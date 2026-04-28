@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة طلبات - كاندي كلوب</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <header class="header">
+            <h1>🍬 كاندي كلوب - Candy Club</h1>
+            <p>نظام إدارة الطلبات السريع</p>
+        </header>
+
+        <form id="orderForm">
+            
+            <div class="form-section">
+                <h3>👤 بيانات العميل</h3>
+                <label>اسم العميل:</label>
+                <input type="text" id="customerName" required placeholder="اكتب اسم العميل ثلاثي">
+
+                <label>رقم التواصل (واتساب):</label>
+                <input type="tel" id="phone1" required placeholder="مثال: 01xxxxxxxxx">
+
+                <label>رقم آخر (اختياري):</label>
+                <input type="tel" id="phone2" placeholder="رقم بديل إن وجد">
+            </div>
+
+            <div class="form-section">
+                <h3>📍 بيانات التوصيل</h3>
+                <label>المحافظة / المنطقة:</label>
+                <select id="governorate" required>
+                    <option value="">-- اختر المحافظة --</option>
+                    <option value="الإسكندرية - سموحة">الإسكندرية - سموحة</option>
+                    <option value="الإسكندرية - سيدي بشر">الإسكندرية - سيدي بشر</option>
+                    <option value="القاهرة">القاهرة</option>
+                    <option value="الجيزة">الجيزة</option>
+                    <option value="محافظات أخرى">محافظات أخرى</option>
+                </select>
+
+                <label>العنوان بالتفصيل:</label>
+                <textarea id="address" required placeholder="اسم الشارع، رقم العمارة، الدور، علامة مميزة"></textarea>
+
+                <label>ملاحظات التوصيل:</label>
+                <input type="text" id="notes" placeholder="مثال: الاتصال قبلها بساعة">
+            </div>
+
+            <div class="form-section">
+                <h3>🛍️ تفاصيل الطلب</h3>
+                <label>نوع الطلب:</label>
+                <select id="orderType">
+                    <option value="عادي">طلب عادي</option>
+                    <option value="هدية">هدية (بدون طباعة السعر)</option>
+                </select>
+
+                <label>المنتجات المطلوبة:</label>
+                <textarea id="products" required placeholder="مثال: 1 كيلو جيلي كولا، نص مارشميلو"></textarea>
+
+                <label>طريقة الدفع:</label>
+                <select id="paymentMethod" required>
+                    <option value="">-- اختر طريقة الدفع --</option>
+                    <option value="كاش">كاش (دفع عند الاستلام)</option>
+                    <option value="إنستا باي">إنستا باي (InstaPay)</option>
+                    <option value="محفظة إلكترونية">محفظة إلكترونية</option>
+                </select>
+            </div>
+
+            <div class="form-section totals-section">
+                <h3>💰 الحسابات</h3>
+                <label>إجمالي المنتجات (جنيه):</label>
+                <input type="number" id="productsTotal" required placeholder="مثال: 350">
+
+                <label>الخصم (إن وجد):</label>
+                <input type="number" id="discount" value="0">
+
+                <label>سعر الشحن:</label>
+                <input type="number" id="shippingCost" readonly placeholder="سيتم حسابه تلقائياً">
+
+                <div class="final-total">
+                    <strong>الإجمالي النهائي: </strong>
+                    <span id="finalTotalDisplay">0</span> جنيه
+                </div>
+            </div>
+
+            <div class="buttons-group">
+                <button type="button" id="saveBtn" class="btn btn-save">💾 حفظ في الشيت</button>
+                <button type="button" id="printBtn" class="btn btn-print">🖨️ طباعة الـ PVC</button>
+                <button type="button" id="whatsappBtn" class="btn btn-whatsapp">💬 إرسال واتساب</button>
+            </div>
+
+        </form>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
