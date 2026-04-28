@@ -1,0 +1,158 @@
+/* إعدادات عامة للموقع */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f7f6;
+    margin: 0;
+    padding: 20px;
+    direction: rtl; /* اتجاه الكتابة من اليمين لليسار */
+}
+
+/* الحاوية الرئيسية للموقع */
+.container {
+    max-width: 600px;
+    margin: auto;
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+/* رأس الصفحة (اللوجو والاسم) */
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+.header h1 {
+    color: #E91E63; /* لون كاندي كلوب الوردي الفخم */
+    margin: 0;
+}
+.header p {
+    color: #777;
+    margin-top: 5px;
+    font-weight: bold;
+}
+
+/* تقسيمات النموذج (البيانات) */
+.form-section {
+    background: #fafafa;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #eee;
+}
+.form-section h3 {
+    color: #2196F3; /* لون أزرق احترافي للعناوين */
+    margin-top: 0;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+}
+
+/* تنسيق الخانات والقوائم المنسدلة */
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+}
+input, select, textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box; /* لمنع خروج الخانة عن الإطار */
+    font-family: inherit;
+    font-size: 14px;
+}
+textarea {
+    resize: vertical; 
+    min-height: 80px;
+}
+input:focus, select:focus, textarea:focus {
+    border-color: #E91E63;
+    outline: none;
+    box-shadow: 0 0 5px rgba(233, 30, 99, 0.3);
+}
+
+/* قسم الحسابات النهائي */
+.totals-section {
+    background: #fff3f6; /* لون وردي فاتح جداً لتمييز الفلوس */
+    border-color: #ffcdd2;
+}
+.final-total {
+    font-size: 1.5em;
+    text-align: center;
+    color: #d32f2f;
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    border: 2px dashed #d32f2f;
+    margin-top: 10px;
+}
+
+/* تنسيق الأزرار (حفظ - طباعة - واتساب) */
+.buttons-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+.btn {
+    flex: 1; /* تقسيم المساحة بالتساوي */
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    color: white;
+    transition: 0.3s; /* حركة ناعمة عند مرور الماوس */
+}
+.btn-save { background-color: #4CAF50; } /* أخضر للحفظ */
+.btn-save:hover { background-color: #45a049; }
+
+.btn-print { background-color: #607D8B; } /* رمادي للطباعة */
+.btn-print:hover { background-color: #546E7A; }
+
+.btn-whatsapp { background-color: #25D366; } /* لون الواتساب الأصلي */
+.btn-whatsapp:hover { background-color: #128C7E; }
+
+/* شاشة الوصل المطبوع (مخفية في الموقع العادي) */
+#receipt-print-area {
+    display: none;
+}
+
+/* =========================================
+   إعدادات الطباعة (لماكينة الـ PVC) 
+   ========================================= */
+@media print {
+    /* إخفاء الموقع بالكامل وكل الزراير والخانات */
+    body * {
+        visibility: hidden;
+    }
+    
+    /* إزالة المسافات عشان الوصل يطلع مظبوط على حجم الورقة */
+    body, html {
+        margin: 0;
+        padding: 0;
+        background: white;
+    }
+
+    /* إظهار منطقة الوصل فقط */
+    #receipt-print-area, #receipt-print-area * {
+        visibility: visible;
+    }
+    
+    #receipt-print-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        font-family: 'Segoe UI', Tahoma, sans-serif;
+        color: black;
+    }
+
+    /* تنسيق الوصل من الداخل */
+    .receipt-header { text-align: center; font-weight: bold; font-size: 18px; border-bottom: 2px dashed black; padding-bottom: 10px; margin-bottom: 10px;}
+    .receipt-item { margin-bottom: 8px; font-size: 14px; }
+    .receipt-total { font-weight: bold; font-size: 16px; border-top: 2px dashed black; padding-top: 10px; margin-top: 10px; text-align: center;}
+}
