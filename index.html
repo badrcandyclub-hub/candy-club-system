@@ -2,149 +2,155 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>سيستم كاندي كلوب الاحترافي</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <nav class="app-nav">
-        <div class="nav-brand">🍬 كاندي كلوب</div>
-        <div class="nav-tabs">
-            <button class="tab-btn active" data-target="ordersTab">📝 الطلبات</button>
-            <button class="tab-btn" data-target="shippingTab">🚚 إدارة الشحن</button>
-            <button class="tab-btn" data-target="settingsTab">⚙️ الإعدادات</button>
-        </div>
+    <header class="app-header">
+        <div class="logo">🍬 Candy Club</div>
+        <div class="status-dot"></div>
+    </header>
+
+    <main class="app-content">
+        
+        <section id="orders-tab" class="tab-pane active">
+            <div class="section-card">
+                <h3 class="section-title">📝 إضافة طلب جديد</h3>
+                <form id="orderForm">
+                    <label>منصة الطلب:</label>
+                    <select id="platform" required>
+                        <option value="واتساب ✅">واتساب ✅</option>
+                        <option value="فيسبوك 🔵">فيسبوك 🔵</option>
+                        <option value="إنستجرام 📸">إنستجرام 📸</option>
+                        <option value="تيك توك 🖤">تيك توك 🖤</option>
+                    </select>
+
+                    <label>اسم العميل:</label>
+                    <input type="text" id="customerName" placeholder="الاسم بالكامل" required>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>رقم التواصل:</label>
+                            <input type="tel" id="phone1" placeholder="01xxxxxxxxx" required>
+                        </div>
+                        <div class="form-group">
+                            <label>رقم آخر (اختياري):</label>
+                            <input type="tel" id="phone2" placeholder="رقم بديل">
+                        </div>
+                    </div>
+
+                    <label>المحافظة / المنطقة:</label>
+                    <select id="governorate" required>
+                        <option value="">-- اختر المنطقة --</option>
+                        </select>
+
+                    <label>العنوان بالتفصيل:</label>
+                    <textarea id="address" placeholder="الشارع، رقم البيت، الدور، علامة مميزة" required></textarea>
+
+                    <div class="divider">المنتجات</div>
+                    <div id="productsContainer">
+                        </div>
+                    <button type="button" id="addProductBtn" class="btn-add-pro">+ إضافة منتج</button>
+
+                    <div class="totals-box">
+                        <div class="total-item"><span>إجمالي المنتجات:</span> <input type="number" id="productsTotal" value="0" readonly></div>
+                        <div class="total-item"><span>الخصم:</span> <input type="number" id="discount" value="0"></div>
+                        <div class="total-item"><span>سعر الشحن:</span> <input type="number" id="shippingCost" value="0"></div>
+                        <div class="final-amount">الإجمالي: <span id="finalTotalDisplay">0</span> ج.م</div>
+                        <div class="delivery-prediction">📅 التوصيل المتوقع: <span id="expectedDateDisplay">--</span></div>
+                    </div>
+
+                    <label>ملاحظات إضافية:</label>
+                    <textarea id="notes" placeholder="ملاحظات للطيار أو التغليف"></textarea>
+
+                    <div class="action-grid">
+                        <button type="button" id="saveBtn" class="btn-save">💾 حفظ في الشيت</button>
+                        <button type="button" id="printBtn" class="btn-print">🖨️ فاتورة</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <section id="couriers-tab" class="tab-pane">
+            <div class="section-card">
+                <h3 class="section-title">🚚 تحميل المناديب</h3>
+                <div class="driver-selection">
+                    <label>اختر المندوب:</label>
+                    <select id="driverNameSelect">
+                        <option value="">-- اختر مندوب --</option>
+                        <option value="أحمد">أحمد</option>
+                        <option value="محمد">محمد</option>
+                    </select>
+                </div>
+                <div id="pendingOrders">
+                    <p class="info-msg">سيتم عرض الأوردرات الجاهزة للتحميل هنا...</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="reports-tab" class="tab-pane">
+            <div class="stats-container">
+                <div class="stat-card">
+                    <span class="stat-label">أوردرات اليوم</span>
+                    <span class="stat-value" id="todayCount">0</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">مبيعات اليوم</span>
+                    <span class="stat-value" id="todaySales">0</span>
+                </div>
+            </div>
+            <div class="section-card">
+                <h3 class="section-title">🔍 بحث عن أوردر</h3>
+                <div class="search-wrap">
+                    <input type="text" id="orderSearch" placeholder="رقم الأوردر أو تليفون العميل">
+                    <button id="searchBtn" class="btn-save">بحث</button>
+                </div>
+                <div id="searchResultArea"></div>
+            </div>
+        </section>
+
+        <section id="shipping-tab" class="tab-pane">
+            <div class="shipping-grid">
+                <div class="ship-card alex">
+                    <h3>⚓ الإسكندرية</h3>
+                    <div id="alexShippingList"></div>
+                    <button class="btn-mini" onclick="addNewShippingRow('alex')">+ منطقة</button>
+                </div>
+                <div class="ship-card govs">
+                    <h3>🚚 المحافظات</h3>
+                    <div id="govsShippingList"></div>
+                    <button class="btn-mini" onclick="addNewShippingRow('govs')">+ محافظة</button>
+                </div>
+            </div>
+            <button id="saveShippingBtn" class="btn-save full-width">💾 حفظ أسعار الشحن</button>
+        </section>
+
+    </main>
+
+    <nav class="bottom-nav">
+        <button class="nav-item active" data-target="orders-tab">
+            <span class="nav-icon">📝</span>
+            <span class="nav-text">الطلبات</span>
+        </button>
+        <button class="nav-item" data-target="couriers-tab">
+            <span class="nav-icon">🚚</span>
+            <span class="nav-text">المناديب</span>
+        </button>
+        <button class="nav-item" data-target="reports-tab">
+            <span class="nav-icon">📊</span>
+            <span class="nav-text">التقارير</span>
+        </button>
+        <button class="nav-item" data-target="shipping-tab">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-text">الشحن</span>
+        </button>
     </nav>
 
-    <div class="app-container">
-        
-        <div id="ordersTab" class="tab-content active">
-            <form id="orderForm" class="horizontal-layout">
-                
-                <div class="form-column">
-                    <div class="form-section">
-                        <h3>👤 بيانات العميل</h3>
-                        <label>الاسم:</label>
-                        <input type="text" id="customerName" required placeholder="اسم العميل">
-                        
-                        <label>رقم واتساب:</label>
-                        <input type="tel" id="phone1" required placeholder="01xxxxxxxxx">
-                        
-                        <label>رقم بديل:</label>
-                        <input type="tel" id="phone2">
-                    </div>
+    <div id="receipt-print-area"></div>
 
-                    <div class="form-section">
-                        <h3>📍 التوصيل</h3>
-                        <label>نوع المنطقة:</label>
-                        <select id="shippingType" required>
-                            <option value="">-- اختر --</option>
-                            <option value="alex">داخل الإسكندرية</option>
-                            <option value="govs">محافظات أخرى</option>
-                        </select>
-
-                        <label>المنطقة / المحافظة:</label>
-                        <select id="governorate" required disabled>
-                            <option value="">اختر نوع المنطقة أولاً</option>
-                        </select>
-
-                        <label>العنوان بالتفصيل:</label>
-                        <textarea id="address" required placeholder="العنوان بالكامل..."></textarea>
-                        
-                        <label>ملاحظات (تُطبع):</label>
-                        <input type="text" id="notes" placeholder="مثال: الاتصال قبلها">
-                    </div>
-                </div>
-
-                <div class="form-column">
-                    <div class="form-section">
-                        <h3>🛍️ المنتجات</h3>
-                        <div id="productsContainer">
-                            </div>
-                        <button type="button" id="addProductBtn" class="btn btn-secondary">+ إضافة منتج آخر</button>
-                        
-                        <label style="margin-top: 15px;">نوع الطلب:</label>
-                        <select id="orderType">
-                            <option value="عادي">طلب عادي</option>
-                            <option value="هدية">هدية (إخفاء السعر في الطباعة)</option>
-                        </select>
-                    </div>
-
-                    <div class="form-section totals-section">
-                        <h3>💰 الحسابات</h3>
-                        <div class="calc-grid">
-                            <div>
-                                <label>إجمالي المنتجات:</label>
-                                <input type="number" id="productsTotal" readonly value="0">
-                            </div>
-                            <div>
-                                <label>الخصم:</label>
-                                <input type="number" id="discount" value="0">
-                            </div>
-                            <div>
-                                <label>الشحن:</label>
-                                <input type="number" id="shippingCost" readonly value="0">
-                            </div>
-                        </div>
-
-                        <div class="final-total">
-                            <strong>الإجمالي النهائي: </strong><span id="finalTotalDisplay">0</span> جنيه
-                        </div>
-
-                        <label>طريقة الدفع:</label>
-                        <select id="paymentMethod" required>
-                            <option value="">-- اختر --</option>
-                            <option value="كاش">كاش (دفع عند الاستلام)</option>
-                            <option value="إنستا باي">إنستا باي (InstaPay)</option>
-                            <option value="محفظة">محفظة إلكترونية</option>
-                        </select>
-                    </div>
-
-                    <div class="buttons-group">
-                        <button type="button" id="saveBtn" class="btn btn-save">💾 حفظ في الشيت</button>
-                        <button type="button" id="printBtn" class="btn btn-print">🖨️ طباعة PVC</button>
-                        <button type="button" id="whatsappBtn" class="btn btn-whatsapp">💬 واتساب</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-
-        <div id="shippingTab" class="tab-content">
-            <div class="form-section">
-                <h3>🚚 تحديث أسعار الشحن</h3>
-                <p style="color: #666; margin-bottom: 20px;">الأسعار التي سيتم إضافتها هنا ستظهر تلقائياً في شاشة الطلبات.</p>
-                
-                <div class="horizontal-layout">
-                    <div class="form-column">
-                        <h4>إسكندرية</h4>
-                        <div id="alexShippingContainer"></div>
-                        <button type="button" class="btn btn-secondary" onclick="addShippingRow('alex')">+ إضافة منطقة</button>
-                    </div>
-                    <div class="form-column">
-                        <h4>المحافظات</h4>
-                        <div id="govShippingContainer"></div>
-                        <button type="button" class="btn btn-secondary" onclick="addShippingRow('govs')">+ إضافة محافظة</button>
-                    </div>
-                </div>
-                <button type="button" id="saveShippingBtn" class="btn btn-save" style="margin-top: 20px; width: 100%;">💾 حفظ أسعار الشحن</button>
-            </div>
-        </div>
-
-        <div id="settingsTab" class="tab-content">
-            <div class="form-section">
-                <h3>⚙️ إعدادات النظام والطباعة</h3>
-                <label>لوجو المحل (سيظهر في طباعة الـ PVC):</label>
-                <input type="file" id="logoInput" accept="image/*">
-                <div style="margin-top: 15px; text-align: center;">
-                    <img id="logoPreview" src="" style="max-width: 150px; display: none; border-radius: 10px; border: 2px dashed #ccc; padding: 5px;">
-                </div>
-                <button type="button" id="clearLogoBtn" class="btn btn-print" style="margin-top: 10px; display: none;">❌ مسح اللوجو</button>
-            </div>
-        </div>
-
-    </div>
-
-   <script src="app.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
