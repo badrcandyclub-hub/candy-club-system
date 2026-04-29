@@ -1,7 +1,7 @@
 // ==========================================
 // 1. الرابط السري لجوجل شيت (حطه هنا لما يجهز)
 // ==========================================
-const GOOGLE_SHEETS_URL = "ضع_الرابط_السري_هنا";
+const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbwAYO1cCYq-qjlhj4T1jW6639AqHOAcA2ADFyP91c49KcJVLFY7TwoXmP8rewWgXOIolw/exec";
 
 // ==========================================
 // 2. نظام التنقل بين الشاشات (التابات)
