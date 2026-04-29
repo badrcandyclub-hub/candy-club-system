@@ -3,24 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>سيستم كاندي كلوب الاحترافي</title>
+    <title>سيستم كاندي كلوب - Candy Club</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
     <header class="app-header">
-        <div class="logo">🍬 Candy Club</div>
-        <div class="status-dot"></div>
+        <div class="logo-container">
+            <span class="logo-text">CANDY CLUB</span>
+            <span class="logo-sub">Professional System</span>
+        </div>
+        <div class="status-indicator">
+            <span id="sync-status">متصل</span>
+            <div class="status-dot"></div>
+        </div>
     </header>
 
     <main class="app-content">
         
         <section id="orders-tab" class="tab-pane active">
             <div class="section-card">
-                <h3 class="section-title">📝 إضافة طلب جديد</h3>
+                <h3 class="section-title">📝 تسجيل أوردر جديد</h3>
                 <form id="orderForm">
-                    <label>منصة الطلب:</label>
+                    <label>المنصة:</label>
                     <select id="platform" required>
                         <option value="واتساب ✅">واتساب ✅</option>
                         <option value="فيسبوك 🔵">فيسبوك 🔵</option>
@@ -29,127 +35,135 @@
                     </select>
 
                     <label>اسم العميل:</label>
-                    <input type="text" id="customerName" placeholder="الاسم بالكامل" required>
+                    <input type="text" id="customerName" placeholder="الاسم ثلاثي" required>
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label>رقم التواصل:</label>
+                            <label>رقم التليفون:</label>
                             <input type="tel" id="phone1" placeholder="01xxxxxxxxx" required>
                         </div>
                         <div class="form-group">
-                            <label>رقم آخر (اختياري):</label>
-                            <input type="tel" id="phone2" placeholder="رقم بديل">
+                            <label>رقم بديل (اختياري):</label>
+                            <input type="tel" id="phone2" placeholder="اختياري">
                         </div>
                     </div>
 
-                    <label>المحافظة / المنطقة:</label>
+                    <label>المنطقة / المحافظة:</label>
                     <select id="governorate" required>
-                        <option value="">-- اختر المنطقة --</option>
+                        <option value="">-- اختر من القائمة --</option>
                         </select>
 
                     <label>العنوان بالتفصيل:</label>
-                    <textarea id="address" placeholder="الشارع، رقم البيت، الدور، علامة مميزة" required></textarea>
+                    <textarea id="address" placeholder="اسم الشارع، رقم البيت، علامة مميزة" required></textarea>
 
-                    <div class="divider">المنتجات</div>
+                    <div class="divider">🛒 تفاصيل المنتجات</div>
                     <div id="productsContainer">
                         </div>
-                    <button type="button" id="addProductBtn" class="btn-add-pro">+ إضافة منتج</button>
+                    <button type="button" id="addProductBtn" class="btn-add-pro">+ إضافة منتج آخر</button>
 
                     <div class="totals-box">
                         <div class="total-item"><span>إجمالي المنتجات:</span> <input type="number" id="productsTotal" value="0" readonly></div>
-                        <div class="total-item"><span>الخصم:</span> <input type="number" id="discount" value="0"></div>
-                        <div class="total-item"><span>سعر الشحن:</span> <input type="number" id="shippingCost" value="0"></div>
-                        <div class="final-amount">الإجمالي: <span id="finalTotalDisplay">0</span> ج.م</div>
-                        <div class="delivery-prediction">📅 التوصيل المتوقع: <span id="expectedDateDisplay">--</span></div>
+                        <div class="total-item"><span>خصم خاص:</span> <input type="number" id="discount" value="0"></div>
+                        <div class="total-item"><span>تكلفة الشحن:</span> <input type="number" id="shippingCost" value="0"></div>
+                        <div class="final-amount">صافي الحساب: <span id="finalTotalDisplay">0</span> ج.م</div>
+                        <div class="delivery-prediction" id="deliveryInfo">📅 موعد التسليم: <span>--</span></div>
                     </div>
 
                     <label>ملاحظات إضافية:</label>
-                    <textarea id="notes" placeholder="ملاحظات للطيار أو التغليف"></textarea>
+                    <textarea id="notes" placeholder="أي ملاحظات للمندوب..."></textarea>
 
                     <div class="action-grid">
-                        <button type="button" id="saveBtn" class="btn-save">💾 حفظ في الشيت</button>
-                        <button type="button" id="printBtn" class="btn-print">🖨️ فاتورة</button>
+                        <button type="button" id="saveBtn" class="btn-save">💾 حفظ الأوردر</button>
+                        <button type="button" id="printBtn" class="btn-print">🖨️ طباعة فاتورة</button>
                     </div>
                 </form>
             </div>
         </section>
 
-        <section id="couriers-tab" class="tab-pane">
+        <section id="delivery-tab" class="tab-pane">
             <div class="section-card">
-                <h3 class="section-title">🚚 تحميل المناديب</h3>
-                <div class="driver-selection">
-                    <label>اختر المندوب:</label>
-                    <select id="driverNameSelect">
-                        <option value="">-- اختر مندوب --</option>
-                        <option value="أحمد">أحمد</option>
-                        <option value="محمد">محمد</option>
+                <h3 class="section-title">🚚 تحميل وتسليم المناديب</h3>
+                <label>اختر المندوب المسؤول:</label>
+                <select id="driverNameSelect">
+                    <option value="">-- اختر مندوب --</option>
                     </select>
-                </div>
-                <div id="pendingOrders">
-                    <p class="info-msg">سيتم عرض الأوردرات الجاهزة للتحميل هنا...</p>
+                <div class="divider">أوردرات قيد التجهيز</div>
+                <div id="pendingOrdersList" class="scroll-list">
+                    <p class="empty-msg">لا توجد أوردرات جاهزة للتحميل حالياً</p>
                 </div>
             </div>
         </section>
 
         <section id="reports-tab" class="tab-pane">
-            <div class="stats-container">
-                <div class="stat-card">
-                    <span class="stat-label">أوردرات اليوم</span>
-                    <span class="stat-value" id="todayCount">0</span>
+            <div class="stats-row">
+                <div class="stat-item pink">
+                    <span class="label">أوردرات اليوم</span>
+                    <span class="value" id="todayCount">0</span>
                 </div>
-                <div class="stat-card">
-                    <span class="stat-label">مبيعات اليوم</span>
-                    <span class="stat-value" id="todaySales">0</span>
+                <div class="stat-item blue">
+                    <span class="label">إجمالي المبيعات</span>
+                    <span class="value" id="todaySales">0</span>
                 </div>
             </div>
             <div class="section-card">
-                <h3 class="section-title">🔍 بحث عن أوردر</h3>
-                <div class="search-wrap">
-                    <input type="text" id="orderSearch" placeholder="رقم الأوردر أو تليفون العميل">
-                    <button id="searchBtn" class="btn-save">بحث</button>
+                <h3 class="section-title">🔍 البحث السريع</h3>
+                <div class="search-box">
+                    <input type="text" id="orderSearchInput" placeholder="رقم الأوردر أو موبايل العميل">
+                    <button id="searchBtn" class="btn-search">بحث</button>
                 </div>
-                <div id="searchResultArea"></div>
+                <div id="searchResult" class="result-area"></div>
             </div>
         </section>
 
-        <section id="shipping-tab" class="tab-pane">
-            <div class="shipping-grid">
-                <div class="ship-card alex">
-                    <h3>⚓ الإسكندرية</h3>
-                    <div id="alexShippingList"></div>
-                    <button class="btn-mini" onclick="addNewShippingRow('alex')">+ منطقة</button>
+        <section id="settings-tab" class="tab-pane">
+            <div class="section-card">
+                <h3 class="section-title">⚙️ إدارة الشحن والمناديب</h3>
+                
+                <div class="setting-group">
+                    <h4>📍 إضافة منطقة / محافظة</h4>
+                    <input type="text" id="newZoneName" placeholder="اسم المنطقة أو المحافظة">
+                    <input type="number" id="newZonePrice" placeholder="سعر الشحن">
+                    <select id="newZoneType">
+                        <option value="same_day">إسكندرية (نفس اليوم)</option>
+                        <option value="next_day">إسكندرية (تاني يوم)</option>
+                        <option value="gov">محافظات (3-4 أيام)</option>
+                    </select>
+                    <button id="addZoneBtn" class="btn-action">إضافة منطقة</button>
                 </div>
-                <div class="ship-card govs">
-                    <h3>🚚 المحافظات</h3>
-                    <div id="govsShippingList"></div>
-                    <button class="btn-mini" onclick="addNewShippingRow('govs')">+ محافظة</button>
+
+                <div class="divider"></div>
+
+                <div class="setting-group">
+                    <h4>🛵 إضافة مندوب جديد</h4>
+                    <input type="text" id="newDriverName" placeholder="اسم المندوب">
+                    <input type="tel" id="newDriverPhone" placeholder="رقم موبايل المندوب">
+                    <button id="addDriverBtn" class="btn-action pink">إضافة مندوب</button>
                 </div>
             </div>
-            <button id="saveShippingBtn" class="btn-save full-width">💾 حفظ أسعار الشحن</button>
         </section>
 
     </main>
 
     <nav class="bottom-nav">
         <button class="nav-item active" data-target="orders-tab">
-            <span class="nav-icon">📝</span>
-            <span class="nav-text">الطلبات</span>
+            <span class="icon">📝</span>
+            <span class="label">الطلبات</span>
         </button>
-        <button class="nav-item" data-target="couriers-tab">
-            <span class="nav-icon">🚚</span>
-            <span class="nav-text">المناديب</span>
+        <button class="nav-item" data-target="delivery-tab">
+            <span class="icon">🚚</span>
+            <span class="label">التحميل</span>
         </button>
         <button class="nav-item" data-target="reports-tab">
-            <span class="nav-icon">📊</span>
-            <span class="nav-text">التقارير</span>
+            <span class="icon">📊</span>
+            <span class="label">التقارير</span>
         </button>
-        <button class="nav-item" data-target="shipping-tab">
-            <span class="nav-icon">⚙️</span>
-            <span class="nav-text">الشحن</span>
+        <button class="nav-item" data-target="settings-tab">
+            <span class="icon">⚙️</span>
+            <span class="label">الإعدادات</span>
         </button>
     </nav>
 
-    <div id="receipt-print-area"></div>
+    <datalist id="smartProductsList"></datalist>
 
     <script src="app.js"></script>
 </body>
