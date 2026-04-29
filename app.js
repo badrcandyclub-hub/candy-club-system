@@ -1,11 +1,12 @@
 // ==========================================
-// 🌐 نظام كاندي كلوب المطور - (app.js) - النسخة الذكية
+// 🌐 نظام كاندي كلوب المطور - (النسخة المتصلة الحقيقية)
 // ==========================================
 
+// الرابط السري الخاص بك
 const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbwAYO1cCYq-qjlhj4T1jW6639AqHOAcA2ADFyP91c49KcJVLFY7TwoXmP8rewWgXOIolw/exec";
 
 // ==========================================
-// 1. نظام التبديل بين الشاشات (التابات السفلية)
+// 1. نظام التبديل بين الشاشات
 // ==========================================
 document.querySelectorAll('.nav-item').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -17,43 +18,74 @@ document.querySelectorAll('.nav-item').forEach(btn => {
 });
 
 // ==========================================
-// 2. قاعدة بيانات مصغرة ذكية (لحل مشكلة كتابة المنتجات وأسعار الشحن)
+// 2. سحب البيانات من الإكسيل عند فتح الموقع
 // ==========================================
+let shippingData = {};
+let productsData = [];
 
-// كتالوج المنتجات (عشان نريح المدير من الكتابة) - تقدر تزود عليه براحتك
-const productsCatalog = [
-    { name: "كاندي فراولة 🍓 - 50 ملي", price: 150 },
-    { name: "كاندي كولا 🥤 - طعم لاذع", price: 120 },
-    { name: "بوكس التوفير ميكس 🎁", price: 300 },
-    { name: "كاندي بطيخ 🍉 - 100 ملي", price: 200 }
-];
+window.onload = () => {
+    const syncStatus = document.getElementById('sync-status');
+    syncStatus.innerText = "جاري التحميل...";
+    syncStatus.style.color = "#FF8C00";
 
-// إنشاء قائمة منسدلة ذكية للمنتجات في الخلفية
-const dataList = document.createElement('datalist');
-dataList.id = "smartProducts";
-productsCatalog.forEach(p => {
-    dataList.innerHTML += `<option value="${p.name}" data-price="${p.price}">`;
-});
-document.body.appendChild(dataList);
+    fetch(GOOGLE_SHEETS_URL)
+        .then(res => res.json())
+        .then(data => {
+            syncStatus.innerText = "متصل";
+            syncStatus.style.color = "#00C853";
 
-// مناطق الشحن الذكية (بالأسعار وتصنيف المواعيد)
-const shippingData = {
-    "سموحة (نفس اليوم)": { price: 30, type: "same_day" },
-    "ميامي (نفس اليوم)": { price: 40, type: "same_day" },
-    "العجمي (تاني يوم)": { price: 50, type: "next_day" },
-    "القاهرة": { price: 80, type: "gov" },
-    "الجيزة": { price: 80, type: "gov" },
-    "طنطا": { price: 60, type: "gov" }
+            // أ- تعبئة قائمة المحافظات ومناطق الشحن
+            const govSelect = document.getElementById('governorate');
+            govSelect.innerHTML = '<option value="">-- اختر المنطقة / المحافظة --</option>';
+
+            if(data.alex && data.alex.length > 0) {
+                let optgroup = document.createElement('optgroup');
+                optgroup.label = "⚓ مناطق الإسكندرية";
+                data.alex.forEach(zone => {
+                    shippingData[zone.name] = { price: zone.price, type: zone.type };
+                    optgroup.innerHTML += `<option value="${zone.name}">${zone.name} (${zone.price}ج)</option>`;
+                });
+                govSelect.appendChild(optgroup);
+            }
+
+            if(data.govs && data.govs.length > 0) {
+                let optgroup = document.createElement('optgroup');
+                optgroup.label = "🚚 المحافظات";
+                data.govs.forEach(zone => {
+                    shippingData[zone.name] = { price: zone.price, type: zone.type };
+                    optgroup.innerHTML += `<option value="${zone.name}">${zone.name} (${zone.price}ج)</option>`;
+                });
+                govSelect.appendChild(optgroup);
+            }
+
+            // ب- تعبئة قائمة المناديب
+            const driverSelect = document.getElementById('driverNameSelect');
+            driverSelect.innerHTML = '<option value="">-- اختر مندوب --</option>';
+            if(data.couriers && data.couriers.length > 0) {
+                data.couriers.forEach(c => {
+                    driverSelect.innerHTML += `<option value="${c.name}">${c.name} (${c.phone})</option>`;
+                });
+            }
+
+            // ج- تعبئة قائمة المنتجات الذكية (من الأوردرات القديمة)
+            const smartProductsList = document.getElementById('smartProductsList');
+            smartProductsList.innerHTML = '';
+            if(data.products && data.products.length > 0) {
+                productsData = data.products;
+                productsData.forEach(p => {
+                    smartProductsList.innerHTML += `<option value="${p.name}">`;
+                });
+            }
+        })
+        .catch(err => {
+            syncStatus.innerText = "خطأ في الاتصال";
+            syncStatus.style.color = "red";
+            console.error("Fetch Error:", err);
+        });
 };
 
-// تعبئة قائمة المحافظات في الموقع
-const govSelect = document.getElementById('governorate');
-for (const [zone, info] of Object.entries(shippingData)) {
-    govSelect.innerHTML += `<option value="${zone}">${zone}</option>`;
-}
-
 // ==========================================
-// 3. حاسبة مواعيد الشحن الذكية (بتستثني يوم الجمعة)
+// 3. حاسبة مواعيد الشحن الذكية (تستثني يوم الجمعة)
 // ==========================================
 function addBusinessDays(startDate, daysToAdd) {
     let date = new Date(startDate);
@@ -67,12 +99,13 @@ function addBusinessDays(startDate, daysToAdd) {
     return date;
 }
 
+const govSelect = document.getElementById('governorate');
 govSelect.addEventListener('change', () => {
     let selectedZone = govSelect.value;
     let shippingCostInput = document.getElementById('shippingCost');
-    let expectedDateDisplay = document.getElementById('expectedDateDisplay');
+    let expectedDateDisplay = document.querySelector('#deliveryInfo span');
     
-    if(!selectedZone) {
+    if(!selectedZone || !shippingData[selectedZone]) {
         shippingCostInput.value = 0;
         expectedDateDisplay.innerText = "--";
         calculateTotal();
@@ -80,9 +113,8 @@ govSelect.addEventListener('change', () => {
     }
 
     let info = shippingData[selectedZone];
-    shippingCostInput.value = info.price; // نزول السعر أوتوماتيك
+    shippingCostInput.value = info.price || 0;
 
-    // حساب التاريخ
     let today = new Date();
     if(info.type === "same_day") {
         expectedDateDisplay.innerText = `اليوم (${today.toLocaleDateString('ar-EG')})`;
@@ -90,18 +122,19 @@ govSelect.addEventListener('change', () => {
         today.setDate(today.getDate() + 1);
         expectedDateDisplay.innerText = `غداً (${today.toLocaleDateString('ar-EG')})`;
     } else if (info.type === "gov") {
-        // المحافظات: يبدأ العد من بكرة، وياخد من 3 لـ 4 أيام، ويتخطى الجمعة
         let startCountingDate = new Date();
-        startCountingDate.setDate(startCountingDate.getDate() + 1); // بكرة
+        startCountingDate.setDate(startCountingDate.getDate() + 1); // يبدأ العد من بكرا
         let minDate = addBusinessDays(startCountingDate, 3);
         let maxDate = addBusinessDays(startCountingDate, 4);
         expectedDateDisplay.innerText = `من ${minDate.toLocaleDateString('ar-EG')} إلى ${maxDate.toLocaleDateString('ar-EG')}`;
+    } else {
+        expectedDateDisplay.innerText = "غير محدد";
     }
     calculateTotal();
 });
 
 // ==========================================
-// 4. نظام إضافة المنتجات (الذكي) وحساب الإجمالي
+// 4. إضافة المنتجات وحساب الإجمالي
 // ==========================================
 const productsContainer = document.getElementById('productsContainer');
 
@@ -109,7 +142,7 @@ function addProductRow() {
     const div = document.createElement('div');
     div.className = 'product-row';
     div.innerHTML = `
-        <input type="text" list="smartProducts" class="product-name-input" placeholder="اكتب اسم المنتج أو اختره" required>
+        <input type="text" list="smartProductsList" class="product-name-input" placeholder="اكتب اسم المنتج..." required>
         <input type="number" class="product-price-input" placeholder="السعر" required value="0">
         <button type="button" class="remove-product-btn">×</button>
     `;
@@ -118,9 +151,9 @@ function addProductRow() {
     let nameInput = div.querySelector('.product-name-input');
     let priceInput = div.querySelector('.product-price-input');
 
-    // أول ما تختار المنتج من القائمة المنسدلة، يحط السعر لوحده
+    // بمجرد اختيار منتج مقترح، ينزل السعر
     nameInput.addEventListener('input', () => {
-        let selectedProduct = productsCatalog.find(p => p.name === nameInput.value);
+        let selectedProduct = productsData.find(p => p.name === nameInput.value);
         if(selectedProduct) {
             priceInput.value = selectedProduct.price;
             calculateTotal();
@@ -151,32 +184,37 @@ function calculateTotal() {
     document.getElementById('finalTotalDisplay').innerText = final;
 }
 
-// حساب عند تعديل الخصم أو الشحن يدوياً
 document.getElementById('discount').addEventListener('input', calculateTotal);
 document.getElementById('shippingCost').addEventListener('input', calculateTotal);
 
 // ==========================================
-// 5. إرسال الطلب لجوجل شيت
+// 5. إرسال الأوردر الجديد للإكسيل
 // ==========================================
 document.getElementById('saveBtn').addEventListener('click', () => {
     const btn = document.getElementById('saveBtn');
+    let name = document.getElementById('customerName').value;
+    let gov = document.getElementById('governorate').value;
     
-    // تجميع المنتجات
+    if(!name || !gov) {
+        alert("⚠️ يرجى إدخال اسم العميل واختيار المحافظة!");
+        return;
+    }
+
     let productsList = "";
     document.querySelectorAll('.product-row').forEach(row => {
-        let name = row.querySelector('.product-name-input').value;
-        let price = row.querySelector('.product-price-input').value;
-        if(name) productsList += `${name} (${price}ج)\n`;
+        let pName = row.querySelector('.product-name-input').value;
+        let pPrice = row.querySelector('.product-price-input').value;
+        if(pName) productsList += `${pName} (${pPrice}ج)\n`;
     });
 
     let formData = new URLSearchParams();
     formData.append('platform', document.getElementById('platform').value);
-    formData.append('customerName', document.getElementById('customerName').value);
+    formData.append('customerName', name);
     formData.append('phone1', document.getElementById('phone1').value);
     formData.append('phone2', document.getElementById('phone2').value);
-    formData.append('governorate', document.getElementById('governorate').value);
+    formData.append('governorate', gov);
     formData.append('address', document.getElementById('address').value);
-    formData.append('expectedDate', document.getElementById('expectedDateDisplay').innerText);
+    formData.append('expectedDate', document.querySelector('#deliveryInfo span').innerText);
     formData.append('products', productsList);
     formData.append('productsTotal', document.getElementById('productsTotal').value);
     formData.append('discount', document.getElementById('discount').value);
@@ -192,17 +230,58 @@ document.getElementById('saveBtn').addEventListener('click', () => {
         mode: 'no-cors',
         body: formData
     }).then(() => {
-        alert("✅ تم إرسال الطلب بنجاح إلى الإكسيل!");
-        btn.innerText = "💾 حفظ في الشيت";
+        alert("✅ تم إرسال الأوردر بنجاح!");
+        btn.innerText = "💾 حفظ الأوردر";
         btn.disabled = false;
         document.getElementById('orderForm').reset();
-        document.getElementById('expectedDateDisplay').innerText = "--";
+        document.querySelector('#deliveryInfo span').innerText = "--";
         document.getElementById('finalTotalDisplay').innerText = "0";
         productsContainer.innerHTML = ''; 
-        addProductRow(); // إضافة صف فاضي جديد
+        addProductRow(); 
     }).catch(err => {
         alert("❌ حدث خطأ في الاتصال");
-        btn.innerText = "💾 حفظ في الشيت";
+        btn.innerText = "💾 حفظ الأوردر";
         btn.disabled = false;
     });
+});
+
+// ==========================================
+// 6. الإعدادات (إضافة منطقة شحن جديدة من الموقع)
+// ==========================================
+document.getElementById('addZoneBtn').addEventListener('click', () => {
+    let name = document.getElementById('newZoneName').value;
+    let price = document.getElementById('newZonePrice').value;
+    let type = document.getElementById('newZoneType').value;
+
+    if(!name || !price) {
+        alert("⚠️ يرجى إدخال اسم المنطقة وسعر الشحن!");
+        return;
+    }
+
+    let zoneType = type === 'gov' ? 'govs' : 'alex';
+    let formData = new URLSearchParams();
+    formData.append('action', 'addShipping');
+    formData.append('zoneType', zoneType);
+    formData.append('name', name);
+    formData.append('price', price);
+    formData.append('deliveryType', type);
+
+    let btn = document.getElementById('addZoneBtn');
+    btn.innerText = "⏳ جاري الإضافة...";
+    
+    fetch(GOOGLE_SHEETS_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: formData
+    }).then(() => {
+        alert("✅ تم إضافة المنطقة بنجاح للشيت! (قم بعمل ريفريش للموقع لتظهر في القائمة)");
+        btn.innerText = "إضافة منطقة";
+        document.getElementById('newZoneName').value = "";
+        document.getElementById('newZonePrice').value = "";
+    });
+});
+
+// زر إضافة مندوب
+document.getElementById('addDriverBtn').addEventListener('click', () => {
+    alert("💡 لضمان الأمان، يرجى إضافة اسم المندوب ورقمه مباشرة في شيت (الإعدادات والشحن) في جوجل شيت.");
 });
