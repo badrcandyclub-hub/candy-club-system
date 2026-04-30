@@ -1,11 +1,11 @@
 /* =========================================
-   إعدادات الألوان والخطوط (Candy Club Theme)
+   1. إعدادات الألوان والخطوط الأساسية
    ========================================= */
 :root {
     --primary-color: #FF1493;    /* وردي فاقع */
     --secondary-color: #00BFFF;  /* أزرق فاقع */
     --success-color: #00C853;    /* أخضر فاقع */
-    --warning-color: #FF8C00;    /* برتقالي للمناديب */
+    --active-bg: #e6f7ff;        /* أزرق فاتح جداً للزر النشط */
     --bg-color: #f4f6f9;
     --text-dark: #2d3436;
     --white: #ffffff;
@@ -21,7 +21,7 @@ body {
     font-family: 'Tajawal', sans-serif;
     background-color: var(--bg-color);
     margin: 0;
-    padding-bottom: 85px; /* مساحة للبار السفلي */
+    padding-bottom: 90px; /* مساحة واسعة للبار السفلي */
     color: var(--text-dark);
     direction: rtl;
 }
@@ -31,7 +31,7 @@ h1, h2, h3, h4, .app-header {
 }
 
 /* =========================================
-   الهيدر واللوجو
+   2. الهيدر واللوجو ومؤشر الاتصال
    ========================================= */
 .app-header {
     background: var(--white);
@@ -88,23 +88,19 @@ h1, h2, h3, h4, .app-header {
 }
 
 /* =========================================
-   الشاشات (Tabs) والكروت
+   3. الشاشات والكروت الأساسية
    ========================================= */
-.app-content {
-    padding: 15px;
-}
+.app-content { padding: 15px; }
 
 .tab-pane {
     display: none;
     animation: fadeIn 0.3s ease;
 }
 
-.tab-pane.active {
-    display: block;
-}
+.tab-pane.active { display: block; }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(5px); }
+    from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
@@ -146,7 +142,7 @@ h1, h2, h3, h4, .app-header {
 .divider::after { left: 0; }
 
 /* =========================================
-   المدخلات (Inputs)
+   4. المدخلات (Inputs) والأزرار
    ========================================= */
 label {
     display: block;
@@ -175,24 +171,48 @@ input:focus, select:focus, textarea:focus {
     box-shadow: 0 0 0 3px rgba(255, 20, 147, 0.1);
 }
 
-.form-row {
-    display: flex;
-    gap: 12px;
+.form-row { display: flex; gap: 12px; }
+.form-group { flex: 1; }
+
+.btn-add-pro {
+    background: #f1f2f6;
+    color: #57606f;
+    border: 2px dashed #ced6e0;
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-bottom: 15px;
 }
 
-.form-group {
+.action-grid { display: flex; gap: 12px; margin-top: 10px; }
+
+.btn-save, .btn-print, .btn-action, .btn-search {
     flex: 1;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    font-family: 'Cairo', sans-serif;
+    transition: 0.2s;
 }
+
+.btn-save:active { transform: scale(0.95); }
+.btn-save { background: var(--success-color); }
+.btn-print { background: var(--secondary-color); }
+.btn-action { background: var(--secondary-color); width: 100%; margin-top: 5px; }
+.btn-action.pink { background: var(--primary-color); }
+.btn-search { background: var(--primary-color); width: auto; padding: 0 25px; }
 
 /* =========================================
-   المنتجات والحسابات
+   5. المنتجات والحسابات (Totals)
    ========================================= */
-.product-row {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 12px;
-}
-
+.product-row { display: flex; gap: 10px; margin-bottom: 12px; }
 .product-row input { margin-bottom: 0; }
 .product-name-input { flex: 2.5; }
 .product-price-input { flex: 1; text-align: center; font-weight: bold; color: var(--primary-color); }
@@ -207,8 +227,6 @@ input:focus, select:focus, textarea:focus {
     cursor: pointer;
     transition: 0.2s;
 }
-
-.remove-product-btn:active { transform: scale(0.9); }
 
 .totals-box {
     background: linear-gradient(145deg, #fff5f8 0%, #ffffff 100%);
@@ -255,90 +273,25 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* =========================================
-   الأزرار العامة وإعدادات الشحن
-   ========================================= */
-.btn-add-pro {
-    background: #f1f2f6;
-    color: #57606f;
-    border: 2px dashed #ced6e0;
-    width: 100%;
-    padding: 12px;
-    border-radius: 12px;
-    font-weight: bold;
-    cursor: pointer;
-    margin-bottom: 15px;
-    font-family: 'Tajawal', sans-serif;
-}
-
-.action-grid {
-    display: flex;
-    gap: 12px;
-    margin-top: 10px;
-}
-
-.btn-save, .btn-print, .btn-action, .btn-search {
-    flex: 1;
-    padding: 14px;
-    border: none;
-    border-radius: 12px;
-    font-weight: bold;
-    font-size: 1.1rem;
-    color: white;
-    cursor: pointer;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    font-family: 'Cairo', sans-serif;
-}
-
-.btn-save { background: var(--success-color); }
-.btn-print { background: var(--secondary-color); }
-.btn-action { background: var(--secondary-color); width: 100%; margin-top: 5px; }
-.btn-action.pink { background: var(--primary-color); }
-.btn-search { background: var(--primary-color); width: auto; padding: 0 25px; }
-
-/* =========================================
-   شاشة الإعدادات والتقارير
+   6. السجل، التقارير، والإعدادات
    ========================================= */
 .setting-group {
     background: #fafafa;
     padding: 15px;
     border-radius: 15px;
     border: 1px solid #eee;
-}
-
-.setting-group h4 {
-    margin-top: 0;
-    margin-bottom: 15px;
-    color: var(--text-dark);
-}
-
-.stats-row {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 20px;
-}
-
-.stat-item {
-    flex: 1;
-    background: var(--white);
-    padding: 20px 15px;
-    border-radius: 18px;
-    text-align: center;
-    box-shadow: var(--shadow);
-    color: white;
-}
-
-.stat-item.pink { background: linear-gradient(135deg, #FF1493, #ff6b81); }
-.stat-item.blue { background: linear-gradient(135deg, #00BFFF, #1e90ff); }
-
-.stat-item .label { display: block; font-size: 0.9rem; margin-bottom: 5px; opacity: 0.9; }
-.stat-item .value { display: block; font-size: 1.8rem; font-weight: bold; font-family: 'Cairo', sans-serif;}
-
-.search-box {
-    display: flex;
-    gap: 10px;
     margin-bottom: 15px;
 }
-.search-box input { margin-bottom: 0; }
+
+.setting-group h4 { margin-top: 0; margin-bottom: 15px; color: var(--text-dark); }
+.text-center { text-align: center; }
+.mt-10 { margin-top: 10px; }
+
+.scroll-list {
+    max-height: 250px;
+    overflow-y: auto;
+    padding: 5px;
+}
 
 .empty-msg {
     text-align: center;
@@ -349,19 +302,46 @@ input:focus, select:focus, textarea:focus {
     border: 1px dashed #ccc;
 }
 
+.logo-preview-box {
+    border: 2px dashed #ccc;
+    padding: 15px;
+    border-radius: 15px;
+    background: var(--white);
+    margin-bottom: 10px;
+}
+
+.stats-row { display: flex; gap: 12px; margin-bottom: 20px; }
+.stat-item {
+    flex: 1;
+    background: var(--white);
+    padding: 20px 15px;
+    border-radius: 18px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    color: white;
+}
+.stat-item.pink { background: linear-gradient(135deg, #FF1493, #ff6b81); }
+.stat-item.blue { background: linear-gradient(135deg, #00BFFF, #1e90ff); }
+.stat-item .label { display: block; font-size: 0.9rem; margin-bottom: 5px; opacity: 0.9; }
+.stat-item .value { display: block; font-size: 1.8rem; font-weight: bold; font-family: 'Cairo', sans-serif;}
+
+.search-box { display: flex; gap: 10px; }
+.search-box input { margin-bottom: 0; }
+
 /* =========================================
-   البار السفلي (Bottom Nav)
+   7. البار السفلي (Bottom Nav) - بتأثير الأزرق السلس
    ========================================= */
 .bottom-nav {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 75px;
+    height: 80px;
     background: var(--white);
     display: flex;
-    justify-content: space-around;
+    justify-content: space-between;
     align-items: center;
+    padding: 0 5px;
     box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
     border-top-left-radius: 25px;
     border-top-right-radius: 25px;
@@ -369,19 +349,31 @@ input:focus, select:focus, textarea:focus {
 }
 
 .nav-item {
-    background: none;
+    background: transparent;
     border: none;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     color: #a4b0be;
-    padding: 8px 15px;
-    transition: 0.3s;
+    width: 19%; /* مساحة متساوية لـ 5 أزرار */
+    height: 65px;
+    border-radius: 16px;
+    transition: all 0.3s ease;
     cursor: pointer;
 }
 
-.nav-item .icon { font-size: 1.5rem; margin-bottom: 4px; transition: 0.3s; }
-.nav-item .label { font-size: 0.75rem; font-weight: bold; font-family: 'Cairo', sans-serif; transition: 0.3s;}
+.nav-item .icon { font-size: 1.4rem; margin-bottom: 3px; transition: 0.3s; }
+.nav-item .label { font-size: 0.7rem; font-weight: bold; font-family: 'Cairo', sans-serif; transition: 0.3s;}
 
-.nav-item.active { color: var(--primary-color); }
-.nav-item.active .icon { transform: translateY(-3px) scale(1.1); }
+/* تأثير الزر النشط (Active) الذي طلبته */
+.nav-item.active {
+    background-color: var(--active-bg); /* خلفية زرقاء فاتحة */
+    color: var(--secondary-color);      /* لون أيقونة ونص أزرق فاقع */
+    transform: translateY(-5px);        /* ارتفاع خفيف لأعلى */
+    box-shadow: 0 4px 10px rgba(0, 191, 255, 0.15); /* ظل أزرق خفيف */
+}
+
+.nav-item.active .icon {
+    transform: scale(1.15); /* تكبير الأيقونة قليلاً */
+}
