@@ -236,3 +236,42 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary-color); 
 
 .nav-item.active { background-color: var(--active-bg); color: var(--secondary-color); transform: translateY(-5px); box-shadow: 0 4px 10px rgba(0, 191, 255, 0.15); }
 .nav-item.active .icon { transform: scale(1.15); }
+/* التعديلات الجديدة لشاشة الشحن والسجل */
+.mb-15 { margin-bottom: 15px; }
+
+.data-list-container {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    padding: 10px;
+    background: #fafafa;
+}
+
+.data-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border-bottom: 1px solid #eee;
+    font-size: 0.95rem;
+    color: #555;
+}
+
+.data-row:last-child {
+    border-bottom: none;
+}
+
+.data-row .price-badge {
+    background: var(--active-bg);
+    color: var(--secondary-color);
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 0.85rem;
+}
+
+.data-row .phone-badge {
+    color: var(--primary-color);
+    font-family: monospace;
+    font-weight: bold;
+}
