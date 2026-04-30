@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>سيستم كاندي كلوب - Candy Club</title>
+    <title>سيستم كاندي كلوب - Candy Club V2</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
 </head>
@@ -14,27 +14,24 @@
     <header class="app-header">
         <div class="logo-container">
             <span class="logo-text">CANDY CLUB</span>
-            <span class="logo-sub">Professional System</span>
+            <span class="logo-sub">Professional System V2</span>
         </div>
-        <div class="status-indicator">
-            <span id="sync-status">متصل</span>
-            <div class="status-dot"></div>
+        <div class="header-actions">
+            <button id="openSuspendedBtn" class="btn-suspended interactive-btn">📂 المعلقة (<span id="suspendedCount">0</span>)</button>
+            <div class="status-indicator">
+                <span id="sync-status">متصل</span>
+                <div class="status-dot"></div>
+            </div>
         </div>
     </header>
 
     <main class="app-content">
         
         <section id="create-tab" class="tab-pane active">
-            <div class="section-card">
+            <div id="orderFieldsContainer" class="section-card">
                 <h3 class="section-title">📝 إنشاء طلب جديد</h3>
                 <form id="orderForm">
                     
-                    <label>رقم الموبايل (للبحث أو تسجيل عميل جديد):</label>
-                    <div class="input-with-action">
-                        <input type="tel" id="customerPhone" placeholder="أدخل الرقم للبحث التلقائي" required>
-                        <span id="phoneCheckStatus" class="check-status-icon">🔍</span>
-                    </div>
-
                     <label>المنصة:</label>
                     <select id="platform" required>
                         <option value="واتساب ✅">واتساب ✅</option>
@@ -44,33 +41,62 @@
                     </select>
 
                     <label>اسم العميل:</label>
-                    <input type="text" id="customerName" placeholder="الاسم ثلاثي" required>
+                    <input type="text" id="customerName" placeholder="الاسم الثلاثي" required>
+
+                    <label>رقم الموبايل:</label>
+                    <div class="input-with-action">
+                        <input type="tel" id="customerPhone" placeholder="أدخل الرقم للبحث" required>
+                        <span id="phoneCheckStatus" class="check-status-icon interactive-btn">🔍</span>
+                    </div>
 
                     <label>رقم بديل (اختياري):</label>
                     <input type="tel" id="phone2" placeholder="اختياري">
 
-                    <label>المنطقة / المحافظة:</label>
-                    <select id="governorate" required>
-                        <option value="">-- اختر من القائمة --</option>
+                    <div class="divider">🚚 تفاصيل التوصيل</div>
+
+                    <label>نوع التوصيل:</label>
+                    <select id="deliveryType" required>
+                        <option value="normal">توصيل منزلي عادي</option>
+                        <option value="branch">استلام من الفرع</option>
+                        <option value="special_date">حجز لتاريخ معين 📅</option>
                     </select>
 
-                    <label>العنوان بالتفصيل:</label>
-                    <textarea id="address" placeholder="اسم الشارع، رقم البيت، علامة مميزة" required></textarea>
+                    <div id="specialDateContainer" class="hidden-field">
+                        <label>اختر تاريخ التوصيل:</label>
+                        <input type="date" id="specialDateInput">
+                    </div>
+
+                    <div id="addressFields">
+                        <label>المنطقة / المحافظة:</label>
+                        <select id="governorate">
+                            <option value="">-- اختر من القائمة --</option>
+                        </select>
+
+                        <label>العنوان بالتفصيل:</label>
+                        <textarea id="address" placeholder="اسم الشارع، رقم البيت، علامة مميزة"></textarea>
+                    </div>
 
                     <div class="divider">🛒 تفاصيل المنتجات</div>
                     <div id="productsContainer"></div>
                     <button type="button" id="addProductBtn" class="btn-add-pro interactive-btn">+ إضافة منتج آخر</button>
 
                     <div class="totals-box">
-                        <div class="total-item"><span>إجمالي المنتجات:</span> <input type="number" id="productsTotal" value="0" readonly></div>
-                        <div class="total-item"><span>تكلفة الشحن:</span> <input type="number" id="shippingCost" value="0" readonly></div>
-                        <div class="total-item"><span>خصم خاص:</span> <input type="number" id="discount" value="0"></div>
+                        <div class="total-item"><span>إجمالي المنتجات:</span> <input type="number" id="productsTotal" value="" readonly placeholder="0"></div>
+                        <div class="total-item"><span>تكلفة الشحن:</span> <input type="number" id="shippingCost" value="" readonly placeholder="0"></div>
+                        <div class="total-item"><span>خصم خاص:</span> <input type="number" id="discount" value="" placeholder="0"></div>
                         
+                        <div class="gift-option">
+                            <label class="switch-label">
+                                <input type="checkbox" id="isGiftCheckbox">
+                                <span class="switch-text">🎁 هذا الأوردر هدية (بدون سعر)</span>
+                            </label>
+                        </div>
+
                         <div class="delivery-prediction" id="deliveryInfo">📅 موعد التسليم: <span>--</span></div>
                         <div class="final-amount">صافي الحساب: <span id="finalTotalDisplay">0</span> ج.م</div>
                     </div>
 
-                    <div class="payment-section">
+                    <div class="payment-section" id="paymentSection">
                         <label>طريقة الدفع:</label>
                         <div class="payment-row">
                             <select id="paymentMethod" required>
@@ -86,6 +112,7 @@
                     <textarea id="notes" placeholder="أي ملاحظات للمندوب..."></textarea>
 
                     <div class="action-grid mt-20">
+                        <button type="button" id="suspendBtn" class="btn-outline interactive-btn">⏸️ تعليق الطلب</button>
                         <button type="button" id="saveAndPrintBtn" class="btn-save pulse-btn">💾 حفظ وطباعة الفاتورة</button>
                     </div>
                 </form>
@@ -99,50 +126,41 @@
                     <input type="text" id="orderSearchInput" placeholder="رقم الأوردر أو الموبايل">
                     <button id="searchBtn" class="btn-search interactive-btn">بحث</button>
                 </div>
-                <div id="searchResult" class="result-area"></div>
             </div>
 
             <div class="section-card">
                 <h3 class="section-title">📦 سجل الأوردرات</h3>
                 <div class="search-box">
-                    <input type="date" id="historyDateFilter" title="فلترة بالتاريخ">
+                    <input type="date" id="historyDateFilter">
                     <button id="loadHistoryBtn" class="btn-search interactive-btn">تحديث</button>
                 </div>
-                <div class="divider">قائمة الأوردرات</div>
-                <div id="historyListContainer" class="scroll-list">
+                <div id="historyListContainer" class="scroll-list mt-15">
                     <p class="empty-msg">جاري تحميل أوردرات اليوم...</p>
                 </div>
             </div>
         </section>
 
         <section id="shipping-tab" class="tab-pane">
-            
             <div class="shipping-actions-row mb-15">
                 <button id="openZoneModalBtn" class="btn-outline interactive-btn">إضافة منطقة ➕</button>
                 <button id="openDriverModalBtn" class="btn-outline interactive-btn">إضافة مندوب ➕</button>
             </div>
-
             <div class="section-card">
                 <h3 class="section-title">🛵 تحميل المناديب</h3>
-                <label>اختر المندوب لتحميل الأوردرات:</label>
                 <select id="driverNameSelect">
                     <option value="">-- اختر مندوب --</option>
                 </select>
                 <div id="pendingOrdersList" class="scroll-list mt-10">
-                    <p class="empty-msg">لا توجد أوردرات قيد التجهيز حاليا</p>
+                    <p class="empty-msg">لا توجد أوردرات قيد التجهيز</p>
                 </div>
             </div>
-
             <div class="section-card">
-                <h3 class="section-title">🌐 مناطق الشحن المسجلة</h3>
-                <div id="zonesDisplayList" class="data-list-container">
-                    </div>
+                <h3 class="section-title">🌐 المناطق المسجلة</h3>
+                <div id="zonesDisplayList" class="data-list-container"></div>
             </div>
-
             <div class="section-card">
                 <h3 class="section-title">🛵 المناديب المسجلين</h3>
-                <div id="driversDisplayList" class="data-list-container">
-                    </div>
+                <div id="driversDisplayList" class="data-list-container"></div>
             </div>
         </section>
 
@@ -152,80 +170,82 @@
                     <span class="label">أوردرات اليوم</span>
                     <span class="value" id="todayCount">0</span>
                 </div>
+                <div class="stat-item orange">
+                    <span class="label">أوردرات مكتملة</span>
+                    <span class="value" id="completedCount">0</span>
+                </div>
                 <div class="stat-item blue">
                     <span class="label">إجمالي المبيعات</span>
                     <span class="value" id="todaySales">0</span>
                 </div>
             </div>
-            <div class="section-card text-center">
-                <p style="color: #7f8c8d; padding: 20px;">سيتم إضافة المزيد من الرسوم البيانية وتقارير المنصات هنا لاحقاً.</p>
-            </div>
         </section>
 
         <section id="settings-tab" class="tab-pane">
-            <div class="section-card">
+            <div class="section-card text-center">
                 <h3 class="section-title">🛠️ إعدادات السيستم</h3>
-                <div class="setting-group text-center">
-                    <h4>صورة لوجو الفاتورة (PVC)</h4>
-                    <div class="logo-preview-box">
-                        <img id="logoPreview" src="" alt="لم يتم رفع لوجو" style="display:none; max-width: 100px; margin: 0 auto 10px;">
-                    </div>
-                    <input type="file" id="logoUpload" accept="image/*">
-                    <p style="font-size: 0.8rem; color: #777;">سيتم طباعة هذا اللوجو على كل الفواتير</p>
+                <label>لوجو الفاتورة (PVC)</label>
+                <div class="logo-preview-box">
+                    <img id="logoPreview" src="" alt="Logo" style="display:none; max-width: 100px;">
                 </div>
+                <input type="file" id="logoUpload" accept="image/*">
             </div>
         </section>
-
     </main>
 
     <nav class="bottom-nav">
         <button class="nav-item active" data-target="create-tab">
-            <span class="icon">📝</span>
-            <span class="label">إنشاء طلب</span>
+            <span class="icon">📝</span><span class="label">إنشاء طلب</span>
         </button>
         <button class="nav-item" data-target="history-tab">
-            <span class="icon">📦</span>
-            <span class="label">السجل</span>
+            <span class="icon">📦</span><span class="label">السجل</span>
         </button>
         <button class="nav-item" data-target="shipping-tab">
-            <span class="icon">🚚</span>
-            <span class="label">الشحن</span>
+            <span class="icon">🚚</span><span class="label">الشحن</span>
         </button>
         <button class="nav-item" data-target="reports-tab">
-            <span class="icon">📊</span>
-            <span class="label">التقارير</span>
+            <span class="icon">📊</span><span class="label">التقارير</span>
         </button>
         <button class="nav-item" data-target="settings-tab">
-            <span class="icon">⚙️</span>
-            <span class="label">الإعدادات</span>
+            <span class="icon">⚙️</span><span class="label">الإعدادات</span>
         </button>
     </nav>
 
+    <div id="suspendedModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>📂 الطلبات المعلقة</h3>
+            <div id="suspendedOrdersList" class="scroll-list">
+                <p class="empty-msg">لا يوجد طلبات معلقة</p>
+            </div>
+            <button id="closeSuspendedModal" class="btn-cancel mt-10">إغلاق</button>
+        </div>
+    </div>
+
     <div id="zoneModal" class="modal-overlay">
         <div class="modal-content">
-            <h3>📍 إضافة منطقة / محافظة</h3>
+            <h3>📍 إضافة منطقة</h3>
             <input type="text" id="newZoneName" placeholder="اسم المنطقة">
             <input type="number" id="newZonePrice" placeholder="سعر الشحن">
             <select id="newZoneType">
                 <option value="same_day">إسكندرية (نفس اليوم)</option>
                 <option value="next_day">إسكندرية (تاني يوم)</option>
-                <option value="gov">محافظات (3-4 أيام)</option>
+                <option value="gov">محافظات</option>
             </select>
             <div class="modal-actions">
-                <button id="closeZoneModal" class="btn-cancel interactive-btn">إلغاء</button>
-                <button id="addZoneBtn" class="btn-confirm interactive-btn">إضافة</button>
+                <button id="closeZoneModal" class="btn-cancel">إلغاء</button>
+                <button id="addZoneBtn" class="btn-confirm">إضافة</button>
             </div>
         </div>
     </div>
 
     <div id="driverModal" class="modal-overlay">
         <div class="modal-content">
-            <h3>🛵 إضافة مندوب جديد</h3>
+            <h3>🛵 إضافة مندوب</h3>
             <input type="text" id="newDriverName" placeholder="اسم المندوب">
             <input type="tel" id="newDriverPhone" placeholder="رقم الموبايل">
             <div class="modal-actions">
-                <button id="closeDriverModal" class="btn-cancel interactive-btn">إلغاء</button>
-                <button id="addDriverBtn" class="btn-confirm interactive-btn">إضافة</button>
+                <button id="closeDriverModal" class="btn-cancel">إلغاء</button>
+                <button id="addDriverBtn" class="btn-confirm">إضافة</button>
             </div>
         </div>
     </div>
