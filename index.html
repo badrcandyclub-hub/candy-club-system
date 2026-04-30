@@ -31,7 +31,7 @@
                     
                     <label>رقم الموبايل (للبحث أو تسجيل عميل جديد):</label>
                     <div class="input-with-action">
-                        <input type="tel" id="customerPhone" placeholder="أدخل 11 رقم للبحث التلقائي" maxlength="11" required>
+                        <input type="tel" id="customerPhone" placeholder="أدخل الرقم للبحث التلقائي" required>
                         <span id="phoneCheckStatus" class="check-status-icon">🔍</span>
                     </div>
 
@@ -63,7 +63,7 @@
 
                     <div class="totals-box">
                         <div class="total-item"><span>إجمالي المنتجات:</span> <input type="number" id="productsTotal" value="0" readonly></div>
-                        <div class="total-item"><span>تكلفة الشحن:</span> <input type="number" id="shippingCost" value="0"></div>
+                        <div class="total-item"><span>تكلفة الشحن:</span> <input type="number" id="shippingCost" value="0" readonly></div>
                         <div class="total-item"><span>خصم خاص:</span> <input type="number" id="discount" value="0"></div>
                         
                         <div class="delivery-prediction" id="deliveryInfo">📅 موعد التسليم: <span>--</span></div>
@@ -78,7 +78,7 @@
                                 <option value="كاش 💵">كاش 💵</option>
                                 <option value="إنستا باي / محفظة 📱">إنستا باي / محفظة 📱</option>
                             </select>
-                            <button type="button" id="confirmPaymentBtn" class="btn-confirm-action">تأكيد ✔️</button>
+                            <button type="button" id="confirmPaymentBtn" class="btn-confirm-action interactive-btn">تأكيد ✔️</button>
                         </div>
                     </div>
 
@@ -94,26 +94,35 @@
 
         <section id="history-tab" class="tab-pane">
             <div class="section-card">
-                <h3 class="section-title">📦 سجل أوردرات السيستم</h3>
+                <h3 class="section-title">🔍 البحث السريع عن أوردر</h3>
+                <div class="search-box mb-15">
+                    <input type="text" id="orderSearchInput" placeholder="رقم الأوردر أو الموبايل">
+                    <button id="searchBtn" class="btn-search interactive-btn">بحث</button>
+                </div>
+                <div id="searchResult" class="result-area"></div>
+            </div>
+
+            <div class="section-card">
+                <h3 class="section-title">📦 سجل الأوردرات</h3>
                 <div class="search-box">
                     <input type="date" id="historyDateFilter" title="فلترة بالتاريخ">
                     <button id="loadHistoryBtn" class="btn-search interactive-btn">تحديث</button>
                 </div>
-                <div class="divider">الأوردرات</div>
+                <div class="divider">قائمة الأوردرات</div>
                 <div id="historyListContainer" class="scroll-list">
-                    <p class="empty-msg">اختر تاريخ أو اضغط تحديث لعرض السجل</p>
+                    <p class="empty-msg">جاري تحميل أوردرات اليوم...</p>
                 </div>
             </div>
         </section>
 
         <section id="shipping-tab" class="tab-pane">
             
-            <div class="shipping-actions-row">
+            <div class="shipping-actions-row mb-15">
                 <button id="openZoneModalBtn" class="btn-outline interactive-btn">إضافة منطقة ➕</button>
                 <button id="openDriverModalBtn" class="btn-outline interactive-btn">إضافة مندوب ➕</button>
             </div>
 
-            <div class="section-card mt-15">
+            <div class="section-card">
                 <h3 class="section-title">🛵 تحميل المناديب</h3>
                 <label>اختر المندوب لتحميل الأوردرات:</label>
                 <select id="driverNameSelect">
@@ -122,6 +131,18 @@
                 <div id="pendingOrdersList" class="scroll-list mt-10">
                     <p class="empty-msg">لا توجد أوردرات قيد التجهيز حاليا</p>
                 </div>
+            </div>
+
+            <div class="section-card">
+                <h3 class="section-title">🌐 مناطق الشحن المسجلة</h3>
+                <div id="zonesDisplayList" class="data-list-container">
+                    </div>
+            </div>
+
+            <div class="section-card">
+                <h3 class="section-title">🛵 المناديب المسجلين</h3>
+                <div id="driversDisplayList" class="data-list-container">
+                    </div>
             </div>
         </section>
 
@@ -136,13 +157,8 @@
                     <span class="value" id="todaySales">0</span>
                 </div>
             </div>
-            <div class="section-card">
-                <h3 class="section-title">🔍 البحث السريع</h3>
-                <div class="search-box">
-                    <input type="text" id="orderSearchInput" placeholder="رقم الأوردر أو موبايل">
-                    <button id="searchBtn" class="btn-search interactive-btn">بحث</button>
-                </div>
-                <div id="searchResult" class="result-area"></div>
+            <div class="section-card text-center">
+                <p style="color: #7f8c8d; padding: 20px;">سيتم إضافة المزيد من الرسوم البيانية وتقارير المنصات هنا لاحقاً.</p>
             </div>
         </section>
 
@@ -215,7 +231,6 @@
     </div>
 
     <datalist id="smartProductsList"></datalist>
-
     <script src="app.js"></script>
 </body>
 </html>
