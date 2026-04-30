@@ -22,7 +22,7 @@
 
     <main class="app-content">
         
-        <section id="orders-tab" class="tab-pane active">
+        <section id="create-tab" class="tab-pane active">
             <div class="section-card">
                 <h3 class="section-title">📝 تسجيل أوردر جديد</h3>
                 <form id="orderForm">
@@ -51,14 +51,13 @@
                     <label>المنطقة / المحافظة:</label>
                     <select id="governorate" required>
                         <option value="">-- اختر من القائمة --</option>
-                        </select>
+                    </select>
 
                     <label>العنوان بالتفصيل:</label>
                     <textarea id="address" placeholder="اسم الشارع، رقم البيت، علامة مميزة" required></textarea>
 
                     <div class="divider">🛒 تفاصيل المنتجات</div>
-                    <div id="productsContainer">
-                        </div>
+                    <div id="productsContainer"></div>
                     <button type="button" id="addProductBtn" class="btn-add-pro">+ إضافة منتج آخر</button>
 
                     <div class="totals-box">
@@ -80,16 +79,51 @@
             </div>
         </section>
 
-        <section id="delivery-tab" class="tab-pane">
+        <section id="history-tab" class="tab-pane">
             <div class="section-card">
-                <h3 class="section-title">🚚 تحميل وتسليم المناديب</h3>
-                <label>اختر المندوب المسؤول:</label>
+                <h3 class="section-title">📦 سجل أوردرات السيستم</h3>
+                <div class="search-box">
+                    <input type="date" id="historyDateFilter" title="فلترة بالتاريخ">
+                    <button id="loadHistoryBtn" class="btn-search">تحديث</button>
+                </div>
+                <div class="divider">الأوردرات</div>
+                <div id="historyListContainer" class="scroll-list">
+                    <p class="empty-msg">جاري تجهيز السجل...</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="shipping-tab" class="tab-pane">
+            <div class="section-card">
+                <h3 class="section-title">🛵 تحميل المناديب</h3>
+                <label>اختر المندوب لتحميل الأوردرات:</label>
                 <select id="driverNameSelect">
                     <option value="">-- اختر مندوب --</option>
+                </select>
+                <div id="pendingOrdersList" class="scroll-list mt-10">
+                    <p class="empty-msg">لا توجد أوردرات قيد التجهيز حالياً</p>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <h3 class="section-title">⚙️ إضافة للمنظومة</h3>
+                <div class="setting-group">
+                    <h4>📍 إضافة منطقة / محافظة</h4>
+                    <input type="text" id="newZoneName" placeholder="اسم المنطقة">
+                    <input type="number" id="newZonePrice" placeholder="سعر الشحن">
+                    <select id="newZoneType">
+                        <option value="same_day">إسكندرية (نفس اليوم)</option>
+                        <option value="next_day">إسكندرية (تاني يوم)</option>
+                        <option value="gov">محافظات (3-4 أيام)</option>
                     </select>
-                <div class="divider">أوردرات قيد التجهيز</div>
-                <div id="pendingOrdersList" class="scroll-list">
-                    <p class="empty-msg">لا توجد أوردرات جاهزة للتحميل حالياً</p>
+                    <button id="addZoneBtn" class="btn-action">إضافة المنطقة</button>
+                </div>
+                <div class="divider"></div>
+                <div class="setting-group">
+                    <h4>🛵 إضافة مندوب</h4>
+                    <input type="text" id="newDriverName" placeholder="اسم المندوب">
+                    <input type="tel" id="newDriverPhone" placeholder="رقم الموبايل">
+                    <button id="addDriverBtn" class="btn-action pink">إضافة المندوب</button>
                 </div>
             </div>
         </section>
@@ -108,7 +142,7 @@
             <div class="section-card">
                 <h3 class="section-title">🔍 البحث السريع</h3>
                 <div class="search-box">
-                    <input type="text" id="orderSearchInput" placeholder="رقم الأوردر أو موبايل العميل">
+                    <input type="text" id="orderSearchInput" placeholder="رقم الأوردر أو موبايل">
                     <button id="searchBtn" class="btn-search">بحث</button>
                 </div>
                 <div id="searchResult" class="result-area"></div>
@@ -117,27 +151,14 @@
 
         <section id="settings-tab" class="tab-pane">
             <div class="section-card">
-                <h3 class="section-title">⚙️ إدارة الشحن والمناديب</h3>
-                
-                <div class="setting-group">
-                    <h4>📍 إضافة منطقة / محافظة</h4>
-                    <input type="text" id="newZoneName" placeholder="اسم المنطقة أو المحافظة">
-                    <input type="number" id="newZonePrice" placeholder="سعر الشحن">
-                    <select id="newZoneType">
-                        <option value="same_day">إسكندرية (نفس اليوم)</option>
-                        <option value="next_day">إسكندرية (تاني يوم)</option>
-                        <option value="gov">محافظات (3-4 أيام)</option>
-                    </select>
-                    <button id="addZoneBtn" class="btn-action">إضافة منطقة</button>
-                </div>
-
-                <div class="divider"></div>
-
-                <div class="setting-group">
-                    <h4>🛵 إضافة مندوب جديد</h4>
-                    <input type="text" id="newDriverName" placeholder="اسم المندوب">
-                    <input type="tel" id="newDriverPhone" placeholder="رقم موبايل المندوب">
-                    <button id="addDriverBtn" class="btn-action pink">إضافة مندوب</button>
+                <h3 class="section-title">🛠️ إعدادات السيستم</h3>
+                <div class="setting-group text-center">
+                    <h4>صورة لوجو الفاتورة (PVC)</h4>
+                    <div class="logo-preview-box">
+                        <img id="logoPreview" src="" alt="لم يتم رفع لوجو" style="display:none; max-width: 100px; margin: 0 auto 10px;">
+                    </div>
+                    <input type="file" id="logoUpload" accept="image/*">
+                    <p style="font-size: 0.8rem; color: #777;">سيتم طباعة هذا اللوجو على كل الفواتير</p>
                 </div>
             </div>
         </section>
@@ -145,13 +166,17 @@
     </main>
 
     <nav class="bottom-nav">
-        <button class="nav-item active" data-target="orders-tab">
+        <button class="nav-item active" data-target="create-tab">
             <span class="icon">📝</span>
-            <span class="label">الطلبات</span>
+            <span class="label">إنشاء</span>
         </button>
-        <button class="nav-item" data-target="delivery-tab">
+        <button class="nav-item" data-target="history-tab">
+            <span class="icon">📦</span>
+            <span class="label">السجل</span>
+        </button>
+        <button class="nav-item" data-target="shipping-tab">
             <span class="icon">🚚</span>
-            <span class="label">التحميل</span>
+            <span class="label">الشحن</span>
         </button>
         <button class="nav-item" data-target="reports-tab">
             <span class="icon">📊</span>
