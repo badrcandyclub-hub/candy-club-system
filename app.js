@@ -1,12 +1,12 @@
 // ==========================================
-// 🌐 نظام كاندي كلوب المطور - (النسخة المتصلة الحقيقية)
+// 🌐 نظام كاندي كلوب المطور - (النسخة النهائية للـ 5 شاشات)
 // ==========================================
 
-// الرابط السري الخاص بك
+// ⚠️ حط الرابط السري بتاعك هنا (اللي آخره exec)
 const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbwAYO1cCYq-qjlhj4T1jW6639AqHOAcA2ADFyP91c49KcJVLFY7TwoXmP8rewWgXOIolw/exec";
 
 // ==========================================
-// 1. نظام التبديل بين الشاشات
+// 1. نظام التبديل بين الشاشات (التابات الـ 5)
 // ==========================================
 document.querySelectorAll('.nav-item').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -18,7 +18,7 @@ document.querySelectorAll('.nav-item').forEach(btn => {
 });
 
 // ==========================================
-// 2. سحب البيانات من الإكسيل عند فتح الموقع
+// 2. سحب البيانات من الإكسيل (لحل خطأ الاتصال)
 // ==========================================
 let shippingData = {};
 let productsData = [];
@@ -34,7 +34,7 @@ window.onload = () => {
             syncStatus.innerText = "متصل";
             syncStatus.style.color = "#00C853";
 
-            // أ- تعبئة قائمة المحافظات ومناطق الشحن
+            // أ- تعبئة المحافظات
             const govSelect = document.getElementById('governorate');
             govSelect.innerHTML = '<option value="">-- اختر المنطقة / المحافظة --</option>';
 
@@ -58,7 +58,7 @@ window.onload = () => {
                 govSelect.appendChild(optgroup);
             }
 
-            // ب- تعبئة قائمة المناديب
+            // ب- تعبئة المناديب في شاشة الشحن
             const driverSelect = document.getElementById('driverNameSelect');
             driverSelect.innerHTML = '<option value="">-- اختر مندوب --</option>';
             if(data.couriers && data.couriers.length > 0) {
@@ -67,7 +67,7 @@ window.onload = () => {
                 });
             }
 
-            // ج- تعبئة قائمة المنتجات الذكية (من الأوردرات القديمة)
+            // ج- تعبئة الاقتراحات الذكية للمنتجات
             const smartProductsList = document.getElementById('smartProductsList');
             smartProductsList.innerHTML = '';
             if(data.products && data.products.length > 0) {
@@ -85,14 +85,14 @@ window.onload = () => {
 };
 
 // ==========================================
-// 3. حاسبة مواعيد الشحن الذكية (تستثني يوم الجمعة)
+// 3. حاسبة مواعيد الشحن الذكية (تخطي الجمعة)
 // ==========================================
 function addBusinessDays(startDate, daysToAdd) {
     let date = new Date(startDate);
     let addedDays = 0;
     while (addedDays < daysToAdd) {
         date.setDate(date.getDate() + 1);
-        if (date.getDay() !== 5) { // رقم 5 هو يوم الجمعة
+        if (date.getDay() !== 5) { // 5 = الجمعة
             addedDays++;
         }
     }
@@ -123,18 +123,16 @@ govSelect.addEventListener('change', () => {
         expectedDateDisplay.innerText = `غداً (${today.toLocaleDateString('ar-EG')})`;
     } else if (info.type === "gov") {
         let startCountingDate = new Date();
-        startCountingDate.setDate(startCountingDate.getDate() + 1); // يبدأ العد من بكرا
+        startCountingDate.setDate(startCountingDate.getDate() + 1);
         let minDate = addBusinessDays(startCountingDate, 3);
         let maxDate = addBusinessDays(startCountingDate, 4);
         expectedDateDisplay.innerText = `من ${minDate.toLocaleDateString('ar-EG')} إلى ${maxDate.toLocaleDateString('ar-EG')}`;
-    } else {
-        expectedDateDisplay.innerText = "غير محدد";
     }
     calculateTotal();
 });
 
 // ==========================================
-// 4. إضافة المنتجات وحساب الإجمالي
+// 4. نظام المنتجات الذكي
 // ==========================================
 const productsContainer = document.getElementById('productsContainer');
 
@@ -151,7 +149,6 @@ function addProductRow() {
     let nameInput = div.querySelector('.product-name-input');
     let priceInput = div.querySelector('.product-price-input');
 
-    // بمجرد اختيار منتج مقترح، ينزل السعر
     nameInput.addEventListener('input', () => {
         let selectedProduct = productsData.find(p => p.name === nameInput.value);
         if(selectedProduct) {
@@ -188,7 +185,7 @@ document.getElementById('discount').addEventListener('input', calculateTotal);
 document.getElementById('shippingCost').addEventListener('input', calculateTotal);
 
 // ==========================================
-// 5. إرسال الأوردر الجديد للإكسيل
+// 5. إرسال الأوردر لجوجل شيت
 // ==========================================
 document.getElementById('saveBtn').addEventListener('click', () => {
     const btn = document.getElementById('saveBtn');
@@ -246,7 +243,7 @@ document.getElementById('saveBtn').addEventListener('click', () => {
 });
 
 // ==========================================
-// 6. الإعدادات (إضافة منطقة شحن جديدة من الموقع)
+// 6. إدارة الشحن (إضافة مناطق ومناديب من الموقع)
 // ==========================================
 document.getElementById('addZoneBtn').addEventListener('click', () => {
     let name = document.getElementById('newZoneName').value;
@@ -274,14 +271,38 @@ document.getElementById('addZoneBtn').addEventListener('click', () => {
         mode: 'no-cors',
         body: formData
     }).then(() => {
-        alert("✅ تم إضافة المنطقة بنجاح للشيت! (قم بعمل ريفريش للموقع لتظهر في القائمة)");
-        btn.innerText = "إضافة منطقة";
+        alert("✅ تم إضافة المنطقة! (اعمل ريفريش للصفحة لتظهر)");
+        btn.innerText = "إضافة المنطقة";
         document.getElementById('newZoneName').value = "";
         document.getElementById('newZonePrice').value = "";
     });
 });
 
-// زر إضافة مندوب
 document.getElementById('addDriverBtn').addEventListener('click', () => {
-    alert("💡 لضمان الأمان، يرجى إضافة اسم المندوب ورقمه مباشرة في شيت (الإعدادات والشحن) في جوجل شيت.");
+    let name = document.getElementById('newDriverName').value;
+    let phone = document.getElementById('newDriverPhone').value;
+
+    if(!name || !phone) {
+        alert("⚠️ يرجى إدخال اسم المندوب ورقمه!");
+        return;
+    }
+
+    let formData = new URLSearchParams();
+    formData.append('action', 'addDriver');
+    formData.append('name', name);
+    formData.append('phone', phone);
+
+    let btn = document.getElementById('addDriverBtn');
+    btn.innerText = "⏳ جاري الإضافة...";
+    
+    fetch(GOOGLE_SHEETS_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: formData
+    }).then(() => {
+        alert("✅ تم إضافة المندوب! (اعمل ريفريش للصفحة لتظهر)");
+        btn.innerText = "إضافة المندوب";
+        document.getElementById('newDriverName').value = "";
+        document.getElementById('newDriverPhone').value = "";
+    });
 });
