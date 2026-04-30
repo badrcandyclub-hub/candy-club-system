@@ -50,12 +50,17 @@ setupModal('openZoneModalBtn', 'zoneModal', 'closeZoneModal');
 setupModal('openDriverModalBtn', 'driverModal', 'closeDriverModal');
 
 // ==========================================
-// 4. تحميل الداتا الأساسية عند فتح الموقع
+// 4. تحميل الداتا الأساسية عند فتح الموقع (محدثة)
 // ==========================================
 let shippingData = {};
 let productsData = [];
 
 window.onload = () => {
+    // 👉 تحديث جديد: وضع تاريخ اليوم تلقائياً في خانة البحث
+    let todayDate = new Date().toISOString().split('T')[0];
+    let dateFilter = document.getElementById('historyDateFilter');
+    if(dateFilter) dateFilter.value = todayDate;
+
     const syncStatus = document.getElementById('sync-status');
     syncStatus.innerText = "جاري التحميل...";
     syncStatus.style.color = "#FF8C00";
@@ -66,31 +71,56 @@ window.onload = () => {
             syncStatus.innerText = "متصل";
             syncStatus.style.color = "#00C853";
 
-            // تحميل المحافظات
             const govSelect = document.getElementById('governorate');
+            const zonesDisplayList = document.getElementById('zonesDisplayList');
+            if(zonesDisplayList) zonesDisplayList.innerHTML = '';
+
+            // تحميل المحافظات وعرضها في شاشة الشحن
             if(data.alex && data.alex.length > 0) {
                 let optgroup = document.createElement('optgroup');
                 optgroup.label = "⚓ مناطق الإسكندرية";
-                data.alex.forEach(z => { shippingData[z.name] = z; optgroup.innerHTML += `<option value="${z.name}">${z.name}</option>`; });
+                data.alex.forEach(z => { 
+                    shippingData[z.name] = z; 
+                    optgroup.innerHTML += `<option value="${z.name}">${z.name}</option>`; 
+                    if(zonesDisplayList) zonesDisplayList.innerHTML += `<div class="data-row"><span>${z.name}</span><span class="price-badge">${z.price} ج.م</span></div>`;
+                });
                 govSelect.appendChild(optgroup);
             }
             if(data.govs && data.govs.length > 0) {
                 let optgroup = document.createElement('optgroup');
                 optgroup.label = "🚚 المحافظات";
-                data.govs.forEach(z => { shippingData[z.name] = z; optgroup.innerHTML += `<option value="${z.name}">${z.name}</option>`; });
+                data.govs.forEach(z => { 
+                    shippingData[z.name] = z; 
+                    optgroup.innerHTML += `<option value="${z.name}">${z.name}</option>`; 
+                    if(zonesDisplayList) zonesDisplayList.innerHTML += `<div class="data-row"><span>${z.name}</span><span class="price-badge">${z.price} ج.م</span></div>`;
+                });
                 govSelect.appendChild(optgroup);
             }
 
-            // تحميل المناديب
+            // تحميل المناديب وعرضهم في شاشة الشحن
             const driverSelect = document.getElementById('driverNameSelect');
-            if(data.couriers) data.couriers.forEach(c => driverSelect.innerHTML += `<option value="${c.name}">${c.name}</option>`);
+            const driversDisplayList = document.getElementById('driversDisplayList');
+            if(driversDisplayList) driversDisplayList.innerHTML = '';
 
-            // تحميل الاقتراحات
+            if(data.couriers) {
+                data.couriers.forEach(c => {
+                    driverSelect.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+                    if(driversDisplayList) driversDisplayList.innerHTML += `<div class="data-row"><span>🛵 ${c.name}</span><span class="phone-badge">${c.phone}</span></div>`;
+                });
+            }
+
+            // تحميل الاقتراحات للمنتجات
             const smartProductsList = document.getElementById('smartProductsList');
             if(data.products) {
                 productsData = data.products;
                 productsData.forEach(p => smartProductsList.innerHTML += `<option value="${p.name}">`);
             }
+
+            // 👉 تحديث جديد: عرض إحصائيات وتقارير اليوم
+            let todayCountEl = document.getElementById('todayCount');
+            let todaySalesEl = document.getElementById('todaySales');
+            if(todayCountEl) todayCountEl.innerText = data.todayOrders || 0;
+            if(todaySalesEl) todaySalesEl.innerText = data.todaySales || 0;
         })
         .catch(err => {
             syncStatus.innerText = "خطأ اتصال";
@@ -100,16 +130,17 @@ window.onload = () => {
 };
 
 // ==========================================
-// 5. البحث عن العميل برقم الموبايل
+// 5. البحث عن العميل برقم الموبايل (محدثة للأرقام الخليجية)
 // ==========================================
 const phoneInput = document.getElementById('customerPhone');
 const phoneStatus = document.getElementById('phoneCheckStatus');
 
-phoneInput.addEventListener('input', () => {
-    if (phoneInput.value.length === 11) {
+function performPhoneSearch() {
+    let phoneVal = phoneInput.value.trim();
+    // 👉 تحديث جديد: يقبل من 9 أرقام فأكثر، عشان الأرقام الخليجي
+    if (phoneVal.length >= 9) {
         phoneStatus.innerText = "⏳";
-        // إرسال طلب لجوجل للبحث عن العميل (هنحدث جوجل شيت عشان يفهمها)
-        fetch(`${GOOGLE_SHEETS_URL}?action=checkPhone&phone=${phoneInput.value}`)
+        fetch(`${GOOGLE_SHEETS_URL}?action=checkPhone&phone=${phoneVal}`)
             .then(res => res.json())
             .then(data => {
                 if(data.found) {
@@ -123,9 +154,14 @@ phoneInput.addEventListener('input', () => {
                 }
             }).catch(() => { phoneStatus.innerText = "🔍"; });
     } else {
+        showToast("يرجى إدخال رقم هاتف صحيح للبحث", "warning");
         phoneStatus.innerText = "🔍";
     }
-});
+}
+
+// البحث يشتغل لما تدوس على أيقونة البحث أو لما تخرج من خانة الرقم
+if(phoneStatus) phoneStatus.addEventListener('click', performPhoneSearch);
+if(phoneInput) phoneInput.addEventListener('change', performPhoneSearch);
 
 // ==========================================
 // 6. حاسبة الشحن واستثناء الجمعة
@@ -186,7 +222,6 @@ function addProductRow() {
 
     priceInput.addEventListener('input', calculateTotal);
 
-    // زرار التأكيد والقفل
     confirmBtn.addEventListener('click', () => {
         if(!nameInput.value || priceInput.value <= 0) {
             showToast("اكتب اسم المنتج وسعره الأول!", "error");
@@ -223,7 +258,6 @@ function calculateTotal() {
     document.getElementById('finalTotalDisplay').innerText = total + shipping - discount;
 }
 document.getElementById('discount').addEventListener('input', calculateTotal);
-document.getElementById('shippingCost').addEventListener('input', calculateTotal);
 
 // ==========================================
 // 8. تأكيد طريقة الدفع
@@ -254,7 +288,6 @@ confirmPaymentBtn.addEventListener('click', () => {
 // 9. الحفظ والطباعة (الكنترول الصارم)
 // ==========================================
 document.getElementById('saveAndPrintBtn').addEventListener('click', () => {
-    // 1. فحص المنتجات المؤكدة
     let unconfirmedRows = document.querySelectorAll('.product-row:not(.confirmed)');
     if(unconfirmedRows.length > 0) {
         showToast("يرجى تأكيد (✔️) أو حذف كل المنتجات قبل الحفظ!", "error");
@@ -271,19 +304,18 @@ document.getElementById('saveAndPrintBtn').addEventListener('click', () => {
         return;
     }
 
-    // 2. فحص طريقة الدفع
     if(!isPaymentConfirmed) {
         showToast("يرجى تأكيد طريقة الدفع 🔒", "error");
         return;
     }
 
-    // 3. فحص البيانات الأساسية
-    let phone = document.getElementById('customerPhone').value;
+    let phone = document.getElementById('customerPhone').value.trim();
     let name = document.getElementById('customerName').value;
     let gov = document.getElementById('governorate').value;
     let address = document.getElementById('address').value;
 
-    if(!phone || phone.length !== 11) { showToast("رقم الموبايل يجب أن يكون 11 رقم!", "error"); return; }
+    // 👉 تحديث جديد: يقبل 9 أرقام فأكثر بدل 11 بالظبط
+    if(!phone || phone.length < 9) { showToast("رقم الموبايل غير صحيح!", "error"); return; }
     if(!name || !gov || !address) { showToast("يرجى إكمال بيانات العميل والمحافظة!", "error"); return; }
 
     const btn = document.getElementById('saveAndPrintBtn');
@@ -310,8 +342,7 @@ document.getElementById('saveAndPrintBtn').addEventListener('click', () => {
     .then(() => {
         showToast("✅ تم حفظ الأوردر بنجاح! جاري الطباعة...", "success");
         setTimeout(() => {
-            window.print(); // فتح شاشة الطباعة
-            // إعادة ضبط الفورمة بعد الطباعة
+            window.print();
             document.getElementById('orderForm').reset();
             document.querySelector('#deliveryInfo span').innerText = "--";
             document.getElementById('finalTotalDisplay').innerText = "0";
@@ -320,6 +351,10 @@ document.getElementById('saveAndPrintBtn').addEventListener('click', () => {
             confirmPaymentBtn.classList.remove('confirmed');
             confirmPaymentBtn.innerHTML = "تأكيد ✔️";
             paymentMethod.disabled = false;
+            
+            // إرجاع أيقونة البحث لشكلها الطبيعي
+            if(phoneStatus) phoneStatus.innerText = "🔍";
+
             btn.innerText = "💾 حفظ وطباعة الفاتورة";
             btn.disabled = false;
         }, 1000);
@@ -329,3 +364,55 @@ document.getElementById('saveAndPrintBtn').addEventListener('click', () => {
         btn.disabled = false;
     });
 });
+
+// ==========================================
+// 10. تشغيل زراير إضافة المناطق والمناديب (كانت ناقصة عندك)
+// ==========================================
+let addZoneBtn = document.getElementById('addZoneBtn');
+if(addZoneBtn) {
+    addZoneBtn.addEventListener('click', () => {
+        let name = document.getElementById('newZoneName').value;
+        let price = document.getElementById('newZonePrice').value;
+        let type = document.getElementById('newZoneType').value;
+
+        if(!name || !price) { showToast("يرجى إدخال اسم المنطقة وسعر الشحن!", "error"); return; }
+
+        let formData = new URLSearchParams();
+        formData.append('action', 'addShipping');
+        formData.append('zoneType', type === 'gov' ? 'govs' : 'alex');
+        formData.append('name', name);
+        formData.append('price', price);
+        formData.append('deliveryType', type);
+
+        fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
+        .then(() => {
+            showToast("✅ تم إضافة المنطقة! اعمل ريفريش للصفحة.", "success");
+            document.getElementById('zoneModal').classList.remove('active');
+            document.getElementById('newZoneName').value = "";
+            document.getElementById('newZonePrice').value = "";
+        });
+    });
+}
+
+let addDriverBtn = document.getElementById('addDriverBtn');
+if(addDriverBtn) {
+    addDriverBtn.addEventListener('click', () => {
+        let name = document.getElementById('newDriverName').value;
+        let phone = document.getElementById('newDriverPhone').value;
+
+        if(!name || !phone) { showToast("يرجى إدخال اسم المندوب ورقمه!", "error"); return; }
+
+        let formData = new URLSearchParams();
+        formData.append('action', 'addDriver');
+        formData.append('name', name);
+        formData.append('phone', phone);
+
+        fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
+        .then(() => {
+            showToast("✅ تم إضافة المندوب! اعمل ريفريش للصفحة.", "success");
+            document.getElementById('driverModal').classList.remove('active');
+            document.getElementById('newDriverName').value = "";
+            document.getElementById('newDriverPhone').value = "";
+        });
+    });
+}
