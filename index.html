@@ -19,7 +19,7 @@
         <div class="header-actions">
             <button id="openSuspendedBtn" class="btn-suspended interactive-btn">📂 المعلقة (<span id="suspendedCount">0</span>)</button>
             <div class="status-indicator">
-                <span id="sync-status">متصل</span>
+                <span id="sync-status">جاري التحميل...</span>
                 <div class="status-dot"></div>
             </div>
         </div>
@@ -30,8 +30,8 @@
         <section id="create-tab" class="tab-pane active">
             <div id="orderFieldsContainer" class="section-card">
                 <h3 class="section-title">📝 إنشاء طلب جديد</h3>
+                
                 <form id="orderForm">
-                    
                     <label>المنصة:</label>
                     <select id="platform" required>
                         <option value="واتساب ✅">واتساب ✅</option>
@@ -45,7 +45,7 @@
 
                     <label>رقم الموبايل:</label>
                     <div class="input-with-action">
-                        <input type="tel" id="customerPhone" placeholder="أدخل الرقم للبحث" required>
+                        <input type="tel" id="customerPhone" placeholder="أدخل الرقم للبحث السريع" required>
                         <span id="phoneCheckStatus" class="check-status-icon interactive-btn">🔍</span>
                     </div>
 
@@ -78,22 +78,31 @@
                     </div>
 
                     <div class="divider">🛒 تفاصيل المنتجات</div>
+                    
                     <div class="product-header-labels">
                         <span style="flex:3">اسم المنتج</span>
-                        <span style="flex:1">السعر</span>
-                        <span style="flex:0.8">الكمية</span>
-                        <span style="width:90px">أكشن</span>
+                        <span style="flex:1; text-align:center;">السعر</span>
+                        <span style="flex:0.8; text-align:center;">الكمية</span>
+                        <span style="width:90px; text-align:center;">أكشن</span>
                     </div>
+                    
                     <div id="productsContainer"></div>
                     <button type="button" id="addProductBtn" class="btn-add-pro interactive-btn">+ إضافة منتج آخر</button>
 
                     <div class="totals-box">
-                        <div class="total-item"><span>إجمالي المنتجات:</span> <input type="number" id="productsTotal" value="" readonly placeholder="0"></div>
-                        <div class="total-item"><span>تكلفة الشحن:</span> <input type="number" id="shippingCost" value="" readonly placeholder="0"></div>
-                        <div class="total-item"><span>خصم خاص:</span> <input type="number" id="discount" value="" placeholder="0"></div>
+                        <div class="total-item">
+                            <span>إجمالي المنتجات:</span> 
+                            <input type="number" id="productsTotal" value="" readonly placeholder="0">
+                        </div>
+                        <div class="total-item">
+                            <span>تكلفة الشحن:</span> 
+                            <input type="number" id="shippingCost" value="" readonly placeholder="0">
+                        </div>
+                        <div class="total-item">
+                            <span>خصم خاص:</span> 
+                            <input type="number" id="discount" value="" placeholder="0">
+                        </div>
                         
-                        <div class="final-amount">صافي المستحق: <span id="finalTotalDisplay">0</span> ج.م</div>
-
                         <div class="gift-switch-container">
                             <span class="gift-label">🎁 هذا الأوردر هدية؟</span>
                             <label class="switch">
@@ -101,6 +110,9 @@
                                 <span class="slider round"></span>
                             </label>
                         </div>
+                        
+                        <div class="delivery-prediction" id="deliveryInfo">📅 موعد التسليم: <span>--</span></div>
+                        <div class="final-amount">صافي المستحق: <span id="finalTotalDisplay">0</span> ج.م</div>
                     </div>
 
                     <div class="payment-section" id="paymentSection">
@@ -133,15 +145,15 @@
             <div class="section-card">
                 <h3 class="section-title">🔍 البحث السريع</h3>
                 <div class="search-box mb-15">
-                    <input type="text" id="orderSearchInput" placeholder="رقم الأوردر أو الموبايل">
+                    <input type="text" id="orderSearchInput" placeholder="ابحث برقم الأوردر، الموبايل، أو الاسم">
                     <button id="searchBtn" class="btn-search interactive-btn">بحث</button>
                 </div>
             </div>
 
             <div class="section-card">
                 <h3 class="section-title">📦 سجل آخر 100 أوردر</h3>
-                <div id="historyListContainer" class="scroll-list">
-                    <p class="empty-msg">جاري مزامنة السجل من جوجل شيت...</p>
+                <div id="historyListContainer" class="scroll-list mt-15">
+                    <p class="empty-msg">جاري مزامنة السجل من قاعدة البيانات...</p>
                 </div>
             </div>
         </section>
@@ -151,13 +163,19 @@
                 <button id="openZoneModalBtn" class="btn-outline interactive-btn">إضافة منطقة ➕</button>
                 <button id="openDriverModalBtn" class="btn-outline interactive-btn">إضافة مندوب ➕</button>
             </div>
+            
             <div class="section-card">
                 <h3 class="section-title">🛵 المناديب المسجلين</h3>
-                <div id="driversDisplayList" class="data-list-container"></div>
+                <div id="driversDisplayList" class="data-list-container">
+                    <p class="empty-msg">جاري التحميل...</p>
+                </div>
             </div>
+            
             <div class="section-card">
                 <h3 class="section-title">🌐 المناطق المسجلة</h3>
-                <div id="zonesDisplayList" class="data-list-container"></div>
+                <div id="zonesDisplayList" class="data-list-container">
+                    <p class="empty-msg">جاري التحميل...</p>
+                </div>
             </div>
         </section>
 
@@ -186,6 +204,7 @@
                 <p style="font-size: 0.8rem; color: #777; margin-top: 10px;">سيظهر اللوجو تلقائياً في أعلى الرسيت المطبوع.</p>
             </div>
         </section>
+        
     </main>
 
     <nav class="bottom-nav">
@@ -209,7 +228,7 @@
     <div id="print-receipt-template" class="print-only">
         <div class="receipt-header">
             <img id="print-logo" src="" alt="Logo" style="display:none; max-width: 80px;">
-            <h2 id="receipt-title">طلب عميل (توصيل)</h2>
+            <h2 id="receipt-title">طلب عميل</h2>
             <p>Candy Club</p>
         </div>
         <hr>
@@ -284,6 +303,7 @@
     </div>
 
     <datalist id="smartProductsList"></datalist>
+    
     <script src="app.js"></script>
 </body>
 </html>
