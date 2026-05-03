@@ -991,3 +991,150 @@ input:checked + .slider:before {
         margin: 5px 0; 
     }
 }
+
+/* =========================================
+   12. التحديثات الجديدة (الوضع الليلي وتنسيقات الشحن)
+   ========================================= */
+
+/* --- الوضع الليلي (Dark Mode) --- */
+body.dark-mode {
+    --bg: #121212;
+    --white: #1e1e1e;
+    --shadow: 0 8px 30px rgba(0,0,0,0.5);
+    color: #e0e0e0;
+}
+
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea {
+    background: #2c2c2c;
+    color: #e0e0e0;
+    border-color: #444;
+}
+
+body.dark-mode .section-card,
+body.dark-mode .app-header,
+body.dark-mode .bottom-nav,
+body.dark-mode .modal-content,
+body.dark-mode .toast {
+    background: var(--white);
+    color: #e0e0e0;
+}
+
+body.dark-mode label,
+body.dark-mode .section-title,
+body.dark-mode h1,
+body.dark-mode h2,
+body.dark-mode h3 {
+    color: #e0e0e0;
+}
+
+body.dark-mode .total-item {
+    color: #ccc;
+}
+
+body.dark-mode .total-item input {
+    background: #2c2c2c;
+    color: #fff;
+    border-color: #444;
+}
+
+body.dark-mode .data-list-container,
+body.dark-mode .payment-section,
+body.dark-mode .totals-box {
+    background: #252525;
+    border-color: #333;
+}
+
+body.dark-mode .empty-msg {
+    background: #252525;
+    color: #aaa;
+    border-color: #444;
+}
+
+body.dark-mode .btn-suspended,
+body.dark-mode .btn-add-pro {
+    background: #2c2c2c;
+    color: #ddd;
+    border-color: #555;
+}
+
+body.dark-mode .product-row.confirmed input {
+    background-color: #1b5e20;
+    color: #e8f5e9;
+    border-color: #2e7d32;
+}
+
+body.dark-mode .bottom-nav {
+    border-top: 1px solid #333;
+}
+
+body.dark-mode .divider::before, 
+body.dark-mode .divider::after,
+body.dark-mode hr {
+    background: #444;
+    border-top-color: #444;
+}
+
+body.dark-mode .data-row {
+    border-bottom-color: #333;
+}
+
+body.dark-mode .gift-switch-container {
+    background: #2c1a22;
+    border-color: var(--primary);
+}
+
+/* --- تنسيقات شاشة الشحن الجديدة (غرفة العمليات) --- */
+.order-checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 10px;
+    border-bottom: 1px solid #eee;
+    transition: 0.2s;
+}
+
+body.dark-mode .order-checkbox-row {
+    border-bottom-color: #333;
+}
+
+.order-checkbox-row:last-child {
+    border-bottom: none;
+}
+
+.order-checkbox-row:hover {
+    background: #f1f2f6;
+}
+
+body.dark-mode .order-checkbox-row:hover {
+    background: #2a2a2a;
+}
+
+.order-checkbox {
+    width: 22px !important;
+    height: 22px !important;
+    margin: 0 !important;
+    cursor: pointer;
+    accent-color: var(--primary);
+}
+
+.order-details-compact {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.order-details-compact .order-id-name {
+    font-weight: bold;
+    color: var(--primary);
+    font-size: 0.95rem;
+}
+
+.order-details-compact .order-address-price {
+    font-size: 0.85rem;
+    color: #7f8c8d;
+    display: flex;
+    justify-content: space-between;
+}
