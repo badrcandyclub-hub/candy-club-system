@@ -1,20 +1,11 @@
 // ==========================================
-// 🌐 العقل المدبر - سيستم كاندي كلوب (النسخة V11 - الداشبورد المتقدمة، المودريتور، الطباعة الكاملة)
+// 🌐 العقل المدبر - سيستم كاندي كلوب (النسخة V12 - الكاملة والمحمية)
 // ==========================================
 
 const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbwAYO1cCYq-qjlhj4T1jW6639AqHOAcA2ADFyP91c49KcJVLFY7TwoXmP8rewWgXOIolw/exec";
 
 // ==========================================
-// 0. نظام المودريتور (الشيفت) ⭐
-// ==========================================
-let currentModerator = localStorage.getItem('candyModerator');
-if (!currentModerator) {
-    currentModerator = prompt("أهلاً بيك في كاندي كلوب 🍬\nالرجاء إدخال اسمك (كاشير الشيفت الحالي):") || "غير محدد";
-    localStorage.setItem('candyModerator', currentModerator);
-}
-
-// ==========================================
-// 1. نظام الإشعارات (Toasts)
+// 1. نظام الإشعارات (Toasts) وقفل الأزرار (Loading)
 // ==========================================
 function showToast(message, type = 'success') {
     const container = document.getElementById('toast-container');
@@ -27,7 +18,6 @@ function showToast(message, type = 'success') {
     setTimeout(() => { toast.classList.add('fade-out'); setTimeout(() => toast.remove(), 400); }, 3000);
 }
 
-// دالة قفل الأزرار (لمنع الضغط المزدوج) ⭐
 function setBtnLoading(btn, isLoading, originalText = "") {
     if(!btn) return;
     if(isLoading) {
@@ -35,15 +25,17 @@ function setBtnLoading(btn, isLoading, originalText = "") {
         btn.dataset.origText = btn.innerText;
         btn.innerText = "جاري التحميل ⏳...";
         btn.style.opacity = "0.7";
+        btn.style.cursor = "not-allowed";
     } else {
         btn.disabled = false;
         btn.innerText = originalText || btn.dataset.origText;
         btn.style.opacity = "1";
+        btn.style.cursor = "pointer";
     }
 }
 
 // ==========================================
-// 2. التبديل بين الشاشات
+// 2. التبديل بين الشاشات والنوافذ المنبثقة
 // ==========================================
 document.querySelectorAll('.nav-item').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -55,9 +47,6 @@ document.querySelectorAll('.nav-item').forEach(btn => {
     });
 });
 
-// ==========================================
-// 3. النوافذ المنبثقة (Modals)
-// ==========================================
 function setupModal(openBtnId, modalId, closeBtnId) {
     const openBtn = document.getElementById(openBtnId);
     const closeBtn = document.getElementById(closeBtnId);
@@ -72,61 +61,31 @@ setupModal('openDriverModalBtn', 'driverModal', 'closeDriverModal');
 setupModal('openSuspendedBtn', 'suspendedModal', 'closeSuspendedModal');
 
 // ==========================================
-// 4. تحميل الداتا الأساسية والفلترة
+// 3. تحميل الداتا الأساسية من الإكسيل
 // ==========================================
 let shippingData = {};
 let productsData = [];
 let orderHistoryData = [];
-let currentFilterDate = new Date().toISOString().split('T')[0]; // تاريخ اليوم
+let currentFilterDate = new Date().toLocaleDateString('en-CA'); // يدينا صيغة YYYY-MM-DD بشكل نظيف
 
 window.onload = () => {
+    // تفعيل الوضع الليلي لو محفوظ
     if(localStorage.getItem('candyDarkMode') === 'true') {
         document.body.classList.add('dark-mode');
         let toggle = document.getElementById('darkModeToggle');
         if(toggle) toggle.checked = true;
     }
 
-    // إضافة فلتر التاريخ في السجل برمجياً ⭐
-    let historySection = document.getElementById('history-tab');
-    if(historySection && !document.getElementById('historyDateFilter')) {
-        let filterDiv = document.createElement('div');
-        filterDiv.className = 'section-card';
-        filterDiv.innerHTML = `
-            <h3 class="section-title">📅 فلترة الأوردرات باليوم</h3>
-            <div style="display:flex; gap:10px;">
-                <input type="date" id="historyDateFilter" value="${currentFilterDate}" style="flex:1; margin-bottom:0;">
-                <button id="loadDateBtn" class="btn-search interactive-btn">عرض الأوردرات</button>
-            </div>
-        `;
-        historySection.insertBefore(filterDiv, historySection.children[1]); // بعد البحث السريع
-        
-        document.getElementById('loadDateBtn').addEventListener('click', () => {
+    // ضبط تاريخ الفلتر الافتراضي على اليوم
+    let historyDateInput = document.getElementById('historyDateFilter');
+    if(historyDateInput) historyDateInput.value = currentFilterDate;
+
+    // زر تحديث السجل
+    let loadDateBtn = document.getElementById('loadDateBtn');
+    if(loadDateBtn) {
+        loadDateBtn.addEventListener('click', () => {
             currentFilterDate = document.getElementById('historyDateFilter').value;
             loadDataFromServer();
-        });
-    }
-
-    // زر تغيير الشيفت في الإعدادات ⭐
-    let settingsSection = document.getElementById('settings-tab').querySelector('.section-card');
-    if(settingsSection && !document.getElementById('changeModeratorBtn')) {
-        let modDiv = document.createElement('div');
-        modDiv.innerHTML = `
-            <hr style="border-top: 1px dashed #eee; margin: 15px 0;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                <span style="font-weight:bold; color:var(--primary);">👤 الكاشير الحالي: <span id="modNameDisplay" style="color:#333;">${currentModerator}</span></span>
-                <button id="changeModeratorBtn" class="btn-outline interactive-btn" style="padding: 5px 15px;">تغيير الشيفت</button>
-            </div>
-        `;
-        settingsSection.insertBefore(modDiv, settingsSection.children[2]);
-        
-        document.getElementById('changeModeratorBtn').addEventListener('click', () => {
-            let newMod = prompt("أدخل اسم الكاشير الجديد:");
-            if(newMod && newMod.trim() !== "") {
-                currentModerator = newMod.trim();
-                localStorage.setItem('candyModerator', currentModerator);
-                document.getElementById('modNameDisplay').innerText = currentModerator;
-                showToast(`تم تغيير الشيفت إلى: ${currentModerator}`, "success");
-            }
         });
     }
 
@@ -138,39 +97,44 @@ function loadDataFromServer() {
     const syncStatus = document.getElementById('sync-status');
     if (syncStatus) { syncStatus.innerText = "جاري التحميل..."; syncStatus.style.color = "#FF8C00"; }
 
-    // إرسال التاريخ المطلوب للفلترة
     fetch(`${GOOGLE_SHEETS_URL}?date=${currentFilterDate}`)
         .then(res => res.json())
         .then(data => {
             if (syncStatus) { syncStatus.innerText = "متصل"; syncStatus.style.color = "#00C853"; }
 
-            // المحافظات
+            // 1. المحافظات والمناطق (مع أزرار التعديل والحذف)
             const govSelect = document.getElementById('governorate');
             const zonesDisplayList = document.getElementById('zonesDisplayList');
             if (zonesDisplayList) zonesDisplayList.innerHTML = '';
-            if (govSelect) govSelect.innerHTML = '<option value="">-- اختر من القائمة --</option>'; // تفريغ القائمة
-            shippingData = {}; // تصفير الداتا
+            if (govSelect) govSelect.innerHTML = '<option value="">-- اختر من القائمة --</option>'; 
+            shippingData = {}; 
 
-            if (data.alex && data.alex.length > 0 && govSelect) {
+            const renderZoneItem = (z, zoneType) => {
+                shippingData[z.name] = z;
+                if (zonesDisplayList) {
+                    zonesDisplayList.innerHTML += `
+                        <div class="data-row" style="align-items:center;">
+                            <div style="flex:1; text-align:right;"><strong>${z.name}</strong> <br> <span class="price-badge">${z.price} ج.م</span> <small style="color:#777;">${z.duration}</small></div>
+                            <div style="display:flex; gap:5px;">
+                                <button type="button" class="btn-outline interactive-btn" style="padding: 4px 8px; font-size:0.8rem;" onclick="editZoneUI('${z.name}', '${z.price}', '${z.type}', '${z.duration}')">✏️</button>
+                                <button type="button" class="interactive-btn" style="padding: 4px 8px; font-size:0.8rem; background:var(--danger); color:white; border:none; border-radius:8px;" onclick="deleteItem('deleteShipping', '${z.name}', '${zoneType}')">❌</button>
+                            </div>
+                        </div>`;
+                }
+            };
+
+            if (data.alex && data.alex.length > 0) {
                 let optgroup = document.createElement('optgroup'); optgroup.label = "⚓ مناطق الإسكندرية";
-                data.alex.forEach(z => { 
-                    shippingData[z.name] = z; 
-                    optgroup.innerHTML += `<option value="${z.name}">${z.name}</option>`; 
-                    if (zonesDisplayList) zonesDisplayList.innerHTML += `<div class="data-row"><span>${z.name}</span><span class="price-badge">${z.price} ج.م</span></div>`;
-                });
-                govSelect.appendChild(optgroup);
+                data.alex.forEach(z => { optgroup.innerHTML += `<option value="${z.name}">${z.name}</option>`; renderZoneItem(z, 'alex'); });
+                if(govSelect) govSelect.appendChild(optgroup);
             }
-            if (data.govs && data.govs.length > 0 && govSelect) {
+            if (data.govs && data.govs.length > 0) {
                 let optgroup = document.createElement('optgroup'); optgroup.label = "🚚 المحافظات";
-                data.govs.forEach(z => { 
-                    shippingData[z.name] = z; 
-                    optgroup.innerHTML += `<option value="${z.name}">${z.name}</option>`; 
-                    if (zonesDisplayList) zonesDisplayList.innerHTML += `<div class="data-row"><span>${z.name}</span><span class="price-badge">${z.price} ج.م</span></div>`;
-                });
-                govSelect.appendChild(optgroup);
+                data.govs.forEach(z => { optgroup.innerHTML += `<option value="${z.name}">${z.name}</option>`; renderZoneItem(z, 'govs'); });
+                if(govSelect) govSelect.appendChild(optgroup);
             }
 
-            // المناديب
+            // 2. المناديب (مع أزرار التعديل والحذف)
             const driverSelect = document.getElementById('driverNameSelect');
             const driversDisplayList = document.getElementById('driversDisplayList');
             const assignDriverSelect = document.getElementById('assignDriverSelect');
@@ -184,13 +148,22 @@ function loadDataFromServer() {
             if (data.couriers && data.couriers.length > 0) {
                 data.couriers.forEach(c => {
                     if (driverSelect) driverSelect.innerHTML += `<option value="${c.name}">${c.name}</option>`;
-                    if (driversDisplayList) driversDisplayList.innerHTML += `<div class="data-row"><span>🛵 ${c.name}</span><span class="phone-badge">${c.phone}</span></div>`;
                     if (assignDriverSelect) assignDriverSelect.innerHTML += `<option value="${c.name}">${c.name}</option>`;
                     if (closeDriverSelect) closeDriverSelect.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+                    if (driversDisplayList) {
+                        driversDisplayList.innerHTML += `
+                            <div class="data-row" style="align-items:center;">
+                                <div style="flex:1; text-align:right;"><strong>🛵 ${c.name}</strong> <br> <span class="phone-badge">${c.phone}</span></div>
+                                <div style="display:flex; gap:5px;">
+                                    <button type="button" class="btn-outline interactive-btn" style="padding: 4px 8px; font-size:0.8rem;" onclick="editDriverUI('${c.name}', '${c.phone}')">✏️</button>
+                                    <button type="button" class="interactive-btn" style="padding: 4px 8px; font-size:0.8rem; background:var(--danger); color:white; border:none; border-radius:8px;" onclick="deleteItem('deleteDriver', '${c.name}')">❌</button>
+                                </div>
+                            </div>`;
+                    }
                 });
             }
 
-            // المنتجات
+            // 3. المنتجات والمودريتور
             const smartProductsList = document.getElementById('smartProductsList');
             if (data.products && smartProductsList) {
                 smartProductsList.innerHTML = '';
@@ -198,14 +171,33 @@ function loadDataFromServer() {
                 productsData.forEach(p => { smartProductsList.innerHTML += `<option value="${p.name}">`; });
             }
 
-            // التقارير (متوافقة مع V11)
+            const modSelect = document.getElementById('moderatorSelect');
+            const modsList = document.getElementById('moderatorsList');
+            if(modSelect) modSelect.innerHTML = '<option value="">-- اختر اسمك --</option>';
+            if(modsList) modsList.innerHTML = '';
+            if (data.moderators && data.moderators.length > 0) {
+                data.moderators.forEach(m => {
+                    if(modSelect) modSelect.innerHTML += `<option value="${m}">${m}</option>`;
+                    if(modsList) {
+                        modsList.innerHTML += `
+                            <div class="data-row" style="align-items:center; padding:5px;">
+                                <span style="flex:1;">👤 ${m}</span>
+                                <button type="button" class="interactive-btn" style="padding: 4px 8px; font-size:0.8rem; background:var(--danger); color:white; border:none; border-radius:8px;" onclick="deleteItem('deleteModerator', '${m}')">❌</button>
+                            </div>`;
+                    }
+                });
+            } else if (modsList) {
+                modsList.innerHTML = '<p class="empty-msg">لا يوجد كاشيرية مسجلين</p>';
+            }
+
+            // 4. التقارير 
             if (document.getElementById('todayCount')) document.getElementById('todayCount').innerText = data.todayOrders || 0;
             if (document.getElementById('todaySales')) document.getElementById('todaySales').innerText = data.todaySales || 0;
             if (document.getElementById('monthSales')) document.getElementById('monthSales').innerText = data.monthSales || 0;
             if (document.getElementById('completedCount')) document.getElementById('completedCount').innerText = data.completedOrders || 0;
             if (document.getElementById('topProduct')) document.getElementById('topProduct').innerText = data.topProduct || "--";
 
-            // السجل
+            // 5. السجل وغرفة العمليات
             orderHistoryData = data.history || [];
             renderHistoryList(orderHistoryData);
             renderShippingRoom(orderHistoryData);
@@ -216,105 +208,31 @@ function loadDataFromServer() {
 }
 
 // ==========================================
-// 5. سجل الأوردرات (العرض والطباعة الأصلية)
+// 4. حساب أجازة الجمعة أوتوماتيك (الميزة العبقرية) 🚀
 // ==========================================
-function renderHistoryList(orders) {
-    let container = document.getElementById('historyListContainer');
-    if (!container) return;
-    container.innerHTML = '';
+function calculateDeliveryDateSkippingFriday(durationText) {
+    if (!durationText) return "";
     
-    if (orders.length === 0) {
-        container.innerHTML = `<p class="empty-msg">لا يوجد أوردرات مسجلة في تاريخ (${currentFilterDate}).</p>`;
-        return;
+    // استخراج الرقم من النص (مثلا "3 أيام" يطلع منها رقم 3)
+    let match = durationText.match(/\d+/);
+    if (!match) return durationText; // لو مفيش رقم، يرجع النص العادي
+    
+    let daysToAdd = parseInt(match[0]);
+    let d = new Date();
+    let added = 0;
+    
+    // هنمشي يوم بيوم، لو الجمعة مش هنحسبه
+    while(added < daysToAdd) {
+        d.setDate(d.getDate() + 1);
+        if(d.getDay() !== 5) { // 5 = الجمعة
+            added++;
+        }
     }
     
-    orders.forEach(order => {
-        let div = document.createElement('div');
-        div.className = 'data-row';
-        div.style.flexDirection = 'column';
-        div.style.alignItems = 'flex-start';
-        let statusColor = order.status === "تم التوصيل" ? "var(--success)" : "var(--primary)";
-        if (order.status === "مرتجع") statusColor = "var(--danger)";
-        
-        div.innerHTML = `
-            <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 5px; align-items: center;">
-                <strong>${order.id} | ${order.name}</strong>
-                <div>
-                    <button class="interactive-btn" onclick="printOldOrder('${order.id}')" style="background:none; border:none; font-size:1.2rem; cursor:pointer;" title="طباعة الفاتورة الأصلية">🖨️</button>
-                    <span style="color: ${statusColor}; font-weight: bold;">${order.status}</span>
-                </div>
-            </div>
-            <div style="display: flex; justify-content: space-between; width: 100%; font-size: 0.85rem; color: #777;">
-                <span>⏰ ${order.time || '--'}</span>
-                <span>📱 ${order.phone}</span>
-                <span style="font-weight:bold; color: #333;">💰 ${order.total} ج.م</span>
-            </div>
-        `;
-        container.appendChild(div);
-    });
+    // تنسيق التاريخ النظيف: الإثنين، 15 مايو
+    let options = { weekday: 'long', month: 'numeric', day: 'numeric' };
+    return d.toLocaleDateString('ar-EG', options);
 }
-
-// الطباعة الأصلية من السجل (تعديل كامل) ⭐
-window.printOldOrder = function(orderId) {
-    let order = orderHistoryData.find(o => o.id === orderId);
-    if(!order) return;
-    
-    if(document.getElementById('receipt-title')) document.getElementById('receipt-title').innerText = `نسخة فاتورة (${order.status})`;
-    if(document.getElementById('print-date')) document.getElementById('print-date').innerText = `${order.date} ${order.time || ''}`;
-    if(document.getElementById('print-customer-name')) document.getElementById('print-customer-name').innerText = order.name;
-    if(document.getElementById('print-phone')) document.getElementById('print-phone').innerText = order.phone;
-    if(document.getElementById('print-address')) document.getElementById('print-address').innerText = order.address || "";
-    
-    // تنسيق المنتجات للطباعة
-    let printItemsHtml = "";
-    if(order.products) {
-        let lines = order.products.split('\n');
-        lines.forEach(line => {
-            if(line.trim() !== "") {
-                printItemsHtml += `<tr><td colspan="4" style="text-align:right; border-bottom:1px solid #ddd; padding:5px;">${line}</td></tr>`;
-            }
-        });
-    } else {
-        printItemsHtml = `<tr><td colspan="4">لا توجد تفاصيل</td></tr>`;
-    }
-    if(document.getElementById('print-items-body')) document.getElementById('print-items-body').innerHTML = printItemsHtml;
-    
-    if(document.getElementById('print-subtotal')) document.getElementById('print-subtotal').innerText = order.subtotal || 0;
-    if(document.getElementById('print-discount')) document.getElementById('print-discount').innerText = order.discount || 0;
-    if(document.getElementById('print-shipping')) document.getElementById('print-shipping').innerText = order.shipping || 0;
-    if(document.getElementById('print-final')) document.getElementById('print-final').innerText = order.total;
-    if(document.getElementById('print-payment')) document.getElementById('print-payment').innerText = order.payment || "";
-    
-    // وضع اسم المودريتور في الفاتورة ⭐
-    let sellerP = document.querySelector('.receipt-footer p:nth-child(2)');
-    if(sellerP) sellerP.innerText = `البائع: ${order.seller || 'غير محدد'}`;
-
-    setTimeout(() => window.print(), 500);
-};
-
-// ==========================================
-// 6. الحسابات والتوصيل والموبايل (لم تتغير)
-// ==========================================
-const phoneInput = document.getElementById('customerPhone');
-const phoneStatus = document.getElementById('phoneCheckStatus');
-function performPhoneSearch() {
-    if(!phoneInput || !phoneStatus) return;
-    let phoneVal = phoneInput.value.trim();
-    if (phoneVal.length >= 9) {
-        phoneStatus.innerText = "⏳";
-        fetch(`${GOOGLE_SHEETS_URL}?action=checkPhone&phone=${phoneVal}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.found) {
-                    if(document.getElementById('customerName')) document.getElementById('customerName').value = data.name;
-                    if(document.getElementById('address')) document.getElementById('address').value = data.address;
-                    phoneStatus.innerText = "✅"; showToast(`أهلاً بعودتك يا ${data.name}!`, "success");
-                } else { phoneStatus.innerText = "🆕"; }
-            }).catch(() => { phoneStatus.innerText = "🔍"; });
-    }
-}
-if (phoneStatus) phoneStatus.addEventListener('click', performPhoneSearch);
-if (phoneInput) phoneInput.addEventListener('change', performPhoneSearch);
 
 const deliveryTypeSelect = document.getElementById('deliveryType');
 const govSelect = document.getElementById('governorate');
@@ -354,18 +272,131 @@ function triggerGovCalc() {
     }
     let info = shippingData[zone];
     if(costInput) costInput.value = info.price || 0;
+    
     if(dateDisplay) {
         let type = deliveryTypeSelect ? deliveryTypeSelect.value : 'normal';
-        if (type === 'special_date') dateDisplay.innerText = "حسب التاريخ المختار 📅";
-        else dateDisplay.innerText = info.duration ? `خلال ${info.duration}` : "غير محدد";
+        if (type === 'special_date') {
+            dateDisplay.innerText = "حسب التاريخ المختار 📅";
+        } else {
+            // هنا بيشتغل سحر تخطي الجمعة! 🚀
+            let exactDate = calculateDeliveryDateSkippingFriday(info.duration);
+            dateDisplay.innerText = exactDate ? `المتوقع: ${exactDate}` : `خلال ${info.duration}`;
+        }
     }
     calculateTotal();
 }
 if(govSelect) govSelect.addEventListener('change', triggerGovCalc);
 
 // ==========================================
-// 7. المنتجات (الكمية × السعر) والقفل الشامل
+// 5. سجل الأوردرات (العرض والطباعة الأصلية)
 // ==========================================
+function renderHistoryList(orders) {
+    let container = document.getElementById('historyListContainer');
+    if (!container) return;
+    container.innerHTML = '';
+    
+    if (orders.length === 0) {
+        container.innerHTML = `<p class="empty-msg">لا توجد أوردرات في تاريخ (${currentFilterDate}).</p>`;
+        return;
+    }
+    
+    orders.forEach(order => {
+        let div = document.createElement('div');
+        div.className = 'data-row';
+        div.style.flexDirection = 'column';
+        div.style.alignItems = 'flex-start';
+        let statusColor = order.status === "تم التوصيل" ? "var(--success)" : "var(--primary)";
+        if (order.status === "مرتجع") statusColor = "var(--danger)";
+        
+        div.innerHTML = `
+            <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 5px; align-items: center;">
+                <strong>${order.id} | ${order.name}</strong>
+                <div>
+                    <button class="interactive-btn" onclick="printOldOrder('${order.id}')" style="background:none; border:none; font-size:1.2rem; cursor:pointer;" title="طباعة الفاتورة الأصلية">🖨️</button>
+                    <span style="color: ${statusColor}; font-weight: bold;">${order.status}</span>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; width: 100%; font-size: 0.85rem; color: #777;">
+                <span>⏰ ${order.time || '--'}</span>
+                <span>📱 ${order.phone}</span>
+                <span style="font-weight:bold; color: #333;">💰 ${order.total} ج.م</span>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+// الطباعة الأصلية من السجل
+window.printOldOrder = function(orderId) {
+    let order = orderHistoryData.find(o => o.id === orderId);
+    if(!order) return;
+    
+    if(document.getElementById('receipt-title')) document.getElementById('receipt-title').innerText = `نسخة فاتورة (${order.status})`;
+    if(document.getElementById('print-date')) document.getElementById('print-date').innerText = `${order.date} ${order.time || ''}`;
+    if(document.getElementById('print-customer-name')) document.getElementById('print-customer-name').innerText = order.name;
+    if(document.getElementById('print-phone')) document.getElementById('print-phone').innerText = order.phone;
+    if(document.getElementById('print-address')) document.getElementById('print-address').innerText = order.address || "";
+    
+    let printItemsHtml = "";
+    if(order.products) {
+        let lines = order.products.split('\n');
+        lines.forEach(line => {
+            if(line.trim() !== "") printItemsHtml += `<tr><td colspan="4" style="text-align:right; border-bottom:1px solid #ddd; padding:5px;">${line}</td></tr>`;
+        });
+    } else {
+        printItemsHtml = `<tr><td colspan="4">لا توجد تفاصيل</td></tr>`;
+    }
+    if(document.getElementById('print-items-body')) document.getElementById('print-items-body').innerHTML = printItemsHtml;
+    
+    if(document.getElementById('print-subtotal')) document.getElementById('print-subtotal').innerText = order.subtotal || 0;
+    if(document.getElementById('print-discount')) document.getElementById('print-discount').innerText = order.discount || 0;
+    if(document.getElementById('print-shipping')) document.getElementById('print-shipping').innerText = order.shipping || 0;
+    if(document.getElementById('print-final')) document.getElementById('print-final').innerText = order.total;
+    if(document.getElementById('print-payment')) document.getElementById('print-payment').innerText = order.payment || "";
+    
+    let sellerP = document.getElementById('print-seller-name');
+    if(sellerP) sellerP.innerText = `البائع: ${order.seller || 'غير محدد'}`;
+
+    setTimeout(() => window.print(), 500);
+};
+
+const searchBtn = document.getElementById('searchBtn');
+const orderSearchInput = document.getElementById('orderSearchInput');
+if (searchBtn && orderSearchInput) {
+    searchBtn.addEventListener('click', () => {
+        let keyword = orderSearchInput.value.trim().toLowerCase();
+        if (keyword === "") renderHistoryList(orderHistoryData);
+        else {
+            let filtered = orderHistoryData.filter(o => o.id.toLowerCase().includes(keyword) || o.phone.includes(keyword) || o.name.toLowerCase().includes(keyword));
+            renderHistoryList(filtered);
+        }
+    });
+}
+
+// ==========================================
+// 6. بحث الهاتف وتنسيق المنتجات
+// ==========================================
+const phoneInput = document.getElementById('customerPhone');
+const phoneStatus = document.getElementById('phoneCheckStatus');
+function performPhoneSearch() {
+    if(!phoneInput || !phoneStatus) return;
+    let phoneVal = phoneInput.value.trim();
+    if (phoneVal.length >= 9) {
+        phoneStatus.innerText = "⏳";
+        fetch(`${GOOGLE_SHEETS_URL}?action=checkPhone&phone=${phoneVal}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.found) {
+                    if(document.getElementById('customerName')) document.getElementById('customerName').value = data.name;
+                    if(document.getElementById('address')) document.getElementById('address').value = data.address;
+                    phoneStatus.innerText = "✅"; showToast(`أهلاً بعودتك يا ${data.name}!`, "success");
+                } else { phoneStatus.innerText = "🆕"; }
+            }).catch(() => { phoneStatus.innerText = "🔍"; });
+    }
+}
+if (phoneStatus) phoneStatus.addEventListener('click', performPhoneSearch);
+if (phoneInput) phoneInput.addEventListener('change', performPhoneSearch);
+
 const productsContainer = document.getElementById('productsContainer');
 function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = false) {
     if(!productsContainer) return;
@@ -439,7 +470,7 @@ if(confirmPaymentBtn) {
 }
 
 // ==========================================
-// 8. المعلقات 
+// 7. المعلقات 
 // ==========================================
 function updateSuspendedCount() {
     let drafts = JSON.parse(localStorage.getItem('candyDrafts')) || [];
@@ -549,7 +580,7 @@ function resetForm() {
 }
 
 // ==========================================
-// 9. إرسال الواتساب
+// 8. إرسال الواتساب
 // ==========================================
 let whatsappReviewBtn = document.getElementById('whatsappReviewBtn');
 if(whatsappReviewBtn) {
@@ -576,7 +607,7 @@ if(whatsappReviewBtn) {
 }
 
 // ==========================================
-// 10. الحفظ والطباعة (مع المودريتور وقفل الزرار) ⭐
+// 9. الحفظ والطباعة (مع المودريتور وقفل الزرار) ⭐
 // ==========================================
 let saveAndPrintBtn = document.getElementById('saveAndPrintBtn');
 if(saveAndPrintBtn) {
@@ -598,12 +629,17 @@ if(saveAndPrintBtn) {
         let name = document.getElementById('customerName') ? document.getElementById('customerName').value : "";
         let gov = document.getElementById('governorate') ? document.getElementById('governorate').value : "";
         let delType = deliveryTypeSelect ? deliveryTypeSelect.value : "";
+        
+        // التحقق من المودريتور
+        let moderatorSelect = document.getElementById('moderatorSelect');
+        let selectedModerator = moderatorSelect ? moderatorSelect.value : "";
+        if (!selectedModerator) { showToast("يرجى اختيار اسم المسؤول عن الأوردر!", "error"); return; }
 
         if (!phone || phone.length < 9) { showToast("رقم الموبايل غير صحيح!", "error"); return; }
         if (!name) { showToast("اكتب اسم العميل!", "error"); return; }
         if (delType === 'normal' && !gov) { showToast("اختر المحافظة!", "error"); return; }
 
-        setBtnLoading(saveAndPrintBtn, true); // قفل الزرار
+        setBtnLoading(saveAndPrintBtn, true);
 
         let finalExpDate = document.querySelector('#deliveryInfo span') ? document.querySelector('#deliveryInfo span').innerText : "";
         if (delType === 'special_date') finalExpDate = document.getElementById('specialDateInput') ? document.getElementById('specialDateInput').value : "";
@@ -632,7 +668,7 @@ if(saveAndPrintBtn) {
         formData.append('finalTotal', finalTotalVal);
         formData.append('payMethod', paymentMethod ? paymentMethod.value : ""); 
         formData.append('notes', finalNotes);
-        formData.append('moderator', currentModerator); // إضافة المودريتور
+        formData.append('moderator', selectedModerator);
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
         .then(() => {
@@ -650,15 +686,14 @@ if(saveAndPrintBtn) {
             if(document.getElementById('print-final')) document.getElementById('print-final').innerText = finalTotalVal;
             if(document.getElementById('print-payment')) document.getElementById('print-payment').innerText = paymentMethod ? paymentMethod.value : "";
             
-            // طباعة اسم المودريتور
-            let sellerP = document.querySelector('.receipt-footer p:nth-child(2)');
-            if(sellerP) sellerP.innerText = `البائع: ${currentModerator}`;
+            let sellerP = document.getElementById('print-seller-name');
+            if(sellerP) sellerP.innerText = `البائع: ${selectedModerator}`;
 
             setTimeout(() => {
                 window.print();
                 resetForm();
-                setBtnLoading(saveAndPrintBtn, false); // فتح الزرار
-                loadDataFromServer(); // تحديث فوري عشان الأوردر يبان في السجل
+                setBtnLoading(saveAndPrintBtn, false);
+                loadDataFromServer(); 
             }, 1000);
             
         }).catch(() => { 
@@ -669,8 +704,40 @@ if(saveAndPrintBtn) {
 }
 
 // ==========================================
-// 11. إضافة وتعديل المناطق والمناديب (منع التكرار) ⭐
+// 10. الإضافة، التعديل، والحذف (المناطق، المناديب، المودريتور) ⭐
 // ==========================================
+
+// دالة حذف عامة متصلة بالإكسيل
+window.deleteItem = function(action, name, zoneType = '') {
+    if(!confirm(`هل أنت متأكد من حذف (${name}) نهائياً؟`)) return;
+    let formData = new URLSearchParams();
+    formData.append('action', action);
+    formData.append('name', name);
+    if(zoneType) formData.append('zoneType', zoneType);
+    
+    showToast("⏳ جاري الحذف...", "warning");
+    fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
+        .then(() => {
+            showToast("✅ تم الحذف بنجاح!", "success");
+            loadDataFromServer();
+        });
+};
+
+// دوال لتعبئة مدخلات التعديل
+window.editZoneUI = function(name, price, type, duration) {
+    if(document.getElementById('newZoneName')) document.getElementById('newZoneName').value = name;
+    if(document.getElementById('newZonePrice')) document.getElementById('newZonePrice').value = price;
+    if(document.getElementById('newZoneType')) document.getElementById('newZoneType').value = type;
+    if(document.getElementById('newZoneDuration')) document.getElementById('newZoneDuration').value = duration;
+    showToast("قم بتعديل البيانات واضغط حفظ", "success");
+};
+
+window.editDriverUI = function(name, phone) {
+    if(document.getElementById('newDriverName')) document.getElementById('newDriverName').value = name;
+    if(document.getElementById('newDriverPhone')) document.getElementById('newDriverPhone').value = phone;
+    showToast("قم بتعديل البيانات واضغط حفظ", "success");
+};
+
 let addZoneBtnAction = document.getElementById('addZoneBtn');
 if (addZoneBtnAction) {
     addZoneBtnAction.addEventListener('click', () => {
@@ -697,8 +764,9 @@ if (addZoneBtnAction) {
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
         .then(() => { 
             showToast(`✅ تم ${isExisting ? 'تعديل' : 'إضافة'} المنطقة!`, "success"); 
-            document.getElementById('zoneModal').classList.remove('active'); 
             setBtnLoading(addZoneBtnAction, false);
+            // تصفير المدخلات
+            document.getElementById('newZoneName').value = ""; document.getElementById('newZonePrice').value = ""; document.getElementById('newZoneDuration').value = "";
             loadDataFromServer();
         }).catch(()=>{ setBtnLoading(addZoneBtnAction, false); });
     });
@@ -711,7 +779,6 @@ if (addDriverBtnAction) {
         let phone = document.getElementById('newDriverPhone') ? document.getElementById('newDriverPhone').value : "";
         if (!name || !phone) { showToast("البيانات ناقصة!", "error"); return; }
         
-        // التحقق لو المندوب موجود (بالبحث في القائمة)
         let isExisting = Array.from(document.getElementById('driverNameSelect').options).some(o => o.value === name);
 
         setBtnLoading(addDriverBtnAction, true);
@@ -723,10 +790,33 @@ if (addDriverBtnAction) {
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
         .then(() => { 
             showToast(`✅ تم ${isExisting ? 'تعديل' : 'إضافة'} المندوب!`, "success"); 
-            document.getElementById('driverModal').classList.remove('active'); 
             setBtnLoading(addDriverBtnAction, false);
+            document.getElementById('newDriverName').value = ""; document.getElementById('newDriverPhone').value = "";
             loadDataFromServer();
         }).catch(()=>{ setBtnLoading(addDriverBtnAction, false); });
+    });
+}
+
+// إضافة كاشير جديد من الإعدادات ⭐
+let addModeratorBtn = document.getElementById('addModeratorBtn');
+if (addModeratorBtn) {
+    addModeratorBtn.addEventListener('click', () => {
+        let nameInput = document.getElementById('newModeratorName');
+        let name = nameInput ? nameInput.value.trim() : "";
+        if(!name) { showToast("اكتب اسم الكاشير أولاً", "error"); return; }
+
+        setBtnLoading(addModeratorBtn, true);
+        let formData = new URLSearchParams();
+        formData.append('action', 'addModerator');
+        formData.append('name', name);
+
+        fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
+        .then(() => {
+            showToast("✅ تم إضافة الكاشير بنجاح", "success");
+            setBtnLoading(addModeratorBtn, false);
+            nameInput.value = "";
+            loadDataFromServer();
+        }).catch(() => { setBtnLoading(addModeratorBtn, false); });
     });
 }
 
@@ -737,9 +827,11 @@ if(logoUpload) {
             let reader = new FileReader();
             reader.onload = function(event) {
                 let printLogo = document.getElementById('print-logo');
+                let logoText = document.getElementById('logoUploadText');
                 if(printLogo) {
                     printLogo.src = event.target.result;
                     printLogo.style.display = 'inline-block';
+                    if(logoText) logoText.innerText = "✅ تم رفع اللوجو بنجاح (سيظهر في الطباعة)";
                     showToast("✅ تم رفع اللوجو بنجاح", "success");
                 }
             }
@@ -749,7 +841,7 @@ if(logoUpload) {
 }
 
 // ==========================================
-// 12. غرفة عمليات الشحن
+// 11. غرفة عمليات الشحن والداشبورد
 // ==========================================
 function renderShippingRoom(history) {
     const pendingContainer = document.getElementById('pendingOrdersContainer');
@@ -826,9 +918,6 @@ if(markDelivBtn) markDelivBtn.addEventListener('click', () => processStatusUpdat
 let markRetBtn = document.getElementById('markReturnedBtn');
 if(markRetBtn) markRetBtn.addEventListener('click', () => processStatusUpdate(markRetBtn, 'shipped-checkbox', 'مرتجع'));
 
-// ==========================================
-// 13. الداشبورد المتقدمة
-// ==========================================
 function updateAdvancedDashboard(history) {
     let moneyWithDrivers = 0, returnedCount = 0;
     history.forEach(o => {
@@ -839,5 +928,26 @@ function updateAdvancedDashboard(history) {
     if(document.getElementById('returnedCount')) document.getElementById('returnedCount').innerText = returnedCount;
 }
 
+// ==========================================
 // التحديث الصامت للبيانات كل دقيقة 
-setInterval(loadDataFromServer, 60000);
+// ==========================================
+setInterval(() => {
+    // لا يقوم بالتحديث إذا كانت هناك نافذة مفتوحة عشان الداتا متهربش من تحت إيد المستخدم
+    if(!document.querySelector('.modal-overlay.active')) {
+        loadDataFromServer();
+    }
+}, 60000); 
+
+// تفعيل الوضع الليلي
+const darkModeToggle = document.getElementById('darkModeToggle');
+if (darkModeToggle) {
+    darkModeToggle.addEventListener('change', (e) => {
+        if(e.target.checked) {
+            document.body.classList.add('dark-mode');
+            localStorage.setItem('candyDarkMode', 'true');
+        } else {
+            document.body.classList.remove('dark-mode');
+            localStorage.setItem('candyDarkMode', 'false');
+        }
+    });
+}
