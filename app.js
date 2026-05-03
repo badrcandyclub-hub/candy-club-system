@@ -1,5 +1,5 @@
 // ==========================================
-// 🌐 العقل المدبر - سيستم كاندي كلوب (النسخة الكاملة والمحمية)
+// 🌐 العقل المدبر - سيستم كاندي كلوب (النسخة الكاملة والمحمية + تحديثات غرفة العمليات والداشبورد)
 // ==========================================
 
 const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbwAYO1cCYq-qjlhj4T1jW6639AqHOAcA2ADFyP91c49KcJVLFY7TwoXmP8rewWgXOIolw/exec";
@@ -117,10 +117,16 @@ window.onload = () => {
             const driversDisplayList = document.getElementById('driversDisplayList');
             if (driversDisplayList) driversDisplayList.innerHTML = '';
             
+            // ⭐ الإضافة الجديدة: تحميل المناديب في قوائم غرفة العمليات ⭐
+            const assignDriverSelect = document.getElementById('assignDriverSelect');
+            const closeDriverSelect = document.getElementById('closeDriverSelect');
+            
             if (data.couriers && data.couriers.length > 0) {
                 data.couriers.forEach(c => {
                     if (driverSelect) driverSelect.innerHTML += `<option value="${c.name}">${c.name}</option>`;
                     if (driversDisplayList) driversDisplayList.innerHTML += `<div class="data-row"><span>🛵 ${c.name}</span><span class="phone-badge">${c.phone}</span></div>`;
+                    if (assignDriverSelect) assignDriverSelect.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+                    if (closeDriverSelect) closeDriverSelect.innerHTML += `<option value="${c.name}">${c.name}</option>`;
                 });
             }
 
@@ -142,6 +148,10 @@ window.onload = () => {
             if (data.history && data.history.length > 0) {
                 orderHistoryData = data.history;
                 renderHistoryList(orderHistoryData);
+                
+                // ⭐ الإضافات الجديدة: تحديث غرفة العمليات والداشبورد المتقدم ⭐
+                renderShippingRoom(orderHistoryData);
+                updateAdvancedDashboard(orderHistoryData);
             } else {
                 let historyContainer = document.getElementById('historyListContainer');
                 if (historyContainer) historyContainer.innerHTML = '<p class="empty-msg">لا توجد أوردرات مسجلة.</p>';
@@ -177,11 +187,16 @@ function renderHistoryList(orders) {
         div.style.flexDirection = 'column';
         div.style.alignItems = 'flex-start';
         let statusColor = order.status === "تم التوصيل" ? "var(--success)" : "var(--primary)";
+        if (order.status === "مرتجع") statusColor = "var(--danger)";
         
+        // ⭐ الإضافة الجديدة: زرار الطباعة في السجل (🖨️) ⭐
         div.innerHTML = `
-            <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 5px;">
+            <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 5px; align-items: center;">
                 <strong>${order.id} | ${order.name}</strong>
-                <span style="color: ${statusColor}; font-weight: bold;">${order.status}</span>
+                <div>
+                    <button class="interactive-btn" onclick="printOldOrder('${order.id}')" style="background:none; border:none; font-size:1.2rem; cursor:pointer;" title="طباعة الفاتورة">🖨️</button>
+                    <span style="color: ${statusColor}; font-weight: bold;">${order.status}</span>
+                </div>
             </div>
             <div style="display: flex; justify-content: space-between; width: 100%; font-size: 0.85rem; color: #777;">
                 <span>📅 ${order.date}</span>
@@ -718,6 +733,9 @@ if(saveAndPrintBtn) {
                 resetForm();
                 saveAndPrintBtn.innerText = "💾 حفظ وطباعة الفاتورة"; 
                 saveAndPrintBtn.disabled = false;
+                
+                // تحديث سريع بعد الحفظ
+                syncDataSilently();
             }, 1000);
             
         }).catch(() => { 
@@ -797,3 +815,171 @@ if(logoUpload) {
         }
     });
 }
+
+// ==========================================
+// 14. الإضافات الجديدة (غرفة العمليات، الداشبورد، الطباعة المباشرة) ⭐
+// ==========================================
+
+// دالة طباعة الأوردرات القديمة من السجل
+window.printOldOrder = function(orderId) {
+    let order = orderHistoryData.find(o => o.id === orderId);
+    if(!order) return;
+    
+    if(document.getElementById('receipt-title')) document.getElementById('receipt-title').innerText = `نسخة فاتورة (${order.status})`;
+    if(document.getElementById('print-date')) document.getElementById('print-date').innerText = order.date;
+    if(document.getElementById('print-customer-name')) document.getElementById('print-customer-name').innerText = order.name;
+    if(document.getElementById('print-phone')) document.getElementById('print-phone').innerText = order.phone;
+    if(document.getElementById('print-final')) document.getElementById('print-final').innerText = order.total;
+    
+    if(document.getElementById('print-items-body')) {
+        document.getElementById('print-items-body').innerHTML = `<tr><td colspan="4" style="text-align:center;">تفاصيل المنتجات غير متوفرة في السجل السريع</td></tr>`;
+    }
+    
+    setTimeout(() => window.print(), 500);
+};
+
+// دالة تحميل وتحديث غرفة العمليات (الشحن)
+function renderShippingRoom(history) {
+    const pendingContainer = document.getElementById('pendingOrdersContainer');
+    const shippedContainer = document.getElementById('shippedOrdersContainer');
+
+    if(pendingContainer) {
+        const pendingOrders = history.filter(o => o.status === 'قيد التجهيز');
+        pendingContainer.innerHTML = '';
+        if(pendingOrders.length === 0) {
+            pendingContainer.innerHTML = '<p class="empty-msg">لا يوجد أوردرات قيد التجهيز.</p>';
+        } else {
+            pendingOrders.forEach(o => {
+                pendingContainer.innerHTML += `
+                    <div class="order-checkbox-row">
+                        <input type="checkbox" class="order-checkbox pending-checkbox" value="${o.id}">
+                        <div class="order-details-compact">
+                            <span class="order-id-name">${o.id} | ${o.name}</span>
+                            <span class="order-address-price">📱 ${o.phone} | 💰 ${o.total} ج.م</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+    }
+
+    if(shippedContainer) {
+        const shippedOrders = history.filter(o => o.status === 'في الشحن');
+        shippedContainer.innerHTML = '';
+        if(shippedOrders.length === 0) {
+            shippedContainer.innerHTML = '<p class="empty-msg">لا يوجد أوردرات في الشحن حالياً.</p>';
+        } else {
+            shippedOrders.forEach(o => {
+                shippedContainer.innerHTML += `
+                    <div class="order-checkbox-row">
+                        <input type="checkbox" class="order-checkbox shipped-checkbox" value="${o.id}">
+                        <div class="order-details-compact">
+                            <span class="order-id-name">${o.id} | ${o.name}</span>
+                            <span class="order-address-price">📱 ${o.phone} | 💰 ${o.total} ج.م</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+    }
+}
+
+// دالة لمعالجة وتغيير حالة الأوردرات مجمعة
+function processStatusUpdate(checkboxesClass, newStatus, driverName = "") {
+    const selected = Array.from(document.querySelectorAll(`.${checkboxesClass}:checked`)).map(cb => cb.value);
+    if(selected.length === 0) {
+        showToast("يرجى تحديد أوردر واحد على الأقل!", "warning");
+        return;
+    }
+
+    showToast("⏳ جاري التحديث...", "warning");
+    
+    let completed = 0;
+    selected.forEach(orderId => {
+        let formData = new URLSearchParams();
+        formData.append('action', 'updateOrderStatus');
+        formData.append('orderId', orderId);
+        formData.append('status', newStatus);
+        if(driverName) formData.append('driverName', driverName);
+
+        fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
+            .then(() => {
+                completed++;
+                if(completed === selected.length) {
+                    showToast(`✅ تم التحديث إلى "${newStatus}"`, "success");
+                    selected.forEach(id => {
+                        let order = orderHistoryData.find(o => o.id === id);
+                        if(order) order.status = newStatus;
+                    });
+                    renderHistoryList(orderHistoryData);
+                    renderShippingRoom(orderHistoryData);
+                    updateAdvancedDashboard(orderHistoryData);
+                }
+            });
+    });
+}
+
+// ربط أزرار غرفة العمليات
+let assignBtn = document.getElementById('assignToDriverBtn');
+if(assignBtn) {
+    assignBtn.addEventListener('click', () => {
+        let driver = document.getElementById('assignDriverSelect').value;
+        if(!driver) { showToast("يرجى اختيار المندوب أولاً!", "error"); return; }
+        processStatusUpdate('pending-checkbox', 'في الشحن', driver);
+    });
+}
+
+let markDelivBtn = document.getElementById('markDeliveredBtn');
+if(markDelivBtn) { markDelivBtn.addEventListener('click', () => processStatusUpdate('shipped-checkbox', 'تم التوصيل')); }
+
+let markRetBtn = document.getElementById('markReturnedBtn');
+if(markRetBtn) { markRetBtn.addEventListener('click', () => processStatusUpdate('shipped-checkbox', 'مرتجع')); }
+
+// تحديث الداشبورد المتقدمة
+function updateAdvancedDashboard(history) {
+    let moneyWithDrivers = 0;
+    let returnedCount = 0;
+    
+    history.forEach(o => {
+        if(o.status === 'في الشحن') moneyWithDrivers += parseFloat(o.total) || 0;
+        if(o.status === 'مرتجع') returnedCount++;
+    });
+
+    if(document.getElementById('moneyWithDrivers')) document.getElementById('moneyWithDrivers').innerText = moneyWithDrivers;
+    if(document.getElementById('returnedCount')) document.getElementById('returnedCount').innerText = returnedCount;
+}
+
+// تفعيل الوضع الليلي
+const darkModeToggle = document.getElementById('darkModeToggle');
+if (darkModeToggle) {
+    darkModeToggle.addEventListener('change', (e) => {
+        if(e.target.checked) document.body.classList.add('dark-mode');
+        else document.body.classList.remove('dark-mode');
+    });
+}
+
+// زر فتح الإكسيل (ربط مباشر برابط جوجل شيت الخاص بك)
+const openGoogleSheetBtn = document.getElementById('openGoogleSheetBtn');
+if (openGoogleSheetBtn) {
+    // استخدمنا الرابط الرئيسي للإسكريبت لتسهيل الوصول، ويمكنك استبداله برابط الشيت الفعلي
+    openGoogleSheetBtn.href = "https://docs.google.com/spreadsheets/d/1XyL_Q_.../edit"; // ضع رابط الشيت الفعلي هنا
+}
+
+// دالة المزامنة الصامتة في الخلفية (كل 30 ثانية للسرعة الوهمية)
+function syncDataSilently() {
+    fetch(GOOGLE_SHEETS_URL)
+        .then(res => res.json())
+        .then(data => {
+            if (data.history) {
+                orderHistoryData = data.history;
+                renderHistoryList(orderHistoryData);
+                renderShippingRoom(orderHistoryData);
+                updateAdvancedDashboard(orderHistoryData);
+                if (document.getElementById('todayCount')) document.getElementById('todayCount').innerText = data.todayOrders || 0;
+                if (document.getElementById('completedCount')) document.getElementById('completedCount').innerText = data.completedOrders || 0;
+                if (document.getElementById('todaySales')) document.getElementById('todaySales').innerText = data.todaySales || 0;
+            }
+        }).catch(() => {}); // نتجاهل الأخطاء لعدم إزعاج المستخدم
+}
+
+setInterval(syncDataSilently, 30000); // تحديث كل 30 ثانية
