@@ -27,6 +27,9 @@
 
     <main class="app-content">
         
+        <!-- ========================================== -->
+        <!-- 1. شاشة: إنشاء طلب جديد -->
+        <!-- ========================================== -->
         <section id="create-tab" class="tab-pane active">
             <div id="orderFieldsContainer" class="section-card">
                 <h3 class="section-title">📝 إنشاء طلب جديد</h3>
@@ -141,6 +144,9 @@
             </div>
         </section>
 
+        <!-- ========================================== -->
+        <!-- 2. شاشة: سجل الطلبات -->
+        <!-- ========================================== -->
         <section id="history-tab" class="tab-pane">
             <div class="section-card">
                 <h3 class="section-title">🔍 البحث السريع</h3>
@@ -158,48 +164,115 @@
             </div>
         </section>
 
+        <!-- ========================================== -->
+        <!-- 3. شاشة: الشحن (غرفة العمليات الجديدة) -->
+        <!-- ========================================== -->
         <section id="shipping-tab" class="tab-pane">
             <div class="shipping-actions-row mb-15">
                 <button id="openZoneModalBtn" class="btn-outline interactive-btn">إضافة منطقة ➕</button>
                 <button id="openDriverModalBtn" class="btn-outline interactive-btn">إضافة مندوب ➕</button>
             </div>
             
+            <!-- قسم 1: تسليم الأوردرات للمناديب -->
             <div class="section-card">
-                <h3 class="section-title">🛵 المناديب المسجلين</h3>
-                <div id="driversDisplayList" class="data-list-container">
-                    <p class="empty-msg">جاري التحميل...</p>
+                <h3 class="section-title">📦 تحميل المناديب</h3>
+                <label>اختر المندوب للاستلام:</label>
+                <select id="assignDriverSelect">
+                    <option value="">-- اختر المندوب --</option>
+                </select>
+                <div id="pendingOrdersContainer" class="data-list-container mt-10" style="min-height: 100px;">
+                    <p class="empty-msg">جاري تحميل الأوردرات (قيد التجهيز)...</p>
                 </div>
+                <button type="button" id="assignToDriverBtn" class="btn-save interactive-btn mt-10" style="width: 100%; font-size: 1rem;">تسليم للمندوب 🚚</button>
             </div>
             
+            <!-- قسم 2: تقفيل عهدة المندوب -->
             <div class="section-card">
-                <h3 class="section-title">🌐 المناطق المسجلة</h3>
-                <div id="zonesDisplayList" class="data-list-container">
-                    <p class="empty-msg">جاري التحميل...</p>
+                <h3 class="section-title">✅ تقفيل اليوم (حالة التوصيل)</h3>
+                <label>اختر المندوب لعرض عهدته:</label>
+                <select id="closeDriverSelect">
+                    <option value="">-- اختر المندوب --</option>
+                </select>
+                <div id="shippedOrdersContainer" class="data-list-container mt-10" style="min-height: 100px;">
+                    <p class="empty-msg">جاري تحميل الأوردرات (في الشحن)...</p>
+                </div>
+                <div class="action-grid mt-10">
+                    <button type="button" id="markDeliveredBtn" class="btn-save interactive-btn" style="flex:1;">تم التوصيل ✅</button>
+                    <!-- زر المرتجع بتصميم أحمر مميز -->
+                    <button type="button" id="markReturnedBtn" class="interactive-btn" style="flex:1; background-color: var(--danger); color: white; border: none; border-radius: 12px; font-weight: bold; font-family: 'Cairo', sans-serif;">مرتجع ❌</button>
                 </div>
             </div>
         </section>
 
+        <!-- ========================================== -->
+        <!-- 4. شاشة: التقارير (لوحة التحكم الشاملة) -->
+        <!-- ========================================== -->
         <section id="reports-tab" class="tab-pane">
-            <div class="stats-row">
+            <h3 class="section-title" style="margin-bottom: 15px; border-right: 4px solid var(--primary); padding-right: 12px;">📊 لوحة تحكم كاندي كلوب</h3>
+            
+            <div class="stats-row" style="margin-bottom: 10px;">
                 <div class="stat-item pink">
                     <span class="label">أوردرات اليوم</span>
                     <span class="value" id="todayCount">0</span>
                 </div>
+                <div class="stat-item blue">
+                    <span class="label">مبيعات اليوم</span>
+                    <span class="value" id="todaySales">0</span>
+                </div>
+            </div>
+            
+            <div class="stats-row" style="margin-bottom: 10px;">
                 <div class="stat-item orange">
-                    <span class="label">أوردرات مكتملة</span>
+                    <span class="label">فلوس مع المناديب</span>
+                    <span class="value" id="moneyWithDrivers">0</span>
+                </div>
+                <div class="stat-item" style="background: linear-gradient(135deg, #00C853, #2E7D32); color:white; padding: 15px 10px; border-radius: 18px; text-align: center; box-shadow: var(--shadow);">
+                    <span class="label">طلبات مكتملة</span>
                     <span class="value" id="completedCount">0</span>
                 </div>
-                <div class="stat-item blue">
-                    <span class="label">إجمالي المبيعات</span>
-                    <span class="value" id="todaySales">0</span>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-item" style="background: linear-gradient(135deg, #ff4d4d, #c0392b); color:white; padding: 15px 10px; border-radius: 18px; text-align: center; box-shadow: var(--shadow);">
+                    <span class="label">مرتجعات</span>
+                    <span class="value" id="returnedCount">0</span>
+                </div>
+                <div class="stat-item" style="background: linear-gradient(135deg, #9b59b6, #8e44ad); color:white; padding: 15px 10px; border-radius: 18px; text-align: center; box-shadow: var(--shadow);">
+                    <span class="label">الأكثر مبيعاً</span>
+                    <span class="value" id="topProduct" style="font-size: 1rem;">--</span>
                 </div>
             </div>
         </section>
 
+        <!-- ========================================== -->
+        <!-- 5. شاشة: الإعدادات (التحديث الجديد) -->
+        <!-- ========================================== -->
         <section id="settings-tab" class="tab-pane">
             <div class="section-card text-center">
                 <h3 class="section-title">🛠️ إعدادات السيستم</h3>
-                <label>لوجو الفاتورة (PNG)</label>
+                
+                <!-- زر فتح قاعدة البيانات -->
+                <div style="margin-bottom: 25px;">
+                    <a href="#" id="openGoogleSheetBtn" class="btn-outline interactive-btn" target="_blank" style="display: block; text-decoration: none; padding: 15px; background: #e8f5e9; color: #2e7d32; border: 2px solid #c8e6c9; border-radius: 15px; font-weight: bold;">
+                        📊 فتح قاعدة البيانات (الإكسيل)
+                    </a>
+                    <p style="font-size: 0.8rem; color: #777; margin-top: 10px;">انقر هنا لمشاهدة سجلات العملاء والبيانات الشاملة مباشرة.</p>
+                </div>
+
+                <hr style="border-top: 1px dashed #eee; margin: 15px 0;">
+
+                <!-- الوضع الليلي -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <span style="font-weight: bold; color: var(--primary);">🌙 الوضع الليلي (Dark Mode)</span>
+                    <label class="switch">
+                        <input type="checkbox" id="darkModeToggle">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+
+                <hr style="border-top: 1px dashed #eee; margin: 15px 0;">
+
+                <label style="text-align: right;">لوجو الفاتورة (PNG)</label>
                 <input type="file" id="logoUpload" accept="image/*">
                 <p style="font-size: 0.8rem; color: #777; margin-top: 10px;">سيظهر اللوجو تلقائياً في أعلى الرسيت المطبوع.</p>
             </div>
@@ -264,6 +337,7 @@
         </div>
     </div>
 
+    <!-- نافذة المعلقات -->
     <div id="suspendedModal" class="modal-overlay">
         <div class="modal-content">
             <h3>📂 الطلبات المعلقة</h3>
@@ -272,6 +346,7 @@
         </div>
     </div>
 
+    <!-- نافذة إضافة منطقة (تم نقل عرض المناطق بداخلها) -->
     <div id="zoneModal" class="modal-overlay">
         <div class="modal-content">
             <h3>📍 إضافة منطقة جديدة</h3>
@@ -287,9 +362,17 @@
                 <button id="closeZoneModal" class="btn-cancel">إلغاء</button>
                 <button id="addZoneBtn" class="btn-confirm">إضافة</button>
             </div>
+            
+            <!-- قائمة المناطق المسجلة نقلت هنا -->
+            <hr style="border-top: 1px dashed #ccc; margin: 15px 0;">
+            <h4 style="color: #555; font-size: 0.95rem; margin-bottom: 10px;">🌐 المناطق المسجلة حالياً:</h4>
+            <div id="zonesDisplayList" class="data-list-container" style="max-height: 120px;">
+                <p class="empty-msg">جاري التحميل...</p>
+            </div>
         </div>
     </div>
 
+    <!-- نافذة إضافة مندوب (تم نقل عرض المناديب بداخلها) -->
     <div id="driverModal" class="modal-overlay">
         <div class="modal-content">
             <h3>🛵 إضافة مندوب</h3>
@@ -298,6 +381,13 @@
             <div class="modal-actions">
                 <button id="closeDriverModal" class="btn-cancel">إلغاء</button>
                 <button id="addDriverBtn" class="btn-confirm">إضافة</button>
+            </div>
+            
+            <!-- قائمة المناديب المسجلة نقلت هنا -->
+            <hr style="border-top: 1px dashed #ccc; margin: 15px 0;">
+            <h4 style="color: #555; font-size: 0.95rem; margin-bottom: 10px;">🛵 المناديب المسجلين حالياً:</h4>
+            <div id="driversDisplayList" class="data-list-container" style="max-height: 120px;">
+                <p class="empty-msg">جاري التحميل...</p>
             </div>
         </div>
     </div>
