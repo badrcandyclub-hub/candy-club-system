@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>كاندي كلوب - Candy Club V11</title>
+    <title>كاندي كلوب - Candy Club V12</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
 </head>
@@ -14,7 +14,7 @@
     <header class="app-header">
         <div class="logo-container">
             <span class="logo-text">CANDY CLUB</span>
-            <span class="logo-sub">نظام الإدارة المتطور V11</span>
+            <span class="logo-sub">نظام الإدارة المتطور V12</span>
         </div>
         <div class="header-actions">
             <button id="openSuspendedBtn" class="btn-suspended interactive-btn">📂 المعلقة (<span id="suspendedCount">0</span>)</button>
@@ -130,6 +130,12 @@
                     <label>ملاحظات إضافية:</label>
                     <textarea id="notes" placeholder="أي ملاحظات للمندوب..."></textarea>
 
+                    <div class="divider">👤 المسؤول عن الأوردر</div>
+                    <label>الكاشير / المودريتور:</label>
+                    <select id="moderatorSelect" required>
+                        <option value="">-- اختر اسمك --</option>
+                    </select>
+
                     <div class="main-actions-stack">
                         <button type="button" id="whatsappReviewBtn" class="btn-whatsapp interactive-btn">📱 مراجعة التفاصيل مع العميل</button>
                         <div class="action-grid mt-10">
@@ -144,9 +150,17 @@
         <section id="history-tab" class="tab-pane">
             <div class="section-card">
                 <h3 class="section-title">🔍 البحث السريع</h3>
-                <div class="search-box">
+                <div class="search-box mb-15">
                     <input type="text" id="orderSearchInput" placeholder="ابحث برقم الأوردر، الموبايل، أو الاسم">
                     <button id="searchBtn" class="btn-search interactive-btn">بحث</button>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <h3 class="section-title">📅 فلترة الأوردرات باليوم</h3>
+                <div style="display:flex; gap:10px;">
+                    <input type="date" id="historyDateFilter" style="flex:1; margin-bottom:0;" dir="ltr">
+                    <button id="loadDateBtn" class="btn-search interactive-btn">تحديث السجل</button>
                 </div>
             </div>
 
@@ -160,8 +174,8 @@
 
         <section id="shipping-tab" class="tab-pane">
             <div class="shipping-actions-row mb-15">
-                <button id="openZoneModalBtn" class="btn-outline interactive-btn">إضافة منطقة ➕</button>
-                <button id="openDriverModalBtn" class="btn-outline interactive-btn">إضافة مندوب ➕</button>
+                <button id="openZoneModalBtn" class="btn-outline interactive-btn">المناطق ➕</button>
+                <button id="openDriverModalBtn" class="btn-outline interactive-btn">المناديب ➕</button>
             </div>
             
             <div class="section-card">
@@ -173,17 +187,17 @@
                 <div id="pendingOrdersContainer" class="data-list-container mt-10" style="min-height: 100px;">
                     <p class="empty-msg">جاري تحميل الأوردرات...</p>
                 </div>
-                <button type="button" id="assignToDriverBtn" class="btn-save interactive-btn mt-10" style="width: 100%;">تسليم للمندوب 🚚</button>
+                <button type="button" id="assignToDriverBtn" class="btn-save interactive-btn mt-10" style="width: 100%; font-size: 1rem;">تسليم للمندوب 🚚</button>
             </div>
             
             <div class="section-card">
                 <h3 class="section-title">✅ تقفيل اليوم (حالة التوصيل)</h3>
-                <label>عرض عهدة المندوب:</label>
+                <label>اختر المندوب لعرض عهدته:</label>
                 <select id="closeDriverSelect">
                     <option value="">-- اختر المندوب --</option>
                 </select>
                 <div id="shippedOrdersContainer" class="data-list-container mt-10" style="min-height: 100px;">
-                    <p class="empty-msg">اختر مندوباً لعرض الأوردرات التي معه...</p>
+                    <p class="empty-msg">جاري تحميل الأوردرات...</p>
                 </div>
                 <div class="action-grid mt-10">
                     <button type="button" id="markDeliveredBtn" class="btn-save interactive-btn" style="flex:1;">تم التوصيل ✅</button>
@@ -193,50 +207,62 @@
         </section>
 
         <section id="reports-tab" class="tab-pane">
-            <h3 class="section-title" style="margin-bottom: 15px;">📊 لوحة تحكم كاندي كلوب</h3>
+            <h3 class="section-title" style="margin-bottom: 15px;">📊 لوحة تحكم الإدارة</h3>
             
-            <div class="stats-row">
+            <div class="stats-row" style="margin-bottom: 10px;">
                 <div class="stat-item pink">
-                    <span class="label">أوردرات اليوم</span>
+                    <span class="label">🛒 أوردرات اليوم</span>
                     <span class="value" id="todayCount">0</span>
                 </div>
                 <div class="stat-item blue">
-                    <span class="label">مبيعات اليوم</span>
+                    <span class="label">💰 مبيعات اليوم</span>
                     <span class="value" id="todaySales">0</span>
                 </div>
             </div>
             
-            <div class="stats-row">
-                <div class="stat-item orange" style="background: linear-gradient(135deg, #FF8C00, #ffb347);">
-                    <span class="label">إجمالي الشهر 📅</span>
+            <div class="stats-row" style="margin-bottom: 10px;">
+                <div class="stat-item orange">
+                    <span class="label">📅 إجمالي مبيعات الشهر</span>
                     <span class="value" id="monthSales">0</span>
                 </div>
-                <div class="stat-item" style="background: linear-gradient(135deg, #00C853, #2E7D32);">
-                    <span class="label">طلبات مكتملة</span>
+                <div class="stat-item" style="background: linear-gradient(135deg, #00C853, #2E7D32); color:white; padding: 15px 10px; border-radius: 18px; text-align: center; box-shadow: var(--shadow);">
+                    <span class="label">✅ طلبات مكتملة</span>
                     <span class="value" id="completedCount">0</span>
                 </div>
             </div>
 
-            <div class="stats-row">
-                <div class="stat-item" style="background: linear-gradient(135deg, #f39c12, #e67e22);">
-                    <span class="label">فلوس المناديب</span>
+            <div class="stats-row" style="margin-bottom: 10px;">
+                <div class="stat-item" style="background: linear-gradient(135deg, #f39c12, #e67e22); color:white; padding: 15px 10px; border-radius: 18px; text-align: center; box-shadow: var(--shadow);">
+                    <span class="label">🛵 عهدة المناديب</span>
                     <span class="value" id="moneyWithDrivers">0</span>
                 </div>
-                <div class="stat-item" style="background: linear-gradient(135deg, #ff4d4d, #c0392b);">
-                    <span class="label">مرتجعات</span>
+                <div class="stat-item" style="background: linear-gradient(135deg, #ff4d4d, #c0392b); color:white; padding: 15px 10px; border-radius: 18px; text-align: center; box-shadow: var(--shadow);">
+                    <span class="label">🚨 مرتجعات</span>
                     <span class="value" id="returnedCount">0</span>
                 </div>
             </div>
 
             <div class="stats-row">
-                <div class="stat-item" style="background: linear-gradient(135deg, #9b59b6, #8e44ad); width: 100%;">
-                    <span class="label">المنتج الأكثر مبيعاً ⭐</span>
+                <div class="stat-item" style="background: linear-gradient(135deg, #9b59b6, #8e44ad); color:white; padding: 15px 10px; border-radius: 18px; text-align: center; box-shadow: var(--shadow); width:100%;">
+                    <span class="label">⭐ المنتج الأكثر مبيعاً</span>
                     <span class="value" id="topProduct" style="font-size: 1.1rem;">--</span>
                 </div>
             </div>
         </section>
 
         <section id="settings-tab" class="tab-pane">
+            
+            <div class="section-card text-center">
+                <h3 class="section-title">👤 إدارة الكاشيرية (المودريتور)</h3>
+                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                    <input type="text" id="newModeratorName" placeholder="اسم الكاشير الجديد" style="margin-bottom:0;">
+                    <button id="addModeratorBtn" class="btn-confirm interactive-btn">إضافة</button>
+                </div>
+                <div id="moderatorsList" class="data-list-container" style="max-height: 150px; text-align:right;">
+                    <p class="empty-msg">جاري التحميل...</p>
+                </div>
+            </div>
+
             <div class="section-card text-center">
                 <h3 class="section-title">🛠️ إعدادات السيستم</h3>
                 
@@ -259,12 +285,10 @@
                 <hr style="border-top: 1px dashed #eee; margin: 15px 0;">
 
                 <label style="text-align: right;">لوجو الفاتورة (PNG)</label>
-                <div id="logoUploadBox" style="border: 2px dashed #ccc; padding: 30px 20px; border-radius: 15px; background: #fafafa; cursor: pointer; position: relative; transition: 0.3s;">
+                <div style="border: 2px dashed #ccc; padding: 30px; border-radius: 15px; background: #fafafa; cursor: pointer; position: relative; transition: 0.3s;" id="logoUploadBox">
                     <input type="file" id="logoUpload" accept="image/*" style="opacity: 0; position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer;">
-                    <div id="logoPreviewContent">
-                        <span style="font-size: 2.5rem;">🖼️</span>
-                        <p style="margin: 10px 0 0; color: #777; font-weight: bold;">اضغط هنا لاختيار اللوجو</p>
-                    </div>
+                    <span style="font-size: 2.5rem;">📸</span>
+                    <p style="margin: 10px 0 0; color: #777; font-weight: bold;" id="logoUploadText">اضغط هنا لرفع اللوجو</p>
                 </div>
             </div>
         </section>
@@ -293,7 +317,7 @@
         <div class="receipt-header">
             <img id="print-logo" src="" alt="Logo" style="display:none; max-width: 80px; margin-bottom: 10px;">
             <h2 id="receipt-title">طلب عميل</h2>
-            <p style="font-weight: bold; font-size: 16px;">Candy Club 🍬</p>
+            <p style="font-weight:bold; font-size:16px;">Candy Club 🍬</p>
         </div>
         <hr>
         <div class="receipt-info">
@@ -303,11 +327,7 @@
             <p>العنوان: <span id="print-address"></span></p>
         </div>
         <table class="receipt-table">
-            <thead>
-                <tr>
-                    <th colspan="4">تفاصيل الطلب</th>
-                </tr>
-            </thead>
+            <thead><tr><th colspan="4">تفاصيل الطلب</th></tr></thead>
             <tbody id="print-items-body"></tbody>
         </table>
         <hr>
@@ -334,33 +354,36 @@
 
     <div id="zoneModal" class="modal-overlay">
         <div class="modal-content">
-            <h3>📍 إضافة/تعديل منطقة</h3>
+            <h3>📍 إدارة المناطق</h3>
             <input type="text" id="newZoneName" placeholder="اسم المنطقة">
             <input type="number" id="newZonePrice" placeholder="سعر الشحن">
             <input type="text" id="newZoneDuration" placeholder="مدة التوصيل">
             <select id="newZoneType">
                 <option value="same_day">إسكندرية (نفس اليوم)</option>
+                <option value="next_day">إسكندرية (تاني يوم)</option>
                 <option value="gov">محافظات</option>
             </select>
             <div class="modal-actions">
                 <button id="closeZoneModal" class="btn-cancel">إلغاء</button>
-                <button id="addZoneBtn" class="btn-confirm">حفظ</button>
+                <button id="addZoneBtn" class="btn-confirm">حفظ المنطقة</button>
             </div>
             <hr style="margin: 15px 0;">
+            <h4 style="color: #555; font-size: 0.95rem; margin-bottom: 10px;">🌐 المناطق المسجلة:</h4>
             <div id="zonesDisplayList" class="data-list-container" style="max-height: 150px;"></div>
         </div>
     </div>
 
     <div id="driverModal" class="modal-overlay">
         <div class="modal-content">
-            <h3>🛵 إضافة/تعديل مندوب</h3>
+            <h3>🛵 إدارة المناديب</h3>
             <input type="text" id="newDriverName" placeholder="اسم المندوب">
             <input type="tel" id="newDriverPhone" placeholder="رقم الموبايل">
             <div class="modal-actions">
                 <button id="closeDriverModal" class="btn-cancel">إلغاء</button>
-                <button id="addDriverBtn" class="btn-confirm">حفظ</button>
+                <button id="addDriverBtn" class="btn-confirm">حفظ المندوب</button>
             </div>
             <hr style="margin: 15px 0;">
+            <h4 style="color: #555; font-size: 0.95rem; margin-bottom: 10px;">🛵 المناديب المسجلين:</h4>
             <div id="driversDisplayList" class="data-list-container" style="max-height: 150px;"></div>
         </div>
     </div>
