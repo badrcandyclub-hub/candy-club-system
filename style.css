@@ -1,5 +1,5 @@
 /* =========================================
-   1.    والألوان الاحترافية
+   1. المتغيرات والألوان الاحترافية
    ========================================= */
 :root {
     --primary: #FF1493;
@@ -993,7 +993,7 @@ input:checked + .slider:before {
 }
 
 /* =========================================
-   12. التحديثات الجديدة (الوضع الليلي وتنسيقات الشحن)
+   12. التحديثات الجديدة (الوضع الليلي والداشبورد وغرفة الشحن)
    ========================================= */
 
 /* --- الوضع الليلي (Dark Mode) --- */
@@ -1083,6 +1083,22 @@ body.dark-mode .data-row {
 body.dark-mode .gift-switch-container {
     background: #2c1a22;
     border-color: var(--primary);
+}
+
+/* --- تصميم رفع اللوجو الجديد --- */
+#logoUploadBox:hover { 
+    background: #f0f0f0; 
+    border-color: var(--primary); 
+}
+
+body.dark-mode #logoUploadBox { 
+    background: #252525; 
+    border-color: #444; 
+}
+
+body.dark-mode #logoUploadBox:hover { 
+    background: #333; 
+    border-color: var(--primary); 
 }
 
 /* --- تنسيقات شاشة الشحن الجديدة (غرفة العمليات) --- */
