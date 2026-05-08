@@ -89,7 +89,11 @@ window.onload = () => {
     }
 
     loadDataFromServer();
-    updateSuspendedCount(); 
+    
+    // التأكد من وجود الدالة قبل استدعائها لتجنب أي خطأ
+    if (typeof updateSuspendedCount === 'function') {
+        updateSuspendedCount(); 
+    }
 };
 
 function loadDataFromServer() {
@@ -100,7 +104,12 @@ function loadDataFromServer() {
         .then(res => res.json())
         .then(data => {
             if (syncStatus) { syncStatus.innerText = "متصل"; syncStatus.style.color = "#00C853"; }
+            
+            // 🚀 تخزين البيانات من السيرفر (وهنا ضفنا السطر الجديد للأوردرات المعلقة)
+            orderHistoryData = data.history || [];
+            window.pendingOrdersData = data.pendingOrders || []; 
 
+            // (يُرجى ترك بقية الأكواد الموجودة عندك أسفل هذا السطر كما هي بدون تغيير)
             // --- 1. الكتالوج والنواقص (الجديد) ---
             catalogData = data.catalog || [];
             renderCatalog(catalogData);
@@ -301,49 +310,109 @@ function triggerGovCalc() {
 if(govSelect) govSelect.addEventListener('change', triggerGovCalc);
 
 // ==========================================
-// 5. سجل الأوردرات (العرض والطباعة الأصلية)
+// 5. سجل الأوردرات (العرض الذكي، التقسيم، والطباعة)
 // ==========================================
-function renderHistoryList(orders) {
+let currentHistoryPage = 1;
+const ITEMS_PER_PAGE = 20;
+let currentOrdersList = [];
+
+function renderHistoryList(orders, isLoadMore = false) {
     let container = document.getElementById('historyListContainer');
     if (!container) return;
-    container.innerHTML = '';
-    
-    if (orders.length === 0) {
-        container.innerHTML = `<p class="empty-msg">لا توجد أوردرات في تاريخ (${currentFilterDate}).</p>`;
-        return;
+
+    if (!isLoadMore) {
+        container.innerHTML = '';
+        currentHistoryPage = 1;
+        currentOrdersList = orders;
+        
+        // 🚀 قسم الأوردرات المعلقة (قيد التجهيز) - بيظهر فوق دايماً عشان متتنسيش
+        if (window.pendingOrdersData && window.pendingOrdersData.length > 0 && document.getElementById('orderSearchInput').value.trim() === "") {
+            let pendingDiv = document.createElement('div');
+            pendingDiv.innerHTML = `<h4 style="color: #e74c3c; padding-bottom: 5px; margin-bottom: 15px; font-weight: bold;">🔴 أوردرات لم تُشحن بعد (${window.pendingOrdersData.length})</h4>`;
+            
+            window.pendingOrdersData.forEach(pOrder => {
+                pendingDiv.innerHTML += `
+                    <div class="history-item" style="border-right-color: #e74c3c; background: #fff5f5;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <strong style="font-size: 1.05rem;">${pOrder.id} | ${pOrder.name}</strong>
+                            <span style="color: #e74c3c; font-weight: bold; font-size:0.85rem;">📅 ${pOrder.date}</span>
+                        </div>
+                        <div style="font-size: 0.9rem; color: #555;">
+                            <span>📱 ${pOrder.phone} | <span style="color:#000; font-weight:bold;">💰 ${pOrder.total} ج.م</span></span>
+                        </div>
+                    </div>
+                `;
+            });
+            container.appendChild(pendingDiv);
+            
+            let hr = document.createElement('hr');
+            hr.style.margin = "20px 0";
+            hr.style.borderColor = "var(--border)";
+            container.appendChild(hr);
+        }
+
+        if (currentOrdersList.length === 0) {
+            container.innerHTML += `<p class="empty-msg">لا توجد أوردرات في هذا التاريخ.</p>`;
+            return;
+        }
     }
-    
-    orders.forEach(order => {
+
+    // حساب التقسيم (عرض 20 أوردر فقط لحماية المتصفح من التهنيج)
+    let startIndex = (currentHistoryPage - 1) * ITEMS_PER_PAGE;
+    let endIndex = startIndex + ITEMS_PER_PAGE;
+    let pageOrders = currentOrdersList.slice(startIndex, endIndex);
+
+    pageOrders.forEach(order => {
         let div = document.createElement('div');
-        div.className = 'data-row';
-        div.style.flexDirection = 'column';
-        div.style.alignItems = 'flex-start';
+        div.className = 'history-item'; // ربطناها بتصميم الـ CSS الجديد
+        
         let statusColor = order.status === "تم التوصيل" ? "var(--success)" : "var(--primary)";
         if (order.status === "مرتجع") statusColor = "var(--danger)";
         
+        div.style.borderRightColor = statusColor;
+        
         div.innerHTML = `
-            <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 5px; align-items: center;">
-                <strong>${order.id} | ${order.name}</strong>
-                <div>
-                    <button class="interactive-btn" onclick="printOldOrder('${order.id}')" style="background:none; border:none; font-size:1.2rem; cursor:pointer;" title="طباعة الفاتورة الأصلية">🖨️</button>
-                    <span style="color: ${statusColor}; font-weight: bold;">${order.status}</span>
+            <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 8px; align-items: center;">
+                <strong style="font-size: 1.05rem;">${order.id} | ${order.name}</strong>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <button class="interactive-btn" onclick="printOldOrder('${order.id}')" style="background:none; border:none; font-size:1.3rem; cursor:pointer;" title="طباعة الفاتورة الأصلية">🖨️</button>
+                    <span style="background: ${statusColor}15; color: ${statusColor}; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.85rem;">${order.status}</span>
                 </div>
             </div>
-            <div style="display: flex; justify-content: space-between; width: 100%; font-size: 0.85rem; color: #777;">
+            <div style="display: flex; justify-content: space-between; width: 100%; font-size: 0.9rem; color: #666; background: var(--bg-body); padding: 8px; border-radius: 6px;">
                 <span>⏰ ${order.time || '--'}</span>
                 <span>📱 ${order.phone}</span>
-                <span style="font-weight:bold; color: #333;">💰 ${order.total} ج.م</span>
+                <span style="font-weight:bold; color: var(--text-dark);">💰 ${order.total} ج.م</span>
             </div>
         `;
         container.appendChild(div);
     });
+
+    // زرار "عرض المزيد" يظهر لو فيه أوردرات لسه متعرضتش
+    let oldBtn = document.getElementById('loadMoreHistoryBtn');
+    if (oldBtn) oldBtn.remove();
+
+    if (endIndex < currentOrdersList.length) {
+        let btn = document.createElement('button');
+        btn.id = 'loadMoreHistoryBtn';
+        btn.innerText = '⬇️ عرض المزيد';
+        btn.style.cssText = 'width: 100%; padding: 12px; margin-top: 15px; background: var(--bg-body); border: 2px solid var(--border); border-radius: 8px; cursor: pointer; font-weight: bold; color: var(--text-dark); transition: 0.3s;';
+        btn.onmouseover = () => btn.style.borderColor = 'var(--primary)';
+        btn.onmouseout = () => btn.style.borderColor = 'var(--border)';
+        btn.onclick = () => {
+            currentHistoryPage++;
+            renderHistoryList(currentOrdersList, true);
+        };
+        container.appendChild(btn);
+    }
 }
 
 window.printOldOrder = function(orderId) {
     let order = orderHistoryData.find(o => o.id === orderId);
     if(!order) return;
     
-    if(document.getElementById('receipt-title')) document.getElementById('receipt-title').innerText = `نسخة فاتورة (${order.status})`;
+    // شلنا كلمة نسخة زي ما طلبت
+    if(document.getElementById('receipt-title')) document.getElementById('receipt-title').innerText = `فاتورة (${order.status})`;
     if(document.getElementById('print-date')) document.getElementById('print-date').innerText = `${order.date} ${order.time || ''}`;
     if(document.getElementById('print-customer-name')) document.getElementById('print-customer-name').innerText = order.name;
     if(document.getElementById('print-phone')) document.getElementById('print-phone').innerText = order.phone;
@@ -353,7 +422,7 @@ window.printOldOrder = function(orderId) {
     if(order.products) {
         let lines = order.products.split('\n');
         lines.forEach(line => {
-            if(line.trim() !== "") printItemsHtml += `<tr><td colspan="4" style="text-align:right; border-bottom:1px solid #ddd; padding:5px;">${line}</td></tr>`;
+            if(line.trim() !== "") printItemsHtml += `<tr><td colspan="4" style="text-align:right; border-bottom:1px dashed #ccc; padding:8px 5px;">${line}</td></tr>`;
         });
     } else {
         printItemsHtml = `<tr><td colspan="4">لا توجد تفاصيل</td></tr>`;
@@ -367,7 +436,7 @@ window.printOldOrder = function(orderId) {
     if(document.getElementById('print-payment')) document.getElementById('print-payment').innerText = order.payment || "";
     
     let sellerP = document.getElementById('print-seller-name');
-    if(sellerP) sellerP.innerText = `البائع: ${order.seller || 'غير محدد'}`;
+    if(sellerP) sellerP.innerText = `الكاشير: ${order.seller || 'غير محدد'}`;
 
     setTimeout(() => window.print(), 500);
 };
@@ -383,8 +452,11 @@ if (searchBtn && orderSearchInput) {
             renderHistoryList(filtered);
         }
     });
+    // خليت السيرش يشتغل كمان لما تدوس Enter في الكيبورد للسرعة
+    orderSearchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') searchBtn.click();
+    });
 }
-
 // ==========================================
 // 6. بحث الهاتف والمنتجات (شاملة العروض الذكية ⭐)
 // ==========================================
@@ -410,8 +482,18 @@ if (phoneStatus) phoneStatus.addEventListener('click', performPhoneSearch);
 if (phoneInput) phoneInput.addEventListener('change', performPhoneSearch);
 
 const productsContainer = document.getElementById('productsContainer');
+// دالة إضافة المنتجات والعروض الذكية
 function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = false) {
     if(!productsContainer) return;
+    
+    // إنشاء القائمة المنسدلة للبحث الذكي لو مش موجودة
+    if(!document.getElementById('smartProductsList')) {
+        let dl = document.createElement('datalist');
+        dl.id = 'smartProductsList';
+        document.body.appendChild(dl);
+        updateSmartProductsList(); // تعبئة القائمة بالمنتجات
+    }
+
     const wrapper = document.createElement('div');
     wrapper.style.display = 'flex';
     wrapper.style.flexDirection = 'column';
@@ -420,28 +502,36 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
     const div = document.createElement('div'); 
     div.className = 'product-row'; 
     if (isConfirmed) div.classList.add('confirmed');
-    div.style.marginBottom = '0'; // عشان هنحط شريط العرض تحته
+    div.style.display = 'flex';
+    div.style.gap = '5px';
+    div.style.alignItems = 'center';
 
     div.innerHTML = `
-        <input type="text" list="smartProductsList" class="product-name-input" placeholder="اسم المنتج..." value="${nameVal}" required>
-        <input type="number" class="product-price-input" placeholder="السعر" value="${priceVal}" required>
-        <input type="number" class="product-qty-input" placeholder="الكمية" value="${qtyVal}" min="1" required>
+        <input type="text" list="smartProductsList" class="product-name-input" placeholder="اسم المنتج..." value="${nameVal}" required style="flex:2;">
+        
+        <div style="display:flex; align-items:center; flex:1.5; position:relative; gap: 5px;">
+            <input type="number" class="product-price-input" placeholder="السعر" value="${priceVal}" required style="width: 100%;">
+            <div class="offer-container" style="display:none; position:absolute; top: -35px; right: 0; z-index:10; white-space: nowrap;"></div>
+        </div>
+
+        <input type="number" class="product-qty-input" placeholder="الكمية" value="${qtyVal}" min="1" required style="flex:1;">
         <button type="button" class="btn-confirm-pro interactive-btn">✔️</button>
         <button type="button" class="remove-product-btn interactive-btn">❌</button>
     `;
     
-    const offerContainer = document.createElement('div');
-    offerContainer.style.display = 'none'; // مخفي في البداية
-    
     wrapper.appendChild(div);
-    wrapper.appendChild(offerContainer);
     productsContainer.appendChild(wrapper);
 
-    let nameInput = div.querySelector('.product-name-input'), priceInput = div.querySelector('.product-price-input');
-    let qtyInput = div.querySelector('.product-qty-input'), confirmBtn = div.querySelector('.btn-confirm-pro'), removeBtn = div.querySelector('.remove-product-btn');
+    let nameInput = div.querySelector('.product-name-input');
+    let priceInput = div.querySelector('.product-price-input');
+    let qtyInput = div.querySelector('.product-qty-input');
+    let confirmBtn = div.querySelector('.btn-confirm-pro');
+    let removeBtn = div.querySelector('.remove-product-btn');
+    let offerContainer = div.querySelector('.offer-container');
+
     if (isConfirmed) confirmBtn.innerHTML = "✏️";
 
-    // السحب الذكي للأسعار وإظهار شريط العروض ⭐
+    // السحب الذكي للأسعار وإظهار شريط العروض النيون
     nameInput.addEventListener('input', () => {
         let selected = catalogData.find(p => p.name === nameInput.value);
         if (selected) { 
@@ -449,85 +539,104 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
             let offerP = parseFloat(selected.offerPrice) || 0;
             let isOfferActive = selected.isOffer === true || selected.isOffer === "true" || selected.isOffer === 1 || selected.isOffer === "TRUE";
             
-            priceInput.value = (isOfferActive && offerP > 0) ? offerP : baseP;
-            
-            // إظهار شريط العرض الاحترافي لو المنتج ليه سعر عرض
             if (offerP > 0) {
                 offerContainer.style.display = 'block';
                 offerContainer.innerHTML = `
                     <div class="invoice-offer-bar">
-                        <div class="offer-prices">أساسي: <span>${baseP}</span> | عرض: <span>${offerP}</span></div>
-                        <div class="offer-mini-switch">
-                            <span>تفعيل العرض</span>
-                            <label class="switch" style="width: 36px; height: 20px; margin-bottom:0;">
-                                <input type="checkbox" class="toggle-offer-btn" ${isOfferActive ? 'checked' : ''}>
-                                <span class="slider round" style="box-shadow: none;"></span>
-                            </label>
-                        </div>
+                        <span style="font-size:0.75rem;">عرض: ${offerP}</span>
+                        <input type="checkbox" class="toggle-offer-btn" ${isOfferActive ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer;">
                     </div>
                 `;
 
-                // لما الكاشير يطفي أو يشغل العرض من الفاتورة
-                offerContainer.querySelector('.toggle-offer-btn').addEventListener('change', (e) => {
+                priceInput.value = isOfferActive ? offerP : baseP;
+                priceInput.readOnly = isOfferActive; // يقفل السعر الأساسي لو العرض متفعل
+
+                let toggleBtn = offerContainer.querySelector('.toggle-offer-btn');
+                toggleBtn.addEventListener('change', (e) => {
                     let isChecked = e.target.checked;
                     priceInput.value = isChecked ? offerP : baseP;
+                    priceInput.readOnly = isChecked;
                     calculateTotal();
                     window.pushCatalogUpdate(selected.name, baseP, isChecked, offerP);
-                    showToast(isChecked ? "🎉 تم تفعيل العرض!" : "تم إيقاف العرض", isChecked ? "success" : "warning");
-                    setTimeout(loadDataFromServer, 1000);
+                    selected.isOffer = isChecked; // تحديث فوري في البرنامج
                 });
             } else {
                 offerContainer.style.display = 'none';
+                priceInput.value = baseP;
+                priceInput.readOnly = false;
             }
             calculateTotal(); 
         } else {
             offerContainer.style.display = 'none';
+            priceInput.readOnly = false;
         }
     });
 
-    priceInput.addEventListener('input', calculateTotal); qtyInput.addEventListener('input', calculateTotal);
+    priceInput.addEventListener('input', calculateTotal); 
+    qtyInput.addEventListener('input', calculateTotal);
 
-    // تأكيد المنتج وتحديث الكتالوج بذكاء ⭐
+    // تأكيد المنتج وسؤال الحفظ الذكي
     confirmBtn.addEventListener('click', () => {
-        if (!nameInput.value || priceInput.value === "" || qtyInput.value === "") { showToast("يرجى إكمال البيانات!", "error"); return; }
+        if (!nameInput.value || priceInput.value === "" || qtyInput.value === "") return;
         
         if (div.classList.contains('confirmed')) { 
-            div.classList.remove('confirmed'); confirmBtn.innerHTML = "✔️"; 
-            nameInput.removeAttribute('readonly'); priceInput.removeAttribute('readonly'); qtyInput.removeAttribute('readonly');
+            div.classList.remove('confirmed'); 
+            confirmBtn.innerHTML = "✔️"; 
+            nameInput.readOnly = false; 
+            
+            // ميفتحش السعر لو العرض متفعل
+            let selected = catalogData.find(p => p.name === nameInput.value);
+            let isOfferActive = selected && (selected.isOffer === true || selected.isOffer === "true" || selected.isOffer === 1);
+            if(!isOfferActive) priceInput.readOnly = false;
+            
+            qtyInput.readOnly = false;
         } else { 
-            div.classList.add('confirmed'); confirmBtn.innerHTML = "✏️"; calculateTotal(); 
-            nameInput.setAttribute('readonly', true); priceInput.setAttribute('readonly', true); qtyInput.setAttribute('readonly', true);
+            div.classList.add('confirmed'); 
+            confirmBtn.innerHTML = "✏️"; 
+            calculateTotal(); 
+            nameInput.readOnly = true; 
+            priceInput.readOnly = true; 
+            qtyInput.readOnly = true;
             
             let currentPrice = parseFloat(priceInput.value);
             let cProd = catalogData.find(p => p.name === nameInput.value);
             
-            // سؤال الكاشير لو كتب سعر جديد بإيده
             if(cProd) {
                 let isOfferActive = cProd.isOffer === true || cProd.isOffer === "true" || cProd.isOffer === 1;
                 let baseP = parseFloat(cProd.price) || 0;
                 let offerP = parseFloat(cProd.offerPrice) || 0;
                 
                 if(isOfferActive && currentPrice !== offerP && currentPrice !== baseP) {
-                    if(confirm("هل تريد حفظ السعر الجديد (" + currentPrice + " ج.م) كسعر عرض لـ " + cProd.name + "؟")) {
+                    if(confirm("تم تعديل السعر لـ " + currentPrice + " هل تريد حفظه كسعر عرض دائم في الكتالوج؟")) {
                         window.pushCatalogUpdate(cProd.name, baseP, true, currentPrice);
-                        showToast("✅ تم تحديث الكتالوج", "success");
-                        setTimeout(loadDataFromServer, 1000);
+                        cProd.offerPrice = currentPrice;
                     }
                 } else if (!isOfferActive && currentPrice !== baseP) {
-                    if(confirm("هل تريد حفظ السعر (" + currentPrice + " ج.م) كسعر أساسي لـ " + cProd.name + "؟")) {
+                    if(confirm("تم تعديل السعر لـ " + currentPrice + " هل تريد حفظه كسعر أساسي دائم في الكتالوج؟")) {
                         window.pushCatalogUpdate(cProd.name, currentPrice, false, offerP);
-                        showToast("✅ تم تحديث الكتالوج", "success");
-                        setTimeout(loadDataFromServer, 1000);
+                        cProd.price = currentPrice;
                     }
                 }
             } else {
                 window.pushCatalogUpdate(nameInput.value, currentPrice, false, 0);
-                showToast("✅ تم إضافة المنتج للكتالوج", "success");
-                setTimeout(loadDataFromServer, 1000);
+                catalogData.push({name: nameInput.value, price: currentPrice, isOffer: false, offerPrice: 0});
+                updateSmartProductsList();
             }
         }
     });
     removeBtn.addEventListener('click', () => { wrapper.remove(); calculateTotal(); });
+}
+
+// دالة تحديث قائمة البحث الذكي السريعة
+function updateSmartProductsList() {
+    let dl = document.getElementById('smartProductsList');
+    if(!dl) return;
+    dl.innerHTML = '';
+    catalogData.forEach(p => {
+        let opt = document.createElement('option');
+        opt.value = p.name;
+        dl.appendChild(opt);
+    });
 }
 if(document.getElementById('addProductBtn')) document.getElementById('addProductBtn').addEventListener('click', () => addProductRow());
 if (productsContainer && productsContainer.children.length === 0) addProductRow();
@@ -1243,3 +1352,73 @@ if (darkModeToggle) {
         }
     });
 }
+// ==========================================
+// 🚀 إضافات الذكاء الاصطناعي (استلام الفرع + تنبيه العميل + الطباعة)
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    
+    // 1. إشعار العميل المسجل مسبقاً (بيشتغل لما تكتب الرقم وتبعد الماوس)
+    let phoneInput = document.querySelector('input[placeholder*="رقم"]'); // بيلقط خانة التليفون
+    if(phoneInput) {
+        phoneInput.addEventListener('blur', (e) => {
+            let phone = e.target.value.trim();
+            if(phone.length >= 8 && typeof customerData !== 'undefined') {
+                 let exists = customerData.some(c => c.phone.includes(phone));
+                 if(exists) showToast("✅ هذا العميل مسجل لدينا مسبقاً!", "success");
+            }
+        });
+    }
+
+    // 2. ذكاء الاستلام من الفرع في شاشة الإنشاء
+    document.addEventListener('change', (e) => {
+        if(e.target.tagName.toLowerCase() === 'select') {
+            let val = e.target.value;
+            if(val.includes('فرع') || val.includes('استلام')) {
+                let addrInput = document.getElementById('customerAddress');
+                let shipInput = document.querySelector('input[placeholder*="الشحن"]');
+                let driverSelect = document.getElementById('assignDriverSelect');
+                
+                if(addrInput) { addrInput.value = 'استلام من الفرع'; addrInput.readOnly = true; }
+                if(shipInput) { shipInput.value = 0; if(typeof calculateTotal === 'function') calculateTotal(); }
+                if(driverSelect) { driverSelect.disabled = true; }
+            } else {
+                let addrInput = document.getElementById('customerAddress');
+                let driverSelect = document.getElementById('assignDriverSelect');
+                if(addrInput && addrInput.value === 'استلام من الفرع') { addrInput.value = ''; addrInput.readOnly = false; }
+                if(driverSelect) { driverSelect.disabled = false; }
+            }
+        }
+    });
+
+    // 3. ذكاء الطباعة (إخفاء العنوان وقيد التجهيز أوتوماتيك)
+    window.addEventListener('beforeprint', () => {
+        let orderTypeEl = document.querySelector('select'); // بيفحص نوع الأوردر
+        let isBranch = false;
+        
+        // لو الفاتورة معروضة وفيها كلمة استلام من الفرع
+        document.querySelectorAll('*').forEach(el => {
+            if(el.innerText && (el.innerText.includes('استلام من الفرع') || el.innerText.includes('استلام فرع'))) {
+                isBranch = true;
+            }
+        });
+
+        if (isBranch) {
+            // بيخفي أي سطر في الفاتورة فيه عنوان أو قيد التجهيز
+            document.querySelectorAll('p, div, tr, li').forEach(el => {
+                let txt = el.innerText || "";
+                if (txt.includes('العنوان:') || txt.includes('قيد التجهيز')) {
+                    el.setAttribute('data-hide-print', 'true');
+                    el.style.display = 'none';
+                }
+            });
+        }
+    });
+
+    window.addEventListener('afterprint', () => {
+        // بيرجعهم تاني بعد الطباعة عشان الشاشة متبوظش
+        document.querySelectorAll('[data-hide-print="true"]').forEach(el => {
+            el.style.display = '';
+            el.removeAttribute('data-hide-print');
+        });
+    });
+});
