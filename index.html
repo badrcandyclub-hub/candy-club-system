@@ -391,15 +391,15 @@
 
     <div id="zoneModal" class="modal-overlay">
         <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
-            <h3>📍 إدارة المناطق</h3>
-            <input type="text" id="newZoneName" placeholder="اسم المنطقة">
-            <input type="number" id="newZonePrice" placeholder="سعر الشحن">
-            <input type="text" id="newZoneDuration" placeholder="مدة التوصيل">
-            <select id="newZoneType">
+           <h3>📍 إدارة المناطق</h3>
+            <select id="newZoneType" style="margin-bottom: 15px;">
                 <option value="same_day">إسكندرية (نفس اليوم)</option>
                 <option value="next_day">إسكندرية (تاني يوم)</option>
                 <option value="gov">محافظات</option>
             </select>
+            <input type="text" id="newZoneName" placeholder="اسم المنطقة">
+            <input type="number" id="newZonePrice" placeholder="سعر الشحن">
+            <input type="text" id="newZoneDuration" placeholder="مدة التوصيل">
             <div class="modal-actions">
                 <button id="closeZoneModal" class="btn-cancel">إلغاء</button>
                 <button id="addZoneBtn" class="btn-confirm">حفظ المنطقة</button>
