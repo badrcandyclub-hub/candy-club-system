@@ -1,6 +1,6 @@
 /* =========================================
    🍬 CANDY CLUB — Premium UI System
-   Desktop-First | RTL | V13 Enhanced
+   Full Width | RTL | V13 Enhanced
    ========================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=Tajawal:wght@300;400;500;700&display=swap');
@@ -204,7 +204,7 @@ h1, h2, h3, h4, h5 {
    ========================================= */
 .app-content {
     padding: 24px 28px;
-    max-width: 1280px;
+    max-width: 100%; /* دعم الشاشة الكاملة للكومبيوتر ⭐ */
     margin: 0 auto;
 }
 
@@ -547,7 +547,6 @@ textarea {
     font-size: 0.9rem;
 }
 
-/* iPhone Switch */
 .switch {
     position: relative;
     display: inline-block;
@@ -1375,110 +1374,114 @@ body.dark-mode #logoUploadBox:hover {
 }
 
 /* =========================================
-   21. Desktop Layout — شاشات كبيرة
+   21. Desktop Layout — شاشات كبيرة (Full Width) ⭐
    ========================================= */
 @media (min-width: 900px) {
 
-    body {
-        padding-bottom: 0;
+    /* تم إلغاء القيود على عرض الشاشة لتصبح Full Width وتلغي الفراغات */
+    .app-content {
+        padding: 30px 40px;
+        max-width: 100%; /* العرض الكامل */
+        margin: 0;
     }
 
     .app-header {
         padding: 0 40px;
     }
 
-    .app-content {
-        padding: 28px 40px;
-        padding-bottom: 40px;
-    }
-
-    /* الناف يبقى شريط جانبي على الديسكتوب */
+    /* البار السفلي يظل ثابت أسفل الشاشة زي الموبايل بالظبط ⭐ */
     .bottom-nav {
         position: fixed;
-        top: var(--header-height);
         bottom: 0;
+        left: 0;
         right: 0;
-        left: auto;
-        width: 90px;
-        height: auto;
-        flex-direction: column;
-        justify-content: flex-start;
-        padding: 24px 8px;
-        gap: 4px;
-        border-top: none;
-        border-left: 1px solid var(--border);
-        box-shadow: -2px 0 20px rgba(30,40,90,0.06);
+        top: auto;
+        width: 100%;
+        height: var(--nav-height);
+        flex-direction: row;
+        justify-content: space-around;
+        padding: 0 20px;
+        border-top: 1px solid var(--border);
+        border-left: none;
+        box-shadow: 0 -2px 20px rgba(30,40,90,0.08);
     }
 
     .nav-item {
-        width: 74px;
-        padding: 12px 8px;
+        width: auto;
+        padding: 8px 24px;
         border-radius: var(--radius);
+        flex-direction: column;
+        justify-content: center;
     }
 
     .nav-item.active::before {
-        top: 50%;
-        right: 0;
-        left: auto;
-        transform: translateY(-50%);
-        width: 3px;
-        height: 28px;
-        border-radius: 4px 0 0 4px;
+        top: 0;
+        right: auto;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 40px;
+        height: 3px;
+        border-radius: 0 0 4px 4px;
     }
 
-    /* المحتوى يبتعد عن الناف الجانبي */
-    .app-content {
-        margin-right: 90px;
-        max-width: calc(1280px - 90px);
-    }
-
-    /* الـ toast تبقى في الكورنر */
     .toast-container {
         top: 78px;
-        right: 110px;
+        right: 40px;
         left: auto;
         max-width: 360px;
     }
 
-    /* شاشة الإنشاء تبقى 2 كولومن */
+    /* تقسيم الكروت في الشاشات الكبيرة عشان تملى المساحة صح */
+    #create-tab {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        align-items: start;
+    }
+
+    /* نخلي الكارت الأول ياخد المساحة كلها لوحده عشان الفورم تفرد */
     #create-tab .section-card {
-        max-width: 720px;
+        grid-column: 1 / -1; 
+        max-width: 100%;
     }
 
-    /* التقارير 3 كولومن */
     #reports-tab .stats-row {
-        gap: 16px;
+        gap: 20px;
     }
 
-    /* الشحن 2 كولومن */
     #shipping-tab {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 20px;
+        gap: 24px;
         align-items: start;
     }
 
     #shipping-tab .shipping-actions-row {
         grid-column: 1 / -1;
     }
-}
 
-@media (min-width: 1200px) {
-    .app-content {
-        padding: 32px 48px;
-        margin-right: 90px;
-    }
-
-    #create-tab {
+    /* ترتيب كروت الكتالوج والنواقص جنب بعض */
+    #catalog-tab {
         display: grid;
-        grid-template-columns: 2fr 1fr;
+        grid-template-columns: 1fr 1fr;
         gap: 24px;
         align-items: start;
     }
+}
 
+@media (min-width: 1200px) {
+    /* شاشات الكومبيوتر الواسعة جداً */
+    .app-content {
+        padding: 40px 60px;
+    }
+
+    #create-tab {
+        grid-template-columns: 2fr 1.5fr; 
+    }
+
+    /* كارت إنشاء طلب ياخد مساحة أكبر */
     #create-tab .section-card:first-child {
-        max-width: none;
-        grid-column: 1;
+        grid-column: 1 / -1; 
     }
 }
 
@@ -1497,4 +1500,5 @@ body.dark-mode #logoUploadBox:hover {
     .nav-item .icon { font-size: 1.2rem; }
     .modal-content { padding: 22px 18px; }
     .toast-container { top: 72px; }
+    #catalog-tab { display: block; }
 }
