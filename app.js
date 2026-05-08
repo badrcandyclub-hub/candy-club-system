@@ -1,5 +1,5 @@
 // ==========================================
-// 🌐 العقل المدبر - سيستم كاندي كلوب (النسخة V12 - الكاملة والمحمية)
+// 🌐 العقل المدبر - سيستم كاندي كلوب (النسخة V13 - الشاملة والمحمية)
 // ==========================================
 
 const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbwAYO1cCYq-qjlhj4T1jW6639AqHOAcA2ADFyP91c49KcJVLFY7TwoXmP8rewWgXOIolw/exec";
@@ -61,26 +61,25 @@ setupModal('openDriverModalBtn', 'driverModal', 'closeDriverModal');
 setupModal('openSuspendedBtn', 'suspendedModal', 'closeSuspendedModal');
 
 // ==========================================
-// 3. تحميل الداتا الأساسية من الإكسيل
+// 3. تحميل الداتا الأساسية من الإكسيل (شامل الكتالوج والنواقص)
 // ==========================================
 let shippingData = {};
 let productsData = [];
+let catalogData = []; // داتا الكتالوج الجديدة
+let oosData = [];     // داتا النواقص الجديدة
 let orderHistoryData = [];
-let currentFilterDate = new Date().toLocaleDateString('en-CA'); // يدينا صيغة YYYY-MM-DD بشكل نظيف
+let currentFilterDate = new Date().toLocaleDateString('en-CA'); 
 
 window.onload = () => {
-    // تفعيل الوضع الليلي لو محفوظ
     if(localStorage.getItem('candyDarkMode') === 'true') {
         document.body.classList.add('dark-mode');
         let toggle = document.getElementById('darkModeToggle');
         if(toggle) toggle.checked = true;
     }
 
-    // ضبط تاريخ الفلتر الافتراضي على اليوم
     let historyDateInput = document.getElementById('historyDateFilter');
     if(historyDateInput) historyDateInput.value = currentFilterDate;
 
-    // زر تحديث السجل
     let loadDateBtn = document.getElementById('loadDateBtn');
     if(loadDateBtn) {
         loadDateBtn.addEventListener('click', () => {
@@ -102,18 +101,29 @@ function loadDataFromServer() {
         .then(data => {
             if (syncStatus) { syncStatus.innerText = "متصل"; syncStatus.style.color = "#00C853"; }
 
-            // 1. المحافظات والمناطق (مع أزرار التعديل والحذف)
+            // --- 1. الكتالوج والنواقص (الجديد) ---
+            catalogData = data.catalog || [];
+            renderCatalog(catalogData);
+            
+            oosData = data.outOfStock || [];
+            renderOutOfStock(oosData);
+
+            // --- 2. المحافظات والمناطق (التقسيم الجديد في V13) ---
             const govSelect = document.getElementById('governorate');
-            const zonesDisplayList = document.getElementById('zonesDisplayList');
-            if (zonesDisplayList) zonesDisplayList.innerHTML = '';
+            const zonesAlexList = document.getElementById('zonesAlexList');
+            const zonesGovList = document.getElementById('zonesGovList');
+            
+            if (zonesAlexList) zonesAlexList.innerHTML = '';
+            if (zonesGovList) zonesGovList.innerHTML = '';
             if (govSelect) govSelect.innerHTML = '<option value="">-- اختر من القائمة --</option>'; 
             shippingData = {}; 
 
-            const renderZoneItem = (z, zoneType) => {
+            const renderZoneItem = (z, zoneType, container) => {
                 shippingData[z.name] = z;
-                if (zonesDisplayList) {
-                    zonesDisplayList.innerHTML += `
-                        <div class="data-row" style="align-items:center;">
+                if (container) {
+                    let specialClass = z.type === 'next_day' ? 'zone-next-day' : '';
+                    container.innerHTML += `
+                        <div class="data-row ${specialClass}" style="align-items:center;">
                             <div style="flex:1; text-align:right;"><strong>${z.name}</strong> <br> <span class="price-badge">${z.price} ج.م</span> <small style="color:#777;">${z.duration}</small></div>
                             <div style="display:flex; gap:5px;">
                                 <button type="button" class="btn-outline interactive-btn" style="padding: 4px 8px; font-size:0.8rem;" onclick="editZoneUI('${z.name}', '${z.price}', '${z.type}', '${z.duration}')">✏️</button>
@@ -125,16 +135,22 @@ function loadDataFromServer() {
 
             if (data.alex && data.alex.length > 0) {
                 let optgroup = document.createElement('optgroup'); optgroup.label = "⚓ مناطق الإسكندرية";
-                data.alex.forEach(z => { optgroup.innerHTML += `<option value="${z.name}">${z.name}</option>`; renderZoneItem(z, 'alex'); });
+                data.alex.forEach(z => { 
+                    optgroup.innerHTML += `<option value="${z.name}">${z.name}</option>`; 
+                    renderZoneItem(z, 'alex', zonesAlexList); 
+                });
                 if(govSelect) govSelect.appendChild(optgroup);
             }
             if (data.govs && data.govs.length > 0) {
                 let optgroup = document.createElement('optgroup'); optgroup.label = "🚚 المحافظات";
-                data.govs.forEach(z => { optgroup.innerHTML += `<option value="${z.name}">${z.name}</option>`; renderZoneItem(z, 'govs'); });
+                data.govs.forEach(z => { 
+                    optgroup.innerHTML += `<option value="${z.name}">${z.name}</option>`; 
+                    renderZoneItem(z, 'govs', zonesGovList); 
+                });
                 if(govSelect) govSelect.appendChild(optgroup);
             }
 
-            // 2. المناديب (مع أزرار التعديل والحذف)
+            // --- 3. المناديب ---
             const driverSelect = document.getElementById('driverNameSelect');
             const driversDisplayList = document.getElementById('driversDisplayList');
             const assignDriverSelect = document.getElementById('assignDriverSelect');
@@ -163,12 +179,12 @@ function loadDataFromServer() {
                 });
             }
 
-            // 3. المنتجات والمودريتور
+            // --- 4. المنتجات والمودريتور ---
             const smartProductsList = document.getElementById('smartProductsList');
-            if (data.products && smartProductsList) {
+            if (smartProductsList) {
                 smartProductsList.innerHTML = '';
-                productsData = data.products;
-                productsData.forEach(p => { smartProductsList.innerHTML += `<option value="${p.name}">`; });
+                // ندمج المنتجات القديمة مع الكتالوج عشان الاقتراحات تكون كاملة
+                catalogData.forEach(p => { smartProductsList.innerHTML += `<option value="${p.name}">`; });
             }
 
             const modSelect = document.getElementById('moderatorSelect');
@@ -190,14 +206,13 @@ function loadDataFromServer() {
                 modsList.innerHTML = '<p class="empty-msg">لا يوجد كاشيرية مسجلين</p>';
             }
 
-            // 4. التقارير 
+            // --- 5. التقارير والسجل ---
             if (document.getElementById('todayCount')) document.getElementById('todayCount').innerText = data.todayOrders || 0;
             if (document.getElementById('todaySales')) document.getElementById('todaySales').innerText = data.todaySales || 0;
             if (document.getElementById('monthSales')) document.getElementById('monthSales').innerText = data.monthSales || 0;
             if (document.getElementById('completedCount')) document.getElementById('completedCount').innerText = data.completedOrders || 0;
             if (document.getElementById('topProduct')) document.getElementById('topProduct').innerText = data.topProduct || "--";
 
-            // 5. السجل وغرفة العمليات
             orderHistoryData = data.history || [];
             renderHistoryList(orderHistoryData);
             renderShippingRoom(orderHistoryData);
@@ -212,24 +227,20 @@ function loadDataFromServer() {
 // ==========================================
 function calculateDeliveryDateSkippingFriday(durationText) {
     if (!durationText) return "";
-    
-    // استخراج الرقم من النص (مثلا "3 أيام" يطلع منها رقم 3)
     let match = durationText.match(/\d+/);
-    if (!match) return durationText; // لو مفيش رقم، يرجع النص العادي
+    if (!match) return durationText; 
     
     let daysToAdd = parseInt(match[0]);
     let d = new Date();
     let added = 0;
     
-    // هنمشي يوم بيوم، لو الجمعة مش هنحسبه
     while(added < daysToAdd) {
         d.setDate(d.getDate() + 1);
-        if(d.getDay() !== 5) { // 5 = الجمعة
+        if(d.getDay() !== 5) { 
             added++;
         }
     }
     
-    // تنسيق التاريخ النظيف: الإثنين، 15 مايو
     let options = { weekday: 'long', month: 'numeric', day: 'numeric' };
     return d.toLocaleDateString('ar-EG', options);
 }
@@ -277,8 +288,10 @@ function triggerGovCalc() {
         let type = deliveryTypeSelect ? deliveryTypeSelect.value : 'normal';
         if (type === 'special_date') {
             dateDisplay.innerText = "حسب التاريخ المختار 📅";
+        } else if (info.type === 'next_day') {
+            // إخفاء المدة عشان كدة كدة إسكندرية تاني يوم ⭐
+            dateDisplay.innerText = "تاني يوم 🚚";
         } else {
-            // هنا بيشتغل سحر تخطي الجمعة! 🚀
             let exactDate = calculateDeliveryDateSkippingFriday(info.duration);
             dateDisplay.innerText = exactDate ? `المتوقع: ${exactDate}` : `خلال ${info.duration}`;
         }
@@ -326,7 +339,6 @@ function renderHistoryList(orders) {
     });
 }
 
-// الطباعة الأصلية من السجل
 window.printOldOrder = function(orderId) {
     let order = orderHistoryData.find(o => o.id === orderId);
     if(!order) return;
@@ -374,7 +386,7 @@ if (searchBtn && orderSearchInput) {
 }
 
 // ==========================================
-// 6. بحث الهاتف وتنسيق المنتجات
+// 6. بحث الهاتف والمنتجات (شاملة العروض الذكية ⭐)
 // ==========================================
 const phoneInput = document.getElementById('customerPhone');
 const phoneStatus = document.getElementById('phoneCheckStatus');
@@ -413,16 +425,52 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
     let qtyInput = div.querySelector('.product-qty-input'), confirmBtn = div.querySelector('.btn-confirm-pro'), removeBtn = div.querySelector('.remove-product-btn');
     if (isConfirmed) confirmBtn.innerHTML = "✏️";
 
+    // السحب الذكي للأسعار والعروض ⭐
     nameInput.addEventListener('input', () => {
-        let selected = productsData.find(p => p.name === nameInput.value);
-        if (selected) { priceInput.value = selected.price; calculateTotal(); }
+        let selected = catalogData.find(p => p.name === nameInput.value);
+        if (selected) { 
+            let isOfferActive = selected.isOffer === true || selected.isOffer === "true" || selected.isOffer === 1 || selected.isOffer === "TRUE";
+            if(isOfferActive && parseFloat(selected.offerPrice) > 0) {
+                priceInput.value = selected.offerPrice;
+                showToast("🎉 تم تطبيق سعر العرض!", "success");
+            } else {
+                priceInput.value = selected.price; 
+            }
+            calculateTotal(); 
+        }
     });
+
     priceInput.addEventListener('input', calculateTotal); qtyInput.addEventListener('input', calculateTotal);
 
+    // تأكيد المنتج وتحديث الكتالوج في الخلفية لو اتغير ⭐
     confirmBtn.addEventListener('click', () => {
         if (!nameInput.value || priceInput.value === "" || qtyInput.value === "") { showToast("يرجى إكمال البيانات!", "error"); return; }
-        if (div.classList.contains('confirmed')) { div.classList.remove('confirmed'); confirmBtn.innerHTML = "✔️"; } 
-        else { div.classList.add('confirmed'); confirmBtn.innerHTML = "✏️"; calculateTotal(); }
+        
+        if (div.classList.contains('confirmed')) { 
+            div.classList.remove('confirmed'); confirmBtn.innerHTML = "✔️"; 
+        } else { 
+            div.classList.add('confirmed'); confirmBtn.innerHTML = "✏️"; calculateTotal(); 
+            
+            // تحديث الكتالوج الصامت لو الكاشير عدل السعر بإيده في الفاتورة
+            let currentPrice = parseFloat(priceInput.value);
+            let cProd = catalogData.find(p => p.name === nameInput.value);
+            
+            if(cProd) {
+                let isOfferActive = cProd.isOffer === true || cProd.isOffer === "true" || cProd.isOffer === 1;
+                let baseP = parseFloat(cProd.price) || 0;
+                let offerP = parseFloat(cProd.offerPrice) || 0;
+                
+                // لو العرض شغال والسعر مختلف عن العرض، حدث العرض. لو مش شغال ومختلف عن الأساسي، حدث الأساسي.
+                if(isOfferActive && currentPrice !== offerP) {
+                    window.pushCatalogUpdate(cProd.name, baseP, true, currentPrice);
+                } else if (!isOfferActive && currentPrice !== baseP) {
+                    window.pushCatalogUpdate(cProd.name, currentPrice, false, offerP);
+                }
+            } else {
+                // منتج جديد خالص اتكتب لأول مرة، سجله في الكتالوج
+                window.pushCatalogUpdate(nameInput.value, currentPrice, false, 0);
+            }
+        }
     });
     removeBtn.addEventListener('click', () => { div.remove(); calculateTotal(); });
 }
@@ -607,7 +655,7 @@ if(whatsappReviewBtn) {
 }
 
 // ==========================================
-// 9. الحفظ والطباعة (مع المودريتور وقفل الزرار) ⭐
+// 9. الحفظ والطباعة (مع المودريتور وقفل الزرار) 
 // ==========================================
 let saveAndPrintBtn = document.getElementById('saveAndPrintBtn');
 if(saveAndPrintBtn) {
@@ -619,7 +667,13 @@ if(saveAndPrintBtn) {
             let n = row.querySelector('.product-name-input').value, p = row.querySelector('.product-price-input').value, q = row.querySelector('.product-qty-input').value;
             let rowTotal = parseFloat(p) * parseFloat(q);
             productsListText += `${n} - الكمية: ${q} (${rowTotal}ج)\n`;
-            printItemsHtml += `<tr><td>${n}</td><td>${p}</td><td>${q}</td><td>${rowTotal}</td></tr>`;
+            
+            // إضافة شارة عرض في الفاتورة لو المنتج ده عليه عرض
+            let cProd = catalogData.find(cp => cp.name === n);
+            let isOffer = cProd && (cProd.isOffer === true || cProd.isOffer === "true" || cProd.isOffer === 1);
+            let nDisplay = isOffer ? `<span class="offer-badge">عرض</span> ${n}` : n;
+            
+            printItemsHtml += `<tr><td>${nDisplay}</td><td>${p}</td><td>${q}</td><td>${rowTotal}</td></tr>`;
         });
         
         if (productsListText === "") { showToast("لا يمكن حفظ أوردر بدون منتجات!", "error"); return; }
@@ -704,10 +758,9 @@ if(saveAndPrintBtn) {
 }
 
 // ==========================================
-// 10. الإضافة، التعديل، والحذف (المناطق، المناديب، المودريتور) ⭐
+// 10. الإضافة، التعديل، والحذف (المناطق، المناديب، المودريتور) 
 // ==========================================
 
-// دالة حذف عامة متصلة بالإكسيل
 window.deleteItem = function(action, name, zoneType = '') {
     if(!confirm(`هل أنت متأكد من حذف (${name}) نهائياً؟`)) return;
     let formData = new URLSearchParams();
@@ -723,7 +776,6 @@ window.deleteItem = function(action, name, zoneType = '') {
         });
 };
 
-// دوال لتعبئة مدخلات التعديل
 window.editZoneUI = function(name, price, type, duration) {
     if(document.getElementById('newZoneName')) document.getElementById('newZoneName').value = name;
     if(document.getElementById('newZonePrice')) document.getElementById('newZonePrice').value = price;
@@ -765,7 +817,6 @@ if (addZoneBtnAction) {
         .then(() => { 
             showToast(`✅ تم ${isExisting ? 'تعديل' : 'إضافة'} المنطقة!`, "success"); 
             setBtnLoading(addZoneBtnAction, false);
-            // تصفير المدخلات
             document.getElementById('newZoneName').value = ""; document.getElementById('newZonePrice').value = ""; document.getElementById('newZoneDuration').value = "";
             loadDataFromServer();
         }).catch(()=>{ setBtnLoading(addZoneBtnAction, false); });
@@ -797,7 +848,6 @@ if (addDriverBtnAction) {
     });
 }
 
-// إضافة كاشير جديد من الإعدادات ⭐
 let addModeratorBtn = document.getElementById('addModeratorBtn');
 if (addModeratorBtn) {
     addModeratorBtn.addEventListener('click', () => {
@@ -929,10 +979,180 @@ function updateAdvancedDashboard(history) {
 }
 
 // ==========================================
+// 12. نظام الكتالوج والنواقص الشامل (الجديد ⭐)
+// ==========================================
+
+// دالة تحديث الكتالوج الصامتة
+window.pushCatalogUpdate = function(name, price, isOffer, offerPrice) {
+    let formData = new URLSearchParams();
+    formData.append('action', 'updateCatalog');
+    formData.append('name', name);
+    formData.append('price', price);
+    formData.append('isOffer', isOffer);
+    formData.append('offerPrice', offerPrice);
+    fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData });
+};
+
+// عرض الكتالوج
+function renderCatalog(catalogList) {
+    let container = document.getElementById('catalogListContainer');
+    if(!container) return;
+    container.innerHTML = '';
+    
+    if(catalogList.length === 0) {
+        container.innerHTML = '<p class="empty-msg">الكتالوج فارغ.</p>';
+        return;
+    }
+
+    catalogList.forEach(p => {
+        let isOfferActive = p.isOffer === true || p.isOffer === "true" || p.isOffer === 1;
+        let div = document.createElement('div');
+        div.className = 'data-row catalog-row';
+        div.innerHTML = `
+            <div class="catalog-info">
+                <strong>${p.name}</strong>
+                <span class="catalog-price">أساسي: ${p.price} ج.م</span>
+                ${isOfferActive ? `<span class="catalog-offer-price">سعر العرض: ${p.offerPrice} ج.م</span>` : ''}
+            </div>
+            <div style="display:flex; flex-direction:column; gap:8px; align-items:center;">
+                <label class="switch" title="تفعيل/إيقاف العرض">
+                    <input type="checkbox" class="offer-toggle" ${isOfferActive ? 'checked' : ''}>
+                    <span class="slider round"></span>
+                </label>
+                <button class="btn-outline interactive-btn edit-cat-btn" style="padding:4px; font-size:0.7rem;">تعديل ✏️</button>
+            </div>
+        `;
+
+        // تفعيل وإلغاء العرض
+        div.querySelector('.offer-toggle').addEventListener('change', (e) => {
+            let newState = e.target.checked;
+            let currentOffer = p.offerPrice || p.price;
+            if(newState && !p.offerPrice) {
+                currentOffer = prompt(`أدخل سعر العرض لـ ${p.name}:`, p.price);
+                if(!currentOffer) { e.target.checked = false; return; }
+            }
+            window.pushCatalogUpdate(p.name, p.price, newState, currentOffer);
+            showToast(newState ? "✅ تم تفعيل العرض" : "❌ تم إيقاف العرض", "success");
+            setTimeout(loadDataFromServer, 1000);
+        });
+
+        // تعديل السعر
+        div.querySelector('.edit-cat-btn').addEventListener('click', () => {
+            let newPrice = prompt(`تعديل السعر الأساسي لـ ${p.name}:`, p.price);
+            if(newPrice) {
+                window.pushCatalogUpdate(p.name, newPrice, isOfferActive, p.offerPrice);
+                showToast("✅ تم تعديل السعر", "success");
+                setTimeout(loadDataFromServer, 1000);
+            }
+        });
+
+        container.appendChild(div);
+    });
+}
+
+// زر إضافة منتج للكتالوج
+let addCatalogBtn = document.getElementById('addCatalogBtn');
+if(addCatalogBtn) {
+    addCatalogBtn.addEventListener('click', () => {
+        let n = document.getElementById('newCatalogName').value;
+        let p = document.getElementById('newCatalogPrice').value;
+        if(!n || !p) { showToast("أدخل اسم المنتج والسعر", "error"); return; }
+        
+        setBtnLoading(addCatalogBtn, true);
+        window.pushCatalogUpdate(n, p, false, 0);
+        showToast("✅ تم إضافة المنتج", "success");
+        setTimeout(() => {
+            document.getElementById('newCatalogName').value = '';
+            document.getElementById('newCatalogPrice').value = '';
+            setBtnLoading(addCatalogBtn, false);
+            loadDataFromServer();
+        }, 1500);
+    });
+}
+
+// عرض النواقص
+function renderOutOfStock(oosList) {
+    let container = document.getElementById('outOfStockContainer');
+    if(!container) return;
+    container.innerHTML = '';
+
+    if(oosList.length === 0) {
+        container.innerHTML = '<p class="empty-msg">لا يوجد نواقص مسجلة حالياً.</p>';
+        return;
+    }
+
+    oosList.forEach(item => {
+        let div = document.createElement('div');
+        div.className = 'data-row';
+        div.style.alignItems = 'center';
+        div.innerHTML = `
+            <div style="flex:1;">
+                <strong>${item.customer}</strong> <br>
+                <small style="color:var(--primary); font-weight:bold;">${item.product}</small>
+            </div>
+            <div style="display:flex; gap:5px;">
+                <button class="interactive-btn wa-oos-btn" style="background:#25D366; color:white; border:none; padding:5px 10px; border-radius:8px;">💬</button>
+                <button class="interactive-btn del-oos-btn" style="background:var(--danger); color:white; border:none; padding:5px 10px; border-radius:8px;">❌</button>
+            </div>
+        `;
+
+        // إرسال واتساب للعميل إن المنتج توفر
+        div.querySelector('.wa-oos-btn').addEventListener('click', () => {
+            let phone = item.phone.toString().replace(/'/g, '').trim();
+            if(phone.startsWith('0')) phone = '+2' + phone;
+            let msg = `أهلاً بك يا ${item.customer} 👋\nالمنتج اللي سألتنا عليه (${item.product}) متوفر دلوقتي وتقدر تطلبه! 🍬`;
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+        });
+
+        // حذف من النواقص
+        div.querySelector('.del-oos-btn').addEventListener('click', () => {
+            if(!confirm("مسح العميل من قائمة النواقص؟")) return;
+            let formData = newSearchParams();
+            formData.append('action', 'deleteOutOfStock');
+            formData.append('phone', item.phone);
+            formData.append('product', item.product);
+            fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData });
+            div.remove();
+            showToast("تم الحذف بنجاح", "success");
+        });
+
+        container.appendChild(div);
+    });
+}
+
+// زر إضافة للنواقص
+let addOosBtn = document.getElementById('addOosBtn');
+if(addOosBtn) {
+    addOosBtn.addEventListener('click', () => {
+        let c = document.getElementById('oosCustomer').value;
+        let ph = document.getElementById('oosPhone').value;
+        let pr = document.getElementById('oosProduct').value;
+        
+        if(!c || !ph || !pr) { showToast("أكمل بيانات العميل والمنتج الناقص", "error"); return; }
+        
+        setBtnLoading(addOosBtn, true);
+        let formData = new URLSearchParams();
+        formData.append('action', 'addOutOfStock');
+        formData.append('customer', c);
+        formData.append('phone', ph);
+        formData.append('product', pr);
+        
+        fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
+        .then(() => {
+            showToast("✅ تم تسجيل الناقص", "success");
+            setBtnLoading(addOosBtn, false);
+            document.getElementById('oosCustomer').value = '';
+            document.getElementById('oosPhone').value = '';
+            document.getElementById('oosProduct').value = '';
+            loadDataFromServer();
+        });
+    });
+}
+
+// ==========================================
 // التحديث الصامت للبيانات كل دقيقة 
 // ==========================================
 setInterval(() => {
-    // لا يقوم بالتحديث إذا كانت هناك نافذة مفتوحة عشان الداتا متهربش من تحت إيد المستخدم
     if(!document.querySelector('.modal-overlay.active')) {
         loadDataFromServer();
     }
