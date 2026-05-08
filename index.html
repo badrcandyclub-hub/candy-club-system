@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>كاندي كلوب - Candy Club V13</title>
+    <!-- تم إضافة id هنا عشان الـ JavaScript يعرف يخفي الاسم ده في الطباعة -->
+    <title id="page-title">كاندي كلوب - Candy Club V13</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
 </head>
@@ -17,6 +18,8 @@
             <span class="logo-sub">نظام الإدارة المتطور V13</span>
         </div>
         <div class="header-actions">
+            <!-- ⭐ إضافة زرار الحسابات المالية هنا عشان يكون سهل توصله في أي وقت -->
+            <button id="openFinancialsBtn" class="btn-outline interactive-btn" style="background:#2c3e50; color:white; border:none;">💰 المالية</button>
             <button id="openSuspendedBtn" class="btn-suspended interactive-btn">📂 المعلقة (<span id="suspendedCount">0</span>)</button>
             <div class="status-indicator">
                 <span id="sync-status">جاري التحميل...</span>
@@ -350,18 +353,22 @@
         </button>
     </nav>
 
+    <!-- ⭐ واجهة الفاتورة للطباعة -->
     <div id="print-receipt-template" class="print-only">
         <div class="receipt-header">
-            <img id="print-logo" src="" alt="Logo" style="display:none; max-width: 80px; margin-bottom: 10px;">
-            <h2 id="receipt-title">طلب عميل</h2>
+            <!-- ⭐ اللوجو جاهز يطبع هنا لو اترفع من الإعدادات -->
+            <img id="print-logo" src="" alt="Logo" style="display:none; max-width: 120px; margin: 0 auto 10px; display: block;">
+            <h2 id="receipt-type">طلب عميل</h2>
             <p style="font-weight:bold; font-size:16px;">Candy Club 🍬</p>
         </div>
         <hr>
         <div class="receipt-info">
-            <p>التاريخ: <span id="print-date"></span></p>
+            <!-- ⭐ تم إرجاع الوقت والتاريخ هنا -->
+            <p>التاريخ: <span id="print-date"></span> <span id="print-time"></span></p>
             <p>العميل: <span id="print-customer-name"></span></p>
             <p>الموبايل: <span id="print-phone"></span></p>
-            <p>العنوان: <span id="print-address"></span></p>
+            <p class="print-address-row">العنوان: <span id="print-address"></span></p>
+            <p class="print-status-row">الحالة: <span id="print-status"></span></p>
         </div>
         <table class="receipt-table">
             <thead><tr><th colspan="4">تفاصيل الطلب</th></tr></thead>
@@ -381,6 +388,7 @@
         </div>
     </div>
 
+    <!-- المودالات الأساسية (المعلقة، المناطق، المناديب) -->
     <div id="suspendedModal" class="modal-overlay">
         <div class="modal-content">
             <h3>📂 الطلبات المعلقة</h3>
@@ -427,6 +435,17 @@
             <hr style="margin: 15px 0;">
             <h4 style="color: #555; font-size: 0.95rem; margin-bottom: 10px;">🛵 المناديب المسجلين:</h4>
             <div id="driversDisplayList" class="data-list-container" style="max-height: 150px;"></div>
+        </div>
+    </div>
+
+    <!-- ⭐ الشاشة الجديدة لحسابات المناديب -->
+    <div id="financialsModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 90%; max-height: 90vh; overflow-y: auto;">
+            <h3 style="color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 15px;">📊 حسابات المناديب (المالية)</h3>
+            <div id="financialsDisplayList" class="data-list-container" style="min-height: 150px;">
+                <p class="empty-msg">جاري تحميل الحسابات من السيرفر...</p>
+            </div>
+            <button id="closeFinancialsModal" class="btn-cancel mt-10" style="width: 100%;">إغلاق الحسابات</button>
         </div>
     </div>
 
