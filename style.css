@@ -1432,7 +1432,7 @@ body.dark-mode #logoUploadBox:hover {
     }
 
     /* تقسيم الكروت في الشاشات الكبيرة عشان تملى المساحة صح */
-    #create-tab {
+    #create-tab.active {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 24px;
@@ -1449,7 +1449,7 @@ body.dark-mode #logoUploadBox:hover {
         gap: 20px;
     }
 
-    #shipping-tab {
+    #shipping-tab.active {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 24px;
@@ -1461,7 +1461,7 @@ body.dark-mode #logoUploadBox:hover {
     }
 
     /* ترتيب كروت الكتالوج والنواقص جنب بعض */
-    #catalog-tab {
+    #catalog-tab.active {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 24px;
@@ -1475,7 +1475,7 @@ body.dark-mode #logoUploadBox:hover {
         padding: 40px 60px;
     }
 
-    #create-tab {
+    #create-tab.active {
         grid-template-columns: 2fr 1.5fr; 
     }
 
@@ -1500,5 +1500,4 @@ body.dark-mode #logoUploadBox:hover {
     .nav-item .icon { font-size: 1.2rem; }
     .modal-content { padding: 22px 18px; }
     .toast-container { top: 72px; }
-    #catalog-tab { display: block; }
 }
