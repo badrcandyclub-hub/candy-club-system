@@ -344,6 +344,18 @@ textarea {
 }
 
 .hidden-field { display: none !important; }
+input[readonly] {
+    background-color: #f1f2f6;
+    color: #7B839A;
+    border-color: #E8ECF4;
+    cursor: not-allowed;
+    font-weight: 600;
+}
+body.dark-mode input[readonly] {
+    background-color: #13151F;
+    color: #5A6380;
+    border-color: #2D3150;
+}
 
 .duration-badge {
     color: var(--secondary);
@@ -485,6 +497,26 @@ textarea {
     background: var(--primary-glow);
     border-color: var(--primary);
 }
+/* شريط العروض داخل الفاتورة */
+.invoice-offer-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff0f8;
+    padding: 6px 10px;
+    border-radius: 8px;
+    margin-top: 5px;
+    font-size: 0.8rem;
+    border: 1px dashed var(--primary-light);
+    width: 100%;
+}
+body.dark-mode .invoice-offer-bar {
+    background: #2D1520;
+    border-color: var(--primary);
+}
+.invoice-offer-bar .offer-prices { color: var(--text-muted); font-weight: 600; }
+.invoice-offer-bar .offer-prices span { color: var(--primary); font-weight: bold; margin: 0 5px; }
+.offer-mini-switch { display: flex; align-items: center; gap: 5px; font-weight: bold; color: var(--primary); }
 
 /* =========================================
    8. الهدية والحسابات
@@ -739,6 +771,18 @@ input:checked + .slider:before { transform: translateX(24px); }
 .scroll-list::-webkit-scrollbar-track { background: var(--bg); border-radius: 10px; }
 .scroll-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 .scroll-list::-webkit-scrollbar-thumb:hover { background: var(--primary-light); }
+/* أسهم التمرير للقوائم */
+.scroll-list::-webkit-scrollbar-button,
+.data-list-container::-webkit-scrollbar-button {
+    display: block;
+    background-color: var(--border);
+    height: 12px;
+    border-radius: 4px;
+}
+.scroll-list::-webkit-scrollbar-button:hover,
+.data-list-container::-webkit-scrollbar-button:hover {
+    background-color: var(--primary-light);
+}
 
 .empty-msg {
     text-align: center;
