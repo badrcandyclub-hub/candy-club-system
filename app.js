@@ -1107,7 +1107,7 @@ function renderOutOfStock(oosList) {
         // حذف من النواقص
         div.querySelector('.del-oos-btn').addEventListener('click', () => {
             if(!confirm("مسح العميل من قائمة النواقص؟")) return;
-            let formData = newSearchParams();
+           let formData = new URLSearchParams();
             formData.append('action', 'deleteOutOfStock');
             formData.append('phone', item.phone);
             formData.append('product', item.product);
