@@ -412,7 +412,16 @@ if (phoneInput) phoneInput.addEventListener('change', performPhoneSearch);
 const productsContainer = document.getElementById('productsContainer');
 function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = false) {
     if(!productsContainer) return;
-    const div = document.createElement('div'); div.className = 'product-row'; if (isConfirmed) div.classList.add('confirmed');
+    const wrapper = document.createElement('div');
+    wrapper.style.display = 'flex';
+    wrapper.style.flexDirection = 'column';
+    wrapper.style.marginBottom = '10px';
+
+    const div = document.createElement('div'); 
+    div.className = 'product-row'; 
+    if (isConfirmed) div.classList.add('confirmed');
+    div.style.marginBottom = '0'; // عشان هنحط شريط العرض تحته
+
     div.innerHTML = `
         <input type="text" list="smartProductsList" class="product-name-input" placeholder="اسم المنتج..." value="${nameVal}" required>
         <input type="number" class="product-price-input" placeholder="السعر" value="${priceVal}" required>
@@ -420,59 +429,105 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
         <button type="button" class="btn-confirm-pro interactive-btn">✔️</button>
         <button type="button" class="remove-product-btn interactive-btn">❌</button>
     `;
-    productsContainer.appendChild(div);
+    
+    const offerContainer = document.createElement('div');
+    offerContainer.style.display = 'none'; // مخفي في البداية
+    
+    wrapper.appendChild(div);
+    wrapper.appendChild(offerContainer);
+    productsContainer.appendChild(wrapper);
+
     let nameInput = div.querySelector('.product-name-input'), priceInput = div.querySelector('.product-price-input');
     let qtyInput = div.querySelector('.product-qty-input'), confirmBtn = div.querySelector('.btn-confirm-pro'), removeBtn = div.querySelector('.remove-product-btn');
     if (isConfirmed) confirmBtn.innerHTML = "✏️";
 
-    // السحب الذكي للأسعار والعروض ⭐
+    // السحب الذكي للأسعار وإظهار شريط العروض ⭐
     nameInput.addEventListener('input', () => {
         let selected = catalogData.find(p => p.name === nameInput.value);
         if (selected) { 
+            let baseP = parseFloat(selected.price) || 0;
+            let offerP = parseFloat(selected.offerPrice) || 0;
             let isOfferActive = selected.isOffer === true || selected.isOffer === "true" || selected.isOffer === 1 || selected.isOffer === "TRUE";
-            if(isOfferActive && parseFloat(selected.offerPrice) > 0) {
-                priceInput.value = selected.offerPrice;
-                showToast("🎉 تم تطبيق سعر العرض!", "success");
+            
+            priceInput.value = (isOfferActive && offerP > 0) ? offerP : baseP;
+            
+            // إظهار شريط العرض الاحترافي لو المنتج ليه سعر عرض
+            if (offerP > 0) {
+                offerContainer.style.display = 'block';
+                offerContainer.innerHTML = `
+                    <div class="invoice-offer-bar">
+                        <div class="offer-prices">أساسي: <span>${baseP}</span> | عرض: <span>${offerP}</span></div>
+                        <div class="offer-mini-switch">
+                            <span>تفعيل العرض</span>
+                            <label class="switch" style="width: 36px; height: 20px; margin-bottom:0;">
+                                <input type="checkbox" class="toggle-offer-btn" ${isOfferActive ? 'checked' : ''}>
+                                <span class="slider round" style="box-shadow: none;"></span>
+                            </label>
+                        </div>
+                    </div>
+                `;
+
+                // لما الكاشير يطفي أو يشغل العرض من الفاتورة
+                offerContainer.querySelector('.toggle-offer-btn').addEventListener('change', (e) => {
+                    let isChecked = e.target.checked;
+                    priceInput.value = isChecked ? offerP : baseP;
+                    calculateTotal();
+                    window.pushCatalogUpdate(selected.name, baseP, isChecked, offerP);
+                    showToast(isChecked ? "🎉 تم تفعيل العرض!" : "تم إيقاف العرض", isChecked ? "success" : "warning");
+                    setTimeout(loadDataFromServer, 1000);
+                });
             } else {
-                priceInput.value = selected.price; 
+                offerContainer.style.display = 'none';
             }
             calculateTotal(); 
+        } else {
+            offerContainer.style.display = 'none';
         }
     });
 
     priceInput.addEventListener('input', calculateTotal); qtyInput.addEventListener('input', calculateTotal);
 
-    // تأكيد المنتج وتحديث الكتالوج في الخلفية لو اتغير ⭐
+    // تأكيد المنتج وتحديث الكتالوج بذكاء ⭐
     confirmBtn.addEventListener('click', () => {
         if (!nameInput.value || priceInput.value === "" || qtyInput.value === "") { showToast("يرجى إكمال البيانات!", "error"); return; }
         
         if (div.classList.contains('confirmed')) { 
             div.classList.remove('confirmed'); confirmBtn.innerHTML = "✔️"; 
+            nameInput.removeAttribute('readonly'); priceInput.removeAttribute('readonly'); qtyInput.removeAttribute('readonly');
         } else { 
             div.classList.add('confirmed'); confirmBtn.innerHTML = "✏️"; calculateTotal(); 
+            nameInput.setAttribute('readonly', true); priceInput.setAttribute('readonly', true); qtyInput.setAttribute('readonly', true);
             
-            // تحديث الكتالوج الصامت لو الكاشير عدل السعر بإيده في الفاتورة
             let currentPrice = parseFloat(priceInput.value);
             let cProd = catalogData.find(p => p.name === nameInput.value);
             
+            // سؤال الكاشير لو كتب سعر جديد بإيده
             if(cProd) {
                 let isOfferActive = cProd.isOffer === true || cProd.isOffer === "true" || cProd.isOffer === 1;
                 let baseP = parseFloat(cProd.price) || 0;
                 let offerP = parseFloat(cProd.offerPrice) || 0;
                 
-                // لو العرض شغال والسعر مختلف عن العرض، حدث العرض. لو مش شغال ومختلف عن الأساسي، حدث الأساسي.
-                if(isOfferActive && currentPrice !== offerP) {
-                    window.pushCatalogUpdate(cProd.name, baseP, true, currentPrice);
+                if(isOfferActive && currentPrice !== offerP && currentPrice !== baseP) {
+                    if(confirm("هل تريد حفظ السعر الجديد (" + currentPrice + " ج.م) كسعر عرض لـ " + cProd.name + "؟")) {
+                        window.pushCatalogUpdate(cProd.name, baseP, true, currentPrice);
+                        showToast("✅ تم تحديث الكتالوج", "success");
+                        setTimeout(loadDataFromServer, 1000);
+                    }
                 } else if (!isOfferActive && currentPrice !== baseP) {
-                    window.pushCatalogUpdate(cProd.name, currentPrice, false, offerP);
+                    if(confirm("هل تريد حفظ السعر (" + currentPrice + " ج.م) كسعر أساسي لـ " + cProd.name + "؟")) {
+                        window.pushCatalogUpdate(cProd.name, currentPrice, false, offerP);
+                        showToast("✅ تم تحديث الكتالوج", "success");
+                        setTimeout(loadDataFromServer, 1000);
+                    }
                 }
             } else {
-                // منتج جديد خالص اتكتب لأول مرة، سجله في الكتالوج
                 window.pushCatalogUpdate(nameInput.value, currentPrice, false, 0);
+                showToast("✅ تم إضافة المنتج للكتالوج", "success");
+                setTimeout(loadDataFromServer, 1000);
             }
         }
     });
-    removeBtn.addEventListener('click', () => { div.remove(); calculateTotal(); });
+    removeBtn.addEventListener('click', () => { wrapper.remove(); calculateTotal(); });
 }
 if(document.getElementById('addProductBtn')) document.getElementById('addProductBtn').addEventListener('click', () => addProductRow());
 if (productsContainer && productsContainer.children.length === 0) addProductRow();
@@ -789,7 +844,23 @@ window.editDriverUI = function(name, phone) {
     if(document.getElementById('newDriverPhone')) document.getElementById('newDriverPhone').value = phone;
     showToast("قم بتعديل البيانات واضغط حفظ", "success");
 };
-
+// الذكاء في اختيار مدة التوصيل تلقائياً
+let newZoneTypeEl = document.getElementById('newZoneType');
+let newZoneDurationEl = document.getElementById('newZoneDuration');
+if(newZoneTypeEl && newZoneDurationEl) {
+    newZoneTypeEl.addEventListener('change', () => {
+        if(newZoneTypeEl.value === 'next_day') {
+            newZoneDurationEl.value = 'تاني يوم';
+            newZoneDurationEl.setAttribute('readonly', true);
+        } else if (newZoneTypeEl.value === 'gov') {
+            newZoneDurationEl.value = 'من 3 لـ 4 أيام';
+            newZoneDurationEl.setAttribute('readonly', true);
+        } else {
+            newZoneDurationEl.value = '';
+            newZoneDurationEl.removeAttribute('readonly');
+        }
+    });
+}
 let addZoneBtnAction = document.getElementById('addZoneBtn');
 if (addZoneBtnAction) {
     addZoneBtnAction.addEventListener('click', () => {
@@ -830,7 +901,8 @@ if (addDriverBtnAction) {
         let phone = document.getElementById('newDriverPhone') ? document.getElementById('newDriverPhone').value : "";
         if (!name || !phone) { showToast("البيانات ناقصة!", "error"); return; }
         
-        let isExisting = Array.from(document.getElementById('driverNameSelect').options).some(o => o.value === name);
+        let driverSelectEl = document.getElementById('driverNameSelect') || document.getElementById('assignDriverSelect');
+        let isExisting = driverSelectEl ? Array.from(driverSelectEl.options).some(o => o.value === name) : false;
 
         setBtnLoading(addDriverBtnAction, true);
         let formData = new URLSearchParams(); 
