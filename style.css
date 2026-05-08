@@ -1106,16 +1106,22 @@ input:checked + .slider:before { transform: translateX(24px); }
 }
 
 /* =========================================
-   16. الطباعة (80mm Thermal)
+   16. الطباعة (80mm Thermal) - المعدلة
    ========================================= */
 .print-only { display: none; }
 
 @media print {
+    @page {
+        margin: 0; /* السطر السحري لمنع المتصفح من طباعة روابط واسم الصفحة */
+    }
+
     body {
-        background: white;
+        background: #fff;
+        color: #000;
         margin: 0;
         padding: 0;
         direction: rtl;
+        -webkit-print-color-adjust: exact;
     }
 
     .app-header,
@@ -1129,53 +1135,61 @@ input:checked + .slider:before { transform: translateX(24px); }
         width: 80mm;
         margin: 0 auto;
         padding: 5mm;
-        color: black;
-        font-family: 'Tajawal', sans-serif;
-        font-size: 12px;
+        color: #000;
+        font-family: 'Cairo', sans-serif;
+        font-size: 13px;
     }
 
     .receipt-header { text-align: center; margin-bottom: 10px; }
-    .receipt-header h2 { margin: 5px 0; font-size: 16px; font-family: 'Cairo'; }
-    .receipt-header p  { margin: 0; font-size: 12px; }
-    .receipt-info p    { margin: 2px 0; font-weight: bold; }
+    .receipt-header img { 
+        display: block; 
+        margin: 0 auto 10px auto; 
+        max-width: 100px; 
+        filter: grayscale(100%); /* طباعة اللوجو أبيض وأسود صريح */
+    }
+    .receipt-header h2 { margin: 5px 0; font-size: 18px; font-weight: bold; }
+    .receipt-header p  { margin: 0; font-size: 14px; font-weight: bold; }
+    
+    .receipt-info p    { margin: 4px 0; font-weight: bold; font-size: 13px; }
 
     .receipt-table {
         width: 100%;
         border-collapse: collapse;
         margin: 10px 0;
-        font-size: 12px;
+        font-size: 13px;
         font-weight: bold;
     }
 
     .receipt-table th,
     .receipt-table td {
         border: 1px solid #000;
-        padding: 4px;
+        padding: 6px 4px;
         text-align: center;
+        color: #000;
     }
 
-    .receipt-totals { margin-top: 10px; font-weight: bold; }
-    .receipt-totals p { margin: 3px 0; display: flex; justify-content: space-between; }
+    .receipt-totals { margin-top: 10px; font-weight: bold; font-size: 13px; }
+    .receipt-totals p { margin: 4px 0; display: flex; justify-content: space-between; }
     .receipt-totals h3 {
         margin: 5px 0;
         display: flex;
         justify-content: space-between;
-        font-size: 14px;
-        border-top: 1px dashed #000;
+        font-size: 16px;
+        border-top: 2px dashed #000;
         padding-top: 5px;
-        font-family: 'Cairo';
+        font-weight: bold;
     }
 
     .receipt-footer {
         text-align: center;
         margin-top: 15px;
-        font-size: 11px;
-        border-top: 1px dashed #000;
+        font-size: 13px;
+        border-top: 2px dashed #000;
         padding-top: 10px;
         font-weight: bold;
     }
 
-    hr { border: none; border-top: 1px dashed #000; margin: 5px 0; }
+    hr { border: none; border-top: 2px dashed #000; margin: 8px 0; }
 }
 
 /* =========================================
@@ -1549,6 +1563,7 @@ body.dark-mode #logoUploadBox:hover {
     .modal-content { padding: 22px 18px; }
     .toast-container { top: 72px; }
 }
+
 /* شريط العروض النيون بينك الاحترافي */
 .invoice-offer-bar {
     display: flex;
@@ -1571,9 +1586,10 @@ body.dark-mode .invoice-offer-bar {
     50% { border-color: #ff85c0; }
     100% { border-color: #FF1493; }
 }
-/* تصميم كروت السجل الاحترافية (تم إضافته من الصفر) */
+
+/* تصميم كروت السجل الاحترافية */
 .history-item {
-    background: var(--bg-card);
+    background: var(--card); /* تم التصحيح ليقرأ اللون بنجاح */
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 15px;
@@ -1581,4 +1597,46 @@ body.dark-mode .invoice-offer-bar {
     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     transition: transform 0.2s;
     border-right: 5px solid var(--primary); /* خط ملون جانبي للتمييز */
+}
+
+/* =========================================
+   23. الحسابات المالية (مضاف حديثاً)
+   ========================================= */
+.financial-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 15px;
+    background: #FAFBFF;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 10px;
+}
+body.dark-mode .financial-row { 
+    background: #242740; 
+    border-color: var(--border); 
+}
+.financial-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    font-size: 1.05rem;
+    color: var(--primary);
+    border-bottom: 1px dashed var(--border);
+    padding-bottom: 8px;
+}
+.financial-details {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+.financial-status {
+    font-size: 0.95rem;
+    font-weight: bold;
+    text-align: center;
+    padding: 5px;
+    border-radius: 6px;
+    margin-top: 5px;
 }
