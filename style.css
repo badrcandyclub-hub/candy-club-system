@@ -767,17 +767,22 @@ input:checked + .slider:before { transform: translateX(24px); }
     padding: 4px;
 }
 
-.scroll-list::-webkit-scrollbar { width: 5px; }
+/* تم تكبير العرض إلى 12 بكسل ليتسع للأسهم */
+.scroll-list::-webkit-scrollbar { width: 12px; } 
 .scroll-list::-webkit-scrollbar-track { background: var(--bg); border-radius: 10px; }
-.scroll-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
-.scroll-list::-webkit-scrollbar-thumb:hover { background: var(--primary-light); }
-/* أسهم التمرير للقوائم */
+.scroll-list::-webkit-scrollbar-thumb { background: var(--primary-light); border-radius: 10px; border: 3px solid var(--bg); }
+.scroll-list::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+/* أسهم التمرير للقوائم لسهولة استخدام الماوس */
 .scroll-list::-webkit-scrollbar-button,
 .data-list-container::-webkit-scrollbar-button {
     display: block;
     background-color: var(--border);
     height: 12px;
     border-radius: 4px;
+    background-repeat: no-repeat;
+    background-size: 8px;
+    background-position: center;
 }
 .scroll-list::-webkit-scrollbar-button:hover,
 .data-list-container::-webkit-scrollbar-button:hover {
@@ -793,7 +798,6 @@ input:checked + .slider:before { transform: translateX(24px); }
     border: 1.5px dashed var(--border);
     font-size: 0.9rem;
 }
-
 /* =========================================
    11. التقارير والإحصائيات
    ========================================= */
@@ -1544,4 +1548,37 @@ body.dark-mode #logoUploadBox:hover {
     .nav-item .icon { font-size: 1.2rem; }
     .modal-content { padding: 22px 18px; }
     .toast-container { top: 72px; }
+}
+/* شريط العروض النيون بينك الاحترافي */
+.invoice-offer-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff0f5; /* خلفية وردي خفيف */
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    border: 2px solid #FF1493; /* حدود نيون بينك */
+    color: #FF1493;
+    font-weight: bold;
+    animation: flash-border 1.5s infinite; /* حركة فلاش خفيفة للعين */
+}
+body.dark-mode .invoice-offer-bar {
+    background: #301020;
+}
+@keyframes flash-border {
+    0% { border-color: #FF1493; }
+    50% { border-color: #ff85c0; }
+    100% { border-color: #FF1493; }
+}
+/* تصميم كروت السجل الاحترافية (تم إضافته من الصفر) */
+.history-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 20px; /* هذا الجزء يصنع مسافة بين كل أوردر والذي يليه */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    transition: transform 0.2s;
+    border-right: 5px solid var(--primary); /* خط ملون جانبي للتمييز */
 }
