@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>كاندي كلوب - Candy Club V12</title>
+    <title>كاندي كلوب - Candy Club V13</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
 </head>
@@ -14,7 +14,7 @@
     <header class="app-header">
         <div class="logo-container">
             <span class="logo-text">CANDY CLUB</span>
-            <span class="logo-sub">نظام الإدارة المتطور V12</span>
+            <span class="logo-sub">نظام الإدارة المتطور V13</span>
         </div>
         <div class="header-actions">
             <button id="openSuspendedBtn" class="btn-suspended interactive-btn">📂 المعلقة (<span id="suspendedCount">0</span>)</button>
@@ -144,6 +144,40 @@
                         </div>
                     </div>
                 </form>
+            </div>
+        </section>
+
+        <section id="catalog-tab" class="tab-pane">
+            
+            <div class="section-card">
+                <h3 class="section-title">📦 الكتالوج والعروض</h3>
+                <div style="display:flex; gap:5px; margin-bottom:15px;">
+                    <input type="text" id="newCatalogName" placeholder="اسم المنتج" style="flex:2; margin-bottom:0;">
+                    <input type="number" id="newCatalogPrice" placeholder="السعر" style="flex:1; margin-bottom:0;">
+                    <button id="addCatalogBtn" class="btn-search interactive-btn" style="padding: 0 10px;">إضافة</button>
+                </div>
+                <div id="catalogListContainer" class="data-list-container" style="max-height: 250px;">
+                    <p class="empty-msg">جاري تحميل الكتالوج...</p>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <h3 class="section-title">⏳ تسجيل النواقص</h3>
+                <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:15px;">
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" id="oosCustomer" placeholder="اسم العميل" style="margin-bottom:0;">
+                        <input type="tel" id="oosPhone" placeholder="الموبايل" style="margin-bottom:0;">
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" id="oosProduct" placeholder="المنتج الناقص" style="flex:3; margin-bottom:0;">
+                        <button id="addOosBtn" class="btn-save interactive-btn" style="flex:1; padding: 10px;">تسجيل</button>
+                    </div>
+                </div>
+                
+                <h4 style="color: var(--primary); font-size: 0.95rem; margin-bottom: 10px; border-bottom: 1px dashed #ccc; padding-bottom: 5px;">📞 عملاء في الانتظار:</h4>
+                <div id="outOfStockContainer" class="data-list-container" style="max-height: 200px;">
+                    <p class="empty-msg">لا يوجد نواقص مسجلة حالياً.</p>
+                </div>
             </div>
         </section>
 
@@ -297,13 +331,16 @@
 
     <nav class="bottom-nav">
         <button class="nav-item active" data-target="create-tab">
-            <span class="icon">📝</span><span class="label">إنشاء طلب</span>
+            <span class="icon">📝</span><span class="label">إنشاء</span>
         </button>
-        <button class="nav-item" data-target="history-tab">
-            <span class="icon">📦</span><span class="label">السجل</span>
+        <button class="nav-item" data-target="catalog-tab">
+            <span class="icon">📦</span><span class="label">الكتالوج</span>
         </button>
         <button class="nav-item" data-target="shipping-tab">
             <span class="icon">🚚</span><span class="label">الشحن</span>
+        </button>
+        <button class="nav-item" data-target="history-tab">
+            <span class="icon">🧾</span><span class="label">السجل</span>
         </button>
         <button class="nav-item" data-target="reports-tab">
             <span class="icon">📊</span><span class="label">التقارير</span>
@@ -353,7 +390,7 @@
     </div>
 
     <div id="zoneModal" class="modal-overlay">
-        <div class="modal-content">
+        <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
             <h3>📍 إدارة المناطق</h3>
             <input type="text" id="newZoneName" placeholder="اسم المنطقة">
             <input type="number" id="newZonePrice" placeholder="سعر الشحن">
@@ -367,9 +404,14 @@
                 <button id="closeZoneModal" class="btn-cancel">إلغاء</button>
                 <button id="addZoneBtn" class="btn-confirm">حفظ المنطقة</button>
             </div>
+            
             <hr style="margin: 15px 0;">
-            <h4 style="color: #555; font-size: 0.95rem; margin-bottom: 10px;">🌐 المناطق المسجلة:</h4>
-            <div id="zonesDisplayList" class="data-list-container" style="max-height: 150px;"></div>
+            
+            <h4 style="color: var(--secondary); font-size: 1rem; margin-bottom: 5px;">⚓ مناطق الإسكندرية</h4>
+            <div id="zonesAlexList" class="data-list-container" style="max-height: 120px; margin-bottom: 15px;"></div>
+
+            <h4 style="color: var(--primary); font-size: 1rem; margin-bottom: 5px;">🚚 المحافظات</h4>
+            <div id="zonesGovList" class="data-list-container" style="max-height: 120px;"></div>
         </div>
     </div>
 
