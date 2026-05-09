@@ -1191,7 +1191,6 @@ input:checked + .slider:before { transform: translateX(24px); }
 
     hr { border: none; border-top: 2px dashed #000; margin: 8px 0; }
 }
-
 /* =========================================
    17. الوضع الليلي (Dark Mode)
    ========================================= */
@@ -1601,6 +1600,75 @@ body.dark-mode .invoice-offer-bar {
 
 /* =========================================
    23. الحسابات المالية (مضاف حديثاً)
+   ========================================= */
+.financial-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 15px;
+    background: #FAFBFF;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 10px;
+}
+body.dark-mode .financial-row { 
+    background: #242740; 
+    border-color: var(--border); 
+}
+.financial-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    font-size: 1.05rem;
+    color: var(--primary);
+    border-bottom: 1px dashed var(--border);
+    padding-bottom: 8px;
+}
+.financial-details {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+.financial-status {
+    font-size: 0.95rem;
+    font-weight: bold;
+    text-align: center;
+    padding: 5px;
+    border-radius: 6px;
+    margin-top: 5px;
+}
+/* --- زرار تفعيل العرض داخل الفاتورة --- */
+.btn-offer-toggle {
+    background: #f1f2f6;
+    color: #7B839A;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 8px 10px;
+    transition: 0.3s;
+    font-size: 0.85rem;
+    height: 38px; /* عشان يبقى نفس طول خانة السعر */
+}
+.btn-offer-toggle.active {
+    background: #fff0f5;
+    color: #FF1493;
+    border-color: #FF1493;
+    box-shadow: 0 0 5px rgba(255,20,147,0.3);
+}
+body.dark-mode .btn-offer-toggle {
+    background: #242740;
+    border-color: var(--border);
+}
+body.dark-mode .btn-offer-toggle.active {
+    background: #301020;
+    color: #FF1493;
+    border-color: #FF1493;
+}
+/* =========================================
+   23. الحسابات المالية للمناديب
    ========================================= */
 .financial-row {
     display: flex;
