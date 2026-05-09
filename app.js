@@ -1,5 +1,5 @@
 // ==========================================
-// 🌐 العقل المدبر - سيستم كاندي كلوب (النسخة V13 - الشاملة والمحمية)
+// 🌐 العقل المدبر - سيستم كاندي كلوب (النسخة V13.5 - الشاملة والمحمية)
 // ==========================================
 
 const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbz6dLvyXzuXhVKKxIt4c5ajIIv8iZtHM_5YRM8bYNuX5vwfs5_wSxP7gcZYOn8xm49OIw/exec";
@@ -494,26 +494,46 @@ if (searchBtn && orderSearchInput) {
 // ==========================================
 const phoneInput = document.getElementById('customerPhone');
 const phoneStatus = document.getElementById('phoneCheckStatus');
+
+// ⭐ البحث المحلي السريع جداً (بينضف الرقم الأول من أي علامات)
 function performPhoneSearch() {
     if(!phoneInput || !phoneStatus) return;
-    let phoneVal = phoneInput.value.trim();
+    let phoneVal = phoneInput.value.trim().replace(/\D/g, ''); // أرقام فقط
     if (phoneVal.length >= 9) {
         phoneStatus.innerText = "⏳";
-        fetch(`${GOOGLE_SHEETS_URL}?action=checkPhone&phone=${phoneVal}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.found) {
-                    if(document.getElementById('customerName')) document.getElementById('customerName').value = data.name;
-                    if(document.getElementById('address')) document.getElementById('address').value = data.address;
-                    phoneStatus.innerText = "✅"; showToast(`أهلاً بعودتك يا ${data.name}!`, "success");
-                } else { phoneStatus.innerText = "🆕"; }
-            }).catch(() => { phoneStatus.innerText = "🔍"; });
+        
+        let foundCustomer = null;
+        
+        // بيبحث في السجل الأول
+        if (orderHistoryData && orderHistoryData.length > 0) {
+            foundCustomer = orderHistoryData.find(o => o.phone.toString().replace(/\D/g, '').includes(phoneVal));
+        }
+        // لو ملقاش، بيبحث في الأوردرات المعلقة اللي لسه متسلمتش
+        if (!foundCustomer && window.pendingOrdersData && window.pendingOrdersData.length > 0) {
+            foundCustomer = window.pendingOrdersData.find(o => o.phone.toString().replace(/\D/g, '').includes(phoneVal));
+        }
+
+        if (foundCustomer) {
+            if(document.getElementById('customerName')) document.getElementById('customerName').value = foundCustomer.name;
+            if(document.getElementById('address') && foundCustomer.address && foundCustomer.address !== 'استلام من الفرع') {
+                document.getElementById('address').value = foundCustomer.address;
+            }
+            phoneStatus.innerText = "✅"; 
+            showToast(`أهلاً بعودتك يا ${foundCustomer.name}!`, "success");
+        } else {
+            phoneStatus.innerText = "🆕";
+        }
+    } else {
+        phoneStatus.innerText = "🔍";
     }
 }
+
 if (phoneStatus) phoneStatus.addEventListener('click', performPhoneSearch);
 if (phoneInput) phoneInput.addEventListener('change', performPhoneSearch);
 
 const productsContainer = document.getElementById('productsContainer');
+
+// ⭐ دالة إضافة المنتجات (مع زرار العرض الجديد بين السعر والكمية)
 function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = false) {
     if(!productsContainer) return;
     
@@ -536,17 +556,16 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
     div.style.gap = '5px';
     div.style.alignItems = 'center';
 
+    // ⭐ تصميم السطر الجديد (الزرار في النص)
     div.innerHTML = `
-        <input type="text" list="smartProductsList" class="product-name-input" placeholder="اسم المنتج..." value="${nameVal}" required style="flex:2;">
+        <input type="text" list="smartProductsList" class="product-name-input" placeholder="اسم المنتج..." value="${nameVal}" required style="flex:3;">
+        <input type="number" class="product-price-input" placeholder="السعر" value="${priceVal}" required style="flex:1.2; text-align:center;">
         
-        <div style="display:flex; align-items:center; flex:1.5; position:relative; gap: 5px;">
-            <input type="number" class="product-price-input" placeholder="السعر" value="${priceVal}" required style="width: 100%;">
-            <div class="offer-container" style="display:none; position:absolute; top: -35px; right: 0; z-index:10; white-space: nowrap;"></div>
-        </div>
+        <button type="button" class="btn-offer-toggle" style="display:none;" title="تفعيل/إيقاف العرض">%</button>
 
-        <input type="number" class="product-qty-input" placeholder="الكمية" value="${qtyVal}" min="1" required style="flex:1;">
-        <button type="button" class="btn-confirm-pro interactive-btn">✔️</button>
-        <button type="button" class="remove-product-btn interactive-btn">❌</button>
+        <input type="number" class="product-qty-input" placeholder="الكمية" value="${qtyVal}" min="1" required style="flex:1; text-align:center;">
+        <button type="button" class="btn-confirm-pro interactive-btn" style="flex: 0 0 36px;">✔️</button>
+        <button type="button" class="remove-product-btn interactive-btn" style="flex: 0 0 36px;">❌</button>
     `;
     
     wrapper.appendChild(div);
@@ -557,7 +576,7 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
     let qtyInput = div.querySelector('.product-qty-input');
     let confirmBtn = div.querySelector('.btn-confirm-pro');
     let removeBtn = div.querySelector('.remove-product-btn');
-    let offerContainer = div.querySelector('.offer-container');
+    let offerBtn = div.querySelector('.btn-offer-toggle'); // ⭐ زرار العرض الجديد
 
     if (isConfirmed) confirmBtn.innerHTML = "✏️";
 
@@ -568,35 +587,39 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
             let offerP = parseFloat(selected.offerPrice) || 0;
             let isOfferActive = selected.isOffer === true || selected.isOffer === "true" || selected.isOffer === 1 || selected.isOffer === "TRUE";
             
+            // ⭐ لو المنتج ليه عرض، الزرار هيظهر وينور
             if (offerP > 0) {
-                offerContainer.style.display = 'block';
-                offerContainer.innerHTML = `
-                    <div class="invoice-offer-bar">
-                        <span style="font-size:0.75rem;">عرض: ${offerP}</span>
-                        <input type="checkbox" class="toggle-offer-btn" ${isOfferActive ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer;">
-                    </div>
-                `;
+                offerBtn.style.display = 'inline-block';
+                if(isOfferActive) offerBtn.classList.add('active');
+                else offerBtn.classList.remove('active');
 
                 priceInput.value = isOfferActive ? offerP : baseP;
                 priceInput.readOnly = isOfferActive; 
 
-                let toggleBtn = offerContainer.querySelector('.toggle-offer-btn');
-                toggleBtn.addEventListener('change', (e) => {
-                    let isChecked = e.target.checked;
-                    priceInput.value = isChecked ? offerP : baseP;
-                    priceInput.readOnly = isChecked;
+                // تحكم الزرار
+                offerBtn.onclick = () => {
+                    let willBeActive = !offerBtn.classList.contains('active');
+                    if(willBeActive) {
+                        offerBtn.classList.add('active');
+                        priceInput.value = offerP;
+                        priceInput.readOnly = true;
+                    } else {
+                        offerBtn.classList.remove('active');
+                        priceInput.value = baseP;
+                        priceInput.readOnly = false;
+                    }
                     calculateTotal();
-                    window.pushCatalogUpdate(selected.name, baseP, isChecked, offerP);
-                    selected.isOffer = isChecked; 
-                });
+                    window.pushCatalogUpdate(selected.name, baseP, willBeActive, offerP);
+                    selected.isOffer = willBeActive; 
+                };
             } else {
-                offerContainer.style.display = 'none';
+                offerBtn.style.display = 'none';
                 priceInput.value = baseP;
                 priceInput.readOnly = false;
             }
             calculateTotal(); 
         } else {
-            offerContainer.style.display = 'none';
+            offerBtn.style.display = 'none';
             priceInput.readOnly = false;
         }
     });
@@ -873,9 +896,8 @@ if(saveAndPrintBtn) {
         let name = document.getElementById('customerName') ? document.getElementById('customerName').value : "";
         let gov = document.getElementById('governorate') ? document.getElementById('governorate').value : "";
         let delType = deliveryTypeSelect ? deliveryTypeSelect.value : "";
-        let addressVal = document.getElementById('address') ? document.getElementById('address').value.trim() : ""; // ⭐ سحب العنوان للرقابة
+        let addressVal = document.getElementById('address') ? document.getElementById('address').value.trim() : ""; 
         
-        // التحقق من المودريتور
         let moderatorSelect = document.getElementById('moderatorSelect');
         let selectedModerator = moderatorSelect ? moderatorSelect.value : "";
         if (!selectedModerator) { showToast("يرجى اختيار اسم المسؤول عن الأوردر!", "error"); return; }
@@ -883,7 +905,7 @@ if(saveAndPrintBtn) {
         if (!phone || phone.length < 9) { showToast("رقم الموبايل غير صحيح!", "error"); return; }
         if (!name) { showToast("اكتب اسم العميل!", "error"); return; }
         if (delType === 'normal' && !gov) { showToast("اختر المحافظة!", "error"); return; }
-        // ⭐ التحقق الإجباري من العنوان التفصيلي (ما لم يكن الاستلام من الفرع)
+        // ⭐ التحقق الإجباري من العنوان التفصيلي
         if (delType !== 'branch' && addressVal === "") { showToast("برجاء كتابة العنوان بالتفصيل أولاً!", "error"); return; }
 
         setBtnLoading(saveAndPrintBtn, true);
@@ -922,7 +944,6 @@ if(saveAndPrintBtn) {
             showToast("✅ تم حفظ الأوردر بنجاح!", "success");
             
             if(document.getElementById('receipt-type')) document.getElementById('receipt-type').innerText = `طلب عميل (${orderTypeLabel})`;
-            // ⭐ ظبطنا الوقت والتاريخ عشان يطبعوا صح
             if(document.getElementById('print-date')) document.getElementById('print-date').innerText = new Date().toLocaleDateString('ar-EG');
             if(document.getElementById('print-time')) document.getElementById('print-time').innerText = new Date().toLocaleTimeString('ar-EG');
             if(document.getElementById('print-customer-name')) document.getElementById('print-customer-name').innerText = name;
@@ -1389,11 +1410,11 @@ if (darkModeToggle) {
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     
-    // 1. إشعار العميل (تم ربطه بالبحث المباشر عشان يشتغل أوتوماتيك أول ما تبعد الماوس) ⭐
+    // 1. إشعار العميل (البحث التلقائي والمحلي أول ما تبعد الماوس) ⭐
     let phoneInputAI = document.getElementById('customerPhone');
     if(phoneInputAI) {
         phoneInputAI.addEventListener('blur', () => {
-            if (phoneInputAI.value.trim().length >= 10) performPhoneSearch();
+            if (phoneInputAI.value.trim().length >= 9) performPhoneSearch();
         });
     }
 
