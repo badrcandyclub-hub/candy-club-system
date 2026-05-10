@@ -1,5 +1,5 @@
 // ==========================================
-// 🌐 العقل المدبر - سيستم كاندي كلوب (النسخة V13.5 - الشاملة والمحمية)
+// 🌐 العقل المدبر - سيستم كاندي كلوب (النسخة V13.6 - الشاملة والمحمية)
 // ==========================================
 
 const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbz6dLvyXzuXhVKKxIt4c5ajIIv8iZtHM_5YRM8bYNuX5vwfs5_wSxP7gcZYOn8xm49OIw/exec";
@@ -110,6 +110,7 @@ function loadDataFromServer() {
             orderHistoryData = data.history || [];
             window.pendingOrdersData = data.pendingOrders || []; 
             window.financialsData = data.financials || []; // ⭐ سحب بيانات الحسابات
+            window.uncollectedOrdersData = data.uncollectedOrders || []; // ⭐ الأوردرات الغير مصفاة
 
             // تحديث شاشة المالية
             if (typeof renderFinancials === 'function') renderFinancials(window.financialsData);
@@ -196,7 +197,6 @@ function loadDataFromServer() {
             const smartProductsList = document.getElementById('smartProductsList');
             if (smartProductsList) {
                 smartProductsList.innerHTML = '';
-                // ندمج المنتجات القديمة مع الكتالوج عشان الاقتراحات تكون كاملة
                 catalogData.forEach(p => { smartProductsList.innerHTML += `<option value="${p.name}">`; });
             }
 
@@ -235,7 +235,7 @@ function loadDataFromServer() {
         });
 }
 
-// ⭐ عرض الحسابات المالية
+// ⭐ عرض الحسابات المالية وتصفية الأوردرات
 function renderFinancials(finList) {
     let container = document.getElementById('financialsDisplayList');
     if(!container) return;
@@ -248,6 +248,27 @@ function renderFinancials(finList) {
     
     finList.forEach(f => {
         let statusColor = f.netDue > 0 ? "#27ae60" : (f.netDue < 0 ? "#c0392b" : "#7f8c8d");
+        
+        // ⭐ عرض الأوردرات الغير مصفاة أسفل كل مندوب
+        let driverOrders = (window.uncollectedOrdersData || []).filter(o => o.driver === f.name);
+        let ordersHtml = '';
+        if (driverOrders.length > 0) {
+            ordersHtml = `<div style="margin-top: 10px; border-top: 1px dashed #ccc; padding-top: 10px;">
+                <strong style="font-size:0.85rem; color:var(--primary);">📦 أوردرات معلقة (لم يتم تسويتها):</strong>`;
+            driverOrders.forEach(o => {
+                ordersHtml += `
+                    <div class="financial-order-item">
+                        <div>
+                            <span style="font-weight:bold;">${o.id}</span><br>
+                            <span style="font-size:0.75rem; color:#777;">${o.payment} | إجمالي: ${o.total}ج | شحن: ${o.shipping}ج</span>
+                        </div>
+                        <button class="btn-settle interactive-btn" onclick="settleDriverOrder('${o.id}', this)">تمت المحاسبة 💸</button>
+                    </div>
+                `;
+            });
+            ordersHtml += `</div>`;
+        }
+
         container.innerHTML += `
             <div class="financial-row">
                 <div class="financial-header">
@@ -261,10 +282,32 @@ function renderFinancials(finList) {
                 <div class="financial-status" style="background: ${statusColor}15; color: ${statusColor}; border: 1px dashed ${statusColor};">
                     ${f.statusText} ${f.netDue !== 0 ? `( ${Math.abs(f.netDue)} ج.م )` : ''}
                 </div>
+                ${ordersHtml}
             </div>
         `;
     });
 }
+
+// ⭐ دالة تصفية الأوردر
+window.settleDriverOrder = function(orderId, btn) {
+    if(!confirm(`هل استلمت حساب الأوردر (${orderId}) وتأكدت من تصفيته؟`)) return;
+    btn.innerText = "جاري...";
+    btn.disabled = true;
+    
+    let formData = new URLSearchParams();
+    formData.append('action', 'settleOrder');
+    formData.append('orderId', orderId);
+    
+    fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
+    .then(() => {
+        showToast("✅ تمت المحاسبة وتصفية الأوردر!", "success");
+        loadDataFromServer();
+    }).catch(() => {
+        showToast("❌ حدث خطأ في الاتصال", "error");
+        btn.innerText = "تمت المحاسبة 💸";
+        btn.disabled = false;
+    });
+};
 
 // ==========================================
 // 4. حساب أجازة الجمعة أوتوماتيك (الميزة العبقرية) 🚀
@@ -443,7 +486,9 @@ window.printOldOrder = function(orderId) {
     let order = orderHistoryData.find(o => o.id === orderId);
     if(!order) return;
     
-    if(document.getElementById('receipt-type')) document.getElementById('receipt-type').innerText = `فاتورة (${order.status})`;
+    let isOldGift = order.notes && order.notes.includes("هدية");
+    
+    if(document.getElementById('receipt-type')) document.getElementById('receipt-type').innerText = isOldGift ? `فاتورة (${order.status}) - 🎁 هدية` : `فاتورة (${order.status})`;
     if(document.getElementById('print-date')) document.getElementById('print-date').innerText = order.date;
     if(document.getElementById('print-time')) document.getElementById('print-time').innerText = order.time || '';
     if(document.getElementById('print-customer-name')) document.getElementById('print-customer-name').innerText = order.name;
@@ -455,17 +500,21 @@ window.printOldOrder = function(orderId) {
     if(order.products) {
         let lines = order.products.split('\n');
         lines.forEach(line => {
-            if(line.trim() !== "") printItemsHtml += `<tr><td colspan="4" style="text-align:right; border-bottom:1px dashed #ccc; padding:8px 5px;">${line}</td></tr>`;
+            if(line.trim() !== "") {
+                // لو الأوردر قديم وهدية مش هنقدر نغير سطوره بسهولة بس هنخفي الإجمالي من تحت
+                printItemsHtml += `<tr><td colspan="4" style="text-align:right; border-bottom:1px dashed #ccc; padding:8px 5px;">${line}</td></tr>`;
+            }
         });
     } else {
         printItemsHtml = `<tr><td colspan="4">لا توجد تفاصيل</td></tr>`;
     }
     if(document.getElementById('print-items-body')) document.getElementById('print-items-body').innerHTML = printItemsHtml;
     
-    if(document.getElementById('print-subtotal')) document.getElementById('print-subtotal').innerText = order.subtotal || 0;
-    if(document.getElementById('print-discount')) document.getElementById('print-discount').innerText = order.discount || 0;
-    if(document.getElementById('print-shipping')) document.getElementById('print-shipping').innerText = order.shipping || 0;
-    if(document.getElementById('print-final')) document.getElementById('print-final').innerText = order.total;
+    // ⭐ إخفاء السعر لو كان الأوردر هدية في السجل
+    if(document.getElementById('print-subtotal')) document.getElementById('print-subtotal').innerText = isOldGift ? "***" : (order.subtotal || 0);
+    if(document.getElementById('print-discount')) document.getElementById('print-discount').innerText = isOldGift ? "***" : (order.discount || 0);
+    if(document.getElementById('print-shipping')) document.getElementById('print-shipping').innerText = isOldGift ? "***" : (order.shipping || 0);
+    if(document.getElementById('print-final')) document.getElementById('print-final').innerText = isOldGift ? "***" : order.total;
     if(document.getElementById('print-payment')) document.getElementById('print-payment').innerText = order.payment || "";
     
     let sellerP = document.getElementById('print-seller-name');
@@ -477,12 +526,27 @@ window.printOldOrder = function(orderId) {
 const searchBtn = document.getElementById('searchBtn');
 const orderSearchInput = document.getElementById('orderSearchInput');
 if (searchBtn && orderSearchInput) {
+    // ⭐ تحديث البحث عشان يجيب من السيرفر لكل الشهور
     searchBtn.addEventListener('click', () => {
         let keyword = orderSearchInput.value.trim().toLowerCase();
-        if (keyword === "") renderHistoryList(orderHistoryData);
-        else {
-            let filtered = orderHistoryData.filter(o => o.id.toLowerCase().includes(keyword) || o.phone.includes(keyword) || o.name.toLowerCase().includes(keyword));
-            renderHistoryList(filtered);
+        if (keyword === "") {
+            renderHistoryList(orderHistoryData);
+        } else {
+            let container = document.getElementById('historyListContainer');
+            container.innerHTML = '<p class="empty-msg">جاري البحث الشامل في قاعدة البيانات... ⏳</p>';
+            
+            fetch(`${GOOGLE_SHEETS_URL}?action=globalSearch&query=${encodeURIComponent(keyword)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.length === 0) container.innerHTML = '<p class="empty-msg">لم يتم العثور على أوردرات مطابقة.</p>';
+                else {
+                    orderHistoryData = data; // نحتفظ بيهم عشان الطباعة تشتغل
+                    renderHistoryList(data);
+                }
+            })
+            .catch(() => {
+                container.innerHTML = '<p class="empty-msg">❌ حدث خطأ في الاتصال بالإنترنت.</p>';
+            });
         }
     });
     orderSearchInput.addEventListener('keypress', (e) => {
@@ -561,7 +625,7 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
         <input type="text" list="smartProductsList" class="product-name-input" placeholder="اسم المنتج..." value="${nameVal}" required style="flex:3;">
         <input type="number" class="product-price-input" placeholder="السعر" value="${priceVal}" required style="flex:1.2; text-align:center;">
         
-        <button type="button" class="btn-offer-toggle" style="display:none;" title="تفعيل/إيقاف العرض">%</button>
+        <button type="button" class="btn-offer-toggle" style="display:none; flex:0.8;" title="تفعيل/إيقاف العرض">%</button>
 
         <input type="number" class="product-qty-input" placeholder="الكمية" value="${qtyVal}" min="1" required style="flex:1; text-align:center;">
         <button type="button" class="btn-confirm-pro interactive-btn" style="flex: 0 0 36px;">✔️</button>
@@ -690,6 +754,7 @@ function updateSmartProductsList() {
 if(document.getElementById('addProductBtn')) document.getElementById('addProductBtn').addEventListener('click', () => addProductRow());
 if (productsContainer && productsContainer.children.length === 0) addProductRow();
 
+// ⭐ تصحيح نظام حساب "الأوردر الهدية"
 function calculateTotal() {
     let total = 0;
     document.querySelectorAll('.product-row.confirmed').forEach(row => {
@@ -697,14 +762,32 @@ function calculateTotal() {
         let qty = parseFloat(row.querySelector('.product-qty-input').value) || 1;
         total += (price * qty);
     });
+    
     if(document.getElementById('productsTotal')) document.getElementById('productsTotal').value = total;
     let discount = document.getElementById('discount') ? (parseFloat(document.getElementById('discount').value) || 0) : 0;
     let shipping = document.getElementById('shippingCost') ? (parseFloat(document.getElementById('shippingCost').value) || 0) : 0;
+    
     let finalAmount = total + shipping - discount;
-    let giftCheck = document.getElementById('isGiftCheckbox');
     let finalDisplay = document.getElementById('finalTotalDisplay');
-    if(finalDisplay) finalDisplay.innerText = (giftCheck && giftCheck.checked) ? "0" : finalAmount;
+    let giftCheck = document.getElementById('isGiftCheckbox');
+    
+    // ⭐ بنظهر السعر الحقيقي دايماً، بس بنحط رسالة تنبيه للكاشير
+    if(finalDisplay) finalDisplay.innerText = finalAmount;
+    
+    let hint = document.getElementById('giftHint');
+    if(giftCheck && giftCheck.checked) {
+        if(!hint) {
+            hint = document.createElement('div');
+            hint.id = 'giftHint';
+            hint.style.cssText = "color:var(--primary); font-size:0.8rem; font-weight:bold; text-align:center; margin-top:5px;";
+            hint.innerText = "* أوردر هدية: سيتم حفظ السعر بالإكسيل وإخفاؤه في الفاتورة المطبوعة *";
+            finalDisplay.parentNode.appendChild(hint);
+        }
+    } else {
+        if(hint) hint.remove();
+    }
 }
+
 if(document.getElementById('discount')) document.getElementById('discount').addEventListener('input', calculateTotal);
 if(document.getElementById('isGiftCheckbox')) document.getElementById('isGiftCheckbox').addEventListener('change', calculateTotal);
 
@@ -838,6 +921,7 @@ function resetForm() {
     toggleGlobalLock(false);
     if(deliveryTypeSelect) deliveryTypeSelect.dispatchEvent(new Event('change'));
     if (phoneStatus) phoneStatus.innerText = "🔍";
+    let hint = document.getElementById('giftHint'); if(hint) hint.remove();
 }
 
 // ==========================================
@@ -868,25 +952,29 @@ if(whatsappReviewBtn) {
 }
 
 // ==========================================
-// 9. الحفظ والطباعة (مع المودريتور وقفل الزرار) 
+// 9. الحفظ والطباعة (الذكاء في الفاتورة والهدية ⭐) 
 // ==========================================
 let saveAndPrintBtn = document.getElementById('saveAndPrintBtn');
 if(saveAndPrintBtn) {
     saveAndPrintBtn.addEventListener('click', () => {
         if (document.querySelectorAll('.product-row:not(.confirmed)').length > 0) { showToast("قم بتأكيد (✔️) المنتجات أولاً!", "error"); return; }
         
+        let isGift = document.getElementById('isGiftCheckbox') ? document.getElementById('isGiftCheckbox').checked : false;
+
         let productsListText = "", printItemsHtml = ""; 
         document.querySelectorAll('.product-row.confirmed').forEach(row => {
             let n = row.querySelector('.product-name-input').value, p = row.querySelector('.product-price-input').value, q = row.querySelector('.product-qty-input').value;
             let rowTotal = parseFloat(p) * parseFloat(q);
             productsListText += `${n} - الكمية: ${q} (${rowTotal}ج)\n`;
             
-            // إضافة شارة عرض في الفاتورة لو المنتج ده عليه عرض
             let cProd = catalogData.find(cp => cp.name === n);
             let isOffer = cProd && (cProd.isOffer === true || cProd.isOffer === "true" || cProd.isOffer === 1);
             let nDisplay = isOffer ? `<span class="offer-badge">عرض</span> ${n}` : n;
             
-            printItemsHtml += `<tr><td>${nDisplay}</td><td>${p}</td><td>${q}</td><td>${rowTotal}</td></tr>`;
+            // ⭐ ذكاء الطباعة: لو هدية بيحط نجوم بدل السعر
+            let printP = isGift ? "***" : p;
+            let printTotal = isGift ? "***" : rowTotal;
+            printItemsHtml += `<tr><td>${nDisplay}</td><td>${printP}</td><td>${q}</td><td>${printTotal}</td></tr>`;
         });
         
         if (productsListText === "") { showToast("لا يمكن حفظ أوردر بدون منتجات!", "error"); return; }
@@ -905,7 +993,6 @@ if(saveAndPrintBtn) {
         if (!phone || phone.length < 9) { showToast("رقم الموبايل غير صحيح!", "error"); return; }
         if (!name) { showToast("اكتب اسم العميل!", "error"); return; }
         if (delType === 'normal' && !gov) { showToast("اختر المحافظة!", "error"); return; }
-        // ⭐ التحقق الإجباري من العنوان التفصيلي
         if (delType !== 'branch' && addressVal === "") { showToast("برجاء كتابة العنوان بالتفصيل أولاً!", "error"); return; }
 
         setBtnLoading(saveAndPrintBtn, true);
@@ -913,11 +1000,11 @@ if(saveAndPrintBtn) {
         let finalExpDate = document.querySelector('#deliveryInfo span') ? document.querySelector('#deliveryInfo span').innerText : "";
         if (delType === 'special_date') finalExpDate = document.getElementById('specialDateInput') ? document.getElementById('specialDateInput').value : "";
         
-        let isGift = document.getElementById('isGiftCheckbox') ? document.getElementById('isGiftCheckbox').checked : false;
         let finalNotes = document.getElementById('notes') ? document.getElementById('notes').value : "";
         if (isGift) finalNotes = "🎁 أوردر هدية - " + finalNotes;
         
-        let finalTotalVal = isGift ? 0 : (document.getElementById('finalTotalDisplay') ? document.getElementById('finalTotalDisplay').innerText : 0);
+        // ⭐ هنا بنبعت السعر الفعلي للإكسيل (بطلنا نبعته صفر)
+        let finalTotalVal = document.getElementById('finalTotalDisplay') ? document.getElementById('finalTotalDisplay').innerText : 0;
         let orderTypeLabel = deliveryTypeSelect ? deliveryTypeSelect.options[deliveryTypeSelect.selectedIndex].text : "توصيل";
 
         let formData = new URLSearchParams();
@@ -934,7 +1021,7 @@ if(saveAndPrintBtn) {
         formData.append('pTotal', document.getElementById('productsTotal') ? document.getElementById('productsTotal').value : 0);
         formData.append('discount', document.getElementById('discount') ? document.getElementById('discount').value : 0);
         formData.append('shipping', document.getElementById('shippingCost') ? document.getElementById('shippingCost').value : 0); 
-        formData.append('finalTotal', finalTotalVal);
+        formData.append('finalTotal', finalTotalVal); // رايح الفلوس الحقيقية
         formData.append('payMethod', paymentMethod ? paymentMethod.value : ""); 
         formData.append('notes', finalNotes);
         formData.append('moderator', selectedModerator);
@@ -943,7 +1030,8 @@ if(saveAndPrintBtn) {
         .then(() => {
             showToast("✅ تم حفظ الأوردر بنجاح!", "success");
             
-            if(document.getElementById('receipt-type')) document.getElementById('receipt-type').innerText = `طلب عميل (${orderTypeLabel})`;
+            // ⭐ تجهيز الفاتورة للطباعة (إخفاء الفلوس لو هدية)
+            if(document.getElementById('receipt-type')) document.getElementById('receipt-type').innerText = isGift ? `طلب عميل (${orderTypeLabel}) - 🎁 هدية` : `طلب عميل (${orderTypeLabel})`;
             if(document.getElementById('print-date')) document.getElementById('print-date').innerText = new Date().toLocaleDateString('ar-EG');
             if(document.getElementById('print-time')) document.getElementById('print-time').innerText = new Date().toLocaleTimeString('ar-EG');
             if(document.getElementById('print-customer-name')) document.getElementById('print-customer-name').innerText = name;
@@ -951,10 +1039,11 @@ if(saveAndPrintBtn) {
             if(document.getElementById('print-address')) document.getElementById('print-address').innerText = addressVal;
             if(document.getElementById('print-status')) document.getElementById('print-status').innerText = "قيد التجهيز";
             if(document.getElementById('print-items-body')) document.getElementById('print-items-body').innerHTML = printItemsHtml;
-            if(document.getElementById('print-subtotal')) document.getElementById('print-subtotal').innerText = document.getElementById('productsTotal') ? document.getElementById('productsTotal').value : 0;
-            if(document.getElementById('print-discount')) document.getElementById('print-discount').innerText = document.getElementById('discount') ? document.getElementById('discount').value || 0 : 0;
-            if(document.getElementById('print-shipping')) document.getElementById('print-shipping').innerText = document.getElementById('shippingCost') ? document.getElementById('shippingCost').value : 0;
-            if(document.getElementById('print-final')) document.getElementById('print-final').innerText = finalTotalVal;
+            
+            if(document.getElementById('print-subtotal')) document.getElementById('print-subtotal').innerText = isGift ? "***" : (document.getElementById('productsTotal') ? document.getElementById('productsTotal').value : 0);
+            if(document.getElementById('print-discount')) document.getElementById('print-discount').innerText = isGift ? "***" : (document.getElementById('discount') ? document.getElementById('discount').value || 0 : 0);
+            if(document.getElementById('print-shipping')) document.getElementById('print-shipping').innerText = isGift ? "***" : (document.getElementById('shippingCost') ? document.getElementById('shippingCost').value : 0);
+            if(document.getElementById('print-final')) document.getElementById('print-final').innerText = isGift ? "***" : finalTotalVal;
             if(document.getElementById('print-payment')) document.getElementById('print-payment').innerText = paymentMethod ? paymentMethod.value : "";
             
             let sellerP = document.getElementById('print-seller-name');
@@ -1216,7 +1305,6 @@ function updateAdvancedDashboard(history) {
 // 12. نظام الكتالوج والنواقص الشامل (الجديد ⭐)
 // ==========================================
 
-// دالة تحديث الكتالوج الصامتة
 window.pushCatalogUpdate = function(name, price, isOffer, offerPrice) {
     let formData = new URLSearchParams();
     formData.append('action', 'updateCatalog');
@@ -1227,7 +1315,7 @@ window.pushCatalogUpdate = function(name, price, isOffer, offerPrice) {
     fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData });
 };
 
-// عرض الكتالوج
+// عرض الكتالوج (مع ربط شاشة التعديل الاحترافية الجديدة ⭐)
 function renderCatalog(catalogList) {
     let container = document.getElementById('catalogListContainer');
     if(!container) return;
@@ -1257,7 +1345,6 @@ function renderCatalog(catalogList) {
             </div>
         `;
 
-        // تفعيل وإلغاء العرض
         div.querySelector('.offer-toggle').addEventListener('change', (e) => {
             let newState = e.target.checked;
             let currentOffer = p.offerPrice || p.price;
@@ -1270,21 +1357,45 @@ function renderCatalog(catalogList) {
             setTimeout(loadDataFromServer, 1000);
         });
 
-        // تعديل السعر
+        // ⭐ فتح شاشة التعديل الجديدة بدل الـ prompt
         div.querySelector('.edit-cat-btn').addEventListener('click', () => {
-            let newPrice = prompt(`تعديل السعر الأساسي لـ ${p.name}:`, p.price);
-            if(newPrice) {
-                window.pushCatalogUpdate(p.name, newPrice, isOfferActive, p.offerPrice);
-                showToast("✅ تم تعديل السعر", "success");
-                setTimeout(loadDataFromServer, 1000);
-            }
+            document.getElementById('editCatOldName').value = p.name;
+            document.getElementById('editCatName').value = p.name;
+            document.getElementById('editCatPrice').value = p.price;
+            document.getElementById('editCatOfferPrice').value = p.offerPrice || 0;
+            document.getElementById('editCatalogModal').classList.add('active');
         });
 
         container.appendChild(div);
     });
 }
 
-// زر إضافة منتج للكتالوج
+// ⭐ أوامر حفظ التعديل في الكتالوج
+let closeEditCatModal = document.getElementById('closeEditCatModal');
+let saveEditCatBtn = document.getElementById('saveEditCatBtn');
+if(closeEditCatModal) closeEditCatModal.addEventListener('click', () => document.getElementById('editCatalogModal').classList.remove('active'));
+
+if(saveEditCatBtn) {
+    saveEditCatBtn.addEventListener('click', () => {
+        let name = document.getElementById('editCatName').value;
+        let price = document.getElementById('editCatPrice').value;
+        let offerPrice = document.getElementById('editCatOfferPrice').value;
+        
+        let selected = catalogData.find(c => c.name === name);
+        let isOfferActive = selected ? (selected.isOffer === true || selected.isOffer === "true" || selected.isOffer === 1) : false;
+        
+        setBtnLoading(saveEditCatBtn, true);
+        window.pushCatalogUpdate(name, price, isOfferActive, offerPrice);
+        
+        setTimeout(() => {
+            showToast("✅ تم التعديل بنجاح", "success");
+            setBtnLoading(saveEditCatBtn, false, "حفظ التعديلات");
+            document.getElementById('editCatalogModal').classList.remove('active');
+            loadDataFromServer();
+        }, 1000);
+    });
+}
+
 let addCatalogBtn = document.getElementById('addCatalogBtn');
 if(addCatalogBtn) {
     addCatalogBtn.addEventListener('click', () => {
@@ -1304,7 +1415,7 @@ if(addCatalogBtn) {
     });
 }
 
-// عرض النواقص
+// عرض النواقص (مع الغرض الجديد ⭐)
 function renderOutOfStock(oosList) {
     let container = document.getElementById('outOfStockContainer');
     if(!container) return;
@@ -1322,7 +1433,8 @@ function renderOutOfStock(oosList) {
         div.innerHTML = `
             <div style="flex:1;">
                 <strong>${item.customer}</strong> <br>
-                <small style="color:var(--primary); font-weight:bold;">${item.product}</small>
+                <small style="color:var(--primary); font-weight:bold;">${item.product}</small><br>
+                <span style="font-size:0.75rem; color:#888;">الغرض: ${item.reason || '--'}</span>
             </div>
             <div style="display:flex; gap:5px;">
                 <button class="interactive-btn wa-oos-btn" style="background:#25D366; color:white; border:none; padding:5px 10px; border-radius:8px;">💬</button>
@@ -1330,7 +1442,6 @@ function renderOutOfStock(oosList) {
             </div>
         `;
 
-        // إرسال واتساب للعميل إن المنتج توفر
         div.querySelector('.wa-oos-btn').addEventListener('click', () => {
             let phone = item.phone.toString().replace(/'/g, '').trim();
             if(phone.startsWith('0')) phone = '+2' + phone;
@@ -1338,7 +1449,6 @@ function renderOutOfStock(oosList) {
             window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
         });
 
-        // حذف من النواقص
         div.querySelector('.del-oos-btn').addEventListener('click', () => {
             if(!confirm("مسح العميل من قائمة النواقص؟")) return;
            let formData = new URLSearchParams();
@@ -1354,13 +1464,14 @@ function renderOutOfStock(oosList) {
     });
 }
 
-// زر إضافة للنواقص
+// تسجيل النواقص
 let addOosBtn = document.getElementById('addOosBtn');
 if(addOosBtn) {
     addOosBtn.addEventListener('click', () => {
         let c = document.getElementById('oosCustomer').value;
         let ph = document.getElementById('oosPhone').value;
         let pr = document.getElementById('oosProduct').value;
+        let r = document.getElementById('oosReason') ? document.getElementById('oosReason').value : "";
         
         if(!c || !ph || !pr) { showToast("أكمل بيانات العميل والمنتج الناقص", "error"); return; }
         
@@ -1370,6 +1481,7 @@ if(addOosBtn) {
         formData.append('customer', c);
         formData.append('phone', ph);
         formData.append('product', pr);
+        formData.append('reason', r); // حفظ الغرض
         
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
         .then(() => {
@@ -1406,33 +1518,11 @@ if (darkModeToggle) {
     });
 }
 // ==========================================
-// 🚀 إضافات الذكاء الاصطناعي (استلام الفرع + تنبيه العميل + الطباعة)
+// 🚀 إضافات الذكاء الاصطناعي 
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     
-    // 1. إشعار العميل (البحث التلقائي والمحلي أول ما تبعد الماوس) ⭐
-    let phoneInputAI = document.getElementById('customerPhone');
-    if(phoneInputAI) {
-        phoneInputAI.addEventListener('blur', () => {
-            if (phoneInputAI.value.trim().length >= 9) performPhoneSearch();
-        });
-    }
-
-    // 2. ذكاء الاستلام من الفرع في شاشة الإنشاء
-    const delTypeSelect = document.getElementById('deliveryType');
-    if(delTypeSelect) {
-        delTypeSelect.addEventListener('change', (e) => {
-            let val = e.target.value;
-            let addrInput = document.getElementById('address');
-            if(val === 'branch') {
-                if(addrInput) { addrInput.value = 'استلام من الفرع'; addrInput.readOnly = true; }
-            } else {
-                if(addrInput && addrInput.value === 'استلام من الفرع') { addrInput.value = ''; addrInput.readOnly = false; }
-            }
-        });
-    }
-
-    // 3. ذكاء الطباعة (إخفاء العنوان وقيد التجهيز أوتوماتيك في حالة فرع أو فاضي)
+    // إخفاء العناوين في الفاتورة لو استلام فرع
     window.addEventListener('beforeprint', () => {
         let printAddr = document.getElementById('print-address');
         let addrRow = document.querySelector('.print-address-row');
@@ -1447,7 +1537,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     window.addEventListener('afterprint', () => {
-        // بيرجعهم تاني بعد الطباعة عشان الشاشة متبوظش
         document.querySelectorAll('[data-hide-print="true"]').forEach(el => {
             el.style.display = '';
             el.removeAttribute('data-hide-print');
