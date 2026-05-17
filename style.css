@@ -1124,11 +1124,14 @@ input:checked + .slider:before { transform: translateX(24px); }
         -webkit-print-color-adjust: exact;
     }
 
+    /* إخفاء كل ما لا يخص الطباعة بما فيها الإضافات الجديدة */
     .app-header,
     .app-content,
     .bottom-nav,
     .toast-container,
-    .modal-overlay { display: none !important; }
+    .modal-overlay,
+    #booking-alert-banner,
+    #quickRefreshBtn { display: none !important; }
 
     .print-only {
         display: block !important;
@@ -1151,13 +1154,21 @@ input:checked + .slider:before { transform: translateX(24px); }
     .receipt-header p  { margin: 0; font-size: 14px; font-weight: bold; }
     
     .receipt-info p    { margin: 4px 0; font-weight: bold; font-size: 13px; }
-
+    
+    /* تحسين إضافي لجدول الطباعة ليكون أوضح للعميل */
     .receipt-table {
         width: 100%;
         border-collapse: collapse;
         margin: 10px 0;
         font-size: 13px;
         font-weight: bold;
+    }
+
+    .receipt-table th {
+        background-color: #f0f0f0 !important;
+        -webkit-print-color-adjust: exact;
+        padding: 6px 4px;
+        border: 1px solid #000;
     }
 
     .receipt-table th,
@@ -1599,7 +1610,7 @@ body.dark-mode .invoice-offer-bar {
 }
 
 /* =========================================
-   23. الحسابات المالية (مضاف حديثاً)
+   23. الحسابات المالية
    ========================================= */
 .financial-row {
     display: flex;
