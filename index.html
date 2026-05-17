@@ -22,12 +22,19 @@
             <div class="status-indicator">
                 <span id="sync-status">جاري التحميل...</span>
                 <div class="status-dot"></div>
+                <!-- ⭐ زرار التحديث السريع -->
+                <button id="quickRefreshBtn" class="interactive-btn" style="background:none; border:none; cursor:pointer; font-size:1.1rem; padding:0 5px; margin-right: 5px;" title="تحديث البيانات السريع">🔄</button>
             </div>
         </div>
     </header>
 
     <main class="app-content">
         
+        <!-- ⭐ منبه الحجوزات القريبة -->
+        <div id="booking-alert-banner" style="display:none; background: var(--warning); color: white; padding: 12px; text-align: center; font-weight: bold; border-radius: 8px; margin-bottom: 15px;">
+            🔔 يوجد أوردرات محجوزة اقترب موعد تسليمها! يرجى مراجعة السجل.
+        </div>
+
         <section id="create-tab" class="tab-pane active">
             <div id="orderFieldsContainer" class="section-card">
                 <h3 class="section-title">📝 إنشاء طلب جديد</h3>
@@ -63,7 +70,7 @@
                     </select>
 
                     <div id="specialDateContainer" class="hidden-field">
-                        <label>اختر تاريخ التوصيل:</label>
+                        <label>اختر تاريخ التوصيل أو الاستلام:</label>
                         <input type="date" id="specialDateInput" dir="ltr">
                     </div>
 
@@ -114,12 +121,12 @@
                         </div>
                         
                         <div class="delivery-prediction" id="deliveryInfo">📅 موعد التسليم: <span>--</span></div>
-                        <div class="final-amount">صافي المستحق: <span id="finalTotalDisplay">0</span> ج.م</div>
+                        <div class="final-amount">إجمالي الفاتورة: <span id="finalTotalDisplay">0</span> ج.م</div>
                     </div>
 
                     <div class="payment-section" id="paymentSection">
-                        <label>طريقة الدفع:</label>
-                        <div class="payment-row">
+                        <label>طريقة الدفع الأساسية:</label>
+                        <div class="payment-row" style="margin-bottom: 15px;">
                             <select id="paymentMethod" required>
                                 <option value="">-- اختر طريقة الدفع --</option>
                                 <option value="كاش 💵">كاش 💵</option>
@@ -127,9 +134,20 @@
                             </select>
                             <button type="button" id="confirmPaymentBtn" class="btn-confirm-action interactive-btn">تأكيد ✔️</button>
                         </div>
+
+                        <!-- ⭐ نظام العربون (Deposit) -->
+                        <div id="depositContainer" style="padding-top: 15px; border-top: 1px dashed #ccc;">
+                            <label style="color: var(--primary);">هل تم دفع عربون (حجز)؟</label>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="number" id="depositAmount" placeholder="مبلغ العربون" style="margin-bottom: 0; flex: 1;">
+                                <div style="flex: 1.5; font-weight: bold; font-size: 0.95rem; text-align: left; padding-left: 10px;">
+                                    المتبقي: <span id="remainingAmountDisplay" style="color: var(--danger); font-size: 1.2rem;">0</span> ج
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <label>ملاحظات إضافية:</label>
+                    <label style="margin-top:15px;">ملاحظات إضافية:</label>
                     <textarea id="notes" placeholder="أي ملاحظات للمندوب..."></textarea>
 
                     <div class="divider">👤 المسؤول عن الأوردر</div>
@@ -189,7 +207,7 @@
 
         <section id="history-tab" class="tab-pane">
             <div class="section-card">
-                <h3 class="section-title">🔍 البحث السريع</h3>
+                <h3 class="section-title">🔍 البحث الشامل</h3>
                 <div class="search-box mb-15">
                     <input type="text" id="orderSearchInput" placeholder="ابحث برقم الأوردر، الموبايل، أو الاسم">
                     <button id="searchBtn" class="btn-search interactive-btn">بحث</button>
@@ -218,8 +236,8 @@
                 <button id="openDriverModalBtn" class="btn-outline interactive-btn">المناديب ➕</button>
             </div>
             
-            <div class="section-card">
-                <h3 class="section-title">📦 تحميل المناديب</h3>
+            <div class="section-card" style="border-right: 4px solid var(--secondary);">
+                <h3 class="section-title">📦 تحميل المناديب (توصيل)</h3>
                 <label>اختر المندوب للاستلام:</label>
                 <select id="assignDriverSelect">
                     <option value="">-- اختر المندوب --</option>
@@ -229,15 +247,28 @@
                 </div>
                 <button type="button" id="assignToDriverBtn" class="btn-save interactive-btn mt-10" style="width: 100%; font-size: 1rem;">تسليم للمندوب 🚚</button>
             </div>
+
+            <!-- ⭐ قسم استلام الفرع المنفصل -->
+            <div class="section-card" style="border-right: 4px solid var(--warning);">
+                <h3 class="section-title">🏪 أوردرات استلام الفرع</h3>
+                <div id="branchOrdersContainer" class="data-list-container mt-10" style="min-height: 100px;">
+                    <p class="empty-msg">جاري التحميل...</p>
+                </div>
+            </div>
             
-            <div class="section-card">
+            <div class="section-card" style="border-right: 4px solid var(--success);">
                 <h3 class="section-title">✅ تقفيل اليوم (حالة التوصيل)</h3>
                 <label>اختر المندوب لعرض عهدته:</label>
-                <select id="closeDriverSelect">
-                    <option value="">-- اختر المندوب --</option>
-                </select>
+                <!-- ⭐ زرار التأكيد الجديد لمنع العشوائية -->
+                <div style="display:flex; gap:10px; margin-bottom:10px;">
+                    <select id="closeDriverSelect" style="margin-bottom:0; flex:1;">
+                        <option value="">-- اختر المندوب --</option>
+                    </select>
+                    <button type="button" id="loadDriverOrdersBtn" class="btn-search interactive-btn" style="padding: 0 15px;">عرض العهدة ✔️</button>
+                </div>
+                
                 <div id="shippedOrdersContainer" class="data-list-container mt-10" style="min-height: 100px;">
-                    <p class="empty-msg">جاري تحميل الأوردرات...</p>
+                    <p class="empty-msg">برجاء اختيار المندوب والضغط على "عرض العهدة"</p>
                 </div>
                 <div class="action-grid mt-10">
                     <button type="button" id="markDeliveredBtn" class="btn-save interactive-btn" style="flex:1;">تم التوصيل ✅</button>
@@ -307,6 +338,7 @@
                 <h3 class="section-title">🛠️ إعدادات السيستم</h3>
                 
                 <div style="margin-bottom: 25px;">
+                    <!-- لينك الإكسيل بتاعك حطه هنا بدل كلمة رابط_الإكسيل_بتاعك_هنا -->
                     <a href="https://docs.google.com/spreadsheets/d/1RL9fNadwDxgGMh45beymGbVzv0uQERHnR_bJrvQ8-AM/edit?gid=0#gid=0" id="openGoogleSheetBtn" class="btn-outline interactive-btn" target="_blank" style="display: block; text-decoration: none; padding: 15px; background: #e8f5e9; color: #2e7d32; border: 2px solid #c8e6c9; border-radius: 15px; font-weight: bold;">
                         📊 فتح قاعدة البيانات (الإكسيل)
                     </a>
@@ -356,6 +388,7 @@
         </button>
     </nav>
 
+    <!-- ⭐ تعديل جذري لجدول الطباعة (عناوين الأعمدة + تاريخ الحجز) -->
     <div id="print-receipt-template" class="print-only">
         <div class="receipt-header">
             <img id="print-logo" src="" alt="Logo" style="display:none; max-width: 120px; margin: 0 auto 10px; display: block;">
@@ -365,13 +398,23 @@
         <hr>
         <div class="receipt-info">
             <p>التاريخ: <span id="print-date"></span> <span id="print-time"></span></p>
+            <p class="print-booking-row" style="display:none; color: var(--primary);">تاريخ الحجز المسبق: <span id="print-booking-date"></span></p>
             <p>العميل: <span id="print-customer-name"></span></p>
             <p>الموبايل: <span id="print-phone"></span></p>
             <p class="print-address-row">العنوان: <span id="print-address"></span></p>
             <p class="print-status-row">الحالة: <span id="print-status"></span></p>
         </div>
         <table class="receipt-table">
-            <thead><tr><th colspan="4">تفاصيل الطلب</th></tr></thead>
+            <thead>
+                <tr><th colspan="4" style="background:#f9f9f9; padding:5px;">تفاصيل الطلب</th></tr>
+                <!-- عناوين الأعمدة اللي كانت ناقصة عشان الفاتورة تتشرح للعميل -->
+                <tr>
+                    <th style="width: 40%;">المنتج</th>
+                    <th style="width: 20%;">السعر</th>
+                    <th style="width: 15%;">الكمية</th>
+                    <th style="width: 25%;">الإجمالي</th>
+                </tr>
+            </thead>
             <tbody id="print-items-body"></tbody>
         </table>
         <hr>
@@ -379,7 +422,8 @@
             <p>إجمالي المنتجات: <span id="print-subtotal"></span> ج.م</p>
             <p>الخصم: <span id="print-discount"></span> ج.م</p>
             <p>الشحن: <span id="print-shipping"></span> ج.م</p>
-            <h3 style="border-top: 1px solid #000; padding-top: 5px;">الصافي: <span id="print-final"></span> ج.م</h3>
+            <p class="print-deposit-row" style="display:none; color: var(--primary);">تم دفع عربون: <span id="print-deposit"></span> ج.م</p>
+            <h3 style="border-top: 1px solid #000; padding-top: 5px;">المتبقي للدفع: <span id="print-final"></span> ج.م</h3>
         </div>
         <div class="receipt-footer">
             <p>طريقة الدفع: <span id="print-payment"></span></p>
