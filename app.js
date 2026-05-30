@@ -115,7 +115,7 @@ function loadDataFromServer() {
             window.uncollectedOrdersData = data.uncollectedOrders || [];
             window.customersData = data.customers || [];
 
-            if (typeof renderCustomers === 'function') renderCustomers(window.customersData);
+
             if (typeof renderFinancials === 'function') renderFinancials(window.financialsData);
 
             catalogData = data.catalog || [];
@@ -125,6 +125,7 @@ function loadDataFromServer() {
             renderOutOfStock(oosData);
 
             const govSelect = document.getElementById('governorate');
+            let currentGov = govSelect ? govSelect.value : "";
             const zonesAlexList = document.getElementById('zonesAlexList');
             const zonesGovList = document.getElementById('zonesGovList');
 
@@ -165,6 +166,7 @@ function loadDataFromServer() {
                 });
                 if (govSelect) govSelect.appendChild(optgroup);
             }
+            if (govSelect && currentGov) govSelect.value = currentGov;
 
             const driverSelect = document.getElementById('driverNameSelect');
             const driversDisplayList = document.getElementById('driversDisplayList');
@@ -201,6 +203,7 @@ function loadDataFromServer() {
             }
 
             const modSelect = document.getElementById('moderatorSelect');
+            let currentMod = modSelect ? modSelect.value : "";
             const modsList = document.getElementById('moderatorsList');
             if (modSelect) modSelect.innerHTML = '<option value="">-- اختر اسمك --</option>';
             if (modsList) modsList.innerHTML = '';
@@ -218,6 +221,7 @@ function loadDataFromServer() {
             } else if (modsList) {
                 modsList.innerHTML = '<p class="empty-msg">لا يوجد كاشيرية مسجلين</p>';
             }
+            if (modSelect && currentMod) modSelect.value = currentMod;
 
             if (document.getElementById('todayCount')) document.getElementById('todayCount').innerText = data.todayOrders || 0;
             if (document.getElementById('todaySales')) document.getElementById('todaySales').innerText = data.todaySales || 0;
@@ -469,6 +473,7 @@ function renderHistoryList(orders, isLoadMore = false) {
             <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 8px; align-items: center;">
                 <strong style="font-size: 1.05rem;">${order.id} | ${order.name}</strong>
                 <div style="display:flex; align-items:center; gap:10px;">
+                    <button class="interactive-btn" onclick="shareToWhatsAppGroup('${order.id}')" style="background:none; border:none; font-size:1.3rem; cursor:pointer;" title="مشاركة للجروب">📱</button>
                     <button class="interactive-btn" onclick="printOldOrder('${order.id}')" style="background:none; border:none; font-size:1.3rem; cursor:pointer;" title="طباعة الفاتورة الأصلية">🖨️</button>
                     <span style="background: ${statusColor}15; color: ${statusColor}; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.85rem;">${order.status}</span>
                 </div>
@@ -533,7 +538,8 @@ window.printOldOrder = function (orderId) {
 
     if (document.getElementById('receipt-type')) {
         let typeStr = oType || "أوردر توصيل";
-        document.getElementById('receipt-type').innerText = isOldGift ? `${typeStr} - 🎁 هدية` : `${typeStr}`;
+        let govStr = order.gov ? order.gov + " - " : "";
+        document.getElementById('receipt-type').innerText = isOldGift ? `${govStr}${typeStr} - 🎁 هدية` : `${govStr}${typeStr}`;
     }
     if (document.getElementById('print-date')) document.getElementById('print-date').innerText = order.date;
     if (document.getElementById('print-time')) document.getElementById('print-time').innerText = order.time || '';
@@ -1161,7 +1167,8 @@ if (saveAndPrintBtn) {
             .then(() => {
                 showToast("✅ تم حفظ الأوردر بنجاح!", "success");
 
-                if (document.getElementById('receipt-type')) document.getElementById('receipt-type').innerText = isGift ? `${orderTypeLabel} - 🎁 هدية` : `${orderTypeLabel}`;
+                let govStr = gov ? gov + " - " : "";
+                if (document.getElementById('receipt-type')) document.getElementById('receipt-type').innerText = isGift ? `${govStr}${orderTypeLabel} - 🎁 هدية` : `${govStr}${orderTypeLabel}`;
 
                 let printLogo = document.getElementById('receiptLogo') || document.getElementById('print-logo');
                 if (printLogo) {
@@ -1546,17 +1553,69 @@ function updateAdvancedDashboard(history) {
     }
 }
 
-let sendWaSmouhaBtn = document.getElementById('sendWaSmouhaBtn');
-if (sendWaSmouhaBtn) sendWaSmouhaBtn.addEventListener('click', () => {
-    let pending = window.pendingOrdersData || [];
-    let text = `أوردرات سموحة الخارجية 🚚\nتاريخ: ${new Date().toLocaleDateString('ar-EG')}\n\n`;
+window.shareToWhatsAppGroup = function(orderId) {
+    let order;
+    if (typeof orderId === 'object') {
+        order = orderId;
+    } else {
+        order = (window.orderHistoryData || []).find(o => o.id === orderId) ||
+                (window.searchResultsCache || []).find(o => o.id === orderId) ||
+                (window.pendingOrdersData || []).find(o => o.id === orderId) ||
+                (window.suspendedOrdersData || []).find(o => o.id === orderId) ||
+                (window.uncollectedOrdersData || []).find(o => o.id === orderId);
+    }
     
-    pending.forEach((o, i) => {
-        text += `🔶 العميل: ${o.name}\n🔸 التليفون: ${o.phone}\n◾ العنوان: ${o.address}\n◻️ الإجمالي: ${o.total} ج\n\n`;
-    });
-    if(pending.length === 0) text += "لا يوجد أوردرات.\n";
+    if (!order) {
+        showToast("لم يتم العثور على الأوردر", "error");
+        return;
+    }
+    
+    let text = `*نوع الطلب:* ${order.orderType || "توصيل"}\n`;
+    text += `*التاريخ:* ${order.date || new Date().toLocaleDateString('ar-EG')} ⏰ ${order.time || new Date().toLocaleTimeString('ar-EG')}\n`;
+    text += `👤 *العميل:* ${order.name}\n`;
+    text += `📍 *العنوان:* ${order.gov ? order.gov + " - " : ""}${order.address || ""}\n`;
+    text += `💳 *طريقة الدفع:* ${order.payment || ""}\n\n`;
+    text += `📦 *المنتجات:*\n${order.products || ""}\n`;
+    text += `🚚 *الشحن:* ${order.shipping || 0}\n`;
+    text += `💰 *الإجمالي النهائي:* ${order.remaining !== undefined ? order.remaining : (order.total || 0)}\n`;
+    
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-});
+};
+
+let shareOrderBtn = document.getElementById('shareOrderBtn');
+if (shareOrderBtn) {
+    shareOrderBtn.addEventListener('click', () => {
+        let name = document.getElementById('customerName') ? document.getElementById('customerName').value.trim() : "";
+        if (!name) { showToast("برجاء إدخال بيانات الأوردر أولاً", "error"); return; }
+        
+        let gov = document.getElementById('governorate') ? document.getElementById('governorate').value : "";
+        let addressVal = document.getElementById('address') ? document.getElementById('address').value : "";
+        let paymentMethod = document.getElementById('paymentMethod') ? document.getElementById('paymentMethod').value : "";
+        let productsListText = "";
+        document.querySelectorAll('.product-row.confirmed').forEach(row => {
+            let n = row.querySelector('.product-name-input').value, p = row.querySelector('.product-price-input').value, q = row.querySelector('.product-qty-input').value;
+            productsListText += `${n} - الكمية: ${q} (${(parseFloat(p) || 0) * (parseFloat(q) || 1)}ج)\n`;
+        });
+        let shipping = document.getElementById('shippingCost') ? document.getElementById('shippingCost').value : 0;
+        let rem = document.getElementById('remainingAmountDisplay') ? document.getElementById('remainingAmountDisplay').innerText : (document.getElementById('finalTotalDisplay') ? document.getElementById('finalTotalDisplay').innerText : 0);
+        let deliveryTypeSelect = document.getElementById('deliveryType');
+        let orderTypeLabel = deliveryTypeSelect ? deliveryTypeSelect.options[deliveryTypeSelect.selectedIndex].text : "توصيل";
+
+        let currentOrderObj = {
+            orderType: orderTypeLabel,
+            date: new Date().toLocaleDateString('ar-EG'),
+            time: new Date().toLocaleTimeString('ar-EG'),
+            name: name,
+            gov: gov,
+            address: addressVal,
+            payment: paymentMethod,
+            products: productsListText,
+            shipping: shipping,
+            remaining: rem
+        };
+        shareToWhatsAppGroup(currentOrderObj);
+    });
+}
 
 let sendWaManagerBtn = document.getElementById('sendWaManagerBtn');
 if (sendWaManagerBtn) sendWaManagerBtn.addEventListener('click', () => {
@@ -1565,12 +1624,14 @@ if (sendWaManagerBtn) sendWaManagerBtn.addEventListener('click', () => {
     let compCount = document.getElementById('completedCount') ? document.getElementById('completedCount').innerText : 0;
     let retCount = document.getElementById('returnedCount') ? document.getElementById('returnedCount').innerText : 0;
     let topP = document.getElementById('topProduct') ? document.getElementById('topProduct').innerText : "--";
+    let oosCount = window.oosData ? window.oosData.length : 0;
 
-    let report = `📊 *تقرير نهاية اليوم - Candy Club*\n\n`;
+    let report = `📊 *تقرير نهاية اليوم - Candy Club Pro*\n\n`;
     report += `🛒 أوردرات اليوم: ${tCount}\n`;
     report += `💰 المبيعات المتوقعة: ${tSales} ج\n`;
     report += `✅ أوردرات مكتملة (محاسب): ${compCount}\n`;
     report += `🚨 مرتجعات: ${retCount}\n`;
+    report += `⚠️ منتجات ناقصة: ${oosCount}\n`;
     report += `⭐ المنتج الأكثر مبيعاً: ${topP}\n\n`;
     report += `تم الإنشاء بواسطة سيستم الإدارة الآلي ⚙️`;
 
@@ -1809,10 +1870,17 @@ function renderCustomers(customersList) {
             <div style="font-size: 0.9rem; color: #555; margin-top: 5px;">
                 <span>📍 ${c.gov} - ${c.address}</span><br>
                 <span>🛒 إجمالي الطلبات: <strong style="color: var(--text-dark);">${c.ordersCount}</strong> | 💰 إجمالي المدفوعات: <strong style="color: var(--success);">${c.totalPaid} ج.م</strong></span><br>
-                <span style="font-size: 0.8rem; color: #888;">📅 آخر طلب: ${c.lastOrder}</span>
+                <span style="font-size: 0.8rem; color: #888;">📅 آخر طلب: ${c.lastOrder ? String(c.lastOrder).split('T')[0] : '--'}</span>
             </div>
         `;
         container.appendChild(div);
+    });
+}
+
+let loadCustomersBtn = document.getElementById('loadCustomersBtn');
+if (loadCustomersBtn) {
+    loadCustomersBtn.addEventListener('click', () => {
+        renderCustomers(window.customersData || []);
     });
 }
 

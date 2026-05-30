@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title id="page-title">كاندي كلوب - Candy Club V13.9</title>
+    <title id="page-title">Candy Club Pro - V14.0</title>
     <link rel="icon" type="image/png" href="./favicon.png">
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
@@ -166,6 +166,7 @@
                             <button type="button" id="suspendBtn" class="btn-outline interactive-btn">⏸️ تعليق الطلب</button>
                             <button type="button" id="saveAndPrintBtn" class="btn-save pulse-btn">💾 حفظ وطباعة الفاتورة</button>
                         </div>
+                        <button type="button" id="shareOrderBtn" class="interactive-btn" style="background:#25D366; color:white; border:none; padding:12px; font-weight:bold; border-radius:8px; margin-top:10px; width:100%;">مشاركة للجروب 📱</button>
                     </div>
                 </form>
             </div>
@@ -353,7 +354,6 @@
                 <h3 class="section-title">🛠️ إعدادات السيستم</h3>
                 
                 <div class="action-grid" style="margin-bottom: 15px;">
-                    <button type="button" id="sendWaSmouhaBtn" class="btn-whatsapp interactive-btn" style="width: 100%; padding: 12px; font-size: 0.95rem;">📱 إرسال أوردرات سموحة الخارجية</button>
                     <button type="button" id="sendWaManagerBtn" class="btn-outline interactive-btn" style="width: 100%; padding: 12px; font-size: 0.95rem; border-color: var(--primary); color: var(--primary);">📊 إرسال تقرير اليوم للمدير (واتساب)</button>
                 </div>
                 
@@ -385,8 +385,11 @@
                     <input type="text" id="customerSearchInput" placeholder="ابحث باسم العميل أو رقم الموبايل...">
                     <button id="searchCustomerBtn" class="btn-search interactive-btn">بحث</button>
                 </div>
+                <div class="text-center" style="margin-bottom: 15px;">
+                    <button type="button" id="loadCustomersBtn" class="interactive-btn" style="padding: 10px 20px;">عرض بيانات العملاء 📂</button>
+                </div>
                 <div id="customersListContainer" class="data-list-container scroll-list" style="max-height: 400px; padding: 5px;">
-                    <p class="empty-msg">جاري تحميل بيانات العملاء...</p>
+                    <p class="empty-msg">اضغط على عرض البيانات ليتم تحميل القائمة...</p>
                 </div>
             </div>
         </section>
@@ -448,21 +451,20 @@
         </table>
         <hr>
         <div class="receipt-totals">
-            <p>إجمالي المنتجات: <span id="print-subtotal"></span> ج.م</p>
-            <p>الخصم: <span id="print-discount"></span> ج.م</p>
-            <p>الشحن: <span id="print-shipping"></span> ج.م</p>
-            <p class="print-deposit-row" style="display:none; color: var(--primary);">تم دفع عربون: <span id="print-deposit"></span> ج.م</p>
-            <h3 style="border-top: 1px solid #000; padding-top: 5px;">المتبقي للدفع: <span id="print-final"></span> ج.م</h3>
+            <p>إجمالي المنتجات: <b><span id="print-subtotal"></span></b></p>
+            <p>الخصم: <b><span id="print-discount"></span></b></p>
+            <p>الشحن: <b><span id="print-shipping"></span></b></p>
+            <p class="print-deposit-row" style="display:none; color: var(--primary);">تم دفع عربون: <b><span id="print-deposit"></span></b></p>
+            <h3 style="border-top: 1px solid #000; padding-top: 5px; font-size: 14px;">المتبقي للدفع: <b style="font-size: 16px;"><span id="print-final"></span></b></h3>
         </div>
         <div class="receipt-footer">
             <p>طريقة الدفع: <span id="print-payment"></span></p>
             <p id="print-seller-name">البائع: ...........................</p>
-            <p style="margin-top: 10px; font-weight: bold;">شكراً لزيارتكم ❤️</p>
-            <!-- روابط قنوات وأرقام الواتساب ثابتة -->
+            <p style="margin-top: 10px; font-weight: bold;">نتمنى لكم يوم مُسكر! 🍬</p>
             <div style="margin-top: 10px; font-size: 11px; color: #555; border-top: 1px dashed #aaa; padding-top: 10px; text-align: center;">
-                <p><strong>📞 +20 10 80269555</strong></p>
-                <p>تابعنا على السوشيال ميديا</p>
-                <img src="./images/qr-code.png" style="max-width: 60px; margin-top: 5px;" alt="QR Code">
+                <p><span dir="ltr" style="unicode-bidi: embed; font-weight: bold; font-size: 13px;">01080269555</span> 📞</p>
+                <p>سكان الكود لعروض حصرية! 👇</p>
+                <img src="./images/qr-code.png" style="max-width: 110px; margin-top: 5px;" alt="QR Code">
             </div>
         </div>
     </div>
