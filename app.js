@@ -19,8 +19,8 @@ function showToast(message, type = 'success') {
 }
 
 function setBtnLoading(btn, isLoading, originalText = "") {
-    if(!btn) return;
-    if(isLoading) {
+    if (!btn) return;
+    if (isLoading) {
         btn.disabled = true;
         btn.dataset.origText = btn.innerText;
         btn.innerText = "جاري التحميل ⏳...";
@@ -43,7 +43,7 @@ document.querySelectorAll('.nav-item').forEach(btn => {
         document.querySelectorAll('.tab-pane').forEach(c => c.classList.remove('active'));
         btn.classList.add('active');
         let targetElement = document.getElementById(btn.getAttribute('data-target'));
-        if(targetElement) targetElement.classList.add('active');
+        if (targetElement) targetElement.classList.add('active');
     });
 });
 
@@ -65,23 +65,23 @@ setupModal('openFinancialsBtn', 'financialsModal', 'closeFinancialsModal');
 // 3. تحميل الداتا الأساسية من الإكسيل
 // ==========================================
 let shippingData = {};
-let catalogData = []; 
-let oosData = [];     
-let orderHistoryData = []; 
-let currentFilterDate = new Date().toLocaleDateString('en-CA'); 
+let catalogData = [];
+let oosData = [];
+let orderHistoryData = [];
+let currentFilterDate = new Date().toLocaleDateString('en-CA');
 
 window.onload = () => {
-    if(localStorage.getItem('candyDarkMode') === 'true') {
+    if (localStorage.getItem('candyDarkMode') === 'true') {
         document.body.classList.add('dark-mode');
         let toggle = document.getElementById('darkModeToggle');
-        if(toggle) toggle.checked = true;
+        if (toggle) toggle.checked = true;
     }
 
     let historyDateInput = document.getElementById('historyDateFilter');
-    if(historyDateInput) historyDateInput.value = currentFilterDate;
+    if (historyDateInput) historyDateInput.value = currentFilterDate;
 
     let loadDateBtn = document.getElementById('loadDateBtn');
-    if(loadDateBtn) {
+    if (loadDateBtn) {
         loadDateBtn.addEventListener('click', () => {
             currentFilterDate = document.getElementById('historyDateFilter').value;
             loadDataFromServer();
@@ -90,13 +90,13 @@ window.onload = () => {
 
     // ⭐ زرار التحديث السريع
     let quickRefreshBtn = document.getElementById('quickRefreshBtn');
-    if(quickRefreshBtn) quickRefreshBtn.addEventListener('click', () => {
+    if (quickRefreshBtn) quickRefreshBtn.addEventListener('click', () => {
         showToast("جاري تحديث البيانات...", "warning");
         loadDataFromServer();
     });
 
     loadDataFromServer();
-    if (typeof updateSuspendedCount === 'function') updateSuspendedCount(); 
+    if (typeof updateSuspendedCount === 'function') updateSuspendedCount();
 };
 
 function loadDataFromServer() {
@@ -107,28 +107,28 @@ function loadDataFromServer() {
         .then(res => res.json())
         .then(data => {
             if (syncStatus) { syncStatus.innerText = "متصل"; syncStatus.style.color = "#00C853"; }
-            
+
             orderHistoryData = data.history || [];
-            window.pendingOrdersData = data.pendingOrders || []; 
-            window.financialsData = data.financials || []; 
-            window.uncollectedOrdersData = data.uncollectedOrders || []; 
+            window.pendingOrdersData = data.pendingOrders || [];
+            window.financialsData = data.financials || [];
+            window.uncollectedOrdersData = data.uncollectedOrders || [];
 
             if (typeof renderFinancials === 'function') renderFinancials(window.financialsData);
 
             catalogData = data.catalog || [];
             renderCatalog(catalogData);
-            
+
             oosData = data.outOfStock || [];
             renderOutOfStock(oosData);
 
             const govSelect = document.getElementById('governorate');
             const zonesAlexList = document.getElementById('zonesAlexList');
             const zonesGovList = document.getElementById('zonesGovList');
-            
+
             if (zonesAlexList) zonesAlexList.innerHTML = '';
             if (zonesGovList) zonesGovList.innerHTML = '';
-            if (govSelect) govSelect.innerHTML = '<option value="">-- اختر من القائمة --</option>'; 
-            shippingData = {}; 
+            if (govSelect) govSelect.innerHTML = '<option value="">-- اختر من القائمة --</option>';
+            shippingData = {};
 
             const renderZoneItem = (z, zoneType, container) => {
                 shippingData[z.name] = z;
@@ -147,20 +147,20 @@ function loadDataFromServer() {
 
             if (data.alex && data.alex.length > 0) {
                 let optgroup = document.createElement('optgroup'); optgroup.label = "⚓ مناطق الإسكندرية";
-                data.alex.forEach(z => { 
+                data.alex.forEach(z => {
                     // ⭐ إظهار السعر بجانب اسم المنطقة
-                    optgroup.innerHTML += `<option value="${z.name}">${z.name} (${z.price} ج)</option>`; 
-                    renderZoneItem(z, 'alex', zonesAlexList); 
+                    optgroup.innerHTML += `<option value="${z.name}">${z.name} (${z.price} ج)</option>`;
+                    renderZoneItem(z, 'alex', zonesAlexList);
                 });
-                if(govSelect) govSelect.appendChild(optgroup);
+                if (govSelect) govSelect.appendChild(optgroup);
             }
             if (data.govs && data.govs.length > 0) {
                 let optgroup = document.createElement('optgroup'); optgroup.label = "🚚 المحافظات";
-                data.govs.forEach(z => { 
-                    optgroup.innerHTML += `<option value="${z.name}">${z.name} (${z.price} ج)</option>`; 
-                    renderZoneItem(z, 'govs', zonesGovList); 
+                data.govs.forEach(z => {
+                    optgroup.innerHTML += `<option value="${z.name}">${z.name} (${z.price} ج)</option>`;
+                    renderZoneItem(z, 'govs', zonesGovList);
                 });
-                if(govSelect) govSelect.appendChild(optgroup);
+                if (govSelect) govSelect.appendChild(optgroup);
             }
 
             const driverSelect = document.getElementById('driverNameSelect');
@@ -172,7 +172,7 @@ function loadDataFromServer() {
             if (driverSelect) driverSelect.innerHTML = '<option value="">-- اختر المندوب --</option>';
             if (assignDriverSelect) assignDriverSelect.innerHTML = '<option value="">-- اختر المندوب --</option>';
             if (closeDriverSelect) closeDriverSelect.innerHTML = '<option value="">-- اختر المندوب --</option>';
-            
+
             if (data.couriers && data.couriers.length > 0) {
                 data.couriers.forEach(c => {
                     if (driverSelect) driverSelect.innerHTML += `<option value="${c.name}">${c.name}</option>`;
@@ -199,12 +199,12 @@ function loadDataFromServer() {
 
             const modSelect = document.getElementById('moderatorSelect');
             const modsList = document.getElementById('moderatorsList');
-            if(modSelect) modSelect.innerHTML = '<option value="">-- اختر اسمك --</option>';
-            if(modsList) modsList.innerHTML = '';
+            if (modSelect) modSelect.innerHTML = '<option value="">-- اختر اسمك --</option>';
+            if (modsList) modsList.innerHTML = '';
             if (data.moderators && data.moderators.length > 0) {
                 data.moderators.forEach(m => {
-                    if(modSelect) modSelect.innerHTML += `<option value="${m}">${m}</option>`;
-                    if(modsList) {
+                    if (modSelect) modSelect.innerHTML += `<option value="${m}">${m}</option>`;
+                    if (modsList) {
                         modsList.innerHTML += `
                             <div class="data-row" style="align-items:center; padding:5px;">
                                 <span style="flex:1;">👤 ${m}</span>
@@ -224,7 +224,7 @@ function loadDataFromServer() {
 
             // إخفاء الأوردرات المشحونة حتى يتم اختيار المندوب
             let shippedCont = document.getElementById('shippedOrdersContainer');
-            if(shippedCont) shippedCont.innerHTML = '<p class="empty-msg">برجاء اختيار المندوب والضغط على "عرض العهدة"</p>';
+            if (shippedCont) shippedCont.innerHTML = '<p class="empty-msg">برجاء اختيار المندوب والضغط على "عرض العهدة"</p>';
 
             renderHistoryList(orderHistoryData);
             renderShippingRoom(orderHistoryData);
@@ -238,25 +238,25 @@ function loadDataFromServer() {
 
 function checkBookingAlerts() {
     let banner = document.getElementById('booking-alert-banner');
-    if(!banner) return;
+    if (!banner) return;
     let hasAlert = window.pendingOrdersData.some(o => o.orderType && o.orderType.includes('حجز'));
-    if(hasAlert) banner.style.display = 'block';
+    if (hasAlert) banner.style.display = 'block';
     else banner.style.display = 'none';
 }
 
 function renderFinancials(finList) {
     let container = document.getElementById('financialsDisplayList');
-    if(!container) return;
+    if (!container) return;
     container.innerHTML = '';
-    
-    if(finList.length === 0) {
+
+    if (finList.length === 0) {
         container.innerHTML = '<p class="empty-msg">لا توجد حسابات أو مديونيات مسجلة.</p>';
         return;
     }
-    
+
     finList.forEach(f => {
         let statusColor = f.netDue > 0 ? "#27ae60" : (f.netDue < 0 ? "#c0392b" : "#7f8c8d");
-        
+
         let driverOrders = (window.uncollectedOrdersData || []).filter(o => o.driver === f.name);
         let ordersHtml = '';
         if (driverOrders.length > 0) {
@@ -297,29 +297,29 @@ function renderFinancials(finList) {
 }
 
 // ⭐ حماية تصفية الأوردر برسالة واضحة بناءً على نوع الدفع
-window.settleDriverOrder = function(orderId, btn, payMethod) {
+window.settleDriverOrder = function (orderId, btn, payMethod) {
     let msg = `هل أنت متأكد من تسوية الأوردر (${orderId})؟`;
-    if(payMethod.includes('كاش')) msg = `هل استلمت النقدية من المندوب الخاصة بالأوردر (${orderId})؟`;
+    if (payMethod.includes('كاش')) msg = `هل استلمت النقدية من المندوب الخاصة بالأوردر (${orderId})؟`;
     else msg = `هل قمت بصرف حق الشحن للمندوب عن الأوردر (${orderId}) المدفوع إلكترونياً؟`;
 
-    if(!confirm(msg)) return;
+    if (!confirm(msg)) return;
 
     btn.innerText = "جاري...";
     btn.disabled = true;
-    
+
     let formData = new URLSearchParams();
     formData.append('action', 'settleOrder');
     formData.append('orderId', orderId);
-    
+
     fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
-    .then(() => {
-        showToast("✅ تمت المحاسبة وتسوية الأوردر!", "success");
-        loadDataFromServer();
-    }).catch(() => {
-        showToast("❌ حدث خطأ في الاتصال", "error");
-        btn.innerText = "تسوية 💸";
-        btn.disabled = false;
-    });
+        .then(() => {
+            showToast("✅ تمت المحاسبة وتسوية الأوردر!", "success");
+            loadDataFromServer();
+        }).catch(() => {
+            showToast("❌ حدث خطأ في الاتصال", "error");
+            btn.innerText = "تسوية 💸";
+            btn.disabled = false;
+        });
 };
 
 // ==========================================
@@ -328,42 +328,42 @@ window.settleDriverOrder = function(orderId, btn, payMethod) {
 function calculateDeliveryDateSkippingFriday(durationText) {
     if (!durationText) return "";
     let match = durationText.match(/\d+/);
-    if (!match) return durationText; 
-    
+    if (!match) return durationText;
+
     let daysToAdd = parseInt(match[0]);
     let d = new Date();
     let added = 0;
-    
-    while(added < daysToAdd) {
+
+    while (added < daysToAdd) {
         d.setDate(d.getDate() + 1);
-        if(d.getDay() !== 5) { 
+        if (d.getDay() !== 5) {
             added++;
         }
     }
-    
+
     let options = { weekday: 'long', month: 'numeric', day: 'numeric' };
     return d.toLocaleDateString('ar-EG', options);
 }
 
 const deliveryTypeSelect = document.getElementById('deliveryType');
 const govSelect = document.getElementById('governorate');
-if(deliveryTypeSelect) {
+if (deliveryTypeSelect) {
     deliveryTypeSelect.addEventListener('change', () => {
         let type = deliveryTypeSelect.value;
         let addressFields = document.getElementById('addressFields');
         let specialDateContainer = document.getElementById('specialDateContainer');
         if (type === 'branch') {
-            if(addressFields) addressFields.classList.add('hidden-field');
-            if(specialDateContainer) specialDateContainer.classList.add('hidden-field');
-            if(document.getElementById('shippingCost')) document.getElementById('shippingCost').value = 0;
-            let infoSpan = document.querySelector('#deliveryInfo span'); if(infoSpan) infoSpan.innerText = "استلام من الفرع 🏪";
+            if (addressFields) addressFields.classList.add('hidden-field');
+            if (specialDateContainer) specialDateContainer.classList.add('hidden-field');
+            if (document.getElementById('shippingCost')) document.getElementById('shippingCost').value = 0;
+            let infoSpan = document.querySelector('#deliveryInfo span'); if (infoSpan) infoSpan.innerText = "استلام من الفرع 🏪";
         } else if (type === 'special_date') {
-            if(addressFields) addressFields.classList.remove('hidden-field');
-            if(specialDateContainer) specialDateContainer.classList.remove('hidden-field');
+            if (addressFields) addressFields.classList.remove('hidden-field');
+            if (specialDateContainer) specialDateContainer.classList.remove('hidden-field');
             triggerGovCalc();
         } else {
-            if(addressFields) addressFields.classList.remove('hidden-field');
-            if(specialDateContainer) specialDateContainer.classList.add('hidden-field');
+            if (addressFields) addressFields.classList.remove('hidden-field');
+            if (specialDateContainer) specialDateContainer.classList.add('hidden-field');
             triggerGovCalc();
         }
         calculateTotal();
@@ -371,20 +371,20 @@ if(deliveryTypeSelect) {
 }
 
 function triggerGovCalc() {
-    if(!govSelect) return;
+    if (!govSelect) return;
     let zone = govSelect.value;
     let costInput = document.getElementById('shippingCost');
     let dateDisplay = document.querySelector('#deliveryInfo span');
-    
+
     if (!zone || !shippingData[zone]) {
-        if(costInput) costInput.value = 0; 
-        if(dateDisplay) dateDisplay.innerText = "--"; 
+        if (costInput) costInput.value = 0;
+        if (dateDisplay) dateDisplay.innerText = "--";
         calculateTotal(); return;
     }
     let info = shippingData[zone];
-    if(costInput) costInput.value = info.price || 0;
-    
-    if(dateDisplay) {
+    if (costInput) costInput.value = info.price || 0;
+
+    if (dateDisplay) {
         let type = deliveryTypeSelect ? deliveryTypeSelect.value : 'normal';
         if (type === 'special_date') {
             dateDisplay.innerText = "حسب التاريخ المختار 📅";
@@ -397,7 +397,7 @@ function triggerGovCalc() {
     }
     calculateTotal();
 }
-if(govSelect) govSelect.addEventListener('change', triggerGovCalc);
+if (govSelect) govSelect.addEventListener('change', triggerGovCalc);
 
 // ==========================================
 // 5. سجل الأوردرات (العرض الذكي والطباعة)
@@ -415,11 +415,11 @@ function renderHistoryList(orders, isLoadMore = false) {
         container.innerHTML = '';
         currentHistoryPage = 1;
         currentOrdersList = orders;
-        
+
         if (window.pendingOrdersData && window.pendingOrdersData.length > 0 && document.getElementById('orderSearchInput').value.trim() === "") {
             let pendingDiv = document.createElement('div');
             pendingDiv.innerHTML = `<h4 style="color: #e74c3c; padding-bottom: 5px; margin-bottom: 15px; font-weight: bold;">🔴 أوردرات لم تُشحن بعد (${window.pendingOrdersData.length})</h4>`;
-            
+
             window.pendingOrdersData.forEach(pOrder => {
                 pendingDiv.innerHTML += `
                     <div class="history-item" style="border-right-color: #e74c3c; background: #fff5f5;">
@@ -434,7 +434,7 @@ function renderHistoryList(orders, isLoadMore = false) {
                 `;
             });
             container.appendChild(pendingDiv);
-            
+
             let hr = document.createElement('hr');
             hr.style.margin = "20px 0";
             hr.style.borderColor = "var(--border)";
@@ -453,13 +453,13 @@ function renderHistoryList(orders, isLoadMore = false) {
 
     pageOrders.forEach(order => {
         let div = document.createElement('div');
-        div.className = 'history-item'; 
-        
+        div.className = 'history-item';
+
         let statusColor = order.status === "تم التوصيل" ? "var(--success)" : "var(--primary)";
         if (order.status === "مرتجع") statusColor = "var(--danger)";
-        
+
         div.style.borderRightColor = statusColor;
-        
+
         div.innerHTML = `
             <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 8px; align-items: center;">
                 <strong style="font-size: 1.05rem;">${order.id} | ${order.name}</strong>
@@ -496,25 +496,25 @@ function renderHistoryList(orders, isLoadMore = false) {
 }
 
 // ⭐ إصلاح تشوه الفاتورة المطبوعة القديمة
-window.printOldOrder = function(orderId) {
+window.printOldOrder = function (orderId) {
     let order = orderHistoryData.find(o => o.id === orderId) || window.searchResultsCache.find(o => o.id === orderId);
-    if(!order) return;
-    
+    if (!order) return;
+
     let isOldGift = order.notes && order.notes.includes("هدية");
-    
-    if(document.getElementById('receipt-type')) document.getElementById('receipt-type').innerText = isOldGift ? `فاتورة (${order.status}) - 🎁 هدية` : `فاتورة (${order.status})`;
-    if(document.getElementById('print-date')) document.getElementById('print-date').innerText = order.date;
-    if(document.getElementById('print-time')) document.getElementById('print-time').innerText = order.time || '';
-    if(document.getElementById('print-customer-name')) document.getElementById('print-customer-name').innerText = order.name;
-    if(document.getElementById('print-phone')) document.getElementById('print-phone').innerText = order.phone;
-    if(document.getElementById('print-address')) document.getElementById('print-address').innerText = order.address || "";
-    if(document.getElementById('print-status')) document.getElementById('print-status').innerText = order.status;
-    
+
+    if (document.getElementById('receipt-type')) document.getElementById('receipt-type').innerText = isOldGift ? `فاتورة (${order.status}) - 🎁 هدية` : `فاتورة (${order.status})`;
+    if (document.getElementById('print-date')) document.getElementById('print-date').innerText = order.date;
+    if (document.getElementById('print-time')) document.getElementById('print-time').innerText = order.time || '';
+    if (document.getElementById('print-customer-name')) document.getElementById('print-customer-name').innerText = order.name;
+    if (document.getElementById('print-phone')) document.getElementById('print-phone').innerText = order.phone;
+    if (document.getElementById('print-address')) document.getElementById('print-address').innerText = order.address || "";
+    if (document.getElementById('print-status')) document.getElementById('print-status').innerText = order.status;
+
     let printItemsHtml = "";
-    if(order.products) {
+    if (order.products) {
         let lines = order.products.split('\n');
         lines.forEach(line => {
-            if(line.trim() !== "") {
+            if (line.trim() !== "") {
                 // تقسيم السطر بشكل ذكي ليتناسب مع الجدول الجديد
                 let match = line.match(/(.*) - الكمية: (\d+) \(([\d.]+)ج\)/);
                 if (match) {
@@ -522,10 +522,10 @@ window.printOldOrder = function(orderId) {
                     let qty = match[2];
                     let total = match[3];
                     let price = parseFloat(total) / parseFloat(qty);
-                    
+
                     let printP = isOldGift ? "***" : price;
                     let printTotal = isOldGift ? "***" : total;
-                    
+
                     printItemsHtml += `<tr><td>${name}</td><td>${printP}</td><td>${qty}</td><td>${printTotal}</td></tr>`;
                 } else {
                     printItemsHtml += `<tr><td colspan="4" style="text-align:right;">${line}</td></tr>`;
@@ -535,14 +535,14 @@ window.printOldOrder = function(orderId) {
     } else {
         printItemsHtml = `<tr><td colspan="4">لا توجد تفاصيل</td></tr>`;
     }
-    if(document.getElementById('print-items-body')) document.getElementById('print-items-body').innerHTML = printItemsHtml;
-    
-    if(document.getElementById('print-subtotal')) document.getElementById('print-subtotal').innerText = isOldGift ? "***" : (order.subtotal || 0);
-    if(document.getElementById('print-discount')) document.getElementById('print-discount').innerText = isOldGift ? "***" : (order.discount || 0);
-    if(document.getElementById('print-shipping')) document.getElementById('print-shipping').innerText = isOldGift ? "***" : (order.shipping || 0);
-    
+    if (document.getElementById('print-items-body')) document.getElementById('print-items-body').innerHTML = printItemsHtml;
+
+    if (document.getElementById('print-subtotal')) document.getElementById('print-subtotal').innerText = isOldGift ? "***" : (order.subtotal || 0);
+    if (document.getElementById('print-discount')) document.getElementById('print-discount').innerText = isOldGift ? "***" : (order.discount || 0);
+    if (document.getElementById('print-shipping')) document.getElementById('print-shipping').innerText = isOldGift ? "***" : (order.shipping || 0);
+
     // إظهار العربون لو فيه
-    if(parseFloat(order.deposit) > 0 && !isOldGift) {
+    if (parseFloat(order.deposit) > 0 && !isOldGift) {
         document.querySelector('.print-deposit-row').style.display = 'block';
         document.getElementById('print-deposit').innerText = order.deposit;
         document.getElementById('print-final').innerText = order.remaining;
@@ -551,10 +551,10 @@ window.printOldOrder = function(orderId) {
         document.getElementById('print-final').innerText = isOldGift ? "***" : order.total;
     }
 
-    if(document.getElementById('print-payment')) document.getElementById('print-payment').innerText = order.payment || "";
-    
+    if (document.getElementById('print-payment')) document.getElementById('print-payment').innerText = order.payment || "";
+
     let sellerP = document.getElementById('print-seller-name');
-    if(sellerP) sellerP.innerText = `الكاشير: ${order.seller || 'غير محدد'}`;
+    if (sellerP) sellerP.innerText = `الكاشير: ${order.seller || 'غير محدد'}`;
 
     setTimeout(() => window.print(), 500);
 };
@@ -566,23 +566,23 @@ if (searchBtn && orderSearchInput) {
     searchBtn.addEventListener('click', () => {
         let keyword = orderSearchInput.value.trim().toLowerCase();
         if (keyword === "") {
-            renderHistoryList(orderHistoryData); 
+            renderHistoryList(orderHistoryData);
         } else {
             let container = document.getElementById('historyListContainer');
             container.innerHTML = '<p class="empty-msg">جاري البحث الشامل في قاعدة البيانات... ⏳</p>';
-            
+
             fetch(`${GOOGLE_SHEETS_URL}?action=globalSearch&query=${encodeURIComponent(keyword)}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.length === 0) container.innerHTML = '<p class="empty-msg">لم يتم العثور على أوردرات مطابقة.</p>';
-                else {
-                    window.searchResultsCache = data; 
-                    renderHistoryList(data);
-                }
-            })
-            .catch(() => {
-                container.innerHTML = '<p class="empty-msg">❌ حدث خطأ في الاتصال بالإنترنت.</p>';
-            });
+                .then(res => res.json())
+                .then(data => {
+                    if (data.length === 0) container.innerHTML = '<p class="empty-msg">لم يتم العثور على أوردرات مطابقة.</p>';
+                    else {
+                        window.searchResultsCache = data;
+                        renderHistoryList(data);
+                    }
+                })
+                .catch(() => {
+                    container.innerHTML = '<p class="empty-msg">❌ حدث خطأ في الاتصال بالإنترنت.</p>';
+                });
         }
     });
     orderSearchInput.addEventListener('keypress', (e) => {
@@ -597,11 +597,11 @@ const phoneStatus = document.getElementById('phoneCheckStatus');
 
 // ⭐ إصلاح ذاكرة السمكة
 function performPhoneSearch() {
-    if(!phoneInput || !phoneStatus) return;
-    let phoneVal = phoneInput.value.trim().replace(/\D/g, ''); 
+    if (!phoneInput || !phoneStatus) return;
+    let phoneVal = phoneInput.value.trim().replace(/\D/g, '');
     if (phoneVal.length >= 9) {
         phoneStatus.innerText = "⏳";
-        
+
         let foundCustomer = null;
         if (orderHistoryData && orderHistoryData.length > 0) foundCustomer = orderHistoryData.find(o => o.phone.toString().replace(/\D/g, '').includes(phoneVal));
         if (!foundCustomer && window.pendingOrdersData && window.pendingOrdersData.length > 0) foundCustomer = window.pendingOrdersData.find(o => o.phone.toString().replace(/\D/g, '').includes(phoneVal));
@@ -611,11 +611,11 @@ function performPhoneSearch() {
         } else {
             // البحث الشامل الصامت في قاعدة العملاء
             fetch(`${GOOGLE_SHEETS_URL}?action=globalSearch&query=${phoneVal}`)
-            .then(res => res.json())
-            .then(data => {
-                if(data.length > 0) fillCustomerData(data[0]);
-                else phoneStatus.innerText = "🆕";
-            }).catch(() => phoneStatus.innerText = "🔍");
+                .then(res => res.json())
+                .then(data => {
+                    if (data.length > 0) fillCustomerData(data[0]);
+                    else phoneStatus.innerText = "🆕";
+                }).catch(() => phoneStatus.innerText = "🔍");
         }
     } else {
         phoneStatus.innerText = "🔍";
@@ -623,11 +623,11 @@ function performPhoneSearch() {
 }
 
 function fillCustomerData(cust) {
-    if(document.getElementById('customerName')) document.getElementById('customerName').value = cust.name;
-    if(document.getElementById('address') && cust.address && cust.address !== 'استلام من الفرع') {
+    if (document.getElementById('customerName')) document.getElementById('customerName').value = cust.name;
+    if (document.getElementById('address') && cust.address && cust.address !== 'استلام من الفرع') {
         document.getElementById('address').value = cust.address;
     }
-    phoneStatus.innerText = "✅"; 
+    phoneStatus.innerText = "✅";
     showToast(`أهلاً بعودتك يا ${cust.name}!`, "success");
 }
 
@@ -638,13 +638,13 @@ const productsContainer = document.getElementById('productsContainer');
 
 // ⭐ دالة إضافة المنتجات (وإصلاح قفل الخانات عند الاسترجاع)
 function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = false) {
-    if(!productsContainer) return;
-    
-    if(!document.getElementById('smartProductsList')) {
+    if (!productsContainer) return;
+
+    if (!document.getElementById('smartProductsList')) {
         let dl = document.createElement('datalist');
         dl.id = 'smartProductsList';
         document.body.appendChild(dl);
-        updateSmartProductsList(); 
+        updateSmartProductsList();
     }
 
     const wrapper = document.createElement('div');
@@ -652,8 +652,8 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
     wrapper.style.flexDirection = 'column';
     wrapper.style.marginBottom = '10px';
 
-    const div = document.createElement('div'); 
-    div.className = 'product-row'; 
+    const div = document.createElement('div');
+    div.className = 'product-row';
     if (isConfirmed) div.classList.add('confirmed');
     div.style.display = 'flex';
     div.style.gap = '5px';
@@ -671,7 +671,7 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
         <button type="button" class="btn-confirm-pro interactive-btn" style="flex: 0 0 36px;">✔️</button>
         <button type="button" class="remove-product-btn interactive-btn" style="flex: 0 0 36px;">❌</button>
     `;
-    
+
     wrapper.appendChild(div);
     productsContainer.appendChild(wrapper);
 
@@ -680,28 +680,28 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
     let qtyInput = div.querySelector('.product-qty-input');
     let confirmBtn = div.querySelector('.btn-confirm-pro');
     let removeBtn = div.querySelector('.remove-product-btn');
-    let offerBtn = div.querySelector('.btn-offer-toggle'); 
+    let offerBtn = div.querySelector('.btn-offer-toggle');
 
     if (isConfirmed) confirmBtn.innerHTML = "✏️";
 
     nameInput.addEventListener('input', () => {
         let selected = catalogData.find(p => p.name === nameInput.value);
-        if (selected) { 
+        if (selected) {
             let baseP = parseFloat(selected.price) || 0;
             let offerP = parseFloat(selected.offerPrice) || 0;
             let isOfferActive = selected.isOffer === true || selected.isOffer === "true" || selected.isOffer === 1 || selected.isOffer === "TRUE";
-            
+
             if (offerP > 0) {
                 offerBtn.style.display = 'inline-block';
-                if(isOfferActive) offerBtn.classList.add('active');
+                if (isOfferActive) offerBtn.classList.add('active');
                 else offerBtn.classList.remove('active');
 
                 priceInput.value = isOfferActive ? offerP : baseP;
-                priceInput.readOnly = isOfferActive; 
+                priceInput.readOnly = isOfferActive;
 
                 offerBtn.onclick = () => {
                     let willBeActive = !offerBtn.classList.contains('active');
-                    if(willBeActive) {
+                    if (willBeActive) {
                         offerBtn.classList.add('active');
                         priceInput.value = offerP;
                         priceInput.readOnly = true;
@@ -712,66 +712,66 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
                     }
                     calculateTotal();
                     window.pushCatalogUpdate(selected.name, baseP, willBeActive, offerP);
-                    selected.isOffer = willBeActive; 
+                    selected.isOffer = willBeActive;
                 };
             } else {
                 offerBtn.style.display = 'none';
                 priceInput.value = baseP;
                 priceInput.readOnly = false;
             }
-            calculateTotal(); 
+            calculateTotal();
         } else {
             offerBtn.style.display = 'none';
             priceInput.readOnly = false;
         }
     });
 
-    priceInput.addEventListener('input', calculateTotal); 
+    priceInput.addEventListener('input', calculateTotal);
     qtyInput.addEventListener('input', calculateTotal);
 
     confirmBtn.addEventListener('click', () => {
         if (!nameInput.value || priceInput.value === "" || qtyInput.value === "") return;
-        
-        if (div.classList.contains('confirmed')) { 
-            div.classList.remove('confirmed'); 
-            confirmBtn.innerHTML = "✔️"; 
-            nameInput.readOnly = false; 
-            
+
+        if (div.classList.contains('confirmed')) {
+            div.classList.remove('confirmed');
+            confirmBtn.innerHTML = "✔️";
+            nameInput.readOnly = false;
+
             let selected = catalogData.find(p => p.name === nameInput.value);
             let isOfferActive = selected && (selected.isOffer === true || selected.isOffer === "true" || selected.isOffer === 1);
-            if(!isOfferActive) priceInput.readOnly = false;
-            
+            if (!isOfferActive) priceInput.readOnly = false;
+
             qtyInput.readOnly = false;
-        } else { 
-            div.classList.add('confirmed'); 
-            confirmBtn.innerHTML = "✏️"; 
-            calculateTotal(); 
-            nameInput.readOnly = true; 
-            priceInput.readOnly = true; 
+        } else {
+            div.classList.add('confirmed');
+            confirmBtn.innerHTML = "✏️";
+            calculateTotal();
+            nameInput.readOnly = true;
+            priceInput.readOnly = true;
             qtyInput.readOnly = true;
-            
+
             let currentPrice = parseFloat(priceInput.value);
             let cProd = catalogData.find(p => p.name === nameInput.value);
-            
-            if(cProd) {
+
+            if (cProd) {
                 let isOfferActive = cProd.isOffer === true || cProd.isOffer === "true" || cProd.isOffer === 1;
                 let baseP = parseFloat(cProd.price) || 0;
                 let offerP = parseFloat(cProd.offerPrice) || 0;
-                
-                if(isOfferActive && currentPrice !== offerP && currentPrice !== baseP) {
-                    if(confirm("تم تعديل السعر لـ " + currentPrice + " هل تريد حفظه كسعر عرض دائم في الكتالوج؟")) {
+
+                if (isOfferActive && currentPrice !== offerP && currentPrice !== baseP) {
+                    if (confirm("تم تعديل السعر لـ " + currentPrice + " هل تريد حفظه كسعر عرض دائم في الكتالوج؟")) {
                         window.pushCatalogUpdate(cProd.name, baseP, true, currentPrice);
                         cProd.offerPrice = currentPrice;
                     }
                 } else if (!isOfferActive && currentPrice !== baseP) {
-                    if(confirm("تم تعديل السعر لـ " + currentPrice + " هل تريد حفظه كسعر أساسي دائم في الكتالوج؟")) {
+                    if (confirm("تم تعديل السعر لـ " + currentPrice + " هل تريد حفظه كسعر أساسي دائم في الكتالوج؟")) {
                         window.pushCatalogUpdate(cProd.name, currentPrice, false, offerP);
                         cProd.price = currentPrice;
                     }
                 }
             } else {
                 window.pushCatalogUpdate(nameInput.value, currentPrice, false, 0);
-                catalogData.push({name: nameInput.value, price: currentPrice, isOffer: false, offerPrice: 0});
+                catalogData.push({ name: nameInput.value, price: currentPrice, isOffer: false, offerPrice: 0 });
                 updateSmartProductsList();
             }
         }
@@ -781,7 +781,7 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
 
 function updateSmartProductsList() {
     let dl = document.getElementById('smartProductsList');
-    if(!dl) return;
+    if (!dl) return;
     dl.innerHTML = '';
     catalogData.forEach(p => {
         let opt = document.createElement('option');
@@ -789,7 +789,7 @@ function updateSmartProductsList() {
         dl.appendChild(opt);
     });
 }
-if(document.getElementById('addProductBtn')) document.getElementById('addProductBtn').addEventListener('click', () => addProductRow());
+if (document.getElementById('addProductBtn')) document.getElementById('addProductBtn').addEventListener('click', () => addProductRow());
 if (productsContainer && productsContainer.children.length === 0) addProductRow();
 
 // ⭐ نظام العربون والـ NaN
@@ -800,30 +800,30 @@ function calculateTotal() {
         let qty = parseFloat(row.querySelector('.product-qty-input').value) || 1;
         total += (price * qty); // محصنة ضد ה- NaN
     });
-    
-    if(document.getElementById('productsTotal')) document.getElementById('productsTotal').value = total;
+
+    if (document.getElementById('productsTotal')) document.getElementById('productsTotal').value = total;
     let discount = document.getElementById('discount') ? (parseFloat(document.getElementById('discount').value) || 0) : 0;
     let shipping = document.getElementById('shippingCost') ? (parseFloat(document.getElementById('shippingCost').value) || 0) : 0;
-    
+
     let finalAmount = total + shipping - discount;
     let finalDisplay = document.getElementById('finalTotalDisplay');
-    
-    if(finalDisplay) finalDisplay.innerText = finalAmount;
-    
+
+    if (finalDisplay) finalDisplay.innerText = finalAmount;
+
     // حساب العربون
     let depositInput = document.getElementById('depositAmount');
     let remainingDisplay = document.getElementById('remainingAmountDisplay');
-    if(depositInput && remainingDisplay) {
+    if (depositInput && remainingDisplay) {
         let dep = parseFloat(depositInput.value) || 0;
         let rem = finalAmount - dep;
-        if(rem < 0) rem = 0;
+        if (rem < 0) rem = 0;
         remainingDisplay.innerText = rem;
     }
 
     let giftCheck = document.getElementById('isGiftCheckbox');
     let hint = document.getElementById('giftHint');
-    if(giftCheck && giftCheck.checked) {
-        if(!hint) {
+    if (giftCheck && giftCheck.checked) {
+        if (!hint) {
             hint = document.createElement('div');
             hint.id = 'giftHint';
             hint.style.cssText = "color:var(--primary); font-size:0.8rem; font-weight:bold; text-align:center; margin-top:5px;";
@@ -831,13 +831,13 @@ function calculateTotal() {
             finalDisplay.parentNode.appendChild(hint);
         }
     } else {
-        if(hint) hint.remove();
+        if (hint) hint.remove();
     }
 }
 
-if(document.getElementById('discount')) document.getElementById('discount').addEventListener('input', calculateTotal);
-if(document.getElementById('isGiftCheckbox')) document.getElementById('isGiftCheckbox').addEventListener('change', calculateTotal);
-if(document.getElementById('depositAmount')) document.getElementById('depositAmount').addEventListener('input', calculateTotal);
+if (document.getElementById('discount')) document.getElementById('discount').addEventListener('input', calculateTotal);
+if (document.getElementById('isGiftCheckbox')) document.getElementById('isGiftCheckbox').addEventListener('change', calculateTotal);
+if (document.getElementById('depositAmount')) document.getElementById('depositAmount').addEventListener('input', calculateTotal);
 
 // ⭐ منع اختراق الكيبورد بـ readonly و disabled
 const paymentMethod = document.getElementById('paymentMethod');
@@ -846,20 +846,20 @@ let isPaymentConfirmed = false;
 const upperFields = ['platform', 'customerName', 'customerPhone', 'phone2', 'deliveryType', 'specialDateInput', 'governorate', 'address'];
 
 function toggleGlobalLock(shouldLock) {
-    upperFields.forEach(id => { 
-        let el = document.getElementById(id); 
-        if (el) { 
+    upperFields.forEach(id => {
+        let el = document.getElementById(id);
+        if (el) {
             if (shouldLock) {
-                el.classList.add('locked-field'); 
-                if(el.tagName === 'SELECT') el.disabled = true; else el.readOnly = true;
+                el.classList.add('locked-field');
+                if (el.tagName === 'SELECT') el.disabled = true; else el.readOnly = true;
             } else {
-                el.classList.remove('locked-field'); 
-                if(el.tagName === 'SELECT') el.disabled = false; else el.readOnly = false;
+                el.classList.remove('locked-field');
+                if (el.tagName === 'SELECT') el.disabled = false; else el.readOnly = false;
             }
         }
     });
 }
-if(confirmPaymentBtn) {
+if (confirmPaymentBtn) {
     confirmPaymentBtn.addEventListener('click', () => {
         if (!paymentMethod || !paymentMethod.value) { showToast("اختر طريقة الدفع أولاً!", "error"); return; }
         if (isPaymentConfirmed) {
@@ -878,23 +878,23 @@ if(confirmPaymentBtn) {
 // ⭐ حل مشكلة انهيار الجافاسكريبت بالـ Try-Catch
 function getDrafts() {
     try { return JSON.parse(localStorage.getItem('candyDrafts')) || []; }
-    catch(e) { return []; }
+    catch (e) { return []; }
 }
 
 function updateSuspendedCount() {
     let drafts = getDrafts();
-    if(document.getElementById('suspendedCount')) document.getElementById('suspendedCount').innerText = drafts.length;
+    if (document.getElementById('suspendedCount')) document.getElementById('suspendedCount').innerText = drafts.length;
 }
 
 let suspendBtn = document.getElementById('suspendBtn');
-if(suspendBtn) {
+if (suspendBtn) {
     suspendBtn.addEventListener('click', () => {
         setBtnLoading(suspendBtn, true); // ⭐ منع تكرار الأوردرات
         let nameEl = document.getElementById('customerName'); let name = nameEl && nameEl.value ? nameEl.value : "بدون اسم";
         let prods = [];
         document.querySelectorAll('.product-row').forEach(row => {
             let n = row.querySelector('.product-name-input').value, p = row.querySelector('.product-price-input').value, q = row.querySelector('.product-qty-input').value, c = row.classList.contains('confirmed');
-            if (n) prods.push({name: n, price: p, qty: q, confirmed: c});
+            if (n) prods.push({ name: n, price: p, qty: q, confirmed: c });
         });
 
         let draftId = Date.now();
@@ -913,21 +913,21 @@ if(suspendBtn) {
         };
 
         let drafts = getDrafts(); drafts.push(draft); localStorage.setItem('candyDrafts', JSON.stringify(drafts));
-        
+
         let formData = new URLSearchParams(); formData.append('action', 'suspendOrder'); formData.append('draftId', draftId); formData.append('draftJson', JSON.stringify(draft));
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
-        .then(()=>{
-            showToast("⏸️ تم تعليق الفاتورة بنجاح!", "warning"); 
-            resetForm(); updateSuspendedCount();
-            setBtnLoading(suspendBtn, false, "⏸️ تعليق الطلب");
-        }).catch(()=>{ setBtnLoading(suspendBtn, false, "⏸️ تعليق الطلب"); });
+            .then(() => {
+                showToast("⏸️ تم تعليق الفاتورة بنجاح!", "warning");
+                resetForm(); updateSuspendedCount();
+                setBtnLoading(suspendBtn, false, "⏸️ تعليق الطلب");
+            }).catch(() => { setBtnLoading(suspendBtn, false, "⏸️ تعليق الطلب"); });
     });
 }
 
 let openSuspendedBtn = document.getElementById('openSuspendedBtn');
-if(openSuspendedBtn) {
+if (openSuspendedBtn) {
     openSuspendedBtn.addEventListener('click', () => {
-        let drafts = getDrafts(); let list = document.getElementById('suspendedOrdersList'); if(!list) return;
+        let drafts = getDrafts(); let list = document.getElementById('suspendedOrdersList'); if (!list) return;
         list.innerHTML = '';
         if (drafts.length === 0) { list.innerHTML = '<p class="empty-msg">لا توجد طلبات معلقة</p>'; return; }
 
@@ -945,7 +945,7 @@ if(openSuspendedBtn) {
             });
             div.querySelector('.delete-btn').addEventListener('click', () => {
                 deleteSuspendedDraft(d.id); div.remove();
-                if(list.children.length === 0) list.innerHTML = '<p class="empty-msg">لا توجد طلبات معلقة</p>';
+                if (list.children.length === 0) list.innerHTML = '<p class="empty-msg">لا توجد طلبات معلقة</p>';
                 showToast("🗑️ تم حذف المسودة", "success");
             });
             list.appendChild(div);
@@ -959,48 +959,48 @@ function deleteSuspendedDraft(draftId) {
 }
 
 function restoreDraft(d) {
-    if(document.getElementById('platform')) document.getElementById('platform').value = d.platform || "";
-    if(document.getElementById('customerName')) document.getElementById('customerName').value = d.name || "";
-    if(document.getElementById('customerPhone')) document.getElementById('customerPhone').value = d.phone || "";
-    if(document.getElementById('phone2')) document.getElementById('phone2').value = d.phone2 || "";
-    if(document.getElementById('deliveryType')) document.getElementById('deliveryType').value = d.delType || "";
-    if(document.getElementById('specialDateInput')) document.getElementById('specialDateInput').value = d.spDate || "";
-    if(document.getElementById('governorate')) document.getElementById('governorate').value = d.gov || "";
-    if(document.getElementById('address')) document.getElementById('address').value = d.address || "";
-    if(document.getElementById('discount')) document.getElementById('discount').value = d.discount || "";
-    if(document.getElementById('notes')) document.getElementById('notes').value = d.notes || "";
-    if(document.getElementById('isGiftCheckbox')) document.getElementById('isGiftCheckbox').checked = d.gift || false;
+    if (document.getElementById('platform')) document.getElementById('platform').value = d.platform || "";
+    if (document.getElementById('customerName')) document.getElementById('customerName').value = d.name || "";
+    if (document.getElementById('customerPhone')) document.getElementById('customerPhone').value = d.phone || "";
+    if (document.getElementById('phone2')) document.getElementById('phone2').value = d.phone2 || "";
+    if (document.getElementById('deliveryType')) document.getElementById('deliveryType').value = d.delType || "";
+    if (document.getElementById('specialDateInput')) document.getElementById('specialDateInput').value = d.spDate || "";
+    if (document.getElementById('governorate')) document.getElementById('governorate').value = d.gov || "";
+    if (document.getElementById('address')) document.getElementById('address').value = d.address || "";
+    if (document.getElementById('discount')) document.getElementById('discount').value = d.discount || "";
+    if (document.getElementById('notes')) document.getElementById('notes').value = d.notes || "";
+    if (document.getElementById('isGiftCheckbox')) document.getElementById('isGiftCheckbox').checked = d.gift || false;
 
-    if(productsContainer) {
+    if (productsContainer) {
         productsContainer.innerHTML = '';
         if (d.prods && d.prods.length > 0) d.prods.forEach(p => addProductRow(p.name, p.price, p.qty, p.confirmed));
         else addProductRow();
     }
-    if(deliveryTypeSelect) deliveryTypeSelect.dispatchEvent(new Event('change'));
+    if (deliveryTypeSelect) deliveryTypeSelect.dispatchEvent(new Event('change'));
     showToast("✅ تم استرجاع الفاتورة!", "success");
 }
 
 function resetForm() {
-    let form = document.getElementById('orderForm'); if(form) form.reset();
-    let infoSpan = document.querySelector('#deliveryInfo span'); if(infoSpan) infoSpan.innerText = "--";
-    let finalDisplay = document.getElementById('finalTotalDisplay'); if(finalDisplay) finalDisplay.innerText = "0";
-    let remDisplay = document.getElementById('remainingAmountDisplay'); if(remDisplay) remDisplay.innerText = "0";
-    
-    if(productsContainer) { productsContainer.innerHTML = ''; addProductRow(); }
+    let form = document.getElementById('orderForm'); if (form) form.reset();
+    let infoSpan = document.querySelector('#deliveryInfo span'); if (infoSpan) infoSpan.innerText = "--";
+    let finalDisplay = document.getElementById('finalTotalDisplay'); if (finalDisplay) finalDisplay.innerText = "0";
+    let remDisplay = document.getElementById('remainingAmountDisplay'); if (remDisplay) remDisplay.innerText = "0";
+
+    if (productsContainer) { productsContainer.innerHTML = ''; addProductRow(); }
     isPaymentConfirmed = false;
-    if(confirmPaymentBtn) { confirmPaymentBtn.classList.remove('confirmed'); confirmPaymentBtn.innerHTML = "تأكيد ✔️"; }
-    if(paymentMethod) { paymentMethod.classList.remove('locked-field'); paymentMethod.disabled = false; }
+    if (confirmPaymentBtn) { confirmPaymentBtn.classList.remove('confirmed'); confirmPaymentBtn.innerHTML = "تأكيد ✔️"; }
+    if (paymentMethod) { paymentMethod.classList.remove('locked-field'); paymentMethod.disabled = false; }
     toggleGlobalLock(false);
-    if(deliveryTypeSelect) deliveryTypeSelect.dispatchEvent(new Event('change'));
+    if (deliveryTypeSelect) deliveryTypeSelect.dispatchEvent(new Event('change'));
     if (phoneStatus) phoneStatus.innerText = "🔍";
-    let hint = document.getElementById('giftHint'); if(hint) hint.remove();
+    let hint = document.getElementById('giftHint'); if (hint) hint.remove();
 }
 
 // ==========================================
 // 8. إرسال الواتساب
 // ==========================================
 let whatsappReviewBtn = document.getElementById('whatsappReviewBtn');
-if(whatsappReviewBtn) {
+if (whatsappReviewBtn) {
     whatsappReviewBtn.addEventListener('click', () => {
         let phoneEl = document.getElementById('customerPhone'); let phone = phoneEl ? phoneEl.value.trim() : "";
         if (!phone) { showToast("يرجى إدخال رقم الهاتف!", "error"); return; }
@@ -1012,7 +1012,7 @@ if(whatsappReviewBtn) {
         let productsText = "";
         document.querySelectorAll('.product-row.confirmed').forEach(row => {
             let n = row.querySelector('.product-name-input').value, p = row.querySelector('.product-price-input').value, q = row.querySelector('.product-qty-input').value;
-            productsText += `- ${n} - الكمية: ${q} (${(parseFloat(p)||0) * (parseFloat(q)||1)} ج.م)\n`;
+            productsText += `- ${n} - الكمية: ${q} (${(parseFloat(p) || 0) * (parseFloat(q) || 1)} ج.م)\n`;
         });
         if (productsText === "") productsText = "لم يتم تأكيد أي منتجات.\n";
 
@@ -1027,27 +1027,27 @@ if(whatsappReviewBtn) {
 // 9. الحفظ والطباعة 
 // ==========================================
 let saveAndPrintBtn = document.getElementById('saveAndPrintBtn');
-if(saveAndPrintBtn) {
+if (saveAndPrintBtn) {
     saveAndPrintBtn.addEventListener('click', () => {
         if (document.querySelectorAll('.product-row:not(.confirmed)').length > 0) { showToast("قم بتأكيد (✔️) المنتجات أولاً!", "error"); return; }
-        
+
         let isGift = document.getElementById('isGiftCheckbox') ? document.getElementById('isGiftCheckbox').checked : false;
 
-        let productsListText = "", printItemsHtml = ""; 
+        let productsListText = "", printItemsHtml = "";
         document.querySelectorAll('.product-row.confirmed').forEach(row => {
             let n = row.querySelector('.product-name-input').value, p = row.querySelector('.product-price-input').value, q = row.querySelector('.product-qty-input').value;
-            let rowTotal = (parseFloat(p)||0) * (parseFloat(q)||1);
+            let rowTotal = (parseFloat(p) || 0) * (parseFloat(q) || 1);
             productsListText += `${n} - الكمية: ${q} (${rowTotal}ج)\n`;
-            
+
             let cProd = catalogData.find(cp => cp.name === n);
             let isOffer = cProd && (cProd.isOffer === true || cProd.isOffer === "true" || cProd.isOffer === 1);
             let nDisplay = isOffer ? `<span class="offer-badge">عرض</span> ${n}` : n;
-            
+
             let printP = isGift ? "***" : p;
             let printTotal = isGift ? "***" : rowTotal;
             printItemsHtml += `<tr><td>${nDisplay}</td><td>${printP}</td><td>${q}</td><td>${printTotal}</td></tr>`;
         });
-        
+
         if (productsListText === "") { showToast("لا يمكن حفظ أوردر بدون منتجات!", "error"); return; }
         if (!isPaymentConfirmed) { showToast("تأكيد طريقة الدفع 🔒", "error"); return; }
 
@@ -1055,8 +1055,8 @@ if(saveAndPrintBtn) {
         let name = document.getElementById('customerName') ? document.getElementById('customerName').value : "";
         let gov = document.getElementById('governorate') ? document.getElementById('governorate').value : "";
         let delType = deliveryTypeSelect ? deliveryTypeSelect.value : "";
-        let addressVal = document.getElementById('address') ? document.getElementById('address').value.trim() : ""; 
-        
+        let addressVal = document.getElementById('address') ? document.getElementById('address').value.trim() : "";
+
         let moderatorSelect = document.getElementById('moderatorSelect');
         let selectedModerator = moderatorSelect ? moderatorSelect.value : "";
         if (!selectedModerator) { showToast("يرجى اختيار اسم المسؤول عن الأوردر!", "error"); return; }
@@ -1074,12 +1074,12 @@ if(saveAndPrintBtn) {
             finalExpDate = document.getElementById('specialDateInput') ? document.getElementById('specialDateInput').value : "";
             bookingDatePrint = finalExpDate;
         }
-        
+
         let finalNotes = document.getElementById('notes') ? document.getElementById('notes').value : "";
         if (isGift) finalNotes = "🎁 أوردر هدية - " + finalNotes;
-        
+
         let finalTotalVal = document.getElementById('finalTotalDisplay') ? document.getElementById('finalTotalDisplay').innerText : 0;
-        
+
         // ⭐ إضافة بيانات العربون
         let dep = document.getElementById('depositAmount') ? (parseFloat(document.getElementById('depositAmount').value) || 0) : 0;
         let rem = document.getElementById('remainingAmountDisplay') ? parseFloat(document.getElementById('remainingAmountDisplay').innerText) : finalTotalVal;
@@ -1093,70 +1093,70 @@ if(saveAndPrintBtn) {
         formData.append('phone1', phone);
         formData.append('phone2', document.getElementById('phone2') ? document.getElementById('phone2').value : "");
         formData.append('orderType', orderTypeLabel);
-        formData.append('gov', gov); 
+        formData.append('gov', gov);
         formData.append('address', addressVal);
-        formData.append('expDate', finalExpDate); 
+        formData.append('expDate', finalExpDate);
         formData.append('products', productsListText);
         formData.append('pTotal', document.getElementById('productsTotal') ? document.getElementById('productsTotal').value : 0);
         formData.append('discount', document.getElementById('discount') ? document.getElementById('discount').value : 0);
-        formData.append('shipping', document.getElementById('shippingCost') ? document.getElementById('shippingCost').value : 0); 
-        formData.append('finalTotal', finalTotalVal); 
-        formData.append('payMethod', paymentMethod ? paymentMethod.value : ""); 
+        formData.append('shipping', document.getElementById('shippingCost') ? document.getElementById('shippingCost').value : 0);
+        formData.append('finalTotal', finalTotalVal);
+        formData.append('payMethod', paymentMethod ? paymentMethod.value : "");
         formData.append('notes', finalNotes);
         formData.append('moderator', selectedModerator);
-        formData.append('deposit', dep); 
-        formData.append('remaining', rem); 
+        formData.append('deposit', dep);
+        formData.append('remaining', rem);
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
-        .then(() => {
-            showToast("✅ تم حفظ الأوردر بنجاح!", "success");
-            
-            if(document.getElementById('receipt-type')) document.getElementById('receipt-type').innerText = isGift ? `طلب عميل (${orderTypeLabel}) - 🎁 هدية` : `طلب عميل (${orderTypeLabel})`;
-            if(document.getElementById('print-date')) document.getElementById('print-date').innerText = new Date().toLocaleDateString('ar-EG');
-            if(document.getElementById('print-time')) document.getElementById('print-time').innerText = new Date().toLocaleTimeString('ar-EG');
-            
-            if(bookingDatePrint) {
-                document.querySelector('.print-booking-row').style.display = 'block';
-                document.getElementById('print-booking-date').innerText = bookingDatePrint;
-            } else {
-                document.querySelector('.print-booking-row').style.display = 'none';
-            }
+            .then(() => {
+                showToast("✅ تم حفظ الأوردر بنجاح!", "success");
 
-            if(document.getElementById('print-customer-name')) document.getElementById('print-customer-name').innerText = name;
-            if(document.getElementById('print-phone')) document.getElementById('print-phone').innerText = phone;
-            if(document.getElementById('print-address')) document.getElementById('print-address').innerText = addressVal;
-            if(document.getElementById('print-status')) document.getElementById('print-status').innerText = "قيد التجهيز";
-            if(document.getElementById('print-items-body')) document.getElementById('print-items-body').innerHTML = printItemsHtml;
-            
-            if(document.getElementById('print-subtotal')) document.getElementById('print-subtotal').innerText = isGift ? "***" : (document.getElementById('productsTotal') ? document.getElementById('productsTotal').value : 0);
-            if(document.getElementById('print-discount')) document.getElementById('print-discount').innerText = isGift ? "***" : (document.getElementById('discount') ? document.getElementById('discount').value || 0 : 0);
-            if(document.getElementById('print-shipping')) document.getElementById('print-shipping').innerText = isGift ? "***" : (document.getElementById('shippingCost') ? document.getElementById('shippingCost').value : 0);
-            
-            if(dep > 0 && !isGift) {
-                document.querySelector('.print-deposit-row').style.display = 'block';
-                document.getElementById('print-deposit').innerText = dep;
-                document.getElementById('print-final').innerText = rem;
-            } else {
-                document.querySelector('.print-deposit-row').style.display = 'none';
-                document.getElementById('print-final').innerText = isGift ? "***" : finalTotalVal;
-            }
+                if (document.getElementById('receipt-type')) document.getElementById('receipt-type').innerText = isGift ? `طلب عميل (${orderTypeLabel}) - 🎁 هدية` : `طلب عميل (${orderTypeLabel})`;
+                if (document.getElementById('print-date')) document.getElementById('print-date').innerText = new Date().toLocaleDateString('ar-EG');
+                if (document.getElementById('print-time')) document.getElementById('print-time').innerText = new Date().toLocaleTimeString('ar-EG');
 
-            if(document.getElementById('print-payment')) document.getElementById('print-payment').innerText = paymentMethod ? paymentMethod.value : "";
-            
-            let sellerP = document.getElementById('print-seller-name');
-            if(sellerP) sellerP.innerText = `الكاشير: ${selectedModerator}`;
+                if (bookingDatePrint) {
+                    document.querySelector('.print-booking-row').style.display = 'block';
+                    document.getElementById('print-booking-date').innerText = bookingDatePrint;
+                } else {
+                    document.querySelector('.print-booking-row').style.display = 'none';
+                }
 
-            setTimeout(() => {
-                window.print();
-                resetForm();
+                if (document.getElementById('print-customer-name')) document.getElementById('print-customer-name').innerText = name;
+                if (document.getElementById('print-phone')) document.getElementById('print-phone').innerText = phone;
+                if (document.getElementById('print-address')) document.getElementById('print-address').innerText = addressVal;
+                if (document.getElementById('print-status')) document.getElementById('print-status').innerText = "قيد التجهيز";
+                if (document.getElementById('print-items-body')) document.getElementById('print-items-body').innerHTML = printItemsHtml;
+
+                if (document.getElementById('print-subtotal')) document.getElementById('print-subtotal').innerText = isGift ? "***" : (document.getElementById('productsTotal') ? document.getElementById('productsTotal').value : 0);
+                if (document.getElementById('print-discount')) document.getElementById('print-discount').innerText = isGift ? "***" : (document.getElementById('discount') ? document.getElementById('discount').value || 0 : 0);
+                if (document.getElementById('print-shipping')) document.getElementById('print-shipping').innerText = isGift ? "***" : (document.getElementById('shippingCost') ? document.getElementById('shippingCost').value : 0);
+
+                if (dep > 0 && !isGift) {
+                    document.querySelector('.print-deposit-row').style.display = 'block';
+                    document.getElementById('print-deposit').innerText = dep;
+                    document.getElementById('print-final').innerText = rem;
+                } else {
+                    document.querySelector('.print-deposit-row').style.display = 'none';
+                    document.getElementById('print-final').innerText = isGift ? "***" : finalTotalVal;
+                }
+
+                if (document.getElementById('print-payment')) document.getElementById('print-payment').innerText = paymentMethod ? paymentMethod.value : "";
+
+                let sellerP = document.getElementById('print-seller-name');
+                if (sellerP) sellerP.innerText = `الكاشير: ${selectedModerator}`;
+
+                setTimeout(() => {
+                    window.print();
+                    resetForm();
+                    setBtnLoading(saveAndPrintBtn, false, "💾 حفظ وطباعة الفاتورة");
+                    loadDataFromServer();
+                }, 1000);
+
+            }).catch(() => {
+                showToast("❌ خطأ في الاتصال بالإنترنت", "error");
                 setBtnLoading(saveAndPrintBtn, false, "💾 حفظ وطباعة الفاتورة");
-                loadDataFromServer(); 
-            }, 1000);
-            
-        }).catch(() => { 
-            showToast("❌ خطأ في الاتصال بالإنترنت", "error"); 
-            setBtnLoading(saveAndPrintBtn, false, "💾 حفظ وطباعة الفاتورة"); 
-        });
+            });
     });
 }
 
@@ -1164,13 +1164,13 @@ if(saveAndPrintBtn) {
 // 10. الإضافة، التعديل، والحذف 
 // ==========================================
 
-window.deleteItem = function(action, name, zoneType = '') {
-    if(!confirm(`هل أنت متأكد من حذف (${name}) نهائياً؟`)) return;
+window.deleteItem = function (action, name, zoneType = '') {
+    if (!confirm(`هل أنت متأكد من حذف (${name}) نهائياً؟`)) return;
     let formData = new URLSearchParams();
     formData.append('action', action);
     formData.append('name', name);
-    if(zoneType) formData.append('zoneType', zoneType);
-    
+    if (zoneType) formData.append('zoneType', zoneType);
+
     showToast("⏳ جاري الحذف...", "warning");
     fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
         .then(() => {
@@ -1179,25 +1179,25 @@ window.deleteItem = function(action, name, zoneType = '') {
         });
 };
 
-window.editZoneUI = function(name, price, type, duration) {
-    if(document.getElementById('newZoneName')) document.getElementById('newZoneName').value = name;
-    if(document.getElementById('newZonePrice')) document.getElementById('newZonePrice').value = price;
-    if(document.getElementById('newZoneType')) document.getElementById('newZoneType').value = type;
-    if(document.getElementById('newZoneDuration')) document.getElementById('newZoneDuration').value = duration;
+window.editZoneUI = function (name, price, type, duration) {
+    if (document.getElementById('newZoneName')) document.getElementById('newZoneName').value = name;
+    if (document.getElementById('newZonePrice')) document.getElementById('newZonePrice').value = price;
+    if (document.getElementById('newZoneType')) document.getElementById('newZoneType').value = type;
+    if (document.getElementById('newZoneDuration')) document.getElementById('newZoneDuration').value = duration;
     showToast("قم بتعديل البيانات واضغط حفظ", "success");
 };
 
-window.editDriverUI = function(name, phone) {
-    if(document.getElementById('newDriverName')) document.getElementById('newDriverName').value = name;
-    if(document.getElementById('newDriverPhone')) document.getElementById('newDriverPhone').value = phone;
+window.editDriverUI = function (name, phone) {
+    if (document.getElementById('newDriverName')) document.getElementById('newDriverName').value = name;
+    if (document.getElementById('newDriverPhone')) document.getElementById('newDriverPhone').value = phone;
     showToast("قم بتعديل البيانات واضغط حفظ", "success");
 };
 
 let newZoneTypeEl = document.getElementById('newZoneType');
 let newZoneDurationEl = document.getElementById('newZoneDuration');
-if(newZoneTypeEl && newZoneDurationEl) {
+if (newZoneTypeEl && newZoneDurationEl) {
     newZoneTypeEl.addEventListener('change', () => {
-        if(newZoneTypeEl.value === 'next_day') {
+        if (newZoneTypeEl.value === 'next_day') {
             newZoneDurationEl.value = 'تاني يوم';
             newZoneDurationEl.setAttribute('readonly', true);
         } else if (newZoneTypeEl.value === 'gov') {
@@ -1212,59 +1212,59 @@ if(newZoneTypeEl && newZoneDurationEl) {
 let addZoneBtnAction = document.getElementById('addZoneBtn');
 if (addZoneBtnAction) {
     addZoneBtnAction.addEventListener('click', () => {
-        let name = document.getElementById('newZoneName') ? document.getElementById('newZoneName').value.trim() : ""; 
-        let price = document.getElementById('newZonePrice') ? document.getElementById('newZonePrice').value : ""; 
+        let name = document.getElementById('newZoneName') ? document.getElementById('newZoneName').value.trim() : "";
+        let price = document.getElementById('newZonePrice') ? document.getElementById('newZonePrice').value : "";
         let type = document.getElementById('newZoneType') ? document.getElementById('newZoneType').value : "";
         let duration = document.getElementById('newZoneDuration') ? document.getElementById('newZoneDuration').value : "";
         if (!name || !price) { showToast("البيانات ناقصة!", "error"); return; }
-        
+
         let isExisting = shippingData[name] !== undefined;
         if (isExisting && shippingData[name].price == price) {
             showToast("المنطقة دي مسجلة مسبقاً", "warning"); return;
         }
 
         setBtnLoading(addZoneBtnAction, true);
-        let formData = new URLSearchParams(); 
-        formData.append('action', isExisting ? 'editShipping' : 'addShipping'); 
-        formData.append('zoneType', type === 'gov' ? 'govs' : 'alex'); 
-        formData.append('name', name); 
-        formData.append('price', price); 
+        let formData = new URLSearchParams();
+        formData.append('action', isExisting ? 'editShipping' : 'addShipping');
+        formData.append('zoneType', type === 'gov' ? 'govs' : 'alex');
+        formData.append('name', name);
+        formData.append('price', price);
         formData.append('deliveryType', type);
         formData.append('duration', duration);
-        
+
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
-        .then(() => { 
-            showToast(`✅ تم ${isExisting ? 'تعديل' : 'إضافة'} المنطقة!`, "success"); 
-            setBtnLoading(addZoneBtnAction, false, "حفظ المنطقة");
-            document.getElementById('newZoneName').value = ""; document.getElementById('newZonePrice').value = ""; document.getElementById('newZoneDuration').value = "";
-            loadDataFromServer();
-        }).catch(()=>{ setBtnLoading(addZoneBtnAction, false, "حفظ المنطقة"); });
+            .then(() => {
+                showToast(`✅ تم ${isExisting ? 'تعديل' : 'إضافة'} المنطقة!`, "success");
+                setBtnLoading(addZoneBtnAction, false, "حفظ المنطقة");
+                document.getElementById('newZoneName').value = ""; document.getElementById('newZonePrice').value = ""; document.getElementById('newZoneDuration').value = "";
+                loadDataFromServer();
+            }).catch(() => { setBtnLoading(addZoneBtnAction, false, "حفظ المنطقة"); });
     });
 }
 
 let addDriverBtnAction = document.getElementById('addDriverBtn');
 if (addDriverBtnAction) {
     addDriverBtnAction.addEventListener('click', () => {
-        let name = document.getElementById('newDriverName') ? document.getElementById('newDriverName').value.trim() : ""; 
+        let name = document.getElementById('newDriverName') ? document.getElementById('newDriverName').value.trim() : "";
         let phone = document.getElementById('newDriverPhone') ? document.getElementById('newDriverPhone').value : "";
         if (!name || !phone) { showToast("البيانات ناقصة!", "error"); return; }
-        
+
         let driverSelectEl = document.getElementById('driverNameSelect') || document.getElementById('assignDriverSelect');
         let isExisting = driverSelectEl ? Array.from(driverSelectEl.options).some(o => o.value === name) : false;
 
         setBtnLoading(addDriverBtnAction, true);
-        let formData = new URLSearchParams(); 
-        formData.append('action', isExisting ? 'editDriver' : 'addDriver'); 
-        formData.append('name', name); 
+        let formData = new URLSearchParams();
+        formData.append('action', isExisting ? 'editDriver' : 'addDriver');
+        formData.append('name', name);
         formData.append('phone', phone);
-        
+
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
-        .then(() => { 
-            showToast(`✅ تم ${isExisting ? 'تعديل' : 'إضافة'} المندوب!`, "success"); 
-            setBtnLoading(addDriverBtnAction, false, "حفظ المندوب");
-            document.getElementById('newDriverName').value = ""; document.getElementById('newDriverPhone').value = "";
-            loadDataFromServer();
-        }).catch(()=>{ setBtnLoading(addDriverBtnAction, false, "حفظ المندوب"); });
+            .then(() => {
+                showToast(`✅ تم ${isExisting ? 'تعديل' : 'إضافة'} المندوب!`, "success");
+                setBtnLoading(addDriverBtnAction, false, "حفظ المندوب");
+                document.getElementById('newDriverName').value = ""; document.getElementById('newDriverPhone').value = "";
+                loadDataFromServer();
+            }).catch(() => { setBtnLoading(addDriverBtnAction, false, "حفظ المندوب"); });
     });
 }
 
@@ -1273,7 +1273,7 @@ if (addModeratorBtn) {
     addModeratorBtn.addEventListener('click', () => {
         let nameInput = document.getElementById('newModeratorName');
         let name = nameInput ? nameInput.value.trim() : "";
-        if(!name) { showToast("اكتب اسم الكاشير أولاً", "error"); return; }
+        if (!name) { showToast("اكتب اسم الكاشير أولاً", "error"); return; }
 
         setBtnLoading(addModeratorBtn, true);
         let formData = new URLSearchParams();
@@ -1281,27 +1281,27 @@ if (addModeratorBtn) {
         formData.append('name', name);
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
-        .then(() => {
-            showToast("✅ تم إضافة الكاشير بنجاح", "success");
-            setBtnLoading(addModeratorBtn, false, "إضافة");
-            nameInput.value = "";
-            loadDataFromServer();
-        }).catch(() => { setBtnLoading(addModeratorBtn, false, "إضافة"); });
+            .then(() => {
+                showToast("✅ تم إضافة الكاشير بنجاح", "success");
+                setBtnLoading(addModeratorBtn, false, "إضافة");
+                nameInput.value = "";
+                loadDataFromServer();
+            }).catch(() => { setBtnLoading(addModeratorBtn, false, "إضافة"); });
     });
 }
 
 let logoUpload = document.getElementById('logoUpload');
-if(logoUpload) {
-    logoUpload.addEventListener('change', function(e) {
+if (logoUpload) {
+    logoUpload.addEventListener('change', function (e) {
         if (e.target.files && e.target.files[0]) {
             let reader = new FileReader();
-            reader.onload = function(event) {
+            reader.onload = function (event) {
                 let printLogo = document.getElementById('print-logo');
                 let logoText = document.getElementById('logoUploadText');
-                if(printLogo) {
+                if (printLogo) {
                     printLogo.src = event.target.result;
                     printLogo.style.display = 'inline-block';
-                    if(logoText) logoText.innerText = "✅ تم رفع اللوجو بنجاح (سيظهر في الطباعة)";
+                    if (logoText) logoText.innerText = "✅ تم رفع اللوجو بنجاح (سيظهر في الطباعة)";
                     showToast("✅ تم رفع اللوجو بنجاح", "success");
                 }
             }
@@ -1317,10 +1317,10 @@ function renderShippingRoom(history) {
     const pendingContainer = document.getElementById('pendingOrdersContainer');
     const branchContainer = document.getElementById('branchOrdersContainer');
 
-    if(pendingContainer) {
+    if (pendingContainer) {
         const pendingOrders = history.filter(o => o.status === 'قيد التجهيز' && o.orderType !== 'استلام من الفرع');
         pendingContainer.innerHTML = '';
-        if(pendingOrders.length === 0) pendingContainer.innerHTML = '<p class="empty-msg">لا يوجد أوردرات شحن قيد التجهيز.</p>';
+        if (pendingOrders.length === 0) pendingContainer.innerHTML = '<p class="empty-msg">لا يوجد أوردرات شحن قيد التجهيز.</p>';
         else pendingOrders.forEach(o => {
             pendingContainer.innerHTML += `
                 <div class="order-checkbox-row">
@@ -1337,7 +1337,7 @@ function renderShippingRoom(history) {
     if (branchContainer) {
         const branchOrders = window.pendingOrdersData.filter(o => o.orderType === 'استلام من الفرع');
         branchContainer.innerHTML = '';
-        if(branchOrders.length === 0) branchContainer.innerHTML = '<p class="empty-msg">لا يوجد أوردرات استلام فرع حالياً.</p>';
+        if (branchOrders.length === 0) branchContainer.innerHTML = '<p class="empty-msg">لا يوجد أوردرات استلام فرع حالياً.</p>';
         else branchOrders.forEach(o => {
             branchContainer.innerHTML += `
                 <div class="financial-order-item" style="border-right: 4px solid var(--warning);">
@@ -1352,8 +1352,8 @@ function renderShippingRoom(history) {
 }
 
 // ⭐ دالة تسليم الفرع الفورية
-window.settleBranchOrder = function(orderId, btn) {
-    if(!confirm('هل تم تسليم الأوردر للعميل واستلام المبلغ المتبقي؟')) return;
+window.settleBranchOrder = function (orderId, btn) {
+    if (!confirm('هل تم تسليم الأوردر للعميل واستلام المبلغ المتبقي؟')) return;
     setBtnLoading(btn, true);
     let formData = new URLSearchParams();
     formData.append('action', 'updateOrderStatus');
@@ -1364,7 +1364,7 @@ window.settleBranchOrder = function(orderId, btn) {
         .then(() => {
             showToast("✅ تم التقفيل بنجاح!", "success");
             loadDataFromServer();
-        }).catch(()=> setBtnLoading(btn, false, "تم التسليم ✅"));
+        }).catch(() => setBtnLoading(btn, false, "تم التسليم ✅"));
 };
 
 // ⭐ حماية زرار (تقفيل المندوبين)
@@ -1374,16 +1374,16 @@ const shippedContainer = document.getElementById('shippedOrdersContainer');
 if (loadDriverOrdersBtn && shippedContainer) {
     loadDriverOrdersBtn.addEventListener('click', () => {
         const driver = document.getElementById('closeDriverSelect').value;
-        if(!driver) {
+        if (!driver) {
             showToast("الرجاء اختيار المندوب أولاً!", "error");
             shippedContainer.innerHTML = '<p class="empty-msg">برجاء اختيار المندوب والضغط على "عرض العهدة"</p>';
             return;
         }
-        
+
         // عرض أوردرات المندوب المشحونة فقط
         const shippedOrders = orderHistoryData.filter(o => o.status === 'في الشحن');
         shippedContainer.innerHTML = '';
-        if(shippedOrders.length === 0) shippedContainer.innerHTML = '<p class="empty-msg">لا توجد أوردرات في الشحن لهذا المندوب.</p>';
+        if (shippedOrders.length === 0) shippedContainer.innerHTML = '<p class="empty-msg">لا توجد أوردرات في الشحن لهذا المندوب.</p>';
         else shippedOrders.forEach(o => {
             shippedContainer.innerHTML += `
                 <div class="order-checkbox-row">
@@ -1399,7 +1399,7 @@ if (loadDriverOrdersBtn && shippedContainer) {
 
 function processStatusUpdate(btn, checkboxesClass, newStatus, driverName = "") {
     const selected = Array.from(document.querySelectorAll(`.${checkboxesClass}:checked`)).map(cb => cb.value);
-    if(selected.length === 0) { showToast("حدد أوردر واحد على الأقل!", "warning"); return; }
+    if (selected.length === 0) { showToast("حدد أوردر واحد على الأقل!", "warning"); return; }
 
     setBtnLoading(btn, true);
     let completed = 0;
@@ -1408,48 +1408,57 @@ function processStatusUpdate(btn, checkboxesClass, newStatus, driverName = "") {
         formData.append('action', 'updateOrderStatus');
         formData.append('orderId', orderId);
         formData.append('status', newStatus);
-        if(driverName) formData.append('driverName', driverName);
+        if (driverName) formData.append('driverName', driverName);
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
                 completed++;
-                if(completed === selected.length) {
+                if (completed === selected.length) {
                     showToast(`✅ تم التحديث لـ "${newStatus}"`, "success");
                     setBtnLoading(btn, false, btn.dataset.origText);
                     loadDataFromServer();
                 }
-            }).catch(()=>{ setBtnLoading(btn, false, btn.dataset.origText); });
+            }).catch(() => { setBtnLoading(btn, false, btn.dataset.origText); });
     });
 }
 
 let assignBtn = document.getElementById('assignToDriverBtn');
-if(assignBtn) assignBtn.addEventListener('click', () => {
+if (assignBtn) assignBtn.addEventListener('click', () => {
     let driver = document.getElementById('assignDriverSelect').value;
-    if(!driver) { showToast("اختر المندوب أولاً!", "error"); return; }
+    if (!driver) { showToast("اختر المندوب أولاً!", "error"); return; }
     processStatusUpdate(assignBtn, 'pending-checkbox', 'في الشحن', driver);
 });
 
 let markDelivBtn = document.getElementById('markDeliveredBtn');
-if(markDelivBtn) markDelivBtn.addEventListener('click', () => processStatusUpdate(markDelivBtn, 'shipped-checkbox', 'تم التوصيل'));
+if (markDelivBtn) markDelivBtn.addEventListener('click', () => processStatusUpdate(markDelivBtn, 'shipped-checkbox', 'تم التوصيل'));
 
 let markRetBtn = document.getElementById('markReturnedBtn');
-if(markRetBtn) markRetBtn.addEventListener('click', () => processStatusUpdate(markRetBtn, 'shipped-checkbox', 'مرتجع'));
+if (markRetBtn) markRetBtn.addEventListener('click', () => processStatusUpdate(markRetBtn, 'shipped-checkbox', 'مرتجع'));
 
 function updateAdvancedDashboard(history) {
     let moneyWithDrivers = 0, returnedCount = 0;
     history.forEach(o => {
-        if(o.status === 'في الشحن') moneyWithDrivers += parseFloat(o.remaining) || 0;
-        if(o.status === 'مرتجع') returnedCount++;
+        if (o.status === 'في الشحن') moneyWithDrivers += parseFloat(o.remaining) || 0;
+        if (o.status === 'مرتجع') returnedCount++;
     });
-    if(document.getElementById('moneyWithDrivers')) document.getElementById('moneyWithDrivers').innerText = moneyWithDrivers;
-    if(document.getElementById('returnedCount')) document.getElementById('returnedCount').innerText = returnedCount;
+    if (document.getElementById('moneyWithDrivers')) document.getElementById('moneyWithDrivers').innerText = moneyWithDrivers;
+    if (document.getElementById('returnedCount')) document.getElementById('returnedCount').innerText = returnedCount;
+
+    let openFinancialsBtn = document.getElementById('openFinancialsBtn');
+    if (openFinancialsBtn) {
+        if (moneyWithDrivers > 0) {
+            openFinancialsBtn.classList.add('pulse-btn');
+        } else {
+            openFinancialsBtn.classList.remove('pulse-btn');
+        }
+    }
 }
 
 // ==========================================
 // 12. نظام الكتالوج والنواقص الشامل
 // ==========================================
 
-window.pushCatalogUpdate = function(name, price, isOffer, offerPrice) {
+window.pushCatalogUpdate = function (name, price, isOffer, offerPrice) {
     let formData = new URLSearchParams();
     formData.append('action', 'updateCatalog');
     formData.append('name', name);
@@ -1462,10 +1471,10 @@ window.pushCatalogUpdate = function(name, price, isOffer, offerPrice) {
 // عرض الكتالوج (مع ربط شاشة التعديل الاحترافية)
 function renderCatalog(catalogList) {
     let container = document.getElementById('catalogListContainer');
-    if(!container) return;
+    if (!container) return;
     container.innerHTML = '';
-    
-    if(catalogList.length === 0) {
+
+    if (catalogList.length === 0) {
         container.innerHTML = '<p class="empty-msg">الكتالوج فارغ.</p>';
         return;
     }
@@ -1492,14 +1501,14 @@ function renderCatalog(catalogList) {
         div.querySelector('.offer-toggle').addEventListener('change', (e) => {
             let newState = e.target.checked;
             let currentOffer = p.offerPrice || p.price;
-            if(newState && !p.offerPrice) {
+            if (newState && !p.offerPrice) {
                 currentOffer = prompt(`أدخل سعر العرض لـ ${p.name}:`, p.price);
-                if(!currentOffer) { e.target.checked = false; return; }
+                if (!currentOffer) { e.target.checked = false; return; }
             }
             window.pushCatalogUpdate(p.name, p.price, newState, currentOffer);
             showToast(newState ? "✅ تم تفعيل العرض" : "❌ تم إيقاف العرض", "success");
             // استخدمنا الـ timeout عشان الداتا تلحق تتسجل
-            setTimeout(loadDataFromServer, 2000); 
+            setTimeout(loadDataFromServer, 2000);
         });
 
         div.querySelector('.edit-cat-btn').addEventListener('click', () => {
@@ -1516,20 +1525,20 @@ function renderCatalog(catalogList) {
 
 let closeEditCatModal = document.getElementById('closeEditCatModal');
 let saveEditCatBtn = document.getElementById('saveEditCatBtn');
-if(closeEditCatModal) closeEditCatModal.addEventListener('click', () => document.getElementById('editCatalogModal').classList.remove('active'));
+if (closeEditCatModal) closeEditCatModal.addEventListener('click', () => document.getElementById('editCatalogModal').classList.remove('active'));
 
-if(saveEditCatBtn) {
+if (saveEditCatBtn) {
     saveEditCatBtn.addEventListener('click', () => {
         let name = document.getElementById('editCatName').value;
         let price = document.getElementById('editCatPrice').value;
         let offerPrice = document.getElementById('editCatOfferPrice').value;
-        
+
         let selected = catalogData.find(c => c.name === name);
         let isOfferActive = selected ? (selected.isOffer === true || selected.isOffer === "true" || selected.isOffer === 1) : false;
-        
+
         setBtnLoading(saveEditCatBtn, true);
         window.pushCatalogUpdate(name, price, isOfferActive, offerPrice);
-        
+
         setTimeout(() => {
             showToast("✅ تم التعديل بنجاح", "success");
             setBtnLoading(saveEditCatBtn, false, "حفظ التعديلات");
@@ -1540,12 +1549,12 @@ if(saveEditCatBtn) {
 }
 
 let addCatalogBtn = document.getElementById('addCatalogBtn');
-if(addCatalogBtn) {
+if (addCatalogBtn) {
     addCatalogBtn.addEventListener('click', () => {
         let n = document.getElementById('newCatalogName').value;
         let p = document.getElementById('newCatalogPrice').value;
-        if(!n || !p) { showToast("أدخل اسم المنتج والسعر", "error"); return; }
-        
+        if (!n || !p) { showToast("أدخل اسم المنتج والسعر", "error"); return; }
+
         setBtnLoading(addCatalogBtn, true);
         window.pushCatalogUpdate(n, p, false, 0);
         showToast("✅ تم إضافة المنتج", "success");
@@ -1560,10 +1569,10 @@ if(addCatalogBtn) {
 
 function renderOutOfStock(oosList) {
     let container = document.getElementById('outOfStockContainer');
-    if(!container) return;
+    if (!container) return;
     container.innerHTML = '';
 
-    if(oosList.length === 0) {
+    if (oosList.length === 0) {
         container.innerHTML = '<p class="empty-msg">لا يوجد نواقص مسجلة حالياً.</p>';
         return;
     }
@@ -1586,14 +1595,14 @@ function renderOutOfStock(oosList) {
 
         div.querySelector('.wa-oos-btn').addEventListener('click', () => {
             let phone = item.phone.toString().replace(/'/g, '').trim();
-            if(phone.startsWith('0')) phone = '+2' + phone;
+            if (phone.startsWith('0')) phone = '+2' + phone;
             let msg = `أهلاً بك يا ${item.customer} 👋\nالمنتج اللي سألتنا عليه (${item.product}) متوفر دلوقتي وتقدر تطلبه! 🍬`;
             window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
         });
 
         div.querySelector('.del-oos-btn').addEventListener('click', () => {
-            if(!confirm("مسح العميل من قائمة النواقص؟")) return;
-           let formData = new URLSearchParams();
+            if (!confirm("مسح العميل من قائمة النواقص؟")) return;
+            let formData = new URLSearchParams();
             formData.append('action', 'deleteOutOfStock');
             formData.append('phone', item.phone);
             formData.append('product', item.product);
@@ -1607,45 +1616,45 @@ function renderOutOfStock(oosList) {
 }
 
 let addOosBtn = document.getElementById('addOosBtn');
-if(addOosBtn) {
+if (addOosBtn) {
     addOosBtn.addEventListener('click', () => {
         let c = document.getElementById('oosCustomer').value;
         let ph = document.getElementById('oosPhone').value;
         let pr = document.getElementById('oosProduct').value;
         let r = document.getElementById('oosReason') ? document.getElementById('oosReason').value : "";
-        
-        if(!c || !ph || !pr) { showToast("أكمل بيانات العميل والمنتج الناقص", "error"); return; }
-        
+
+        if (!c || !ph || !pr) { showToast("أكمل بيانات العميل والمنتج الناقص", "error"); return; }
+
         setBtnLoading(addOosBtn, true);
         let formData = new URLSearchParams();
         formData.append('action', 'addOutOfStock');
         formData.append('customer', c);
         formData.append('phone', ph);
         formData.append('product', pr);
-        formData.append('reason', r); 
-        
+        formData.append('reason', r);
+
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
-        .then(() => {
-            showToast("✅ تم تسجيل الناقص", "success");
-            setBtnLoading(addOosBtn, false, "تسجيل");
-            document.getElementById('oosCustomer').value = '';
-            document.getElementById('oosPhone').value = '';
-            document.getElementById('oosProduct').value = '';
-            loadDataFromServer();
-        }).catch(()=> setBtnLoading(addOosBtn, false, "تسجيل"));
+            .then(() => {
+                showToast("✅ تم تسجيل الناقص", "success");
+                setBtnLoading(addOosBtn, false, "تسجيل");
+                document.getElementById('oosCustomer').value = '';
+                document.getElementById('oosPhone').value = '';
+                document.getElementById('oosProduct').value = '';
+                loadDataFromServer();
+            }).catch(() => setBtnLoading(addOosBtn, false, "تسجيل"));
     });
 }
 
 setInterval(() => {
-    if(!document.querySelector('.modal-overlay.active')) {
+    if (!document.querySelector('.modal-overlay.active')) {
         loadDataFromServer();
     }
-}, 60000); 
+}, 60000);
 
 const darkModeToggle = document.getElementById('darkModeToggle');
 if (darkModeToggle) {
     darkModeToggle.addEventListener('change', (e) => {
-        if(e.target.checked) {
+        if (e.target.checked) {
             document.body.classList.add('dark-mode');
             localStorage.setItem('candyDarkMode', 'true');
         } else {
