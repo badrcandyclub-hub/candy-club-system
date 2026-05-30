@@ -542,7 +542,10 @@ window.printOldOrder = function (orderId) {
         printLogo.style.display = 'inline-block';
     }
 
-    if (document.getElementById('receipt-type')) document.getElementById('receipt-type').innerText = isOldGift ? `فاتورة (${order.status}) - 🎁 هدية` : `فاتورة (${order.status})`;
+    if (document.getElementById('receipt-type')) {
+        let typeStr = oType || "أوردر توصيل";
+        document.getElementById('receipt-type').innerText = isOldGift ? `${typeStr} - 🎁 هدية` : `${typeStr}`;
+    }
     if (document.getElementById('print-date')) document.getElementById('print-date').innerText = order.date;
     if (document.getElementById('print-time')) document.getElementById('print-time').innerText = order.time || '';
     if (document.getElementById('print-customer-name')) document.getElementById('print-customer-name').innerText = order.name;
@@ -1099,7 +1102,7 @@ if (saveAndPrintBtn) {
 
             let cProd = catalogData.find(cp => cp.name === n);
             let isOffer = cProd && (cProd.isOffer === true || cProd.isOffer === "true" || cProd.isOffer === 1);
-            let nDisplay = isOffer ? `<span class="offer-badge">عرض</span> ${n}` : n;
+            let nDisplay = n;
 
             let printP = isGift ? "***" : p;
             let printTotal = isGift ? "***" : rowTotal;
@@ -1169,7 +1172,7 @@ if (saveAndPrintBtn) {
             .then(() => {
                 showToast("✅ تم حفظ الأوردر بنجاح!", "success");
 
-                if (document.getElementById('receipt-type')) document.getElementById('receipt-type').innerText = isGift ? `طلب عميل (${orderTypeLabel}) - 🎁 هدية` : `طلب عميل (${orderTypeLabel})`;
+                if (document.getElementById('receipt-type')) document.getElementById('receipt-type').innerText = isGift ? `${orderTypeLabel} - 🎁 هدية` : `${orderTypeLabel}`;
 
                 let printLogo = document.getElementById('receiptLogo') || document.getElementById('print-logo');
                 if (printLogo) {

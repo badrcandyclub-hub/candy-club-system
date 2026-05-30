@@ -420,12 +420,7 @@
     <div id="print-receipt-template" class="print-only">
         <div class="receipt-header">
             <!-- لوجو دائم بدلا من الرفع اليدوي (SVG كود) -->
-            <svg id="print-logo-permanent" viewBox="0 0 200 80" style="width: 150px; margin: 0 auto 10px; display: block;">
-                <rect width="200" height="80" rx="15" fill="#f8d7e8"/>
-                <text x="100" y="48" font-family="'Cairo', sans-serif" font-size="28" font-weight="bold" fill="#d81b60" text-anchor="middle">Candy Club</text>
-                <circle cx="30" cy="40" r="12" fill="#ff4081"/>
-                <circle cx="170" cy="40" r="12" fill="#ff4081"/>
-            </svg>
+            <img id="print-logo" src="" style="width: 150px; margin: 0 auto 10px; display: none;" alt="لوجو">
             <h2 id="receipt-type">طلب عميل</h2>
         </div>
         <hr>
@@ -463,9 +458,10 @@
             <p id="print-seller-name">البائع: ...........................</p>
             <p style="margin-top: 10px; font-weight: bold;">شكراً لزيارتكم ❤️</p>
             <!-- روابط قنوات وأرقام الواتساب ثابتة -->
-            <div style="margin-top: 10px; font-size: 11px; color: #555; border-top: 1px dashed #aaa; padding-top: 10px;">
-                <p>📞 للتواصل والشكاوى (واتساب): 0100000000</p>
-                <p>🔗 تابعنا على السوشيال ميديا: @CandyClub</p>
+            <div style="margin-top: 10px; font-size: 11px; color: #555; border-top: 1px dashed #aaa; padding-top: 10px; text-align: center;">
+                <p><strong>📞 +20 10 80269555</strong></p>
+                <p>تابعنا على السوشيال ميديا</p>
+                <img src="./images/qr-code.png" style="max-width: 60px; margin-top: 5px;" alt="QR Code">
             </div>
         </div>
     </div>

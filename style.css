@@ -1417,33 +1417,7 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
 
 .catalog-offer-price { font-size: 0.85rem; font-weight: 700; color: var(--primary); }
 
-/* =========================================
-   20. اللوجو
-   ========================================= */
-#logoUploadBox {
-    border: 2px dashed var(--border);
-    padding: 28px;
-    border-radius: var(--radius-lg);
-    background: var(--bg);
-    cursor: pointer;
-    position: relative;
-    transition: var(--transition);
-}
 
-#logoUploadBox:hover {
-    background: var(--primary-glow);
-    border-color: var(--primary);
-}
-
-body.dark-mode #logoUploadBox {
-    background: #13151F;
-    border-color: var(--border);
-}
-
-body.dark-mode #logoUploadBox:hover {
-    background: #1f1525;
-    border-color: var(--primary);
-}
 
 /* =========================================
    21. Desktop Layout — شاشات كبيرة (Full Width) ⭐
@@ -1744,22 +1718,23 @@ body.dark-mode .btn-settle {
         padding: 0;
     }
     
-    /* تصغير الفاتورة وإلغاء الهوامش المزعجة التي تسبب صفحة فارغة إضافية */
+    /* تصغير الفاتورة وإلغاء الهوامش المزعجة التي تسبب صفحة فارغة إضافية لورق الـ PVC */
     @page {
         margin: 0;
-        size: auto;
+        size: 80mm auto;
     }
     
     body {
         margin: 0;
         padding: 0;
-        transform: scale(0.95);
-        transform-origin: top center;
+        font-size: 12px;
     }
 
-    .receipt-header h2 { margin: 5px 0; }
-    .receipt-info p, .receipt-totals p, .receipt-footer p { margin: 3px 0; }
+    .receipt-header h2 { margin: 2px 0; font-size: 16px; }
+    .receipt-info p, .receipt-totals p, .receipt-footer p { margin: 1px 0; font-size: 11px; }
     
-    .receipt-table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-    .receipt-table th, .receipt-table td { border: 1px solid #000; padding: 4px; text-align: center; }
+    .receipt-table { width: 100%; border-collapse: collapse; margin: 5px 0; font-size: 11px; }
+    .receipt-table th, .receipt-table td { border: 1px solid #000; padding: 2px; text-align: center; }
+    
+    hr { margin: 5px 0; border: 0; border-top: 1px dashed #000; }
 }
