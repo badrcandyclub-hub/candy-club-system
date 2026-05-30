@@ -526,6 +526,22 @@ window.printOldOrder = function (orderId) {
 
     let isOldGift = order.notes && order.notes.includes("هدية");
 
+    let printLogo = document.getElementById('receiptLogo') || document.getElementById('print-logo');
+    if (printLogo) {
+        let oType = order.orderType || "";
+        let rem = parseFloat(order.remaining) || 0;
+        let pay = order.payment || "";
+        
+        if (oType.includes("استلام من الفرع")) {
+            printLogo.src = "./images/logo-branch.jpg";
+        } else if (rem === 0 && (pay.includes("انستاباي") || pay.includes("محفظة") || pay.includes("فودافون") || pay.includes("إنستا"))) {
+            printLogo.src = "./images/logo-digital.jpg";
+        } else {
+            printLogo.src = "./images/logo-cash.jpg";
+        }
+        printLogo.style.display = 'inline-block';
+    }
+
     if (document.getElementById('receipt-type')) document.getElementById('receipt-type').innerText = isOldGift ? `فاتورة (${order.status}) - 🎁 هدية` : `فاتورة (${order.status})`;
     if (document.getElementById('print-date')) document.getElementById('print-date').innerText = order.date;
     if (document.getElementById('print-time')) document.getElementById('print-time').innerText = order.time || '';
@@ -1154,6 +1170,20 @@ if (saveAndPrintBtn) {
                 showToast("✅ تم حفظ الأوردر بنجاح!", "success");
 
                 if (document.getElementById('receipt-type')) document.getElementById('receipt-type').innerText = isGift ? `طلب عميل (${orderTypeLabel}) - 🎁 هدية` : `طلب عميل (${orderTypeLabel})`;
+
+                let printLogo = document.getElementById('receiptLogo') || document.getElementById('print-logo');
+                if (printLogo) {
+                    let payVal = paymentMethod ? paymentMethod.value : "";
+                    if (orderTypeLabel.includes("استلام من الفرع")) {
+                        printLogo.src = "./images/logo-branch.jpg";
+                    } else if (parseFloat(rem) === 0 && (payVal.includes("إنستا") || payVal.includes("انستاباي") || payVal.includes("محفظة") || payVal.includes("فودافون"))) {
+                        printLogo.src = "./images/logo-digital.jpg";
+                    } else {
+                        printLogo.src = "./images/logo-cash.jpg";
+                    }
+                    printLogo.style.display = 'inline-block';
+                }
+
                 if (document.getElementById('print-date')) document.getElementById('print-date').innerText = new Date().toLocaleDateString('ar-EG');
                 if (document.getElementById('print-time')) document.getElementById('print-time').innerText = new Date().toLocaleTimeString('ar-EG');
 
@@ -1332,25 +1362,7 @@ if (addModeratorBtn) {
     });
 }
 
-let logoUpload = document.getElementById('logoUpload');
-if (logoUpload) {
-    logoUpload.addEventListener('change', function (e) {
-        if (e.target.files && e.target.files[0]) {
-            let reader = new FileReader();
-            reader.onload = function (event) {
-                let printLogo = document.getElementById('print-logo');
-                let logoText = document.getElementById('logoUploadText');
-                if (printLogo) {
-                    printLogo.src = event.target.result;
-                    printLogo.style.display = 'inline-block';
-                    if (logoText) logoText.innerText = "✅ تم رفع اللوجو بنجاح (سيظهر في الطباعة)";
-                    showToast("✅ تم رفع اللوجو بنجاح", "success");
-                }
-            }
-            reader.readAsDataURL(e.target.files[0]);
-        }
-    });
-}
+
 
 // ==========================================
 // 11. غرفة عمليات الشحن والداشبورد
