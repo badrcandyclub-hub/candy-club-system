@@ -110,9 +110,12 @@ function loadDataFromServer() {
 
             orderHistoryData = data.history || [];
             window.pendingOrdersData = data.pendingOrders || [];
+            window.suspendedOrdersData = data.suspendedOrders || [];
             window.financialsData = data.financials || [];
             window.uncollectedOrdersData = data.uncollectedOrders || [];
+            window.customersData = data.customers || [];
 
+            if (typeof renderCustomers === 'function') renderCustomers(window.customersData);
             if (typeof renderFinancials === 'function') renderFinancials(window.financialsData);
 
             catalogData = data.catalog || [];
@@ -398,6 +401,27 @@ function triggerGovCalc() {
     calculateTotal();
 }
 if (govSelect) govSelect.addEventListener('change', triggerGovCalc);
+
+const lockRegionBtn = document.getElementById('lockRegionBtn');
+if (lockRegionBtn && govSelect) {
+    lockRegionBtn.addEventListener('click', () => {
+        if (govSelect.hasAttribute('readonly')) {
+            govSelect.removeAttribute('readonly');
+            govSelect.style.pointerEvents = 'auto';
+            govSelect.style.background = '';
+            lockRegionBtn.innerText = "✔️";
+            lockRegionBtn.style.background = "";
+            lockRegionBtn.style.color = "";
+        } else {
+            govSelect.setAttribute('readonly', 'readonly');
+            govSelect.style.pointerEvents = 'none';
+            govSelect.style.background = '#f0f0f0';
+            lockRegionBtn.innerText = "🔒";
+            lockRegionBtn.style.background = "var(--primary)";
+            lockRegionBtn.style.color = "white";
+        }
+    });
+}
 
 // ==========================================
 // 5. سجل الأوردرات (العرض الذكي والطباعة)
@@ -875,15 +899,10 @@ if (confirmPaymentBtn) {
 // ==========================================
 // 7. المعلقات 
 // ==========================================
-// ⭐ حل مشكلة انهيار الجافاسكريبت بالـ Try-Catch
-function getDrafts() {
-    try { return JSON.parse(localStorage.getItem('candyDrafts')) || []; }
-    catch (e) { return []; }
-}
 
 function updateSuspendedCount() {
-    let drafts = getDrafts();
-    if (document.getElementById('suspendedCount')) document.getElementById('suspendedCount').innerText = drafts.length;
+    let count = window.suspendedOrdersData ? window.suspendedOrdersData.length : 0;
+    if (document.getElementById('suspendedCount')) document.getElementById('suspendedCount').innerText = count;
 }
 
 let suspendBtn = document.getElementById('suspendBtn');
@@ -897,7 +916,7 @@ if (suspendBtn) {
             if (n) prods.push({ name: n, price: p, qty: q, confirmed: c });
         });
 
-        let draftId = Date.now();
+        let draftId = "CANDY-" + Math.floor(Math.random() * 900000 + 100000);
         let draft = {
             id: draftId, date: new Date().toLocaleTimeString('ar-EG'),
             platform: document.getElementById('platform') ? document.getElementById('platform').value : "", name: name,
@@ -912,9 +931,11 @@ if (suspendBtn) {
             gift: document.getElementById('isGiftCheckbox') ? document.getElementById('isGiftCheckbox').checked : false, prods: prods
         };
 
-        let drafts = getDrafts(); drafts.push(draft); localStorage.setItem('candyDrafts', JSON.stringify(drafts));
-
-        let formData = new URLSearchParams(); formData.append('action', 'suspendOrder'); formData.append('draftId', draftId); formData.append('draftJson', JSON.stringify(draft));
+        let formData = new URLSearchParams(); 
+        formData.append('action', 'suspendOrder'); 
+        formData.append('draftId', draftId); 
+        formData.append('draftJson', JSON.stringify(draft));
+        
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
                 showToast("⏸️ تم تعليق الفاتورة بنجاح!", "warning");
@@ -927,14 +948,15 @@ if (suspendBtn) {
 let openSuspendedBtn = document.getElementById('openSuspendedBtn');
 if (openSuspendedBtn) {
     openSuspendedBtn.addEventListener('click', () => {
-        let drafts = getDrafts(); let list = document.getElementById('suspendedOrdersList'); if (!list) return;
+        let drafts = window.suspendedOrdersData || []; 
+        let list = document.getElementById('suspendedOrdersList'); if (!list) return;
         list.innerHTML = '';
         if (drafts.length === 0) { list.innerHTML = '<p class="empty-msg">لا توجد طلبات معلقة</p>'; return; }
 
         drafts.forEach(d => {
             let div = document.createElement('div'); div.className = 'data-row'; div.style.alignItems = 'center';
             div.innerHTML = `
-                <div style="flex:1;"><strong>${d.name}</strong> <br> <small style="color:#777">⏰ ${d.date}</small></div>
+                <div style="flex:1;"><strong>${d.name}</strong> <br> <small style="color:#777">⏰ ${d.time || d.date}</small></div>
                 <div style="display:flex; gap:5px;">
                     <button class="btn-search interactive-btn restore-btn" style="padding: 5px 10px; font-size:0.8rem">استرجاع 🔄</button>
                     <button class="interactive-btn delete-btn" style="padding: 5px 10px; font-size:0.8rem; background-color:var(--danger); color:white; border:none; border-radius:8px; cursor:pointer;">حذف ❌</button>
@@ -954,7 +976,10 @@ if (openSuspendedBtn) {
 }
 
 function deleteSuspendedDraft(draftId) {
-    let drafts = getDrafts(); drafts = drafts.filter(item => item.id !== draftId); localStorage.setItem('candyDrafts', JSON.stringify(drafts)); updateSuspendedCount();
+    if (window.suspendedOrdersData) {
+        window.suspendedOrdersData = window.suspendedOrdersData.filter(item => item.id !== draftId);
+    }
+    updateSuspendedCount();
     let formData = new URLSearchParams(); formData.append('action', 'removeSuspended'); formData.append('draftId', draftId); fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData });
 }
 
@@ -971,10 +996,27 @@ function restoreDraft(d) {
     if (document.getElementById('notes')) document.getElementById('notes').value = d.notes || "";
     if (document.getElementById('isGiftCheckbox')) document.getElementById('isGiftCheckbox').checked = d.gift || false;
 
-    if (productsContainer) {
-        productsContainer.innerHTML = '';
-        if (d.prods && d.prods.length > 0) d.prods.forEach(p => addProductRow(p.name, p.price, p.qty, p.confirmed));
-        else addProductRow();
+    if (d.prods) { // If restored from local format
+        if (productsContainer) {
+            productsContainer.innerHTML = '';
+            if (d.prods.length > 0) d.prods.forEach(p => addProductRow(p.name, p.price, p.qty, p.confirmed));
+            else addProductRow();
+        }
+    } else if (d.products) { // If restored from Google Sheets
+        if (productsContainer) {
+            productsContainer.innerHTML = '';
+            let lines = d.products.split('\n');
+            let hasProds = false;
+            lines.forEach(line => {
+                let match = line.match(/(.*) - الكمية: (\d+)/);
+                if (match) {
+                    addProductRow(match[1].trim(), "", match[2], true);
+                    hasProds = true;
+                }
+            });
+            if (!hasProds) addProductRow();
+        }
+        if (document.getElementById('discount')) document.getElementById('discount').value = d.discount || "";
     }
     if (deliveryTypeSelect) deliveryTypeSelect.dispatchEvent(new Event('change'));
     showToast("✅ تم استرجاع الفاتورة!", "success");
@@ -1316,9 +1358,12 @@ if (logoUpload) {
 function renderShippingRoom(history) {
     const pendingContainer = document.getElementById('pendingOrdersContainer');
     const branchContainer = document.getElementById('branchOrdersContainer');
+    const resContainer = document.getElementById('reservationsContainer');
 
-    if (pendingContainer) {
-        const pendingOrders = history.filter(o => o.status === 'قيد التجهيز' && o.orderType !== 'استلام من الفرع');
+    if (pendingContainer && resContainer) {
+        const pendingOrders = history.filter(o => o.status === 'قيد التجهيز' && o.orderType !== 'استلام من الفرع' && !o.orderType.includes('حجز'));
+        const resOrders = history.filter(o => o.status === 'قيد التجهيز' && o.orderType && o.orderType.includes('حجز'));
+
         pendingContainer.innerHTML = '';
         if (pendingOrders.length === 0) pendingContainer.innerHTML = '<p class="empty-msg">لا يوجد أوردرات شحن قيد التجهيز.</p>';
         else pendingOrders.forEach(o => {
@@ -1328,6 +1373,19 @@ function renderShippingRoom(history) {
                     <div class="order-details-compact">
                         <span class="order-id-name">${o.id} | ${o.name}</span>
                         <span class="order-address-price">📱 ${o.phone} | 💰 ${o.total} ج.م</span>
+                    </div>
+                </div>`;
+        });
+
+        resContainer.innerHTML = '';
+        if (resOrders.length === 0) resContainer.innerHTML = '<p class="empty-msg">لا يوجد حجوزات قادمة.</p>';
+        else resOrders.forEach(o => {
+            resContainer.innerHTML += `
+                <div class="order-checkbox-row" style="border-left: 4px solid var(--primary);">
+                    <input type="checkbox" class="order-checkbox pending-checkbox" value="${o.id}">
+                    <div class="order-details-compact">
+                        <span class="order-id-name">${o.id} | ${o.name}</span>
+                        <span class="order-address-price" style="color: var(--primary); font-weight: bold;">📅 ${o.date} | 📱 ${o.phone} | 💰 ${o.total} ج.م</span>
                     </div>
                 </div>`;
         });
@@ -1353,7 +1411,10 @@ function renderShippingRoom(history) {
 
 // ⭐ دالة تسليم الفرع الفورية
 window.settleBranchOrder = function (orderId, btn) {
-    if (!confirm('هل تم تسليم الأوردر للعميل واستلام المبلغ المتبقي؟')) return;
+    let order = window.pendingOrdersData.find(o => o.id === orderId);
+    let amountPaidText = prompt('الرجاء إدخال المبلغ المدفوع لاستلام الفرع:', order ? order.remaining : 0);
+    if (amountPaidText === null) return; 
+
     setBtnLoading(btn, true);
     let formData = new URLSearchParams();
     formData.append('action', 'updateOrderStatus');
@@ -1362,7 +1423,7 @@ window.settleBranchOrder = function (orderId, btn) {
 
     fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
         .then(() => {
-            showToast("✅ تم التقفيل بنجاح!", "success");
+            showToast(`✅ تم التسليم وتصفية مبلغ (${amountPaidText} ج.م) بنجاح!`, "success");
             loadDataFromServer();
         }).catch(() => setBtnLoading(btn, false, "تم التسليم ✅"));
 };
@@ -1381,7 +1442,7 @@ if (loadDriverOrdersBtn && shippedContainer) {
         }
 
         // عرض أوردرات المندوب المشحونة فقط
-        const shippedOrders = orderHistoryData.filter(o => o.status === 'في الشحن');
+        const shippedOrders = orderHistoryData.filter(o => o.status === 'في الشحن' && o.driver === driver);
         shippedContainer.innerHTML = '';
         if (shippedOrders.length === 0) shippedContainer.innerHTML = '<p class="empty-msg">لا توجد أوردرات في الشحن لهذا المندوب.</p>';
         else shippedOrders.forEach(o => {
@@ -1429,6 +1490,33 @@ if (assignBtn) assignBtn.addEventListener('click', () => {
     processStatusUpdate(assignBtn, 'pending-checkbox', 'في الشحن', driver);
 });
 
+let sendWaDriverBtn = document.getElementById('sendWaDriverBtn');
+if (sendWaDriverBtn) sendWaDriverBtn.addEventListener('click', () => {
+    let driver = document.getElementById('assignDriverSelect').value;
+    if (!driver) { showToast("اختر المندوب أولاً!", "error"); return; }
+    
+    let courierPhone = "";
+    if (shippingData && window.financialsData) {
+        let courier = shippingData[driver] || window.financialsData.find(f => f.name === driver); // fallback search
+    }
+    // We can also just send it to WhatsApp with empty phone and user selects the contact
+    let ordersListText = `أوردرات المندوب: ${driver} 🛵\n\n`;
+    let totalCash = 0;
+
+    const selected = Array.from(document.querySelectorAll('.pending-checkbox:checked')).map(cb => cb.value);
+    if (selected.length === 0) { showToast("حدد أوردر واحد على الأقل!", "warning"); return; }
+
+    selected.forEach((orderId, idx) => {
+        let o = orderHistoryData.find(x => x.id === orderId);
+        if (o) {
+            ordersListText += `${idx+1}. العميل: ${o.name}\n📱 ${o.phone}\n📍 العنوان: ${o.address}\n💰 المطلوب: ${o.remaining} ج.م\n🛒 المنتجات: ${o.products.replace(/\n/g, ', ')}\n\n`;
+            totalCash += parseFloat(o.remaining) || 0;
+        }
+    });
+    ordersListText += `🔥 الإجمالي المطلوب تحصيله: ${totalCash} ج.م\n`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(ordersListText)}`, '_blank');
+});
+
 let markDelivBtn = document.getElementById('markDeliveredBtn');
 if (markDelivBtn) markDelivBtn.addEventListener('click', () => processStatusUpdate(markDelivBtn, 'shipped-checkbox', 'تم التوصيل'));
 
@@ -1453,6 +1541,37 @@ function updateAdvancedDashboard(history) {
         }
     }
 }
+
+let sendWaSmouhaBtn = document.getElementById('sendWaSmouhaBtn');
+if (sendWaSmouhaBtn) sendWaSmouhaBtn.addEventListener('click', () => {
+    let pending = window.pendingOrdersData || [];
+    let text = `أوردرات سموحة الخارجية 🚚\nتاريخ: ${new Date().toLocaleDateString('ar-EG')}\n\n`;
+    
+    pending.forEach((o, i) => {
+        text += `🔶 العميل: ${o.name}\n🔸 التليفون: ${o.phone}\n◾ العنوان: ${o.address}\n◻️ الإجمالي: ${o.total} ج\n\n`;
+    });
+    if(pending.length === 0) text += "لا يوجد أوردرات.\n";
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+});
+
+let sendWaManagerBtn = document.getElementById('sendWaManagerBtn');
+if (sendWaManagerBtn) sendWaManagerBtn.addEventListener('click', () => {
+    let tCount = document.getElementById('todayCount') ? document.getElementById('todayCount').innerText : 0;
+    let tSales = document.getElementById('todaySales') ? document.getElementById('todaySales').innerText : 0;
+    let compCount = document.getElementById('completedCount') ? document.getElementById('completedCount').innerText : 0;
+    let retCount = document.getElementById('returnedCount') ? document.getElementById('returnedCount').innerText : 0;
+    let topP = document.getElementById('topProduct') ? document.getElementById('topProduct').innerText : "--";
+
+    let report = `📊 *تقرير نهاية اليوم - Candy Club*\n\n`;
+    report += `🛒 أوردرات اليوم: ${tCount}\n`;
+    report += `💰 المبيعات المتوقعة: ${tSales} ج\n`;
+    report += `✅ أوردرات مكتملة (محاسب): ${compCount}\n`;
+    report += `🚨 مرتجعات: ${retCount}\n`;
+    report += `⭐ المنتج الأكثر مبيعاً: ${topP}\n\n`;
+    report += `تم الإنشاء بواسطة سيستم الإدارة الآلي ⚙️`;
+
+    window.open(`https://wa.me/?text=${encodeURIComponent(report)}`, '_blank');
+});
 
 // ==========================================
 // 12. نظام الكتالوج والنواقص الشامل
@@ -1661,5 +1780,53 @@ if (darkModeToggle) {
             document.body.classList.remove('dark-mode');
             localStorage.setItem('candyDarkMode', 'false');
         }
+    });
+}
+
+function renderCustomers(customersList) {
+    let container = document.getElementById('customersListContainer');
+    if (!container) return;
+    container.innerHTML = '';
+    
+    if (customersList.length === 0) {
+        container.innerHTML = '<p class="empty-msg">لا يوجد عملاء مسجلين.</p>';
+        return;
+    }
+
+    customersList.forEach(c => {
+        let div = document.createElement('div');
+        div.className = 'history-item';
+        div.style.borderRightColor = 'var(--secondary)';
+        div.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <strong style="font-size: 1.05rem;">👤 ${c.name}</strong>
+                <span style="color: var(--secondary); font-weight: bold; font-size: 0.85rem;">📞 ${c.phone}</span>
+            </div>
+            <div style="font-size: 0.9rem; color: #555; margin-top: 5px;">
+                <span>📍 ${c.gov} - ${c.address}</span><br>
+                <span>🛒 إجمالي الطلبات: <strong style="color: var(--text-dark);">${c.ordersCount}</strong> | 💰 إجمالي المدفوعات: <strong style="color: var(--success);">${c.totalPaid} ج.م</strong></span><br>
+                <span style="font-size: 0.8rem; color: #888;">📅 آخر طلب: ${c.lastOrder}</span>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+let searchCustomerBtn = document.getElementById('searchCustomerBtn');
+let customerSearchInput = document.getElementById('customerSearchInput');
+if (searchCustomerBtn && customerSearchInput) {
+    searchCustomerBtn.addEventListener('click', () => {
+        let keyword = customerSearchInput.value.trim().toLowerCase();
+        if (keyword === "") {
+            renderCustomers(window.customersData || []);
+        } else {
+            let filtered = (window.customersData || []).filter(c => 
+                c.name.toLowerCase().includes(keyword) || c.phone.toString().includes(keyword)
+            );
+            renderCustomers(filtered);
+        }
+    });
+    customerSearchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') searchCustomerBtn.click();
     });
 }

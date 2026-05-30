@@ -76,10 +76,13 @@
 
                     <div id="addressFields">
                         <label>المنطقة / المحافظة:</label>
-                        <select id="governorate">
-                            <option value="">-- اختر من القائمة --</option>
-                        </select>
-                        <div id="zoneDurationInfo" class="duration-badge hidden-field">⏳ مدة التوصيل: <span>--</span></div>
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <select id="governorate" style="margin-bottom:0; flex:1;">
+                                <option value="">-- اختر من القائمة --</option>
+                            </select>
+                            <button type="button" id="lockRegionBtn" class="btn-outline interactive-btn" style="padding: 10px 15px; border-radius: 8px; flex: 0 0 auto;" title="تثبيت المنطقة">✔️</button>
+                        </div>
+                        <div id="zoneDurationInfo" class="duration-badge hidden-field" style="margin-top: 10px;">⏳ مدة التوصيل: <span>--</span></div>
 
                         <label>العنوان بالتفصيل:</label>
                         <textarea id="address" placeholder="اسم الشارع، رقم البيت، علامة مميزة"></textarea>
@@ -245,7 +248,18 @@
                 <div id="pendingOrdersContainer" class="data-list-container mt-10" style="min-height: 100px;">
                     <p class="empty-msg">جاري تحميل الأوردرات...</p>
                 </div>
-                <button type="button" id="assignToDriverBtn" class="btn-save interactive-btn mt-10" style="width: 100%; font-size: 1rem;">تسليم للمندوب 🚚</button>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button type="button" id="assignToDriverBtn" class="btn-save interactive-btn" style="flex: 2; font-size: 1rem;">تسليم للمندوب 🚚</button>
+                    <button type="button" id="sendWaDriverBtn" class="btn-whatsapp interactive-btn" style="flex: 1; font-size: 0.9rem;">إرسال واتس 📱</button>
+                </div>
+            </div>
+
+            <!-- ⭐ قسم الحجوزات -->
+            <div class="section-card" style="border-right: 4px solid var(--primary);">
+                <h3 class="section-title">📅 طلبات الحجوزات القادمة</h3>
+                <div id="reservationsContainer" class="data-list-container mt-10" style="min-height: 100px; max-height: 250px; overflow-y: auto;">
+                    <p class="empty-msg">لا يوجد حجوزات قادمة...</p>
+                </div>
             </div>
 
             <!-- ⭐ قسم استلام الفرع المنفصل -->
@@ -337,6 +351,11 @@
             <div class="section-card text-center">
                 <h3 class="section-title">🛠️ إعدادات السيستم</h3>
                 
+                <div class="action-grid" style="margin-bottom: 15px;">
+                    <button type="button" id="sendWaSmouhaBtn" class="btn-whatsapp interactive-btn" style="width: 100%; padding: 12px; font-size: 0.95rem;">📱 إرسال أوردرات سموحة الخارجية</button>
+                    <button type="button" id="sendWaManagerBtn" class="btn-outline interactive-btn" style="width: 100%; padding: 12px; font-size: 0.95rem; border-color: var(--primary); color: var(--primary);">📊 إرسال تقرير اليوم للمدير (واتساب)</button>
+                </div>
+                
                 <div style="margin-bottom: 25px;">
                     <!-- لينك الإكسيل بتاعك حطه هنا بدل كلمة رابط_الإكسيل_بتاعك_هنا -->
                     <a href="https://docs.google.com/spreadsheets/d/1RL9fNadwDxgGMh45beymGbVzv0uQERHnR_bJrvQ8-AM/edit?gid=0#gid=0" id="openGoogleSheetBtn" class="btn-outline interactive-btn" target="_blank" style="display: block; text-decoration: none; padding: 15px; background: #e8f5e9; color: #2e7d32; border: 2px solid #c8e6c9; border-radius: 15px; font-weight: bold;">
@@ -364,6 +383,19 @@
                 </div>
             </div>
         </section>
+        <!-- ⭐ قسم قاعدة العملاء -->
+        <section id="customers-tab" class="tab-pane">
+            <div class="section-card">
+                <h3 class="section-title">👥 قاعدة العملاء</h3>
+                <div class="search-box mb-15">
+                    <input type="text" id="customerSearchInput" placeholder="ابحث باسم العميل أو رقم الموبايل...">
+                    <button id="searchCustomerBtn" class="btn-search interactive-btn">بحث</button>
+                </div>
+                <div id="customersListContainer" class="data-list-container scroll-list" style="max-height: 400px; padding: 5px;">
+                    <p class="empty-msg">جاري تحميل بيانات العملاء...</p>
+                </div>
+            </div>
+        </section>
         
     </main>
 
@@ -380,6 +412,9 @@
         <button class="nav-item" data-target="history-tab">
             <span class="icon">🧾</span><span class="label">السجل</span>
         </button>
+        <button class="nav-item" data-target="customers-tab">
+            <span class="icon">👥</span><span class="label">العملاء</span>
+        </button>
         <button class="nav-item" data-target="reports-tab">
             <span class="icon">📊</span><span class="label">التقارير</span>
         </button>
@@ -391,9 +426,14 @@
     <!-- ⭐ تعديل جذري لجدول الطباعة (عناوين الأعمدة + تاريخ الحجز) -->
     <div id="print-receipt-template" class="print-only">
         <div class="receipt-header">
-            <img id="print-logo" src="" alt="Logo" style="display:none; max-width: 120px; margin: 0 auto 10px; display: block;">
+            <!-- لوجو دائم بدلا من الرفع اليدوي (SVG كود) -->
+            <svg id="print-logo-permanent" viewBox="0 0 200 80" style="width: 150px; margin: 0 auto 10px; display: block;">
+                <rect width="200" height="80" rx="15" fill="#f8d7e8"/>
+                <text x="100" y="48" font-family="'Cairo', sans-serif" font-size="28" font-weight="bold" fill="#d81b60" text-anchor="middle">Candy Club</text>
+                <circle cx="30" cy="40" r="12" fill="#ff4081"/>
+                <circle cx="170" cy="40" r="12" fill="#ff4081"/>
+            </svg>
             <h2 id="receipt-type">طلب عميل</h2>
-            <p style="font-weight:bold; font-size:16px;">Candy Club 🍬</p>
         </div>
         <hr>
         <div class="receipt-info">
@@ -428,7 +468,12 @@
         <div class="receipt-footer">
             <p>طريقة الدفع: <span id="print-payment"></span></p>
             <p id="print-seller-name">البائع: ...........................</p>
-            <p style="margin-top: 10px;">شكراً لزيارتكم ❤️</p>
+            <p style="margin-top: 10px; font-weight: bold;">شكراً لزيارتكم ❤️</p>
+            <!-- روابط قنوات وأرقام الواتساب ثابتة -->
+            <div style="margin-top: 10px; font-size: 11px; color: #555; border-top: 1px dashed #aaa; padding-top: 10px;">
+                <p>📞 للتواصل والشكاوى (واتساب): 0100000000</p>
+                <p>🔗 تابعنا على السوشيال ميديا: @CandyClub</p>
+            </div>
         </div>
     </div>
 
