@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title id="page-title">كاندي كلوب - Candy Club V13.6</title>
+    <title id="page-title">كاندي كلوب - Candy Club V13.9</title>
+    <link rel="icon" type="image/png" href="./favicon.png">
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
 </head>
@@ -39,7 +40,7 @@
             <div id="orderFieldsContainer" class="section-card">
                 <h3 class="section-title">📝 إنشاء طلب جديد</h3>
                 
-                <form id="orderForm">
+                <form id="orderForm" onsubmit="event.preventDefault();">
                     <label>المنصة:</label>
                     <select id="platform" required>
                         <option value="واتساب ✅">واتساب ✅</option>

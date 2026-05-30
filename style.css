@@ -767,27 +767,13 @@ input:checked + .slider:before { transform: translateX(24px); }
     padding: 4px;
 }
 
-/* تم تكبير العرض إلى 12 بكسل ليتسع للأسهم */
-.scroll-list::-webkit-scrollbar { width: 12px; } 
-.scroll-list::-webkit-scrollbar-track { background: var(--bg); border-radius: 10px; }
-.scroll-list::-webkit-scrollbar-thumb { background: var(--primary-light); border-radius: 10px; border: 3px solid var(--bg); }
-.scroll-list::-webkit-scrollbar-thumb:hover { background: var(--primary); }
-
-/* أسهم التمرير للقوائم لسهولة استخدام الماوس */
-.scroll-list::-webkit-scrollbar-button,
-.data-list-container::-webkit-scrollbar-button {
-    display: block;
-    background-color: var(--border);
-    height: 12px;
-    border-radius: 4px;
-    background-repeat: no-repeat;
-    background-size: 8px;
-    background-position: center;
-}
-.scroll-list::-webkit-scrollbar-button:hover,
-.data-list-container::-webkit-scrollbar-button:hover {
-    background-color: var(--primary-light);
-}
+/* =========================================
+   Custom Webkit Scrollbar موحد
+   ========================================= */
+::-webkit-scrollbar { width: 10px; height: 10px; } 
+::-webkit-scrollbar-track { background: #f1f2f6; border-radius: 8px; }
+::-webkit-scrollbar-thumb { background: #E91E8C; border-radius: 8px; border: 2px solid #f1f2f6; }
+::-webkit-scrollbar-thumb:hover { background: #d81b60; }
 
 .empty-msg {
     text-align: center;
@@ -868,8 +854,7 @@ input:checked + .slider:before { transform: translateX(24px); }
     border: 1.5px solid var(--border);
 }
 
-.data-list-container::-webkit-scrollbar { width: 4px; }
-.data-list-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; }
+
 
 .data-row {
     display: flex;
@@ -1733,8 +1718,11 @@ body.dark-mode .btn-settle {
     .receipt-header h2 { margin: 2px 0; font-size: 16px; }
     .receipt-info p, .receipt-totals p, .receipt-footer p { margin: 1px 0; font-size: 11px; }
     
-    .receipt-table { width: 100%; border-collapse: collapse; margin: 5px 0; font-size: 11px; }
-    .receipt-table th, .receipt-table td { border: 1px solid #000; padding: 2px; text-align: center; }
+    .receipt-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 11px; }
+    .receipt-table th { border: 1px solid #000; padding: 6px; text-align: center; background: #eee !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .receipt-table td { border: 1px solid #000; padding: 6px; text-align: center; }
+    
+    #print-logo { object-fit: contain; max-height: 80px; }
     
     hr { margin: 5px 0; border: 0; border-top: 1px dashed #000; }
 }

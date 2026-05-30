@@ -402,26 +402,7 @@ function triggerGovCalc() {
 }
 if (govSelect) govSelect.addEventListener('change', triggerGovCalc);
 
-const lockRegionBtn = document.getElementById('lockRegionBtn');
-if (lockRegionBtn && govSelect) {
-    lockRegionBtn.addEventListener('click', () => {
-        if (govSelect.hasAttribute('readonly')) {
-            govSelect.removeAttribute('readonly');
-            govSelect.style.pointerEvents = 'auto';
-            govSelect.style.background = '';
-            lockRegionBtn.innerText = "✔️";
-            lockRegionBtn.style.background = "";
-            lockRegionBtn.style.color = "";
-        } else {
-            govSelect.setAttribute('readonly', 'readonly');
-            govSelect.style.pointerEvents = 'none';
-            govSelect.style.background = '#f0f0f0';
-            lockRegionBtn.innerText = "🔒";
-            lockRegionBtn.style.background = "var(--primary)";
-            lockRegionBtn.style.color = "white";
-        }
-    });
-}
+
 
 // ==========================================
 // 5. سجل الأوردرات (العرض الذكي والطباعة)
@@ -521,8 +502,16 @@ function renderHistoryList(orders, isLoadMore = false) {
 
 // ⭐ إصلاح تشوه الفاتورة المطبوعة القديمة
 window.printOldOrder = function (orderId) {
-    let order = orderHistoryData.find(o => o.id === orderId) || window.searchResultsCache.find(o => o.id === orderId);
-    if (!order) return;
+    let order = orderHistoryData.find(o => o.id === orderId);
+    if (!order && window.searchResultsCache) order = window.searchResultsCache.find(o => o.id === orderId);
+    if (!order && window.pendingOrdersData) order = window.pendingOrdersData.find(o => o.id === orderId);
+    if (!order && window.suspendedOrdersData) order = window.suspendedOrdersData.find(o => o.id === orderId);
+    if (!order && window.uncollectedOrdersData) order = window.uncollectedOrdersData.find(o => o.id === orderId);
+    
+    if (!order) {
+        showToast("تعذر العثور على بيانات الأوردر للطباعة", "error");
+        return;
+    }
 
     let isOldGift = order.notes && order.notes.includes("هدية");
 
@@ -533,11 +522,11 @@ window.printOldOrder = function (orderId) {
         let pay = order.payment || "";
         
         if (oType.includes("استلام من الفرع")) {
-            printLogo.src = "./images/logo-branch.jpg";
+            printLogo.src = "./images/logo-branch.png";
         } else if (rem === 0 && (pay.includes("انستاباي") || pay.includes("محفظة") || pay.includes("فودافون") || pay.includes("إنستا"))) {
-            printLogo.src = "./images/logo-digital.jpg";
+            printLogo.src = "./images/logo-digital.png";
         } else {
-            printLogo.src = "./images/logo-cash.jpg";
+            printLogo.src = "./images/logo-cash.png";
         }
         printLogo.style.display = 'inline-block';
     }
@@ -1178,11 +1167,11 @@ if (saveAndPrintBtn) {
                 if (printLogo) {
                     let payVal = paymentMethod ? paymentMethod.value : "";
                     if (orderTypeLabel.includes("استلام من الفرع")) {
-                        printLogo.src = "./images/logo-branch.jpg";
+                        printLogo.src = "./images/logo-branch.png";
                     } else if (parseFloat(rem) === 0 && (payVal.includes("إنستا") || payVal.includes("انستاباي") || payVal.includes("محفظة") || payVal.includes("فودافون"))) {
-                        printLogo.src = "./images/logo-digital.jpg";
+                        printLogo.src = "./images/logo-digital.png";
                     } else {
-                        printLogo.src = "./images/logo-cash.jpg";
+                        printLogo.src = "./images/logo-cash.png";
                     }
                     printLogo.style.display = 'inline-block';
                 }
