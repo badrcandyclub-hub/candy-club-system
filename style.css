@@ -324,15 +324,25 @@ textarea::placeholder { color: var(--text-light); }
 
 select {
     appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23E91E8C' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%237B839A' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: left 14px center;
     padding-left: 36px;
-    background-color: var(--bg-body);
+    background-color: #FAFBFF;
     font-weight: 700;
-    color: var(--primary);
+    color: var(--text-main);
     cursor: pointer;
-    box-shadow: 0 2px 5px rgba(233, 30, 140, 0.05);
+}
+
+optgroup {
+    font-weight: bold;
+    color: var(--primary);
+    background: #fdfdfd;
+}
+option {
+    color: var(--text-dark);
+    font-weight: normal;
+    background: #fff;
 }
 
 textarea {
@@ -1137,20 +1147,20 @@ input:checked + .slider:before { transform: translateX(24px); }
     .receipt-header img { 
         display: block; 
         margin: 0 auto 10px auto; 
-        max-width: 100px; 
+        max-width: 140px; 
         filter: grayscale(100%); /* طباعة اللوجو أبيض وأسود صريح */
     }
-    .receipt-header h2 { margin: 5px 0; font-size: 18px; font-weight: bold; }
-    .receipt-header p  { margin: 0; font-size: 14px; font-weight: bold; }
+    .receipt-header h2 { margin: 5px 0; font-size: 19px; font-weight: bold; }
+    .receipt-header p  { margin: 0; font-size: 15px; font-weight: bold; }
     
-    .receipt-info p    { margin: 4px 0; font-weight: bold; font-size: 13px; }
+    .receipt-info p    { margin: 4px 0; font-weight: bold; font-size: 15px; }
     
     /* تحسين إضافي لجدول الطباعة ليكون أوضح للعميل */
     .receipt-table {
         width: 100%;
         border-collapse: collapse;
         margin: 10px 0;
-        font-size: 13px;
+        font-size: 15px;
         font-weight: bold;
     }
 
@@ -1169,13 +1179,13 @@ input:checked + .slider:before { transform: translateX(24px); }
         color: #000;
     }
 
-    .receipt-totals { margin-top: 10px; font-weight: bold; font-size: 13px; }
+    .receipt-totals { margin-top: 10px; font-weight: bold; font-size: 15px; }
     .receipt-totals p { margin: 4px 0; display: flex; justify-content: space-between; }
     .receipt-totals h3 {
         margin: 5px 0;
         display: flex;
         justify-content: space-between;
-        font-size: 16px;
+        font-size: 18px;
         border-top: 2px dashed #000;
         padding-top: 5px;
         font-weight: bold;

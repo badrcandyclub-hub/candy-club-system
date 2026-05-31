@@ -114,7 +114,7 @@ function loadDataFromServer() {
             window.financialsData = data.financials || [];
             window.uncollectedOrdersData = data.uncollectedOrders || [];
             window.customersData = data.customers || [];
-
+            window.driversList = data.couriers || [];
 
             if (typeof renderFinancials === 'function') renderFinancials(window.financialsData);
 
@@ -256,12 +256,27 @@ function renderFinancials(finList) {
     if (!container) return;
     container.innerHTML = '';
 
-    if (finList.length === 0) {
-        container.innerHTML = '<p class="empty-msg">لا توجد حسابات أو مديونيات مسجلة.</p>';
+    let allDrivers = window.driversList || [];
+    let driversMap = {};
+    allDrivers.forEach(d => {
+        driversMap[d.name] = { name: d.name, ordersCount: 0, cashCollected: 0, shippingFees: 0, netDue: 0, statusText: "لا توجد مديونية" };
+    });
+    
+    finList.forEach(f => {
+        if (!driversMap[f.name]) {
+            driversMap[f.name] = f;
+        } else {
+            driversMap[f.name] = { ...driversMap[f.name], ...f };
+        }
+    });
+
+    let driversArray = Object.values(driversMap);
+    if (driversArray.length === 0) {
+        container.innerHTML = '<p class="empty-msg">لا توجد مناديب مسجلة.</p>';
         return;
     }
 
-    finList.forEach(f => {
+    driversArray.forEach(f => {
         let statusColor = f.netDue > 0 ? "#27ae60" : (f.netDue < 0 ? "#c0392b" : "#7f8c8d");
 
         let driverOrders = (window.uncollectedOrdersData || []).filter(o => o.driver === f.name);
@@ -271,13 +286,13 @@ function renderFinancials(finList) {
                 <strong style="font-size:0.85rem; color:var(--primary);">📦 أوردرات معلقة (لم يتم تسويتها):</strong>`;
             driverOrders.forEach(o => {
                 ordersHtml += `
-                    <div class="financial-order-item">
+                    <div class="financial-order-item" style="background:#fdfdfd; padding:8px; border:1px solid #eee; border-radius:6px; margin-top:5px; display:flex; justify-content:space-between; align-items:center;">
                         <div>
-                            <span style="font-weight:bold;">${o.id}</span><br>
+                            <span style="font-weight:bold; color:var(--text-dark);">${o.id}</span><br>
                             <span style="font-size:0.75rem; color:#777;">${o.payment} | إجمالي: ${o.total}ج | شحن: ${o.shipping}ج</span><br>
                             <span style="font-size:0.85rem; font-weight:bold; color:var(--danger);">المطلوب تحصيله: ${o.remaining}ج</span>
                         </div>
-                        <button class="btn-settle interactive-btn" onclick="settleDriverOrder('${o.id}', this, '${o.payment}')">تسوية 💸</button>
+                        <button class="btn-settle interactive-btn" onclick="settleDriverOrder('${o.id}', this, '${o.payment}')" style="background:var(--success); color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">تسوية 💸</button>
                     </div>
                 `;
             });
@@ -285,17 +300,17 @@ function renderFinancials(finList) {
         }
 
         container.innerHTML += `
-            <div class="financial-row">
-                <div class="financial-header">
-                    <span>🛵 ${f.name}</span>
-                    <span style="font-size: 0.85rem; color: #555;">${f.ordersCount} طلب</span>
+            <div class="financial-row" style="background: #fff; padding: 15px; border-radius: 12px; border: 1px solid #eaeaea; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                <div class="financial-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #f0f0f0; padding-bottom:8px; margin-bottom:10px;">
+                    <span style="font-weight:bold; font-size:1.1rem; color:var(--text-dark);">🛵 ${f.name}</span>
+                    <span style="font-size: 0.85rem; background:#f0f0f0; color:var(--text-dark); padding:3px 8px; border-radius:12px; font-weight:bold;">${f.ordersCount || 0} طلب</span>
                 </div>
-                <div class="financial-details">
-                    <span>الكاش: <strong>${f.cashCollected}</strong> ج</span>
-                    <span>الشحن: <strong>${f.shippingFees}</strong> ج</span>
+                <div class="financial-details" style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:10px;">
+                    <span style="background:#e8f4f8; padding:5px 10px; border-radius:6px; color:#555;">الكاش: <strong style="color:#2980b9;">${f.cashCollected || 0}</strong> ج</span>
+                    <span style="background:#f9ebea; padding:5px 10px; border-radius:6px; color:#555;">الشحن: <strong style="color:#c0392b;">${f.shippingFees || 0}</strong> ج</span>
                 </div>
-                <div class="financial-status" style="background: ${statusColor}15; color: ${statusColor}; border: 1px dashed ${statusColor};">
-                    ${f.statusText} ${f.netDue !== 0 ? `( ${Math.abs(f.netDue)} ج.م )` : ''}
+                <div class="financial-status" style="background: ${statusColor}15; color: ${statusColor}; padding: 8px; border-radius: 6px; text-align:center; font-weight:bold; border: 1px dashed ${statusColor};">
+                    ${f.statusText || "لا توجد مديونية"} ${f.netDue !== 0 ? `( ${Math.abs(f.netDue)} ج.م )` : ''}
                 </div>
                 ${ordersHtml}
             </div>
@@ -584,9 +599,11 @@ window.printOldOrder = function (orderId) {
         document.querySelector('.print-deposit-row').style.display = 'block';
         document.getElementById('print-deposit').innerText = order.deposit;
         document.getElementById('print-final').innerText = order.remaining;
+        if(document.getElementById('print-final-label')) document.getElementById('print-final-label').innerText = "المتبقي للدفع";
     } else {
         document.querySelector('.print-deposit-row').style.display = 'none';
         document.getElementById('print-final').innerText = isOldGift ? "***" : order.total;
+        if(document.getElementById('print-final-label')) document.getElementById('print-final-label').innerText = "الإجمالي النهائي";
     }
 
     if (document.getElementById('print-payment')) document.getElementById('print-payment').innerText = order.payment || "";
@@ -1196,7 +1213,6 @@ if (saveAndPrintBtn) {
                 if (document.getElementById('print-customer-name')) document.getElementById('print-customer-name').innerText = name;
                 if (document.getElementById('print-phone')) document.getElementById('print-phone').innerText = phone;
                 if (document.getElementById('print-address')) document.getElementById('print-address').innerText = addressVal;
-                if (document.getElementById('print-status')) document.getElementById('print-status').innerText = "قيد التجهيز";
                 if (document.getElementById('print-items-body')) document.getElementById('print-items-body').innerHTML = printItemsHtml;
 
                 if (document.getElementById('print-subtotal')) document.getElementById('print-subtotal').innerText = isGift ? "***" : (document.getElementById('productsTotal') ? document.getElementById('productsTotal').value : 0);
@@ -1207,9 +1223,11 @@ if (saveAndPrintBtn) {
                     document.querySelector('.print-deposit-row').style.display = 'block';
                     document.getElementById('print-deposit').innerText = dep;
                     document.getElementById('print-final').innerText = rem;
+                    if(document.getElementById('print-final-label')) document.getElementById('print-final-label').innerText = "المتبقي للدفع";
                 } else {
                     document.querySelector('.print-deposit-row').style.display = 'none';
                     document.getElementById('print-final').innerText = isGift ? "***" : finalTotalVal;
+                    if(document.getElementById('print-final-label')) document.getElementById('print-final-label').innerText = "الإجمالي النهائي";
                 }
 
                 if (document.getElementById('print-payment')) document.getElementById('print-payment').innerText = paymentMethod ? paymentMethod.value : "";
@@ -1579,7 +1597,11 @@ window.shareToWhatsAppGroup = function(orderId) {
     text += `🚚 *الشحن:* ${order.shipping || 0}\n`;
     text += `💰 *الإجمالي النهائي:* ${order.remaining !== undefined ? order.remaining : (order.total || 0)}\n`;
     
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    navigator.clipboard.writeText(text).then(() => {
+        showToast("تم نسخ بيانات الأوردر للحافظة بنجاح 📋", "success");
+    }).catch(err => {
+        showToast("فشل في نسخ البيانات", "error");
+    });
 };
 
 let shareOrderBtn = document.getElementById('shareOrderBtn');
@@ -1626,16 +1648,27 @@ if (sendWaManagerBtn) sendWaManagerBtn.addEventListener('click', () => {
     let topP = document.getElementById('topProduct') ? document.getElementById('topProduct').innerText : "--";
     let oosCount = window.oosData ? window.oosData.length : 0;
 
-    let report = `📊 *تقرير نهاية اليوم - Candy Club Pro*\n\n`;
+    let monthSales = document.getElementById('monthSales') ? document.getElementById('monthSales').innerText : 0;
+
+    let report = `📊 *تقرير الإدارة - Candy Club Pro*\n\n`;
+    report += `📅 *إحصائيات اليوم:*\n`;
     report += `🛒 أوردرات اليوم: ${tCount}\n`;
-    report += `💰 المبيعات المتوقعة: ${tSales} ج\n`;
+    report += `💰 مبيعات اليوم المتوقعة: ${tSales} ج\n`;
     report += `✅ أوردرات مكتملة (محاسب): ${compCount}\n`;
-    report += `🚨 مرتجعات: ${retCount}\n`;
+    report += `🚨 مرتجعات: ${retCount}\n\n`;
+    
+    report += `📅 *إحصائيات الشهر:*\n`;
+    report += `📈 إجمالي مبيعات الشهر: ${monthSales} ج\n\n`;
+    
     report += `⚠️ منتجات ناقصة: ${oosCount}\n`;
     report += `⭐ المنتج الأكثر مبيعاً: ${topP}\n\n`;
     report += `تم الإنشاء بواسطة سيستم الإدارة الآلي ⚙️`;
 
-    window.open(`https://wa.me/?text=${encodeURIComponent(report)}`, '_blank');
+    navigator.clipboard.writeText(report).then(() => {
+        showToast("تم نسخ التقرير للحافظة بنجاح 📋", "success");
+    }).catch(err => {
+        showToast("فشل في نسخ التقرير", "error");
+    });
 });
 
 // ==========================================
@@ -1878,9 +1911,21 @@ function renderCustomers(customersList) {
 }
 
 let loadCustomersBtn = document.getElementById('loadCustomersBtn');
-if (loadCustomersBtn) {
+let customersListContainer = document.getElementById('customersListContainer');
+if (loadCustomersBtn && customersListContainer) {
     loadCustomersBtn.addEventListener('click', () => {
-        renderCustomers(window.customersData || []);
+        if (customersListContainer.style.display === 'none') {
+            customersListContainer.style.display = 'block';
+            loadCustomersBtn.innerHTML = 'إخفاء بيانات العملاء 📂';
+            loadCustomersBtn.style.background = 'var(--danger)';
+            if (customersListContainer.innerHTML.includes('جاري تحميل') || customersListContainer.innerHTML.includes('لا يوجد')) {
+                renderCustomers(window.customersData || []);
+            }
+        } else {
+            customersListContainer.style.display = 'none';
+            loadCustomersBtn.innerHTML = 'إظهار بيانات العملاء 📂';
+            loadCustomersBtn.style.background = 'var(--secondary)';
+        }
     });
 }
 

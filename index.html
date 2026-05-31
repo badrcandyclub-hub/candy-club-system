@@ -65,7 +65,7 @@
 
                     <label>نوع التوصيل:</label>
                     <select id="deliveryType" required>
-                        <option value="normal">توصيل منزلي عادي</option>
+                        <option value="normal">توصيل منزلي</option>
                         <option value="branch">استلام من الفرع</option>
                         <option value="special_date">حجز لتاريخ معين 📅</option>
                     </select>
@@ -81,7 +81,6 @@
                             <select id="governorate" style="margin-bottom:0; flex:1;">
                                 <option value="">-- اختر من القائمة --</option>
                             </select>
-                            <button type="button" id="lockRegionBtn" class="btn-outline interactive-btn" style="padding: 10px 15px; border-radius: 8px; flex: 0 0 auto;" title="تثبيت المنطقة">✔️</button>
                         </div>
                         <div id="zoneDurationInfo" class="duration-badge hidden-field" style="margin-top: 10px;">⏳ مدة التوصيل: <span>--</span></div>
 
@@ -166,7 +165,7 @@
                             <button type="button" id="suspendBtn" class="btn-outline interactive-btn">⏸️ تعليق الطلب</button>
                             <button type="button" id="saveAndPrintBtn" class="btn-save pulse-btn">💾 حفظ وطباعة الفاتورة</button>
                         </div>
-                        <button type="button" id="shareOrderBtn" class="interactive-btn" style="background:#25D366; color:white; border:none; padding:12px; font-weight:bold; border-radius:8px; margin-top:10px; width:100%;">مشاركة للجروب 📱</button>
+                        <button type="button" id="shareOrderBtn" class="interactive-btn" style="background:#25D366; color:white; border:none; padding:12px; font-weight:bold; border-radius:8px; margin-top:10px; width:100%;">نسخ للجروب 📋</button>
                     </div>
                 </form>
             </div>
@@ -354,7 +353,7 @@
                 <h3 class="section-title">🛠️ إعدادات السيستم</h3>
                 
                 <div class="action-grid" style="margin-bottom: 15px;">
-                    <button type="button" id="sendWaManagerBtn" class="btn-outline interactive-btn" style="width: 100%; padding: 12px; font-size: 0.95rem; border-color: var(--primary); color: var(--primary);">📊 إرسال تقرير اليوم للمدير (واتساب)</button>
+                    <button type="button" id="sendWaManagerBtn" class="btn-outline interactive-btn" style="width: 100%; padding: 12px; font-size: 0.95rem; border-color: var(--primary); color: var(--primary);">📊 نسخ تقرير الإدارة (اليوم والشهر)</button>
                 </div>
                 
                 <div style="margin-bottom: 25px;">
@@ -386,10 +385,10 @@
                     <button id="searchCustomerBtn" class="btn-search interactive-btn">بحث</button>
                 </div>
                 <div class="text-center" style="margin-bottom: 15px;">
-                    <button type="button" id="loadCustomersBtn" class="interactive-btn" style="padding: 10px 20px;">عرض بيانات العملاء 📂</button>
+                    <button type="button" id="loadCustomersBtn" class="interactive-btn" style="padding: 10px 20px; background: var(--secondary); color: white; border-radius: 8px; border: none; font-weight: bold; width: 100%;">إظهار بيانات العملاء 📂</button>
                 </div>
-                <div id="customersListContainer" class="data-list-container scroll-list" style="max-height: 400px; padding: 5px;">
-                    <p class="empty-msg">اضغط على عرض البيانات ليتم تحميل القائمة...</p>
+                <div id="customersListContainer" class="data-list-container scroll-list" style="max-height: 400px; padding: 5px; display: none;">
+                    <p class="empty-msg">جاري تحميل القائمة...</p>
                 </div>
             </div>
         </section>
@@ -434,7 +433,7 @@
             <p>العميل: <span id="print-customer-name"></span></p>
             <p>الموبايل: <span id="print-phone"></span></p>
             <p class="print-address-row">العنوان: <span id="print-address"></span></p>
-            <p class="print-status-row">الحالة: <span id="print-status"></span></p>
+
         </div>
         <table class="receipt-table">
             <thead>
@@ -455,7 +454,7 @@
             <p>الخصم: <b><span id="print-discount"></span></b></p>
             <p>الشحن: <b><span id="print-shipping"></span></b></p>
             <p class="print-deposit-row" style="display:none; color: var(--primary);">تم دفع عربون: <b><span id="print-deposit"></span></b></p>
-            <h3 style="border-top: 1px solid #000; padding-top: 5px; font-size: 14px;">المتبقي للدفع: <b style="font-size: 16px;"><span id="print-final"></span></b></h3>
+            <h3 style="border-top: 1px solid #000; padding-top: 5px; font-size: 14px;"><span id="print-final-label">الإجمالي النهائي</span>: <b style="font-size: 16px;"><span id="print-final"></span></b></h3>
         </div>
         <div class="receipt-footer">
             <p>طريقة الدفع: <span id="print-payment"></span></p>
@@ -463,8 +462,8 @@
             <p style="margin-top: 10px; font-weight: bold;">نتمنى لكم يوم مُسكر! 🍬</p>
             <div style="margin-top: 10px; font-size: 11px; color: #555; border-top: 1px dashed #aaa; padding-top: 10px; text-align: center;">
                 <p><span dir="ltr" style="unicode-bidi: embed; font-weight: bold; font-size: 13px;">01080269555</span> 📞</p>
-                <p>سكان الكود لعروض حصرية! 👇</p>
-                <img src="./images/qr-code.png" style="max-width: 110px; margin-top: 5px;" alt="QR Code">
+                <p>سكان الكود لمتابعة صفحاتنا وعروضنا الحصرية 👇</p>
+                <img src="./images/qr-code.png" style="max-width: 140px; margin-top: 5px;" alt="QR Code">
             </div>
         </div>
     </div>
