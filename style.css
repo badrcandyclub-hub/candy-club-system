@@ -1190,7 +1190,8 @@ input:checked + .slider:before { transform: translateX(24px); }
     .receipt-totals h3 {
         margin: 5px 0;
         display: flex;
-        justify-content: space-between;
+        justify-content: flex-start;
+        gap: 5px;
         font-size: 18px;
         border-top: 2px dashed #000;
         padding-top: 5px;

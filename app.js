@@ -228,11 +228,8 @@ function loadDataFromServer() {
             }
             if (modSelect && currentMod) modSelect.value = currentMod;
 
-            if (document.getElementById('todayCount')) document.getElementById('todayCount').innerText = data.todayOrders || 0;
-            if (document.getElementById('todaySales')) document.getElementById('todaySales').innerText = data.todaySales || 0;
             if (document.getElementById('monthSales')) document.getElementById('monthSales').innerText = data.monthSales || 0;
-            if (document.getElementById('completedCount')) document.getElementById('completedCount').innerText = data.completedOrders || 0;
-            if (document.getElementById('topProduct')) document.getElementById('topProduct').innerText = data.topProduct || "--";
+            if (document.getElementById('completedMonthCount')) document.getElementById('completedMonthCount').innerText = data.completedMonthCount || 0;
 
             // إخفاء الأوردرات المشحونة حتى يتم اختيار المندوب
             let shippedCont = document.getElementById('shippedOrdersContainer');
@@ -1422,8 +1419,8 @@ function renderShippingRoom(history) {
     const resContainer = document.getElementById('reservationsContainer');
 
     if (pendingContainer && resContainer) {
-        const pendingOrders = history.filter(o => o.status === 'قيد التجهيز' && o.orderType !== 'استلام من الفرع' && !o.orderType.includes('حجز'));
-        const resOrders = history.filter(o => o.status === 'قيد التجهيز' && o.orderType && o.orderType.includes('حجز'));
+        const pendingOrders = window.pendingOrdersData.filter(o => o.orderType !== 'استلام من الفرع' && (!o.orderType || !o.orderType.includes('حجز')));
+        const resOrders = window.pendingOrdersData.filter(o => o.orderType && o.orderType.includes('حجز'));
 
         pendingContainer.innerHTML = '';
         if (pendingOrders.length === 0) pendingContainer.innerHTML = '<p class="empty-msg">لا يوجد أوردرات شحن قيد التجهيز.</p>';
@@ -1641,7 +1638,14 @@ function updateAdvancedDashboard(history) {
     // عرض الإحصائيات الأساسية
     if (document.getElementById('moneyWithDrivers')) document.getElementById('moneyWithDrivers').innerText = moneyWithDrivers;
     if (document.getElementById('returnedCount')) document.getElementById('returnedCount').innerText = returnedCount;
-    if (document.getElementById('completedCount')) document.getElementById('completedCount').innerText = completedToday;
+    
+    // ⭐ V15.0: إحصائيات الشهر الشاملة
+    let monthCountEl = document.getElementById('monthCount');
+    if (monthCountEl) {
+        let allMonthOrders = allOrders.filter(o => (o.date || "").slice(0, 7) === monthStr && o.status !== "مرتجع");
+        monthCountEl.innerText = allMonthOrders.length;
+    }
+    
     if (document.getElementById('completedMonthCount')) document.getElementById('completedMonthCount').innerText = completedMonth;
 
     // بالس على زر المالية
@@ -2053,8 +2057,8 @@ function renderCustomers(customersList) {
             </div>
             <div style="font-size: 0.9rem; color: #555; margin-top: 5px;">
                 <span>📍 ${c.gov} - ${c.address}</span><br>
-                <span>🛒 إجمالي الطلبات: <strong style="color: var(--text-dark);">${c.ordersCount}</strong> | 💰 إجمالي المدفوعات: <strong style="color: var(--success);">${c.totalPaid} ج.م</strong></span><br>
-                <span style="font-size: 0.8rem; color: #888;">📅 آخر طلب: ${c.lastOrder ? String(c.lastOrder).split('T')[0] : '--'}</span>
+                <span>🛒 إجمالي الطلبات: <strong style="color: var(--text-dark);">${c.count || 0}</strong> | 💰 إجمالي المدفوعات: <strong style="color: var(--success);">${c.total || 0} ج.م</strong></span><br>
+                <span style="font-size: 0.8rem; color: #888;">📅 آخر طلب: ${c.lastDate ? String(c.lastDate).split('T')[0] : '--'}</span>
             </div>
         `;
         container.appendChild(div);

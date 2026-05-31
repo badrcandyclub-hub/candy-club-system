@@ -214,13 +214,14 @@ function doGet(e) {
   var catalogSheet = ss.getSheetByName("📦 الكتالوج");
   var oosSheet = ss.getSheetByName("⏳ النواقص");
   var finSheet = ss.getSheetByName("📊 الحسابات والمالية");
+  var customerSheet = ss.getSheetByName("👥 قاعدة العملاء");
   // ⭐ V14.2: شيت المعلقات
   var draftsSheet = ss.getSheetByName("📂 المعلقات");
   
   var response = { 
-    alex: [], govs: [], couriers: [], products: [], moderators: [], catalog: [], outOfStock: [],
-    todayOrders: 0, todaySales: 0, monthSales: 0, history: [], pendingOrders: [], financials: [],
-    uncollectedOrders: [],
+    alex: [], govs: [], couriers: [], products: [], moderators: [], catalog: [], outOfStock: [], customers: [],
+    todayOrders: 0, todaySales: 0, monthSales: 0, completedMonthCount: 0, history: [], pendingOrders: [], financials: [],
+    monthTopProducts: [], monthPlatforms: {}, uncollectedOrders: [],
     suspendedOrders: [] // ⭐ V14.2: الطلبات المعلقة من جوجل شيتس
   };
 
@@ -249,6 +250,17 @@ function doGet(e) {
         response.financials.push({
           name: finData[i][0], ordersCount: finData[i][1], inTransit: finData[i][2], 
           cashCollected: finData[i][3], shippingFees: finData[i][4], netDue: finData[i][5], statusText: finData[i][6]
+        });
+      }
+    }
+  }
+
+  if (customerSheet) {
+    var custData = customerSheet.getDataRange().getValues();
+    for (var i = 1; i < custData.length; i++) {
+      if (custData[i][0]) {
+        response.customers.push({
+          name: custData[i][0], phone: custData[i][1], gov: custData[i][2], address: custData[i][3], count: custData[i][4], total: custData[i][5], lastDate: custData[i][6]
         });
       }
     }
@@ -285,6 +297,8 @@ function doGet(e) {
   if (ordersSheet) {
     var data = ordersSheet.getDataRange().getValues();
     var uniqueProducts = {};
+    var monthProductsMap = {};
+    var monthPlatformsMap = { 'واتساب': 0, 'فيسبوك': 0, 'انستجرام': 0, 'تيك توك': 0, 'أخرى': 0 };
 
     for (var j = 1; j < data.length; j++) {
       var rowDate = data[j][1] instanceof Date ? Utilities.formatDate(data[j][1], "GMT+2", "yyyy-MM-dd") : (data[j][1] ? data[j][1].toString().replace(/'/g, "").trim() : "");
@@ -306,8 +320,34 @@ function doGet(e) {
         response.todaySales += finalTotal; 
       }
       
-      if (rowDate.startsWith(currentMonth) && status !== "مرتجع" && status !== "تم التوصيل ومُحاسب") { 
-        response.monthSales += finalTotal; 
+      if (rowDate.startsWith(currentMonth)) {
+        if (status !== "مرتجع" && status !== "تم التوصيل ومُحاسب") { 
+            response.monthSales += finalTotal; 
+        }
+        if (status === "تم التوصيل" || status === "تم التوصيل ومُحاسب") {
+            response.completedMonthCount++;
+        }
+        
+        // Products logic for month
+        if (data[j][13]) {
+          var monthParts = data[j][13].split('\n');
+          monthParts.forEach(function(p) {
+            var m = p.match(/^(.+?)\s*-\s*الكمية:\s*(\d+)/);
+            if (m) {
+              var pName = m[1].trim();
+              var pQty = parseInt(m[2]) || 1;
+              monthProductsMap[pName] = (monthProductsMap[pName] || 0) + pQty;
+            }
+          });
+        }
+        
+        // Platform logic for month
+        var plt = (data[j][3] || data[j][20] || "أخرى").toString().toLowerCase();
+        if (plt.includes('واتس')) monthPlatformsMap['واتساب']++;
+        else if (plt.includes('فيس') || plt.includes('facebook')) monthPlatformsMap['فيسبوك']++;
+        else if (plt.includes('انستا') || plt.includes('insta')) monthPlatformsMap['انستجرام']++;
+        else if (plt.includes('تيك') || plt.includes('tiktok')) monthPlatformsMap['تيك توك']++;
+        else monthPlatformsMap['أخرى']++;
       }
 
       if (rowDate === filterDate) {
@@ -334,9 +374,13 @@ function doGet(e) {
       }
     }
     
-    var topP = ""; var maxV = 0;
-    for (var p in uniqueProducts) { if(uniqueProducts[p] > maxV) { maxV = uniqueProducts[p]; topP = p; } }
-    response.topProduct = topP || "لا يوجد";
+    // Sort and get top 10 month products
+    var sortedMonthProducts = Object.keys(monthProductsMap).map(function(k) {
+      return { name: k, qty: monthProductsMap[k] };
+    }).sort(function(a, b) { return b.qty - a.qty; }).slice(0, 10);
+    
+    response.monthTopProducts = sortedMonthProducts;
+    response.monthPlatforms = monthPlatformsMap;
     response.products = Object.keys(uniqueProducts).map(function(n) { return {name: n}; });
   }
 
