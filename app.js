@@ -67,7 +67,9 @@ setupModal('openFinancialsBtn', 'financialsModal', 'closeFinancialsModal');
 let shippingData = {};
 let catalogData = [];
 let oosData = [];
-let orderHistoryData = [];
+// ⭐ Fix: expose on window so ALL functions (printHistoryOrder, shareToWhatsApp) can access it
+window.orderHistoryData = [];
+let orderHistoryData = window.orderHistoryData; // local alias
 let currentFilterDate = new Date().toLocaleDateString('en-CA');
 
 window.onload = () => {
@@ -109,6 +111,7 @@ function loadDataFromServer() {
             if (syncStatus) { syncStatus.innerText = "متصل"; syncStatus.style.color = "#00C853"; }
 
             orderHistoryData = data.history || [];
+            window.orderHistoryData = orderHistoryData; // ⭐ keep window ref in sync
             window.pendingOrdersData = data.pendingOrders || [];
             window.suspendedOrdersData = data.suspendedOrders || [];
             window.financialsData = data.financials || [];
@@ -539,8 +542,12 @@ window.printHistoryOrder = function (orderId) {
     
     if (!order) {
         alert("⚠️ خطأ: لم يتم العثور على بيانات الطلب للطباعة.");
+        // ⭐ Debug: log all available IDs to help trace mismatch
+        console.warn("printHistoryOrder: could not find orderId =", orderId, typeof orderId);
+        console.log("Available history IDs:", (window.orderHistoryData||[]).map(o=>({id:o.id,type:typeof o.id})));
         return;
     }
+    console.log("Order Data:", order);
 
     let isOldGift = order.notes && order.notes.includes("هدية");
     let oType = order.orderType || "";
@@ -1591,17 +1598,20 @@ window.shareToWhatsAppGroup = function(orderId) {
     
     if (!order) {
         showToast("لم يتم العثور على الأوردر", "error");
+        console.warn("shareToWhatsAppGroup: could not find orderId =", orderId, typeof orderId);
+        console.log("Available IDs in history:", (window.orderHistoryData||[]).map(o=>({id:o.id,type:typeof o.id})));
         return;
     }
+    console.log("Order Data:", order);
     
-    let text = `*نوع الطلب:* ${order.orderType || "توصيل"}\n`;
+    let text = `*نوع الطلب:* ${order.orderType || order.type || "توصيل"}\n`;
     text += `*التاريخ:* ${order.date || new Date().toLocaleDateString('ar-EG')} ⏰ ${order.time || new Date().toLocaleTimeString('ar-EG')}\n`;
-    text += `👤 *العميل:* ${order.name}\n`;
-    text += `📍 *العنوان:* ${order.gov ? order.gov + " - " : ""}${order.address || ""}\n`;
-    text += `💳 *طريقة الدفع:* ${order.payment || ""}\n\n`;
-    text += `📦 *المنتجات:*\n${order.products || ""}\n`;
-    text += `🚚 *الشحن:* ${order.shipping || 0}\n`;
-    text += `💰 *الإجمالي النهائي:* ${order.remaining !== undefined ? order.remaining : (order.total || 0)}\n`;
+    text += `👤 *العميل:* ${order.name || order.customerName || ""}\n`;
+    text += `📍 *العنوان:* ${order.gov ? order.gov + " - " : ""}${order.address || order.customerAddress || ""}\n`;
+    text += `💳 *طريقة الدفع:* ${order.payment || order.paymentMethod || ""}\n\n`;
+    text += `📦 *المنتجات:*\n${order.products || order.items || ""}\n`;
+    text += `🚚 *الشحن:* ${order.shipping || order.shippingCost || 0}\n`;
+    text += `💰 *الإجمالي النهائي:* ${order.remaining !== undefined ? order.remaining : (order.total || order.finalTotal || 0)}\n`;
     
     navigator.clipboard.writeText(text).then(() => {
         showToast("تم نسخ بيانات الأوردر للحافظة بنجاح 📋", "success");
