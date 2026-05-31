@@ -294,49 +294,85 @@
 
         <section id="reports-tab" class="tab-pane">
             <h3 class="section-title" style="margin-bottom: 15px;">📊 لوحة تحكم الإدارة</h3>
-            
-            <div class="stats-row" style="margin-bottom: 10px;">
-                <div class="stat-item pink">
-                    <span class="label">🛒 إجمالي أوردرات الشهر</span>
-                    <span class="value" id="monthCount">0</span>
-                </div>
-                <div class="stat-item blue">
-                    <span class="label">💰 إجمالي مبيعات الشهر</span>
-                    <span class="value" id="monthSales">0</span>
-                </div>
-            </div>
-            
-            <div class="stats-row" style="margin-bottom: 10px;">
-                <div class="stat-item" style="background: linear-gradient(135deg, #00C853, #2E7D32); color:white; padding: 15px 10px; border-radius: 18px; text-align: center; box-shadow: var(--shadow);">
-                    <span class="label">✅ مكتملة الشهر</span>
-                    <span class="value" id="completedMonthCount">0</span>
-                </div>
-                <div class="stat-item" style="background: linear-gradient(135deg, #f39c12, #e67e22); color:white; padding: 15px 10px; border-radius: 18px; text-align: center; box-shadow: var(--shadow);">
-                    <span class="label">🛵 عهدة المناديب (تراكمي)</span>
-                    <span class="value" id="moneyWithDrivers">0</span>
-                </div>
-            </div>
-            <div class="stats-row" style="margin-bottom: 10px;">
-                <div class="stat-item" style="background: linear-gradient(135deg, #ff4d4d, #c0392b); color:white; padding: 15px 10px; border-radius: 18px; text-align: center; box-shadow: var(--shadow);">
-                    <span class="label">🚨 مرتجعات الشهر</span>
-                    <span class="value" id="returnedCount">0</span>
+
+            <!-- ⭐ V15.1: إحصائيات اليوم -->
+            <div class="section-card" style="margin-bottom:12px; border-right:4px solid var(--primary); padding:16px;">
+                <h4 style="margin:0 0 10px; font-size:0.85rem; color:var(--text-muted); text-align:center; letter-spacing:1px; text-transform:uppercase;">📅 إحصائيات اليوم</h4>
+                <div class="stats-row" style="margin-bottom:0; gap:8px;">
+                    <div class="stat-item pink" style="padding:12px 8px;">
+                        <span class="label" style="font-size:0.72rem;">🛒 أوردرات اليوم</span>
+                        <span class="value" id="todayCount" style="font-size:1.5rem;">0</span>
+                    </div>
+                    <div class="stat-item blue" style="padding:12px 8px;">
+                        <span class="label" style="font-size:0.72rem;">💰 مبيعات اليوم</span>
+                        <span class="value" id="todaySales" style="font-size:1.5rem;">0</span>
+                    </div>
+                    <div class="stat-item" style="background:linear-gradient(135deg,#00C853,#2E7D32);color:white;padding:12px 8px;border-radius:18px;text-align:center;box-shadow:var(--shadow);">
+                        <span class="label" style="font-size:0.72rem;">✅ مكتملة اليوم</span>
+                        <span class="value" id="completedCount" style="font-size:1.5rem;">0</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- ⭐ V15.0: لوحة أفضل 10 منتجات مبيعاً خلال الشهر -->
-            <div class="section-card" style="margin-top: 16px; border-right: 4px solid var(--primary);">
-                <h3 class="section-title" style="font-size:1.05rem;">🏆 أكثر 10 منتجات مبيعاً في الشهر</h3>
-                <div id="topProductsList" style="padding: 5px 0;">
-                    <p class="empty-msg">جاري التحميل...</p>
+            <!-- ⭐ V15.1: إحصائيات الشهر -->
+            <div class="section-card" style="margin-bottom:12px; border-right:4px solid var(--secondary); padding:16px;">
+                <h4 style="margin:0 0 10px; font-size:0.85rem; color:var(--text-muted); text-align:center; letter-spacing:1px; text-transform:uppercase;">📆 إحصائيات الشهر الحالي</h4>
+                <div class="stats-row" style="margin-bottom:8px; gap:8px;">
+                    <div class="stat-item pink" style="padding:12px 8px;">
+                        <span class="label" style="font-size:0.72rem;">🛒 أوردرات الشهر</span>
+                        <span class="value" id="monthCount" style="font-size:1.5rem;">0</span>
+                    </div>
+                    <div class="stat-item blue" style="padding:12px 8px;">
+                        <span class="label" style="font-size:0.72rem;">💰 مبيعات الشهر</span>
+                        <span class="value" id="monthSales" style="font-size:1.5rem;">0</span>
+                    </div>
+                </div>
+                <div class="stats-row" style="margin-bottom:0; gap:8px;">
+                    <div class="stat-item" style="background:linear-gradient(135deg,#00C853,#2E7D32);color:white;padding:12px 8px;border-radius:18px;text-align:center;box-shadow:var(--shadow);">
+                        <span class="label" style="font-size:0.72rem;">✅ مكتملة الشهر</span>
+                        <span class="value" id="completedMonthCount" style="font-size:1.5rem;">0</span>
+                    </div>
+                    <div class="stat-item" style="background:linear-gradient(135deg,#f39c12,#e67e22);color:white;padding:12px 8px;border-radius:18px;text-align:center;box-shadow:var(--shadow);">
+                        <span class="label" style="font-size:0.72rem;">🛵 عهدة المناديب</span>
+                        <span class="value" id="moneyWithDrivers" style="font-size:1.5rem;">0</span>
+                    </div>
+                    <div class="stat-item" style="background:linear-gradient(135deg,#ff4d4d,#c0392b);color:white;padding:12px 8px;border-radius:18px;text-align:center;box-shadow:var(--shadow);">
+                        <span class="label" style="font-size:0.72rem;">🚨 مرتجعات الشهر</span>
+                        <span class="value" id="returnedCount" style="font-size:1.5rem;">0</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- ⭐ V15.0: لوحة أداء المنصات خلال الشهر -->
-            <div class="section-card" style="margin-top: 16px; border-right: 4px solid var(--secondary);">
-                <h3 class="section-title" style="font-size:0.95rem;">📱 أداء المنصات هذا الشهر</h3>
-                <div id="platformStatsList" style="padding: 5px 0;">
-                    <p class="empty-msg">جاري التحميل...</p>
+            <!-- ⭐ V15.1: زرار إظهار/إخفاء التقارير التفصيلية -->
+            <button type="button" id="loadReportsBtn" class="interactive-btn" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--primary),var(--primary-light));color:white;border:none;border-radius:14px;font-weight:bold;font-size:1rem;font-family:'Cairo',sans-serif;box-shadow:var(--shadow-pink);cursor:pointer;margin-bottom:14px;">
+                📊 إظهار التقارير التفصيلية
+            </button>
+
+            <!-- ⭐ V15.1: التقارير التفصيلية - مخفية عند البدء -->
+            <div id="detailedReportsSection" style="display:none;">
+
+                <!-- فلتر الشهر المستقل للتقارير -->
+                <div class="section-card" style="margin-bottom:12px; padding:16px;">
+                    <h4 style="margin:0 0 12px; font-size:0.95rem; color:var(--primary); font-family:'Cairo',sans-serif;">📅 اختر الشهر للتقرير</h4>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <select id="reportMonthFilter" style="flex:1; margin-bottom:0;"><option value="">-- اختر الشهر --</option></select>
+                        <button type="button" id="loadReportDataBtn" class="btn-search interactive-btn" style="white-space:nowrap; padding:11px 18px;">عرض 🔍</button>
+                    </div>
+                    <p id="reportFilterStatus" style="margin:8px 0 0; font-size:0.8rem; color:var(--text-muted); text-align:center;"></p>
                 </div>
+
+                <!-- أفضل 10 منتجات -->
+                <div class="section-card" style="margin-bottom:12px; border-right:4px solid var(--primary);">
+                    <h3 class="section-title" style="font-size:1.05rem;">🏆 أكثر 10 منتجات مبيعاً</h3>
+                    <div id="topProductsList" style="padding:5px 0;"><p class="empty-msg">اختر الشهر ثم اضغط عرض</p></div>
+                </div>
+
+                <!-- أداء المنصات -->
+                <div class="section-card" style="margin-bottom:12px; border-right:4px solid var(--secondary);">
+                    <h3 class="section-title" style="font-size:0.95rem;">📱 أداء المنصات</h3>
+                    <div id="platformStatsList" style="padding:5px 0;"><p class="empty-msg">اختر الشهر ثم اضغط عرض</p></div>
+                </div>
+
             </div>
         </section>
 
@@ -456,9 +492,9 @@
         <div class="receipt-totals">
             <p>إجمالي المنتجات: <b><span id="print-subtotal"></span></b></p>
             <p>الخصم: <b><span id="print-discount"></span></b></p>
-            <p class="print-shipping-row">الشحن: <b><span id="print-shipping"></span></b></p>
-            <p class="print-deposit-row" style="display:none; color: var(--primary);">تم دفع عربون: <b><span id="print-deposit"></span></b></p>
-            <h3 style="border-top: 1px solid #000; padding-top: 5px; font-size: 14px;"><span id="print-final-label">الإجمالي النهائي</span>: <b style="font-size: 16px;"><span id="print-final"></span></b></h3>
+            <p class="print-shipping-row" style="background:#f5f5f5; border:2px dashed #555; border-radius:5px; padding:4px 7px; margin:5px 0;">■ الشحن: <b><span id="print-shipping"></span> ج.م</b></p>
+            <p class="print-deposit-row" style="display:none; color:#c0392b;">تم دفع عربون: <b><span id="print-deposit"></span></b></p>
+            <h3><span id="print-final-label">الإجمالي النهائي</span>: <b><span id="print-final"></span></b></h3>
         </div>
         <div class="receipt-footer">
             <p>طريقة الدفع: <span id="print-payment"></span></p>

@@ -118,6 +118,7 @@ function loadDataFromServer() {
             updateSuspendedCount(); // ⭐ V14.2: تحديث العداد من السيرفر بعد كل تحميل
             window.financialsData = data.financials || [];
             window.uncollectedOrdersData = data.uncollectedOrders || [];
+            // ⭐ V15.1: تخزين بيانات العملاء فقط بدون عرضها تلقائياً (Lazy)
             window.customersData = data.customers || [];
             window.driversList = data.couriers || [];
 
@@ -136,7 +137,7 @@ function loadDataFromServer() {
 
             if (zonesAlexList) zonesAlexList.innerHTML = '';
             if (zonesGovList) zonesGovList.innerHTML = '';
-            if (govSelect) govSelect.innerHTML = '<option value="">-- اختر من القائمة --</option>';
+            if (govSelect) govSelect.innerHTML = '<option value="">اختر من القائمة</option>';
             shippingData = {};
 
             const renderZoneItem = (z, zoneType, container) => {
@@ -155,7 +156,7 @@ function loadDataFromServer() {
             };
 
             if (data.alex && data.alex.length > 0) {
-                let optgroup = document.createElement('optgroup'); optgroup.label = "⚓ مناطق الإسكندرية";
+                let optgroup = document.createElement('optgroup'); optgroup.label = "⛓ مناطق الإسكندرية";
                 data.alex.forEach(z => {
                     // ⭐ إظهار السعر بجانب اسم المنطقة
                     optgroup.innerHTML += `<option value="${z.name}">${z.name} (${z.price} ج)</option>`;
@@ -179,9 +180,9 @@ function loadDataFromServer() {
             const closeDriverSelect = document.getElementById('closeDriverSelect');
 
             if (driversDisplayList) driversDisplayList.innerHTML = '';
-            if (driverSelect) driverSelect.innerHTML = '<option value="">-- اختر المندوب --</option>';
-            if (assignDriverSelect) assignDriverSelect.innerHTML = '<option value="">-- اختر المندوب --</option>';
-            if (closeDriverSelect) closeDriverSelect.innerHTML = '<option value="">-- اختر المندوب --</option>';
+            if (driverSelect) driverSelect.innerHTML = '<option value="">اختر المندوب</option>';
+            if (assignDriverSelect) assignDriverSelect.innerHTML = '<option value="">اختر المندوب</option>';
+            if (closeDriverSelect) closeDriverSelect.innerHTML = '<option value="">اختر المندوب</option>';
 
             if (data.couriers && data.couriers.length > 0) {
                 data.couriers.forEach(c => {
@@ -210,7 +211,7 @@ function loadDataFromServer() {
             const modSelect = document.getElementById('moderatorSelect');
             let currentMod = modSelect ? modSelect.value : "";
             const modsList = document.getElementById('moderatorsList');
-            if (modSelect) modSelect.innerHTML = '<option value="">-- اختر اسمك --</option>';
+            if (modSelect) modSelect.innerHTML = '<option value="">اختر اسمك</option>';
             if (modsList) modsList.innerHTML = '';
             if (data.moderators && data.moderators.length > 0) {
                 data.moderators.forEach(m => {
@@ -228,10 +229,20 @@ function loadDataFromServer() {
             }
             if (modSelect && currentMod) modSelect.value = currentMod;
 
+            // ⭐ V15.1: إحصائيات اليوم (today)
+            if (document.getElementById('todayCount')) document.getElementById('todayCount').innerText = data.todayOrders || 0;
+            if (document.getElementById('todaySales')) document.getElementById('todaySales').innerText = data.todaySales || 0;
+            // إحصائيات الشهر
             if (document.getElementById('monthSales')) document.getElementById('monthSales').innerText = data.monthSales || 0;
             if (document.getElementById('completedMonthCount')) document.getElementById('completedMonthCount').innerText = data.completedMonthCount || 0;
 
-            // إخفاء الأوردرات المشحونة حتى يتم اختيار المندوب
+            // ⭐ ملء فلتر الشهور في التقارير تلقائياً
+            buildMonthFilterOptions();
+
+            // ⭐ المبكر هينت: عشان اللي فاتح التقارير يتحدث داتاه تلقائياً
+            window.latestServerData = data;
+
+            // ⭐ أخفي الأوردرات المشحونة حتى يتم اختيار المندوب
             let shippedCont = document.getElementById('shippedOrdersContainer');
             if (shippedCont) shippedCont.innerHTML = '<p class="empty-msg">برجاء اختيار المندوب والضغط على "عرض العهدة"</p>';
 
@@ -554,14 +565,15 @@ window.printHistoryOrder = function (orderId) {
     let printLogo = document.getElementById('print-logo');
     if (printLogo) {
         let pay = order.payment || "";
-        // ⭐ V15.0: لوجو ديناميكي شامل - تطابق كل صيغ الدفع الإلكتروني
-        let isDigitalPay = pay.includes("إنستا") || pay.includes("انستاباي") || pay.includes("انستا باي") || pay.includes("محفظة") || pay.includes("فودافون") || pay.includes("تحويل");
-        if (oType.includes("استلام من الفرع")) {
-            printLogo.src = "./images/logo-branch.png";
+        // ⭐ V15.1: فحص دقيق لنوع الطلب - يشمل كل صيغ ممكنة
+        let isBranch = oType.includes('استلام من الفرع') || oType === 'branch' || (order.deliveryType || '').includes('فرع') || (order.deliveryType || '') === 'branch';
+        let isDigitalPay = pay.includes('إنستا') || pay.includes('انستاباي') || pay.includes('انستا باي') || pay.includes('محفظة') || pay.includes('فودافون') || pay.includes('تحويل');
+        if (isBranch) {
+            printLogo.src = './images/logo-branch.png';
         } else if (isDigitalPay) {
-            printLogo.src = "./images/logo-digital.png";
+            printLogo.src = './images/logo-digital.png';
         } else {
-            printLogo.src = "./images/logo-cash.png";
+            printLogo.src = './images/logo-cash.png';
         }
         printLogo.style.display = 'block';
     }
@@ -1582,18 +1594,15 @@ let markRetBtn = document.getElementById('markReturnedBtn');
 if (markRetBtn) markRetBtn.addEventListener('click', () => processStatusUpdate(markRetBtn, 'shipped-checkbox', 'مرتجع'));
 
 function updateAdvancedDashboard(history) {
-    // ⭐ V15.0: إحصائيات اليوم + الشهر + لوحة التحليلات المتقدمة
     let moneyWithDrivers = 0, returnedCount = 0;
     let completedToday = 0, completedMonth = 0;
 
-    // تجميع بيانات التحليل للشهر
-    let productMap = {};   // { اسم المنتج : عدد المبيع }
-    let platformMap = {};  // { اسم المنصة : عدد الطلبات }
+    let productMap = {};
+    let platformMap = {};
 
     let todayStr = new Date().toISOString().slice(0, 10);
     let monthStr = new Date().toISOString().slice(0, 7);
 
-    // نجمع كل البيانات المتاحة (تاريخ اليوم + كل تاريخ متاح)
     let allOrders = window.orderHistoryData || [];
 
     allOrders.forEach(o => {
@@ -1601,19 +1610,12 @@ function updateAdvancedDashboard(history) {
         let oMonth = oDate.slice(0, 7);
         let isCompleted = o.status && (o.status.includes("تم التوصيل"));
 
-        // متابعة المناديب
         if (o.status === 'في الشحن') moneyWithDrivers += parseFloat(o.remaining) || 0;
         if (o.status === 'مرتجع') returnedCount++;
-
-        // مكتملة اليوم
         if (isCompleted && oDate === todayStr) completedToday++;
 
-        // تحليلات الشهر فقط
         if (oMonth === monthStr) {
-            // مكتملة الشهر
             if (isCompleted) completedMonth++;
-
-            // تقسيم المنتجات
             if (o.products) {
                 o.products.split('\n').forEach(line => {
                     let match = line.match(/^(.+?)\s*-\s*الكمية:\s*(\d+)/);
@@ -1624,12 +1626,9 @@ function updateAdvancedDashboard(history) {
                     }
                 });
             }
-
-            // تقسيم المنصات
             if (o.platform || o.moderator) {
                 let plt = o.platform || o.moderator || "غير محدد";
-                // تنظيف الإيموجي
-                plt = plt.replace(/[�-��-�]/g, '').replace(/[\ufe0f]/g, '').trim();
+                plt = plt.replace(/[--]/g, '').replace(/[\ufe0f]/g, '').trim();
                 if (plt) platformMap[plt] = (platformMap[plt] || 0) + 1;
             }
         }
@@ -1647,6 +1646,7 @@ function updateAdvancedDashboard(history) {
     }
     
     if (document.getElementById('completedMonthCount')) document.getElementById('completedMonthCount').innerText = completedMonth;
+    if (document.getElementById('completedCount')) document.getElementById('completedCount').innerText = completedToday;
 
     // بالس على زر المالية
     let openFinancialsBtn = document.getElementById('openFinancialsBtn');
@@ -1654,57 +1654,134 @@ function updateAdvancedDashboard(history) {
         if (moneyWithDrivers > 0) openFinancialsBtn.classList.add('pulse-btn');
         else openFinancialsBtn.classList.remove('pulse-btn');
     }
+}
 
-    // ⭐ V15.0: أفضل 10 منتجات مبيعاً خلال الشهر
-    let topProductsEl = document.getElementById('topProductsList');
-    if (topProductsEl) {
-        let sorted = Object.entries(productMap).sort((a, b) => b[1] - a[1]).slice(0, 10);
-        if (sorted.length === 0) {
-            topProductsEl.innerHTML = '<p class="empty-msg">لا توجد بيانات كافية لهذا الشهر.</p>';
-        } else {
-            let maxVal = sorted[0][1];
-            topProductsEl.innerHTML = sorted.map(([name, qty], idx) => {
-                let pct = Math.round((qty / maxVal) * 100);
-                let medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx+1}.`;
-                return `
-                    <div style="margin-bottom:10px;">
-                        <div style="display:flex; justify-content:space-between; font-size:0.88rem; font-weight:bold; margin-bottom:3px;">
-                            <span>${medal} ${name}</span>
-                            <span style="color:var(--primary);">${qty} قطعة</span>
-                        </div>
-                        <div style="background:var(--bg); border-radius:6px; height:8px; overflow:hidden;">
-                            <div style="height:100%; width:${pct}%; background:linear-gradient(90deg,var(--primary),var(--primary-light)); border-radius:6px; transition:width 0.6s ease;"></div>
-                        </div>
-                    </div>`;
-            }).join('');
-        }
+// ⭐ V15.1: بناء قائمة الشهور لفلتر التقارير
+function buildMonthFilterOptions() {
+    let sel = document.getElementById('reportMonthFilter');
+    if (!sel) return;
+    let currentVal = sel.value;
+    sel.innerHTML = '<option value="">اختر الشهر</option>';
+    let arabicMonths = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+    let now = new Date();
+    for (let i = 0; i < 12; i++) {
+        let d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        let val = d.toISOString().slice(0, 7);
+        let label = arabicMonths[d.getMonth()] + ' ' + d.getFullYear();
+        let opt = document.createElement('option');
+        opt.value = val;
+        opt.textContent = i === 0 ? label + ' (الحالي)' : label;
+        sel.appendChild(opt);
     }
+    if (currentVal) sel.value = currentVal;
+}
 
-    // ⭐ V15.0: أداء المنصات خلال الشهر
-    let platformEl = document.getElementById('platformStatsList');
-    if (platformEl) {
-        let pltSorted = Object.entries(platformMap).sort((a, b) => b[1] - a[1]);
-        let totalPlt = pltSorted.reduce((s, [, v]) => s + v, 0);
-        if (pltSorted.length === 0) {
-            platformEl.innerHTML = '<p class="empty-msg">لا توجد بيانات كافية لهذا الشهر.</p>';
-        } else {
-            const pColors = ['#E91E8C','#00B4D8','#FF8C00','#6C3483','#00C853','#c0392b'];
-            platformEl.innerHTML = pltSorted.map(([name, cnt], idx) => {
-                let pct = totalPlt > 0 ? Math.round((cnt / totalPlt) * 100) : 0;
-                let color = pColors[idx % pColors.length];
-                return `
-                    <div style="margin-bottom:10px;">
-                        <div style="display:flex; justify-content:space-between; font-size:0.88rem; font-weight:bold; margin-bottom:3px;">
-                            <span>${name}</span>
-                            <span style="color:${color};">${cnt} طلب (${pct}%)</span>
-                        </div>
-                        <div style="background:var(--bg); border-radius:6px; height:8px; overflow:hidden;">
-                            <div style="height:100%; width:${pct}%; background:${color}; border-radius:6px; transition:width 0.6s ease;"></div>
-                        </div>
-                    </div>`;
-            }).join('');
-        }
+// ⭐ V15.1: عرض تقرير شهر محدد - يجلب من السيرفر
+function renderReportForMonth(targetMonth) {
+    let statusEl = document.getElementById('reportFilterStatus');
+    let topEl    = document.getElementById('topProductsList');
+    let pltEl    = document.getElementById('platformStatsList');
+    if (!targetMonth) {
+        if (statusEl) statusEl.textContent = '⚠️ اختر شهراً أولاً';
+        return;
     }
+    if (statusEl) statusEl.textContent = '⏳ جاري تحميل بيانات الشهر...';
+    if (topEl) topEl.innerHTML = '<p class="empty-msg">⏳ جاري التحميل...</p>';
+    if (pltEl) pltEl.innerHTML = '<p class="empty-msg">⏳ جاري التحميل...</p>';
+
+    let fetchDate = targetMonth + '-01';
+    fetch(`${GOOGLE_SHEETS_URL}?date=${fetchDate}`)
+        .then(r => r.json())
+        .then(data => {
+            let arabicMonths = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+            let [yr, mo] = targetMonth.split('-');
+            if (statusEl) statusEl.textContent = `✅ تم تحميل بيانات ${arabicMonths[parseInt(mo)-1]} ${yr}`;
+
+            // أفضل 10 منتجات
+            if (topEl) {
+                let products = data.monthTopProducts || [];
+                if (products.length === 0) {
+                    topEl.innerHTML = '<p class="empty-msg">لا توجد بيانات مبيعات في هذا الشهر.</p>';
+                } else {
+                    let maxVal = Math.max(...products.map(p => p.qty || 0)) || 1;
+                    topEl.innerHTML = products.map((p, idx) => {
+                        let pct = Math.round(((p.qty||0) / maxVal) * 100);
+                        let medal = idx===0?'🥇':idx===1?'🥈':idx===2?'🥉':`${idx+1}.`;
+                        return `<div style="margin-bottom:12px;">
+                            <div style="display:flex;justify-content:space-between;font-size:0.88rem;font-weight:bold;margin-bottom:4px;">
+                                <span>${medal} ${p.name}</span>
+                                <span style="color:var(--primary);background:var(--primary-glow);padding:2px 8px;border-radius:8px;">${p.qty} قطعة</span>
+                            </div>
+                            <div style="background:var(--bg);border-radius:8px;height:10px;overflow:hidden;">
+                                <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--primary),var(--primary-light));border-radius:8px;transition:width 0.8s ease;"></div>
+                            </div></div>`;
+                    }).join('');
+                }
+            }
+
+            // أداء المنصات - بالترتيب المحدد
+            if (pltEl) {
+                let raw = data.monthPlatforms || {};
+                const ORDER = [
+                    { key: 'واتساب',   emoji: '💬', color: '#25D366' },
+                    { key: 'انستجرام', emoji: '📸', color: '#E1306C' },
+                    { key: 'فيسبوك',   emoji: '🔵', color: '#1877F2' },
+                    { key: 'تيك توك',  emoji: '🎵', color: '#010101' },
+                ];
+                // ⭐ حساب الإجمالي باستخدام includes لتغطية الإيموجي في الشيت
+                const getCount = (raw, keyword) => {
+                    return Object.entries(raw).reduce((sum, [k, v]) => k.includes(keyword) ? sum + v : sum, 0);
+                };
+                let total = ORDER.reduce((s, p) => s + getCount(raw, p.key), 0);
+                if (total === 0) {
+                    pltEl.innerHTML = '<p class="empty-msg">لا توجد بيانات منصات في هذا الشهر.</p>';
+                } else {
+                    pltEl.innerHTML = ORDER.map(plt => {
+                        let cnt = getCount(raw, plt.key);
+                        let pct = total > 0 ? Math.round((cnt / total) * 100) : 0;
+                        return `<div style="margin-bottom:14px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+                                <span style="font-weight:bold;font-size:0.95rem;">${plt.emoji} ${plt.key}</span>
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <span style="font-size:0.95rem;font-weight:900;color:${plt.color};">${cnt} طلب</span>
+                                    <span style="font-size:0.75rem;background:#f0f0f0;color:#555;padding:2px 7px;border-radius:10px;">${pct}%</span>
+                                </div>
+                            </div>
+                            <div style="background:var(--bg);border-radius:10px;height:12px;overflow:hidden;">
+                                <div style="height:100%;width:${pct}%;background:${plt.color};border-radius:10px;transition:width 0.9s ease;"></div>
+                            </div></div>`;
+                    }).join('');
+                }
+            }
+        })
+        .catch(() => {
+            if (statusEl) statusEl.textContent = '❌ حدث خطأ في الاتصال';
+            if (topEl) topEl.innerHTML = '<p class="empty-msg">❌ تعذر التحميل</p>';
+            if (pltEl) pltEl.innerHTML = '<p class="empty-msg">❌ تعذر التحميل</p>';
+        });
+}
+
+// ⭐ V15.1: ربط زرار التقارير
+let loadReportsBtn = document.getElementById('loadReportsBtn');
+if (loadReportsBtn) {
+    let reportsVisible = false;
+    loadReportsBtn.addEventListener('click', () => {
+        let sec = document.getElementById('detailedReportsSection');
+        if (!sec) return;
+        reportsVisible = !reportsVisible;
+        sec.style.display = reportsVisible ? 'block' : 'none';
+        loadReportsBtn.textContent = reportsVisible ? '📊 إخفاء التقارير التفصيلية' : '📊 إظهار التقارير التفصيلية';
+        if (reportsVisible) buildMonthFilterOptions();
+    });
+}
+
+let loadReportDataBtn = document.getElementById('loadReportDataBtn');
+if (loadReportDataBtn) {
+    loadReportDataBtn.addEventListener('click', () => {
+        let sel = document.getElementById('reportMonthFilter');
+        if (!sel || !sel.value) { showToast('اختر شهراً أولاً', 'warning'); return; }
+        renderReportForMonth(sel.value);
+    });
 }
 
 window.shareToWhatsAppGroup = function(orderId) {
@@ -2067,18 +2144,35 @@ function renderCustomers(customersList) {
 
 let loadCustomersBtn = document.getElementById('loadCustomersBtn');
 let customersListContainer = document.getElementById('customersListContainer');
+let _customersLoaded = false; // ⭐ V15.1: Lazy flag - لا نحمل إلا عند الطلب
+
 if (loadCustomersBtn && customersListContainer) {
     loadCustomersBtn.addEventListener('click', () => {
         if (customersListContainer.style.display === 'none') {
             customersListContainer.style.display = 'block';
-            loadCustomersBtn.innerHTML = 'إخفاء بيانات العملاء 📂';
+            loadCustomersBtn.innerHTML = '\u0625\u062e\u0641\u0627\u0621 \u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u0639\u0645\u0644\u0627\u0621 \ud83d\udcc2';
             loadCustomersBtn.style.background = 'var(--danger)';
-            if (customersListContainer.innerHTML.includes('جاري تحميل') || customersListContainer.innerHTML.includes('لا يوجد')) {
-                renderCustomers(window.customersData || []);
+
+            if (!_customersLoaded) {
+                // \u2b50 \u0623\u0648\u0644 \u0636\u063a\u0637\u0629: \u0646\u062c\u0644\u0628 \u0645\u0646 \u0627\u0644\u0633\u064a\u0631\u0641\u0631 \u0645\u062e\u0635\u0648\u0635\u0627\u064b
+                customersListContainer.innerHTML = '<p class="empty-msg">\u23f3 \u062c\u0627\u0631\u064a \u062a\u062d\u0645\u064a\u0644 \u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u0639\u0645\u0644\u0627\u0621...</p>';
+                fetch(`${GOOGLE_SHEETS_URL}?action=getCustomers`)
+                    .then(r => r.json())
+                    .then(data => {
+                        let customers = data.customers || window.customersData || [];
+                        window.customersData = customers;
+                        _customersLoaded = true;
+                        renderCustomers(customers);
+                    })
+                    .catch(() => {
+                        // \u0641\u0627\u0644\u0628\u0627\u0643: \u0625\u0630\u0627 \u0641\u0634\u0644 \u0627\u0644\u0637\u0644\u0628 \u0627\u0633\u062a\u062e\u062f\u0645 \u0627\u0644\u0643\u0627\u0634 \u0627\u0644\u0645\u062d\u0644\u064a
+                        renderCustomers(window.customersData || []);
+                        _customersLoaded = true;
+                    });
             }
         } else {
             customersListContainer.style.display = 'none';
-            loadCustomersBtn.innerHTML = 'إظهار بيانات العملاء 📂';
+            loadCustomersBtn.innerHTML = '\u0625\u0638\u0647\u0627\u0631 \u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u0639\u0645\u0644\u0627\u0621 \ud83d\udcc2';
             loadCustomersBtn.style.background = 'var(--secondary)';
         }
     });

@@ -1,5 +1,6 @@
 // ==========================================
 // 🚀 نظام كاندي كلوب المطور V15.1 - (النسخة الكاملة النهائية)
+// ⭐ تاريخ التحديث: 2026-06-01
 // ==========================================
 
 function onOpen() {
@@ -161,14 +162,95 @@ function setupCandyClubUX() {
 
   calculateFinancials();
 
-  SpreadsheetApp.getUi().alert("✅ تم بناء وتحديث النظام الشامل V14.2 بنجاح!");
+  SpreadsheetApp.getUi().alert("✅ تم بناء وتحديث النظام الشامل V15.1 بنجاح!");
+}
+
+// ============================================================
+// ⭐ V15.1: دالة مساعدة للتعرف على المنصة من النص
+// ============================================================
+function detectPlatformName(rawPlatform) {
+  var plt = (rawPlatform || "").toString().toLowerCase();
+  if (plt.includes('واتس') || plt.includes('whats')) return 'واتساب';
+  if (plt.includes('انستا') || plt.includes('insta') || plt.includes('انستجرام') || plt.includes('إنستجرام')) return 'انستجرام';
+  if (plt.includes('فيس') || plt.includes('face') || plt.includes('facebook')) return 'فيسبوك';
+  if (plt.includes('تيك') || plt.includes('tiktok')) return 'تيك توك';
+  return 'أخرى';
+}
+
+// ============================================================
+// ⭐ V15.1: دالة مستقلة لحساب تقرير شهر محدد
+// targetMonth = "2026-06" مثلاً
+// ============================================================
+function buildMonthlyReport(ordersData, targetMonth) {
+  var monthTopProductsMap = {};
+  var monthPlatformsMap   = { 'واتساب': 0, 'انستجرام': 0, 'فيسبوك': 0, 'تيك توك': 0, 'أخرى': 0 };
+  var monthSales          = 0;
+  var completedMonthCount = 0;
+  var monthOrderCount     = 0;
+  var returnedCount       = 0;
+
+  for (var j = 1; j < ordersData.length; j++) {
+    var rowDate = ordersData[j][1] instanceof Date
+      ? Utilities.formatDate(ordersData[j][1], "GMT+2", "yyyy-MM-dd")
+      : (ordersData[j][1] ? ordersData[j][1].toString().replace(/'/g, "").trim() : "");
+
+    // فقط سجلات الشهر المطلوب
+    if (!rowDate.startsWith(targetMonth)) continue;
+
+    var status     = ordersData[j][18];
+    var finalTotal = parseFloat(ordersData[j][17]) || 0;
+
+    if (status === "مرتجع") {
+      returnedCount++;
+      continue; // المرتجعات لا تدخل في المبيعات
+    }
+
+    monthOrderCount++;
+    monthSales += finalTotal;
+
+    if (status === "تم التوصيل" || status === "تم التوصيل ومُحاسب") {
+      completedMonthCount++;
+    }
+
+    // ⭐ تجميع المنتجات
+    if (ordersData[j][13]) {
+      var parts = ordersData[j][13].toString().split('\n');
+      parts.forEach(function(p) {
+        var m = p.match(/^(.+?)\s*-\s*الكمية:\s*(\d+)/);
+        if (m) {
+          var pName = m[1].trim();
+          var pQty  = parseInt(m[2]) || 1;
+          monthTopProductsMap[pName] = (monthTopProductsMap[pName] || 0) + pQty;
+        }
+      });
+    }
+
+    // ⭐ تجميع المنصات - عمود المنصة [3] أو المودريتور [20] fallback
+    var rawPlt   = ordersData[j][3] || ordersData[j][20] || "";
+    var pltName  = detectPlatformName(rawPlt);
+    monthPlatformsMap[pltName]++;
+  }
+
+  // ترتيب المنتجات تنازلياً وأخذ أفضل 10
+  var sortedProducts = Object.keys(monthTopProductsMap).map(function(k) {
+    return { name: k, qty: monthTopProductsMap[k] };
+  }).sort(function(a, b) { return b.qty - a.qty; }).slice(0, 10);
+
+  return {
+    monthTopProducts: sortedProducts,
+    monthPlatforms:   monthPlatformsMap,
+    monthSales:       monthSales,
+    monthOrderCount:  monthOrderCount,
+    completedMonthCount: completedMonthCount,
+    returnedCount:    returnedCount
+  };
 }
 
 function doGet(e) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var action = e.parameter.action;
 
-  // ⭐ تم حل مشكلة التاريخ المشوه هنا
+  // ⭐ البحث الشامل
   if (action === "globalSearch") {
       var keyword = (e.parameter.query || "").toLowerCase().trim();
       var ordersSheet = ss.getSheetByName("📝 الطلبات");
@@ -176,32 +258,24 @@ function doGet(e) {
       if (ordersSheet && keyword.length > 0) {
           var data = ordersSheet.getDataRange().getValues();
           for (var i = 1; i < data.length; i++) {
-              var id = data[i][0].toString().toLowerCase();
-              var name = data[i][4].toString().toLowerCase();
+              var id    = data[i][0].toString().toLowerCase();
+              var name  = data[i][4].toString().toLowerCase();
               var phone = data[i][7].toString().replace(/'/g, "");
               
               if (id.includes(keyword) || name.includes(keyword) || phone.includes(keyword)) {
                   var rawDate = data[i][1];
-                  var formattedDate = rawDate instanceof Date ? Utilities.formatDate(rawDate, "GMT+2", "yyyy-MM-dd") : (rawDate ? rawDate.toString().replace(/'/g, "").trim() : "");
-
+                  var formattedDate = rawDate instanceof Date
+                    ? Utilities.formatDate(rawDate, "GMT+2", "yyyy-MM-dd")
+                    : (rawDate ? rawDate.toString().replace(/'/g, "").trim() : "");
                   searchResults.push({
-                      id: data[i][0], 
-                      date: formattedDate, 
-                      time: data[i][2], 
-                      name: data[i][4], 
-                      phone: phone,
-                      address: data[i][6], 
-                      products: data[i][13], 
-                      subtotal: data[i][14], 
-                      discount: data[i][15],
-                      shipping: data[i][16], 
-                      total: parseFloat(data[i][17]) || 0, 
-                      status: data[i][18], 
-                      payment: data[i][10], 
-                      seller: data[i][20],
-                      orderType: data[i][9],
-                      deposit: data[i][21] || 0,
-                      remaining: data[i][22] || (parseFloat(data[i][17]) || 0)
+                      id: data[i][0], date: formattedDate, time: data[i][2],
+                      name: data[i][4], phone: phone, address: data[i][6],
+                      products: data[i][13], subtotal: data[i][14], discount: data[i][15],
+                      shipping: data[i][16], total: parseFloat(data[i][17]) || 0,
+                      status: data[i][18], payment: data[i][10], seller: data[i][20],
+                      orderType: data[i][9], deposit: data[i][21] || 0,
+                      remaining: data[i][22] || (parseFloat(data[i][17]) || 0),
+                      gov: data[i][5], platform: data[i][3]
                   });
               }
           }
@@ -209,26 +283,56 @@ function doGet(e) {
       return ContentService.createTextOutput(JSON.stringify(searchResults.reverse())).setMimeType(ContentService.MimeType.JSON);
   }
 
-  var ordersSheet = ss.getSheetByName("📝 الطلبات");
+  // ⭐ V15.1: جلب بيانات العملاء منفصلاً (Lazy Load)
+  if (action === "getCustomers") {
+    var customerSheet = ss.getSheetByName("👥 قاعدة العملاء");
+    var custResult = [];
+    if (customerSheet) {
+      var custData = customerSheet.getDataRange().getValues();
+      for (var i = 1; i < custData.length; i++) {
+        if (custData[i][0]) {
+          custResult.push({
+            name: custData[i][0], phone: custData[i][1], gov: custData[i][2],
+            address: custData[i][3], count: custData[i][4], total: custData[i][5], lastDate: custData[i][6]
+          });
+        }
+      }
+    }
+    return ContentService.createTextOutput(JSON.stringify({ customers: custResult })).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  // ============================================================
+  // الـ request الرئيسي
+  // ============================================================
+  var ordersSheet  = ss.getSheetByName("📝 الطلبات");
   var settingsSheet = ss.getSheetByName("⚙️ الإعدادات والشحن");
   var catalogSheet = ss.getSheetByName("📦 الكتالوج");
-  var oosSheet = ss.getSheetByName("⏳ النواقص");
-  var finSheet = ss.getSheetByName("📊 الحسابات والمالية");
+  var oosSheet     = ss.getSheetByName("⏳ النواقص");
+  var finSheet     = ss.getSheetByName("📊 الحسابات والمالية");
   var customerSheet = ss.getSheetByName("👥 قاعدة العملاء");
-  // ⭐ V14.2: شيت المعلقات
-  var draftsSheet = ss.getSheetByName("📂 المعلقات");
-  
+  var draftsSheet  = ss.getSheetByName("📂 المعلقات");
+
+  // ⭐ V15.1: نحدد الشهر المطلوب للتقرير
+  // - إذا كان date = "2026-06-01" فمعناه فلتر السجل على يوم 1 يونيو
+  // - currentMonth يُستخدم لحساب إحصائيات الشهر
+  var filterDate   = e.parameter.date || Utilities.formatDate(new Date(), "GMT+2", "yyyy-MM-dd");
+  var currentMonth = filterDate.substring(0, 7); // "2026-06"
+
+  // ⭐ هل هذا request لتقرير شهر معين (أول يوم في الشهر)؟
+  // إذا كان filterDate ينتهي بـ "-01" فغالباً طلب تقرير شهري مستقل
+  var isMonthlyReportRequest = filterDate.endsWith("-01");
+
   var response = { 
-    alex: [], govs: [], couriers: [], products: [], moderators: [], catalog: [], outOfStock: [], customers: [],
-    todayOrders: 0, todaySales: 0, monthSales: 0, completedMonthCount: 0, history: [], pendingOrders: [], financials: [],
+    alex: [], govs: [], couriers: [], products: [], moderators: [],
+    catalog: [], outOfStock: [], customers: [],
+    todayOrders: 0, todaySales: 0, monthSales: 0,
+    completedMonthCount: 0, completedTodayCount: 0,
+    history: [], pendingOrders: [], financials: [],
     monthTopProducts: [], monthPlatforms: {}, uncollectedOrders: [],
-    suspendedOrders: [] // ⭐ V14.2: الطلبات المعلقة من جوجل شيتس
+    suspendedOrders: []
   };
 
-  var filterDate = e.parameter.date || Utilities.formatDate(new Date(), "GMT+2", "yyyy-MM-dd");
-  var currentMonth = filterDate.substring(0, 7);
-
-  // ⭐ V14.2: قراءة الطلبات المعلقة من الشيت وإرسالها للفرونت إند
+  // ⭐ قراءة الطلبات المعلقة
   if (draftsSheet && draftsSheet.getLastRow() > 1) {
     var draftsData = draftsSheet.getDataRange().getValues();
     for (var i = 1; i < draftsData.length; i++) {
@@ -236,13 +340,12 @@ function doGet(e) {
         try {
           var parsedDraft = JSON.parse(draftsData[i][2]);
           response.suspendedOrders.push(parsedDraft);
-        } catch(err) {
-          // تجاهل أي صف فاسد
-        }
+        } catch(err) {}
       }
     }
   }
 
+  // ⭐ الحسابات المالية
   if (finSheet) {
     var finData = finSheet.getDataRange().getValues();
     for (var i = 1; i < finData.length; i++) {
@@ -255,17 +358,21 @@ function doGet(e) {
     }
   }
 
-  if (customerSheet) {
+  // ⭐ العملاء - يُرسلون فقط إذا لم يكن طلب Lazy منفصل
+  // (الـ Lazy fetch يمر من action=getCustomers)
+  if (customerSheet && !isMonthlyReportRequest) {
     var custData = customerSheet.getDataRange().getValues();
     for (var i = 1; i < custData.length; i++) {
       if (custData[i][0]) {
         response.customers.push({
-          name: custData[i][0], phone: custData[i][1], gov: custData[i][2], address: custData[i][3], count: custData[i][4], total: custData[i][5], lastDate: custData[i][6]
+          name: custData[i][0], phone: custData[i][1], gov: custData[i][2],
+          address: custData[i][3], count: custData[i][4], total: custData[i][5], lastDate: custData[i][6]
         });
       }
     }
   }
 
+  // ⭐ الكتالوج
   if (catalogSheet) {
     var cData = catalogSheet.getDataRange().getValues();
     for (var i = 1; i < cData.length; i++) {
@@ -275,6 +382,7 @@ function doGet(e) {
     }
   }
 
+  // ⭐ النواقص
   if (oosSheet) {
     var oosData = oosSheet.getDataRange().getValues();
     for (var i = 1; i < oosData.length; i++) {
@@ -284,107 +392,133 @@ function doGet(e) {
     }
   }
 
+  // ⭐ الإعدادات والشحن والمناديب والمودريتور
   if (settingsSheet) {
     var sData = settingsSheet.getDataRange().getValues();
     for (var i = 1; i < sData.length; i++) {
-      if (sData[i][0]) response.alex.push({ name: sData[i][0], price: sData[i][1], type: sData[i][2], duration: sData[i][3] });
-      if (sData[i][6]) response.govs.push({ name: sData[i][6], price: sData[i][7], type: sData[i][8], duration: sData[i][9] });
+      if (sData[i][0])  response.alex.push({ name: sData[i][0], price: sData[i][1], type: sData[i][2], duration: sData[i][3] });
+      if (sData[i][6])  response.govs.push({ name: sData[i][6], price: sData[i][7], type: sData[i][8], duration: sData[i][9] });
       if (sData[i][12]) response.couriers.push({ name: sData[i][12], phone: sData[i][13].toString() });
       if (sData[i][15]) response.moderators.push(sData[i][15].toString());
     }
   }
 
+  // ============================================================
+  // ⭐ V15.1: المنطق الرئيسي لقراءة الطلبات
+  // ============================================================
   if (ordersSheet) {
     var data = ordersSheet.getDataRange().getValues();
     var uniqueProducts = {};
-    var monthProductsMap = {};
-    var monthPlatformsMap = { 'واتساب': 0, 'فيسبوك': 0, 'انستجرام': 0, 'تيك توك': 0, 'أخرى': 0 };
 
+    // ⭐ اليوم الفعلي (للإحصائيات الحقيقية لليوم)
+    var todayReal = Utilities.formatDate(new Date(), "GMT+2", "yyyy-MM-dd");
+    var todayMonth = todayReal.substring(0, 7);
+
+    // ⭐ V15.1: بناء التقرير الشهري باستخدام الدالة المستقلة
+    // - إذا كان طلب تقرير شهري (filterDate = YYYY-MM-01): يحسب للشهر المطلوب
+    // - خلاف ذلك: يحسب للشهر الحالي الفعلي
+    var reportMonth = currentMonth; // سواء كان الشهر الحالي أو شهر مختار
+    var monthlyReport = buildMonthlyReport(data, reportMonth);
+    
+    response.monthTopProducts    = monthlyReport.monthTopProducts;
+    response.monthPlatforms      = monthlyReport.monthPlatforms;
+    response.monthSales          = monthlyReport.monthSales;
+    response.completedMonthCount = monthlyReport.completedMonthCount;
+
+    // ⭐ إحصائيات اليوم الحقيقي (دايماً اليوم الفعلي، مش filterDate)
+    var todayReport = buildDailyStats(data, todayReal);
+    response.todayOrders          = todayReport.todayOrders;
+    response.todaySales           = todayReport.todaySales;
+    response.completedTodayCount  = todayReport.completedToday;
+
+    // ⭐ قراءة السجل (history) للـ filterDate المطلوبة
     for (var j = 1; j < data.length; j++) {
-      var rowDate = data[j][1] instanceof Date ? Utilities.formatDate(data[j][1], "GMT+2", "yyyy-MM-dd") : (data[j][1] ? data[j][1].toString().replace(/'/g, "").trim() : "");
-      var status = data[j][18];
-      var finalTotal = parseFloat(data[j][17]) || 0;
+      var rowDate = data[j][1] instanceof Date
+        ? Utilities.formatDate(data[j][1], "GMT+2", "yyyy-MM-dd")
+        : (data[j][1] ? data[j][1].toString().replace(/'/g, "").trim() : "");
+
+      var status      = data[j][18];
+      var finalTotal  = parseFloat(data[j][17]) || 0;
       var remainingCash = parseFloat(data[j][22]);
-      if (isNaN(remainingCash)) remainingCash = finalTotal; 
+      if (isNaN(remainingCash)) remainingCash = finalTotal;
       var driver = data[j][11];
 
       // أوردرات غير مصفاة للمناديب
       if (status === "تم التوصيل" && driver) {
-          response.uncollectedOrders.push({
-              id: data[j][0], driver: driver, total: finalTotal, remaining: remainingCash, payment: data[j][10], shipping: data[j][16]
-          });
+        response.uncollectedOrders.push({
+          id: data[j][0], driver: driver, total: finalTotal, remaining: remainingCash,
+          payment: data[j][10], shipping: data[j][16]
+        });
       }
 
-      if (rowDate === filterDate && status !== "مرتجع" && status !== "تم التوصيل ومُحاسب") { 
-        response.todayOrders++; 
-        response.todaySales += finalTotal; 
-      }
-      
-      if (rowDate.startsWith(currentMonth)) {
-        if (status !== "مرتجع" && status !== "تم التوصيل ومُحاسب") { 
-            response.monthSales += finalTotal; 
-        }
-        if (status === "تم التوصيل" || status === "تم التوصيل ومُحاسب") {
-            response.completedMonthCount++;
-        }
-        
-        // Products logic for month
-        if (data[j][13]) {
-          var monthParts = data[j][13].split('\n');
-          monthParts.forEach(function(p) {
-            var m = p.match(/^(.+?)\s*-\s*الكمية:\s*(\d+)/);
-            if (m) {
-              var pName = m[1].trim();
-              var pQty = parseInt(m[2]) || 1;
-              monthProductsMap[pName] = (monthProductsMap[pName] || 0) + pQty;
-            }
-          });
-        }
-        
-        // Platform logic for month
-        var plt = (data[j][3] || data[j][20] || "أخرى").toString().toLowerCase();
-        if (plt.includes('واتس')) monthPlatformsMap['واتساب']++;
-        else if (plt.includes('فيس') || plt.includes('facebook')) monthPlatformsMap['فيسبوك']++;
-        else if (plt.includes('انستا') || plt.includes('insta')) monthPlatformsMap['انستجرام']++;
-        else if (plt.includes('تيك') || plt.includes('tiktok')) monthPlatformsMap['تيك توك']++;
-        else monthPlatformsMap['أخرى']++;
-      }
-
+      // ⭐ السجل: يعرض الطلبات حسب filterDate (اليوم المختار في السجل)
       if (rowDate === filterDate) {
         response.history.push({
-          id: data[j][0], date: rowDate, time: data[j][2], name: data[j][4], phone: data[j][7],
-          address: data[j][6], products: data[j][13], subtotal: data[j][14], discount: data[j][15],
-          shipping: data[j][16], total: finalTotal, status: status, payment: data[j][10], seller: data[j][20], orderType: data[j][9],
-          deposit: data[j][21] || 0, remaining: remainingCash
+          id: data[j][0], date: rowDate, time: data[j][2], name: data[j][4],
+          phone: data[j][7].toString().replace(/'/g, ""), address: data[j][6],
+          products: data[j][13], subtotal: data[j][14], discount: data[j][15],
+          shipping: data[j][16], total: finalTotal, status: status,
+          payment: data[j][10], seller: data[j][20], orderType: data[j][9],
+          deposit: data[j][21] || 0, remaining: remainingCash,
+          gov: data[j][5], platform: data[j][3]
         });
       }
 
+      // ⭐ الأوردرات المعلقة (قيد التجهيز) - كلها بدون فلتر تاريخ
       if (status === "قيد التجهيز") {
         response.pendingOrders.push({
-          id: data[j][0], name: data[j][4], phone: data[j][7], total: finalTotal, remaining: remainingCash, payment: data[j][10], date: rowDate
+          id: data[j][0], name: data[j][4],
+          phone: data[j][7].toString().replace(/'/g, ""),
+          total: finalTotal, remaining: remainingCash,
+          payment: data[j][10], date: rowDate,
+          orderType: data[j][9]
         });
       }
 
+      // تجميع المنتجات الفريدة للـ autocomplete
       if (data[j][13]) {
-        var pParts = data[j][13].split('\n');
+        var pParts = data[j][13].toString().split('\n');
         pParts.forEach(function(p) { 
-          var m = p.match(/(.+)\s*-/); 
+          var m = p.match(/^(.+?)\s*-/); 
           if (m) { uniqueProducts[m[1].trim()] = (uniqueProducts[m[1].trim()] || 0) + 1; }
         });
       }
     }
-    
-    // Sort and get top 10 month products
-    var sortedMonthProducts = Object.keys(monthProductsMap).map(function(k) {
-      return { name: k, qty: monthProductsMap[k] };
-    }).sort(function(a, b) { return b.qty - a.qty; }).slice(0, 10);
-    
-    response.monthTopProducts = sortedMonthProducts;
-    response.monthPlatforms = monthPlatformsMap;
-    response.products = Object.keys(uniqueProducts).map(function(n) { return {name: n}; });
+
+    response.products = Object.keys(uniqueProducts).map(function(n) { return { name: n }; });
   }
 
   return ContentService.createTextOutput(JSON.stringify(response)).setMimeType(ContentService.MimeType.JSON);
+}
+
+// ============================================================
+// ⭐ V15.1: دالة مستقلة لإحصائيات يوم محدد
+// ============================================================
+function buildDailyStats(ordersData, targetDate) {
+  var todayOrders  = 0;
+  var todaySales   = 0;
+  var completedToday = 0;
+
+  for (var j = 1; j < ordersData.length; j++) {
+    var rowDate = ordersData[j][1] instanceof Date
+      ? Utilities.formatDate(ordersData[j][1], "GMT+2", "yyyy-MM-dd")
+      : (ordersData[j][1] ? ordersData[j][1].toString().replace(/'/g, "").trim() : "");
+
+    if (rowDate !== targetDate) continue;
+
+    var status     = ordersData[j][18];
+    var finalTotal = parseFloat(ordersData[j][17]) || 0;
+
+    if (status !== "مرتجع" && status !== "تم التوصيل ومُحاسب") {
+      todayOrders++;
+      todaySales += finalTotal;
+    }
+    if (status === "تم التوصيل" || status === "تم التوصيل ومُحاسب") {
+      completedToday++;
+    }
+  }
+
+  return { todayOrders: todayOrders, todaySales: todaySales, completedToday: completedToday };
 }
 
 function doPost(e) {
@@ -396,12 +530,12 @@ function doPost(e) {
     var sSheet = ss.getSheetByName("⚙️ الإعدادات والشحن");
 
     if (action === "addOrder") {
-      var sheet = ss.getSheetByName("📝 الطلبات");
+      var sheet     = ss.getSheetByName("📝 الطلبات");
       var custSheet = ss.getSheetByName("👥 قاعدة العملاء");
       
       // ⭐ V14.2: Timestamp-based ID لمنع التكرار نهائياً
       var tsStr = new Date().getTime().toString();
-      var id = "CANDY-" + tsStr.slice(-6);
+      var id    = "CANDY-" + tsStr.slice(-6);
       
       var d = e.parameter.browserDate || Utilities.formatDate(new Date(), "GMT+2", "yyyy-MM-dd");
       var t = Utilities.formatDate(new Date(), "GMT+2", "hh:mm a");
@@ -421,24 +555,24 @@ function doPost(e) {
 
     else if (action === "updateOrderStatus") {
       var sheet = ss.getSheetByName("📝 الطلبات");
-      var data = sheet.getDataRange().getValues();
+      var data  = sheet.getDataRange().getValues();
       for (var i = 1; i < data.length; i++) {
         if (data[i][0] === e.parameter.orderId) {
           var oldStatus = data[i][18];
           sheet.getRange(i+1, 19).setValue(e.parameter.status);
-          if(e.parameter.driverName) sheet.getRange(i+1, 12).setValue(e.parameter.driverName);
+          if (e.parameter.driverName) sheet.getRange(i+1, 12).setValue(e.parameter.driverName);
           
           // ⭐ التلوين وحساب المرتجع
           var rowRange = sheet.getRange(i+1, 1, 1, sheet.getLastColumn());
           if (e.parameter.status === "مرتجع") {
-              rowRange.setBackground("#FEE2E2"); // أحمر فاتح
+              rowRange.setBackground("#FEE2E2");
               if (oldStatus !== "مرتجع") {
                  var phoneToSub = data[i][7].toString().replace(/'/g, "").trim();
-                 var amtToSub = parseFloat(data[i][17]) || 0;
+                 var amtToSub  = parseFloat(data[i][17]) || 0;
                  subtractFromCustomerDB(ss.getSheetByName("👥 قاعدة العملاء"), phoneToSub, amtToSub);
               }
           } else if (e.parameter.status === "تم التوصيل") {
-              rowRange.setBackground("#D4EDDA"); // أخضر باهت (قيد التحصيل)
+              rowRange.setBackground("#D4EDDA");
           } else if (e.parameter.status === "في الشحن" || e.parameter.status === "قيد التجهيز") {
               rowRange.setBackground("#FFFFFF"); 
           }
@@ -451,11 +585,11 @@ function doPost(e) {
 
     else if (action === "settleOrder") {
         var sheet = ss.getSheetByName("📝 الطلبات");
-        var data = sheet.getDataRange().getValues();
+        var data  = sheet.getDataRange().getValues();
         for (var i = 1; i < data.length; i++) {
             if (data[i][0] === e.parameter.orderId) {
                 sheet.getRange(i+1, 19).setValue("تم التوصيل ومُحاسب");
-                sheet.getRange(i+1, 1, 1, sheet.getLastColumn()).setBackground("#E8F5E9"); // أخضر فاتح مريح
+                sheet.getRange(i+1, 1, 1, sheet.getLastColumn()).setBackground("#E8F5E9");
                 calculateFinancials();
                 return ContentService.createTextOutput("success");
             }
@@ -465,7 +599,7 @@ function doPost(e) {
     else if (action === "addModerator") {
       var mods = sSheet.getRange(1, 16, sSheet.getMaxRows(), 1).getValues();
       var last = 1;
-      for(var m = 0; m < mods.length; m++) { if(mods[m][0] !== "") last = m + 2; else break; }
+      for (var m = 0; m < mods.length; m++) { if (mods[m][0] !== "") last = m + 2; else break; }
       sSheet.getRange(last, 16).setValue(e.parameter.name);
       return ContentService.createTextOutput("success");
     }
@@ -481,10 +615,10 @@ function doPost(e) {
     }
 
     else if (action === "addShipping") {
-      var type = e.parameter.zoneType === 'alex' ? 0 : 6; 
-      var zones = sSheet.getRange(1, type + 1, sSheet.getMaxRows(), 1).getValues();
+      var type   = e.parameter.zoneType === 'alex' ? 0 : 6; 
+      var zones  = sSheet.getRange(1, type + 1, sSheet.getMaxRows(), 1).getValues();
       var lastRow = 1;
-      for(var z=0; z<zones.length; z++) { if(zones[z][0] !== "") lastRow = z + 2; else break; }
+      for (var z = 0; z < zones.length; z++) { if (zones[z][0] !== "") lastRow = z + 2; else break; }
       sSheet.getRange(lastRow, type + 1, 1, 4).setValues([[e.parameter.name, e.parameter.price, e.parameter.deliveryType, e.parameter.duration]]);
       return ContentService.createTextOutput("success");
     }
@@ -513,9 +647,9 @@ function doPost(e) {
     }
 
     else if (action === "addDriver") {
-      var drvs = sSheet.getRange(1, 13, sSheet.getMaxRows(), 1).getValues();
+      var drvs    = sSheet.getRange(1, 13, sSheet.getMaxRows(), 1).getValues();
       var lastRow = 1;
-      for(var dr=0; dr<drvs.length; dr++) { if(drvs[dr][0] !== "") lastRow = dr + 2; else break; }
+      for (var dr = 0; dr < drvs.length; dr++) { if (drvs[dr][0] !== "") lastRow = dr + 2; else break; }
       sSheet.getRange(lastRow, 13, 1, 2).setValues([[e.parameter.name, "'" + e.parameter.phone]]);
       return ContentService.createTextOutput("success");
     }
@@ -540,7 +674,7 @@ function doPost(e) {
       }
     }
 
-    // ⭐ V14.2: حفظ الطلب المعلق في شيت المعلقات (JSON كامل)
+    // ⭐ V14.2: حفظ الطلب المعلق
     else if (action === "suspendOrder") {
       var draftSheet = ss.getSheetByName("📂 المعلقات");
       if (!draftSheet) draftSheet = ss.insertSheet("📂 المعلقات");
@@ -549,7 +683,7 @@ function doPost(e) {
       return ContentService.createTextOutput("success");
     }
 
-    // ⭐ V14.2: مسح الطلب المعلق من الشيت بعد الاسترجاع أو الحذف
+    // ⭐ V14.2: مسح الطلب المعلق
     else if (action === "removeSuspended") {
       var draftSheet = ss.getSheetByName("📂 المعلقات");
       if (!draftSheet) return ContentService.createTextOutput("notfound");
@@ -564,8 +698,8 @@ function doPost(e) {
 
     else if (action === "updateCatalog") {
       var cSheet = ss.getSheetByName("📦 الكتالوج");
-      var cData = cSheet.getDataRange().getValues();
-      var found = false;
+      var cData  = cSheet.getDataRange().getValues();
+      var found  = false;
       for (var i = 1; i < cData.length; i++) {
         if (cData[i][0] === e.parameter.name) {
           cSheet.getRange(i + 1, 2, 1, 3).setValues([[e.parameter.price, e.parameter.isOffer, e.parameter.offerPrice]]);
@@ -578,7 +712,7 @@ function doPost(e) {
 
     else if (action === "deleteProduct") {
       var cSheet = ss.getSheetByName("📦 الكتالوج");
-      var cData = cSheet.getDataRange().getValues();
+      var cData  = cSheet.getDataRange().getValues();
       for (var i = 1; i < cData.length; i++) {
         if (cData[i][0] === e.parameter.name) {
           cSheet.deleteRow(i + 1);
@@ -596,7 +730,7 @@ function doPost(e) {
 
     else if (action === "deleteOutOfStock") {
       var oosSheet = ss.getSheetByName("⏳ النواقص");
-      var oosData = oosSheet.getDataRange().getValues();
+      var oosData  = oosSheet.getDataRange().getValues();
       for (var i = oosData.length - 1; i >= 1; i--) {
         if (oosData[i][1].toString().includes(e.parameter.phone) && oosData[i][2] === e.parameter.product) {
           oosSheet.deleteRow(i + 1);
@@ -608,8 +742,11 @@ function doPost(e) {
   } finally { lock.releaseLock(); }
 }
 
+// ============================================================
+// دوال قاعدة بيانات العملاء
+// ============================================================
 function updateCustomerDB(sheet, name, phone, gov, address, amount, date) {
-  var data = sheet.getDataRange().getValues();
+  var data       = sheet.getDataRange().getValues();
   var cleanPhone = phone.toString().replace(/'/g, "").trim();
   for (var i = 1; i < data.length; i++) {
     if (data[i][1].toString().replace(/'/g, "").trim() === cleanPhone) {
@@ -623,8 +760,8 @@ function updateCustomerDB(sheet, name, phone, gov, address, amount, date) {
 }
 
 function subtractFromCustomerDB(sheet, phone, amount) {
-  if(!sheet) return;
-  var data = sheet.getDataRange().getValues();
+  if (!sheet) return;
+  var data       = sheet.getDataRange().getValues();
   var cleanPhone = phone.toString().replace(/'/g, "").trim();
   for (var i = 1; i < data.length; i++) {
     if (data[i][1].toString().replace(/'/g, "").trim() === cleanPhone) {
@@ -636,27 +773,30 @@ function subtractFromCustomerDB(sheet, phone, amount) {
   }
 }
 
+// ============================================================
+// حساب الحسابات المالية للمناديب
+// ============================================================
 function calculateFinancials() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss          = SpreadsheetApp.getActiveSpreadsheet();
   var ordersSheet = ss.getSheetByName("📝 الطلبات");
-  var finSheet = ss.getSheetByName("📊 الحسابات والمالية");
+  var finSheet    = ss.getSheetByName("📊 الحسابات والمالية");
   
   if (!ordersSheet || !finSheet) return;
 
-  var data = ordersSheet.getDataRange().getValues();
+  var data     = ordersSheet.getDataRange().getValues();
   var accounts = {};
 
   for (var i = 1; i < data.length; i++) {
-    var status = data[i][18];
-    var driver = data[i][11];
+    var status    = data[i][18];
+    var driver    = data[i][11];
     var payMethod = data[i][10] ? data[i][10].toString() : "";
     var shippingCost = parseFloat(data[i][16]) || 0;
-    var finalTotal = parseFloat(data[i][17]) || 0;
+    var finalTotal   = parseFloat(data[i][17]) || 0;
     
     var remainingCash = parseFloat(data[i][22]);
     if (isNaN(remainingCash)) remainingCash = finalTotal; 
 
-    var isCash = payMethod.indexOf("كاش 💵") !== -1 || (payMethod.includes("كاش") && !payMethod.includes("فودافون"));
+    var isCash    = payMethod.indexOf("كاش 💵") !== -1 || (payMethod.includes("كاش") && !payMethod.includes("فودافون"));
     var isDigital = payMethod.includes("إنستا") || payMethod.includes("انستاباي") || payMethod.includes("فودافون") || payMethod.includes("تحويل") || payMethod.includes("محفظة");
 
     if ((status === "تم التوصيل" || status === "في الشحن") && driver) {
@@ -671,11 +811,11 @@ function calculateFinancials() {
           accounts[driver].ordersCount++;
           if (isCash) {
             accounts[driver].cashCollected += remainingCash;
-            accounts[driver].shippingFees += shippingCost;
-            accounts[driver].netDue += (remainingCash - shippingCost); 
+            accounts[driver].shippingFees  += shippingCost;
+            accounts[driver].netDue        += (remainingCash - shippingCost); 
           } else if (isDigital) {
             accounts[driver].shippingFees += shippingCost;
-            accounts[driver].netDue -= shippingCost; 
+            accounts[driver].netDue       -= shippingCost; 
           }
       }
     }
@@ -688,7 +828,7 @@ function calculateFinancials() {
 
   var row = 2;
   for (var drv in accounts) {
-    var acc = accounts[drv];
+    var acc        = accounts[drv];
     var statusText = acc.netDue > 0 ? "عايزين منه" : (acc.netDue < 0 ? "ليه عندنا" : "خالص");
     
     finSheet.getRange(row, 1, 1, 7).setValues([[
