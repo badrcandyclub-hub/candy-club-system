@@ -277,7 +277,13 @@ function renderFinancials(finList) {
     }
 
     driversArray.forEach(f => {
-        let statusColor = f.netDue > 0 ? "#27ae60" : (f.netDue < 0 ? "#c0392b" : "#7f8c8d");
+        let netDue = parseFloat(f.netDue) || 0;
+        let isSettled = netDue === 0;
+        let statusColor = netDue > 0 ? "#27ae60" : (netDue < 0 ? "#c0392b" : "#9e9e9e");
+        let cardClass = isSettled ? "financial-row driver-card settled" : "financial-row driver-card";
+        let cardShadow = isSettled ? "none" : "0 4px 6px rgba(0,0,0,0.05)";
+        let cardOpacity = isSettled ? "0.8" : "1";
+        let cardBorderColor = isSettled ? "#e0e0e0" : "#eaeaea";
 
         let driverOrders = (window.uncollectedOrdersData || []).filter(o => o.driver === f.name);
         let ordersHtml = '';
@@ -300,7 +306,7 @@ function renderFinancials(finList) {
         }
 
         container.innerHTML += `
-            <div class="financial-row" style="background: #fff; padding: 15px; border-radius: 12px; border: 1px solid #eaeaea; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+            <div class="${cardClass}" style="background: #fff; padding: 15px; border-radius: 12px; border: 1px solid ${cardBorderColor}; margin-bottom: 12px; box-shadow: ${cardShadow}; opacity: ${cardOpacity}; transition: all 0.3s ease;">
                 <div class="financial-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #f0f0f0; padding-bottom:8px; margin-bottom:10px;">
                     <span style="font-weight:bold; font-size:1.1rem; color:var(--text-dark);">🛵 ${f.name}</span>
                     <span style="font-size: 0.85rem; background:#f0f0f0; color:var(--text-dark); padding:3px 8px; border-radius:12px; font-weight:bold;">${f.ordersCount || 0} طلب</span>
@@ -310,7 +316,7 @@ function renderFinancials(finList) {
                     <span style="background:#f9ebea; padding:5px 10px; border-radius:6px; color:#555;">الشحن: <strong style="color:#c0392b;">${f.shippingFees || 0}</strong> ج</span>
                 </div>
                 <div class="financial-status" style="background: ${statusColor}15; color: ${statusColor}; padding: 8px; border-radius: 6px; text-align:center; font-weight:bold; border: 1px dashed ${statusColor};">
-                    ${f.statusText || "لا توجد مديونية"} ${f.netDue !== 0 ? `( ${Math.abs(f.netDue)} ج.م )` : ''}
+                    ${f.statusText || "لا توجد مديونية"} ${netDue !== 0 ? `( ${Math.abs(netDue)} ج.م )` : ''}
                 </div>
                 ${ordersHtml}
             </div>
@@ -523,11 +529,13 @@ function renderHistoryList(orders, isLoadMore = false) {
 }
 
 window.printHistoryOrder = function (orderId) {
-    let order = (window.orderHistoryData || []).find(o => o.id === orderId) ||
-                (window.searchResultsCache || []).find(o => o.id === orderId) ||
-                (window.pendingOrdersData || []).find(o => o.id === orderId) ||
-                (window.suspendedOrdersData || []).find(o => o.id === orderId) ||
-                (window.uncollectedOrdersData || []).find(o => o.id === orderId);
+    // ⭐ Fix: String() comparison to prevent type mismatch (string vs number)
+    let findFn = o => String(o.id) === String(orderId);
+    let order = (window.orderHistoryData || []).find(findFn) ||
+                (window.searchResultsCache || []).find(findFn) ||
+                (window.pendingOrdersData || []).find(findFn) ||
+                (window.suspendedOrdersData || []).find(findFn) ||
+                (window.uncollectedOrdersData || []).find(findFn);
     
     if (!order) {
         alert("⚠️ خطأ: لم يتم العثور على بيانات الطلب للطباعة.");
@@ -1572,11 +1580,13 @@ window.shareToWhatsAppGroup = function(orderId) {
     if (typeof orderId === 'object') {
         order = orderId;
     } else {
-        order = (window.orderHistoryData || []).find(o => o.id === orderId) ||
-                (window.searchResultsCache || []).find(o => o.id === orderId) ||
-                (window.pendingOrdersData || []).find(o => o.id === orderId) ||
-                (window.suspendedOrdersData || []).find(o => o.id === orderId) ||
-                (window.uncollectedOrdersData || []).find(o => o.id === orderId);
+        // ⭐ Fix: String() comparison to prevent type mismatch (string vs number)
+        let findFn = o => String(o.id) === String(orderId);
+        order = (window.orderHistoryData || []).find(findFn) ||
+                (window.searchResultsCache || []).find(findFn) ||
+                (window.pendingOrdersData || []).find(findFn) ||
+                (window.suspendedOrdersData || []).find(findFn) ||
+                (window.uncollectedOrdersData || []).find(findFn);
     }
     
     if (!order) {
