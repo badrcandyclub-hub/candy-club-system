@@ -1,5 +1,5 @@
 // ==========================================
-// 🚀 نظام كاندي كلوب المطور V13.6 - (نسخة تصفية الحسابات والبحث الشامل المعدلة)
+// 🚀 نظام كاندي كلوب المطور V14.2 - (النسخة الكاملة النهائية)
 // ==========================================
 
 function onOpen() {
@@ -9,7 +9,7 @@ function onOpen() {
       .addToUi();
 }
 
-// ⭐ إضافة دالة التفاعل اليدوي: عشان لو غيرت الحالة من الإكسيل بإيدك، اللون يتغير والمالية تتحدث فورا
+// ⭐ إضافة دالة التفاعل اليدوي: عشان لو غيرت الحالة من الإكسيل بإيدك، اللون يتغير والمالية تتحدث فوراً
 function onEdit(e) {
   if (!e || !e.range) return;
   var sheet = e.range.getSheet();
@@ -48,7 +48,9 @@ function setupCandyClubUX() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var headerFont = "Cairo"; 
   
-  // 1. شيت الطلبات (تم إضافة أعمدة العربون والمتبقي)
+  // ============================================================
+  // 1. شيت الطلبات
+  // ============================================================
   var ordersSheet = ss.getSheetByName("📝 الطلبات") || ss.getSheets()[0];
   ordersSheet.setName("📝 الطلبات");
   var orderHeaders = [
@@ -69,20 +71,28 @@ function setupCandyClubUX() {
   var rule = SpreadsheetApp.newDataValidation().requireValueInList(["قيد التجهيز", "في الشحن", "تم التوصيل", "تم التوصيل ومُحاسب", "مرتجع"], true).build();
   statusRange.setDataValidation(rule);
 
+  // ============================================================
   // 2. شيت العملاء
+  // ============================================================
   var customerSheet = ss.getSheetByName("👥 قاعدة العملاء") || ss.insertSheet("👥 قاعدة العملاء");
   var customerHeaders = ["اسم العميل", "الموبايل", "المحافظة", "العنوان", "عدد الطلبات", "إجمالي المدفوعات", "تاريخ آخر طلب"];
-  customerSheet.getRange(1, 1, 1, customerHeaders.length).setValues([customerHeaders]).setBackground("#673AB7").setFontColor("white").setFontFamily(headerFont).setFontSize(12).setFontWeight("bold");
+  customerSheet.getRange(1, 1, 1, customerHeaders.length).setValues([customerHeaders])
+               .setBackground("#673AB7").setFontColor("white").setFontFamily(headerFont).setFontSize(12).setFontWeight("bold")
+               .setHorizontalAlignment("center").setVerticalAlignment("middle");
   customerSheet.setRowHeight(1, 45); 
   customerSheet.setFrozenRows(1);
 
-  // 3. شيت الإعدادات
+  // ============================================================
+  // 3. شيت الإعدادات والشحن
+  // ============================================================
   var settingsSheet = ss.getSheetByName("⚙️ الإعدادات والشحن") || ss.insertSheet("⚙️ الإعدادات والشحن");
   settingsSheet.getRange("P1:P1").setValues([["👤 المودريتور"]]).setBackground("#8e44ad").setFontColor("white").setFontFamily(headerFont).setFontSize(12).setFontWeight("bold");
   settingsSheet.getRange(1, 16, 50, 1).setBorder(true, true, true, true, true, true, "#8e44ad", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
   settingsSheet.setColumnWidth(16, 150);
 
+  // ============================================================
   // 4. شيت الكتالوج
+  // ============================================================
   var catalogSheet = ss.getSheetByName("📦 الكتالوج") || ss.insertSheet("📦 الكتالوج");
   var catalogHeaders = ["اسم المنتج", "السعر الأساسي", "حالة العرض", "سعر العرض"];
   catalogSheet.getRange(1, 1, 1, catalogHeaders.length).setValues([catalogHeaders])
@@ -90,13 +100,17 @@ function setupCandyClubUX() {
               .setHorizontalAlignment("center").setVerticalAlignment("middle");
   catalogSheet.setRowHeight(1, 45);
   catalogSheet.setFrozenRows(1);
-  catalogSheet.getRange("A2:D" + catalogSheet.getMaxRows()).setFontSize(14).setFontFamily(headerFont).setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
+  catalogSheet.getRange("A2:D" + catalogSheet.getMaxRows())
+              .setFontSize(14).setFontFamily(headerFont)
+              .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
   catalogSheet.setColumnWidth(1, 280);
   catalogSheet.setColumnWidth(2, 150);
   catalogSheet.setColumnWidth(3, 150);
   catalogSheet.setColumnWidth(4, 150);
 
+  // ============================================================
   // 5. شيت النواقص
+  // ============================================================
   var outOfStockSheet = ss.getSheetByName("⏳ النواقص") || ss.insertSheet("⏳ النواقص");
   var oosHeaders = ["اسم العميل", "رقم الموبايل", "المنتج", "الغرض", "التاريخ"];
   outOfStockSheet.getRange(1, 1, 1, oosHeaders.length).setValues([oosHeaders])
@@ -104,14 +118,32 @@ function setupCandyClubUX() {
                  .setHorizontalAlignment("center").setVerticalAlignment("middle");
   outOfStockSheet.setRowHeight(1, 45);
   outOfStockSheet.setFrozenRows(1);
-  outOfStockSheet.getRange("A2:E" + outOfStockSheet.getMaxRows()).setFontSize(14).setFontFamily(headerFont).setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
+  outOfStockSheet.getRange("A2:E" + outOfStockSheet.getMaxRows())
+                 .setFontSize(14).setFontFamily(headerFont)
+                 .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
   outOfStockSheet.setColumnWidth(1, 180);
   outOfStockSheet.setColumnWidth(2, 140);
   outOfStockSheet.setColumnWidth(3, 240);
   outOfStockSheet.setColumnWidth(4, 180);
   outOfStockSheet.setColumnWidth(5, 160);
 
-  // 6. شيت الحسابات المالية
+  // ============================================================
+  // 6. ⭐ V14.2: شيت المعلقات (حفظ الطلبات المعلقة في جوجل شيتس)
+  // ============================================================
+  var draftsSheet = ss.getSheetByName("📂 المعلقات") || ss.insertSheet("📂 المعلقات");
+  var draftsHeaders = ["رقم الطلب (Draft ID)", "التاريخ والوقت", "بيانات الطلب (JSON)"];
+  draftsSheet.getRange(1, 1, 1, draftsHeaders.length).setValues([draftsHeaders])
+             .setBackground("#34495e").setFontColor("white").setFontFamily(headerFont).setFontSize(12).setFontWeight("bold")
+             .setHorizontalAlignment("center").setVerticalAlignment("middle");
+  draftsSheet.setRowHeight(1, 45);
+  draftsSheet.setFrozenRows(1);
+  draftsSheet.setColumnWidth(1, 180);
+  draftsSheet.setColumnWidth(2, 180);
+  draftsSheet.setColumnWidth(3, 500);
+
+  // ============================================================
+  // 7. شيت الحسابات المالية
+  // ============================================================
   var finSheet = ss.getSheetByName("📊 الحسابات والمالية") || ss.insertSheet("📊 الحسابات والمالية");
   var finHeaders = ["الجهة (مندوب/شركة)", "إجمالي الطلبات المُسلمة", "العهدة (في الشحن)", "إجمالي الكاش المحصل", "إجمالي مصاريف الشحن", "صافي المديونية لنا", "حالة الحساب"];
   finSheet.getRange(1, 1, 1, finHeaders.length).setValues([finHeaders])
@@ -129,7 +161,7 @@ function setupCandyClubUX() {
 
   calculateFinancials();
 
-  SpreadsheetApp.getUi().alert("✅ تم بناء وتحديث النظام الشامل بنجاح!");
+  SpreadsheetApp.getUi().alert("✅ تم بناء وتحديث النظام الشامل V14.2 بنجاح!");
 }
 
 function doGet(e) {
@@ -182,27 +214,33 @@ function doGet(e) {
   var catalogSheet = ss.getSheetByName("📦 الكتالوج");
   var oosSheet = ss.getSheetByName("⏳ النواقص");
   var finSheet = ss.getSheetByName("📊 الحسابات والمالية");
-  var customersSheet = ss.getSheetByName("👥 قاعدة العملاء");
+  // ⭐ V14.2: شيت المعلقات
+  var draftsSheet = ss.getSheetByName("📂 المعلقات");
   
   var response = { 
-    alex: [], govs: [], couriers: [], products: [], moderators: [], catalog: [], outOfStock: [], customers: [],
-    todayOrders: 0, todaySales: 0, monthSales: 0, history: [], pendingOrders: [], suspendedOrders: [], financials: [], uncollectedOrders: [], completedOrders: 0
+    alex: [], govs: [], couriers: [], products: [], moderators: [], catalog: [], outOfStock: [],
+    todayOrders: 0, todaySales: 0, monthSales: 0, history: [], pendingOrders: [], financials: [],
+    uncollectedOrders: [],
+    suspendedOrders: [] // ⭐ V14.2: الطلبات المعلقة من جوجل شيتس
   };
-
-  if (customersSheet) {
-    var custData = customersSheet.getDataRange().getValues();
-    for (var i = 1; i < custData.length; i++) {
-      if (custData[i][0]) {
-        response.customers.push({
-          name: custData[i][0], phone: custData[i][1], gov: custData[i][2],
-          address: custData[i][3], ordersCount: custData[i][4], totalPaid: custData[i][5], lastOrder: custData[i][6]
-        });
-      }
-    }
-  }
 
   var filterDate = e.parameter.date || Utilities.formatDate(new Date(), "GMT+2", "yyyy-MM-dd");
   var currentMonth = filterDate.substring(0, 7);
+
+  // ⭐ V14.2: قراءة الطلبات المعلقة من الشيت وإرسالها للفرونت إند
+  if (draftsSheet && draftsSheet.getLastRow() > 1) {
+    var draftsData = draftsSheet.getDataRange().getValues();
+    for (var i = 1; i < draftsData.length; i++) {
+      if (draftsData[i][0]) {
+        try {
+          var parsedDraft = JSON.parse(draftsData[i][2]);
+          response.suspendedOrders.push(parsedDraft);
+        } catch(err) {
+          // تجاهل أي صف فاسد
+        }
+      }
+    }
+  }
 
   if (finSheet) {
     var finData = finSheet.getDataRange().getValues();
@@ -256,15 +294,11 @@ function doGet(e) {
       if (isNaN(remainingCash)) remainingCash = finalTotal; 
       var driver = data[j][11];
 
-      // أوردرات غير مصفاة للمندوبين
+      // أوردرات غير مصفاة للمناديب
       if (status === "تم التوصيل" && driver) {
           response.uncollectedOrders.push({
               id: data[j][0], driver: driver, total: finalTotal, remaining: remainingCash, payment: data[j][10], shipping: data[j][16]
           });
-      }
-
-      if (rowDate === filterDate && status === "تم التوصيل ومُحاسب") { 
-        response.completedOrders++; 
       }
 
       if (rowDate === filterDate && status !== "مرتجع" && status !== "تم التوصيل ومُحاسب") { 
@@ -281,7 +315,7 @@ function doGet(e) {
           id: data[j][0], date: rowDate, time: data[j][2], name: data[j][4], phone: data[j][7],
           address: data[j][6], products: data[j][13], subtotal: data[j][14], discount: data[j][15],
           shipping: data[j][16], total: finalTotal, status: status, payment: data[j][10], seller: data[j][20], orderType: data[j][9],
-          driver: driver, deposit: data[j][21] || 0, remaining: remainingCash
+          deposit: data[j][21] || 0, remaining: remainingCash
         });
       }
 
@@ -291,18 +325,9 @@ function doGet(e) {
         });
       }
 
-      if (status === "معلق") {
-        response.suspendedOrders.push({
-          id: data[j][0], date: rowDate, time: data[j][2], name: data[j][4], phone: data[j][7],
-          address: data[j][6], products: data[j][13], subtotal: data[j][14], discount: data[j][15],
-          shipping: data[j][16], total: finalTotal, status: status, payment: data[j][10], seller: data[j][20], orderType: data[j][9],
-          driver: driver, deposit: data[j][21] || 0, remaining: remainingCash
-        });
-      }
-
       if (data[j][13]) {
         var pParts = data[j][13].split('\n');
-        pParts.forEach(p => { 
+        pParts.forEach(function(p) { 
           var m = p.match(/(.+)\s*-/); 
           if (m) { uniqueProducts[m[1].trim()] = (uniqueProducts[m[1].trim()] || 0) + 1; }
         });
@@ -312,7 +337,7 @@ function doGet(e) {
     var topP = ""; var maxV = 0;
     for (var p in uniqueProducts) { if(uniqueProducts[p] > maxV) { maxV = uniqueProducts[p]; topP = p; } }
     response.topProduct = topP || "لا يوجد";
-    response.products = Object.keys(uniqueProducts).map(n => ({name: n}));
+    response.products = Object.keys(uniqueProducts).map(function(n) { return {name: n}; });
   }
 
   return ContentService.createTextOutput(JSON.stringify(response)).setMimeType(ContentService.MimeType.JSON);
@@ -330,9 +355,9 @@ function doPost(e) {
       var sheet = ss.getSheetByName("📝 الطلبات");
       var custSheet = ss.getSheetByName("👥 قاعدة العملاء");
       
-      // ⭐ حل مشكلة تكرار الأرقام (توليد رقم عشوائي آمن)
-      var uniquePart = Math.floor(Math.random() * 900000 + 100000); 
-      var id = "CANDY-" + uniquePart;
+      // ⭐ V14.2: Timestamp-based ID لمنع التكرار نهائياً
+      var tsStr = new Date().getTime().toString();
+      var id = "CANDY-" + tsStr.slice(-6);
       
       var d = e.parameter.browserDate || Utilities.formatDate(new Date(), "GMT+2", "yyyy-MM-dd");
       var t = Utilities.formatDate(new Date(), "GMT+2", "hh:mm a");
@@ -471,40 +496,23 @@ function doPost(e) {
       }
     }
 
+    // ⭐ V14.2: حفظ الطلب المعلق في شيت المعلقات (JSON كامل)
     else if (action === "suspendOrder") {
-      var sheet = ss.getSheetByName("📝 الطلبات");
-      var draft = JSON.parse(e.parameter.draftJson);
-      var d = Utilities.formatDate(new Date(), "GMT+2", "yyyy-MM-dd");
-      var t = Utilities.formatDate(new Date(), "GMT+2", "hh:mm a");
-
-      var pText = "";
-      var pTotal = 0;
-      if (draft.prods) {
-          draft.prods.forEach(p => {
-              pText += p.name + " - الكمية: " + p.qty + " (" + (p.price * p.qty) + "ج)\n";
-              pTotal += (p.price * p.qty);
-          });
-      }
-
-      var row = [
-          draft.id, "'" + d, t, draft.platform, draft.name, draft.gov, 
-          draft.address, "'" + draft.phone, "'" + draft.phone2, 
-          draft.delType, draft.payMethod || "", "", draft.spDate, 
-          pText, pTotal, draft.discount, 
-          draft.shippingCost || 0, (pTotal + (parseFloat(draft.shippingCost)||0) - (draft.discount||0)), "معلق", draft.notes, "",
-          draft.deposit || 0, (pTotal + (parseFloat(draft.shippingCost)||0) - (draft.discount||0) - (draft.deposit||0))
-      ];
-      sheet.appendRow(row);
+      var draftSheet = ss.getSheetByName("📂 المعلقات");
+      if (!draftSheet) draftSheet = ss.insertSheet("📂 المعلقات");
+      var timestamp = Utilities.formatDate(new Date(), "GMT+2", "yyyy-MM-dd hh:mm:ss a");
+      draftSheet.appendRow([e.parameter.draftId, timestamp, e.parameter.draftJson]);
       return ContentService.createTextOutput("success");
     }
 
+    // ⭐ V14.2: مسح الطلب المعلق من الشيت بعد الاسترجاع أو الحذف
     else if (action === "removeSuspended") {
-      var sheet = ss.getSheetByName("📝 الطلبات");
-      var data = sheet.getDataRange().getValues();
-      for (var k = data.length - 1; k >= 1; k--) {
-        if (data[k][0].toString() === e.parameter.draftId.toString() && data[k][18] === "معلق") {
-          sheet.deleteRow(k + 1);
-          return ContentService.createTextOutput("success");
+      var draftSheet = ss.getSheetByName("📂 المعلقات");
+      if (!draftSheet) return ContentService.createTextOutput("notfound");
+      var dData = draftSheet.getDataRange().getValues();
+      for (var k = dData.length - 1; k >= 1; k--) {
+        if (dData[k][0].toString() === e.parameter.draftId.toString()) {
+          draftSheet.deleteRow(k + 1);
         }
       }
       return ContentService.createTextOutput("success");

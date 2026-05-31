@@ -99,6 +99,7 @@ window.onload = () => {
 
     loadDataFromServer();
     if (typeof updateSuspendedCount === 'function') updateSuspendedCount();
+    // ⭐ V14.2: عداد المعلقات يُقرأ من السيرفر مباشرة بعد loadDataFromServer
 };
 
 function loadDataFromServer() {
@@ -114,6 +115,7 @@ function loadDataFromServer() {
             window.orderHistoryData = orderHistoryData; // ⭐ keep window ref in sync
             window.pendingOrdersData = data.pendingOrders || [];
             window.suspendedOrdersData = data.suspendedOrders || [];
+            updateSuspendedCount(); // ⭐ V14.2: تحديث العداد من السيرفر بعد كل تحميل
             window.financialsData = data.financials || [];
             window.uncollectedOrdersData = data.uncollectedOrders || [];
             window.customersData = data.customers || [];
@@ -576,7 +578,16 @@ window.printHistoryOrder = function (orderId) {
     if (document.getElementById('print-time')) document.getElementById('print-time').innerText = order.time || '';
     if (document.getElementById('print-customer-name')) document.getElementById('print-customer-name').innerText = order.name || '';
     if (document.getElementById('print-phone')) document.getElementById('print-phone').innerText = order.phone || '';
-    if (document.getElementById('print-address')) document.getElementById('print-address').innerText = order.address || "";
+
+    // ⭐ V14.2: إخفاء العنوان للفرع برمجياً - لا يطبع العنوان نهائياً
+    let printAddressRow = document.querySelector('.print-address-row');
+    if (oType.includes('استلام من الفرع')) {
+        if (printAddressRow) printAddressRow.style.display = 'none';
+        if (document.getElementById('print-address')) document.getElementById('print-address').innerText = '';
+    } else {
+        if (printAddressRow) printAddressRow.style.display = '';
+        if (document.getElementById('print-address')) document.getElementById('print-address').innerText = order.address || order.customerAddress || '';
+    }
 
     let printItemsHtml = "";
     if (order.products) {
@@ -958,7 +969,8 @@ if (suspendBtn) {
             if (n) prods.push({ name: n, price: p, qty: q, confirmed: c });
         });
 
-        let draftId = "CANDY-" + Math.floor(Math.random() * 900000 + 100000);
+        // ⭐ V14.2: Timestamp-based ID لمنع التكرار نهائياً
+        let draftId = "CANDY-" + Date.now().toString().slice(-5);
         let draft = {
             id: draftId, date: new Date().toLocaleTimeString('ar-EG'),
             platform: document.getElementById('platform') ? document.getElementById('platform').value : "", name: name,
@@ -1604,14 +1616,28 @@ window.shareToWhatsAppGroup = function(orderId) {
     }
     console.log("Order Data:", order);
     
-    let text = `*نوع الطلب:* ${order.orderType || order.type || "توصيل"}\n`;
+    // ⭐ V14.2: إصلاح شامل لـ Keys القادمة من الإكسيل - fallback لكل حقل
+    let _name     = order.name     || order.customerName  || "";
+    let _gov      = order.gov      || order.governorate   || "";
+    let _address  = order.address  || order.customerAddress || order.addr || "";
+    let _phone    = order.phone    || order.customerPhone  || order.mobile || "";
+    let _payment  = order.payment  || order.paymentMethod  || order.payMethod || "";
+    let _products = order.products || order.items          || order.productDetails || "";
+    let _shipping = parseFloat(order.shipping || order.shippingCost || order.shippingFee || 0);
+    let _remaining = order.remaining !== undefined ? order.remaining : (order.total || order.finalTotal || 0);
+    let _type     = order.orderType || order.type || order.deliveryType || "توصيل";
+
+    let text = `*نوع الطلب:* ${_type}\n`;
     text += `*التاريخ:* ${order.date || new Date().toLocaleDateString('ar-EG')} ⏰ ${order.time || new Date().toLocaleTimeString('ar-EG')}\n`;
-    text += `👤 *العميل:* ${order.name || order.customerName || ""}\n`;
-    text += `📍 *العنوان:* ${order.gov ? order.gov + " - " : ""}${order.address || order.customerAddress || ""}\n`;
-    text += `💳 *طريقة الدفع:* ${order.payment || order.paymentMethod || ""}\n\n`;
-    text += `📦 *المنتجات:*\n${order.products || order.items || ""}\n`;
-    text += `🚚 *الشحن:* ${order.shipping || order.shippingCost || 0}\n`;
-    text += `💰 *الإجمالي النهائي:* ${order.remaining !== undefined ? order.remaining : (order.total || order.finalTotal || 0)}\n`;
+    text += `👤 *العميل:* ${_name}\n`;
+    if (!_type.includes('استلام من الفرع') && (_gov || _address)) {
+        text += `📍 *العنوان:* ${_gov ? _gov + " - " : ""}${_address}\n`;
+    }
+    if (_phone) text += `📱 *الموبايل:* ${_phone}\n`;
+    text += `💳 *طريقة الدفع:* ${_payment}\n\n`;
+    text += `📦 *المنتجات:*\n${_products}\n`;
+    text += `🚚 *الشحن:* ${_shipping}\n`;
+    text += `💰 *الإجمالي النهائي:* ${_remaining}\n`;
     
     navigator.clipboard.writeText(text).then(() => {
         showToast("تم نسخ بيانات الأوردر للحافظة بنجاح 📋", "success");

@@ -1182,7 +1182,7 @@ input:checked + .slider:before { transform: translateX(24px); }
     }
 
     .receipt-totals { margin-top: 10px; font-weight: bold; font-size: 15px; }
-    .receipt-totals p { margin: 4px 0; display: flex; justify-content: space-between; }
+    .receipt-totals p { margin: 4px 0; display: flex; justify-content: flex-start; gap: 8px; align-items: baseline; }
     .receipt-totals h3 {
         margin: 5px 0;
         display: flex;
