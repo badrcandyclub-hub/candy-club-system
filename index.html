@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title id="page-title">Candy Club Pro - V14.0</title>
+    <title id="page-title">Candy Club orders V15.0</title>
     <link rel="icon" type="image/png" href="./favicon.png">
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
@@ -15,7 +15,7 @@
     <header class="app-header">
         <div class="logo-container">
             <span class="logo-text">CANDY CLUB</span>
-            <span class="logo-sub">نظام الإدارة المتطور V13.6</span>
+            <span class="logo-sub">نظام الإدارة V15.0</span>
         </div>
         <div class="header-actions">
             <button id="openFinancialsBtn" class="btn-outline interactive-btn" style="background:#2c3e50; color:white; border:none;">💰 المالية</button>
@@ -311,9 +311,14 @@
                     <span class="label">📅 إجمالي مبيعات الشهر</span>
                     <span class="value" id="monthSales">0</span>
                 </div>
+            <div class="stats-row" style="margin-bottom: 10px;">
                 <div class="stat-item" style="background: linear-gradient(135deg, #00C853, #2E7D32); color:white; padding: 15px 10px; border-radius: 18px; text-align: center; box-shadow: var(--shadow);">
-                    <span class="label">✅ طلبات مكتملة</span>
+                    <span class="label">✅ مكتملة اليوم</span>
                     <span class="value" id="completedCount">0</span>
+                </div>
+                <div class="stat-item" style="background: linear-gradient(135deg, #1565C0, #42A5F5); color:white; padding: 15px 10px; border-radius: 18px; text-align: center; box-shadow: var(--shadow);">
+                    <span class="label">📅 مكتملة الشهر</span>
+                    <span class="value" id="completedMonthCount">0</span>
                 </div>
             </div>
 
@@ -332,6 +337,22 @@
                 <div class="stat-item" style="background: linear-gradient(135deg, #9b59b6, #8e44ad); color:white; padding: 15px 10px; border-radius: 18px; text-align: center; box-shadow: var(--shadow); width:100%;">
                     <span class="label">⭐ المنتج الأكثر مبيعاً</span>
                     <span class="value" id="topProduct" style="font-size: 1.1rem;">--</span>
+                </div>
+            </div>
+
+            <!-- ⭐ V15.0: لوحة أفضل 10 منتجات مبيعاً خلال الشهر -->
+            <div class="section-card" style="margin-top: 16px; border-right: 4px solid var(--primary);">
+                <h3 class="section-title" style="font-size:0.95rem;">🏆 أفضل 10 منتجات هذا الشهر</h3>
+                <div id="topProductsList" style="padding: 5px 0;">
+                    <p class="empty-msg">جاري التحميل...</p>
+                </div>
+            </div>
+
+            <!-- ⭐ V15.0: لوحة أداء المنصات خلال الشهر -->
+            <div class="section-card" style="margin-top: 16px; border-right: 4px solid var(--secondary);">
+                <h3 class="section-title" style="font-size:0.95rem;">📱 أداء المنصات هذا الشهر</h3>
+                <div id="platformStatsList" style="padding: 5px 0;">
+                    <p class="empty-msg">جاري التحميل...</p>
                 </div>
             </div>
         </section>
@@ -452,7 +473,7 @@
         <div class="receipt-totals">
             <p>إجمالي المنتجات: <b><span id="print-subtotal"></span></b></p>
             <p>الخصم: <b><span id="print-discount"></span></b></p>
-            <p>الشحن: <b><span id="print-shipping"></span></b></p>
+            <p class="print-shipping-row">الشحن: <b><span id="print-shipping"></span></b></p>
             <p class="print-deposit-row" style="display:none; color: var(--primary);">تم دفع عربون: <b><span id="print-deposit"></span></b></p>
             <h3 style="border-top: 1px solid #000; padding-top: 5px; font-size: 14px;"><span id="print-final-label">الإجمالي النهائي</span>: <b style="font-size: 16px;"><span id="print-final"></span></b></h3>
         </div>

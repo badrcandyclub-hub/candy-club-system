@@ -556,12 +556,12 @@ window.printHistoryOrder = function (orderId) {
 
     let printLogo = document.getElementById('print-logo');
     if (printLogo) {
-        let rem = parseFloat(order.remaining) || parseFloat(order.total) || 0;
         let pay = order.payment || "";
-        
+        // ⭐ V15.0: لوجو ديناميكي شامل - تطابق كل صيغ الدفع الإلكتروني
+        let isDigitalPay = pay.includes("إنستا") || pay.includes("انستاباي") || pay.includes("انستا باي") || pay.includes("محفظة") || pay.includes("فودافون") || pay.includes("تحويل");
         if (oType.includes("استلام من الفرع")) {
             printLogo.src = "./images/logo-branch.png";
-        } else if (rem === 0 && (pay.includes("انستاباي") || pay.includes("محفظة") || pay.includes("فودافون") || pay.includes("إنستا"))) {
+        } else if (isDigitalPay) {
             printLogo.src = "./images/logo-digital.png";
         } else {
             printLogo.src = "./images/logo-cash.png";
@@ -570,7 +570,8 @@ window.printHistoryOrder = function (orderId) {
     }
 
     if (document.getElementById('receipt-type')) {
-        let typeStr = oType || "أوردر توصيل";
+        // ⭐ V15.0: تطبيع النص - إزالة "عادي" من "توصيل منزلي عادي"
+        let typeStr = (oType || "أوردر توصيل").replace("توصيل منزلي عادي", "توصيل منزلي");
         let govStr = order.gov ? order.gov + " - " : "";
         document.getElementById('receipt-type').innerText = isOldGift ? `${govStr}${typeStr} - 🎁 هدية` : `${govStr}${typeStr}`;
     }
@@ -615,7 +616,15 @@ window.printHistoryOrder = function (orderId) {
 
     if (document.getElementById('print-subtotal')) document.getElementById('print-subtotal').innerText = isOldGift ? "***" : (order.subtotal || order.total || 0);
     if (document.getElementById('print-discount')) document.getElementById('print-discount').innerText = isOldGift ? "***" : (order.discount || 0);
-    if (document.getElementById('print-shipping')) document.getElementById('print-shipping').innerText = isOldGift ? "***" : (order.shipping || 0);
+
+    // ⭐ V15.0: إخفاء سطر الشحن لطلبات استلام الفرع نهائياً
+    let printShippingRow = document.querySelector('.print-shipping-row');
+    if (oType.includes('استلام من الفرع')) {
+        if (printShippingRow) printShippingRow.style.display = 'none';
+    } else {
+        if (printShippingRow) printShippingRow.style.display = '';
+        if (document.getElementById('print-shipping')) document.getElementById('print-shipping').innerText = isOldGift ? "***" : (order.shipping || 0);
+    }
 
     if (parseFloat(order.deposit) > 0 && !isOldGift) {
         document.querySelector('.print-deposit-row').style.display = 'block';
@@ -1576,20 +1585,120 @@ let markRetBtn = document.getElementById('markReturnedBtn');
 if (markRetBtn) markRetBtn.addEventListener('click', () => processStatusUpdate(markRetBtn, 'shipped-checkbox', 'مرتجع'));
 
 function updateAdvancedDashboard(history) {
+    // ⭐ V15.0: إحصائيات اليوم + الشهر + لوحة التحليلات المتقدمة
     let moneyWithDrivers = 0, returnedCount = 0;
-    history.forEach(o => {
+    let completedToday = 0, completedMonth = 0;
+
+    // تجميع بيانات التحليل للشهر
+    let productMap = {};   // { اسم المنتج : عدد المبيع }
+    let platformMap = {};  // { اسم المنصة : عدد الطلبات }
+
+    let todayStr = new Date().toISOString().slice(0, 10);
+    let monthStr = new Date().toISOString().slice(0, 7);
+
+    // نجمع كل البيانات المتاحة (تاريخ اليوم + كل تاريخ متاح)
+    let allOrders = window.orderHistoryData || [];
+
+    allOrders.forEach(o => {
+        let oDate = (o.date || "").slice(0, 10);
+        let oMonth = oDate.slice(0, 7);
+        let isCompleted = o.status && (o.status.includes("تم التوصيل"));
+
+        // متابعة المناديب
         if (o.status === 'في الشحن') moneyWithDrivers += parseFloat(o.remaining) || 0;
         if (o.status === 'مرتجع') returnedCount++;
+
+        // مكتملة اليوم
+        if (isCompleted && oDate === todayStr) completedToday++;
+
+        // تحليلات الشهر فقط
+        if (oMonth === monthStr) {
+            // مكتملة الشهر
+            if (isCompleted) completedMonth++;
+
+            // تقسيم المنتجات
+            if (o.products) {
+                o.products.split('\n').forEach(line => {
+                    let match = line.match(/^(.+?)\s*-\s*الكمية:\s*(\d+)/);
+                    if (match) {
+                        let pName = match[1].trim();
+                        let pQty = parseInt(match[2]) || 1;
+                        productMap[pName] = (productMap[pName] || 0) + pQty;
+                    }
+                });
+            }
+
+            // تقسيم المنصات
+            if (o.platform || o.moderator) {
+                let plt = o.platform || o.moderator || "غير محدد";
+                // تنظيف الإيموجي
+                plt = plt.replace(/[�-��-�]/g, '').replace(/[\ufe0f]/g, '').trim();
+                if (plt) platformMap[plt] = (platformMap[plt] || 0) + 1;
+            }
+        }
     });
+
+    // عرض الإحصائيات الأساسية
     if (document.getElementById('moneyWithDrivers')) document.getElementById('moneyWithDrivers').innerText = moneyWithDrivers;
     if (document.getElementById('returnedCount')) document.getElementById('returnedCount').innerText = returnedCount;
+    if (document.getElementById('completedCount')) document.getElementById('completedCount').innerText = completedToday;
+    if (document.getElementById('completedMonthCount')) document.getElementById('completedMonthCount').innerText = completedMonth;
 
+    // بالس على زر المالية
     let openFinancialsBtn = document.getElementById('openFinancialsBtn');
     if (openFinancialsBtn) {
-        if (moneyWithDrivers > 0) {
-            openFinancialsBtn.classList.add('pulse-btn');
+        if (moneyWithDrivers > 0) openFinancialsBtn.classList.add('pulse-btn');
+        else openFinancialsBtn.classList.remove('pulse-btn');
+    }
+
+    // ⭐ V15.0: أفضل 10 منتجات مبيعاً خلال الشهر
+    let topProductsEl = document.getElementById('topProductsList');
+    if (topProductsEl) {
+        let sorted = Object.entries(productMap).sort((a, b) => b[1] - a[1]).slice(0, 10);
+        if (sorted.length === 0) {
+            topProductsEl.innerHTML = '<p class="empty-msg">لا توجد بيانات كافية لهذا الشهر.</p>';
         } else {
-            openFinancialsBtn.classList.remove('pulse-btn');
+            let maxVal = sorted[0][1];
+            topProductsEl.innerHTML = sorted.map(([name, qty], idx) => {
+                let pct = Math.round((qty / maxVal) * 100);
+                let medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx+1}.`;
+                return `
+                    <div style="margin-bottom:10px;">
+                        <div style="display:flex; justify-content:space-between; font-size:0.88rem; font-weight:bold; margin-bottom:3px;">
+                            <span>${medal} ${name}</span>
+                            <span style="color:var(--primary);">${qty} قطعة</span>
+                        </div>
+                        <div style="background:var(--bg); border-radius:6px; height:8px; overflow:hidden;">
+                            <div style="height:100%; width:${pct}%; background:linear-gradient(90deg,var(--primary),var(--primary-light)); border-radius:6px; transition:width 0.6s ease;"></div>
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+    }
+
+    // ⭐ V15.0: أداء المنصات خلال الشهر
+    let platformEl = document.getElementById('platformStatsList');
+    if (platformEl) {
+        let pltSorted = Object.entries(platformMap).sort((a, b) => b[1] - a[1]);
+        let totalPlt = pltSorted.reduce((s, [, v]) => s + v, 0);
+        if (pltSorted.length === 0) {
+            platformEl.innerHTML = '<p class="empty-msg">لا توجد بيانات كافية لهذا الشهر.</p>';
+        } else {
+            const pColors = ['#E91E8C','#00B4D8','#FF8C00','#6C3483','#00C853','#c0392b'];
+            platformEl.innerHTML = pltSorted.map(([name, cnt], idx) => {
+                let pct = totalPlt > 0 ? Math.round((cnt / totalPlt) * 100) : 0;
+                let color = pColors[idx % pColors.length];
+                return `
+                    <div style="margin-bottom:10px;">
+                        <div style="display:flex; justify-content:space-between; font-size:0.88rem; font-weight:bold; margin-bottom:3px;">
+                            <span>${name}</span>
+                            <span style="color:${color};">${cnt} طلب (${pct}%)</span>
+                        </div>
+                        <div style="background:var(--bg); border-radius:6px; height:8px; overflow:hidden;">
+                            <div style="height:100%; width:${pct}%; background:${color}; border-radius:6px; transition:width 0.6s ease;"></div>
+                        </div>
+                    </div>`;
+            }).join('');
         }
     }
 }
