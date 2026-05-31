@@ -1122,6 +1122,7 @@ input:checked + .slider:before { transform: translateX(24px); }
         padding: 0;
         direction: rtl;
         -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
 
     /* إخفاء كل ما لا يخص الطباعة بما فيها الإضافات الجديدة */
@@ -1167,6 +1168,7 @@ input:checked + .slider:before { transform: translateX(24px); }
     .receipt-table th {
         background-color: #f0f0f0 !important;
         -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
         padding: 6px 4px;
         border: 1px solid #000;
     }

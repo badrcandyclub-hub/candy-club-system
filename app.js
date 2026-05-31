@@ -489,7 +489,9 @@ function renderHistoryList(orders, isLoadMore = false) {
                 <strong style="font-size: 1.05rem;">${order.id} | ${order.name}</strong>
                 <div style="display:flex; align-items:center; gap:10px;">
                     <button class="interactive-btn" onclick="shareToWhatsAppGroup('${order.id}')" style="background:none; border:none; font-size:1.3rem; cursor:pointer;" title="مشاركة للجروب">📱</button>
-                    <button class="interactive-btn" onclick="printOldOrder('${order.id}')" style="background:none; border:none; font-size:1.3rem; cursor:pointer;" title="طباعة الفاتورة الأصلية">🖨️</button>
+                    <button class="interactive-btn" onclick="printHistoryOrder('${order.id}')" style="background:none; border:none; cursor:pointer;" title="طباعة الفاتورة">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-dark);"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                    </button>
                     <span style="background: ${statusColor}15; color: ${statusColor}; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.85rem;">${order.status}</span>
                 </div>
             </div>
@@ -520,25 +522,24 @@ function renderHistoryList(orders, isLoadMore = false) {
     }
 }
 
-// ⭐ إصلاح تشوه الفاتورة المطبوعة القديمة
-window.printOldOrder = function (orderId) {
-    let order = orderHistoryData.find(o => o.id === orderId);
-    if (!order && window.searchResultsCache) order = window.searchResultsCache.find(o => o.id === orderId);
-    if (!order && window.pendingOrdersData) order = window.pendingOrdersData.find(o => o.id === orderId);
-    if (!order && window.suspendedOrdersData) order = window.suspendedOrdersData.find(o => o.id === orderId);
-    if (!order && window.uncollectedOrdersData) order = window.uncollectedOrdersData.find(o => o.id === orderId);
+window.printHistoryOrder = function (orderId) {
+    let order = (window.orderHistoryData || []).find(o => o.id === orderId) ||
+                (window.searchResultsCache || []).find(o => o.id === orderId) ||
+                (window.pendingOrdersData || []).find(o => o.id === orderId) ||
+                (window.suspendedOrdersData || []).find(o => o.id === orderId) ||
+                (window.uncollectedOrdersData || []).find(o => o.id === orderId);
     
     if (!order) {
-        showToast("تعذر العثور على بيانات الأوردر للطباعة", "error");
+        alert("⚠️ خطأ: لم يتم العثور على بيانات الطلب للطباعة.");
         return;
     }
 
     let isOldGift = order.notes && order.notes.includes("هدية");
+    let oType = order.orderType || "";
 
-    let printLogo = document.getElementById('receiptLogo') || document.getElementById('print-logo');
+    let printLogo = document.getElementById('print-logo');
     if (printLogo) {
-        let oType = order.orderType || "";
-        let rem = parseFloat(order.remaining) || 0;
+        let rem = parseFloat(order.remaining) || parseFloat(order.total) || 0;
         let pay = order.payment || "";
         
         if (oType.includes("استلام من الفرع")) {
@@ -548,7 +549,7 @@ window.printOldOrder = function (orderId) {
         } else {
             printLogo.src = "./images/logo-cash.png";
         }
-        printLogo.style.display = 'inline-block';
+        printLogo.style.display = 'block';
     }
 
     if (document.getElementById('receipt-type')) {
@@ -556,29 +557,25 @@ window.printOldOrder = function (orderId) {
         let govStr = order.gov ? order.gov + " - " : "";
         document.getElementById('receipt-type').innerText = isOldGift ? `${govStr}${typeStr} - 🎁 هدية` : `${govStr}${typeStr}`;
     }
-    if (document.getElementById('print-date')) document.getElementById('print-date').innerText = order.date;
+    if (document.getElementById('print-date')) document.getElementById('print-date').innerText = order.date || new Date().toLocaleDateString('ar-EG');
     if (document.getElementById('print-time')) document.getElementById('print-time').innerText = order.time || '';
-    if (document.getElementById('print-customer-name')) document.getElementById('print-customer-name').innerText = order.name;
-    if (document.getElementById('print-phone')) document.getElementById('print-phone').innerText = order.phone;
+    if (document.getElementById('print-customer-name')) document.getElementById('print-customer-name').innerText = order.name || '';
+    if (document.getElementById('print-phone')) document.getElementById('print-phone').innerText = order.phone || '';
     if (document.getElementById('print-address')) document.getElementById('print-address').innerText = order.address || "";
-    if (document.getElementById('print-status')) document.getElementById('print-status').innerText = order.status;
 
     let printItemsHtml = "";
     if (order.products) {
         let lines = order.products.split('\n');
         lines.forEach(line => {
             if (line.trim() !== "") {
-                // تقسيم السطر بشكل ذكي ليتناسب مع الجدول الجديد
                 let match = line.match(/(.*) - الكمية: (\d+) \(([\d.]+)ج\)/);
                 if (match) {
                     let name = match[1].trim();
                     let qty = match[2];
                     let total = match[3];
                     let price = parseFloat(total) / parseFloat(qty);
-
                     let printP = isOldGift ? "***" : price;
                     let printTotal = isOldGift ? "***" : total;
-
                     printItemsHtml += `<tr><td>${name}</td><td>${printP}</td><td>${qty}</td><td>${printTotal}</td></tr>`;
                 } else {
                     printItemsHtml += `<tr><td colspan="4" style="text-align:right;">${line}</td></tr>`;
@@ -590,15 +587,14 @@ window.printOldOrder = function (orderId) {
     }
     if (document.getElementById('print-items-body')) document.getElementById('print-items-body').innerHTML = printItemsHtml;
 
-    if (document.getElementById('print-subtotal')) document.getElementById('print-subtotal').innerText = isOldGift ? "***" : (order.subtotal || 0);
+    if (document.getElementById('print-subtotal')) document.getElementById('print-subtotal').innerText = isOldGift ? "***" : (order.subtotal || order.total || 0);
     if (document.getElementById('print-discount')) document.getElementById('print-discount').innerText = isOldGift ? "***" : (order.discount || 0);
     if (document.getElementById('print-shipping')) document.getElementById('print-shipping').innerText = isOldGift ? "***" : (order.shipping || 0);
 
-    // إظهار العربون لو فيه
     if (parseFloat(order.deposit) > 0 && !isOldGift) {
         document.querySelector('.print-deposit-row').style.display = 'block';
         document.getElementById('print-deposit').innerText = order.deposit;
-        document.getElementById('print-final').innerText = order.remaining;
+        document.getElementById('print-final').innerText = order.remaining !== undefined ? order.remaining : order.total;
         if(document.getElementById('print-final-label')) document.getElementById('print-final-label').innerText = "المتبقي للدفع";
     } else {
         document.querySelector('.print-deposit-row').style.display = 'none';
