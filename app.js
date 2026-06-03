@@ -229,12 +229,16 @@ function loadDataFromServer() {
             }
             if (modSelect && currentMod) modSelect.value = currentMod;
 
-            // ⭐ V15.1: إحصائيات اليوم (today)
-            if (document.getElementById('todayCount')) document.getElementById('todayCount').innerText = data.todayOrders || 0;
-            if (document.getElementById('todaySales')) document.getElementById('todaySales').innerText = data.todaySales || 0;
-            // إحصائيات الشهر
-            if (document.getElementById('monthSales')) document.getElementById('monthSales').innerText = data.monthSales || 0;
-            // ⭐ Fix: completedMonthCount يتحسب في updateAdvancedDashboard مش من السيرفر
+            // ⭐ V15.1: إحصائيات اليوم (today) - تم استبدالها بالمنطق المحلي في updateAdvancedDashboard لحل مشكلة الإكسيل
+
+            // ⭐ إذا لم يكن المستخدم قد اختار شهراً معيناً للتقرير، نعرض إحصائيات الشهر الحالي في المربعات
+            let reportMonthFilter = document.getElementById('reportMonthFilter');
+            if (!reportMonthFilter || !reportMonthFilter.value) {
+                if (document.getElementById('monthSales')) document.getElementById('monthSales').innerText = data.monthSales || 0;
+                if (document.getElementById('monthCount')) document.getElementById('monthCount').innerText = data.monthOrderCount || 0;
+                if (document.getElementById('completedMonthCount')) document.getElementById('completedMonthCount').innerText = data.completedMonthCount || 0;
+                if (document.getElementById('returnedCount')) document.getElementById('returnedCount').innerText = data.returnedCount || 0;
+            }
 
             // ⭐ ملء فلتر الشهور في التقارير تلقائياً
             buildMonthFilterOptions();
@@ -1640,7 +1644,10 @@ function updateAdvancedDashboard(history) {
 
     let allOrders = window.orderHistoryData || [];
 
-    // ⭐ Fix: دمج كل مصادر البيانات للحصول على صورة شاملة
+    let todayOrdersCount = 0;
+    let todaySalesTotal = 0;
+
+    // ⭐ Fix: دمج كل مصادر البيانات للحصول على صورة شاملة (لليوم فقط)
     let allKnownOrders = [...allOrders];
     if (window.uncollectedOrdersData && window.uncollectedOrdersData.length > 0) {
         window.uncollectedOrdersData.forEach(uo => {
@@ -1652,47 +1659,31 @@ function updateAdvancedDashboard(history) {
 
     allKnownOrders.forEach(o => {
         let oDate = (o.date || "").slice(0, 10);
-        let oMonth = oDate.slice(0, 7);
-        // ⭐ Fix: المكتمل = "تم التوصيل ومُحاسب" فقط
         let isAccountedFor = o.status && o.status.includes("تم التوصيل ومُحاسب");
 
-        if (o.status === 'في الشحن') moneyWithDrivers += parseFloat(o.remaining) || 0;
-        // ⭐ Fix: المرتجعات تحسب للشهر الحالي فقط
-        if (o.status === 'مرتجع' && oMonth === monthStr) returnedCount++;
-        if (isAccountedFor && oDate === todayStr) completedToday++;
-
-        if (oMonth === monthStr) {
-            if (isAccountedFor) completedMonth++;
-            if (o.products) {
-                o.products.split('\n').forEach(line => {
-                    let match = line.match(/^(.+?)\s*-\s*الكمية:\s*(\d+)/);
-                    if (match) {
-                        let pName = match[1].trim();
-                        let pQty = parseInt(match[2]) || 1;
-                        productMap[pName] = (productMap[pName] || 0) + pQty;
-                    }
-                });
-            }
-            if (o.platform || o.moderator) {
-                let plt = o.platform || o.moderator || "غير محدد";
-                plt = plt.replace(/[--]/g, '').replace(/[\ufe0f]/g, '').trim();
-                if (plt) platformMap[plt] = (platformMap[plt] || 0) + 1;
-            }
+        // حسابات اليوم: نحسب كل الطلبات ما عدا المرتجع
+        if (oDate === todayStr && o.status !== "مرتجع") {
+            todayOrdersCount++;
+            todaySalesTotal += parseFloat(o.total || o.remaining || 0) || 0;
         }
+
+        if (isAccountedFor && oDate === todayStr) completedToday++;
     });
+
+    // ⭐ حساب العهدة الإجمالية من البيانات المالية (من الإكسيل مباشرة)
+    let moneyWithDrivers = 0;
+    if (window.latestServerData && window.latestServerData.financials) {
+        window.latestServerData.financials.forEach(f => {
+            moneyWithDrivers += parseFloat(f.inTransit) || 0;
+        });
+    }
 
     // عرض الإحصائيات الأساسية
     if (document.getElementById('moneyWithDrivers')) document.getElementById('moneyWithDrivers').innerText = moneyWithDrivers;
-    if (document.getElementById('returnedCount')) document.getElementById('returnedCount').innerText = returnedCount;
     
-    // ⭐ V15.0: إحصائيات الشهر الشاملة
-    let monthCountEl = document.getElementById('monthCount');
-    if (monthCountEl) {
-        let allMonthOrders = allKnownOrders.filter(o => (o.date || "").slice(0, 7) === monthStr && o.status !== "مرتجع");
-        monthCountEl.innerText = allMonthOrders.length;
-    }
-    
-    if (document.getElementById('completedMonthCount')) document.getElementById('completedMonthCount').innerText = completedMonth;
+    // ⭐ تحديث إحصائيات اليوم محلياً بشكل صحيح
+    if (document.getElementById('todayCount')) document.getElementById('todayCount').innerText = todayOrdersCount;
+    if (document.getElementById('todaySales')) document.getElementById('todaySales').innerText = todaySalesTotal;
     if (document.getElementById('completedCount')) document.getElementById('completedCount').innerText = completedToday;
 
     // بالس على زر المالية
@@ -1787,6 +1778,12 @@ function renderReportForMonth(targetMonth) {
                     }).join('');
                 }
             }
+
+            // ⭐ تحديث إحصائيات الشهر في أعلى الصفحة بناءً على الشهر المختار
+            if (document.getElementById('monthCount')) document.getElementById('monthCount').innerText = data.monthOrderCount || 0;
+            if (document.getElementById('monthSales')) document.getElementById('monthSales').innerText = data.monthSales || 0;
+            if (document.getElementById('completedMonthCount')) document.getElementById('completedMonthCount').innerText = data.completedMonthCount || 0;
+            if (document.getElementById('returnedCount')) document.getElementById('returnedCount').innerText = data.returnedCount || 0;
 
             // أداء المنصات - بالترتيب المحدد
             if (pltEl) {
