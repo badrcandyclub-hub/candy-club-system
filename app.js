@@ -1631,8 +1631,7 @@ let markRetBtn = document.getElementById('markReturnedBtn');
 if (markRetBtn) markRetBtn.addEventListener('click', () => processStatusUpdate(markRetBtn, 'shipped-checkbox', 'مرتجع'));
 
 function updateAdvancedDashboard(history) {
-    let moneyWithDrivers = 0, returnedCount = 0;
-    let completedToday = 0, completedMonth = 0;
+    let completedToday = 0;
 
     let productMap = {};
     let platformMap = {};
