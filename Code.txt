@@ -276,7 +276,7 @@ function doGet(e) {
                       status: data[i][18], payment: data[i][10], seller: data[i][20],
                       orderType: data[i][9], deposit: data[i][21] || 0,
                       remaining: data[i][22] || (parseFloat(data[i][17]) || 0),
-                      gov: data[i][5], platform: data[i][3]
+                      gov: data[i][5], platform: data[i][3], driver: data[i][11]
                   });
               }
           }
@@ -330,7 +330,7 @@ function doGet(e) {
     completedMonthCount: 0, completedTodayCount: 0,
     history: [], pendingOrders: [], financials: [],
     monthTopProducts: [], monthPlatforms: {}, uncollectedOrders: [],
-    suspendedOrders: []
+    suspendedOrders: [], shippedOrders: []
   };
 
   // ⭐ قراءة الطلبات المعلقة
@@ -454,6 +454,14 @@ function doGet(e) {
         });
       }
 
+      // ⭐ أوردرات في الشحن
+      if (status === "في الشحن" && driver) {
+        response.shippedOrders.push({
+          id: data[j][0], driver: driver, total: finalTotal, remaining: remainingCash,
+          payment: data[j][10], shipping: data[j][16], name: data[j][4], phone: data[j][7].toString().replace(/'/g, ""), address: data[j][6]
+        });
+      }
+
       // ⭐ السجل: يعرض الطلبات حسب filterDate (اليوم المختار في السجل)
       if (rowDate === filterDate) {
         response.history.push({
@@ -463,7 +471,7 @@ function doGet(e) {
           shipping: data[j][16], total: finalTotal, status: status,
           payment: data[j][10], seller: data[j][20], orderType: data[j][9],
           deposit: data[j][21] || 0, remaining: remainingCash,
-          gov: data[j][5], platform: data[j][3]
+          gov: data[j][5], platform: data[j][3], driver: driver
         });
       }
 

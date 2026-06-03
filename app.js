@@ -1517,29 +1517,14 @@ if (loadDriverOrdersBtn && shippedContainer) {
 
         shippedContainer.innerHTML = '<p class="empty-msg">⏳ جاري تحميل عهدة المندوب...</p>';
 
-        // ⭐ Fix: البحث في كل مصادر البيانات المتاحة
-        let allAvailableOrders = [
-            ...(window.orderHistoryData || []),
-            ...(window.uncollectedOrdersData || [])
-        ];
-        // إزالة التكرار بناءً على الـ ID
-        let uniqueMap = {};
-        allAvailableOrders.forEach(o => { uniqueMap[String(o.id)] = o; });
-        let uniqueOrders = Object.values(uniqueMap);
+        // ⭐ Fix: استخدام shippedOrders المرسلة من الإكسيل مباشرة
+        let shippedOrders = [];
+        if (window.latestServerData && window.latestServerData.shippedOrders) {
+            shippedOrders = window.latestServerData.shippedOrders.filter(o => o.driver === driver);
+        }
 
-        let shippedOrders = uniqueOrders.filter(o => o.status === 'في الشحن' && o.driver === driver);
-        
-        // ⭐ Fix: لو مفيش نتائج محلياً، نجيب من السيرفر بدون تاريخ محدد
         if (shippedOrders.length === 0) {
-            fetch(`${GOOGLE_SHEETS_URL}?action=globalSearch&query=${encodeURIComponent(driver)}`)
-                .then(res => res.json())
-                .then(data => {
-                    shippedOrders = (data || []).filter(o => o.status === 'في الشحن' && o.driver === driver);
-                    renderDriverShippedOrders(shippedOrders, shippedContainer);
-                })
-                .catch(() => {
-                    shippedContainer.innerHTML = '<p class="empty-msg">❌ تعذر تحميل البيانات</p>';
-                });
+            shippedContainer.innerHTML = '<p class="empty-msg">لا توجد أوردرات في الشحن لهذا المندوب حالياً.</p>';
         } else {
             renderDriverShippedOrders(shippedOrders, shippedContainer);
         }
