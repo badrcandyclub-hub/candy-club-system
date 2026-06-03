@@ -200,12 +200,13 @@ function buildMonthlyReport(ordersData, targetMonth) {
     var status     = ordersData[j][18];
     var finalTotal = parseFloat(ordersData[j][17]) || 0;
 
+    monthOrderCount++;
+
     if (status === "مرتجع") {
       returnedCount++;
       continue; // المرتجعات لا تدخل في المبيعات
     }
 
-    monthOrderCount++;
     monthSales += finalTotal;
 
     if (status === "تم التوصيل" || status === "تم التوصيل ومُحاسب") {
@@ -424,6 +425,8 @@ function doGet(e) {
     response.monthPlatforms      = monthlyReport.monthPlatforms;
     response.monthSales          = monthlyReport.monthSales;
     response.completedMonthCount = monthlyReport.completedMonthCount;
+    response.monthOrderCount     = monthlyReport.monthOrderCount;
+    response.returnedCount       = monthlyReport.returnedCount;
 
     // ⭐ إحصائيات اليوم الحقيقي (دايماً اليوم الفعلي، مش filterDate)
     var todayReport = buildDailyStats(data, todayReal);
@@ -509,7 +512,7 @@ function buildDailyStats(ordersData, targetDate) {
     var status     = ordersData[j][18];
     var finalTotal = parseFloat(ordersData[j][17]) || 0;
 
-    if (status !== "مرتجع" && status !== "تم التوصيل ومُحاسب") {
+    if (status !== "مرتجع") {
       todayOrders++;
       todaySales += finalTotal;
     }

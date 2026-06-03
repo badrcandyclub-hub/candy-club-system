@@ -1660,10 +1660,12 @@ function updateAdvancedDashboard(history) {
         let oDate = (o.date || "").slice(0, 10);
         let isAccountedFor = o.status && o.status.includes("تم التوصيل ومُحاسب");
 
-        // حسابات اليوم: نحسب كل الطلبات ما عدا المرتجع
-        if (oDate === todayStr && o.status !== "مرتجع") {
+        // حسابات اليوم: عدد الأوردرات يحسب الكل، المبيعات تستثني المرتجع
+        if (oDate === todayStr) {
             todayOrdersCount++;
-            todaySalesTotal += parseFloat(o.total || o.remaining || 0) || 0;
+            if (o.status !== "مرتجع") {
+                todaySalesTotal += parseFloat(o.total || o.remaining || 0) || 0;
+            }
         }
 
         if (isAccountedFor && oDate === todayStr) completedToday++;
