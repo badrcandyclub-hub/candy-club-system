@@ -1811,3 +1811,81 @@ body.dark-mode .btn-settle {
         print-color-adjust: exact !important;
     }
 }
+
+/* =========================================
+   14. ⭐ مودال حماية الإكسيل (Password Modal)
+   ========================================= */
+.excel-password-modal {
+    max-width: 400px;
+    padding: 30px;
+    text-align: center;
+    background: var(--card);
+}
+
+.password-modal-header {
+    margin-bottom: 25px;
+}
+
+.lock-icon-container {
+    width: 60px;
+    height: 60px;
+    background: #e8f5e9;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 15px;
+    border: 2px dashed #a5d6a7;
+}
+
+.lock-icon {
+    font-size: 1.8rem;
+}
+
+.password-input-container {
+    margin-bottom: 25px;
+}
+
+.password-field {
+    text-align: center;
+    font-size: 1.2rem;
+    letter-spacing: 5px;
+    font-weight: bold;
+    padding-right: 45px;
+    border: 2px solid var(--border);
+    transition: all 0.3s;
+}
+
+.password-field:focus {
+    border-color: #2e7d32;
+    box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.1);
+}
+
+.toggle-password-btn {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.3s;
+}
+
+.toggle-password-btn:hover {
+    opacity: 1;
+}
+
+/* تأثير الاهتزاز عند الخطأ */
+.shake-animation {
+    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+    40%, 60% { transform: translate3d(4px, 0, 0); }
+}

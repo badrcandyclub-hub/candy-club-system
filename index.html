@@ -397,10 +397,10 @@
                 </div>
                 
                 <div style="margin-bottom: 25px;">
-                    <!-- لينك الإكسيل بتاعك حطه هنا بدل كلمة رابط_الإكسيل_بتاعك_هنا -->
-                    <a href="https://docs.google.com/spreadsheets/d/1RL9fNadwDxgGMh45beymGbVzv0uQERHnR_bJrvQ8-AM/edit?gid=0#gid=0" id="openGoogleSheetBtn" class="btn-outline interactive-btn" target="_blank" style="display: block; text-decoration: none; padding: 15px; background: #e8f5e9; color: #2e7d32; border: 2px solid #c8e6c9; border-radius: 15px; font-weight: bold;">
+                    <!-- ⭐ زرار الإكسيل محمي بباسورد -->
+                    <button type="button" id="openGoogleSheetBtn" class="btn-outline interactive-btn" style="display: block; width:100%; text-decoration: none; padding: 15px; background: #e8f5e9; color: #2e7d32; border: 2px solid #c8e6c9; border-radius: 15px; font-weight: bold; font-family: 'Cairo', sans-serif; font-size:1rem; cursor:pointer;">
                         📊 فتح قاعدة البيانات (الإكسيل)
-                    </a>
+                    </button>
                 </div>
 
                 <hr style="border-top: 1px dashed #eee; margin: 15px 0;">
@@ -584,6 +584,32 @@
             <div class="modal-actions mt-10">
                 <button id="closeEditCatModal" class="btn-cancel">إلغاء</button>
                 <button id="saveEditCatBtn" class="btn-confirm">حفظ التعديلات</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ⭐ مودال الباسورد لحماية الإكسيل -->
+    <div id="excelPasswordModal" class="modal-overlay">
+        <div class="modal-content excel-password-modal">
+            <div class="password-modal-header">
+                <div class="lock-icon-container">
+                    <span class="lock-icon">🔒</span>
+                </div>
+                <h3 style="margin: 0; color: var(--text-dark); font-size: 1.2rem;">منطقة محمية</h3>
+                <p style="margin: 5px 0 0; font-size: 0.85rem; color: #888;">يرجى إدخال كلمة المرور للوصول إلى قاعدة البيانات</p>
+            </div>
+            
+            <div class="password-input-container">
+                <div style="position: relative;">
+                    <input type="password" id="excelPasswordInput" placeholder="أدخل كلمة المرور" autocomplete="off" class="password-field">
+                    <button type="button" id="togglePasswordVisibility" class="toggle-password-btn" title="إظهار/إخفاء">👁️</button>
+                </div>
+                <p id="passwordError" style="color: #e74c3c; font-size: 0.8rem; margin: 5px 0 0; display: none; text-align: center;">❌ كلمة المرور غير صحيحة</p>
+            </div>
+
+            <div class="modal-actions" style="margin-top: 15px;">
+                <button id="closeExcelPasswordModal" class="btn-cancel">إلغاء</button>
+                <button id="confirmExcelPassword" class="btn-confirm" style="background: linear-gradient(135deg, #2e7d32, #43a047); color: white;">فتح 🔓</button>
             </div>
         </div>
     </div>

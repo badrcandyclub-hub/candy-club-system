@@ -234,7 +234,7 @@ function loadDataFromServer() {
             if (document.getElementById('todaySales')) document.getElementById('todaySales').innerText = data.todaySales || 0;
             // إحصائيات الشهر
             if (document.getElementById('monthSales')) document.getElementById('monthSales').innerText = data.monthSales || 0;
-            if (document.getElementById('completedMonthCount')) document.getElementById('completedMonthCount').innerText = data.completedMonthCount || 0;
+            // ⭐ Fix: completedMonthCount يتحسب في updateAdvancedDashboard مش من السيرفر
 
             // ⭐ ملء فلتر الشهور في التقارير تلقائياً
             buildMonthFilterOptions();
@@ -1511,12 +1511,45 @@ if (loadDriverOrdersBtn && shippedContainer) {
             return;
         }
 
-        // عرض أوردرات المندوب المشحونة فقط
-        const shippedOrders = orderHistoryData.filter(o => o.status === 'في الشحن' && o.driver === driver);
-        shippedContainer.innerHTML = '';
-        if (shippedOrders.length === 0) shippedContainer.innerHTML = '<p class="empty-msg">لا توجد أوردرات في الشحن لهذا المندوب.</p>';
-        else shippedOrders.forEach(o => {
-            shippedContainer.innerHTML += `
+        shippedContainer.innerHTML = '<p class="empty-msg">⏳ جاري تحميل عهدة المندوب...</p>';
+
+        // ⭐ Fix: البحث في كل مصادر البيانات المتاحة
+        let allAvailableOrders = [
+            ...(window.orderHistoryData || []),
+            ...(window.uncollectedOrdersData || [])
+        ];
+        // إزالة التكرار بناءً على الـ ID
+        let uniqueMap = {};
+        allAvailableOrders.forEach(o => { uniqueMap[String(o.id)] = o; });
+        let uniqueOrders = Object.values(uniqueMap);
+
+        let shippedOrders = uniqueOrders.filter(o => o.status === 'في الشحن' && o.driver === driver);
+        
+        // ⭐ Fix: لو مفيش نتائج محلياً، نجيب من السيرفر بدون تاريخ محدد
+        if (shippedOrders.length === 0) {
+            fetch(`${GOOGLE_SHEETS_URL}?action=globalSearch&query=${encodeURIComponent(driver)}`)
+                .then(res => res.json())
+                .then(data => {
+                    shippedOrders = (data || []).filter(o => o.status === 'في الشحن' && o.driver === driver);
+                    renderDriverShippedOrders(shippedOrders, shippedContainer);
+                })
+                .catch(() => {
+                    shippedContainer.innerHTML = '<p class="empty-msg">❌ تعذر تحميل البيانات</p>';
+                });
+        } else {
+            renderDriverShippedOrders(shippedOrders, shippedContainer);
+        }
+    });
+}
+
+// ⭐ دالة مساعدة لعرض أوردرات المندوب المشحونة
+function renderDriverShippedOrders(shippedOrders, container) {
+    container.innerHTML = '';
+    if (shippedOrders.length === 0) {
+        container.innerHTML = '<p class="empty-msg">لا توجد أوردرات في الشحن لهذا المندوب.</p>';
+    } else {
+        shippedOrders.forEach(o => {
+            container.innerHTML += `
                 <div class="order-checkbox-row">
                     <input type="checkbox" class="order-checkbox shipped-checkbox" value="${o.id}">
                     <div class="order-details-compact">
@@ -1525,7 +1558,7 @@ if (loadDriverOrdersBtn && shippedContainer) {
                     </div>
                 </div>`;
         });
-    });
+    }
 }
 
 function processStatusUpdate(btn, checkboxesClass, newStatus, driverName = "") {
@@ -1600,22 +1633,36 @@ function updateAdvancedDashboard(history) {
     let productMap = {};
     let platformMap = {};
 
-    let todayStr = new Date().toISOString().slice(0, 10);
-    let monthStr = new Date().toISOString().slice(0, 7);
+    // ⭐ Fix: استخدام التاريخ المحلي بدل UTC لتجنب مشكلة الـ timezone
+    let now = new Date();
+    let todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+    let monthStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
 
     let allOrders = window.orderHistoryData || [];
 
-    allOrders.forEach(o => {
+    // ⭐ Fix: دمج كل مصادر البيانات للحصول على صورة شاملة
+    let allKnownOrders = [...allOrders];
+    if (window.uncollectedOrdersData && window.uncollectedOrdersData.length > 0) {
+        window.uncollectedOrdersData.forEach(uo => {
+            if (!allKnownOrders.find(o => String(o.id) === String(uo.id))) {
+                allKnownOrders.push(uo);
+            }
+        });
+    }
+
+    allKnownOrders.forEach(o => {
         let oDate = (o.date || "").slice(0, 10);
         let oMonth = oDate.slice(0, 7);
-        let isCompleted = o.status && (o.status.includes("تم التوصيل"));
+        // ⭐ Fix: المكتمل = "تم التوصيل ومُحاسب" فقط
+        let isAccountedFor = o.status && o.status.includes("تم التوصيل ومُحاسب");
 
         if (o.status === 'في الشحن') moneyWithDrivers += parseFloat(o.remaining) || 0;
-        if (o.status === 'مرتجع') returnedCount++;
-        if (isCompleted && oDate === todayStr) completedToday++;
+        // ⭐ Fix: المرتجعات تحسب للشهر الحالي فقط
+        if (o.status === 'مرتجع' && oMonth === monthStr) returnedCount++;
+        if (isAccountedFor && oDate === todayStr) completedToday++;
 
         if (oMonth === monthStr) {
-            if (isCompleted) completedMonth++;
+            if (isAccountedFor) completedMonth++;
             if (o.products) {
                 o.products.split('\n').forEach(line => {
                     let match = line.match(/^(.+?)\s*-\s*الكمية:\s*(\d+)/);
@@ -1641,7 +1688,7 @@ function updateAdvancedDashboard(history) {
     // ⭐ V15.0: إحصائيات الشهر الشاملة
     let monthCountEl = document.getElementById('monthCount');
     if (monthCountEl) {
-        let allMonthOrders = allOrders.filter(o => (o.date || "").slice(0, 7) === monthStr && o.status !== "مرتجع");
+        let allMonthOrders = allKnownOrders.filter(o => (o.date || "").slice(0, 7) === monthStr && o.status !== "مرتجع");
         monthCountEl.innerText = allMonthOrders.length;
     }
     
@@ -1656,23 +1703,45 @@ function updateAdvancedDashboard(history) {
     }
 }
 
-// ⭐ V15.1: بناء قائمة الشهور لفلتر التقارير
+// ⭐ V15.1: بناء قائمة الشهور لفلتر التقارير - شهور فيها بيانات فقط
 function buildMonthFilterOptions() {
     let sel = document.getElementById('reportMonthFilter');
     if (!sel) return;
     let currentVal = sel.value;
     sel.innerHTML = '<option value="">اختر الشهر</option>';
     let arabicMonths = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+    
+    // ⭐ Fix: جمع كل الشهور الفعلية من البيانات المتاحة
+    let availableMonths = new Set();
+    let allDataSources = [
+        ...(window.orderHistoryData || []),
+        ...(window.pendingOrdersData || []),
+        ...(window.uncollectedOrdersData || [])
+    ];
+    
+    allDataSources.forEach(o => {
+        let d = (o.date || "").slice(0, 7); // "2026-05"
+        if (d && d.length === 7 && d.includes('-')) availableMonths.add(d);
+    });
+
+    // ⭐ Fix: إضافة الشهر الحالي دائماً (بدون toISOString)
     let now = new Date();
-    for (let i = 0; i < 12; i++) {
-        let d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        let val = d.toISOString().slice(0, 7);
-        let label = arabicMonths[d.getMonth()] + ' ' + d.getFullYear();
+    let currentMonthVal = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    availableMonths.add(currentMonthVal);
+
+    // ترتيب الشهور من الأحدث للأقدم
+    let sortedMonths = Array.from(availableMonths).sort().reverse();
+
+    sortedMonths.forEach(monthVal => {
+        let [yr, mo] = monthVal.split('-');
+        let moIdx = parseInt(mo) - 1;
+        if (moIdx < 0 || moIdx > 11) return;
+        let label = arabicMonths[moIdx] + ' ' + yr;
         let opt = document.createElement('option');
-        opt.value = val;
-        opt.textContent = i === 0 ? label + ' (الحالي)' : label;
+        opt.value = monthVal;
+        opt.textContent = monthVal === currentMonthVal ? label + ' (الحالي)' : label;
         sel.appendChild(opt);
-    }
+    });
     if (currentVal) sel.value = currentVal;
 }
 
@@ -2194,5 +2263,82 @@ if (searchCustomerBtn && customerSearchInput) {
     });
     customerSearchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') searchCustomerBtn.click();
+    });
+}
+
+// ==========================================
+// 13. ⭐ حماية زر الإكسيل بباسورد
+// ==========================================
+const EXCEL_SHEET_URL = "https://docs.google.com/spreadsheets/d/1RL9fNadwDxgGMh45beymGbVzv0uQERHnR_bJrvQ8-AM/edit?gid=0#gid=0";
+const EXCEL_PASSWORD = "2092006";
+
+let openGoogleSheetBtn = document.getElementById('openGoogleSheetBtn');
+let excelPasswordModal = document.getElementById('excelPasswordModal');
+let closeExcelPasswordModal = document.getElementById('closeExcelPasswordModal');
+let confirmExcelPassword = document.getElementById('confirmExcelPassword');
+let excelPasswordInput = document.getElementById('excelPasswordInput');
+let passwordError = document.getElementById('passwordError');
+let togglePasswordVisibility = document.getElementById('togglePasswordVisibility');
+
+if (openGoogleSheetBtn && excelPasswordModal) {
+    openGoogleSheetBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        excelPasswordModal.classList.add('active');
+        if (excelPasswordInput) {
+            excelPasswordInput.value = '';
+            excelPasswordInput.focus();
+        }
+        if (passwordError) passwordError.style.display = 'none';
+    });
+}
+
+if (closeExcelPasswordModal) {
+    closeExcelPasswordModal.addEventListener('click', () => {
+        excelPasswordModal.classList.remove('active');
+        if (excelPasswordInput) excelPasswordInput.value = '';
+        if (passwordError) passwordError.style.display = 'none';
+    });
+}
+
+if (togglePasswordVisibility && excelPasswordInput) {
+    togglePasswordVisibility.addEventListener('click', () => {
+        if (excelPasswordInput.type === 'password') {
+            excelPasswordInput.type = 'text';
+            togglePasswordVisibility.textContent = '🙈';
+        } else {
+            excelPasswordInput.type = 'password';
+            togglePasswordVisibility.textContent = '👁️';
+        }
+    });
+}
+
+function tryExcelPassword() {
+    let enteredPassword = excelPasswordInput ? excelPasswordInput.value.trim() : '';
+    if (enteredPassword === EXCEL_PASSWORD) {
+        showToast("✅ تم التحقق بنجاح، جاري فتح قاعدة البيانات...", "success");
+        excelPasswordModal.classList.remove('active');
+        if (excelPasswordInput) excelPasswordInput.value = '';
+        window.open(EXCEL_SHEET_URL, '_blank');
+    } else {
+        if (passwordError) passwordError.style.display = 'block';
+        let modalContent = excelPasswordModal.querySelector('.excel-password-modal');
+        if (modalContent) {
+            modalContent.classList.add('shake-animation');
+            setTimeout(() => modalContent.classList.remove('shake-animation'), 500);
+        }
+        if (excelPasswordInput) {
+            excelPasswordInput.value = '';
+            excelPasswordInput.focus();
+        }
+    }
+}
+
+if (confirmExcelPassword) {
+    confirmExcelPassword.addEventListener('click', tryExcelPassword);
+}
+
+if (excelPasswordInput) {
+    excelPasswordInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') tryExcelPassword();
     });
 }
