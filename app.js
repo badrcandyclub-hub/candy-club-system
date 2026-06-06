@@ -402,6 +402,10 @@ if (deliveryTypeSelect) {
             if (specialDateContainer) specialDateContainer.classList.add('hidden-field');
             if (document.getElementById('shippingCost')) document.getElementById('shippingCost').value = 0;
             let infoSpan = document.querySelector('#deliveryInfo span'); if (infoSpan) infoSpan.innerText = "استلام من الفرع 🏪";
+        } else if (type === 'gov_shipping') {
+            if (addressFields) addressFields.classList.remove('hidden-field');
+            if (specialDateContainer) specialDateContainer.classList.add('hidden-field');
+            triggerGovCalc();
         } else if (type === 'special_date') {
             if (addressFields) addressFields.classList.remove('hidden-field');
             if (specialDateContainer) specialDateContainer.classList.remove('hidden-field');
@@ -522,6 +526,11 @@ function renderHistoryList(orders, isLoadMore = false) {
                 <span>⏰ ${order.time || '--'}</span>
                 <span>📱 ${order.phone}</span>
                 <span style="font-weight:bold; color: var(--text-dark);">💰 ${order.total} ج.م</span>
+            </div>
+            <div style="margin-top: 5px; padding-top: 5px; border-top: 1px dashed #ccc; display: flex; align-items: center; gap: 10px;">
+                <label style="font-size: 0.85rem; color: var(--primary); font-weight: bold;">سعر العرض:</label>
+                <input type="number" id="hist-offer-${order.id}" value="${order.offerPrice || 0}" style="width: 80px; padding: 4px; font-size: 0.85rem; margin-bottom: 0; border: 1px solid var(--border); border-radius: 4px; text-align: center;">
+                <button class="interactive-btn" onclick="window.updateOrderOffer('${order.id}')" style="background: var(--secondary); color: white; border: none; padding: 4px 12px; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">تحديث</button>
             </div>
         `;
         container.appendChild(div);
@@ -655,7 +664,42 @@ window.printHistoryOrder = function (orderId) {
     let sellerP = document.getElementById('print-seller-name');
     if (sellerP) sellerP.innerText = `الكاشير: ${order.seller || 'غير محدد'}`;
 
-    setTimeout(() => window.print(), 500);
+    let isGovShipping = oType === 'gov_shipping' || oType.includes('محافظات') || (order.deliveryType || '') === 'gov_shipping';
+    if (isGovShipping) {
+        document.body.classList.add('print-gov-shipping');
+    } else {
+        document.body.classList.remove('print-gov-shipping');
+    }
+
+    setTimeout(() => { 
+        window.print();
+        document.body.classList.remove('print-gov-shipping');
+    }, 500);
+};
+
+window.updateOrderOffer = function(orderId) {
+    let newOffer = document.getElementById(`hist-offer-${orderId}`).value;
+    if (!confirm('هل أنت متأكد من تحديث سعر العرض وتعديل الإجمالي النهائي للأوردر؟')) return;
+    
+    let btn = event.target;
+    let oldText = btn.innerText;
+    btn.innerText = "جاري...";
+    btn.disabled = true;
+
+    let formData = new URLSearchParams();
+    formData.append('action', 'updateOfferPrice');
+    formData.append('orderId', orderId);
+    formData.append('newOfferPrice', newOffer);
+
+    fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
+        .then(() => {
+            showToast("✅ تم تحديث سعر العرض بنجاح!", "success");
+            loadDataFromServer();
+        }).catch(() => {
+            showToast("❌ حدث خطأ في الاتصال", "error");
+            btn.innerText = oldText;
+            btn.disabled = false;
+        });
 };
 
 // ⭐ إصلاح مسح الذاكرة في محرك البحث الشامل
@@ -764,7 +808,7 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
         <input type="text" list="smartProductsList" class="product-name-input" placeholder="اسم المنتج..." value="${nameVal}" required style="flex:3;" ${rOnly}>
         <input type="number" class="product-price-input" placeholder="السعر" value="${priceVal}" required style="flex:1.2; text-align:center;" ${rOnly}>
         
-        <button type="button" class="btn-offer-toggle" style="display:none; flex:0.8;" title="تفعيل/إيقاف العرض">%</button>
+        <input type="number" class="product-offer-input" placeholder="عرض" style="flex:0.8; text-align:center;" ${rOnly}>
 
         <input type="number" class="product-qty-input" placeholder="الكمية" value="${qtyVal}" min="1" required style="flex:1; text-align:center;" ${rOnly}>
         <button type="button" class="btn-confirm-pro interactive-btn" style="flex: 0 0 36px;">✔️</button>
@@ -776,10 +820,10 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
 
     let nameInput = div.querySelector('.product-name-input');
     let priceInput = div.querySelector('.product-price-input');
+    let offerInput = div.querySelector('.product-offer-input');
     let qtyInput = div.querySelector('.product-qty-input');
     let confirmBtn = div.querySelector('.btn-confirm-pro');
     let removeBtn = div.querySelector('.remove-product-btn');
-    let offerBtn = div.querySelector('.btn-offer-toggle');
 
     if (isConfirmed) confirmBtn.innerHTML = "✏️";
 
@@ -790,42 +834,18 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
             let offerP = parseFloat(selected.offerPrice) || 0;
             let isOfferActive = selected.isOffer === true || selected.isOffer === "true" || selected.isOffer === 1 || selected.isOffer === "TRUE";
 
-            if (offerP > 0) {
-                offerBtn.style.display = 'inline-block';
-                if (isOfferActive) offerBtn.classList.add('active');
-                else offerBtn.classList.remove('active');
-
-                priceInput.value = isOfferActive ? offerP : baseP;
-                priceInput.readOnly = isOfferActive;
-
-                offerBtn.onclick = () => {
-                    let willBeActive = !offerBtn.classList.contains('active');
-                    if (willBeActive) {
-                        offerBtn.classList.add('active');
-                        priceInput.value = offerP;
-                        priceInput.readOnly = true;
-                    } else {
-                        offerBtn.classList.remove('active');
-                        priceInput.value = baseP;
-                        priceInput.readOnly = false;
-                    }
-                    calculateTotal();
-                    window.pushCatalogUpdate(selected.name, baseP, willBeActive, offerP);
-                    selected.isOffer = willBeActive;
-                };
+            priceInput.value = baseP;
+            if (offerP > 0 && isOfferActive) {
+                offerInput.value = offerP;
             } else {
-                offerBtn.style.display = 'none';
-                priceInput.value = baseP;
-                priceInput.readOnly = false;
+                offerInput.value = "";
             }
             calculateTotal();
-        } else {
-            offerBtn.style.display = 'none';
-            priceInput.readOnly = false;
         }
     });
 
     priceInput.addEventListener('input', calculateTotal);
+    offerInput.addEventListener('input', calculateTotal);
     qtyInput.addEventListener('input', calculateTotal);
 
     confirmBtn.addEventListener('click', () => {
@@ -835,11 +855,8 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
             div.classList.remove('confirmed');
             confirmBtn.innerHTML = "✔️";
             nameInput.readOnly = false;
-
-            let selected = catalogData.find(p => p.name === nameInput.value);
-            let isOfferActive = selected && (selected.isOffer === true || selected.isOffer === "true" || selected.isOffer === 1);
-            if (!isOfferActive) priceInput.readOnly = false;
-
+            priceInput.readOnly = false;
+            offerInput.readOnly = false;
             qtyInput.readOnly = false;
         } else {
             div.classList.add('confirmed');
@@ -847,6 +864,7 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
             calculateTotal();
             nameInput.readOnly = true;
             priceInput.readOnly = true;
+            offerInput.readOnly = true;
             qtyInput.readOnly = true;
 
             let currentPrice = parseFloat(priceInput.value);
@@ -896,8 +914,10 @@ function calculateTotal() {
     let total = 0;
     document.querySelectorAll('.product-row.confirmed').forEach(row => {
         let price = parseFloat(row.querySelector('.product-price-input').value) || 0;
+        let offer = parseFloat(row.querySelector('.product-offer-input').value) || 0;
+        let finalPrice = offer > 0 ? offer : price;
         let qty = parseFloat(row.querySelector('.product-qty-input').value) || 1;
-        total += (price * qty); // محصنة ضد ה- NaN
+        total += (finalPrice * qty); // محصنة ضد الـ NaN
     });
 
     if (document.getElementById('productsTotal')) document.getElementById('productsTotal').value = total;
@@ -1151,17 +1171,25 @@ if (saveAndPrintBtn) {
 
         let isGift = document.getElementById('isGiftCheckbox') ? document.getElementById('isGiftCheckbox').checked : false;
 
-        let productsListText = "", printItemsHtml = "";
+        let productsListText = "", printItemsHtml = "", orderOfferPrice = 0;
         document.querySelectorAll('.product-row.confirmed').forEach(row => {
-            let n = row.querySelector('.product-name-input').value, p = row.querySelector('.product-price-input').value, q = row.querySelector('.product-qty-input').value;
-            let rowTotal = (parseFloat(p) || 0) * (parseFloat(q) || 1);
+            let n = row.querySelector('.product-name-input').value;
+            let p = parseFloat(row.querySelector('.product-price-input').value) || 0;
+            let oVal = parseFloat(row.querySelector('.product-offer-input').value) || 0;
+            let q = parseFloat(row.querySelector('.product-qty-input').value) || 1;
+            
+            let finalPrice = oVal > 0 ? oVal : p;
+            let rowTotal = finalPrice * q;
+            
+            if (oVal > 0) orderOfferPrice += (oVal * q);
+
             productsListText += `${n} - الكمية: ${q} (${rowTotal}ج)\n`;
 
             let cProd = catalogData.find(cp => cp.name === n);
             let isOffer = cProd && (cProd.isOffer === true || cProd.isOffer === "true" || cProd.isOffer === 1);
             let nDisplay = n;
 
-            let printP = isGift ? "***" : p;
+            let printP = isGift ? "***" : finalPrice;
             let printTotal = isGift ? "***" : rowTotal;
             printItemsHtml += `<tr><td>${nDisplay}</td><td>${printP}</td><td>${q}</td><td>${printTotal}</td></tr>`;
         });
@@ -1224,6 +1252,7 @@ if (saveAndPrintBtn) {
         formData.append('moderator', selectedModerator);
         formData.append('deposit', dep);
         formData.append('remaining', rem);
+        formData.append('offerPrice', orderOfferPrice);
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
