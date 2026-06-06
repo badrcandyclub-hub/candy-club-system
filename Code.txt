@@ -97,6 +97,9 @@ function setupCandyClubUX() {
   settingsSheet.setColumnWidth(15, 120);
   settingsSheet.setColumnWidth(16, 120);
 
+  settingsSheet.getRange("O2:O50").setFormula('=IF(M2<>"", COUNTIFS(\'📝 الطلبات\'!L:L, M2, \'📝 الطلبات\'!S:S, "*تم التوصيل*"), "")');
+  settingsSheet.getRange("P2:P50").setFormula('=IF(M2<>"", SUMIFS(\'📝 الطلبات\'!Q:Q, \'📝 الطلبات\'!L:L, M2, \'📝 الطلبات\'!S:S, "*تم التوصيل*"), "")');
+
   settingsSheet.getRange("S1:T1").setValues([["👤 المودريتور", "عدد الأوردرات"]]).setBackground("#8e44ad").setFontColor("white").setFontFamily(headerFont).setFontSize(12).setFontWeight("bold");
   settingsSheet.getRange(1, 19, 50, 2).setBorder(true, true, true, true, true, true, "#8e44ad", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
   settingsSheet.setColumnWidth(19, 150);
@@ -862,28 +865,6 @@ function calculateFinancials() {
       drv, acc.ordersCount, acc.inTransit, acc.cashCollected, acc.shippingFees, acc.netDue, statusText 
     ]]);
     row++;
-  }
-
-  var settingsSheet = ss.getSheetByName("⚙️ الإعدادات والشحن");
-  if (settingsSheet) {
-    var sLast = settingsSheet.getLastRow();
-    if (sLast > 1) {
-      var drvs = settingsSheet.getRange(2, 13, sLast - 1, 1).getValues();
-      var outData = [];
-      for (var k = 0; k < drvs.length; k++) {
-        var dName = drvs[k][0];
-        if (dName && accounts[dName]) {
-          outData.push([accounts[dName].ordersCount, accounts[dName].shippingFees]);
-        } else if (dName) {
-          outData.push([0, 0]);
-        } else {
-          outData.push(["", ""]);
-        }
-      }
-      if (outData.length > 0) {
-        settingsSheet.getRange(2, 15, outData.length, 2).setValues(outData);
-      }
-    }
   }
 }
 

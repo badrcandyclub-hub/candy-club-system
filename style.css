@@ -1907,29 +1907,30 @@ body.dark-mode .btn-settle {
     .print-gov-shipping th:nth-child(4),
     .print-gov-shipping td:nth-child(2),
     .print-gov-shipping td:nth-child(4),
-    .print-gov-shipping .receipt-totals {
+    .print-gov-shipping .receipt-totals,
+    .print-gov-shipping .receipt-table {
         display: none !important;
     }
 
     .print-gov-shipping h2#receipt-type {
-        font-size: 36pt !important;
+        font-size: 24pt !important;
         font-weight: 900 !important;
-        margin-bottom: 20px !important;
+        margin-bottom: 10px !important;
     }
 
     .print-gov-shipping .receipt-info {
-        font-size: 28pt !important;
-        line-height: 2 !important;
+        font-size: 20pt !important;
+        line-height: 1.8 !important;
         border: 4px solid #000 !important;
-        padding: 30px !important;
-        margin: 40px 0 !important;
+        padding: 20px !important;
+        margin: 20px 0 !important;
         background: #fff !important;
     }
 
     .print-gov-shipping .receipt-info p {
-        font-size: 28pt !important;
+        font-size: 20pt !important;
         font-weight: 900 !important;
-        margin-bottom: 20px !important;
+        margin-bottom: 15px !important;
         color: #000 !important;
     }
 }
