@@ -156,22 +156,14 @@ function loadDataFromServer() {
             };
 
             if (data.alex && data.alex.length > 0) {
-                let optgroup = document.createElement('optgroup'); optgroup.label = "⛓ مناطق الإسكندرية";
-                data.alex.forEach(z => {
-                    // ⭐ إظهار السعر بجانب اسم المنطقة
-                    optgroup.innerHTML += `<option value="${z.name}">${z.name} (${z.price} ج)</option>`;
-                    renderZoneItem(z, 'alex', zonesAlexList);
-                });
-                if (govSelect) govSelect.appendChild(optgroup);
+                data.alex.forEach(z => renderZoneItem(z, 'alex', zonesAlexList));
             }
             if (data.govs && data.govs.length > 0) {
-                let optgroup = document.createElement('optgroup'); optgroup.label = "🚚 المحافظات";
-                data.govs.forEach(z => {
-                    optgroup.innerHTML += `<option value="${z.name}">${z.name} (${z.price} ج)</option>`;
-                    renderZoneItem(z, 'govs', zonesGovList);
-                });
-                if (govSelect) govSelect.appendChild(optgroup);
+                data.govs.forEach(z => renderZoneItem(z, 'govs', zonesGovList));
             }
+            
+            window.latestServerData = data;
+            window.updateGovernoratesDropdown();
             if (govSelect && currentGov) govSelect.value = currentGov;
 
             const driverSelect = document.getElementById('driverNameSelect');
@@ -415,9 +407,42 @@ if (deliveryTypeSelect) {
             if (specialDateContainer) specialDateContainer.classList.add('hidden-field');
             triggerGovCalc();
         }
+        window.updateGovernoratesDropdown();
         calculateTotal();
     });
 }
+
+window.updateGovernoratesDropdown = function() {
+    const govSelect = document.getElementById('governorate');
+    if (!govSelect || !window.latestServerData) return;
+    let data = window.latestServerData;
+    let type = document.getElementById('deliveryType') ? document.getElementById('deliveryType').value : 'normal';
+    
+    let currentVal = govSelect.value;
+    govSelect.innerHTML = '<option value="">اختر من القائمة</option>';
+    
+    if (type === 'gov_shipping') {
+        if (data.govs && data.govs.length > 0) {
+            let optgroup = document.createElement('optgroup'); optgroup.label = "🚚 المحافظات";
+            data.govs.forEach(z => {
+                optgroup.innerHTML += `<option value="${z.name}">${z.name} (${z.price} ج)</option>`;
+            });
+            govSelect.appendChild(optgroup);
+        }
+    } else {
+        if (data.alex && data.alex.length > 0) {
+            let optgroup = document.createElement('optgroup'); optgroup.label = "⛓ مناطق الإسكندرية";
+            data.alex.forEach(z => {
+                optgroup.innerHTML += `<option value="${z.name}">${z.name} (${z.price} ج)</option>`;
+            });
+            govSelect.appendChild(optgroup);
+        }
+    }
+    
+    if (Array.from(govSelect.options).some(opt => opt.value === currentVal)) {
+        govSelect.value = currentVal;
+    }
+};
 
 function triggerGovCalc() {
     if (!govSelect) return;
@@ -526,11 +551,6 @@ function renderHistoryList(orders, isLoadMore = false) {
                 <span>⏰ ${order.time || '--'}</span>
                 <span>📱 ${order.phone}</span>
                 <span style="font-weight:bold; color: var(--text-dark);">💰 ${order.total} ج.م</span>
-            </div>
-            <div style="margin-top: 5px; padding-top: 5px; border-top: 1px dashed #ccc; display: flex; align-items: center; gap: 10px;">
-                <label style="font-size: 0.85rem; color: var(--primary); font-weight: bold;">سعر العرض:</label>
-                <input type="number" id="hist-offer-${order.id}" value="${order.offerPrice || 0}" style="width: 80px; padding: 4px; font-size: 0.85rem; margin-bottom: 0; border: 1px solid var(--border); border-radius: 4px; text-align: center;">
-                <button class="interactive-btn" onclick="window.updateOrderOffer('${order.id}')" style="background: var(--secondary); color: white; border: none; padding: 4px 12px; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">تحديث</button>
             </div>
         `;
         container.appendChild(div);
@@ -677,30 +697,6 @@ window.printHistoryOrder = function (orderId) {
     }, 500);
 };
 
-window.updateOrderOffer = function(orderId) {
-    let newOffer = document.getElementById(`hist-offer-${orderId}`).value;
-    if (!confirm('هل أنت متأكد من تحديث سعر العرض وتعديل الإجمالي النهائي للأوردر؟')) return;
-    
-    let btn = event.target;
-    let oldText = btn.innerText;
-    btn.innerText = "جاري...";
-    btn.disabled = true;
-
-    let formData = new URLSearchParams();
-    formData.append('action', 'updateOfferPrice');
-    formData.append('orderId', orderId);
-    formData.append('newOfferPrice', newOffer);
-
-    fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
-        .then(() => {
-            showToast("✅ تم تحديث سعر العرض بنجاح!", "success");
-            loadDataFromServer();
-        }).catch(() => {
-            showToast("❌ حدث خطأ في الاتصال", "error");
-            btn.innerText = oldText;
-            btn.disabled = false;
-        });
-};
 
 // ⭐ إصلاح مسح الذاكرة في محرك البحث الشامل
 const searchBtn = document.getElementById('searchBtn');
@@ -868,6 +864,7 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
             qtyInput.readOnly = true;
 
             let currentPrice = parseFloat(priceInput.value);
+            let currentOffer = parseFloat(offerInput.value) || 0;
             let cProd = catalogData.find(p => p.name === nameInput.value);
 
             if (cProd) {
@@ -875,20 +872,22 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
                 let baseP = parseFloat(cProd.price) || 0;
                 let offerP = parseFloat(cProd.offerPrice) || 0;
 
-                if (isOfferActive && currentPrice !== offerP && currentPrice !== baseP) {
-                    if (confirm("تم تعديل السعر لـ " + currentPrice + " هل تريد حفظه كسعر عرض دائم في الكتالوج؟")) {
-                        window.pushCatalogUpdate(cProd.name, baseP, true, currentPrice);
-                        cProd.offerPrice = currentPrice;
+                if (currentOffer > 0 && currentOffer !== offerP) {
+                    if (confirm("تم تعديل سعر العرض لـ " + currentOffer + " هل تريد حفظه كسعر عرض دائم للمنتج وتفعيله في الكتالوج؟")) {
+                        window.pushCatalogUpdate(cProd.name, baseP, true, currentOffer);
+                        cProd.offerPrice = currentOffer;
+                        cProd.isOffer = true;
                     }
-                } else if (!isOfferActive && currentPrice !== baseP) {
-                    if (confirm("تم تعديل السعر لـ " + currentPrice + " هل تريد حفظه كسعر أساسي دائم في الكتالوج؟")) {
+                } else if (currentOffer === 0 && currentPrice !== baseP) {
+                    if (confirm("تم تعديل السعر الأساسي لـ " + currentPrice + " هل تريد حفظه كسعر أساسي دائم في الكتالوج؟")) {
                         window.pushCatalogUpdate(cProd.name, currentPrice, false, offerP);
                         cProd.price = currentPrice;
+                        cProd.isOffer = false;
                     }
                 }
             } else {
-                window.pushCatalogUpdate(nameInput.value, currentPrice, false, 0);
-                catalogData.push({ name: nameInput.value, price: currentPrice, isOffer: false, offerPrice: 0 });
+                window.pushCatalogUpdate(nameInput.value, currentPrice, currentOffer > 0, currentOffer);
+                catalogData.push({ name: nameInput.value, price: currentPrice, isOffer: currentOffer > 0, offerPrice: currentOffer });
                 updateSmartProductsList();
             }
         }
@@ -1171,7 +1170,7 @@ if (saveAndPrintBtn) {
 
         let isGift = document.getElementById('isGiftCheckbox') ? document.getElementById('isGiftCheckbox').checked : false;
 
-        let productsListText = "", printItemsHtml = "", orderOfferPrice = 0;
+        let productsListText = "", printItemsHtml = "";
         document.querySelectorAll('.product-row.confirmed').forEach(row => {
             let n = row.querySelector('.product-name-input').value;
             let p = parseFloat(row.querySelector('.product-price-input').value) || 0;
@@ -1181,14 +1180,9 @@ if (saveAndPrintBtn) {
             let finalPrice = oVal > 0 ? oVal : p;
             let rowTotal = finalPrice * q;
             
-            if (oVal > 0) orderOfferPrice += (oVal * q);
-
             productsListText += `${n} - الكمية: ${q} (${rowTotal}ج)\n`;
 
-            let cProd = catalogData.find(cp => cp.name === n);
-            let isOffer = cProd && (cProd.isOffer === true || cProd.isOffer === "true" || cProd.isOffer === 1);
             let nDisplay = n;
-
             let printP = isGift ? "***" : finalPrice;
             let printTotal = isGift ? "***" : rowTotal;
             printItemsHtml += `<tr><td>${nDisplay}</td><td>${printP}</td><td>${q}</td><td>${printTotal}</td></tr>`;
@@ -1252,7 +1246,6 @@ if (saveAndPrintBtn) {
         formData.append('moderator', selectedModerator);
         formData.append('deposit', dep);
         formData.append('remaining', rem);
-        formData.append('offerPrice', orderOfferPrice);
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {

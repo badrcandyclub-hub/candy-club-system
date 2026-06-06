@@ -58,7 +58,7 @@ function setupCandyClubUX() {
     "رقم الطلب", "التاريخ", "الوقت", "المنصة", "اسم العميل", "المحافظة", "العنوان بالتفصيل", 
     "رقم التواصل", "رقم آخر", "نوع التوصيل", "طريقة الدفع", "اسم المندوب", "موعد التسليم", 
     "تفاصيل المنتجات", "إجمالي المنتجات", "الخصم", "سعر الشحن", "الإجمالي بالشحن", "حالة الطلب", "ملاحظات", "المودريتور",
-    "العربون (مدفوع)", "المتبقي عند الاستلام", "سعر العرض"
+    "العربون (مدفوع)", "المتبقي عند الاستلام"
   ];
   ordersSheet.getRange(1, 1, 1, orderHeaders.length).setValues([orderHeaders])
              .setBackground("#FF1493").setFontColor("white").setFontFamily(headerFont).setFontSize(12).setFontWeight("bold")
@@ -87,11 +87,13 @@ function setupCandyClubUX() {
   // 3. شيت الإعدادات والشحن
   // ============================================================
   var settingsSheet = ss.getSheetByName("⚙️ الإعدادات والشحن") || ss.insertSheet("⚙️ الإعدادات والشحن");
-  settingsSheet.getRange("Q1:Q1").setValues([["👤 المودريتور"]]).setBackground("#8e44ad").setFontColor("white").setFontFamily(headerFont).setFontSize(12).setFontWeight("bold");
-  settingsSheet.getRange(1, 17, 50, 1).setBorder(true, true, true, true, true, true, "#8e44ad", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
-  settingsSheet.setColumnWidth(17, 150);
+  settingsSheet.getRange("S1:T1").setValues([["👤 المودريتور", "عدد الأوردرات"]]).setBackground("#8e44ad").setFontColor("white").setFontFamily(headerFont).setFontSize(12).setFontWeight("bold");
+  settingsSheet.getRange(1, 19, 50, 2).setBorder(true, true, true, true, true, true, "#8e44ad", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
+  settingsSheet.setColumnWidth(19, 150);
+  settingsSheet.setColumnWidth(20, 120);
 
   settingsSheet.getRange("O1:P1").setValues([["عدد الأوردرات", "صافي الربح"]]).setBackground("#f39c12").setFontColor("white").setFontFamily(headerFont).setFontSize(12).setFontWeight("bold");
+  settingsSheet.getRange(1, 15, 50, 2).setBorder(true, true, true, true, true, true, "#f39c12", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
   settingsSheet.setColumnWidth(15, 120);
   settingsSheet.setColumnWidth(16, 120);
 
@@ -404,7 +406,7 @@ function doGet(e) {
       if (sData[i][0])  response.alex.push({ name: sData[i][0], price: sData[i][1], type: sData[i][2], duration: sData[i][3] });
       if (sData[i][6])  response.govs.push({ name: sData[i][6], price: sData[i][7], type: sData[i][8], duration: sData[i][9] });
       if (sData[i][12]) response.couriers.push({ name: sData[i][12], phone: sData[i][13].toString() });
-      if (sData[i][16]) response.moderators.push(sData[i][16].toString());
+      if (sData[i][18]) response.moderators.push(sData[i][18].toString());
     }
   }
 
@@ -475,8 +477,7 @@ function doGet(e) {
           shipping: data[j][16], total: finalTotal, status: status,
           payment: data[j][10], seller: data[j][20], orderType: data[j][9],
           deposit: data[j][21] || 0, remaining: remainingCash,
-          gov: data[j][5], platform: data[j][3], driver: driver,
-          offerPrice: data[j][23] || 0
+          gov: data[j][5], platform: data[j][3], driver: driver
         });
       }
 
@@ -562,7 +563,7 @@ function doPost(e) {
         e.parameter.orderType, e.parameter.payMethod, "", e.parameter.expDate, 
         e.parameter.products, e.parameter.pTotal, e.parameter.discount, 
         e.parameter.shipping, e.parameter.finalTotal, "قيد التجهيز", e.parameter.notes, e.parameter.moderator,
-        e.parameter.deposit || 0, e.parameter.remaining || e.parameter.finalTotal, e.parameter.offerPrice || 0
+        e.parameter.deposit || 0, e.parameter.remaining || e.parameter.finalTotal
       ];
       sheet.appendRow(row);
       updateCustomerDB(custSheet, e.parameter.customerName, e.parameter.phone1, e.parameter.gov, e.parameter.address, e.parameter.finalTotal, d);
@@ -612,41 +613,21 @@ function doPost(e) {
         }
     }
 
-    else if (action === "updateOfferPrice") {
-      var sheet = ss.getSheetByName("📝 الطلبات");
-      var data  = sheet.getDataRange().getValues();
-      for (var i = 1; i < data.length; i++) {
-        if (data[i][0] === e.parameter.orderId) {
-          sheet.getRange(i+1, 24).setValue(e.parameter.newOfferPrice);
-          
-          var shipping = parseFloat(data[i][16]) || 0;
-          var discount = parseFloat(data[i][15]) || 0;
-          var deposit = parseFloat(data[i][21]) || 0;
-          var newFinalTotal = parseFloat(e.parameter.newOfferPrice) + shipping - discount;
-          var newRemaining = newFinalTotal - deposit;
-          
-          sheet.getRange(i+1, 18).setValue(newFinalTotal);
-          sheet.getRange(i+1, 23).setValue(newRemaining);
-          
-          calculateFinancials();
-          return ContentService.createTextOutput("success");
-        }
-      }
-    }
+
 
     else if (action === "addModerator") {
-      var mods = sSheet.getRange(1, 17, sSheet.getMaxRows(), 1).getValues();
+      var mods = sSheet.getRange(1, 19, sSheet.getMaxRows(), 1).getValues();
       var last = 1;
       for (var m = 0; m < mods.length; m++) { if (mods[m][0] !== "") last = m + 2; else break; }
-      sSheet.getRange(last, 17).setValue(e.parameter.name);
+      sSheet.getRange(last, 19).setValue(e.parameter.name);
       return ContentService.createTextOutput("success");
     }
 
     else if (action === "deleteModerator") {
-      var data = sSheet.getRange(1, 17, sSheet.getMaxRows(), 1).getValues();
+      var data = sSheet.getRange(1, 19, sSheet.getMaxRows(), 1).getValues();
       for (var i = 1; i < data.length; i++) {
         if (data[i][0] === e.parameter.name) {
-          sSheet.getRange(i+1, 17).clearContent();
+          sSheet.getRange(i+1, 19).clearContent();
           return ContentService.createTextOutput("success");
         }
       }
