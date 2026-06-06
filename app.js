@@ -600,7 +600,8 @@ window.printHistoryOrder = function (orderId) {
         let pay = order.payment || "";
         // ⭐ V15.1: فحص دقيق لنوع الطلب - يشمل كل صيغ ممكنة
         let isBranch = oType.includes('استلام من الفرع') || oType === 'branch' || (order.deliveryType || '').includes('فرع') || (order.deliveryType || '') === 'branch';
-        let isDigitalPay = pay.includes('إنستا') || pay.includes('انستاباي') || pay.includes('انستا باي') || pay.includes('محفظة') || pay.includes('فودافون') || pay.includes('تحويل');
+        let isGovShipping = oType === 'gov_shipping' || oType.includes('محافظات') || (order.deliveryType || '') === 'gov_shipping';
+        let isDigitalPay = isGovShipping || pay.includes('إنستا') || pay.includes('انستاباي') || pay.includes('انستا باي') || pay.includes('محفظة') || pay.includes('فودافون') || pay.includes('تحويل');
         if (isBranch) {
             printLogo.src = './images/logo-branch.png';
         } else if (isDigitalPay) {
@@ -1251,6 +1252,13 @@ if (saveAndPrintBtn) {
             .then(() => {
                 showToast("✅ تم حفظ الأوردر بنجاح!", "success");
 
+                let isGovShipping = orderTypeLabel === 'gov_shipping' || orderTypeLabel.includes('محافظات') || delType === 'gov_shipping';
+                if (isGovShipping) {
+                    document.body.classList.add('print-gov-shipping');
+                } else {
+                    document.body.classList.remove('print-gov-shipping');
+                }
+
                 let govStr = gov ? gov + " - " : "";
                 if (document.getElementById('receipt-type')) document.getElementById('receipt-type').innerText = isGift ? `${govStr}${orderTypeLabel} - 🎁 هدية` : `${govStr}${orderTypeLabel}`;
 
@@ -1259,12 +1267,12 @@ if (saveAndPrintBtn) {
                     let payVal = paymentMethod ? paymentMethod.value : "";
                     if (orderTypeLabel.includes("استلام من الفرع")) {
                         printLogo.src = "./images/logo-branch.png";
-                    } else if (parseFloat(rem) === 0 && (payVal.includes("إنستا") || payVal.includes("انستاباي") || payVal.includes("محفظة") || payVal.includes("فودافون"))) {
+                    } else if (isGovShipping || (parseFloat(rem) === 0 && (payVal.includes("إنستا") || payVal.includes("انستاباي") || payVal.includes("محفظة") || payVal.includes("فودافون")))) {
                         printLogo.src = "./images/logo-digital.png";
                     } else {
                         printLogo.src = "./images/logo-cash.png";
                     }
-                    printLogo.style.display = 'inline-block';
+                    printLogo.style.display = 'block';
                 }
 
                 if (document.getElementById('print-date')) document.getElementById('print-date').innerText = new Date().toLocaleDateString('ar-EG');
@@ -1304,6 +1312,7 @@ if (saveAndPrintBtn) {
 
                 setTimeout(() => {
                     window.print();
+                    document.body.classList.remove('print-gov-shipping');
                     resetForm();
                     setBtnLoading(saveAndPrintBtn, false, "💾 حفظ وطباعة الفاتورة");
                     loadDataFromServer();
