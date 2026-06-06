@@ -87,15 +87,19 @@ function setupCandyClubUX() {
   // 3. شيت الإعدادات والشحن
   // ============================================================
   var settingsSheet = ss.getSheetByName("⚙️ الإعدادات والشحن") || ss.insertSheet("⚙️ الإعدادات والشحن");
-  settingsSheet.getRange("S1:T1").setValues([["👤 المودريتور", "عدد الأوردرات"]]).setBackground("#8e44ad").setFontColor("white").setFontFamily(headerFont).setFontSize(12).setFontWeight("bold");
-  settingsSheet.getRange(1, 19, 50, 2).setBorder(true, true, true, true, true, true, "#8e44ad", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
-  settingsSheet.setColumnWidth(19, 150);
-  settingsSheet.setColumnWidth(20, 120);
+  
+  settingsSheet.getRange("O1:T50").clearContent().clearFormat().setBorder(false, false, false, false, false, false);
+  ordersSheet.getRange(1, 24, ordersSheet.getMaxRows(), 1).clearContent().clearFormat();
 
-  settingsSheet.getRange("O1:P1").setValues([["عدد الأوردرات", "صافي الربح"]]).setBackground("#f39c12").setFontColor("white").setFontFamily(headerFont).setFontSize(12).setFontWeight("bold");
-  settingsSheet.getRange(1, 15, 50, 2).setBorder(true, true, true, true, true, true, "#f39c12", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
-  settingsSheet.setColumnWidth(15, 120);
-  settingsSheet.setColumnWidth(16, 120);
+  settingsSheet.getRange(1, 13, 50, 2).setBorder(true, true, true, true, true, true, "#000", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
+  settingsSheet.getRange("M1:N1").setBackground("#e67e22").setFontColor("white").setFontFamily(headerFont).setFontSize(12).setFontWeight("bold");
+  
+  settingsSheet.getRange("Q1:R1").setValues([["👤 المودريتور", "عدد الأوردرات"]]).setBackground("#8e44ad").setFontColor("white").setFontFamily(headerFont).setFontSize(12).setFontWeight("bold");
+  settingsSheet.getRange(1, 17, 50, 2).setBorder(true, true, true, true, true, true, "#8e44ad", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
+  settingsSheet.setColumnWidth(17, 150);
+  settingsSheet.setColumnWidth(18, 120);
+
+  settingsSheet.getRange("R2:R50").setFormula('=IF(Q2<>"", COUNTIF(\'📝 الطلبات\'!U:U, Q2), "")');
 
   // ============================================================
   // 4. شيت الكتالوج
@@ -165,6 +169,7 @@ function setupCandyClubUX() {
   finSheet.setColumnWidth(5, 180);
   finSheet.setColumnWidth(6, 180);
   finSheet.setColumnWidth(7, 160);
+  finSheet.getRange(1, 1, 50, 7).setBorder(true, true, true, true, true, true, "#2c3e50", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
 
   calculateFinancials();
 
@@ -406,7 +411,7 @@ function doGet(e) {
       if (sData[i][0])  response.alex.push({ name: sData[i][0], price: sData[i][1], type: sData[i][2], duration: sData[i][3] });
       if (sData[i][6])  response.govs.push({ name: sData[i][6], price: sData[i][7], type: sData[i][8], duration: sData[i][9] });
       if (sData[i][12]) response.couriers.push({ name: sData[i][12], phone: sData[i][13].toString() });
-      if (sData[i][18]) response.moderators.push(sData[i][18].toString());
+      if (sData[i][16]) response.moderators.push(sData[i][16].toString());
     }
   }
 
@@ -616,18 +621,18 @@ function doPost(e) {
 
 
     else if (action === "addModerator") {
-      var mods = sSheet.getRange(1, 19, sSheet.getMaxRows(), 1).getValues();
+      var mods = sSheet.getRange(1, 17, sSheet.getMaxRows(), 1).getValues();
       var last = 1;
       for (var m = 0; m < mods.length; m++) { if (mods[m][0] !== "") last = m + 2; else break; }
-      sSheet.getRange(last, 19).setValue(e.parameter.name);
+      sSheet.getRange(last, 17).setValue(e.parameter.name);
       return ContentService.createTextOutput("success");
     }
 
     else if (action === "deleteModerator") {
-      var data = sSheet.getRange(1, 19, sSheet.getMaxRows(), 1).getValues();
+      var data = sSheet.getRange(1, 17, sSheet.getMaxRows(), 1).getValues();
       for (var i = 1; i < data.length; i++) {
         if (data[i][0] === e.parameter.name) {
-          sSheet.getRange(i+1, 19).clearContent();
+          sSheet.getRange(i+1, 17).clearContent();
           return ContentService.createTextOutput("success");
         }
       }
