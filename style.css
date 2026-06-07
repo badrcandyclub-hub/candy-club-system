@@ -1223,14 +1223,8 @@ input:checked + .slider:before { transform: translateX(24px); }
         text-align: center;
         margin-top: 15px;
         font-size: 13px;
-        border: none !important;
         padding-top: 10px;
         font-weight: bold;
-    }
-
-    .print-only .receipt-footer div,
-    .print-only .receipt-footer [style*="dashed"] {
-        border: none !important;
     }
     
     .print-only hr {
@@ -1247,6 +1241,21 @@ input:checked + .slider:before { transform: translateX(24px); }
 
     .print-shipping-row {
         border: 2px solid #000 !important;
+    }
+
+    /* Force remove borders from footer and ALL its children */
+    .print-only .receipt-footer, 
+    .print-only .receipt-footer *,
+    .print-only .receipt-footer [style*="dashed"],
+    .print-only .receipt-footer [style*="dotted"],
+    .print-only #print-footer,
+    .print-only #print-footer *,
+    .print-only #print-qr-code,
+    .print-only .print-qr-container,
+    .print-only .print-qr-container * {
+        border: none !important;
+        outline: none !important;
+        box-shadow: none !important;
     }
 }
 /* =========================================
