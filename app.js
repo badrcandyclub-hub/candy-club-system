@@ -692,6 +692,9 @@ window.printHistoryOrder = function (orderId) {
         document.body.classList.remove('print-gov-shipping');
     }
 
+    let qrImg = document.querySelector('img[alt="QR Code"]');
+    if (qrImg) qrImg.src = 'images/qr-code.png';
+
     setTimeout(() => { 
         window.print();
         document.body.classList.remove('print-gov-shipping');
@@ -1309,6 +1312,9 @@ if (saveAndPrintBtn) {
 
                 let sellerP = document.getElementById('print-seller-name');
                 if (sellerP) sellerP.innerText = `الكاشير: ${selectedModerator}`;
+
+                let qrImg = document.querySelector('img[alt="QR Code"]');
+                if (qrImg) qrImg.src = 'images/qr-code.png';
 
                 setTimeout(() => {
                     window.print();

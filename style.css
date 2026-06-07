@@ -1228,15 +1228,21 @@ input:checked + .slider:before { transform: translateX(24px); }
         font-weight: bold;
     }
     
-    .receipt-footer > div {
+    .print-only hr {
+        border: none !important;
         border-top: 2px solid #000 !important;
+        margin: 8px 0 !important;
+    }
+
+    .print-only [style*="dashed"],
+    .print-only [style*="dotted"] {
+        border-style: solid !important;
+        border-color: #000000 !important;
     }
 
     .print-shipping-row {
         border: 2px solid #000 !important;
     }
-
-    hr { border: none !important; border-top: 2px solid #000 !important; margin: 8px 0; }
 }
 /* =========================================
    17. الوضع الليلي (Dark Mode)
