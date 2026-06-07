@@ -1223,9 +1223,14 @@ input:checked + .slider:before { transform: translateX(24px); }
         text-align: center;
         margin-top: 15px;
         font-size: 13px;
-        border-top: 2px solid #000 !important;
+        border: none !important;
         padding-top: 10px;
         font-weight: bold;
+    }
+
+    .print-only .receipt-footer div,
+    .print-only .receipt-footer [style*="dashed"] {
+        border: none !important;
     }
     
     .print-only hr {
