@@ -1201,7 +1201,7 @@ input:checked + .slider:before { transform: translateX(24px); }
         justify-content: flex-start;
         gap: 5px;
         font-size: 18px;
-        border-top: 2px dashed #000;
+        border-top: 2px solid #000 !important;
         padding: 8px !important;
         font-weight: 900 !important;
         background-color: #000000 !important;
@@ -1223,12 +1223,20 @@ input:checked + .slider:before { transform: translateX(24px); }
         text-align: center;
         margin-top: 15px;
         font-size: 13px;
-        border-top: 2px dashed #000;
+        border-top: 2px solid #000 !important;
         padding-top: 10px;
         font-weight: bold;
     }
+    
+    .receipt-footer > div {
+        border-top: 2px solid #000 !important;
+    }
 
-    hr { border: none; border-top: 2px dashed #000; margin: 8px 0; }
+    .print-shipping-row {
+        border: 2px solid #000 !important;
+    }
+
+    hr { border: none !important; border-top: 2px solid #000 !important; margin: 8px 0; }
 }
 /* =========================================
    17. الوضع الليلي (Dark Mode)

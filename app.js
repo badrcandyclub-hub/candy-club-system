@@ -603,11 +603,11 @@ window.printHistoryOrder = function (orderId) {
         let isGovShipping = oType === 'gov_shipping' || oType.includes('محافظات') || (order.deliveryType || '') === 'gov_shipping';
         let isDigitalPay = isGovShipping || pay.includes('إنستا') || pay.includes('انستاباي') || pay.includes('انستا باي') || pay.includes('محفظة') || pay.includes('فودافون') || pay.includes('تحويل');
         if (isBranch) {
-            printLogo.src = './images/logo-branch.png';
+            printLogo.src = 'images/logo-branch.png';
         } else if (isDigitalPay) {
-            printLogo.src = './images/logo-digital.png';
+            printLogo.src = 'images/logo-digital.png';
         } else {
-            printLogo.src = './images/logo-cash.png';
+            printLogo.src = 'images/logo-cash.png';
         }
         printLogo.style.display = 'block';
     }
@@ -670,12 +670,12 @@ window.printHistoryOrder = function (orderId) {
     }
 
     if (parseFloat(order.deposit) > 0 && !isOldGift) {
-        document.querySelector('.print-deposit-row').style.display = 'block';
-        document.getElementById('print-deposit').innerText = order.deposit;
+        let depositHtml = `<p class="print-deposit-row">تم دفع عربون: <b><span id="print-deposit">${order.deposit}</span></b></p>`;
+        document.getElementById('print-deposit-container').innerHTML = depositHtml;
         document.getElementById('print-final').innerText = order.remaining !== undefined ? order.remaining : order.total;
         if(document.getElementById('print-final-label')) document.getElementById('print-final-label').innerText = "المتبقي للدفع";
     } else {
-        document.querySelector('.print-deposit-row').style.display = 'none';
+        document.getElementById('print-deposit-container').innerHTML = '';
         document.getElementById('print-final').innerText = isOldGift ? "***" : order.total;
         if(document.getElementById('print-final-label')) document.getElementById('print-final-label').innerText = "الإجمالي النهائي";
     }
@@ -1266,11 +1266,11 @@ if (saveAndPrintBtn) {
                 if (printLogo) {
                     let payVal = paymentMethod ? paymentMethod.value : "";
                     if (orderTypeLabel.includes("استلام من الفرع")) {
-                        printLogo.src = "./images/logo-branch.png";
+                        printLogo.src = "images/logo-branch.png";
                     } else if (isGovShipping || (parseFloat(rem) === 0 && (payVal.includes("إنستا") || payVal.includes("انستاباي") || payVal.includes("محفظة") || payVal.includes("فودافون")))) {
-                        printLogo.src = "./images/logo-digital.png";
+                        printLogo.src = "images/logo-digital.png";
                     } else {
-                        printLogo.src = "./images/logo-cash.png";
+                        printLogo.src = "images/logo-cash.png";
                     }
                     printLogo.style.display = 'block';
                 }
@@ -1295,12 +1295,12 @@ if (saveAndPrintBtn) {
                 if (document.getElementById('print-shipping')) document.getElementById('print-shipping').innerText = isGift ? "***" : (document.getElementById('shippingCost') ? document.getElementById('shippingCost').value : 0);
 
                 if (dep > 0 && !isGift) {
-                    document.querySelector('.print-deposit-row').style.display = 'block';
-                    document.getElementById('print-deposit').innerText = dep;
+                    let depositHtml = `<p class="print-deposit-row">تم دفع عربون: <b><span id="print-deposit">${dep}</span></b></p>`;
+                    document.getElementById('print-deposit-container').innerHTML = depositHtml;
                     document.getElementById('print-final').innerText = rem;
                     if(document.getElementById('print-final-label')) document.getElementById('print-final-label').innerText = "المتبقي للدفع";
                 } else {
-                    document.querySelector('.print-deposit-row').style.display = 'none';
+                    document.getElementById('print-deposit-container').innerHTML = '';
                     document.getElementById('print-final').innerText = isGift ? "***" : finalTotalVal;
                     if(document.getElementById('print-final-label')) document.getElementById('print-final-label').innerText = "الإجمالي النهائي";
                 }
