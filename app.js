@@ -2371,6 +2371,12 @@ let barcodeCatalogData = [];
 let html5QrcodeScanner = null;
 
 // 1. جلب وتحليل ملف الـ CSV
+const toEnglishNumber = str => {
+    if (!str) return 0;
+    let engStr = String(str).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+    return parseFloat(engStr) || 0;
+};
+
 function fetchCatalogCSV() {
     fetch('products.csv.csv')
         .then(response => {
@@ -2387,7 +2393,7 @@ function fetchCatalogCSV() {
                 if (cols.length >= 3) {
                     let barcode = cols[0].trim();
                     let name = cols[1].trim();
-                    let price = cols[2].trim();
+                    let price = toEnglishNumber(cols[2].trim()); // إجبار الأرقام الإنجليزية
                     
                     // نتجاهل السطر لو كان فارغ
                     if (barcode && name) {
@@ -2540,7 +2546,8 @@ function handleBarcodeMatch(barcodeValue) {
         playBeepSound();
         
         document.getElementById('scanResultName').textContent = matchedProduct.name;
-        document.getElementById('scanResultPrice').textContent = matchedProduct.price;
+        // عرض السعر بالإنجليزية القياسية
+        document.getElementById('scanResultPrice').textContent = Number(matchedProduct.price);
         
         scanResultModal.classList.add('active');
         
@@ -2639,8 +2646,12 @@ if (barcodeImageUpload) {
             
             // استخدام setTimeout للسماح للمتصفح بتحديث الواجهة قبل بدء المعالجة الثقيلة
             setTimeout(() => {
-                // تمرير false لتجنب رسم الصورة الكبيرة في الواجهة مما يقلل من التعليق
-                tempScanner.scanFile(imageFile, false)
+                const scanPromise = tempScanner.scanFile(imageFile, false);
+                const timeoutPromise = new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error("SCAN_TIMEOUT")), 5000);
+                });
+                
+                Promise.race([scanPromise, timeoutPromise])
                     .then(decodedText => {
                         scannerModal.classList.remove('active');
                         handleBarcodeMatch(decodedText);
@@ -2656,7 +2667,11 @@ if (barcodeImageUpload) {
                     })
                     .catch(err => {
                         console.error("فشل المسح من الصورة:", err);
-                        showToast("لم يتم العثور على باركود واضح في هذه الصورة، حاول مرة أخرى", "warning");
+                        if (err && err.message === "SCAN_TIMEOUT") {
+                            showToast("الصورة معقدة أو الإضاءة قوية، يرجى المحاولة بصورة أوضح", "warning");
+                        } else {
+                            showToast("لم يتم العثور على باركود واضح في هذه الصورة، حاول مرة أخرى", "warning");
+                        }
                         
                         // إعادة ضبط الواجهة لتفادي التعليق (Unblock UI)
                         e.target.value = '';
@@ -2665,6 +2680,9 @@ if (barcodeImageUpload) {
                             uploadLabel.style.pointerEvents = 'auto';
                             uploadLabel.style.opacity = '1';
                         }
+                        
+                        // محاولة تنظيف الماسح في الخلفية
+                        try { tempScanner.clear(); } catch(e){}
                     });
             }, 100);
         }
@@ -2675,34 +2693,63 @@ let addToCartBtn = document.getElementById('addToCartBtn');
 if (addToCartBtn) {
     addToCartBtn.addEventListener('click', () => {
         if (currentScannedProduct) {
-            // إزالة الصفوف الفارغة لتجنب الفوضى
-            let emptyRows = Array.from(document.querySelectorAll('.product-row:not(.confirmed)')).filter(r => r.querySelector('.product-name-input').value === "");
-            if (emptyRows.length > 0) {
-                emptyRows[0].parentElement.remove();
+            let productName = currentScannedProduct.name;
+            let productPrice = Number(currentScannedProduct.price);
+            
+            // 1. البحث عن المنتج في الفاتورة لزيادة الكمية بدلاً من التكرار
+            let existingRows = Array.from(document.querySelectorAll('.product-row'));
+            let foundRow = null;
+            
+            for (let row of existingRows) {
+                let nameInput = row.querySelector('.product-name-input');
+                if (nameInput && nameInput.value === productName) {
+                    foundRow = row;
+                    break;
+                }
             }
             
-            // استخدام دالة إضافة المنتجات الحالية في النظام
-            if (typeof addProductRow === 'function') {
-                addProductRow(currentScannedProduct.name, currentScannedProduct.price, "1", true);
-                
-                // تحديث الإجمالي
-                if (typeof calculateTotal === 'function') {
-                    calculateTotal();
+            if (foundRow) {
+                // زيادة الكمية للصف الحالي
+                let qtyInput = foundRow.querySelector('.product-qty-input');
+                if (qtyInput) {
+                    let currentQty = parseInt(qtyInput.value) || 0;
+                    qtyInput.value = currentQty + 1;
                 }
                 
-                showToast(`تمت إضافة ${currentScannedProduct.name} للفاتورة بنجاح ✅`, "success");
+                if (typeof calculateTotal === 'function') calculateTotal();
+                showToast(`تمت زيادة كمية ${productName} في الفاتورة 🛒`, "success");
                 
-                // إغلاق النافذة
                 scanResultModal.classList.remove('active');
-                
-                // التأكد من وجود صف فارغ للإدخال اليدوي
-                if (document.querySelectorAll('.product-row:not(.confirmed)').length === 0) {
-                    addProductRow();
-                }
-                
                 currentScannedProduct = null;
             } else {
-                showToast("تعذر إضافة المنتج، دالة الفاتورة غير متوفرة", "error");
+                // 2. إضافة كصف جديد إذا لم يكن موجوداً
+                // إزالة الصفوف الفارغة لتجنب الفوضى
+                let emptyRows = Array.from(document.querySelectorAll('.product-row:not(.confirmed)')).filter(r => r.querySelector('.product-name-input').value === "");
+                if (emptyRows.length > 0) {
+                    emptyRows[0].parentElement.remove();
+                }
+                
+                // استخدام دالة إضافة المنتجات الحالية في النظام
+                if (typeof addProductRow === 'function') {
+                    addProductRow(productName, productPrice, "1", true);
+                    
+                    // تحديث الإجمالي
+                    if (typeof calculateTotal === 'function') calculateTotal();
+                    
+                    showToast(`تمت إضافة ${productName} للفاتورة بنجاح ✅`, "success");
+                    
+                    // إغلاق النافذة
+                    scanResultModal.classList.remove('active');
+                    
+                    // التأكد من وجود صف فارغ للإدخال اليدوي
+                    if (document.querySelectorAll('.product-row:not(.confirmed)').length === 0) {
+                        addProductRow();
+                    }
+                    
+                    currentScannedProduct = null;
+                } else {
+                    showToast("تعذر إضافة المنتج، دالة الفاتورة غير متوفرة", "error");
+                }
             }
         }
     });
