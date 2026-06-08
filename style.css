@@ -1985,40 +1985,76 @@ body.dark-mode .btn-settle {
 }
 
 /* =========================================
-   تعديلات حرارية متطرفة لضمان الوضوح
-   Extreme Thermal CSS Overhaul
+   [Phase 3] Thermal Printer CSS Overhaul 
+   Energy Optimization & Readability
    ========================================= */
 @media print {
-    /* 1. معالجة بكسلة النصوص */
-    .print-only, .print-only * {
-        font-family: Arial, Helvetica, sans-serif !important;
-        text-rendering: optimizeSpeed !important;
-        -webkit-font-smoothing: none !important;
+    /* 1. توحيد وتنعيم الخطوط (Font Optimization) */
+    body, .print-only, .print-only *, * {
+        font-family: Tahoma, Arial, sans-serif !important;
+        -webkit-font-smoothing: auto !important;
+        font-smoothing: auto !important;
+        text-rendering: optimizeLegibility !important;
     }
 
-    /* 2. تكبير اللوجو للحد الأقصى */
-    #print-logo {
-        width: 95% !important;
+    /* 2. تكبير اللوجو وتوسيطه (Logo Sizing) */
+    .receipt-header img, #print-logo {
+        display: block !important;
+        width: 80% !important;
         max-width: none !important;
-        margin: 0 auto !important;
+        margin: 0 auto 15px auto !important;
         transform: none !important;
+        filter: grayscale(100%) !important;
     }
 
-    /* 3. تضخيم بيانات العميل */
-    .receipt-info p,
-    .receipt-info span {
-        font-size: 16px !important;
-        font-weight: 900 !important;
-        line-height: 1.6 !important;
-        margin-bottom: 5px !important;
-    }
-
-    /* 4. تغليظ خطوط الجدول */
+    /* 3. تخفيف إرهاق الطابعة في حدود الجدول وتكبير الخط (Table Borders) */
     .receipt-table,
     .receipt-table th,
     .receipt-table td {
-        border: 3px solid #000000 !important;
+        border: 1px solid #000000 !important;
         padding: 8px !important;
+    }
+    
+    .receipt-table th,
+    .receipt-table td {
+        font-size: 16px !important;
+        font-weight: bold !important;
+        color: #000000 !important;
+    }
+
+    /* 4. إزالة الكتل السوداء وتضخيم الإجمالي النهائي (Final Total Section) */
+    .receipt-totals h3 {
+        background: transparent !important;
+        background-color: transparent !important;
+        color: #000000 !important;
+        border: 3px solid #000000 !important;
+        border-top: 3px solid #000000 !important;
+        font-size: 24px !important;
+        font-weight: 900 !important;
+        padding: 10px !important;
+        margin: 15px 0 !important;
+        display: flex !important;
+        justify-content: flex-start !important;
+        align-items: center !important;
+        gap: 5px !important;
+    }
+    
+    .receipt-totals h3 * {
+        color: #000000 !important;
+    }
+
+    /* 5. تكبير البيانات السفلية وتنسيق التباعد (Bottom Details) */
+    .receipt-totals p, 
+    .receipt-footer, 
+    .receipt-footer p,
+    .print-deposit-row,
+    .print-shipping-row,
+    .receipt-info p {
+        font-size: 14px !important;
+        font-weight: bold !important;
+        line-height: 1.8 !important;
+        margin: 6px 0 !important;
+        color: #000000 !important;
     }
 }
 
