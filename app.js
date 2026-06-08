@@ -2646,13 +2646,22 @@ if (barcodeImageUpload) {
             
             // استخدام setTimeout للسماح للمتصفح بتحديث الواجهة قبل بدء المعالجة الثقيلة
             setTimeout(() => {
-                const scanPromise = tempScanner.scanFile(imageFile, false);
-                const timeoutPromise = new Promise((_, reject) => {
-                    setTimeout(() => reject(new Error("SCAN_TIMEOUT")), 5000);
-                });
+                let emergencyTimeout = setTimeout(() => {
+                    // إجبار الواجهة على العودة لطبيعتها
+                    if (uploadLabel) {
+                        uploadLabel.innerHTML = originalLabelHtml;
+                        uploadLabel.style.pointerEvents = 'auto';
+                        uploadLabel.style.opacity = '1';
+                    }
+                    e.target.value = ''; // تفريغ حقل الملف
+                    showToast('الصورة معقدة أو الإضاءة قوية، يرجى المحاولة بصورة أوضح', 'error');
+                    // محاولة تنظيف الماسح
+                    try { tempScanner.clear(); } catch(err){}
+                }, 5000);
                 
-                Promise.race([scanPromise, timeoutPromise])
+                tempScanner.scanFile(imageFile, false)
                     .then(decodedText => {
+                        clearTimeout(emergencyTimeout);
                         scannerModal.classList.remove('active');
                         handleBarcodeMatch(decodedText);
                         
@@ -2666,12 +2675,9 @@ if (barcodeImageUpload) {
                         stopBarcodeScanner(); // إيقاف الكاميرا لو كانت تعمل
                     })
                     .catch(err => {
+                        clearTimeout(emergencyTimeout);
                         console.error("فشل المسح من الصورة:", err);
-                        if (err && err.message === "SCAN_TIMEOUT") {
-                            showToast("الصورة معقدة أو الإضاءة قوية، يرجى المحاولة بصورة أوضح", "warning");
-                        } else {
-                            showToast("لم يتم العثور على باركود واضح في هذه الصورة، حاول مرة أخرى", "warning");
-                        }
+                        showToast("لم يتم العثور على باركود واضح في هذه الصورة، حاول مرة أخرى", "warning");
                         
                         // إعادة ضبط الواجهة لتفادي التعليق (Unblock UI)
                         e.target.value = '';
@@ -2680,9 +2686,6 @@ if (barcodeImageUpload) {
                             uploadLabel.style.pointerEvents = 'auto';
                             uploadLabel.style.opacity = '1';
                         }
-                        
-                        // محاولة تنظيف الماسح في الخلفية
-                        try { tempScanner.clear(); } catch(e){}
                     });
             }, 100);
         }
@@ -2712,8 +2715,9 @@ if (addToCartBtn) {
                 // زيادة الكمية للصف الحالي
                 let qtyInput = foundRow.querySelector('.product-qty-input');
                 if (qtyInput) {
-                    let currentQty = parseInt(qtyInput.value) || 0;
-                    qtyInput.value = currentQty + 1;
+                    qtyInput.value = parseInt(qtyInput.value || 1) + 1;
+                    // إطلاق حدث الإدخال لتحديث الإجمالي
+                    qtyInput.dispatchEvent(new Event('input'));
                 }
                 
                 if (typeof calculateTotal === 'function') calculateTotal();
@@ -2721,8 +2725,10 @@ if (addToCartBtn) {
                 
                 scanResultModal.classList.remove('active');
                 currentScannedProduct = null;
-            } else {
-                // 2. إضافة كصف جديد إذا لم يكن موجوداً
+                return; // إنهاء الدالة فوراً
+            }
+            
+            // 2. إضافة كصف جديد إذا لم يكن موجوداً
                 // إزالة الصفوف الفارغة لتجنب الفوضى
                 let emptyRows = Array.from(document.querySelectorAll('.product-row:not(.confirmed)')).filter(r => r.querySelector('.product-name-input').value === "");
                 if (emptyRows.length > 0) {
