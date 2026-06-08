@@ -1984,3 +1984,41 @@ body.dark-mode .btn-settle {
     }
 }
 
+/* =========================================
+   تعديلات حرارية متطرفة لضمان الوضوح
+   Extreme Thermal CSS Overhaul
+   ========================================= */
+@media print {
+    /* 1. معالجة بكسلة النصوص */
+    .print-only, .print-only * {
+        font-family: Arial, Helvetica, sans-serif !important;
+        text-rendering: optimizeSpeed !important;
+        -webkit-font-smoothing: none !important;
+    }
+
+    /* 2. تكبير اللوجو للحد الأقصى */
+    #print-logo {
+        width: 95% !important;
+        max-width: none !important;
+        margin: 0 auto !important;
+        transform: none !important;
+    }
+
+    /* 3. تضخيم بيانات العميل */
+    .receipt-info p,
+    .receipt-info span {
+        font-size: 16px !important;
+        font-weight: 900 !important;
+        line-height: 1.6 !important;
+        margin-bottom: 5px !important;
+    }
+
+    /* 4. تغليظ خطوط الجدول */
+    .receipt-table,
+    .receipt-table th,
+    .receipt-table td {
+        border: 3px solid #000000 !important;
+        padding: 8px !important;
+    }
+}
+
