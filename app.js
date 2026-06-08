@@ -2625,21 +2625,48 @@ if (barcodeImageUpload) {
                 }
             }
             
-            // إضافة Toast لإعلام المستخدم أن العملية جارية (قد تستغرق ثانية)
+            // تغيير واجهة الزر لإعطاء تأكيد مرئي ومنع تكرار الضغط
+            let uploadLabel = document.querySelector('label[for="barcodeImageUpload"]');
+            let originalLabelHtml = uploadLabel ? uploadLabel.innerHTML : '';
+            if (uploadLabel) {
+                uploadLabel.innerHTML = 'جاري الفحص... ⏳';
+                uploadLabel.style.pointerEvents = 'none';
+                uploadLabel.style.opacity = '0.7';
+            }
+            
+            // إضافة Toast لإعلام المستخدم
             showToast("جاري فحص الصورة...", "success");
             
-            tempScanner.scanFile(imageFile, true)
-                .then(decodedText => {
-                    scannerModal.classList.remove('active');
-                    handleBarcodeMatch(decodedText);
-                    e.target.value = ''; 
-                    stopBarcodeScanner(); // إيقاف الكاميرا لو كانت تعمل
-                })
-                .catch(err => {
-                    console.error("فشل المسح من الصورة:", err);
-                    showToast("لم يتم العثور على باركود واضح في هذه الصورة، حاول مرة أخرى", "warning");
-                    e.target.value = '';
-                });
+            // استخدام setTimeout للسماح للمتصفح بتحديث الواجهة قبل بدء المعالجة الثقيلة
+            setTimeout(() => {
+                // تمرير false لتجنب رسم الصورة الكبيرة في الواجهة مما يقلل من التعليق
+                tempScanner.scanFile(imageFile, false)
+                    .then(decodedText => {
+                        scannerModal.classList.remove('active');
+                        handleBarcodeMatch(decodedText);
+                        
+                        // إعادة ضبط كل شيء
+                        e.target.value = ''; 
+                        if (uploadLabel) {
+                            uploadLabel.innerHTML = originalLabelHtml;
+                            uploadLabel.style.pointerEvents = 'auto';
+                            uploadLabel.style.opacity = '1';
+                        }
+                        stopBarcodeScanner(); // إيقاف الكاميرا لو كانت تعمل
+                    })
+                    .catch(err => {
+                        console.error("فشل المسح من الصورة:", err);
+                        showToast("لم يتم العثور على باركود واضح في هذه الصورة، حاول مرة أخرى", "warning");
+                        
+                        // إعادة ضبط الواجهة لتفادي التعليق (Unblock UI)
+                        e.target.value = '';
+                        if (uploadLabel) {
+                            uploadLabel.innerHTML = originalLabelHtml;
+                            uploadLabel.style.pointerEvents = 'auto';
+                            uploadLabel.style.opacity = '1';
+                        }
+                    });
+            }, 100);
         }
     });
 }
