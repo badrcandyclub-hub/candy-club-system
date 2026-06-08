@@ -2463,31 +2463,59 @@ if (scanAnotherBtn) {
 }
 
 // 4. منطق الماسح الضوئي
-function startBarcodeScanner() {
-    if (html5QrcodeScanner) {
-        // إذا كان يعمل بالفعل
-        return;
+const getSupportedFormats = () => {
+    if (typeof Html5QrcodeSupportedFormats !== 'undefined') {
+        return [
+            Html5QrcodeSupportedFormats.QR_CODE,
+            Html5QrcodeSupportedFormats.EAN_13,
+            Html5QrcodeSupportedFormats.EAN_8,
+            Html5QrcodeSupportedFormats.CODE_128,
+            Html5QrcodeSupportedFormats.CODE_39,
+            Html5QrcodeSupportedFormats.UPC_A,
+            Html5QrcodeSupportedFormats.UPC_E
+        ];
     }
-    
-    // استخدام Html5Qrcode مباشرة للحصول على تحكم أفضل على الكاميرا الخلفية
-    html5QrcodeScanner = new Html5Qrcode("reader");
-    let config = { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.0 };
-    
-    html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
-        .catch(err => {
-            console.error("تعذر تشغيل الكاميرا:", err);
-            showToast("تعذر تشغيل الكاميرا، يرجى التحقق من الصلاحيات.", "error");
-        });
+    return undefined;
+};
+
+function startBarcodeScanner() {
+    try {
+        if (html5QrcodeScanner) {
+            return;
+        }
+        
+        let formats = getSupportedFormats();
+        let configObj = formats ? { formatsToSupport: formats } : undefined;
+        html5QrcodeScanner = new Html5Qrcode("reader", configObj);
+        
+        let config = { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.0 };
+        
+        html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
+            .catch(err => {
+                console.error("تعذر تشغيل الكاميرا:", err);
+                showToast("تعذر تشغيل الكاميرا، يمكنك استخدام البحث اليدوي أو رفع صورة.", "warning");
+            });
+    } catch (e) {
+        console.error("خطأ فادح في تشغيل الماسح الضوئي:", e);
+        showToast("تعذر تشغيل الكاميرا، يمكنك استخدام البحث اليدوي أو رفع صورة.", "warning");
+    }
 }
 
 function stopBarcodeScanner() {
-    if (html5QrcodeScanner) {
-        html5QrcodeScanner.stop().then(() => {
-            html5QrcodeScanner.clear();
-            html5QrcodeScanner = null;
-        }).catch(err => {
-            console.error("فشل في إيقاف الكاميرا", err);
-        });
+    try {
+        if (html5QrcodeScanner) {
+            html5QrcodeScanner.stop().then(() => {
+                html5QrcodeScanner.clear();
+                html5QrcodeScanner = null;
+            }).catch(err => {
+                console.error("فشل في إيقاف الكاميرا", err);
+                try { html5QrcodeScanner.clear(); } catch(e){}
+                html5QrcodeScanner = null;
+            });
+        }
+    } catch (e) {
+        console.error("خطأ أثناء محاولة إيقاف الماسح:", e);
+        html5QrcodeScanner = null;
     }
 }
 
@@ -2498,7 +2526,7 @@ function onScanSuccess(decodedText, decodedResult) {
 }
 
 function onScanFailure(error) {
-    // تتكرر مع كل فريم لا يجد فيه باركود، لا نفعل شيئاً هنا لتجنب الإزعاج
+    // تتكرر مع كل فريم لا يجد فيه باركود
 }
 
 // 5. البحث والتطابق
@@ -2508,17 +2536,14 @@ function handleBarcodeMatch(barcodeValue) {
     if (matchedProduct) {
         playBeepSound();
         
-        // عرض البيانات
         document.getElementById('scanResultName').textContent = matchedProduct.name;
         document.getElementById('scanResultPrice').textContent = matchedProduct.price;
         
-        // إظهار النافذة وتفعيل تأثير الوميض
         scanResultModal.classList.add('active');
         
         let modalContent = scanResultModal.querySelector('.modal-content');
         modalContent.classList.remove('flash-success');
-        // Trigger reflow
-        void modalContent.offsetWidth;
+        void modalContent.offsetWidth; // Trigger reflow
         modalContent.classList.add('flash-success');
         
     } else {
@@ -2537,10 +2562,14 @@ if (manualSearchBtn && manualBarcodeInput) {
             showToast("يرجى إدخال رقم الباركود", "warning");
             return;
         }
-        stopBarcodeScanner();
+        
+        // إغلاق النافذة وتنفيذ البحث فوراً بدون انتظار الكاميرا
         scannerModal.classList.remove('active');
         handleBarcodeMatch(val);
         manualBarcodeInput.value = '';
+        
+        // محاولة إيقاف الكاميرا في الخلفية
+        stopBarcodeScanner();
     });
     
     manualBarcodeInput.addEventListener('keypress', (e) => {
@@ -2578,16 +2607,33 @@ if (barcodeImageUpload) {
         if (e.target.files && e.target.files.length > 0) {
             let imageFile = e.target.files[0];
             
-            let tempScanner = html5QrcodeScanner || new Html5Qrcode("reader");
+            let formats = getSupportedFormats();
+            let configObj = formats ? { formatsToSupport: formats } : undefined;
+            let tempScanner = html5QrcodeScanner;
+            
+            if (!tempScanner) {
+                try {
+                    tempScanner = new Html5Qrcode("reader", configObj);
+                } catch(err) {
+                    console.error("فشل تهيئة الماسح للصور:", err);
+                    showToast("فشل تهيئة الماسح الضوئي، حاول مرة أخرى", "error");
+                    e.target.value = '';
+                    return;
+                }
+            }
+            
+            // إضافة Toast لإعلام المستخدم أن العملية جارية (قد تستغرق ثانية)
+            showToast("جاري فحص الصورة...", "success");
             
             tempScanner.scanFile(imageFile, true)
                 .then(decodedText => {
-                    stopBarcodeScanner(); // إيقاف الكاميرا لو كانت تعمل
                     scannerModal.classList.remove('active');
                     handleBarcodeMatch(decodedText);
-                    e.target.value = ''; // تصفير حقل الملف لتمكين اختياره مرة أخرى
+                    e.target.value = ''; 
+                    stopBarcodeScanner(); // إيقاف الكاميرا لو كانت تعمل
                 })
                 .catch(err => {
+                    console.error("فشل المسح من الصورة:", err);
                     showToast("لم يتم العثور على باركود واضح في هذه الصورة، حاول مرة أخرى", "warning");
                     e.target.value = '';
                 });
