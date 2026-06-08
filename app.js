@@ -2547,3 +2547,50 @@ if (manualSearchBtn && manualBarcodeInput) {
         if (e.key === 'Enter') manualSearchBtn.click();
     });
 }
+
+// 7. تحسينات إضافية (نسخ الاسم ورفع صورة)
+let copyProductNameBtn = document.getElementById('copyProductNameBtn');
+if (copyProductNameBtn) {
+    copyProductNameBtn.addEventListener('click', () => {
+        let nameToCopy = document.getElementById('scanResultName').textContent;
+        navigator.clipboard.writeText(nameToCopy).then(() => {
+            let origText = copyProductNameBtn.textContent;
+            copyProductNameBtn.textContent = "تم النسخ ✅";
+            copyProductNameBtn.style.background = "var(--success-light)";
+            copyProductNameBtn.style.color = "var(--success)";
+            copyProductNameBtn.style.borderColor = "var(--success)";
+            
+            setTimeout(() => {
+                copyProductNameBtn.textContent = origText;
+                copyProductNameBtn.style.background = "";
+                copyProductNameBtn.style.color = "";
+                copyProductNameBtn.style.borderColor = "";
+            }, 2000);
+        }).catch(err => {
+            showToast("فشل نسخ الاسم", "error");
+        });
+    });
+}
+
+let barcodeImageUpload = document.getElementById('barcodeImageUpload');
+if (barcodeImageUpload) {
+    barcodeImageUpload.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+            let imageFile = e.target.files[0];
+            
+            let tempScanner = html5QrcodeScanner || new Html5Qrcode("reader");
+            
+            tempScanner.scanFile(imageFile, true)
+                .then(decodedText => {
+                    stopBarcodeScanner(); // إيقاف الكاميرا لو كانت تعمل
+                    scannerModal.classList.remove('active');
+                    handleBarcodeMatch(decodedText);
+                    e.target.value = ''; // تصفير حقل الملف لتمكين اختياره مرة أخرى
+                })
+                .catch(err => {
+                    showToast("لم يتم العثور على باركود واضح في هذه الصورة، حاول مرة أخرى", "warning");
+                    e.target.value = '';
+                });
+        }
+    });
+}
