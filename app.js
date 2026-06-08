@@ -2671,9 +2671,9 @@ if (barcodeImageUpload) {
     });
 }
 
-let addScannedToCartBtn = document.getElementById('addScannedToCartBtn');
-if (addScannedToCartBtn) {
-    addScannedToCartBtn.addEventListener('click', () => {
+let addToCartBtn = document.getElementById('addToCartBtn');
+if (addToCartBtn) {
+    addToCartBtn.addEventListener('click', () => {
         if (currentScannedProduct) {
             // إزالة الصفوف الفارغة لتجنب الفوضى
             let emptyRows = Array.from(document.querySelectorAll('.product-row:not(.confirmed)')).filter(r => r.querySelector('.product-name-input').value === "");

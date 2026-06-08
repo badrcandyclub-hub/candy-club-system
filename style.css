@@ -2042,3 +2042,58 @@ body.dark-mode .btn-settle {
     border-radius: 10px;
 }
 
+/* =========================================
+   نظام الإشعارات (Toast Notifications)
+   ========================================= */
+.toast-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toast {
+    min-width: 250px;
+    padding: 15px 20px;
+    border-radius: 12px;
+    background: #333;
+    color: #fff;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    animation: slideInToast 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.toast.success {
+    background: linear-gradient(135deg, #2e7d32, #43a047);
+}
+
+.toast.error {
+    background: linear-gradient(135deg, #c62828, #e53935);
+}
+
+.toast.warning {
+    background: linear-gradient(135deg, #f57c00, #ff9800);
+}
+
+.toast.fade-out {
+    opacity: 0;
+    transform: translateX(100%);
+}
+
+@keyframes slideInToast {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
