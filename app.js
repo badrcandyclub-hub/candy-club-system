@@ -2530,10 +2530,13 @@ function onScanFailure(error) {
 }
 
 // 5. البحث والتطابق
+let currentScannedProduct = null;
+
 function handleBarcodeMatch(barcodeValue) {
     let matchedProduct = barcodeCatalogData.find(p => p.barcode === barcodeValue);
     
     if (matchedProduct) {
+        currentScannedProduct = matchedProduct;
         playBeepSound();
         
         document.getElementById('scanResultName').textContent = matchedProduct.name;
@@ -2637,6 +2640,43 @@ if (barcodeImageUpload) {
                     showToast("لم يتم العثور على باركود واضح في هذه الصورة، حاول مرة أخرى", "warning");
                     e.target.value = '';
                 });
+        }
+    });
+}
+
+let addScannedToCartBtn = document.getElementById('addScannedToCartBtn');
+if (addScannedToCartBtn) {
+    addScannedToCartBtn.addEventListener('click', () => {
+        if (currentScannedProduct) {
+            // إزالة الصفوف الفارغة لتجنب الفوضى
+            let emptyRows = Array.from(document.querySelectorAll('.product-row:not(.confirmed)')).filter(r => r.querySelector('.product-name-input').value === "");
+            if (emptyRows.length > 0) {
+                emptyRows[0].parentElement.remove();
+            }
+            
+            // استخدام دالة إضافة المنتجات الحالية في النظام
+            if (typeof addProductRow === 'function') {
+                addProductRow(currentScannedProduct.name, currentScannedProduct.price, "1", true);
+                
+                // تحديث الإجمالي
+                if (typeof calculateTotal === 'function') {
+                    calculateTotal();
+                }
+                
+                showToast(`تمت إضافة ${currentScannedProduct.name} للفاتورة بنجاح ✅`, "success");
+                
+                // إغلاق النافذة
+                scanResultModal.classList.remove('active');
+                
+                // التأكد من وجود صف فارغ للإدخال اليدوي
+                if (document.querySelectorAll('.product-row:not(.confirmed)').length === 0) {
+                    addProductRow();
+                }
+                
+                currentScannedProduct = null;
+            } else {
+                showToast("تعذر إضافة المنتج، دالة الفاتورة غير متوفرة", "error");
+            }
         }
     });
 }

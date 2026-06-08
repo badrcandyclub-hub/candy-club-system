@@ -653,7 +653,10 @@
     <div id="scanResultModal" class="modal-overlay">
         <div class="modal-content text-center" style="max-width: 400px; background: var(--card); border: 3px solid var(--success);">
             <h2 id="scanResultName" style="font-size: 2rem; color: var(--text-main); margin-bottom: 10px; word-wrap: break-word; line-height: 1.2;">اسم المنتج</h2>
-            <button id="copyProductNameBtn" class="btn-outline interactive-btn" style="margin-bottom: 15px; padding: 5px 15px; font-size: 0.9rem; border-radius: 20px;">نسخ اسم المنتج 📋</button>
+            <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
+                <button id="copyProductNameBtn" class="btn-outline interactive-btn" style="padding: 8px 15px; font-size: 0.9rem; border-radius: 20px;">نسخ الاسم 📋</button>
+                <button id="addScannedToCartBtn" class="btn-confirm interactive-btn" style="padding: 8px 15px; font-size: 0.9rem; border-radius: 20px; background: var(--primary); color: white; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">إضافة للفاتورة 🛒</button>
+            </div>
             <div style="background: #e8f5e9; border-radius: 15px; padding: 15px; margin-bottom: 20px;">
                 <span style="font-size: 1.2rem; font-weight: bold; color: #2e7d32;">السعر:</span><br>
                 <span id="scanResultPrice" style="font-size: 3rem; font-weight: 900; color: #2e7d32; text-shadow: 1px 1px 2px rgba(0,0,0,0.1);">000</span> <span style="font-size: 1.5rem; color: #2e7d32; font-weight: bold;">ج.م</span>
