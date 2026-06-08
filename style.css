@@ -2022,3 +2022,23 @@ body.dark-mode .btn-settle {
     }
 }
 
+/* =========================================
+   تأثيرات الماسح الضوئي الذكي (Scanner Effects)
+   ========================================= */
+@keyframes flashSuccessAnim {
+    0%   { background-color: rgba(46, 125, 50, 0.4); }
+    100% { background-color: var(--card); }
+}
+
+.flash-success {
+    animation: flashSuccessAnim 0.6s ease-out;
+}
+
+#reader {
+    background: #000;
+}
+#reader video {
+    object-fit: cover;
+    border-radius: 10px;
+}
+

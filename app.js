@@ -2362,3 +2362,188 @@ if (excelPasswordInput) {
         if (e.key === 'Enter') tryExcelPassword();
     });
 }
+
+// ==========================================
+// 14. ⭐ الماسح الضوئي الذكي (Offline Barcode Scanner)
+// ==========================================
+
+let barcodeCatalogData = [];
+let html5QrcodeScanner = null;
+
+// 1. جلب وتحليل ملف الـ CSV
+function fetchCatalogCSV() {
+    fetch('products.csv.csv')
+        .then(response => {
+            if (!response.ok) throw new Error("لم يتم العثور على ملف products.csv.csv");
+            return response.text();
+        })
+        .then(csvText => {
+            let lines = csvText.split('\n');
+            barcodeCatalogData = [];
+            
+            // تجاهل أول سطر إذا كان عناوين الأعمدة، لكن تحسباً سنقرأ كل السطور
+            lines.forEach((line, index) => {
+                let cols = line.split(',');
+                if (cols.length >= 3) {
+                    let barcode = cols[0].trim();
+                    let name = cols[1].trim();
+                    let price = cols[2].trim();
+                    
+                    // نتجاهل السطر لو كان فارغ
+                    if (barcode && name) {
+                        barcodeCatalogData.push({ barcode, name, price });
+                    }
+                }
+            });
+            console.log("تم تحميل بيانات الكتالوج للمسح الضوئي: ", barcodeCatalogData.length, "منتج");
+        })
+        .catch(err => console.error("خطأ في تحميل الكتالوج للباركود:", err));
+}
+
+// تشغيل الدالة فور تحميل الصفحة
+window.addEventListener('load', fetchCatalogCSV);
+
+// 2. إصدار صوت Beep قصير عند نجاح المسح
+function playBeepSound() {
+    try {
+        let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let oscillator = audioCtx.createOscillator();
+        let gainNode = audioCtx.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.value = 800; // تردد الصوت
+        gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+        
+        oscillator.start(audioCtx.currentTime);
+        oscillator.stop(audioCtx.currentTime + 0.1);
+    } catch (e) {
+        console.warn("Web Audio API غير مدعوم في هذا المتصفح");
+    }
+}
+
+// 3. فتح وإغلاق النوافذ
+let openScannerBtn = document.getElementById('openScannerBtn');
+let scannerModal = document.getElementById('scannerModal');
+let closeScannerModalBtn = document.getElementById('closeScannerModalBtn');
+
+let scanResultModal = document.getElementById('scanResultModal');
+let closeScanResultBtn = document.getElementById('closeScanResultBtn');
+let scanAnotherBtn = document.getElementById('scanAnotherBtn');
+
+if (openScannerBtn) {
+    openScannerBtn.addEventListener('click', () => {
+        scannerModal.classList.add('active');
+        startBarcodeScanner();
+    });
+}
+
+if (closeScannerModalBtn) {
+    closeScannerModalBtn.addEventListener('click', () => {
+        stopBarcodeScanner();
+        scannerModal.classList.remove('active');
+    });
+}
+
+if (closeScanResultBtn) {
+    closeScanResultBtn.addEventListener('click', () => {
+        scanResultModal.classList.remove('active');
+    });
+}
+
+if (scanAnotherBtn) {
+    scanAnotherBtn.addEventListener('click', () => {
+        scanResultModal.classList.remove('active');
+        scannerModal.classList.add('active');
+        startBarcodeScanner();
+    });
+}
+
+// 4. منطق الماسح الضوئي
+function startBarcodeScanner() {
+    if (html5QrcodeScanner) {
+        // إذا كان يعمل بالفعل
+        return;
+    }
+    
+    // استخدام Html5Qrcode مباشرة للحصول على تحكم أفضل على الكاميرا الخلفية
+    html5QrcodeScanner = new Html5Qrcode("reader");
+    let config = { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.0 };
+    
+    html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
+        .catch(err => {
+            console.error("تعذر تشغيل الكاميرا:", err);
+            showToast("تعذر تشغيل الكاميرا، يرجى التحقق من الصلاحيات.", "error");
+        });
+}
+
+function stopBarcodeScanner() {
+    if (html5QrcodeScanner) {
+        html5QrcodeScanner.stop().then(() => {
+            html5QrcodeScanner.clear();
+            html5QrcodeScanner = null;
+        }).catch(err => {
+            console.error("فشل في إيقاف الكاميرا", err);
+        });
+    }
+}
+
+function onScanSuccess(decodedText, decodedResult) {
+    stopBarcodeScanner();
+    scannerModal.classList.remove('active');
+    handleBarcodeMatch(decodedText);
+}
+
+function onScanFailure(error) {
+    // تتكرر مع كل فريم لا يجد فيه باركود، لا نفعل شيئاً هنا لتجنب الإزعاج
+}
+
+// 5. البحث والتطابق
+function handleBarcodeMatch(barcodeValue) {
+    let matchedProduct = barcodeCatalogData.find(p => p.barcode === barcodeValue);
+    
+    if (matchedProduct) {
+        playBeepSound();
+        
+        // عرض البيانات
+        document.getElementById('scanResultName').textContent = matchedProduct.name;
+        document.getElementById('scanResultPrice').textContent = matchedProduct.price;
+        
+        // إظهار النافذة وتفعيل تأثير الوميض
+        scanResultModal.classList.add('active');
+        
+        let modalContent = scanResultModal.querySelector('.modal-content');
+        modalContent.classList.remove('flash-success');
+        // Trigger reflow
+        void modalContent.offsetWidth;
+        modalContent.classList.add('flash-success');
+        
+    } else {
+        showToast("المنتج غير مسجل في قاعدة البيانات ❌", "error");
+    }
+}
+
+// 6. الإدخال اليدوي
+let manualSearchBtn = document.getElementById('manualSearchBtn');
+let manualBarcodeInput = document.getElementById('manualBarcodeInput');
+
+if (manualSearchBtn && manualBarcodeInput) {
+    manualSearchBtn.addEventListener('click', () => {
+        let val = manualBarcodeInput.value.trim();
+        if (!val) {
+            showToast("يرجى إدخال رقم الباركود", "warning");
+            return;
+        }
+        stopBarcodeScanner();
+        scannerModal.classList.remove('active');
+        handleBarcodeMatch(val);
+        manualBarcodeInput.value = '';
+    });
+    
+    manualBarcodeInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') manualSearchBtn.click();
+    });
+}
