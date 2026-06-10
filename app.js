@@ -543,11 +543,11 @@ function renderHistoryList(orders, isLoadMore = false) {
         } else if (oType.includes('استلام من الفرع') || oType === 'branch') {
             typeBadge = `<span style="background: #e8f5e9; color: #2e7d32; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px;">🏪 استلام من الفرع</span>`;
         } else if (oType.includes('محافظات') || oType === 'gov_shipping') {
-            typeBadge = `<span style="background: #f3e5f5; color: #6a1b9a; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px;">📦 شحن محافظات</span>`;
+            typeBadge = `<span style="background: #fff3e0; color: #e65100; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px;">📦 شحن محافظات</span>`;
         } else if (oType.includes('حجز') || oType === 'special_date') {
             let resDate = order.reservationDate || order.expectedDate || order.bookingDate || order.specialDate || order.spDate || order.date;
             let dateText = resDate ? `حجز: ${resDate}` : 'حجز مسبق';
-            typeBadge = `<span style="background: #fff3e0; color: #e65100; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px;">🗓️ ${dateText}</span>`;
+            typeBadge = `<span style="background: #fce4ec; color: #c2185b; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px;">🗓️ ${dateText}</span>`;
         }
 
         div.innerHTML = `
