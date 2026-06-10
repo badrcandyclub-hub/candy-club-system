@@ -1997,6 +1997,7 @@ body.dark-mode .btn-settle {
         text-rendering: optimizeLegibility !important;
         font-weight: bold !important;
         color: #000000 !important;
+        -webkit-text-stroke: 0.2px #000000 !important;
     }
 
     body, .receipt-container {
@@ -2014,7 +2015,7 @@ body.dark-mode .btn-settle {
 
     /* 2. تكبير اللوجو وتوسيطه (Logo Sizing) */
     .receipt-header img, #print-logo {
-        width: 180px !important;
+        width: 150px !important;
         max-width: none !important;
         display: block !important;
         margin: 0 auto 10px auto !important;
