@@ -2000,7 +2000,7 @@ body.dark-mode .btn-settle {
     /* 2. تكبير اللوجو وتوسيطه (Logo Sizing) */
     .receipt-header img, #print-logo {
         display: block !important;
-        width: 240px !important;
+        width: 280px !important;
         max-width: 100% !important;
         margin: 0 auto 15px auto !important;
         transform: none !important;
@@ -2018,8 +2018,8 @@ body.dark-mode .btn-settle {
     .receipt-table td {
         display: table-cell !important;
         border: 2px solid #000 !important;
-        font-size: 13px !important;
-        padding: 4px !important;
+        font-size: 11px !important;
+        padding: 2px !important;
         font-weight: bold !important;
         color: #000000 !important;
     }
