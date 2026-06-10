@@ -2135,3 +2135,26 @@ body.dark-mode .btn-settle {
         transform: translateX(0);
     }
 }
+
+/* إصلاح عرض الواجهة العلوية وأزرار التحديث في الهواتف */
+@media (max-width: 768px) {
+    .header-actions {
+        display: flex !important;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 5px;
+    }
+    .status-indicator {
+        display: flex !important;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 5px;
+    }
+    .header-actions button, .status-indicator button {
+        font-size: 0.85rem !important;
+        padding: 5px 8px !important;
+    }
+    #sync-status {
+        font-size: 0.8rem;
+    }
+}
