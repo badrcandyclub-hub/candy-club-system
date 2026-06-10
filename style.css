@@ -2000,24 +2000,26 @@ body.dark-mode .btn-settle {
     /* 2. تكبير اللوجو وتوسيطه (Logo Sizing) */
     .receipt-header img, #print-logo {
         display: block !important;
-        width: 80% !important;
-        max-width: none !important;
+        width: 240px !important;
+        max-width: 100% !important;
         margin: 0 auto 15px auto !important;
         transform: none !important;
         filter: grayscale(100%) !important;
     }
 
     /* 3. تخفيف إرهاق الطابعة في حدود الجدول وتكبير الخط (Table Borders) */
-    .receipt-table,
-    .receipt-table th,
-    .receipt-table td {
-        border: 1px solid #000000 !important;
-        padding: 8px !important;
+    .receipt-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        display: table !important;
     }
     
     .receipt-table th,
     .receipt-table td {
-        font-size: 16px !important;
+        display: table-cell !important;
+        border: 2px solid #000 !important;
+        font-size: 13px !important;
+        padding: 4px !important;
         font-weight: bold !important;
         color: #000000 !important;
     }
@@ -2029,10 +2031,10 @@ body.dark-mode .btn-settle {
         color: #000000 !important;
         border: 3px solid #000000 !important;
         border-top: 3px solid #000000 !important;
-        font-size: 24px !important;
+        font-size: 20px !important;
         font-weight: 900 !important;
         padding: 10px !important;
-        margin: 15px 0 !important;
+        margin: 5px 0 !important;
         display: flex !important;
         justify-content: flex-start !important;
         align-items: center !important;
@@ -2052,8 +2054,8 @@ body.dark-mode .btn-settle {
     .receipt-info p {
         font-size: 14px !important;
         font-weight: bold !important;
-        line-height: 1.8 !important;
-        margin: 6px 0 !important;
+        line-height: 1.3 !important;
+        margin: 2px 0 !important;
         color: #000000 !important;
     }
 }
