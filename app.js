@@ -699,11 +699,11 @@ window.printHistoryOrder = function (orderId) {
     let sellerP = document.getElementById('print-seller-name');
     if (sellerP) sellerP.innerText = `الكاشير: ${order.seller || 'غير محدد'}`;
 
-    let isGovShipping = oType === 'gov_shipping' || oType.includes('محافظات') || (order.deliveryType || '') === 'gov_shipping';
+    let isGovShipping = oType === 'gov_shipping' || oType.includes('محافظات') || (order.deliveryType || '') === 'gov_shipping' || oType.includes('شحن');
     if (isGovShipping) {
-        document.body.classList.add('print-gov-shipping');
+        document.body.classList.add('print-gov-shipping', 'shipping-mode');
     } else {
-        document.body.classList.remove('print-gov-shipping');
+        document.body.classList.remove('print-gov-shipping', 'shipping-mode');
     }
 
     let qrImg = document.querySelector('img[alt="QR Code"]');
@@ -711,7 +711,7 @@ window.printHistoryOrder = function (orderId) {
 
     setTimeout(() => { 
         window.print();
-        document.body.classList.remove('print-gov-shipping');
+        document.body.classList.remove('print-gov-shipping', 'shipping-mode');
     }, 500);
 };
 
