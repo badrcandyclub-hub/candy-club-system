@@ -535,10 +535,18 @@ function renderHistoryList(orders, isLoadMore = false) {
         if (order.status === "مرتجع") statusColor = "var(--danger)";
 
         div.style.borderRightColor = statusColor;
+        
+        let typeBadge = '';
+        let oType = order.orderType || order.type || order.deliveryType || "";
+        if (oType.includes('توصيل منزلي') || oType === 'normal') {
+            typeBadge = `<span style="background: #e3f2fd; color: #1565c0; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px;">🚚 توصيل منزلي</span>`;
+        } else if (oType.includes('استلام من الفرع') || oType === 'branch') {
+            typeBadge = `<span style="background: #e8f5e9; color: #2e7d32; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px;">🏪 استلام من الفرع</span>`;
+        }
 
         div.innerHTML = `
             <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 8px; align-items: center;">
-                <strong style="font-size: 1.05rem;">${order.id} | ${order.name}</strong>
+                <strong style="font-size: 1.05rem;">${order.id} | ${order.name} ${typeBadge}</strong>
                 <div style="display:flex; align-items:center; gap:10px;">
                     <button class="interactive-btn" onclick="shareToWhatsAppGroup('${order.id}')" style="background:none; border:none; font-size:1.3rem; cursor:pointer;" title="مشاركة للجروب">📱</button>
                     <button class="interactive-btn" onclick="printHistoryOrder('${order.id}')" style="background:none; border:none; cursor:pointer;" title="طباعة الفاتورة">
@@ -1143,9 +1151,31 @@ function resetForm() {
 let whatsappReviewBtn = document.getElementById('whatsappReviewBtn');
 if (whatsappReviewBtn) {
     whatsappReviewBtn.addEventListener('click', () => {
+        let nameEl = document.getElementById('customerName'); let name = nameEl ? nameEl.value.trim() : "";
         let phoneEl = document.getElementById('customerPhone'); let phone = phoneEl ? phoneEl.value.trim() : "";
-        if (!phone) { showToast("يرجى إدخال رقم الهاتف!", "error"); return; }
-        if (phone.startsWith('0')) phone = '+2' + phone;
+        let addressEl = document.getElementById('address'); let address = addressEl ? addressEl.value.trim() : "";
+        
+        let hasMissingData = false;
+        
+        let displayPhone = phone;
+        if (!displayPhone) {
+            displayPhone = "(مطلوب)";
+            hasMissingData = true;
+        } else if (displayPhone.startsWith('0')) {
+            displayPhone = '+2' + displayPhone;
+        }
+
+        let displayName = name;
+        if (!displayName) {
+            displayName = "(مطلوب)";
+            hasMissingData = true;
+        }
+
+        let displayAddress = address;
+        if (!displayAddress) {
+            displayAddress = "(مطلوب لتحديد تكلفة الشحن)";
+            hasMissingData = true;
+        }
 
         let expectedDateText = document.querySelector('#deliveryInfo span') ? document.querySelector('#deliveryInfo span').innerText : "";
         if (deliveryTypeSelect && deliveryTypeSelect.value === 'special_date') expectedDateText = document.getElementById('specialDateInput') ? document.getElementById('specialDateInput').value : "";
@@ -1157,10 +1187,22 @@ if (whatsappReviewBtn) {
         });
         if (productsText === "") productsText = "لم يتم تأكيد أي منتجات.\n";
 
-        let message = `أهلاً بك في كاندي كلوب 🍬\nيرجى مراجعة تفاصيل طلبك:\n\n📦 التوصيل: ${expectedDateText}\n\n🛒 تفاصيل الطلب:\n${productsText}\n`;
+        let productsTotal = document.getElementById('productsTotal') ? document.getElementById('productsTotal').value || 0 : 0;
+
+        let message = `أهلاً بك في كاندي كلوب 🍬\nيرجى مراجعة تفاصيل طلبك:\n\n👤 الاسم: ${displayName}\n📱 الموبايل: ${displayPhone}\n📍 العنوان: ${displayAddress}\n\n📦 التوصيل: ${expectedDateText}\n\n🛒 تفاصيل الطلب:\n${productsText}\n`;
+        message += `🛍️ إجمالي المنتجات: ${productsTotal} ج.م\n`;
         message += `🚚 الشحن: ${document.getElementById('shippingCost') ? document.getElementById('shippingCost').value || 0 : 0} ج.م\n`;
-        message += `💰 الإجمالي المستحق: ${document.getElementById('finalTotalDisplay') ? document.getElementById('finalTotalDisplay').innerText : 0} ج.م\n\nيرجى الرد بكلمة (تمام) لتأكيد الأوردر 🤝`;
-        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+        message += `💰 الإجمالي المستحق: ${document.getElementById('finalTotalDisplay') ? document.getElementById('finalTotalDisplay').innerText : 0} ج.م\n\n`;
+        
+        if (hasMissingData) {
+            message += `يرجى ملء البيانات الناقصة بالأعلى والرد بكلمة (تمام) لتأكيد الأوردر 🤝`;
+        } else {
+            message += `يرجى الرد بكلمة (تمام) لتأكيد الأوردر 🤝`;
+        }
+
+        let waPhone = phone.replace(/\D/g, '');
+        if (waPhone.startsWith('0')) waPhone = '2' + waPhone;
+        window.open(`https://wa.me/${waPhone}?text=${encodeURIComponent(message)}`, '_blank');
     });
 }
 
@@ -1915,6 +1957,8 @@ window.shareToWhatsAppGroup = function(orderId) {
     if (_phone) text += `📱 *الموبايل:* ${_phone}\n`;
     text += `💳 *طريقة الدفع:* ${_payment}\n\n`;
     text += `📦 *المنتجات:*\n${_products}\n`;
+    let _subtotal = order.subtotal || order.productsTotal || (parseFloat(order.total) - parseFloat(_shipping)) || 0;
+    text += `🛍️ *إجمالي المنتجات:* ${_subtotal} ج.م\n`;
     text += `🚚 *الشحن:* ${_shipping}\n`;
     text += `💰 *الإجمالي النهائي:* ${_remaining}\n`;
     
