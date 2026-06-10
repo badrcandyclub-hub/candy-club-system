@@ -710,7 +710,17 @@ window.printHistoryOrder = function (orderId) {
     if (qrImg) qrImg.src = 'images/qr-code.png';
 
     setTimeout(() => { 
+        if (isGovShipping) {
+            let tableContainers = document.querySelectorAll('.receipt-table, .receipt-table-container');
+            tableContainers.forEach(el => el.style.display = 'none');
+        }
+
         window.print();
+
+        if (isGovShipping) {
+            let tableContainers = document.querySelectorAll('.receipt-table, .receipt-table-container');
+            tableContainers.forEach(el => el.style.display = '');
+        }
         document.body.classList.remove('print-gov-shipping', 'shipping-mode');
     }, 500);
 };

@@ -1995,8 +1995,16 @@ body.dark-mode .btn-settle {
         -webkit-font-smoothing: auto !important;
         font-smoothing: auto !important;
         text-rendering: optimizeLegibility !important;
-        font-weight: 900 !important;
+        font-weight: bold !important;
         color: #000000 !important;
+    }
+
+    body, .receipt-container {
+        direction: rtl !important;
+        text-align: right !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+        width: 100% !important;
     }
 
     body.shipping-mode .receipt-table,
@@ -2006,10 +2014,10 @@ body.dark-mode .btn-settle {
 
     /* 2. تكبير اللوجو وتوسيطه (Logo Sizing) */
     .receipt-header img, #print-logo {
-        width: 100% !important;
+        width: 180px !important;
         max-width: none !important;
         display: block !important;
-        margin: 0 auto 15px auto !important;
+        margin: 0 auto 10px auto !important;
     }
 
     /* 3. تخفيف إرهاق الطابعة في حدود الجدول وتكبير الخط (Table Borders) */
