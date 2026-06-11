@@ -502,6 +502,10 @@ function renderHistoryList(orders, isLoadMore = false) {
                 if (pType.includes('حجز') || pType === 'special_date') {
                     let resDate = pOrder.reservationDate || pOrder.expectedDate || pOrder.specialDate || pOrder.spDate;
                     if (resDate) {
+                        if (resDate.toString().includes('GMT') || resDate.toString().includes('توقيت')) {
+                            let d = new Date(resDate);
+                            if (!isNaN(d.getTime())) resDate = `${d.getFullYear()}-${("0"+(d.getMonth()+1)).slice(-2)}-${("0"+d.getDate()).slice(-2)}`;
+                        }
                         dateHtml = `<span style="color: #fff; background: #c2185b; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size:0.9rem;">🗓️ تسليم: ${resDate}</span>`;
                     }
                 }
@@ -554,6 +558,10 @@ function renderHistoryList(orders, isLoadMore = false) {
             typeBadge = `<span style="background: #fff3e0; color: #e65100; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px;">📦 شحن محافظات</span>`;
         } else if (oType.includes('حجز') || oType === 'special_date') {
             let resDate = order.reservationDate || order.expectedDate || order.bookingDate || order.specialDate || order.spDate || order.date;
+            if (resDate && (resDate.toString().includes('GMT') || resDate.toString().includes('توقيت'))) {
+                let d = new Date(resDate);
+                if (!isNaN(d.getTime())) resDate = `${d.getFullYear()}-${("0"+(d.getMonth()+1)).slice(-2)}-${("0"+d.getDate()).slice(-2)}`;
+            }
             let dateText = resDate ? `تسليم: ${resDate}` : 'حجز مسبق';
             typeBadge = `<span style="background: #c2185b; color: #fff; padding: 3px 8px; border-radius: 6px; font-size: 0.85rem; margin-right: 5px; font-weight: bold;">🗓️ ${dateText}</span>`;
         }
@@ -2008,6 +2016,10 @@ window.shareToWhatsAppGroup = function(orderId) {
     if (_type.includes('حجز') || _type === 'special_date') {
         let resDate = order.reservationDate || order.expectedDate || order.bookingDate || order.specialDate || order.spDate;
         if (resDate) {
+            if (resDate.toString().includes('GMT') || resDate.toString().includes('توقيت')) {
+                let d = new Date(resDate);
+                if (!isNaN(d.getTime())) resDate = `${d.getFullYear()}-${("0"+(d.getMonth()+1)).slice(-2)}-${("0"+d.getDate()).slice(-2)}`;
+            }
             text += `🗓️ *تاريخ التسليم:* ${resDate}\n`;
         }
     }

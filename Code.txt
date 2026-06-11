@@ -285,6 +285,9 @@ function doGet(e) {
                   var formattedDate = rawDate instanceof Date
                     ? Utilities.formatDate(rawDate, "GMT+2", "yyyy-MM-dd")
                     : (rawDate ? rawDate.toString().replace(/'/g, "").trim() : "");
+                  var formattedResDate = data[i][12] instanceof Date
+                    ? Utilities.formatDate(data[i][12], "GMT+2", "yyyy-MM-dd")
+                    : (data[i][12] ? data[i][12].toString().replace(/'/g, "").trim() : "");
                   searchResults.push({
                       id: data[i][0], date: formattedDate, time: data[i][2],
                       name: data[i][4], phone: phone, address: data[i][6],
@@ -294,7 +297,7 @@ function doGet(e) {
                       orderType: data[i][9], deposit: data[i][21] || 0,
                       remaining: data[i][22] || (parseFloat(data[i][17]) || 0),
                       gov: data[i][5], platform: data[i][3], driver: data[i][11],
-                      reservationDate: data[i][12] ? data[i][12].toString().replace(/'/g, "").trim() : ""
+                      reservationDate: formattedResDate
                   });
               }
           }
@@ -480,6 +483,10 @@ function doGet(e) {
         });
       }
 
+      var formattedResDate = data[j][12] instanceof Date
+        ? Utilities.formatDate(data[j][12], "GMT+2", "yyyy-MM-dd")
+        : (data[j][12] ? data[j][12].toString().replace(/'/g, "").trim() : "");
+
       // ⭐ السجل: يعرض الطلبات حسب filterDate (اليوم المختار في السجل)
       if (rowDate === filterDate) {
         response.history.push({
@@ -490,7 +497,7 @@ function doGet(e) {
           payment: data[j][10], seller: data[j][20], orderType: data[j][9],
           deposit: data[j][21] || 0, remaining: remainingCash,
           gov: data[j][5], platform: data[j][3], driver: driver,
-          reservationDate: data[j][12] ? data[j][12].toString().replace(/'/g, "").trim() : ""
+          reservationDate: formattedResDate
         });
       }
 
@@ -502,7 +509,7 @@ function doGet(e) {
           total: finalTotal, remaining: remainingCash,
           payment: data[j][10], date: rowDate,
           orderType: data[j][9],
-          reservationDate: data[j][12] ? data[j][12].toString().replace(/'/g, "").trim() : ""
+          reservationDate: formattedResDate
         });
       }
 
