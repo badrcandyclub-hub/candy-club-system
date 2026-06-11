@@ -293,7 +293,8 @@ function doGet(e) {
                       status: data[i][18], payment: data[i][10], seller: data[i][20],
                       orderType: data[i][9], deposit: data[i][21] || 0,
                       remaining: data[i][22] || (parseFloat(data[i][17]) || 0),
-                      gov: data[i][5], platform: data[i][3], driver: data[i][11]
+                      gov: data[i][5], platform: data[i][3], driver: data[i][11],
+                      reservationDate: data[i][12] ? data[i][12].toString().replace(/'/g, "").trim() : ""
                   });
               }
           }
@@ -488,7 +489,8 @@ function doGet(e) {
           shipping: data[j][16], total: finalTotal, status: status,
           payment: data[j][10], seller: data[j][20], orderType: data[j][9],
           deposit: data[j][21] || 0, remaining: remainingCash,
-          gov: data[j][5], platform: data[j][3], driver: driver
+          gov: data[j][5], platform: data[j][3], driver: driver,
+          reservationDate: data[j][12] ? data[j][12].toString().replace(/'/g, "").trim() : ""
         });
       }
 
@@ -499,7 +501,8 @@ function doGet(e) {
           phone: data[j][7].toString().replace(/'/g, ""),
           total: finalTotal, remaining: remainingCash,
           payment: data[j][10], date: rowDate,
-          orderType: data[j][9]
+          orderType: data[j][9],
+          reservationDate: data[j][12] ? data[j][12].toString().replace(/'/g, "").trim() : ""
         });
       }
 
