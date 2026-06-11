@@ -1948,11 +1948,6 @@ body.dark-mode .btn-settle {
         filter: grayscale(100%) contrast(150%);
     }
     
-    #print-logo {
-        transform: scale(1.5);
-        margin: 20px auto 30px auto !important;
-    }
-    
     .print-gov-shipping th:nth-child(2),
     .print-gov-shipping th:nth-child(4),
     .print-gov-shipping td:nth-child(2),
@@ -1998,7 +1993,6 @@ body.dark-mode .btn-settle {
         text-rendering: optimizeLegibility !important;
         font-weight: bold !important;
         color: #000000 !important;
-        -webkit-text-stroke: 0.2px #000000 !important;
     }
 
     body, .receipt-container {
@@ -2014,13 +2008,7 @@ body.dark-mode .btn-settle {
         display: none !important;
     }
 
-    /* 2. تكبير اللوجو وتوسيطه (Logo Sizing) */
-    .receipt-header img, #print-logo {
-        width: 150px !important;
-        max-width: none !important;
-        display: block !important;
-        margin: 0 auto 10px auto !important;
-    }
+    /* 2. تكبير اللوجو وتوسيطه (Logo Sizing) - Removed to avoid conflicts with line 1152 */
 
     /* 3. تخفيف إرهاق الطابعة في حدود الجدول وتكبير الخط (Table Borders) */
     .receipt-table {

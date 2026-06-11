@@ -652,9 +652,18 @@ window.printHistoryOrder = function (orderId) {
     if (document.getElementById('print-time')) document.getElementById('print-time').innerText = order.time || '';
 
     let printBookingRow = document.querySelector('.print-booking-row');
-    if (oType.includes('حجز') || oType === 'special_date' || order.reservationDate || order.expectedDate || order.spDate) {
-        if (printBookingRow) printBookingRow.style.display = 'block';
-        if (document.getElementById('print-booking-date')) document.getElementById('print-booking-date').innerText = order.reservationDate || order.expectedDate || order.specialDate || order.spDate || order.date || "";
+    if (oType.includes('حجز') || oType === 'special_date') {
+        let rDate = order.reservationDate || order.expectedDate || order.specialDate || order.spDate;
+        if (rDate) {
+            if (printBookingRow) printBookingRow.style.display = 'block';
+            if (rDate.toString().includes('GMT') || rDate.toString().includes('توقيت')) {
+                let d = new Date(rDate);
+                if (!isNaN(d.getTime())) rDate = `${d.getFullYear()}-${("0"+(d.getMonth()+1)).slice(-2)}-${("0"+d.getDate()).slice(-2)}`;
+            }
+            if (document.getElementById('print-booking-date')) document.getElementById('print-booking-date').innerText = rDate;
+        } else {
+            if (printBookingRow) printBookingRow.style.display = 'none';
+        }
     } else {
         if (printBookingRow) printBookingRow.style.display = 'none';
     }
@@ -1363,7 +1372,7 @@ if (saveAndPrintBtn) {
                 if (document.getElementById('print-date')) document.getElementById('print-date').innerText = new Date().toLocaleDateString('ar-EG');
                 if (document.getElementById('print-time')) document.getElementById('print-time').innerText = new Date().toLocaleTimeString('ar-EG');
 
-                if (bookingDatePrint) {
+                if (bookingDatePrint && (orderTypeLabel.includes('حجز') || orderTypeLabel === 'special_date')) {
                     document.querySelector('.print-booking-row').style.display = 'block';
                     document.getElementById('print-booking-date').innerText = bookingDatePrint;
                 } else {
