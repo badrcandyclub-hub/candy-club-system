@@ -1152,8 +1152,9 @@ input:checked + .slider:before { transform: translateX(24px); }
     .receipt-header img, #print-logo { 
         display: block !important; 
         margin: 0 auto 10px auto !important; 
-        width: 120px !important;
-        height: auto !important;
+        width: 90px !important;
+        height: 90px !important;
+        object-fit: contain !important;
         max-width: none !important;
         filter: grayscale(100%) !important;
     }

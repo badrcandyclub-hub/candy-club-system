@@ -497,11 +497,19 @@ function renderHistoryList(orders, isLoadMore = false) {
             pendingDiv.innerHTML = `<h4 style="color: #e74c3c; padding-bottom: 5px; margin-bottom: 15px; font-weight: bold;">🔴 أوردرات لم تُشحن بعد (${window.pendingOrdersData.length})</h4>`;
 
             window.pendingOrdersData.forEach(pOrder => {
+                let pType = pOrder.orderType || pOrder.type || pOrder.deliveryType || "";
+                let dateHtml = `<span style="color: #e74c3c; font-weight: bold; font-size:0.85rem;">📅 ${pOrder.date}</span>`;
+                if (pType.includes('حجز') || pType === 'special_date') {
+                    let resDate = pOrder.reservationDate || pOrder.expectedDate || pOrder.specialDate || pOrder.spDate;
+                    if (resDate) {
+                        dateHtml = `<span style="color: #fff; background: #c2185b; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size:0.9rem;">🗓️ تسليم: ${resDate}</span>`;
+                    }
+                }
                 pendingDiv.innerHTML += `
                     <div class="history-item" style="border-right-color: #e74c3c; background: #fff5f5;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                             <strong style="font-size: 1.05rem;">${pOrder.id} | ${pOrder.name}</strong>
-                            <span style="color: #e74c3c; font-weight: bold; font-size:0.85rem;">📅 ${pOrder.date}</span>
+                            ${dateHtml}
                         </div>
                         <div style="font-size: 0.9rem; color: #555;">
                             <span>📱 ${pOrder.phone} | <span style="color:#000; font-weight:bold;">💰 ${pOrder.total} ج.م</span></span>
@@ -546,8 +554,8 @@ function renderHistoryList(orders, isLoadMore = false) {
             typeBadge = `<span style="background: #fff3e0; color: #e65100; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px;">📦 شحن محافظات</span>`;
         } else if (oType.includes('حجز') || oType === 'special_date') {
             let resDate = order.reservationDate || order.expectedDate || order.bookingDate || order.specialDate || order.spDate || order.date;
-            let dateText = resDate ? `حجز: ${resDate}` : 'حجز مسبق';
-            typeBadge = `<span style="background: #fce4ec; color: #c2185b; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px;">🗓️ ${dateText}</span>`;
+            let dateText = resDate ? `تسليم: ${resDate}` : 'حجز مسبق';
+            typeBadge = `<span style="background: #c2185b; color: #fff; padding: 3px 8px; border-radius: 6px; font-size: 0.85rem; margin-right: 5px; font-weight: bold;">🗓️ ${dateText}</span>`;
         }
 
         div.innerHTML = `
@@ -1997,7 +2005,13 @@ window.shareToWhatsAppGroup = function(orderId) {
     let _type     = order.orderType || order.type || order.deliveryType || "توصيل";
 
     let text = `*نوع الطلب:* ${_type}\n`;
-    text += `*التاريخ:* ${order.date || new Date().toLocaleDateString('ar-EG')} ⏰ ${order.time || new Date().toLocaleTimeString('ar-EG')}\n`;
+    if (_type.includes('حجز') || _type === 'special_date') {
+        let resDate = order.reservationDate || order.expectedDate || order.bookingDate || order.specialDate || order.spDate;
+        if (resDate) {
+            text += `🗓️ *تاريخ التسليم:* ${resDate}\n`;
+        }
+    }
+    text += `*تاريخ إنشاء الأوردر:* ${order.date || new Date().toLocaleDateString('ar-EG')} ⏰ ${order.time || new Date().toLocaleTimeString('ar-EG')}\n`;
     text += `👤 *العميل:* ${_name}\n`;
     if (!_type.includes('استلام من الفرع') && (_gov || _address)) {
         text += `📍 *العنوان:* ${_gov ? _gov + " - " : ""}${_address}\n`;
