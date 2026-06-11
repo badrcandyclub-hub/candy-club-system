@@ -634,6 +634,14 @@ window.printHistoryOrder = function (orderId) {
     }
     if (document.getElementById('print-date')) document.getElementById('print-date').innerText = order.date || new Date().toLocaleDateString('ar-EG');
     if (document.getElementById('print-time')) document.getElementById('print-time').innerText = order.time || '';
+
+    let printBookingRow = document.querySelector('.print-booking-row');
+    if (oType.includes('حجز') || oType === 'special_date' || order.reservationDate || order.expectedDate || order.spDate) {
+        if (printBookingRow) printBookingRow.style.display = 'block';
+        if (document.getElementById('print-booking-date')) document.getElementById('print-booking-date').innerText = order.reservationDate || order.expectedDate || order.specialDate || order.spDate || order.date || "";
+    } else {
+        if (printBookingRow) printBookingRow.style.display = 'none';
+    }
     if (document.getElementById('print-customer-name')) document.getElementById('print-customer-name').innerText = order.name || '';
     if (document.getElementById('print-phone')) document.getElementById('print-phone').innerText = order.phone || '';
 
@@ -1550,11 +1558,17 @@ function renderShippingRoom(history) {
         if (resOrders.length === 0) resContainer.innerHTML = '<p class="empty-msg">لا يوجد حجوزات قادمة.</p>';
         else resOrders.forEach(o => {
             resContainer.innerHTML += `
-                <div class="order-checkbox-row" style="border-left: 4px solid var(--primary);">
-                    <input type="checkbox" class="order-checkbox pending-checkbox" value="${o.id}">
-                    <div class="order-details-compact">
-                        <span class="order-id-name">${o.id} | ${o.name}</span>
-                        <span class="order-address-price" style="color: var(--primary); font-weight: bold;">📅 ${o.date} | 📱 ${o.phone} | 💰 ${o.total} ج.م</span>
+                <div class="financial-order-item" style="border-right: 4px solid var(--primary); margin-bottom: 10px; padding: 10px; background: #fff; border-radius: 8px; border: 1px solid #eee;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div>
+                            <span style="font-weight:bold;">${o.id} | ${o.name}</span><br>
+                            <span style="font-size:0.85rem; color:var(--primary); font-weight: bold;">📅 ${o.date} | 📱 ${o.phone}</span><br>
+                            <span style="font-size:0.75rem; color:#777;">الإجمالي: ${o.total}ج | المتبقي: <span style="color:var(--danger); font-weight:bold;">${o.remaining}ج</span></span>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-settle interactive-btn" style="flex: 1; padding: 8px; font-size: 0.85rem; border-radius: 6px; border: none; background: var(--success); color: white; font-weight: bold;" onclick="settleBranchOrder('${o.id}', this)">تم التسليم ✅</button>
+                        <button class="interactive-btn" style="flex: 1.5; padding: 8px; font-size: 0.85rem; border-radius: 6px; border: none; background: var(--secondary); color: white; font-weight: bold;" onclick="convertToNormalDelivery('${o.id}', this)">تحويل لتوصيل عادي 🚚</button>
                     </div>
                 </div>`;
         });
@@ -1595,6 +1609,24 @@ window.settleBranchOrder = function (orderId, btn) {
             showToast(`✅ تم التسليم وتصفية مبلغ (${amountPaidText} ج.م) بنجاح!`, "success");
             loadDataFromServer();
         }).catch(() => setBtnLoading(btn, false, "تم التسليم ✅"));
+};
+
+// ⭐ دالة تحويل الحجز لتوصيل عادي
+window.convertToNormalDelivery = function (orderId, btn) {
+    if (!confirm('هل أنت متأكد من تحويل هذا الحجز إلى توصيل فوري عادي؟')) return;
+
+    setBtnLoading(btn, true);
+    let formData = new URLSearchParams();
+    formData.append('action', 'updateOrderStatus');
+    formData.append('orderId', orderId);
+    formData.append('status', 'قيد التجهيز');
+    formData.append('orderType', 'توصيل منزلي عادي');
+
+    fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
+        .then(() => {
+            showToast("✅ تم التحويل لتوصيل فوري بنجاح!", "success");
+            loadDataFromServer();
+        }).catch(() => setBtnLoading(btn, false, "تحويل لتوصيل عادي 🚚"));
 };
 
 // ⭐ حماية زرار (تقفيل المندوبين)
