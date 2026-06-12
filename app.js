@@ -1232,14 +1232,20 @@ if (whatsappReviewBtn) {
         let productsText = "";
         document.querySelectorAll('.product-row.confirmed').forEach(row => {
             let n = row.querySelector('.product-name-input').value, p = row.querySelector('.product-price-input').value, q = row.querySelector('.product-qty-input').value;
-            productsText += `- ${n} - الكمية: ${q} (${(parseFloat(p) || 0) * (parseFloat(q) || 1)} ج.م)\n`;
+            productsText += `- ${n} (السعر: ${parseFloat(p) || 0}ج) - الكمية: ${q} - الإجمالي: ${(parseFloat(p) || 0) * (parseFloat(q) || 1)} ج.م\n`;
         });
         if (productsText === "") productsText = "لم يتم تأكيد أي منتجات.\n";
 
         let productsTotal = document.getElementById('productsTotal') ? document.getElementById('productsTotal').value || 0 : 0;
 
-        let message = `أهلاً بك في كاندي كلوب 🍬\nيرجى مراجعة تفاصيل طلبك:\n\n👤 الاسم: ${displayName}\n📱 الموبايل: ${displayPhone}\n📍 العنوان: ${displayAddress}\n\n📦 التوصيل: ${expectedDateText}\n\n🛒 تفاصيل الطلب:\n${productsText}\n`;
+        let message = `أهلاً بك في كاندي كلوب 🍬\nيرجى مراجعة تفاصيل طلبك:\n\n👤 الاسم: ${displayName}\n📱 الموبايل: ${displayPhone}\n📍 العنوان: ${displayAddress}\n\n🛒 تفاصيل الطلب:\n${productsText}\n`;
         message += `🛍️ إجمالي المنتجات: ${productsTotal} ج.م\n`;
+        
+        let discountValue = document.getElementById('discount') ? parseFloat(document.getElementById('discount').value) || 0 : 0;
+        if (discountValue > 0) {
+            message += `🏷️ الخصم: ${discountValue} ج.م\n`;
+        }
+
         message += `🚚 الشحن: ${document.getElementById('shippingCost') ? document.getElementById('shippingCost').value || 0 : 0} ج.م\n`;
         message += `💰 الإجمالي المستحق: ${document.getElementById('finalTotalDisplay') ? document.getElementById('finalTotalDisplay').innerText : 0} ج.م\n\n`;
         
