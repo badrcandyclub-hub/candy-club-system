@@ -323,6 +323,30 @@ function doGet(e) {
     return ContentService.createTextOutput(JSON.stringify({ customers: custResult })).setMimeType(ContentService.MimeType.JSON);
   }
 
+  // ⭐ V15.2: جلب بيانات الاستلامات والصلاحيات
+  if (action === "getExpiries") {
+    var expirySheet = ss.getSheetByName("الاستلامات");
+    var expResult = [];
+    if (expirySheet) {
+      var expData = expirySheet.getDataRange().getValues();
+      for (var i = 1; i < expData.length; i++) {
+        if (expData[i][0]) {
+          expResult.push({
+            id: expData[i][0],
+            name: expData[i][1],
+            qty: expData[i][2],
+            expiryDate: expData[i][3],
+            location: expData[i][4],
+            receiver: expData[i][5],
+            status: expData[i][6],
+            notes: expData[i][7]
+          });
+        }
+      }
+    }
+    return ContentService.createTextOutput(JSON.stringify({ expiries: expResult })).setMimeType(ContentService.MimeType.JSON);
+  }
+
   // ============================================================
   // الـ request الرئيسي
   // ============================================================
@@ -774,6 +798,41 @@ function doPost(e) {
       for (var i = oosData.length - 1; i >= 1; i--) {
         if (oosData[i][1].toString().includes(e.parameter.phone) && oosData[i][2] === e.parameter.product) {
           oosSheet.deleteRow(i + 1);
+        }
+      }
+      return ContentService.createTextOutput("success");
+    }
+
+    // ⭐ V15.2: إضافة استلامة جديدة (نظام الصلاحيات)
+    else if (action === "addExpiry") {
+      var expirySheet = ss.getSheetByName("الاستلامات");
+      if (!expirySheet) {
+          expirySheet = ss.insertSheet("الاستلامات");
+          expirySheet.appendRow(["ID", "اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "المستلم", "الحالة", "ملاحظات"]);
+      }
+      expirySheet.appendRow([
+        e.parameter.id, 
+        e.parameter.name, 
+        e.parameter.qty, 
+        e.parameter.expiryDate, 
+        e.parameter.location, 
+        e.parameter.receiver, 
+        e.parameter.status, 
+        e.parameter.notes
+      ]);
+      return ContentService.createTextOutput("success");
+    }
+
+    // ⭐ V15.2: تحديث حالة الاستلامة (تشغيل عرض / تم البيع)
+    else if (action === "updateExpiryStatus") {
+      var expirySheet = ss.getSheetByName("الاستلامات");
+      if (expirySheet) {
+        var expData = expirySheet.getDataRange().getValues();
+        for (var i = 1; i < expData.length; i++) {
+          if (expData[i][0] === e.parameter.id) {
+            expirySheet.getRange(i + 1, 7).setValue(e.parameter.status);
+            break;
+          }
         }
       }
       return ContentService.createTextOutput("success");

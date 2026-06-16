@@ -2892,3 +2892,449 @@ if (addToCartBtn) {
         }
     });
 }
+
+// ==========================================
+// 15. نظام الصلاحيات والعروض (Expiry Dashboard)
+// ==========================================
+
+let expiryData = [];
+
+// Fetch data only when modal opens (Lazy Loading)
+window.openExpiryDashboard = function() {
+    document.getElementById('expiryDashboardModal').style.display = 'flex';
+    loadExpiryData();
+};
+
+function loadExpiryData() {
+    const btn = document.getElementById('openExpiryBtn');
+    if (btn) {
+        btn.dataset.origText = btn.innerText;
+        btn.innerText = "جاري التحميل ⏳...";
+        btn.style.opacity = "0.7";
+        btn.style.pointerEvents = "none";
+    }
+
+    // Lazy load the expiries from Google Sheets
+    fetch(`${GOOGLE_SHEETS_URL}?action=getExpiries`)
+        .then(res => res.json())
+        .then(data => {
+            if (btn) {
+                btn.innerText = btn.dataset.origText;
+                btn.style.opacity = "1";
+                btn.style.pointerEvents = "auto";
+            }
+            // Assuming data is an array of objects: { id, name, qty, expiryDate, location, receiver, notes, status }
+            expiryData = Array.isArray(data) ? data : (data.expiries || []);
+            renderExpiryDashboard();
+            updateCatalogWithOffers(); // To highlight items on offer in the main cashier view
+        })
+        .catch(err => {
+            if (btn) {
+                btn.innerText = btn.dataset.origText;
+                btn.style.opacity = "1";
+                btn.style.pointerEvents = "auto";
+            }
+            showToast("❌ حدث خطأ في تحميل الصلاحيات. يرجى مراجعة إعدادات Google Sheets", "error");
+            // Also call render to clear the "loading" or show empty states
+            renderExpiryDashboard();
+        });
+}
+
+function renderExpiryDashboard() {
+    const listCritical = document.getElementById('listCritical');
+    const listAlert = document.getElementById('listAlert');
+    const listAttention = document.getElementById('listAttention');
+    const listSafe = document.getElementById('listSafe');
+
+    // Clear lists
+    if(listCritical) listCritical.innerHTML = '';
+    if(listAlert) listAlert.innerHTML = '';
+    if(listAttention) listAttention.innerHTML = '';
+    if(listSafe) listSafe.innerHTML = '';
+
+    let countTotal = 0;
+    let countCritical = 0;
+    let countOffer = 0;
+    let countSafe = 0;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let activeItems = expiryData.filter(item => item.status !== 'Done/Archived');
+    
+    activeItems.forEach(item => {
+        countTotal++;
+
+        if (item.status === 'Active Display') {
+            countOffer++;
+        }
+
+        // Calculate days remaining
+        const expDate = new Date(item.expiryDate);
+        const timeDiff = expDate.getTime() - today.getTime();
+        const daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
+        // Format date
+        let formattedDate = '-';
+        if (!isNaN(expDate.getTime())) {
+            formattedDate = expDate.toLocaleDateString('ar-EG');
+        } else if (item.expiryDate) {
+            formattedDate = item.expiryDate;
+        }
+
+        // Build HTML for the item row
+        let rowClass = "expiry-item-row";
+        let activeOfferStyle = "";
+        if (item.status === 'Active Display') {
+            rowClass += " active-offer";
+            activeOfferStyle = 'style="border: 2px solid #ffeb3b; background: #fffde7; box-shadow: 0 0 10px rgba(255, 235, 59, 0.5);"';
+        }
+
+        let daysText = "";
+        let daysColor = "";
+        
+        if (daysRemaining < 0) {
+            daysText = `منتهي منذ ${Math.abs(daysRemaining)} يوم 🚨`;
+            daysColor = "#c0392b";
+        } else {
+            daysText = `باقي ${daysRemaining} يوم`;
+            if (daysRemaining < 7) daysColor = "#e74c3c";
+            else if (daysRemaining < 30) daysColor = "#e67e22";
+            else if (daysRemaining <= 90) daysColor = "#f39c12";
+            else daysColor = "#27ae60";
+        }
+
+        const offerBtnText = item.status === 'Active Display' ? "إيقاف العرض ⏸" : "تشغيل العرض 🔥";
+        const offerBtnColor = item.status === 'Active Display' ? "#e0e0e0" : "#fff3e0";
+        const offerBtnAction = item.status === 'Active Display' ? "Active" : "Active Display";
+
+        let itemHtml = `
+            <div class="${rowClass}" ${activeOfferStyle}>
+                <h4>📦 ${item.name}</h4>
+                <div class="expiry-item-details">
+                    <span>الكمية: ${item.qty}</span>
+                    <span style="color: ${daysColor}; font-weight: bold;">${daysText}</span>
+                </div>
+                <div style="font-size: 0.8rem; color: #7f8c8d; margin-bottom: 8px;">
+                    📅 انتهاء: ${formattedDate} | 🏢 مكان: ${item.location || '-'}
+                </div>
+                <div class="expiry-item-actions">
+                    <button class="btn-activate-offer interactive-btn" style="background: ${offerBtnColor};" onclick="changeExpiryStatus('${item.id}', '${offerBtnAction}')">${offerBtnText}</button>
+                    <button class="btn-close-item interactive-btn" onclick="changeExpiryStatus('${item.id}', 'Done/Archived')">تم البيع ✖️</button>
+                </div>
+            </div>
+        `;
+
+        // Distribute to traffic light lists
+        if (daysRemaining < 7 || isNaN(daysRemaining)) {
+            if(listCritical) listCritical.innerHTML += itemHtml;
+            countCritical++;
+        } else if (daysRemaining < 30) {
+            if(listAlert) listAlert.innerHTML += itemHtml;
+        } else if (daysRemaining <= 90) {
+            if(listAttention) listAttention.innerHTML += itemHtml;
+        } else {
+            if(listSafe) listSafe.innerHTML += itemHtml;
+            countSafe++;
+        }
+    });
+
+    // Handle empty lists
+    if (listCritical && listCritical.innerHTML === '') listCritical.innerHTML = '<p class="empty-msg">لا توجد أصناف حرجة.</p>';
+    if (listAlert && listAlert.innerHTML === '') listAlert.innerHTML = '<p class="empty-msg">لا توجد أصناف للتنبيه السريع.</p>';
+    if (listAttention && listAttention.innerHTML === '') listAttention.innerHTML = '<p class="empty-msg">لا توجد أصناف في الانتباه.</p>';
+    if (listSafe && listSafe.innerHTML === '') listSafe.innerHTML = '<p class="empty-msg">لا توجد أصناف في المخزون الآمن.</p>';
+
+    // Update stats cards
+    if(document.getElementById('expTotalItems')) document.getElementById('expTotalItems').innerText = countTotal;
+    if(document.getElementById('expCriticalItems')) document.getElementById('expCriticalItems').innerText = countCritical;
+    if(document.getElementById('expOfferItems')) document.getElementById('expOfferItems').innerText = countOffer;
+    if(document.getElementById('expSafeItems')) document.getElementById('expSafeItems').innerText = countSafe;
+}
+
+// 3. Status Control (دورة حياة العرض)
+window.changeExpiryStatus = function(id, newStatus) {
+    let msg = "";
+    if (newStatus === 'Active Display') msg = "هل تريد تفعيل العرض وجعل السطر فسفوري؟ 🔥";
+    else if (newStatus === 'Active') msg = "هل تريد إيقاف العرض وإعادته للحالة الطبيعية؟";
+    else if (newStatus === 'Done/Archived') msg = "هل تم الانتهاء من بيع هذا المنتج؟ سيتم إخفاؤه من هذه الشاشة. ✖️";
+
+    if (!confirm(msg)) return;
+
+    showToast("جاري التحديث...", "warning");
+
+    let formData = new URLSearchParams();
+    formData.append('action', 'updateExpiryStatus');
+    formData.append('id', id);
+    formData.append('status', newStatus);
+
+    fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
+        .then(() => {
+            showToast("✅ تم تحديث الحالة بنجاح", "success");
+            // Optimistic update
+            let item = expiryData.find(i => i.id == id);
+            if(item) {
+                item.status = newStatus;
+            }
+            renderExpiryDashboard();
+            updateCatalogWithOffers();
+        }).catch(() => {
+            showToast("❌ خطأ في الاتصال بالإنترنت", "error");
+        });
+};
+
+// 4. Save New Items (حفظ بضاعة جديدة)
+const registerExpiryBtn = document.getElementById('registerExpiryBtn');
+if (registerExpiryBtn) {
+    registerExpiryBtn.addEventListener('click', () => {
+        const name = document.getElementById('expProdName').value;
+        const qty = document.getElementById('expProdQty').value;
+        const date = document.getElementById('expProdDate').value;
+        const location = document.getElementById('expProdLocation').value;
+        const receiver = document.getElementById('expProdReceiver').value;
+        const notes = document.getElementById('expProdNotes').value;
+
+        if (!name || !qty || !date) {
+            showToast("يرجى إكمال البيانات الأساسية (الاسم، الكمية، التاريخ)", "warning");
+            return;
+        }
+
+        setBtnLoading(registerExpiryBtn, true);
+
+        // Generate a random ID for the new item
+        const newId = 'EXP-' + Date.now();
+
+        let formData = new URLSearchParams();
+        formData.append('action', 'addExpiry');
+        formData.append('id', newId);
+        formData.append('name', name);
+        formData.append('qty', qty);
+        formData.append('expiryDate', date);
+        formData.append('location', location);
+        formData.append('receiver', receiver);
+        formData.append('notes', notes);
+        formData.append('status', 'Active'); // Default status
+
+        fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
+            .then(() => {
+                showToast("✅ تم تسجيل البضاعة بنجاح", "success");
+                setBtnLoading(registerExpiryBtn, false);
+                
+                // Clear Form
+                document.getElementById('expProdName').value = '';
+                document.getElementById('expProdQty').value = '';
+                document.getElementById('expProdDate').value = '';
+                document.getElementById('expProdLocation').value = '';
+                document.getElementById('expProdReceiver').value = '';
+                document.getElementById('expProdNotes').value = '';
+
+                // Refresh Dashboard Data
+                loadExpiryData();
+            }).catch(() => {
+                showToast("❌ حدث خطأ في الاتصال", "error");
+                setBtnLoading(registerExpiryBtn, false);
+            });
+    });
+}
+
+// Function to update the main catalog (واجهة البيع) to show offer indicators
+function updateCatalogWithOffers() {
+    if (!catalogData || catalogData.length === 0) return;
+
+    const activeOffers = expiryData.filter(item => item.status === 'Active Display').map(item => item.name);
+    
+    const catalogContainer = document.getElementById('catalogListContainer');
+    if (catalogContainer) {
+        const rows = catalogContainer.querySelectorAll('.data-row');
+        rows.forEach(row => {
+            const nameEl = row.querySelector('strong');
+            if (nameEl) {
+                // Get clean product name
+                const productName = nameEl.innerText.replace('🔥', '').replace('عرض خاص', '').trim();
+                const hasOffer = activeOffers.some(offerName => productName.includes(offerName) || offerName.includes(productName));
+                
+                if (hasOffer) {
+                    if (!nameEl.innerHTML.includes('🔥')) {
+                        nameEl.innerHTML += ' <span style="background: #ffeb3b; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; color: #d35400;">عرض خاص 🔥</span>';
+                        row.style.border = "2px solid #ffeb3b";
+                    }
+                } else {
+                    if (nameEl.innerHTML.includes('عرض خاص')) {
+                        nameEl.innerHTML = productName;
+                        row.style.border = "none";
+                    }
+                }
+            }
+        });
+    }
+}
+
+// Export Management Report to Excel
+const exportExpiryExcelBtn = document.getElementById('exportExpiryExcelBtn');
+if (exportExpiryExcelBtn) {
+    exportExpiryExcelBtn.addEventListener('click', async () => {
+        if(expiryData.length === 0) {
+            showToast("لا توجد بيانات للتصدير", "warning");
+            return;
+        }
+        
+        try {
+            setBtnLoading(exportExpiryExcelBtn, true, "جاري التصدير ⏳...");
+            
+            // Check if ExcelJS is loaded, if not, load it dynamically
+            if (typeof ExcelJS === 'undefined') {
+                showToast("جاري تجهيز محرك التصدير الذكي...", "warning");
+                await new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js';
+                    script.onload = resolve;
+                    script.onerror = reject;
+                    document.head.appendChild(script);
+                });
+            }
+
+            const workbook = new ExcelJS.Workbook();
+            workbook.creator = 'Candy Club System';
+            workbook.created = new Date();
+
+            // ==========================================
+            // 1. Data Sheet (بيانات الاستلامات النشطة)
+            // ==========================================
+            const sheet1 = workbook.addWorksheet('الاستلامات', { views: [{ rightToLeft: true }] });
+            
+            sheet1.columns = [
+                { header: 'ID', key: 'id', width: 15 },
+                { header: 'اسم المنتج', key: 'name', width: 35 },
+                { header: 'الكمية', key: 'qty', width: 12 },
+                { header: 'تاريخ الانتهاء', key: 'date', width: 18 },
+                { header: 'الأيام المتبقية', key: 'days', width: 15 },
+                { header: 'المكان / المورد', key: 'loc', width: 22 },
+                { header: 'المستلم', key: 'rec', width: 18 },
+                { header: 'الحالة', key: 'status', width: 18 },
+                { header: 'ملاحظات', key: 'notes', width: 30 }
+            ];
+
+            // Style headers
+            sheet1.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
+            sheet1.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2C3E50' } };
+            sheet1.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
+            sheet1.getRow(1).height = 25;
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            let totalItemsCount = 0;
+            let activeOffersCount = 0;
+            let soldArchivedCount = 0;
+
+            // Sort data: active ones first, then sorted by remaining days
+            let sortedData = [...expiryData].sort((a, b) => {
+                if(a.status === 'Done/Archived' && b.status !== 'Done/Archived') return 1;
+                if(b.status === 'Done/Archived' && a.status !== 'Done/Archived') return -1;
+                let da = new Date(a.expiryDate).getTime();
+                let db = new Date(b.expiryDate).getTime();
+                return da - db;
+            });
+
+            sortedData.forEach(row => {
+                totalItemsCount++;
+                if (row.status === 'Active Display') activeOffersCount++;
+                if (row.status === 'Done/Archived') soldArchivedCount++;
+
+                const expDate = new Date(row.expiryDate);
+                const timeDiff = expDate.getTime() - today.getTime();
+                let daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
+                
+                let daysFormatted = isNaN(daysRemaining) ? '-' : daysRemaining;
+
+                const newRow = sheet1.addRow({
+                    id: row.id || '',
+                    name: row.name || '',
+                    qty: row.qty || '',
+                    date: row.expiryDate || '',
+                    days: daysFormatted,
+                    loc: row.location || '',
+                    rec: row.receiver || '',
+                    status: row.status || '',
+                    notes: row.notes || ''
+                });
+
+                newRow.alignment = { vertical: 'middle', horizontal: 'center' };
+                newRow.height = 20;
+
+                // Conditional Styling
+                if (row.status !== 'Done/Archived' && !isNaN(daysRemaining)) {
+                    if (daysRemaining < 0) {
+                        newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFCCCC' } }; // Light Red
+                        newRow.font = { color: { argb: 'FFC0392B' }, bold: true };
+                    } else if (daysRemaining < 7) {
+                        newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFD6D6' } }; // Light Red
+                    } else if (daysRemaining < 30) {
+                        newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF9C4' } }; // Light Yellow
+                    }
+                }
+                
+                // Styling for Archived rows
+                if (row.status === 'Done/Archived') {
+                    newRow.font = { color: { argb: 'FF95A5A6' }, italic: true };
+                    newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F4F4' } }; // Light Gray
+                }
+            });
+
+            // ==========================================
+            // 2. Summary Sheet (ملخص الإحصائيات)
+            // ==========================================
+            const sheet2 = workbook.addWorksheet('الملخص الإداري', { views: [{ rightToLeft: true }] });
+            sheet2.columns = [
+                { header: 'البيان', key: 'label', width: 45 },
+                { header: 'العدد', key: 'value', width: 25 }
+            ];
+            
+            sheet2.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
+            sheet2.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF8E44AD' } };
+            sheet2.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
+            sheet2.getRow(1).height = 25;
+
+            sheet2.addRow({ label: 'إجمالي الأصناف المسجلة (تاريخياً)', value: totalItemsCount });
+            sheet2.addRow({ label: 'إجمالي الأصناف النشطة حالياً بالمخزن', value: totalItemsCount - soldArchivedCount });
+            sheet2.addRow({ label: 'أصناف تم تفعيل العرض عليها (Active Display) 🔥', value: activeOffersCount });
+            sheet2.addRow({ label: 'أصناف تم بيعها/إنهاؤها (Done/Archived) ✖️', value: soldArchivedCount });
+            
+            sheet2.eachRow(row => {
+                row.alignment = { vertical: 'middle', horizontal: 'center' };
+                if (row.number > 1) {
+                    row.font = { size: 12, bold: true, color: { argb: 'FF2C3E50' } };
+                    row.height = 30;
+                }
+            });
+
+            // Add borders to summary sheet
+            sheet2.eachRow({ includeEmpty: false }, function(row, rowNumber) {
+                row.eachCell({ includeEmpty: false }, function(cell, colNumber) {
+                    cell.border = {
+                        top: {style:'thin'}, left: {style:'thin'},
+                        bottom: {style:'thin'}, right: {style:'thin'}
+                    };
+                });
+            });
+
+            // Generate File
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `تقرير_الصلاحيات_الاحترافي_${new Date().toLocaleDateString('en-CA')}.xlsx`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            setBtnLoading(exportExpiryExcelBtn, false);
+            showToast("✅ تم تصدير التقرير الاحترافي بنجاح", "success");
+
+        } catch (error) {
+            console.error(error);
+            setBtnLoading(exportExpiryExcelBtn, false);
+            showToast("❌ حدث خطأ أثناء التصدير، يرجى المحاولة لاحقاً", "error");
+        }
+    });
+}
