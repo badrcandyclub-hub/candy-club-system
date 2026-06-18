@@ -21,8 +21,6 @@
             <span class="logo-sub">نظام الإدارة V15.0</span>
         </div>
         <div class="header-actions">
-            <!-- ⭐ زر إدارة الصلاحيات الجديد -->
-            <button id="openExpiryBtn" class="interactive-btn pulse-btn" style="background: linear-gradient(135deg, #e67e22, #d35400); color: white; border: none; padding: 8px 15px; border-radius: 10px; font-family: 'Cairo', sans-serif; font-weight: bold; margin-left: 10px; box-shadow: 0 4px 15px rgba(211,84,0,0.3);" onclick="openExpiryDashboard()">📦 إدارة الصلاحيات</button>
             <button id="openFinancialsBtn" class="btn-outline interactive-btn" style="background:#2c3e50; color:white; border:none;">💰 المالية</button>
             <button id="openSuspendedBtn" class="btn-suspended interactive-btn">📂 المعلقة (<span id="suspendedCount">0</span>)</button>
             <div class="status-indicator">
@@ -443,6 +441,139 @@
                 </div>
             </div>
         </section>
+
+        <!-- ⭐ شاشة إدارة الصلاحيات والعروض (Expiry Dashboard) -->
+        <section id="expiry-tab" class="tab-pane">
+            <div class="section-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3 class="section-title" style="margin-bottom: 0;">📦 إدارة الصلاحيات والعروض</h3>
+                    <button id="refreshExpiryBtn" class="interactive-btn" style="background: linear-gradient(135deg, #e67e22, #d35400); color: white; border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold;">🔄 تحميل وتحديث</button>
+                </div>
+                
+                <div class="expiry-body">
+                    <!-- فورم إدخال بضاعة جديدة -->
+                    <div class="section-card expiry-form-card" style="border: 2px dashed var(--border); box-shadow: none;">
+                        <h4 style="margin-bottom: 15px; color: var(--primary);">📥 تسجيل بضاعة واردة</h4>
+                        <div class="expiry-form-grid">
+                            <div>
+                                <label>تاريخ التسجيل</label>
+                                <input type="date" id="expRegDate" dir="ltr">
+                            </div>
+                            <div>
+                                <label>اسم المسجِّل <span style="color:red;">*</span></label>
+                                <input type="text" id="expRegistrarName" placeholder="اسمك" required>
+                            </div>
+                            <div>
+                                <label>اسم المنتج</label>
+                                <input type="text" id="expProdName" placeholder="مثال: كيت كات شينكي">
+                            </div>
+                            <div>
+                                <label>العدد (كمية)</label>
+                                <input type="number" id="expProdQty" placeholder="0">
+                            </div>
+                            <div>
+                                <label>تاريخ الانتهاء</label>
+                                <input type="date" id="expProdDate" dir="ltr">
+                            </div>
+                            <div>
+                                <label>مكان البضاعة / المورد</label>
+                                <input type="text" id="expProdLocation" placeholder="الفرع أو المورد">
+                            </div>
+                            <div>
+                                <label>اسم المستلم</label>
+                                <input type="text" id="expProdReceiver" placeholder="اسم المستلم (اختياري)">
+                            </div>
+                            <div>
+                                <label>ملاحظات</label>
+                                <input type="text" id="expProdNotes" placeholder="أي تفاصيل أخرى...">
+                            </div>
+                        </div>
+                        <button id="registerExpiryBtn" class="btn-save interactive-btn pulse-btn" style="width: 100%; margin-top: 15px;">تسجيل الاستلامة ➕</button>
+                    </div>
+
+                    <!-- عدادات الداش بورد السريعة -->
+                    <div class="expiry-stats-row mt-15">
+                        <div class="expiry-stat-item stat-total">
+                            <span class="label">إجمالي الأصناف</span>
+                            <span class="value" id="expTotalItems">0</span>
+                        </div>
+                        <div class="expiry-stat-item stat-critical">
+                            <span class="label">حرج جداً</span>
+                            <span class="value" id="expCriticalItems">0</span>
+                        </div>
+                        <div class="expiry-stat-item stat-far">
+                            <span class="label">تاريخ بعيد</span>
+                            <span class="value" id="expFarItems">0</span>
+                        </div>
+                        <div class="expiry-stat-item stat-safe">
+                            <span class="label">أصناف آمنة</span>
+                            <span class="value" id="expSafeItems">0</span>
+                        </div>
+                    </div>
+
+                    <!-- زر التصدير -->
+                    <button id="exportExpiryExcelBtn" class="btn-whatsapp interactive-btn" style="width: 100%; margin: 15px 0; font-size: 1.1rem; border-radius: 12px; background: linear-gradient(135deg, #27ae60, #1e8449);">📊 تصدير تقرير الإدارة لـ Excel</button>
+
+                    <!-- نظام إشارات المرور (5 فئات) -->
+                    <div class="traffic-light-grid">
+                        <!-- 🔴 Very Critical -->
+                        <div class="traffic-card traffic-red">
+                            <div class="traffic-header">
+                                <h3>🔴 حرج جداً</h3>
+                                <span class="subtitle">أقل من 7 أيام</span>
+                            </div>
+                            <div class="traffic-list scroll-list" id="listCritical" style="max-height: 300px;">
+                                <p class="empty-msg">جاري التحميل...</p>
+                            </div>
+                        </div>
+                        
+                        <!-- 🟠 Quick Alert -->
+                        <div class="traffic-card traffic-orange">
+                            <div class="traffic-header">
+                                <h3>🟠 تنبيه سريع</h3>
+                                <span class="subtitle">أقل من 30 يوم</span>
+                            </div>
+                            <div class="traffic-list scroll-list" id="listAlert" style="max-height: 300px;">
+                                <p class="empty-msg">جاري التحميل...</p>
+                            </div>
+                        </div>
+                        
+                        <!-- 🟡 Attention -->
+                        <div class="traffic-card traffic-yellow">
+                            <div class="traffic-header">
+                                <h3>🟡 انتباه ومراقبة</h3>
+                                <span class="subtitle">1 إلى 3 شهور</span>
+                            </div>
+                            <div class="traffic-list scroll-list" id="listAttention" style="max-height: 300px;">
+                                <p class="empty-msg">جاري التحميل...</p>
+                            </div>
+                        </div>
+                        
+                        <!-- 🟢 Safe -->
+                        <div class="traffic-card traffic-green">
+                            <div class="traffic-header">
+                                <h3>🟢 مخزون آمن</h3>
+                                <span class="subtitle">3 شهور إلى 6 شهور</span>
+                            </div>
+                            <div class="traffic-list scroll-list" id="listSafe" style="max-height: 300px;">
+                                <p class="empty-msg">جاري التحميل...</p>
+                            </div>
+                        </div>
+
+                        <!-- 🔵 Far Date -->
+                        <div class="traffic-card traffic-blue">
+                            <div class="traffic-header">
+                                <h3>🔵 تاريخ بعيد</h3>
+                                <span class="subtitle">6 شهور أو أكثر</span>
+                            </div>
+                            <div class="traffic-list scroll-list" id="listFar" style="max-height: 300px;">
+                                <p class="empty-msg">جاري التحميل...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
         
     </main>
 
@@ -464,6 +595,9 @@
         </button>
         <button class="nav-item" data-target="reports-tab">
             <span class="icon">📊</span><span class="label">التقارير</span>
+        </button>
+        <button class="nav-item" data-target="expiry-tab">
+            <span class="icon">📦</span><span class="label">الصلاحيات</span>
         </button>
         <button class="nav-item" data-target="settings-tab">
             <span class="icon">⚙️</span><span class="label">الإعدادات</span>
@@ -671,141 +805,7 @@
         </div>
     </div>
 
-    <!-- ⭐ شاشة إدارة الصلاحيات والعروض (Expiry Dashboard) -->
-    <div id="expiryDashboardModal" class="modal-overlay expiry-dashboard-overlay" style="display: none;">
-        <div class="expiry-dashboard-content">
-            <div class="expiry-header">
-                <h2>📦 إدارة الصلاحيات والعروض</h2>
-                <button class="btn-cancel" onclick="document.getElementById('expiryDashboardModal').style.display='none'">إغلاق ✖</button>
-            </div>
-            
-            <div class="expiry-body">
-                <!-- فورم إدخال بضاعة جديدة -->
-                <div class="section-card expiry-form-card">
-                    <h3>📥 تسجيل بضاعة واردة</h3>
-                    <div class="expiry-form-grid">
-                        <div>
-                            <label>اسم المنتج</label>
-                            <input type="text" id="expProdName" placeholder="مثال: كيت كات شينكي">
-                        </div>
-                        <div>
-                            <label>العدد (كمية)</label>
-                            <input type="number" id="expProdQty" placeholder="0">
-                        </div>
-                        <div>
-                            <label>تاريخ الانتهاء</label>
-                            <input type="date" id="expProdDate" dir="ltr">
-                        </div>
-                        <div>
-                            <label>مكان البضاعة / المورد</label>
-                            <input type="text" id="expProdLocation" placeholder="الفرع أو المورد">
-                        </div>
-                        <div>
-                            <label>اسم المستلم</label>
-                            <input type="text" id="expProdReceiver" placeholder="اسمك">
-                        </div>
-                        <div>
-                            <label>ملاحظات</label>
-                            <input type="text" id="expProdNotes" placeholder="أي تفاصيل أخرى...">
-                        </div>
-                    </div>
-                    <button id="registerExpiryBtn" class="btn-save interactive-btn pulse-btn" style="width: 100%; margin-top: 15px;">تسجيل الاستلامة ➕</button>
-                </div>
 
-                <!-- عدادات الداش بورد السريعة -->
-                <div class="expiry-stats-row">
-                    <div class="expiry-stat-item stat-total">
-                        <span class="label">إجمالي الأصناف</span>
-                        <span class="value" id="expTotalItems">0</span>
-                    </div>
-                    <div class="expiry-stat-item stat-critical">
-                        <span class="label">منتهية / حرجة</span>
-                        <span class="value" id="expCriticalItems">0</span>
-                    </div>
-                    <div class="expiry-stat-item stat-offer">
-                        <span class="label">أصناف عليها عروض</span>
-                        <span class="value" id="expOfferItems">0</span>
-                    </div>
-                    <div class="expiry-stat-item stat-safe">
-                        <span class="label">أصناف آمنة</span>
-                        <span class="value" id="expSafeItems">0</span>
-                    </div>
-                </div>
-
-                <!-- زر التصدير -->
-                <button id="exportExpiryExcelBtn" class="btn-whatsapp interactive-btn" style="width: 100%; margin: 15px 0; font-size: 1.1rem; border-radius: 12px; background: linear-gradient(135deg, #27ae60, #1e8449);">📊 تصدير تقرير الإدارة لـ Excel</button>
-
-                <!-- نظام إشارات المرور -->
-                <div class="traffic-light-grid">
-                    <!-- 🔴 Very Critical -->
-                    <div class="traffic-card traffic-red">
-                        <div class="traffic-header">
-                            <h3>🔴 حرج جداً</h3>
-                            <span class="subtitle">أقل من 7 أيام</span>
-                        </div>
-                        <div class="traffic-list" id="listCritical">
-                            <!-- مثال لعنصر -->
-                            <div class="expiry-item-row">
-                                <h4>🍫 كيت كات شينكي</h4>
-                                <div class="expiry-item-details">
-                                    <span>الكمية: 50</span>
-                                    <span style="color: #e74c3c; font-weight: bold;">باقي 3 أيام</span>
-                                </div>
-                                <div class="expiry-item-actions">
-                                    <button class="btn-activate-offer interactive-btn">تشغيل العرض 🔥</button>
-                                    <button class="btn-close-item interactive-btn">تم البيع ✖️</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- 🟠 Quick Alert -->
-                    <div class="traffic-card traffic-orange">
-                        <div class="traffic-header">
-                            <h3>🟠 تنبيه سريع</h3>
-                            <span class="subtitle">أقل من 30 يوم</span>
-                        </div>
-                        <div class="traffic-list" id="listAlert">
-                            <!-- مثال لعنصر -->
-                            <div class="expiry-item-row">
-                                <h4>🥛 حليب جهينة</h4>
-                                <div class="expiry-item-details">
-                                    <span>الكمية: 120</span>
-                                    <span style="color: #e67e22; font-weight: bold;">باقي 15 يوم</span>
-                                </div>
-                                <div class="expiry-item-actions">
-                                    <button class="btn-activate-offer interactive-btn">تشغيل العرض 🔥</button>
-                                    <button class="btn-close-item interactive-btn">تم البيع ✖️</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- 🟡 Attention -->
-                    <div class="traffic-card traffic-yellow">
-                        <div class="traffic-header">
-                            <h3>🟡 انتباه ومراقبة</h3>
-                            <span class="subtitle">1 إلى 3 شهور</span>
-                        </div>
-                        <div class="traffic-list" id="listAttention">
-                            <p class="empty-msg">لا توجد أصناف في قائمة الانتباه.</p>
-                        </div>
-                    </div>
-                    
-                    <!-- 🟢 Safe -->
-                    <div class="traffic-card traffic-green">
-                        <div class="traffic-header">
-                            <h3>🟢 مخزون آمن</h3>
-                            <span class="subtitle">أكثر من 3 شهور</span>
-                        </div>
-                        <div class="traffic-list" id="listSafe">
-                            <p class="empty-msg">لا توجد أصناف في المخزون الآمن.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- حاوية الإشعارات -->
     <div id="toast-container" class="toast-container"></div>

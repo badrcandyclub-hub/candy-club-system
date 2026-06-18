@@ -2265,7 +2265,7 @@ body.dark-mode .btn-settle {
 
 .stat-total { background: linear-gradient(135deg, #34495e, #2c3e50); }
 .stat-critical { background: linear-gradient(135deg, #e74c3c, #c0392b); box-shadow: 0 8px 20px rgba(231, 76, 60, 0.3); }
-.stat-offer { background: linear-gradient(135deg, #f39c12, #d35400); box-shadow: 0 8px 20px rgba(243, 156, 18, 0.3); }
+.stat-far { background: linear-gradient(135deg, #3498db, #2980b9); box-shadow: 0 8px 20px rgba(52, 152, 219, 0.3); }
 .stat-safe { background: linear-gradient(135deg, #2ecc71, #27ae60); box-shadow: 0 8px 20px rgba(46, 204, 113, 0.3); }
 
 .traffic-light-grid {
@@ -2307,11 +2307,13 @@ body.dark-mode .btn-settle {
 .traffic-orange .traffic-header { background: linear-gradient(135deg, #ff9f43, #d35400); }
 .traffic-yellow .traffic-header { background: linear-gradient(135deg, #f1c40f, #f39c12); }
 .traffic-green .traffic-header { background: linear-gradient(135deg, #2ed573, #27ae60); }
+.traffic-blue .traffic-header { background: linear-gradient(135deg, #3498db, #2980b9); }
 
 .traffic-red { border: 2px solid #ff4d4d; }
 .traffic-orange { border: 2px solid #ff9f43; }
 .traffic-yellow { border: 2px solid #f1c40f; }
 .traffic-green { border: 2px solid #2ed573; }
+.traffic-blue { border: 2px solid #3498db; }
 
 .traffic-list {
     padding: 12px;

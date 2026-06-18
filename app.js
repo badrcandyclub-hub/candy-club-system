@@ -44,6 +44,21 @@ document.querySelectorAll('.nav-item').forEach(btn => {
         btn.classList.add('active');
         let targetElement = document.getElementById(btn.getAttribute('data-target'));
         if (targetElement) targetElement.classList.add('active');
+        
+        // Lazy load expiry data if tab is opened
+        if (btn.getAttribute('data-target') === 'expiry-tab') {
+            if (typeof expiryData !== 'undefined' && expiryData.length === 0) loadExpiryData();
+            
+            // Set default reg date to today if empty
+            let regDateInput = document.getElementById('expRegDate');
+            if (regDateInput && !regDateInput.value) {
+                let today = new Date();
+                let yyyy = today.getFullYear();
+                let mm = String(today.getMonth() + 1).padStart(2, '0');
+                let dd = String(today.getDate()).padStart(2, '0');
+                regDateInput.value = `${yyyy}-${mm}-${dd}`;
+            }
+        }
     });
 });
 
@@ -2742,6 +2757,47 @@ if (copyProductNameBtn) {
             showToast("فشل نسخ الاسم", "error");
         });
     });
+}
+
+// Refresh Button Listener
+const refreshExpiryBtn = document.getElementById('refreshExpiryBtn');
+if (refreshExpiryBtn) {
+    refreshExpiryBtn.addEventListener('click', loadExpiryData);
+}
+
+function loadExpiryData() {
+    const btn = document.getElementById('refreshExpiryBtn');
+    if (btn) {
+        btn.dataset.origText = btn.innerText;
+        btn.innerText = "جاري التحميل ⏳...";
+        btn.style.opacity = "0.7";
+        btn.style.pointerEvents = "none";
+    }
+
+    // Lazy load the expiries from Google Sheets
+    fetch(`${GOOGLE_SHEETS_URL}?action=getExpiries`)
+        .then(res => res.json())
+        .then(data => {
+            if (btn) {
+                btn.innerText = btn.dataset.origText;
+                btn.style.opacity = "1";
+                btn.style.pointerEvents = "auto";
+            }
+            // Assuming data is an array of objects: { id, name, qty, expiryDate, location, receiver, notes, status }
+            expiryData = Array.isArray(data) ? data : (data.expiries || []);
+            renderExpiryDashboard();
+            updateCatalogWithOffers(); // To highlight items on offer in the main cashier view
+        })
+        .catch(err => {
+            if (btn) {
+                btn.innerText = btn.dataset.origText;
+                btn.style.opacity = "1";
+                btn.style.pointerEvents = "auto";
+            }
+            showToast("❌ حدث خطأ في تحميل الصلاحيات. يرجى مراجعة إعدادات Google Sheets", "error");
+            // Also call render to clear the "loading" or show empty states
+            renderExpiryDashboard();
+        });
 }
 
 let barcodeImageUpload = document.getElementById('barcodeImageUpload');

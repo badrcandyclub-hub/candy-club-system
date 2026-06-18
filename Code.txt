@@ -339,7 +339,9 @@ function doGet(e) {
             location: expData[i][4],
             receiver: expData[i][5],
             status: expData[i][6],
-            notes: expData[i][7]
+            notes: expData[i][7],
+            regDate: expData[i][8],
+            registrarName: expData[i][9]
           });
         }
       }
@@ -808,7 +810,7 @@ function doPost(e) {
       var expirySheet = ss.getSheetByName("الاستلامات");
       if (!expirySheet) {
           expirySheet = ss.insertSheet("الاستلامات");
-          expirySheet.appendRow(["ID", "اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "المستلم", "الحالة", "ملاحظات"]);
+          expirySheet.appendRow(["ID", "اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "المستلم", "الحالة", "ملاحظات", "تاريخ التسجيل", "اسم المسجل"]);
       }
       expirySheet.appendRow([
         e.parameter.id, 
@@ -818,7 +820,9 @@ function doPost(e) {
         e.parameter.location, 
         e.parameter.receiver, 
         e.parameter.status, 
-        e.parameter.notes
+        e.parameter.notes,
+        e.parameter.regDate,
+        e.parameter.registrarName
       ]);
       return ContentService.createTextOutput("success");
     }
