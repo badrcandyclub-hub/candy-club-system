@@ -52,134 +52,181 @@ function setupCandyClubUX() {
   // ============================================================
   // 1. شيت الطلبات
   // ============================================================
-  var ordersSheet = ss.getSheetByName("📝 الطلبات") || ss.getSheets()[0];
-  ordersSheet.setName("📝 الطلبات");
-  var orderHeaders = [
-    "رقم الطلب", "التاريخ", "الوقت", "المنصة", "اسم العميل", "المحافظة", "العنوان بالتفصيل", 
-    "رقم التواصل", "رقم آخر", "نوع التوصيل", "طريقة الدفع", "اسم المندوب", "موعد التسليم", 
-    "تفاصيل المنتجات", "إجمالي المنتجات", "الخصم", "سعر الشحن", "الإجمالي بالشحن", "حالة الطلب", "ملاحظات", "المودريتور",
-    "العربون (مدفوع)", "المتبقي عند الاستلام"
-  ];
-  ordersSheet.getRange(1, 1, 1, orderHeaders.length).setValues([orderHeaders])
-             .setBackground("#FF1493").setFontColor("white").setFontFamily(headerFont).setFontSize(12).setFontWeight("bold")
-             .setHorizontalAlignment("center").setVerticalAlignment("middle");
-  ordersSheet.setRowHeight(1, 45); 
-  ordersSheet.setFrozenRows(1);
-  
-  // ديناميكية السطور بدلا من 1000 سطر
-  ordersSheet.getRange("A2:W" + ordersSheet.getMaxRows()).clearDataValidations();
-  var statusRange = ordersSheet.getRange("S2:S" + ordersSheet.getMaxRows()); 
-  var rule = SpreadsheetApp.newDataValidation().requireValueInList(["قيد التجهيز", "في الشحن", "تم التوصيل", "تم التوصيل ومُحاسب", "مرتجع"], true).build();
-  statusRange.setDataValidation(rule);
+  var ordersSheet = ss.getSheetByName("📝 الطلبات");
+  if (!ordersSheet) {
+    ordersSheet = ss.getSheets()[0];
+    ordersSheet.setName("📝 الطلبات");
+    var orderHeaders = [
+      "رقم الطلب", "التاريخ", "الوقت", "المنصة", "اسم العميل", "المحافظة", "العنوان بالتفصيل", 
+      "رقم التواصل", "رقم آخر", "نوع التوصيل", "طريقة الدفع", "اسم المندوب", "موعد التسليم", 
+      "تفاصيل المنتجات", "إجمالي المنتجات", "الخصم", "سعر الشحن", "الإجمالي بالشحن", "حالة الطلب", "ملاحظات", "المودريتور",
+      "العربون (مدفوع)", "المتبقي عند الاستلام"
+    ];
+    ordersSheet.getRange(1, 1, 1, orderHeaders.length).setValues([orderHeaders])
+               .setBackground("#FF1493").setFontColor("white").setFontFamily(headerFont).setFontSize(12).setFontWeight("bold")
+               .setHorizontalAlignment("center").setVerticalAlignment("middle");
+    ordersSheet.setRowHeight(1, 45); 
+    ordersSheet.setFrozenRows(1);
+    
+    ordersSheet.getRange("A2:W" + ordersSheet.getMaxRows()).clearDataValidations();
+    var statusRange = ordersSheet.getRange("S2:S" + ordersSheet.getMaxRows()); 
+    var rule = SpreadsheetApp.newDataValidation().requireValueInList(["قيد التجهيز", "في الشحن", "تم التوصيل", "تم التوصيل ومُحاسب", "مرتجع"], true).build();
+    statusRange.setDataValidation(rule);
+  }
 
   // ============================================================
   // 2. شيت العملاء
   // ============================================================
-  var customerSheet = ss.getSheetByName("👥 قاعدة العملاء") || ss.insertSheet("👥 قاعدة العملاء");
-  var customerHeaders = ["اسم العميل", "الموبايل", "المحافظة", "العنوان", "عدد الطلبات", "إجمالي المدفوعات", "تاريخ آخر طلب"];
-  customerSheet.getRange(1, 1, 1, customerHeaders.length).setValues([customerHeaders])
-               .setBackground("#673AB7").setFontColor("white").setFontFamily(headerFont).setFontSize(12).setFontWeight("bold")
-               .setHorizontalAlignment("center").setVerticalAlignment("middle");
-  customerSheet.setRowHeight(1, 45); 
-  customerSheet.setFrozenRows(1);
+  var customerSheet = ss.getSheetByName("👥 قاعدة العملاء");
+  if (!customerSheet) {
+    customerSheet = ss.insertSheet("👥 قاعدة العملاء");
+    var customerHeaders = ["اسم العميل", "الموبايل", "المحافظة", "العنوان", "عدد الطلبات", "إجمالي المدفوعات", "تاريخ آخر طلب"];
+    customerSheet.getRange(1, 1, 1, customerHeaders.length).setValues([customerHeaders])
+                 .setBackground("#673AB7").setFontColor("white").setFontFamily(headerFont).setFontSize(12).setFontWeight("bold")
+                 .setHorizontalAlignment("center").setVerticalAlignment("middle");
+    customerSheet.setRowHeight(1, 45); 
+    customerSheet.setFrozenRows(1);
+  }
 
   // ============================================================
   // 3. شيت الإعدادات والشحن
   // ============================================================
-  var settingsSheet = ss.getSheetByName("⚙️ الإعدادات والشحن") || ss.insertSheet("⚙️ الإعدادات والشحن");
-  
-  settingsSheet.getRange("O1:T50").clearContent().clearFormat().setBorder(false, false, false, false, false, false);
-  ordersSheet.getRange(1, 24, ordersSheet.getMaxRows(), 1).clearContent().clearFormat();
+  var settingsSheet = ss.getSheetByName("⚙️ الإعدادات والشحن");
+  if (!settingsSheet) {
+    settingsSheet = ss.insertSheet("⚙️ الإعدادات والشحن");
+    
+    settingsSheet.getRange(1, 13, 50, 4).setBorder(true, true, true, true, true, true, "#f39c12", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
+    settingsSheet.getRange("M1:P1").setBackground("#e67e22").setFontColor("white").setFontFamily(headerFont).setFontSize(12).setFontWeight("bold");
+    settingsSheet.getRange("O1:P1").setValues([["عدد الأوردرات", "صافي الربح"]]);
+    settingsSheet.setColumnWidth(15, 120);
+    settingsSheet.setColumnWidth(16, 120);
 
-  settingsSheet.getRange(1, 13, 50, 4).setBorder(true, true, true, true, true, true, "#f39c12", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
-  settingsSheet.getRange("M1:P1").setBackground("#e67e22").setFontColor("white").setFontFamily(headerFont).setFontSize(12).setFontWeight("bold");
-  settingsSheet.getRange("O1:P1").setValues([["عدد الأوردرات", "صافي الربح"]]);
-  settingsSheet.setColumnWidth(15, 120);
-  settingsSheet.setColumnWidth(16, 120);
+    settingsSheet.getRange("O2:O50").setFormula('=IF(M2<>"", COUNTIFS(\'📝 الطلبات\'!L:L, M2, \'📝 الطلبات\'!S:S, "*تم التوصيل*"), "")');
+    settingsSheet.getRange("P2:P50").setFormula('=IF(M2<>"", SUMIFS(\'📝 الطلبات\'!Q:Q, \'📝 الطلبات\'!L:L, M2, \'📝 الطلبات\'!S:S, "*تم التوصيل*"), "")');
 
-  settingsSheet.getRange("O2:O50").setFormula('=IF(M2<>"", COUNTIFS(\'📝 الطلبات\'!L:L, M2, \'📝 الطلبات\'!S:S, "*تم التوصيل*"), "")');
-  settingsSheet.getRange("P2:P50").setFormula('=IF(M2<>"", SUMIFS(\'📝 الطلبات\'!Q:Q, \'📝 الطلبات\'!L:L, M2, \'📝 الطلبات\'!S:S, "*تم التوصيل*"), "")');
+    settingsSheet.getRange("S1:T1").setValues([["👤 المودريتور", "عدد الأوردرات"]]).setBackground("#8e44ad").setFontColor("white").setFontFamily(headerFont).setFontSize(12).setFontWeight("bold");
+    settingsSheet.getRange(1, 19, 50, 2).setBorder(true, true, true, true, true, true, "#8e44ad", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
+    settingsSheet.setColumnWidth(19, 150);
+    settingsSheet.setColumnWidth(20, 120);
 
-  settingsSheet.getRange("S1:T1").setValues([["👤 المودريتور", "عدد الأوردرات"]]).setBackground("#8e44ad").setFontColor("white").setFontFamily(headerFont).setFontSize(12).setFontWeight("bold");
-  settingsSheet.getRange(1, 19, 50, 2).setBorder(true, true, true, true, true, true, "#8e44ad", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
-  settingsSheet.setColumnWidth(19, 150);
-  settingsSheet.setColumnWidth(20, 120);
-
-  settingsSheet.getRange("T2:T50").setFormula('=IF(S2<>"", COUNTIF(\'📝 الطلبات\'!U:U, S2), "")');
+    settingsSheet.getRange("T2:T50").setFormula('=IF(S2<>"", COUNTIF(\'📝 الطلبات\'!U:U, S2), "")');
+  }
 
   // ============================================================
   // 4. شيت الكتالوج
   // ============================================================
-  var catalogSheet = ss.getSheetByName("📦 الكتالوج") || ss.insertSheet("📦 الكتالوج");
-  var catalogHeaders = ["اسم المنتج", "السعر الأساسي", "حالة العرض", "سعر العرض"];
-  catalogSheet.getRange(1, 1, 1, catalogHeaders.length).setValues([catalogHeaders])
-              .setBackground("#2ecc71").setFontColor("white").setFontFamily(headerFont).setFontSize(16).setFontWeight("bold")
-              .setHorizontalAlignment("center").setVerticalAlignment("middle");
-  catalogSheet.setRowHeight(1, 45);
-  catalogSheet.setFrozenRows(1);
-  catalogSheet.getRange("A2:D" + catalogSheet.getMaxRows())
-              .setFontSize(14).setFontFamily(headerFont)
-              .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
-  catalogSheet.setColumnWidth(1, 280);
-  catalogSheet.setColumnWidth(2, 150);
-  catalogSheet.setColumnWidth(3, 150);
-  catalogSheet.setColumnWidth(4, 150);
+  var catalogSheet = ss.getSheetByName("📦 الكتالوج");
+  if (!catalogSheet) {
+    catalogSheet = ss.insertSheet("📦 الكتالوج");
+    var catalogHeaders = ["اسم المنتج", "السعر الأساسي", "حالة العرض", "سعر العرض"];
+    catalogSheet.getRange(1, 1, 1, catalogHeaders.length).setValues([catalogHeaders])
+                .setBackground("#2ecc71").setFontColor("white").setFontFamily(headerFont).setFontSize(16).setFontWeight("bold")
+                .setHorizontalAlignment("center").setVerticalAlignment("middle");
+    catalogSheet.setRowHeight(1, 45);
+    catalogSheet.setFrozenRows(1);
+    catalogSheet.getRange("A2:D" + catalogSheet.getMaxRows())
+                .setFontSize(14).setFontFamily(headerFont)
+                .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
+    catalogSheet.setColumnWidth(1, 280);
+    catalogSheet.setColumnWidth(2, 150);
+    catalogSheet.setColumnWidth(3, 150);
+    catalogSheet.setColumnWidth(4, 150);
+  }
 
   // ============================================================
   // 5. شيت النواقص
   // ============================================================
-  var outOfStockSheet = ss.getSheetByName("⏳ النواقص") || ss.insertSheet("⏳ النواقص");
-  var oosHeaders = ["اسم العميل", "رقم الموبايل", "المنتج", "الغرض", "التاريخ"];
-  outOfStockSheet.getRange(1, 1, 1, oosHeaders.length).setValues([oosHeaders])
-                 .setBackground("#e67e22").setFontColor("white").setFontFamily(headerFont).setFontSize(16).setFontWeight("bold")
-                 .setHorizontalAlignment("center").setVerticalAlignment("middle");
-  outOfStockSheet.setRowHeight(1, 45);
-  outOfStockSheet.setFrozenRows(1);
-  outOfStockSheet.getRange("A2:E" + outOfStockSheet.getMaxRows())
-                 .setFontSize(14).setFontFamily(headerFont)
-                 .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
-  outOfStockSheet.setColumnWidth(1, 180);
-  outOfStockSheet.setColumnWidth(2, 140);
-  outOfStockSheet.setColumnWidth(3, 240);
-  outOfStockSheet.setColumnWidth(4, 180);
-  outOfStockSheet.setColumnWidth(5, 160);
+  var outOfStockSheet = ss.getSheetByName("⏳ النواقص");
+  if (!outOfStockSheet) {
+    outOfStockSheet = ss.insertSheet("⏳ النواقص");
+    var oosHeaders = ["اسم العميل", "رقم الموبايل", "المنتج", "الغرض", "التاريخ"];
+    outOfStockSheet.getRange(1, 1, 1, oosHeaders.length).setValues([oosHeaders])
+                   .setBackground("#e67e22").setFontColor("white").setFontFamily(headerFont).setFontSize(16).setFontWeight("bold")
+                   .setHorizontalAlignment("center").setVerticalAlignment("middle");
+    outOfStockSheet.setRowHeight(1, 45);
+    outOfStockSheet.setFrozenRows(1);
+    outOfStockSheet.getRange("A2:E" + outOfStockSheet.getMaxRows())
+                   .setFontSize(14).setFontFamily(headerFont)
+                   .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
+    outOfStockSheet.setColumnWidth(1, 180);
+    outOfStockSheet.setColumnWidth(2, 140);
+    outOfStockSheet.setColumnWidth(3, 240);
+    outOfStockSheet.setColumnWidth(4, 180);
+    outOfStockSheet.setColumnWidth(5, 160);
+  }
 
   // ============================================================
   // 6. ⭐ V14.2: شيت المعلقات (حفظ الطلبات المعلقة في جوجل شيتس)
   // ============================================================
-  var draftsSheet = ss.getSheetByName("📂 المعلقات") || ss.insertSheet("📂 المعلقات");
-  var draftsHeaders = ["رقم الطلب (Draft ID)", "التاريخ والوقت", "بيانات الطلب (JSON)"];
-  draftsSheet.getRange(1, 1, 1, draftsHeaders.length).setValues([draftsHeaders])
-             .setBackground("#34495e").setFontColor("white").setFontFamily(headerFont).setFontSize(12).setFontWeight("bold")
-             .setHorizontalAlignment("center").setVerticalAlignment("middle");
-  draftsSheet.setRowHeight(1, 45);
-  draftsSheet.setFrozenRows(1);
-  draftsSheet.setColumnWidth(1, 180);
-  draftsSheet.setColumnWidth(2, 180);
-  draftsSheet.setColumnWidth(3, 500);
+  var draftsSheet = ss.getSheetByName("📂 المعلقات");
+  if (!draftsSheet) {
+    draftsSheet = ss.insertSheet("📂 المعلقات");
+    var draftsHeaders = ["رقم الطلب (Draft ID)", "التاريخ والوقت", "بيانات الطلب (JSON)"];
+    draftsSheet.getRange(1, 1, 1, draftsHeaders.length).setValues([draftsHeaders])
+               .setBackground("#34495e").setFontColor("white").setFontFamily(headerFont).setFontSize(12).setFontWeight("bold")
+               .setHorizontalAlignment("center").setVerticalAlignment("middle");
+    draftsSheet.setRowHeight(1, 45);
+    draftsSheet.setFrozenRows(1);
+    draftsSheet.setColumnWidth(1, 180);
+    draftsSheet.setColumnWidth(2, 180);
+    draftsSheet.setColumnWidth(3, 500);
+  }
 
   // ============================================================
   // 7. شيت الحسابات المالية
   // ============================================================
-  var finSheet = ss.getSheetByName("📊 الحسابات والمالية") || ss.insertSheet("📊 الحسابات والمالية");
-  var finHeaders = ["الجهة (مندوب/شركة)", "إجمالي الطلبات المُسلمة", "العهدة (في الشحن)", "إجمالي الكاش المحصل", "إجمالي مصاريف الشحن", "صافي المديونية لنا", "حالة الحساب"];
-  finSheet.getRange(1, 1, 1, finHeaders.length).setValues([finHeaders])
-          .setBackground("#2c3e50").setFontColor("white").setFontFamily(headerFont).setFontSize(14).setFontWeight("bold")
-          .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
-  finSheet.setRowHeight(1, 55);
-  finSheet.setFrozenRows(1);
-  finSheet.setColumnWidth(1, 220);
-  finSheet.setColumnWidth(2, 160);
-  finSheet.setColumnWidth(3, 160);
-  finSheet.setColumnWidth(4, 180);
-  finSheet.setColumnWidth(5, 180);
-  finSheet.setColumnWidth(6, 180);
-  finSheet.setColumnWidth(7, 160);
-  finSheet.getRange(1, 1, 50, 7).setBorder(true, true, true, true, true, true, "#2c3e50", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
+  var finSheet = ss.getSheetByName("📊 الحسابات والمالية");
+  if (!finSheet) {
+    finSheet = ss.insertSheet("📊 الحسابات والمالية");
+    var finHeaders = ["الجهة (مندوب/شركة)", "إجمالي الطلبات المُسلمة", "العهدة (في الشحن)", "إجمالي الكاش المحصل", "إجمالي مصاريف الشحن", "صافي المديونية لنا", "حالة الحساب"];
+    finSheet.getRange(1, 1, 1, finHeaders.length).setValues([finHeaders])
+            .setBackground("#2c3e50").setFontColor("white").setFontFamily(headerFont).setFontSize(14).setFontWeight("bold")
+            .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
+    finSheet.setRowHeight(1, 55);
+    finSheet.setFrozenRows(1);
+    finSheet.setColumnWidth(1, 220);
+    finSheet.setColumnWidth(2, 160);
+    finSheet.setColumnWidth(3, 160);
+    finSheet.setColumnWidth(4, 180);
+    finSheet.setColumnWidth(5, 180);
+    finSheet.setColumnWidth(6, 180);
+    finSheet.setColumnWidth(7, 160);
+    finSheet.getRange(1, 1, 50, 7).setBorder(true, true, true, true, true, true, "#2c3e50", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
+  }
+
+  // ============================================================
+  // 8. شيت الاستلامات (التحديث الذكي)
+  // ============================================================
+  var expirySheet = ss.getSheetByName("الاستلامات");
+  if (!expirySheet) {
+    expirySheet = ss.insertSheet("الاستلامات");
+    expirySheet.appendRow(["ID", "اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "المستلم", "الحالة", "ملاحظات", "تاريخ التسجيل", "اسم المسجل"]);
+  } else {
+    // التحديث الذكي: فحص الصف الأول (العناوين)
+    var lastCol = expirySheet.getLastColumn();
+    if (lastCol > 0) {
+      var headers = expirySheet.getRange(1, 1, 1, lastCol).getValues()[0];
+      var hasRegDate = false;
+      var hasRegistrarName = false;
+      for (var i = 0; i < headers.length; i++) {
+        if (headers[i] === "تاريخ التسجيل") hasRegDate = true;
+        if (headers[i] === "اسم المسجل") hasRegistrarName = true;
+      }
+      
+      if (!hasRegDate) {
+        lastCol++;
+        expirySheet.getRange(1, lastCol).setValue("تاريخ التسجيل");
+      }
+      if (!hasRegistrarName) {
+        lastCol++;
+        expirySheet.getRange(1, lastCol).setValue("اسم المسجل");
+      }
+    }
+  }
 
   calculateFinancials();
 
-  SpreadsheetApp.getUi().alert("✅ تم بناء وتحديث النظام الشامل V15.1 بنجاح!");
+  SpreadsheetApp.getUi().alert("✅ تم التحديث الآمن للنظام الشامل V15.2 بنجاح بدون فقدان أي بيانات!");
 }
 
 // ============================================================
