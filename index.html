@@ -443,137 +443,180 @@
         </section>
 
         <!-- ⭐ شاشة إدارة الصلاحيات والعروض (Expiry Dashboard) -->
+        <!-- ⭐ شاشة إدارة الصلاحيات والعروض (Expiry Dashboard) -->
         <section id="expiry-tab" class="tab-pane">
             <div class="section-card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <h3 class="section-title" style="margin-bottom: 0;">📦 إدارة الصلاحيات والعروض</h3>
-                    <button id="refreshExpiryBtn" class="interactive-btn" style="background: linear-gradient(135deg, #e67e22, #d35400); color: white; border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold;">🔄 تحميل وتحديث</button>
+                    <button id="openLedgerBtn" class="interactive-btn pulse-btn" style="background: linear-gradient(135deg, #8e44ad, #2980b9); color: white; border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold;">➕ تسجيل بضاعة (محضر استلام)</button>
                 </div>
                 
                 <div class="expiry-body">
-                    <!-- فورم إدخال بضاعة جديدة -->
-                    <div class="section-card expiry-form-card" style="border: 2px dashed var(--border); box-shadow: none;">
-                        <h4 style="margin-bottom: 15px; color: var(--primary);">📥 تسجيل بضاعة واردة</h4>
-                        <div class="expiry-form-grid">
-                            <div>
-                                <label>تاريخ التسجيل</label>
-                                <input type="date" id="expRegDate" dir="ltr">
-                            </div>
-                            <div>
-                                <label>اسم المسجِّل <span style="color:red;">*</span></label>
-                                <input type="text" id="expRegistrarName" placeholder="اسمك" required>
-                            </div>
-                            <div>
-                                <label>اسم المنتج</label>
-                                <input type="text" id="expProdName" placeholder="مثال: كيت كات شينكي">
-                            </div>
-                            <div>
-                                <label>العدد (كمية)</label>
-                                <input type="number" id="expProdQty" placeholder="0">
-                            </div>
-                            <div>
-                                <label>تاريخ الانتهاء</label>
-                                <input type="date" id="expProdDate" dir="ltr">
-                            </div>
-                            <div>
-                                <label>مكان البضاعة / المورد</label>
-                                <input type="text" id="expProdLocation" placeholder="الفرع أو المورد">
-                            </div>
-                            <div>
-                                <label>اسم المستلم</label>
-                                <input type="text" id="expProdReceiver" placeholder="اسم المستلم (اختياري)">
-                            </div>
-                            <div>
-                                <label>ملاحظات</label>
-                                <input type="text" id="expProdNotes" placeholder="أي تفاصيل أخرى...">
-                            </div>
-                        </div>
-                        <button id="registerExpiryBtn" class="btn-save interactive-btn pulse-btn" style="width: 100%; margin-top: 15px;">تسجيل الاستلامة ➕</button>
-                    </div>
 
-                    <!-- عدادات الداش بورد السريعة -->
-                    <div class="expiry-stats-row mt-15">
-                        <div class="expiry-stat-item stat-total">
-                            <span class="label">إجمالي الأصناف</span>
-                            <span class="value" id="expTotalItems">0</span>
+                    <!-- أدوات التصدير الذكية -->
+                    <div class="export-controls" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; background: var(--bg-light); padding: 15px; border-radius: 10px; border: 1px solid var(--border);">
+                        <div style="flex: 1; min-width: 200px;">
+                            <label style="font-size: 0.9rem; margin-bottom: 5px; display: block; color: var(--text-color);">تصدير حسب شهر الانتهاء:</label>
+                            <div style="display: flex; gap: 5px;">
+                                <input type="month" id="exportMonthInput" dir="ltr" style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #ccc;">
+                                <button id="btnExportMonth" class="interactive-btn" style="background: #27ae60; color: white; border: none; padding: 8px 12px; border-radius: 8px;">تصدير</button>
+                            </div>
                         </div>
-                        <div class="expiry-stat-item stat-critical">
-                            <span class="label">حرج جداً</span>
-                            <span class="value" id="expCriticalItems">0</span>
-                        </div>
-                        <div class="expiry-stat-item stat-far">
-                            <span class="label">تاريخ بعيد</span>
-                            <span class="value" id="expFarItems">0</span>
-                        </div>
-                        <div class="expiry-stat-item stat-safe">
-                            <span class="label">أصناف آمنة</span>
-                            <span class="value" id="expSafeItems">0</span>
+                        <div style="flex: 1; min-width: 200px;">
+                            <label style="font-size: 0.9rem; margin-bottom: 5px; display: block; color: var(--text-color);">تصدير حسب يوم الإدخال (التسجيل):</label>
+                            <div style="display: flex; gap: 5px;">
+                                <input type="date" id="exportDateInput" dir="ltr" style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #ccc;">
+                                <button id="btnExportDate" class="interactive-btn" style="background: #2980b9; color: white; border: none; padding: 8px 12px; border-radius: 8px;">تصدير</button>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- زر التصدير -->
-                    <button id="exportExpiryExcelBtn" class="btn-whatsapp interactive-btn" style="width: 100%; margin: 15px 0; font-size: 1.1rem; border-radius: 12px; background: linear-gradient(135deg, #27ae60, #1e8449);">📊 تصدير تقرير الإدارة لـ Excel</button>
-
-                    <!-- نظام إشارات المرور (5 فئات) -->
-                    <div class="traffic-light-grid">
+                    <!-- نظام البطاقات (الداشبورد) -->
+                    <div class="traffic-light-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <!-- 🔵 إجمالي الأصناف -->
+                        <div class="traffic-card traffic-total" onclick="showExpiryDetails('Total')" style="cursor: pointer; background: #ecf0f1; border: 2px solid #bdc3c7;">
+                            <div class="traffic-header">
+                                <h3 style="color: #2c3e50;">📦 إجمالي الأصناف المسجلة</h3>
+                                <span class="subtitle">كل البضاعة في النظام</span>
+                            </div>
+                            <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #34495e;" id="expTotalItems">0</h2>
+                        </div>
+                        
                         <!-- 🔴 Very Critical -->
-                        <div class="traffic-card traffic-red">
+                        <div class="traffic-card traffic-red" onclick="showExpiryDetails('Critical')" style="cursor: pointer;">
                             <div class="traffic-header">
                                 <h3>🔴 حرج جداً</h3>
                                 <span class="subtitle">أقل من 7 أيام</span>
                             </div>
-                            <div class="traffic-list scroll-list" id="listCritical" style="max-height: 300px;">
-                                <p class="empty-msg">جاري التحميل...</p>
-                            </div>
+                            <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #c0392b;" id="expCriticalItems">0</h2>
                         </div>
                         
                         <!-- 🟠 Quick Alert -->
-                        <div class="traffic-card traffic-orange">
+                        <div class="traffic-card traffic-orange" onclick="showExpiryDetails('Alert')" style="cursor: pointer;">
                             <div class="traffic-header">
                                 <h3>🟠 تنبيه سريع</h3>
                                 <span class="subtitle">أقل من 30 يوم</span>
                             </div>
-                            <div class="traffic-list scroll-list" id="listAlert" style="max-height: 300px;">
-                                <p class="empty-msg">جاري التحميل...</p>
-                            </div>
+                            <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #d35400;" id="expAlertItems">0</h2>
                         </div>
                         
                         <!-- 🟡 Attention -->
-                        <div class="traffic-card traffic-yellow">
+                        <div class="traffic-card traffic-yellow" onclick="showExpiryDetails('Attention')" style="cursor: pointer;">
                             <div class="traffic-header">
                                 <h3>🟡 انتباه ومراقبة</h3>
                                 <span class="subtitle">1 إلى 3 شهور</span>
                             </div>
-                            <div class="traffic-list scroll-list" id="listAttention" style="max-height: 300px;">
-                                <p class="empty-msg">جاري التحميل...</p>
-                            </div>
+                            <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #f39c12;" id="expAttentionItems">0</h2>
                         </div>
                         
                         <!-- 🟢 Safe -->
-                        <div class="traffic-card traffic-green">
+                        <div class="traffic-card traffic-green" onclick="showExpiryDetails('Safe')" style="cursor: pointer;">
                             <div class="traffic-header">
                                 <h3>🟢 مخزون آمن</h3>
-                                <span class="subtitle">3 شهور إلى 6 شهور</span>
+                                <span class="subtitle">3 إلى 6 شهور</span>
                             </div>
-                            <div class="traffic-list scroll-list" id="listSafe" style="max-height: 300px;">
-                                <p class="empty-msg">جاري التحميل...</p>
-                            </div>
+                            <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #27ae60;" id="expSafeItems">0</h2>
                         </div>
 
                         <!-- 🔵 Far Date -->
-                        <div class="traffic-card traffic-blue">
+                        <div class="traffic-card traffic-blue" onclick="showExpiryDetails('Far')" style="cursor: pointer;">
                             <div class="traffic-header">
                                 <h3>🔵 تاريخ بعيد</h3>
                                 <span class="subtitle">6 شهور أو أكثر</span>
                             </div>
-                            <div class="traffic-list scroll-list" id="listFar" style="max-height: 300px;">
-                                <p class="empty-msg">جاري التحميل...</p>
+                            <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #2980b9;" id="expFarItems">0</h2>
+                        </div>
+                    </div>
+                    
+                    <!-- منطقة عرض التفاصيل (مخفية افتراضياً) -->
+                    <div id="expiryDetailsSection" style="display: none; margin-top: 20px; border-top: 2px solid var(--border); padding-top: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 id="detailsTitle" style="color: var(--primary);">التفاصيل</h3>
+                            <div style="display: flex; gap: 10px;">
+                                <button id="exportCurrentListBtn" class="interactive-btn" style="background: #27ae60; color: white; border: none; padding: 6px 12px; border-radius: 8px;">📊 تصدير Excel</button>
+                                <button onclick="closeExpiryDetails()" class="interactive-btn" style="background: #c0392b; color: white; border: none; padding: 6px 12px; border-radius: 8px;">❌ إغلاق</button>
                             </div>
+                        </div>
+                        <div class="traffic-list scroll-list" id="detailsList" style="max-height: 400px; background: var(--bg-light); border-radius: 10px; padding: 10px; border: 1px solid var(--border);">
+                            <!-- يتم حقن العناصر هنا -->
                         </div>
                     </div>
                 </div>
             </div>
         </section>
+
+        <!-- ⭐ شاشة محضر تسجيل بضاعة (Ledger Modal) -->
+        <div id="ledgerModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
+            <div class="modal-content" style="background: var(--bg-color); width: 100%; max-width: 900px; border-radius: 15px; padding: 20px; max-height: 90vh; overflow-y: auto; position: relative;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid var(--border); padding-bottom: 10px;">
+                    <h2 style="color: var(--primary); margin: 0;">📝 محضر استلام وتسجيل بضاعة</h2>
+                    <span class="close-modal" onclick="closeLedgerModal()" style="font-size: 2rem; cursor: pointer; color: #c0392b;">&times;</span>
+                </div>
+                
+                <div class="ledger-header-info" style="display: flex; gap: 15px; margin-bottom: 20px; background: var(--bg-light); padding: 15px; border-radius: 10px; border: 1px solid var(--border);">
+                    <div style="flex: 1;">
+                        <label style="display: block; margin-bottom: 5px;">تاريخ التسجيل <span style="color:red;">*</span></label>
+                        <input type="date" id="ledgerRegDate" dir="ltr" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #ccc;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="display: block; margin-bottom: 5px;">اسم المسجِّل <span style="color:red;">*</span></label>
+                        <input type="text" id="ledgerRegistrarName" placeholder="اسمك" required style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #ccc;">
+                    </div>
+                </div>
+
+                <div class="ledger-add-item-form" style="border: 2px dashed #3498db; padding: 15px; border-radius: 10px; margin-bottom: 20px; background: rgba(52, 152, 219, 0.05);">
+                    <h4 style="margin-bottom: 15px; margin-top: 0; color: #3498db;">➕ إضافة منتج للمحضر</h4>
+                    <div class="expiry-form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                        <div style="grid-column: span 2;">
+                            <label>اسم المنتج <span style="color:red;">*</span></label>
+                            <input type="text" id="ledgerProdName" placeholder="اسم المنتج">
+                        </div>
+                        <div>
+                            <label>الكمية <span style="color:red;">*</span></label>
+                            <input type="number" id="ledgerProdQty" placeholder="0" min="1">
+                        </div>
+                        <div>
+                            <label>تاريخ الانتهاء <span style="color:red;">*</span></label>
+                            <input type="date" id="ledgerProdDate" dir="ltr">
+                        </div>
+                        <div style="grid-column: span 2;">
+                            <label>المكان / المورد</label>
+                            <input type="text" id="ledgerProdLocation" placeholder="اختياري">
+                        </div>
+                        <div style="grid-column: span 2;">
+                            <label>اسم المستلم</label>
+                            <input type="text" id="ledgerProdReceiver" placeholder="اختياري">
+                        </div>
+                        <div style="grid-column: span 4;">
+                            <label>ملاحظات</label>
+                            <input type="text" id="ledgerProdNotes" placeholder="اختياري">
+                        </div>
+                    </div>
+                    <button id="addLedgerItemBtn" class="interactive-btn" style="width: 100%; background: #3498db; color: white; border: none; padding: 12px; border-radius: 10px; font-weight: bold; font-size: 1.1rem; margin-top: 15px;">إضافة للقائمة 👇</button>
+                </div>
+
+                <div class="ledger-cart">
+                    <h4 style="margin-bottom: 10px; margin-top: 0; color: var(--text-color);">📋 سلة المنتجات المضافة (<span id="ledgerCartCount">0</span>)</h4>
+                    <div class="table-responsive" style="max-height: 300px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 15px; background: white;">
+                        <table class="data-table" style="width: 100%; border-collapse: collapse; text-align: right;">
+                            <thead style="background: #f8f9fa; position: sticky; top: 0;">
+                                <tr>
+                                    <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">المنتج</th>
+                                    <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">الكمية</th>
+                                    <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">الانتهاء</th>
+                                    <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">المكان/المورد</th>
+                                    <th style="padding: 10px; border-bottom: 2px solid #dee2e6; text-align: center;">حذف</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ledgerCartBody">
+                                <tr><td colspan="5" style="text-align:center; padding: 20px; color: #7f8c8d;">لا توجد منتجات مضافة حتى الآن.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <button id="saveLedgerBtn" class="interactive-btn pulse-btn" style="width: 100%; background: #27ae60; color: white; border: none; padding: 15px; border-radius: 10px; font-size: 1.2rem; font-weight: bold; cursor: pointer;">✅ حفظ واعتماد المحضر بالكامل</button>
+                </div>
+            </div>
+        </div>
         
     </main>
 
