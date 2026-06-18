@@ -1,4 +1,4 @@
-// ==========================================
+﻿// ==========================================
 // 🌐 العقل المدبر - سيستم كاندي كلوب (النسخة V13.6 - الشاملة والمحصنة)
 // ==========================================
 
@@ -2996,117 +2996,291 @@ function loadExpiryData() {
         });
 }
 
-function renderExpiryDashboard() {
-    const listCritical = document.getElementById('listCritical');
-    const listAlert = document.getElementById('listAlert');
-    const listAttention = document.getElementById('listAttention');
-    const listSafe = document.getElementById('listSafe');
 
-    // Clear lists
-    if(listCritical) listCritical.innerHTML = '';
-    if(listAlert) listAlert.innerHTML = '';
-    if(listAttention) listAttention.innerHTML = '';
-    if(listSafe) listSafe.innerHTML = '';
+let ledgerCart = [];
+let currentExportData = [];
+let currentExportCategory = '';
 
-    let countTotal = 0;
-    let countCritical = 0;
-    let countOffer = 0;
-    let countSafe = 0;
+// ==========================================
+// 1. Ledger Modal Logic (محضر الاستلام)
+// ==========================================
+const openLedgerBtn = document.getElementById('openLedgerBtn');
+const ledgerModal = document.getElementById('ledgerModal');
 
+if (openLedgerBtn) {
+    openLedgerBtn.addEventListener('click', () => {
+        if (!document.getElementById('ledgerRegDate').value) {
+            document.getElementById('ledgerRegDate').value = new Date().toISOString().split('T')[0];
+        }
+        ledgerModal.style.display = 'flex';
+    });
+}
+
+window.closeLedgerModal = function() {
+    ledgerModal.style.display = 'none';
+};
+
+// Add Item to Cart
+const addLedgerItemBtn = document.getElementById('addLedgerItemBtn');
+if (addLedgerItemBtn) {
+    addLedgerItemBtn.addEventListener('click', () => {
+        const name = document.getElementById('ledgerProdName').value;
+        const qty = document.getElementById('ledgerProdQty').value;
+        const date = document.getElementById('ledgerProdDate').value;
+        const location = document.getElementById('ledgerProdLocation').value;
+        const receiver = document.getElementById('ledgerProdReceiver').value;
+        const notes = document.getElementById('ledgerProdNotes').value;
+
+        if (!name || !qty || !date) {
+            showToast("يرجى إكمال البيانات الأساسية (الاسم، الكمية، التاريخ)", "warning");
+            return;
+        }
+
+        const item = {
+            id: 'EXP-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+            name: name,
+            qty: qty,
+            expiryDate: date,
+            location: location,
+            receiver: receiver,
+            status: 'Active',
+            notes: notes
+        };
+
+        ledgerCart.push(item);
+        renderLedgerCart();
+
+        document.getElementById('ledgerProdName').value = '';
+        document.getElementById('ledgerProdQty').value = '';
+        document.getElementById('ledgerProdDate').value = '';
+        document.getElementById('ledgerProdLocation').value = '';
+        document.getElementById('ledgerProdReceiver').value = '';
+        document.getElementById('ledgerProdNotes').value = '';
+    });
+}
+
+function renderLedgerCart() {
+    const tbody = document.getElementById('ledgerCartBody');
+    const countSpan = document.getElementById('ledgerCartCount');
+    if (!tbody) return;
+
+    countSpan.innerText = ledgerCart.length;
+
+    if (ledgerCart.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: #7f8c8d;">لا توجد منتجات مضافة حتى الآن.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = '';
+    ledgerCart.forEach((item, index) => {
+        tbody.innerHTML += `
+            <tr style="border-bottom: 1px solid #eee;">
+                <td style="padding: 8px;">${item.name}</td>
+                <td style="padding: 8px;">${item.qty}</td>
+                <td style="padding: 8px;" dir="ltr">${item.expiryDate}</td>
+                <td style="padding: 8px;">${item.location || '-'}</td>
+                <td style="padding: 8px; text-align: center;">
+                    <button class="interactive-btn" style="background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 5px;" onclick="removeLedgerItem(${index})">حذف</button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+window.removeLedgerItem = function(index) {
+    ledgerCart.splice(index, 1);
+    renderLedgerCart();
+};
+
+// Save Batch
+const saveLedgerBtn = document.getElementById('saveLedgerBtn');
+if (saveLedgerBtn) {
+    saveLedgerBtn.addEventListener('click', () => {
+        if (ledgerCart.length === 0) {
+            showToast("السلة فارغة، يرجى إضافة منتجات أولاً.", "warning");
+            return;
+        }
+
+        const regDate = document.getElementById('ledgerRegDate').value;
+        const regName = document.getElementById('ledgerRegistrarName').value;
+
+        if (!regDate || !regName) {
+            showToast("يرجى إدخال تاريخ التسجيل واسم المسجل في أعلى المحضر.", "warning");
+            return;
+        }
+
+        // Attach reg info to all items
+        const payload = ledgerCart.map(item => Object.assign({}, item, {
+            regDate: regDate,
+            registrarName: regName
+        }));
+
+        setBtnLoading(saveLedgerBtn, true, "جاري الحفظ...");
+
+        let formData = new URLSearchParams();
+        formData.append('action', 'addExpiriesBatch');
+        formData.append('batchData', JSON.stringify(payload));
+
+        fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
+            .then(() => {
+                showToast("✅ تم حفظ المحضر بنجاح!", "success");
+                setBtnLoading(saveLedgerBtn, false);
+                ledgerCart = [];
+                renderLedgerCart();
+                closeLedgerModal();
+                loadExpiryData(); // Refresh the dashboard
+            }).catch(() => {
+                showToast("❌ حدث خطأ في الاتصال", "error");
+                setBtnLoading(saveLedgerBtn, false);
+            });
+    });
+}
+
+// ==========================================
+// 2. Dashboard Logic (إدارة الصلاحيات)
+// ==========================================
+
+function getDaysRemaining(expiryDateStr) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const expDate = new Date(expiryDateStr);
+    const timeDiff = expDate.getTime() - today.getTime();
+    return Math.ceil(timeDiff / (1000 * 3600 * 24));
+}
+
+function renderExpiryDashboard() {
+    let countTotal = 0;
+    let countCritical = 0;
+    let countAlert = 0;
+    let countAttention = 0;
+    let countSafe = 0;
+    let countFar = 0;
 
     let activeItems = expiryData.filter(item => item.status !== 'Done/Archived');
     
     activeItems.forEach(item => {
         countTotal++;
+        const daysRemaining = getDaysRemaining(item.expiryDate);
 
-        if (item.status === 'Active Display') {
-            countOffer++;
-        }
-
-        // Calculate days remaining
-        const expDate = new Date(item.expiryDate);
-        const timeDiff = expDate.getTime() - today.getTime();
-        const daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
-
-        // Format date
-        let formattedDate = '-';
-        if (!isNaN(expDate.getTime())) {
-            formattedDate = expDate.toLocaleDateString('ar-EG');
-        } else if (item.expiryDate) {
-            formattedDate = item.expiryDate;
-        }
-
-        // Build HTML for the item row
-        let rowClass = "expiry-item-row";
-        let activeOfferStyle = "";
-        if (item.status === 'Active Display') {
-            rowClass += " active-offer";
-            activeOfferStyle = 'style="border: 2px solid #ffeb3b; background: #fffde7; box-shadow: 0 0 10px rgba(255, 235, 59, 0.5);"';
-        }
-
-        let daysText = "";
-        let daysColor = "";
-        
-        if (daysRemaining < 0) {
-            daysText = `منتهي منذ ${Math.abs(daysRemaining)} يوم 🚨`;
-            daysColor = "#c0392b";
-        } else {
-            daysText = `باقي ${daysRemaining} يوم`;
-            if (daysRemaining < 7) daysColor = "#e74c3c";
-            else if (daysRemaining < 30) daysColor = "#e67e22";
-            else if (daysRemaining <= 90) daysColor = "#f39c12";
-            else daysColor = "#27ae60";
-        }
-
-        const offerBtnText = item.status === 'Active Display' ? "إيقاف العرض ⏸" : "تشغيل العرض 🔥";
-        const offerBtnColor = item.status === 'Active Display' ? "#e0e0e0" : "#fff3e0";
-        const offerBtnAction = item.status === 'Active Display' ? "Active" : "Active Display";
-
-        let itemHtml = `
-            <div class="${rowClass}" ${activeOfferStyle}>
-                <h4>📦 ${item.name}</h4>
-                <div class="expiry-item-details">
-                    <span>الكمية: ${item.qty}</span>
-                    <span style="color: ${daysColor}; font-weight: bold;">${daysText}</span>
-                </div>
-                <div style="font-size: 0.8rem; color: #7f8c8d; margin-bottom: 8px;">
-                    📅 انتهاء: ${formattedDate} | 🏢 مكان: ${item.location || '-'}
-                </div>
-                <div class="expiry-item-actions">
-                    <button class="btn-activate-offer interactive-btn" style="background: ${offerBtnColor};" onclick="changeExpiryStatus('${item.id}', '${offerBtnAction}')">${offerBtnText}</button>
-                    <button class="btn-close-item interactive-btn" onclick="changeExpiryStatus('${item.id}', 'Done/Archived')">تم البيع ✖️</button>
-                </div>
-            </div>
-        `;
-
-        // Distribute to traffic light lists
         if (daysRemaining < 7 || isNaN(daysRemaining)) {
-            if(listCritical) listCritical.innerHTML += itemHtml;
             countCritical++;
         } else if (daysRemaining < 30) {
-            if(listAlert) listAlert.innerHTML += itemHtml;
+            countAlert++;
         } else if (daysRemaining <= 90) {
-            if(listAttention) listAttention.innerHTML += itemHtml;
-        } else {
-            if(listSafe) listSafe.innerHTML += itemHtml;
+            countAttention++;
+        } else if (daysRemaining <= 180) {
             countSafe++;
+        } else {
+            countFar++;
         }
     });
 
-    // Handle empty lists
-    if (listCritical && listCritical.innerHTML === '') listCritical.innerHTML = '<p class="empty-msg">لا توجد أصناف حرجة.</p>';
-    if (listAlert && listAlert.innerHTML === '') listAlert.innerHTML = '<p class="empty-msg">لا توجد أصناف للتنبيه السريع.</p>';
-    if (listAttention && listAttention.innerHTML === '') listAttention.innerHTML = '<p class="empty-msg">لا توجد أصناف في الانتباه.</p>';
-    if (listSafe && listSafe.innerHTML === '') listSafe.innerHTML = '<p class="empty-msg">لا توجد أصناف في المخزون الآمن.</p>';
-
-    // Update stats cards
     if(document.getElementById('expTotalItems')) document.getElementById('expTotalItems').innerText = countTotal;
     if(document.getElementById('expCriticalItems')) document.getElementById('expCriticalItems').innerText = countCritical;
-    if(document.getElementById('expOfferItems')) document.getElementById('expOfferItems').innerText = countOffer;
+    if(document.getElementById('expAlertItems')) document.getElementById('expAlertItems').innerText = countAlert;
+    if(document.getElementById('expAttentionItems')) document.getElementById('expAttentionItems').innerText = countAttention;
     if(document.getElementById('expSafeItems')) document.getElementById('expSafeItems').innerText = countSafe;
+    if(document.getElementById('expFarItems')) document.getElementById('expFarItems').innerText = countFar;
 }
+
+window.showExpiryDetails = function(category) {
+    let filteredData = [];
+    let title = "";
+
+    let activeItems = expiryData.filter(item => item.status !== 'Done/Archived');
+
+    activeItems.forEach(item => {
+        const daysRemaining = getDaysRemaining(item.expiryDate);
+        let matches = false;
+
+        if (category === 'Total') {
+            matches = true;
+            title = "📦 إجمالي الأصناف المسجلة";
+        } else if (category === 'Critical' && (daysRemaining < 7 || isNaN(daysRemaining))) {
+            matches = true;
+            title = "🔴 حرج جداً (أقل من 7 أيام)";
+        } else if (category === 'Alert' && daysRemaining >= 7 && daysRemaining < 30) {
+            matches = true;
+            title = "🟠 تنبيه سريع (أقل من 30 يوم)";
+        } else if (category === 'Attention' && daysRemaining >= 30 && daysRemaining <= 90) {
+            matches = true;
+            title = "🟡 انتباه ومراقبة (1 إلى 3 شهور)";
+        } else if (category === 'Safe' && daysRemaining > 90 && daysRemaining <= 180) {
+            matches = true;
+            title = "🟢 مخزون آمن (3 إلى 6 شهور)";
+        } else if (category === 'Far' && daysRemaining > 180) {
+            matches = true;
+            title = "🔵 تاريخ بعيد (أكثر من 6 شهور)";
+        }
+
+        if (matches) {
+            filteredData.push(Object.assign({}, item, { daysRemaining: daysRemaining }));
+        }
+    });
+
+    currentExportData = filteredData;
+    currentExportCategory = title;
+
+    document.getElementById('detailsTitle').innerText = title;
+    const detailsList = document.getElementById('detailsList');
+    
+    if (filteredData.length === 0) {
+        detailsList.innerHTML = '<p class="empty-msg">لا توجد أصناف في هذه الفئة.</p>';
+    } else {
+        detailsList.innerHTML = '';
+        filteredData.forEach(item => {
+            let daysColor = "";
+            if (item.daysRemaining < 0) daysColor = "#c0392b";
+            else if (item.daysRemaining < 7) daysColor = "#e74c3c";
+            else if (item.daysRemaining < 30) daysColor = "#e67e22";
+            else if (item.daysRemaining <= 90) daysColor = "#f39c12";
+            else daysColor = "#27ae60";
+
+            let daysText = item.daysRemaining < 0 ? `منتهي منذ ${Math.abs(item.daysRemaining)} يوم 🚨` : `باقي ${item.daysRemaining} يوم`;
+
+            let rowClass = "expiry-item-row";
+            let activeOfferStyle = "";
+            if (item.status === 'Active Display') {
+                rowClass += " active-offer";
+                activeOfferStyle = 'style="border: 2px solid #ffeb3b; background: #fffde7;"';
+            }
+
+            const offerBtnText = item.status === 'Active Display' ? "إيقاف العرض ⏸" : "تشغيل العرض 🔥";
+            const offerBtnColor = item.status === 'Active Display' ? "#e0e0e0" : "#fff3e0";
+            const offerBtnAction = item.status === 'Active Display' ? "Active" : "Active Display";
+
+            let formattedDate = new Date(item.expiryDate);
+            formattedDate = isNaN(formattedDate.getTime()) ? item.expiryDate : formattedDate.toLocaleDateString('ar-EG');
+
+            detailsList.innerHTML += `
+                <div class="${rowClass}" ${activeOfferStyle}>
+                    <h4>📦 ${item.name}</h4>
+                    <div class="expiry-item-details">
+                        <span>الكمية: ${item.qty}</span>
+                        <span style="color: ${daysColor}; font-weight: bold;">${daysText}</span>
+                    </div>
+                    <div style="font-size: 0.8rem; color: #7f8c8d; margin-bottom: 8px;">
+                        📅 انتهاء: ${formattedDate} | 🏢 مكان: ${item.location || '-'}
+                    </div>
+                    <div class="expiry-item-actions">
+                        <button class="btn-activate-offer interactive-btn" style="background: ${offerBtnColor};" onclick="changeExpiryStatus('${item.id}', '${offerBtnAction}')">${offerBtnText}</button>
+                        <button class="btn-close-item interactive-btn" onclick="changeExpiryStatus('${item.id}', 'Done/Archived')">تم البيع ✖️</button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    document.getElementById('expiryDetailsSection').style.display = 'block';
+    
+    setTimeout(() => {
+        document.getElementById('expiryDetailsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+};
+
+window.closeExpiryDetails = function() {
+    document.getElementById('expiryDetailsSection').style.display = 'none';
+};
 
 // 3. Status Control (دورة حياة العرض)
 window.changeExpiryStatus = function(id, newStatus) {
@@ -3127,85 +3301,29 @@ window.changeExpiryStatus = function(id, newStatus) {
     fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
         .then(() => {
             showToast("✅ تم تحديث الحالة بنجاح", "success");
-            // Optimistic update
             let item = expiryData.find(i => i.id == id);
             if(item) {
                 item.status = newStatus;
             }
             renderExpiryDashboard();
             updateCatalogWithOffers();
+            if (document.getElementById('expiryDetailsSection').style.display === 'block') {
+                closeExpiryDetails();
+            }
         }).catch(() => {
             showToast("❌ خطأ في الاتصال بالإنترنت", "error");
         });
 };
 
-// 4. Save New Items (حفظ بضاعة جديدة)
-const registerExpiryBtn = document.getElementById('registerExpiryBtn');
-if (registerExpiryBtn) {
-    registerExpiryBtn.addEventListener('click', () => {
-        const name = document.getElementById('expProdName').value;
-        const qty = document.getElementById('expProdQty').value;
-        const date = document.getElementById('expProdDate').value;
-        const location = document.getElementById('expProdLocation').value;
-        const receiver = document.getElementById('expProdReceiver').value;
-        const notes = document.getElementById('expProdNotes').value;
-
-        if (!name || !qty || !date) {
-            showToast("يرجى إكمال البيانات الأساسية (الاسم، الكمية، التاريخ)", "warning");
-            return;
-        }
-
-        setBtnLoading(registerExpiryBtn, true);
-
-        // Generate a random ID for the new item
-        const newId = 'EXP-' + Date.now();
-
-        let formData = new URLSearchParams();
-        formData.append('action', 'addExpiry');
-        formData.append('id', newId);
-        formData.append('name', name);
-        formData.append('qty', qty);
-        formData.append('expiryDate', date);
-        formData.append('location', location);
-        formData.append('receiver', receiver);
-        formData.append('notes', notes);
-        formData.append('status', 'Active'); // Default status
-
-        fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
-            .then(() => {
-                showToast("✅ تم تسجيل البضاعة بنجاح", "success");
-                setBtnLoading(registerExpiryBtn, false);
-                
-                // Clear Form
-                document.getElementById('expProdName').value = '';
-                document.getElementById('expProdQty').value = '';
-                document.getElementById('expProdDate').value = '';
-                document.getElementById('expProdLocation').value = '';
-                document.getElementById('expProdReceiver').value = '';
-                document.getElementById('expProdNotes').value = '';
-
-                // Refresh Dashboard Data
-                loadExpiryData();
-            }).catch(() => {
-                showToast("❌ حدث خطأ في الاتصال", "error");
-                setBtnLoading(registerExpiryBtn, false);
-            });
-    });
-}
-
-// Function to update the main catalog (واجهة البيع) to show offer indicators
 function updateCatalogWithOffers() {
     if (!catalogData || catalogData.length === 0) return;
-
     const activeOffers = expiryData.filter(item => item.status === 'Active Display').map(item => item.name);
-    
     const catalogContainer = document.getElementById('catalogListContainer');
     if (catalogContainer) {
         const rows = catalogContainer.querySelectorAll('.data-row');
         rows.forEach(row => {
             const nameEl = row.querySelector('strong');
             if (nameEl) {
-                // Get clean product name
                 const productName = nameEl.innerText.replace('🔥', '').replace('عرض خاص', '').trim();
                 const hasOffer = activeOffers.some(offerName => productName.includes(offerName) || offerName.includes(productName));
                 
@@ -3225,172 +3343,179 @@ function updateCatalogWithOffers() {
     }
 }
 
-// Export Management Report to Excel
-const exportExpiryExcelBtn = document.getElementById('exportExpiryExcelBtn');
-if (exportExpiryExcelBtn) {
-    exportExpiryExcelBtn.addEventListener('click', async () => {
-        if(expiryData.length === 0) {
-            showToast("لا توجد بيانات للتصدير", "warning");
+// ==========================================
+// 3. Export Logic (تصدير متقدم ExcelJS)
+// ==========================================
+
+async function generateExcel(dataToExport, reportTitle) {
+    if(!dataToExport || dataToExport.length === 0) {
+        showToast("لا توجد بيانات للتصدير في هذه القائمة", "warning");
+        return;
+    }
+    
+    try {
+        if (typeof ExcelJS === 'undefined') {
+            showToast("جاري تجهيز محرك التصدير الذكي...", "warning");
+            await new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js';
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+
+        const workbook = new ExcelJS.Workbook();
+        workbook.creator = 'Candy Club System';
+        workbook.created = new Date();
+
+        const sheet1 = workbook.addWorksheet('البيانات التفصيلية', { views: [{ rightToLeft: true }] });
+        
+        sheet1.columns = [
+            { header: 'ID', key: 'id', width: 15 },
+            { header: 'اسم المنتج', key: 'name', width: 35 },
+            { header: 'الكمية', key: 'qty', width: 12 },
+            { header: 'تاريخ الانتهاء', key: 'date', width: 18 },
+            { header: 'الأيام المتبقية', key: 'days', width: 15 },
+            { header: 'تاريخ التسجيل', key: 'reg', width: 18 },
+            { header: 'اسم المسجل', key: 'regname', width: 22 },
+            { header: 'المكان / المورد', key: 'loc', width: 22 },
+            { header: 'المستلم', key: 'rec', width: 18 },
+            { header: 'الحالة', key: 'status', width: 18 },
+            { header: 'ملاحظات', key: 'notes', width: 30 }
+        ];
+
+        sheet1.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
+        sheet1.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2C3E50' } };
+        sheet1.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
+        sheet1.getRow(1).height = 25;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        let sortedData = [...dataToExport].sort((a, b) => {
+            let da = new Date(a.expiryDate).getTime();
+            let db = new Date(b.expiryDate).getTime();
+            return da - db;
+        });
+
+        sortedData.forEach(row => {
+            const expDate = new Date(row.expiryDate);
+            const timeDiff = expDate.getTime() - today.getTime();
+            let daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
+            let daysFormatted = isNaN(daysRemaining) ? '-' : daysRemaining;
+
+            const newRow = sheet1.addRow({
+                id: row.id || '',
+                name: row.name || '',
+                qty: row.qty || '',
+                date: row.expiryDate || '',
+                days: daysFormatted,
+                reg: row.regDate || '',
+                regname: row.registrarName || '',
+                loc: row.location || '',
+                rec: row.receiver || '',
+                status: row.status || '',
+                notes: row.notes || ''
+            });
+
+            newRow.alignment = { vertical: 'middle', horizontal: 'center' };
+            newRow.height = 20;
+
+            if (row.status !== 'Done/Archived' && !isNaN(daysRemaining)) {
+                if (daysRemaining < 0) {
+                    newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFCCCC' } }; 
+                    newRow.font = { color: { argb: 'FFC0392B' }, bold: true };
+                } else if (daysRemaining < 7) {
+                    newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFD6D6' } }; 
+                } else if (daysRemaining < 30) {
+                    newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF9C4' } }; 
+                } else if (daysRemaining <= 90) {
+                    newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFE0B2' } }; 
+                } else if (daysRemaining > 180) {
+                    newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD4E6F1' } }; 
+                } else {
+                    newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD5F5E3' } }; 
+                }
+            }
+            
+            if (row.status === 'Done/Archived') {
+                newRow.font = { color: { argb: 'FF95A5A6' }, italic: true };
+                newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F4F4' } }; 
+            }
+        });
+
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        let safeTitle = reportTitle.replace(/[^a-zA-Z0-9أ-ي]/g, '_');
+        link.download = `تقرير_${safeTitle}_${new Date().toLocaleDateString('en-CA')}.xlsx`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showToast("✅ تم تصدير التقرير الاحترافي بنجاح", "success");
+
+    } catch (error) {
+        console.error(error);
+        showToast("❌ حدث خطأ أثناء التصدير", "error");
+    }
+}
+
+// Export Current List Button (inside Details Section)
+const exportCurrentListBtn = document.getElementById('exportCurrentListBtn');
+if (exportCurrentListBtn) {
+    exportCurrentListBtn.addEventListener('click', () => {
+        setBtnLoading(exportCurrentListBtn, true, "تصدير...");
+        generateExcel(currentExportData, currentExportCategory).then(() => {
+            setBtnLoading(exportCurrentListBtn, false);
+        });
+    });
+}
+
+// Export by Month
+const btnExportMonth = document.getElementById('btnExportMonth');
+if (btnExportMonth) {
+    btnExportMonth.addEventListener('click', () => {
+        const monthVal = document.getElementById('exportMonthInput').value; // YYYY-MM
+        if (!monthVal) {
+            showToast("يرجى تحديد الشهر أولاً", "warning");
             return;
         }
         
-        try {
-            setBtnLoading(exportExpiryExcelBtn, true, "جاري التصدير ⏳...");
-            
-            // Check if ExcelJS is loaded, if not, load it dynamically
-            if (typeof ExcelJS === 'undefined') {
-                showToast("جاري تجهيز محرك التصدير الذكي...", "warning");
-                await new Promise((resolve, reject) => {
-                    const script = document.createElement('script');
-                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js';
-                    script.onload = resolve;
-                    script.onerror = reject;
-                    document.head.appendChild(script);
-                });
-            }
-
-            const workbook = new ExcelJS.Workbook();
-            workbook.creator = 'Candy Club System';
-            workbook.created = new Date();
-
-            // ==========================================
-            // 1. Data Sheet (بيانات الاستلامات النشطة)
-            // ==========================================
-            const sheet1 = workbook.addWorksheet('الاستلامات', { views: [{ rightToLeft: true }] });
-            
-            sheet1.columns = [
-                { header: 'ID', key: 'id', width: 15 },
-                { header: 'اسم المنتج', key: 'name', width: 35 },
-                { header: 'الكمية', key: 'qty', width: 12 },
-                { header: 'تاريخ الانتهاء', key: 'date', width: 18 },
-                { header: 'الأيام المتبقية', key: 'days', width: 15 },
-                { header: 'المكان / المورد', key: 'loc', width: 22 },
-                { header: 'المستلم', key: 'rec', width: 18 },
-                { header: 'الحالة', key: 'status', width: 18 },
-                { header: 'ملاحظات', key: 'notes', width: 30 }
-            ];
-
-            // Style headers
-            sheet1.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
-            sheet1.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2C3E50' } };
-            sheet1.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
-            sheet1.getRow(1).height = 25;
-
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            
-            let totalItemsCount = 0;
-            let activeOffersCount = 0;
-            let soldArchivedCount = 0;
-
-            // Sort data: active ones first, then sorted by remaining days
-            let sortedData = [...expiryData].sort((a, b) => {
-                if(a.status === 'Done/Archived' && b.status !== 'Done/Archived') return 1;
-                if(b.status === 'Done/Archived' && a.status !== 'Done/Archived') return -1;
-                let da = new Date(a.expiryDate).getTime();
-                let db = new Date(b.expiryDate).getTime();
-                return da - db;
-            });
-
-            sortedData.forEach(row => {
-                totalItemsCount++;
-                if (row.status === 'Active Display') activeOffersCount++;
-                if (row.status === 'Done/Archived') soldArchivedCount++;
-
-                const expDate = new Date(row.expiryDate);
-                const timeDiff = expDate.getTime() - today.getTime();
-                let daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
-                
-                let daysFormatted = isNaN(daysRemaining) ? '-' : daysRemaining;
-
-                const newRow = sheet1.addRow({
-                    id: row.id || '',
-                    name: row.name || '',
-                    qty: row.qty || '',
-                    date: row.expiryDate || '',
-                    days: daysFormatted,
-                    loc: row.location || '',
-                    rec: row.receiver || '',
-                    status: row.status || '',
-                    notes: row.notes || ''
-                });
-
-                newRow.alignment = { vertical: 'middle', horizontal: 'center' };
-                newRow.height = 20;
-
-                // Conditional Styling
-                if (row.status !== 'Done/Archived' && !isNaN(daysRemaining)) {
-                    if (daysRemaining < 0) {
-                        newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFCCCC' } }; // Light Red
-                        newRow.font = { color: { argb: 'FFC0392B' }, bold: true };
-                    } else if (daysRemaining < 7) {
-                        newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFD6D6' } }; // Light Red
-                    } else if (daysRemaining < 30) {
-                        newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF9C4' } }; // Light Yellow
-                    }
-                }
-                
-                // Styling for Archived rows
-                if (row.status === 'Done/Archived') {
-                    newRow.font = { color: { argb: 'FF95A5A6' }, italic: true };
-                    newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F4F4' } }; // Light Gray
-                }
-            });
-
-            // ==========================================
-            // 2. Summary Sheet (ملخص الإحصائيات)
-            // ==========================================
-            const sheet2 = workbook.addWorksheet('الملخص الإداري', { views: [{ rightToLeft: true }] });
-            sheet2.columns = [
-                { header: 'البيان', key: 'label', width: 45 },
-                { header: 'العدد', key: 'value', width: 25 }
-            ];
-            
-            sheet2.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
-            sheet2.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF8E44AD' } };
-            sheet2.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
-            sheet2.getRow(1).height = 25;
-
-            sheet2.addRow({ label: 'إجمالي الأصناف المسجلة (تاريخياً)', value: totalItemsCount });
-            sheet2.addRow({ label: 'إجمالي الأصناف النشطة حالياً بالمخزن', value: totalItemsCount - soldArchivedCount });
-            sheet2.addRow({ label: 'أصناف تم تفعيل العرض عليها (Active Display) 🔥', value: activeOffersCount });
-            sheet2.addRow({ label: 'أصناف تم بيعها/إنهاؤها (Done/Archived) ✖️', value: soldArchivedCount });
-            
-            sheet2.eachRow(row => {
-                row.alignment = { vertical: 'middle', horizontal: 'center' };
-                if (row.number > 1) {
-                    row.font = { size: 12, bold: true, color: { argb: 'FF2C3E50' } };
-                    row.height = 30;
-                }
-            });
-
-            // Add borders to summary sheet
-            sheet2.eachRow({ includeEmpty: false }, function(row, rowNumber) {
-                row.eachCell({ includeEmpty: false }, function(cell, colNumber) {
-                    cell.border = {
-                        top: {style:'thin'}, left: {style:'thin'},
-                        bottom: {style:'thin'}, right: {style:'thin'}
-                    };
-                });
-            });
-
-            // Generate File
-            const buffer = await workbook.xlsx.writeBuffer();
-            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `تقرير_الصلاحيات_الاحترافي_${new Date().toLocaleDateString('en-CA')}.xlsx`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            setBtnLoading(exportExpiryExcelBtn, false);
-            showToast("✅ تم تصدير التقرير الاحترافي بنجاح", "success");
-
-        } catch (error) {
-            console.error(error);
-            setBtnLoading(exportExpiryExcelBtn, false);
-            showToast("❌ حدث خطأ أثناء التصدير، يرجى المحاولة لاحقاً", "error");
-        }
+        let filtered = expiryData.filter(item => {
+            if (!item.expiryDate) return false;
+            return item.expiryDate.startsWith(monthVal);
+        });
+        
+        setBtnLoading(btnExportMonth, true, "تصدير...");
+        generateExcel(filtered, 'شهر_' + monthVal).then(() => {
+            setBtnLoading(btnExportMonth, false);
+        });
     });
 }
+
+// Export by Registration Date
+const btnExportDate = document.getElementById('btnExportDate');
+if (btnExportDate) {
+    btnExportDate.addEventListener('click', () => {
+        const dateVal = document.getElementById('exportDateInput').value; // YYYY-MM-DD
+        if (!dateVal) {
+            showToast("يرجى تحديد يوم التسجيل أولاً", "warning");
+            return;
+        }
+        
+        let filtered = expiryData.filter(item => {
+            if (!item.regDate) return false;
+            // Handle date formats which might include time
+            return item.regDate.includes(dateVal);
+        });
+        
+        setBtnLoading(btnExportDate, true, "تصدير...");
+        generateExcel(filtered, 'إدخالات_يوم_' + dateVal).then(() => {
+            setBtnLoading(btnExportDate, false);
+        });
+    });
+}
+
