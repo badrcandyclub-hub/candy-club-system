@@ -448,7 +448,7 @@
             <div class="section-card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <h3 class="section-title" style="margin-bottom: 0;">📦 إدارة الصلاحيات والعروض</h3>
-                    <button id="openLedgerBtn" class="interactive-btn pulse-btn" style="background: linear-gradient(135deg, #8e44ad, #2980b9); color: white; border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold;">➕ تسجيل بضاعة (محضر استلام)</button>
+                    <button id="openLedgerBtn" class="interactive-btn pulse-btn" style="background: linear-gradient(135deg, #8e44ad, #2980b9); color: white; border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold;">➕ تسجيل استلام بضاعة</button>
                 </div>
                 
                 <div class="expiry-body">
@@ -474,12 +474,12 @@
                     <!-- نظام البطاقات (الداشبورد) -->
                     <div class="traffic-light-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
                         <!-- 🔵 إجمالي الأصناف -->
-                        <div class="traffic-card traffic-total" onclick="showExpiryDetails('Total')" style="cursor: pointer; background: #ecf0f1; border: 2px solid #bdc3c7;">
+                        <div class="traffic-card traffic-total" onclick="showExpiryDetails('Total')" style="cursor: pointer; background: linear-gradient(135deg, #1e3c72, #2a5298); border: none; box-shadow: 0 4px 10px rgba(30, 60, 114, 0.3);">
                             <div class="traffic-header">
-                                <h3 style="color: #2c3e50;">📦 إجمالي الأصناف المسجلة</h3>
-                                <span class="subtitle">كل البضاعة في النظام</span>
+                                <h3 style="color: #ffffff;">📦 إجمالي الأصناف المسجلة</h3>
+                                <span class="subtitle" style="color: #d1d8e0; font-weight: bold;">كل البضاعة في النظام</span>
                             </div>
-                            <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #34495e;" id="expTotalItems">0</h2>
+                            <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #ffffff;" id="expTotalItems">0</h2>
                         </div>
                         
                         <!-- 🔴 Very Critical -->
@@ -546,25 +546,29 @@
         </section>
 
         <!-- ⭐ شاشة محضر تسجيل بضاعة (Ledger Modal) -->
-        <div id="ledgerModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
-            <div class="modal-content" style="background: var(--bg-color); width: 100%; max-width: 900px; border-radius: 15px; padding: 20px; max-height: 90vh; overflow-y: auto; position: relative;">
+        <div id="ledgerModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
+            <div class="modal-content" style="background: #ffffff; width: 100%; max-width: 900px; border-radius: 15px; padding: 20px; max-height: 90vh; overflow-y: auto; position: relative;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid var(--border); padding-bottom: 10px;">
-                    <h2 style="color: var(--primary); margin: 0;">📝 محضر استلام وتسجيل بضاعة</h2>
+                    <h2 style="color: var(--primary); margin: 0;">📝 إذن استلام وتسجيل بضاعة</h2>
                     <span class="close-modal" onclick="closeLedgerModal()" style="font-size: 2rem; cursor: pointer; color: #c0392b;">&times;</span>
                 </div>
                 
-                <div class="ledger-header-info" style="display: flex; gap: 15px; margin-bottom: 20px; background: var(--bg-light); padding: 15px; border-radius: 10px; border: 1px solid var(--border);">
+                <div class="ledger-header-info" style="display: flex; gap: 15px; margin-bottom: 20px; background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                     <div style="flex: 1;">
-                        <label style="display: block; margin-bottom: 5px;">تاريخ التسجيل <span style="color:red;">*</span></label>
-                        <input type="date" id="ledgerRegDate" dir="ltr" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #ccc;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: var(--primary);">تاريخ التسجيل <span style="color:red;">*</span></label>
+                        <input type="date" id="ledgerRegDate" dir="ltr" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
                     </div>
                     <div style="flex: 1;">
-                        <label style="display: block; margin-bottom: 5px;">اسم المسجِّل <span style="color:red;">*</span></label>
-                        <input type="text" id="ledgerRegistrarName" placeholder="اسمك" required style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #ccc;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: var(--primary);">اسم المسجِّل <span style="color:red;">*</span></label>
+                        <input type="text" id="ledgerRegistrarName" placeholder="اسمك" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: var(--primary);">اسم المستلم <span style="color:red;">*</span></label>
+                        <input type="text" id="ledgerReceiverName" placeholder="اسم المستلم" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
                     </div>
                 </div>
 
-                <div class="ledger-add-item-form" style="border: 2px dashed #3498db; padding: 15px; border-radius: 10px; margin-bottom: 20px; background: rgba(52, 152, 219, 0.05);">
+                <div class="ledger-add-item-form" style="border: 2px dashed #3498db; padding: 15px; border-radius: 10px; margin-bottom: 20px; background: #f8f9fa;">
                     <h4 style="margin-bottom: 15px; margin-top: 0; color: #3498db;">➕ إضافة منتج للمحضر</h4>
                     <div class="expiry-form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
                         <div style="grid-column: span 2;">
@@ -582,10 +586,6 @@
                         <div style="grid-column: span 2;">
                             <label>المكان / المورد</label>
                             <input type="text" id="ledgerProdLocation" placeholder="اختياري">
-                        </div>
-                        <div style="grid-column: span 2;">
-                            <label>اسم المستلم</label>
-                            <input type="text" id="ledgerProdReceiver" placeholder="اختياري">
                         </div>
                         <div style="grid-column: span 4;">
                             <label>ملاحظات</label>
@@ -613,7 +613,7 @@
                             </tbody>
                         </table>
                     </div>
-                    <button id="saveLedgerBtn" class="interactive-btn pulse-btn" style="width: 100%; background: #27ae60; color: white; border: none; padding: 15px; border-radius: 10px; font-size: 1.2rem; font-weight: bold; cursor: pointer;">✅ حفظ واعتماد المحضر بالكامل</button>
+                    <button id="saveLedgerBtn" class="interactive-btn pulse-btn" style="width: 100%; background: #27ae60; color: white; border: none; padding: 15px; border-radius: 10px; font-size: 1.2rem; font-weight: bold; cursor: pointer;">✅ تأكيد وتسجيل استلام البضاعة</button>
                 </div>
             </div>
         </div>

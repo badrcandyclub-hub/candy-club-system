@@ -372,7 +372,7 @@ function doGet(e) {
 
   // ⭐ V15.2: جلب بيانات الاستلامات والصلاحيات
   if (action === "getExpiries") {
-    var expirySheet = ss.getSheetByName("الاستلامات");
+    var expirySheet = ss.getSheetByName("📥 الاستلامات");
     var expResult = [];
     if (expirySheet) {
       var expData = expirySheet.getDataRange().getValues();
@@ -386,9 +386,9 @@ function doGet(e) {
             location: expData[i][4],
             receiver: expData[i][5],
             status: expData[i][6],
-            notes: expData[i][7],
-            regDate: expData[i][8],
-            registrarName: expData[i][9]
+            regDate: expData[i][7],
+            registrarName: expData[i][8],
+            notes: expData[i][9]
           });
         }
       }
@@ -854,10 +854,13 @@ function doPost(e) {
 
     // ⭐ V15.2: إضافة استلامة جديدة (نظام الصلاحيات)
     else if (action === "addExpiry") {
-      var expirySheet = ss.getSheetByName("الاستلامات");
+      var expirySheet = ss.getSheetByName("📥 الاستلامات");
       if (!expirySheet) {
-          expirySheet = ss.insertSheet("الاستلامات");
-          expirySheet.appendRow(["ID", "اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "المستلم", "الحالة", "ملاحظات", "تاريخ التسجيل", "اسم المسجل"]);
+          expirySheet = ss.insertSheet("📥 الاستلامات");
+          var expiryHeaders = ["ID", "اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "المستلم", "الحالة", "تاريخ التسجيل", "اسم المسجل", "ملاحظات"];
+          expirySheet.getRange(1, 1, 1, expiryHeaders.length).setValues([expiryHeaders])
+               .setBackground("#2980b9").setFontColor("white").setFontFamily("Cairo").setFontSize(14).setFontWeight("bold")
+               .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
       }
       expirySheet.appendRow([
         e.parameter.id, 
@@ -867,19 +870,22 @@ function doPost(e) {
         e.parameter.location, 
         e.parameter.receiver, 
         e.parameter.status, 
-        e.parameter.notes,
         e.parameter.regDate,
-        e.parameter.registrarName
+        e.parameter.registrarName,
+        e.parameter.notes
       ]);
       return ContentService.createTextOutput("success");
     }
 
     // ⭐ V15.3: إضافة استلامات دفعة واحدة (نظام المحضر)
     else if (action === "addExpiriesBatch") {
-      var expirySheet = ss.getSheetByName("الاستلامات");
+      var expirySheet = ss.getSheetByName("📥 الاستلامات");
       if (!expirySheet) {
-          expirySheet = ss.insertSheet("الاستلامات");
-          expirySheet.appendRow(["ID", "اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "المستلم", "الحالة", "ملاحظات", "تاريخ التسجيل", "اسم المسجل"]);
+          expirySheet = ss.insertSheet("📥 الاستلامات");
+          var expiryHeaders = ["ID", "اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "المستلم", "الحالة", "تاريخ التسجيل", "اسم المسجل", "ملاحظات"];
+          expirySheet.getRange(1, 1, 1, expiryHeaders.length).setValues([expiryHeaders])
+               .setBackground("#2980b9").setFontColor("white").setFontFamily("Cairo").setFontSize(14).setFontWeight("bold")
+               .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
       }
       var items = JSON.parse(e.parameter.batchData);
       var rows = [];
@@ -893,9 +899,9 @@ function doPost(e) {
           item.location,
           item.receiver,
           item.status,
-          item.notes,
           item.regDate,
-          item.registrarName
+          item.registrarName,
+          item.notes
         ]);
       }
       if (rows.length > 0) {
@@ -906,7 +912,7 @@ function doPost(e) {
 
     // ⭐ V15.2: تحديث حالة الاستلامة (تشغيل عرض / تم البيع)
     else if (action === "updateExpiryStatus") {
-      var expirySheet = ss.getSheetByName("الاستلامات");
+      var expirySheet = ss.getSheetByName("📥 الاستلامات");
       if (expirySheet) {
         var expData = expirySheet.getDataRange().getValues();
         for (var i = 1; i < expData.length; i++) {

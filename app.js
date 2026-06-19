@@ -1,4 +1,4 @@
-﻿// ==========================================
+// ==========================================
 // 🌐 العقل المدبر - سيستم كاندي كلوب (النسخة V13.6 - الشاملة والمحصنة)
 // ==========================================
 
@@ -3028,7 +3028,6 @@ if (addLedgerItemBtn) {
         const qty = document.getElementById('ledgerProdQty').value;
         const date = document.getElementById('ledgerProdDate').value;
         const location = document.getElementById('ledgerProdLocation').value;
-        const receiver = document.getElementById('ledgerProdReceiver').value;
         const notes = document.getElementById('ledgerProdNotes').value;
 
         if (!name || !qty || !date) {
@@ -3042,7 +3041,6 @@ if (addLedgerItemBtn) {
             qty: qty,
             expiryDate: date,
             location: location,
-            receiver: receiver,
             status: 'Active',
             notes: notes
         };
@@ -3054,7 +3052,6 @@ if (addLedgerItemBtn) {
         document.getElementById('ledgerProdQty').value = '';
         document.getElementById('ledgerProdDate').value = '';
         document.getElementById('ledgerProdLocation').value = '';
-        document.getElementById('ledgerProdReceiver').value = '';
         document.getElementById('ledgerProdNotes').value = '';
     });
 }
@@ -3103,16 +3100,18 @@ if (saveLedgerBtn) {
 
         const regDate = document.getElementById('ledgerRegDate').value;
         const regName = document.getElementById('ledgerRegistrarName').value;
+        const receiverName = document.getElementById('ledgerReceiverName').value;
 
-        if (!regDate || !regName) {
-            showToast("يرجى إدخال تاريخ التسجيل واسم المسجل في أعلى المحضر.", "warning");
+        if (!regDate || !regName || !receiverName) {
+            showToast("يرجى إدخال تاريخ التسجيل واسم المسجل واسم المستلم في أعلى المحضر.", "warning");
             return;
         }
 
         // Attach reg info to all items
         const payload = ledgerCart.map(item => Object.assign({}, item, {
             regDate: regDate,
-            registrarName: regName
+            registrarName: regName,
+            receiver: receiverName
         }));
 
         setBtnLoading(saveLedgerBtn, true, "جاري الحفظ...");
