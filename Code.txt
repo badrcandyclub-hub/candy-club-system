@@ -197,32 +197,25 @@ function setupCandyClubUX() {
   // ============================================================
   // 8. شيت الاستلامات (التحديث الذكي)
   // ============================================================
-  var expirySheet = ss.getSheetByName("الاستلامات");
+  var expirySheet = ss.getSheetByName("📥 الاستلامات");
   if (!expirySheet) {
-    expirySheet = ss.insertSheet("الاستلامات");
-    expirySheet.appendRow(["ID", "اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "المستلم", "الحالة", "ملاحظات", "تاريخ التسجيل", "اسم المسجل"]);
-  } else {
-    // التحديث الذكي: فحص الصف الأول (العناوين)
-    var lastCol = expirySheet.getLastColumn();
-    if (lastCol > 0) {
-      var headers = expirySheet.getRange(1, 1, 1, lastCol).getValues()[0];
-      var hasRegDate = false;
-      var hasRegistrarName = false;
-      for (var i = 0; i < headers.length; i++) {
-        if (headers[i] === "تاريخ التسجيل") hasRegDate = true;
-        if (headers[i] === "اسم المسجل") hasRegistrarName = true;
-      }
-      
-      if (!hasRegDate) {
-        lastCol++;
-        expirySheet.getRange(1, lastCol).setValue("تاريخ التسجيل");
-      }
-      if (!hasRegistrarName) {
-        lastCol++;
-        expirySheet.getRange(1, lastCol).setValue("اسم المسجل");
-      }
+    expirySheet = ss.getSheetByName("الاستلامات");
+    if (expirySheet) {
+      expirySheet.setName("📥 الاستلامات");
+    } else {
+      expirySheet = ss.insertSheet("📥 الاستلامات");
     }
   }
+  
+  // فرض التنسيقات وترتيب الأعمدة الجديد إجبارياً
+  var expiryHeaders = ["ID", "اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "المستلم", "الحالة", "تاريخ التسجيل", "اسم المسجل", "ملاحظات"];
+  expirySheet.getRange(1, 1, 1, expiryHeaders.length).setValues([expiryHeaders])
+             .setBackground("#2980b9").setFontColor("white").setFontFamily(headerFont).setFontSize(14).setFontWeight("bold")
+             .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
+  expirySheet.setRowHeight(1, 45);
+  expirySheet.setFrozenRows(1);
+  expirySheet.setColumnWidth(1, 120);
+  expirySheet.setColumnWidth(2, 220);
 
   calculateFinancials();
 
