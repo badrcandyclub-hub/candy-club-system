@@ -199,16 +199,10 @@ function setupCandyClubUX() {
   // ============================================================
   var expirySheet = ss.getSheetByName("📥 الاستلامات");
   if (!expirySheet) {
-    expirySheet = ss.getSheetByName("الاستلامات");
-    if (expirySheet) {
-      expirySheet.setName("📥 الاستلامات");
-    } else {
       expirySheet = ss.insertSheet("📥 الاستلامات");
-    }
   }
   
-  // فرض التنسيقات وترتيب الأعمدة الجديد إجبارياً
-  var expiryHeaders = ["ID", "اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "المستلم", "الحالة", "تاريخ التسجيل", "اسم المسجل", "ملاحظات", "السعر الأساسي", "سعر العرض"];
+  var expiryHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "المستلم", "الحالة", "تاريخ التسجيل", "اسم المسجل", "ملاحظات", "السعر الأساسي", "سعر العرض"];
   expirySheet.getRange(1, 1, 1, expiryHeaders.length).setValues([expiryHeaders])
              .setBackground("#2980b9").setFontColor("white").setFontFamily(headerFont).setFontSize(14).setFontWeight("bold")
              .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
@@ -372,18 +366,18 @@ function doGet(e) {
       for (var i = 1; i < expData.length; i++) {
         if (expData[i][0]) {
           expResult.push({
-            id: expData[i][0],
-            name: expData[i][1],
-            qty: expData[i][2],
-            expiryDate: expData[i][3],
-            location: expData[i][4],
-            receiver: expData[i][5],
-            status: expData[i][6],
-            regDate: expData[i][7],
-            registrarName: expData[i][8],
-            notes: expData[i][9],
-            originalPrice: expData[i][10],
-            offerPrice: expData[i][11]
+            id: expData[i][0] + '|' + expData[i][1] + '|' + expData[i][2],
+            name: expData[i][0],
+            qty: expData[i][1],
+            expiryDate: expData[i][2],
+            location: expData[i][3],
+            receiver: expData[i][4],
+            status: expData[i][5],
+            regDate: expData[i][6],
+            registrarName: expData[i][7],
+            notes: expData[i][8],
+            originalPrice: expData[i][9],
+            offerPrice: expData[i][10]
           });
         }
       }
@@ -852,13 +846,12 @@ function doPost(e) {
       var expirySheet = ss.getSheetByName("📥 الاستلامات");
       if (!expirySheet) {
           expirySheet = ss.insertSheet("📥 الاستلامات");
-          var expiryHeaders = ["ID", "اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "المستلم", "الحالة", "تاريخ التسجيل", "اسم المسجل", "ملاحظات", "السعر الأساسي", "سعر العرض"];
+          var expiryHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "المستلم", "الحالة", "تاريخ التسجيل", "اسم المسجل", "ملاحظات", "السعر الأساسي", "سعر العرض"];
           expirySheet.getRange(1, 1, 1, expiryHeaders.length).setValues([expiryHeaders])
                .setBackground("#2980b9").setFontColor("white").setFontFamily("Cairo").setFontSize(14).setFontWeight("bold")
                .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
       }
       expirySheet.appendRow([
-        e.parameter.id, 
         e.parameter.name, 
         e.parameter.qty, 
         e.parameter.expiryDate, 
@@ -879,7 +872,7 @@ function doPost(e) {
       var expirySheet = ss.getSheetByName("📥 الاستلامات");
       if (!expirySheet) {
           expirySheet = ss.insertSheet("📥 الاستلامات");
-          var expiryHeaders = ["ID", "اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "المستلم", "الحالة", "تاريخ التسجيل", "اسم المسجل", "ملاحظات", "السعر الأساسي", "سعر العرض"];
+          var expiryHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "المستلم", "الحالة", "تاريخ التسجيل", "اسم المسجل", "ملاحظات", "السعر الأساسي", "سعر العرض"];
           expirySheet.getRange(1, 1, 1, expiryHeaders.length).setValues([expiryHeaders])
                .setBackground("#2980b9").setFontColor("white").setFontFamily("Cairo").setFontSize(14).setFontWeight("bold")
                .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
@@ -889,7 +882,6 @@ function doPost(e) {
       for (var i = 0; i < items.length; i++) {
         var item = items[i];
         rows.push([
-          item.id,
           item.name,
           item.qty,
           item.expiryDate,
@@ -917,16 +909,22 @@ function doPost(e) {
       
       if (expirySheet) {
         var expData = expirySheet.getDataRange().getValues();
+        // Since id is missing, we find row by name, qty, expiryDate
+        var targetIdParts = e.parameter.id ? e.parameter.id.split('|') : [];
+        var targetName = targetIdParts[0] || e.parameter.id;
+        var targetQty = targetIdParts[1] || "";
+        var targetDate = targetIdParts[2] || "";
+
         for (var i = 1; i < expData.length; i++) {
-          if (expData[i][0] === e.parameter.id) {
-            expirySheet.getRange(i + 1, 7).setValue(newStatus);
-            productName = expData[i][1];
+          if (expData[i][0] == targetName && (!targetDate || expData[i][2].toString() == targetDate.toString())) {
+            expirySheet.getRange(i + 1, 6).setValue(newStatus); // Status is now col 6
+            productName = expData[i][0];
             
             if (e.parameter.originalPrice !== undefined) {
-               expirySheet.getRange(i + 1, 11).setValue(e.parameter.originalPrice);
+               expirySheet.getRange(i + 1, 10).setValue(e.parameter.originalPrice); // Col 10
             }
             if (e.parameter.offerPrice !== undefined) {
-               expirySheet.getRange(i + 1, 12).setValue(e.parameter.offerPrice);
+               expirySheet.getRange(i + 1, 11).setValue(e.parameter.offerPrice); // Col 11
             }
             break;
           }

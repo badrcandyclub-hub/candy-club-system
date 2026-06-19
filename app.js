@@ -3036,7 +3036,7 @@ if (addLedgerItemBtn) {
         }
 
         const item = {
-            id: 'EXP-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+            id: name + '|' + qty + '|' + date,
             name: name,
             qty: qty,
             expiryDate: date,
@@ -3076,13 +3076,26 @@ function renderLedgerCart() {
                 <td style="padding: 8px;">${item.qty}</td>
                 <td style="padding: 8px;" dir="ltr">${item.expiryDate}</td>
                 <td style="padding: 8px;">${item.location || '-'}</td>
-                <td style="padding: 8px; text-align: center;">
+                <td style="padding: 8px; text-align: center; display: flex; gap: 5px; justify-content: center;">
+                    <button class="interactive-btn" style="background: #f39c12; color: white; border: none; padding: 5px 10px; border-radius: 5px;" onclick="editLedgerItem(${index})">تعديل</button>
                     <button class="interactive-btn" style="background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 5px;" onclick="removeLedgerItem(${index})">حذف</button>
                 </td>
             </tr>
         `;
     });
 }
+
+window.editLedgerItem = function(index) {
+    const item = ledgerCart[index];
+    document.getElementById('ledgerProdName').value = item.name;
+    document.getElementById('ledgerProdQty').value = item.qty;
+    document.getElementById('ledgerProdDate').value = item.expiryDate;
+    document.getElementById('ledgerProdLocation').value = item.location || '';
+    document.getElementById('ledgerProdNotes').value = item.notes || '';
+    
+    ledgerCart.splice(index, 1);
+    renderLedgerCart();
+};
 
 window.removeLedgerItem = function(index) {
     ledgerCart.splice(index, 1);
@@ -3122,7 +3135,7 @@ if (saveLedgerBtn) {
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
-                showToast("✅ تم حفظ المحضر بنجاح!", "success");
+                showToast("✅ تم حفظ البضاعة بنجاح", "success");
                 setBtnLoading(saveLedgerBtn, false);
                 ledgerCart = [];
                 renderLedgerCart();
@@ -3326,13 +3339,67 @@ if (searchExpiryBtn && expiryGlobalSearchInput) {
     });
 }
 
+window.customConfirm = function(message, onConfirm) {
+    const overlay = document.createElement('div');
+    overlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px);";
+    const modal = document.createElement('div');
+    modal.style = "background: white; padding: 25px; border-radius: 15px; text-align: center; max-width: 400px; width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.2);";
+    modal.innerHTML = `
+        <h3 style="color: var(--primary); margin-top: 0;">تأكيد الإجراء</h3>
+        <p style="font-size: 1.1rem; color: #333; margin-bottom: 25px;">${message}</p>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button id="btnConfirmYes" class="interactive-btn" style="background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1;">نعم ✅</button>
+            <button id="btnConfirmNo" class="interactive-btn" style="background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1;">إلغاء ❌</button>
+        </div>
+    `;
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    document.getElementById('btnConfirmYes').onclick = () => {
+        document.body.removeChild(overlay);
+        onConfirm();
+    };
+    document.getElementById('btnConfirmNo').onclick = () => {
+        document.body.removeChild(overlay);
+    };
+};
+
+window.customPrompt = function(title, onConfirm) {
+    const overlay = document.createElement('div');
+    overlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px);";
+    const modal = document.createElement('div');
+    modal.style = "background: white; padding: 25px; border-radius: 15px; text-align: center; max-width: 400px; width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.2);";
+    modal.innerHTML = `
+        <h3 style="color: var(--primary); margin-top: 0;">${title}</h3>
+        <input type="number" id="promptOrig" placeholder="السعر الأساسي" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ccc;">
+        <input type="number" id="promptOffer" placeholder="سعر العرض" style="width: 100%; padding: 10px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ccc;">
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button id="btnPromptYes" class="interactive-btn" style="background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1;">حفظ ✅</button>
+            <button id="btnPromptNo" class="interactive-btn" style="background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1;">إلغاء ❌</button>
+        </div>
+    `;
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    document.getElementById('btnPromptYes').onclick = () => {
+        let orig = document.getElementById('promptOrig').value;
+        let offer = document.getElementById('promptOffer').value;
+        document.body.removeChild(overlay);
+        onConfirm(orig, offer);
+    };
+    document.getElementById('btnPromptNo').onclick = () => {
+        document.body.removeChild(overlay);
+    };
+};
+
 window.promptNewOffer = function(id) {
-    let orig = prompt("أدخل السعر الأساسي للمنتج قبل العرض:", "");
-    if (orig === null) return;
-    let offer = prompt("أدخل سعر العرض الجديد:", "");
-    if (offer === null) return;
-    
-    saveExpiryOffer(id, 'Active Display', orig, offer);
+    customPrompt("تفعيل عرض جديد", (orig, offer) => {
+        if (orig === "" || offer === "") {
+            showToast("يرجى إدخال السعرين", "warning");
+            return;
+        }
+        saveExpiryOffer(id, 'Active Display', orig, offer);
+    });
 };
 
 window.saveExpiryOffer = function(id, status, origVal, offerVal) {
@@ -3379,30 +3446,30 @@ window.changeExpiryStatus = function(id, newStatus) {
     else if (newStatus === 'Active') msg = "هل تريد إيقاف العرض وإعادته للحالة الطبيعية؟";
     else if (newStatus === 'Done/Archived') msg = "هل تم الانتهاء من بيع هذا المنتج؟ سيتم إخفاؤه من هذه الشاشة. ✖️";
 
-    if (!confirm(msg)) return;
+    customConfirm(msg, () => {
+        showToast("جاري التحديث...", "warning");
 
-    showToast("جاري التحديث...", "warning");
+        let formData = new URLSearchParams();
+        formData.append('action', 'updateExpiryStatus');
+        formData.append('id', id);
+        formData.append('status', newStatus);
 
-    let formData = new URLSearchParams();
-    formData.append('action', 'updateExpiryStatus');
-    formData.append('id', id);
-    formData.append('status', newStatus);
-
-    fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
-        .then(() => {
-            showToast("✅ تم تحديث الحالة بنجاح", "success");
-            let item = expiryData.find(i => i.id == id);
-            if(item) {
-                item.status = newStatus;
-            }
-            renderExpiryDashboard();
-            updateCatalogWithOffers();
-            if (document.getElementById('expiryDetailsSection').style.display === 'block') {
-                closeExpiryDetails();
-            }
-        }).catch(() => {
-            showToast("❌ خطأ في الاتصال بالإنترنت", "error");
-        });
+        fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
+            .then(() => {
+                showToast("✅ تم تحديث الحالة بنجاح", "success");
+                let item = expiryData.find(i => i.id == id);
+                if(item) {
+                    item.status = newStatus;
+                }
+                renderExpiryDashboard();
+                updateCatalogWithOffers();
+                if (document.getElementById('expiryDetailsSection').style.display === 'block') {
+                    closeExpiryDetails();
+                }
+            }).catch(() => {
+                showToast("❌ خطأ في الاتصال بالإنترنت", "error");
+            });
+    });
 };
 
 function updateCatalogWithOffers() {
@@ -3462,7 +3529,6 @@ async function generateExcel(dataToExport, reportTitle) {
         const sheet1 = workbook.addWorksheet('البيانات التفصيلية', { views: [{ rightToLeft: true }] });
         
         sheet1.columns = [
-            { header: 'ID', key: 'id', width: 15 },
             { header: 'اسم المنتج', key: 'name', width: 35 },
             { header: 'السعر الأساسي', key: 'origPrice', width: 15 },
             { header: 'سعر العرض', key: 'offerPrice', width: 15 },
@@ -3497,15 +3563,19 @@ async function generateExcel(dataToExport, reportTitle) {
             let daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
             let daysFormatted = isNaN(daysRemaining) ? '-' : daysRemaining;
 
+            let formattedRegDate = row.regDate ? new Date(row.regDate).toISOString().split('T')[0] : '';
+            let formattedExpDate = row.expiryDate ? new Date(row.expiryDate).toISOString().split('T')[0] : '';
+            if (formattedRegDate === 'NaN-NaN-NaN') formattedRegDate = row.regDate;
+            if (formattedExpDate === 'NaN-NaN-NaN') formattedExpDate = row.expiryDate;
+
             const newRow = sheet1.addRow({
-                id: row.id || '',
                 name: row.name || '',
                 origPrice: row.originalPrice || '',
                 offerPrice: row.offerPrice || '',
                 qty: row.qty || '',
-                date: row.expiryDate || '',
+                date: formattedExpDate,
                 days: daysFormatted,
-                reg: row.regDate || '',
+                reg: formattedRegDate,
                 regname: row.registrarName || '',
                 loc: row.location || '',
                 rec: row.receiver || '',
