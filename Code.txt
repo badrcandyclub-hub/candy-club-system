@@ -197,12 +197,7 @@ function setupCandyClubUX() {
   // ============================================================
   // 8. شيت الاستلامات (التحديث الذكي)
   // ============================================================
-  var oldExpirySheet = ss.getSheetByName("الاستلامات");
-  if (oldExpirySheet) {
-      ss.deleteSheet(oldExpirySheet);
-  }
-
-  var expirySheet = ss.getSheetByName("📥 الاستلامات");
+  var expirySheet = getExpirySheet(ss);
   if (!expirySheet) {
       expirySheet = ss.insertSheet("📥 الاستلامات");
   }
