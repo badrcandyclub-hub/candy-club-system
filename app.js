@@ -677,12 +677,11 @@ window.printHistoryOrder = function (orderId) {
 
     let isOldGift = order.notes && order.notes.includes("هدية");
     let oType = order.orderType || "";
+    let isBranch = oType.includes('استلام من الفرع') || oType === 'branch' || (order.deliveryType || '').includes('فرع') || (order.deliveryType || '') === 'branch';
 
     let printLogo = document.getElementById('print-logo');
     if (printLogo) {
         let pay = order.payment || "";
-        // ⭐ V15.1: فحص دقيق لنوع الطلب - يشمل كل صيغ ممكنة
-        let isBranch = oType.includes('استلام من الفرع') || oType === 'branch' || (order.deliveryType || '').includes('فرع') || (order.deliveryType || '') === 'branch';
         let isGovShipping = oType === 'gov_shipping' || oType.includes('محافظات') || (order.deliveryType || '') === 'gov_shipping';
         let isDigitalPay = isGovShipping || pay.includes('إنستا') || pay.includes('انستاباي') || pay.includes('انستا باي') || pay.includes('محفظة') || pay.includes('فودافون') || pay.includes('تحويل');
         if (isBranch) {
