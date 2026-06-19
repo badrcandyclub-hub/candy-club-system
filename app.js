@@ -725,7 +725,7 @@ window.printHistoryOrder = function (orderId) {
 
     let printPhone2Row = document.getElementById('print-phone2-row');
     if (printPhone2Row) {
-        if (order.phone2 && order.phone2.trim() !== '') {
+        if (order.phone2 && String(order.phone2).trim() !== '') {
             printPhone2Row.style.display = 'block';
             if (document.getElementById('print-phone2')) document.getElementById('print-phone2').innerText = order.phone2;
         } else {
