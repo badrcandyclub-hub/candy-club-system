@@ -632,7 +632,7 @@ function renderHistoryList(orders, isLoadMore = false) {
             </div>
             <div style="display: flex; justify-content: space-between; width: 100%; font-size: 0.9rem; color: #666; background: var(--bg-body); padding: 8px; border-radius: 6px;">
                 <span>⏰ ${order.time || '--'}</span>
-                <span>📱 ${order.phone}</span>
+                <span>📱 ${order.phone}${order.phone2 ? ' | 📱 ' + order.phone2 : ''}</span>
                 <span style="font-weight:bold; color: var(--text-dark);">💰 ${order.total} ج.م</span>
             </div>
         `;
@@ -723,6 +723,16 @@ window.printHistoryOrder = function (orderId) {
     if (document.getElementById('print-customer-name')) document.getElementById('print-customer-name').innerText = order.name || '';
     if (document.getElementById('print-phone')) document.getElementById('print-phone').innerText = order.phone || '';
 
+    let printPhone2Row = document.getElementById('print-phone2-row');
+    if (printPhone2Row) {
+        if (order.phone2 && order.phone2.trim() !== '') {
+            printPhone2Row.style.display = 'block';
+            if (document.getElementById('print-phone2')) document.getElementById('print-phone2').innerText = order.phone2;
+        } else {
+            printPhone2Row.style.display = 'none';
+        }
+    }
+
     // ⭐ V14.2: إخفاء العنوان للفرع برمجياً - لا يطبع العنوان نهائياً
     let printAddressRow = document.querySelector('.print-address-row');
     if (oType.includes('استلام من الفرع')) {
@@ -762,7 +772,7 @@ window.printHistoryOrder = function (orderId) {
 
     // ⭐ V15.0: إخفاء سطر الشحن لطلبات استلام الفرع نهائياً
     let printShippingRow = document.querySelector('.print-shipping-row');
-    if (oType.includes('استلام من الفرع')) {
+    if (isBranch) {
         if (printShippingRow) printShippingRow.style.display = 'none';
     } else {
         if (printShippingRow) printShippingRow.style.display = '';
@@ -1255,6 +1265,7 @@ if (whatsappReviewBtn) {
     whatsappReviewBtn.addEventListener('click', () => {
         let nameEl = document.getElementById('customerName'); let name = nameEl ? nameEl.value.trim() : "";
         let phoneEl = document.getElementById('customerPhone'); let phone = phoneEl ? phoneEl.value.trim() : "";
+        let phone2El = document.getElementById('phone2'); let phone2 = phone2El ? phone2El.value.trim() : "";
         let addressEl = document.getElementById('address'); let address = addressEl ? addressEl.value.trim() : "";
 
         let hasMissingData = false;
@@ -1291,7 +1302,8 @@ if (whatsappReviewBtn) {
 
         let productsTotal = document.getElementById('productsTotal') ? document.getElementById('productsTotal').value || 0 : 0;
 
-        let message = `أهلاً بك في كاندي كلوب 🍬\nيرجى مراجعة تفاصيل طلبك:\n\n👤 الاسم: ${displayName}\n📱 الموبايل: ${displayPhone}\n📍 العنوان: ${displayAddress}\n\n🛒 تفاصيل الطلب:\n${productsText}\n`;
+        let phoneStr = phone2 ? `${displayPhone} | 📱 ${phone2}` : displayPhone;
+        let message = `أهلاً بك في كاندي كلوب 🍬\nيرجى مراجعة تفاصيل طلبك:\n\n👤 الاسم: ${displayName}\n📱 الموبايل: ${phoneStr}\n📍 العنوان: ${displayAddress}\n\n🛒 تفاصيل الطلب:\n${productsText}\n`;
         message += `🛍️ إجمالي المنتجات: ${productsTotal} ج.م\n`;
 
         let discountValue = document.getElementById('discount') ? parseFloat(document.getElementById('discount').value) || 0 : 0;
@@ -2097,6 +2109,7 @@ window.shareToWhatsAppGroup = function (orderId) {
         text += `📍 *العنوان:* ${_gov ? _gov + " - " : ""}${_address}\n`;
     }
     if (_phone) text += `📱 *الموبايل:* ${_phone}\n`;
+    if (order.phone2) text += `📱 *رقم احتياطي:* ${order.phone2}\n`;
     text += `💳 *طريقة الدفع:* ${_payment}\n\n`;
     text += `📦 *المنتجات:*\n${_products}\n`;
     let _subtotal = order.subtotal || order.productsTotal || (parseFloat(order.total) - parseFloat(_shipping)) || 0;
@@ -2135,6 +2148,8 @@ if (shareOrderBtn) {
             date: new Date().toLocaleDateString('ar-EG'),
             time: new Date().toLocaleTimeString('ar-EG'),
             name: name,
+            phone: document.getElementById('customerPhone') ? document.getElementById('customerPhone').value.trim() : "",
+            phone2: document.getElementById('phone2') ? document.getElementById('phone2').value.trim() : "",
             gov: gov,
             address: addressVal,
             payment: paymentMethod,
