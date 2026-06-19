@@ -303,6 +303,17 @@ function buildMonthlyReport(ordersData, targetMonth) {
   };
 }
 
+// ⭐ دالة مساعدة للبحث عن شيت الاستلامات بغض النظر عن الإيموجي أو المسافات
+function getExpirySheet(ss) {
+  var sheets = ss.getSheets();
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].getName().indexOf("استلامات") !== -1) {
+      return sheets[i];
+    }
+  }
+  return null;
+}
+
 function doGet(e) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var action = e.parameter.action;
@@ -364,7 +375,7 @@ function doGet(e) {
 
   // ⭐ V15.2: جلب بيانات الاستلامات والصلاحيات
   if (action === "getExpiries") {
-    var expirySheet = ss.getSheetByName("📥 الاستلامات");
+    var expirySheet = getExpirySheet(ss);
     var expResult = [];
     if (expirySheet) {
       var expData = expirySheet.getDataRange().getValues();
@@ -848,7 +859,7 @@ function doPost(e) {
 
     // ⭐ V15.2: إضافة استلامة جديدة (نظام الصلاحيات)
     else if (action === "addExpiry") {
-      var expirySheet = ss.getSheetByName("📥 الاستلامات");
+      var expirySheet = getExpirySheet(ss);
       if (!expirySheet) {
           expirySheet = ss.insertSheet("📥 الاستلامات");
           var expiryHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "المستلم", "الحالة", "تاريخ التسجيل", "اسم المسجل", "ملاحظات", "السعر الأساسي", "سعر العرض"];
@@ -874,7 +885,7 @@ function doPost(e) {
 
     // ⭐ V15.3: إضافة استلامات دفعة واحدة (نظام المحضر)
     else if (action === "addExpiriesBatch") {
-      var expirySheet = ss.getSheetByName("📥 الاستلامات");
+      var expirySheet = getExpirySheet(ss);
       if (!expirySheet) {
           expirySheet = ss.insertSheet("📥 الاستلامات");
           var expiryHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "المستلم", "الحالة", "تاريخ التسجيل", "اسم المسجل", "ملاحظات", "السعر الأساسي", "سعر العرض"];
@@ -908,7 +919,7 @@ function doPost(e) {
 
     // ⭐ V15.2: تحديث حالة الاستلامة (تشغيل عرض / تم البيع) وتحديث الأسعار
     else if (action === "updateExpiryStatus") {
-      var expirySheet = ss.getSheetByName("📥 الاستلامات");
+      var expirySheet = getExpirySheet(ss);
       var productName = "";
       var newStatus = e.parameter.status;
       
