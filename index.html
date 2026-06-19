@@ -453,6 +453,12 @@
                 
                 <div class="expiry-body">
 
+                    <!-- بحث عام في الصلاحيات -->
+                    <div class="search-box mb-15">
+                        <input type="text" id="expiryGlobalSearchInput" placeholder="بحث عام عن منتج في الصلاحيات والعروض...">
+                        <button id="searchExpiryBtn" class="btn-search interactive-btn">بحث 🔍</button>
+                    </div>
+
                     <!-- أدوات التصدير الذكية -->
                     <div class="export-controls" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; background: var(--bg-light); padding: 15px; border-radius: 10px; border: 1px solid var(--border);">
                         <div style="flex: 1; min-width: 200px;">
@@ -473,6 +479,16 @@
 
                     <!-- نظام البطاقات (الداشبورد) -->
                     <div class="traffic-light-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        
+                        <!-- 🎁 العروض -->
+                        <div class="traffic-card traffic-offers" onclick="showExpiryDetails('Offers')" style="cursor: pointer; background: linear-gradient(135deg, #f1c40f, #f39c12); border: none; box-shadow: 0 4px 10px rgba(243, 156, 18, 0.3);">
+                            <div class="traffic-header">
+                                <h3 style="color: #ffffff;">🎁 العروض النشطة</h3>
+                                <span class="subtitle" style="color: #fffaf0; font-weight: bold;">المنتجات داخل العرض</span>
+                            </div>
+                            <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #ffffff;" id="expOffersItems">0</h2>
+                        </div>
+
                         <!-- 🔵 إجمالي الأصناف -->
                         <div class="traffic-card traffic-total" onclick="showExpiryDetails('Total')" style="cursor: pointer; background: linear-gradient(135deg, #1e3c72, #2a5298); border: none; box-shadow: 0 4px 10px rgba(30, 60, 114, 0.3);">
                             <div class="traffic-header">

@@ -208,7 +208,7 @@ function setupCandyClubUX() {
   }
   
   // فرض التنسيقات وترتيب الأعمدة الجديد إجبارياً
-  var expiryHeaders = ["ID", "اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "المستلم", "الحالة", "تاريخ التسجيل", "اسم المسجل", "ملاحظات"];
+  var expiryHeaders = ["ID", "اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "المستلم", "الحالة", "تاريخ التسجيل", "اسم المسجل", "ملاحظات", "السعر الأساسي", "سعر العرض"];
   expirySheet.getRange(1, 1, 1, expiryHeaders.length).setValues([expiryHeaders])
              .setBackground("#2980b9").setFontColor("white").setFontFamily(headerFont).setFontSize(14).setFontWeight("bold")
              .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
@@ -381,7 +381,9 @@ function doGet(e) {
             status: expData[i][6],
             regDate: expData[i][7],
             registrarName: expData[i][8],
-            notes: expData[i][9]
+            notes: expData[i][9],
+            originalPrice: expData[i][10],
+            offerPrice: expData[i][11]
           });
         }
       }
@@ -850,7 +852,7 @@ function doPost(e) {
       var expirySheet = ss.getSheetByName("📥 الاستلامات");
       if (!expirySheet) {
           expirySheet = ss.insertSheet("📥 الاستلامات");
-          var expiryHeaders = ["ID", "اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "المستلم", "الحالة", "تاريخ التسجيل", "اسم المسجل", "ملاحظات"];
+          var expiryHeaders = ["ID", "اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "المستلم", "الحالة", "تاريخ التسجيل", "اسم المسجل", "ملاحظات", "السعر الأساسي", "سعر العرض"];
           expirySheet.getRange(1, 1, 1, expiryHeaders.length).setValues([expiryHeaders])
                .setBackground("#2980b9").setFontColor("white").setFontFamily("Cairo").setFontSize(14).setFontWeight("bold")
                .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
@@ -865,7 +867,9 @@ function doPost(e) {
         e.parameter.status, 
         e.parameter.regDate,
         e.parameter.registrarName,
-        e.parameter.notes
+        e.parameter.notes,
+        e.parameter.originalPrice || "",
+        e.parameter.offerPrice || ""
       ]);
       return ContentService.createTextOutput("success");
     }
@@ -875,7 +879,7 @@ function doPost(e) {
       var expirySheet = ss.getSheetByName("📥 الاستلامات");
       if (!expirySheet) {
           expirySheet = ss.insertSheet("📥 الاستلامات");
-          var expiryHeaders = ["ID", "اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "المستلم", "الحالة", "تاريخ التسجيل", "اسم المسجل", "ملاحظات"];
+          var expiryHeaders = ["ID", "اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "المستلم", "الحالة", "تاريخ التسجيل", "اسم المسجل", "ملاحظات", "السعر الأساسي", "سعر العرض"];
           expirySheet.getRange(1, 1, 1, expiryHeaders.length).setValues([expiryHeaders])
                .setBackground("#2980b9").setFontColor("white").setFontFamily("Cairo").setFontSize(14).setFontWeight("bold")
                .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
@@ -894,7 +898,9 @@ function doPost(e) {
           item.status,
           item.regDate,
           item.registrarName,
-          item.notes
+          item.notes,
+          item.originalPrice || "",
+          item.offerPrice || ""
         ]);
       }
       if (rows.length > 0) {
@@ -903,17 +909,48 @@ function doPost(e) {
       return ContentService.createTextOutput("success");
     }
 
-    // ⭐ V15.2: تحديث حالة الاستلامة (تشغيل عرض / تم البيع)
+    // ⭐ V15.2: تحديث حالة الاستلامة (تشغيل عرض / تم البيع) وتحديث الأسعار
     else if (action === "updateExpiryStatus") {
       var expirySheet = ss.getSheetByName("📥 الاستلامات");
+      var productName = "";
+      var newStatus = e.parameter.status;
+      
       if (expirySheet) {
         var expData = expirySheet.getDataRange().getValues();
         for (var i = 1; i < expData.length; i++) {
           if (expData[i][0] === e.parameter.id) {
-            expirySheet.getRange(i + 1, 7).setValue(e.parameter.status);
+            expirySheet.getRange(i + 1, 7).setValue(newStatus);
+            productName = expData[i][1];
+            
+            if (e.parameter.originalPrice !== undefined) {
+               expirySheet.getRange(i + 1, 11).setValue(e.parameter.originalPrice);
+            }
+            if (e.parameter.offerPrice !== undefined) {
+               expirySheet.getRange(i + 1, 12).setValue(e.parameter.offerPrice);
+            }
             break;
           }
         }
+      }
+
+      // تحديث الكتالوج فوراً
+      if (productName) {
+         var cSheet = ss.getSheetByName("📦 الكتالوج");
+         if (cSheet) {
+            var cData = cSheet.getDataRange().getValues();
+            for (var c = 1; c < cData.length; c++) {
+               if (cData[c][0] === productName) {
+                  if (newStatus === "Active Display") {
+                     cSheet.getRange(c + 1, 3).setValue("TRUE");
+                     if (e.parameter.offerPrice) cSheet.getRange(c + 1, 4).setValue(e.parameter.offerPrice);
+                  } else if (newStatus === "Active" || newStatus === "Done/Archived") {
+                     cSheet.getRange(c + 1, 3).setValue("FALSE");
+                     cSheet.getRange(c + 1, 4).setValue(""); // مسح سعر العرض
+                  }
+                  break;
+               }
+            }
+         }
       }
       return ContentService.createTextOutput("success");
     }
