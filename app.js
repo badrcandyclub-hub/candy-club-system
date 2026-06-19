@@ -44,10 +44,13 @@ document.querySelectorAll('.nav-item').forEach(btn => {
         btn.classList.add('active');
         let targetElement = document.getElementById(btn.getAttribute('data-target'));
         if (targetElement) targetElement.classList.add('active');
-        
-        // Lazy load expiry data if tab is opened
+
+        // Load expiry data every time the tab is opened, with a custom loading screen
         if (btn.getAttribute('data-target') === 'expiry-tab') {
-            if (typeof expiryData !== 'undefined' && expiryData.length === 0) loadExpiryData();
+            let overlay = document.getElementById('expiry-loading-overlay');
+            if (overlay) overlay.style.display = 'flex';
+            
+            loadExpiryData(); // Fetch fresh data every time
             
             // Set default reg date to today if empty
             let regDateInput = document.getElementById('expRegDate');
@@ -57,6 +60,24 @@ document.querySelectorAll('.nav-item').forEach(btn => {
                 let mm = String(today.getMonth() + 1).padStart(2, '0');
                 let dd = String(today.getDate()).padStart(2, '0');
                 regDateInput.value = `${yyyy}-${mm}-${dd}`;
+            }
+        } else {
+            // Memory cleanup: Clear expiryData when leaving the tab to free up memory
+            if (typeof expiryData !== 'undefined' && expiryData.length > 0) {
+                // Save active offers before clearing so the catalog doesn't break
+                window.cachedActiveOffers = expiryData.filter(item => item.status === 'Active Display').map(item => item.name);
+                expiryData = [];
+                
+                const detailsList = document.getElementById('detailsList');
+                if (detailsList) detailsList.innerHTML = '';
+                const detailsSection = document.getElementById('expiryDetailsSection');
+                if (detailsSection) detailsSection.style.display = 'none';
+                
+                // Reset counters
+                ['expOffersItems','expTotalItems','expCriticalItems','expAlertItems','expAttentionItems','expSafeItems','expFarItems'].forEach(id => {
+                    let el = document.getElementById(id);
+                    if (el) el.innerText = '0';
+                });
             }
         }
     });
@@ -176,7 +197,7 @@ function loadDataFromServer() {
             if (data.govs && data.govs.length > 0) {
                 data.govs.forEach(z => renderZoneItem(z, 'govs', zonesGovList));
             }
-            
+
             window.latestServerData = data;
             window.updateGovernoratesDropdown();
             if (govSelect && currentGov) govSelect.value = currentGov;
@@ -285,7 +306,7 @@ function renderFinancials(finList) {
     allDrivers.forEach(d => {
         driversMap[d.name] = { name: d.name, ordersCount: 0, cashCollected: 0, shippingFees: 0, netDue: 0, statusText: "لا توجد مديونية" };
     });
-    
+
     finList.forEach(f => {
         if (!driversMap[f.name]) {
             driversMap[f.name] = f;
@@ -427,15 +448,15 @@ if (deliveryTypeSelect) {
     });
 }
 
-window.updateGovernoratesDropdown = function() {
+window.updateGovernoratesDropdown = function () {
     const govSelect = document.getElementById('governorate');
     if (!govSelect || !window.latestServerData) return;
     let data = window.latestServerData;
     let type = document.getElementById('deliveryType') ? document.getElementById('deliveryType').value : 'normal';
-    
+
     let currentVal = govSelect.value;
     govSelect.innerHTML = '<option value="">اختر من القائمة</option>';
-    
+
     if (type === 'gov_shipping') {
         if (data.govs && data.govs.length > 0) {
             let optgroup = document.createElement('optgroup'); optgroup.label = "🚚 المحافظات";
@@ -453,7 +474,7 @@ window.updateGovernoratesDropdown = function() {
             govSelect.appendChild(optgroup);
         }
     }
-    
+
     if (Array.from(govSelect.options).some(opt => opt.value === currentVal)) {
         govSelect.value = currentVal;
     }
@@ -519,7 +540,7 @@ function renderHistoryList(orders, isLoadMore = false) {
                     if (resDate) {
                         if (resDate.toString().includes('GMT') || resDate.toString().includes('توقيت')) {
                             let d = new Date(resDate);
-                            if (!isNaN(d.getTime())) resDate = `${d.getFullYear()}-${("0"+(d.getMonth()+1)).slice(-2)}-${("0"+d.getDate()).slice(-2)}`;
+                            if (!isNaN(d.getTime())) resDate = `${d.getFullYear()}-${("0" + (d.getMonth() + 1)).slice(-2)}-${("0" + d.getDate()).slice(-2)}`;
                         }
                         dateHtml = `<span style="color: #fff; background: #c2185b; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size:0.9rem;">🗓️ تسليم: ${resDate}</span>`;
                     }
@@ -562,7 +583,7 @@ function renderHistoryList(orders, isLoadMore = false) {
         if (order.status === "مرتجع") statusColor = "var(--danger)";
 
         div.style.borderRightColor = statusColor;
-        
+
         let typeBadge = '';
         let oType = order.orderType || order.type || order.deliveryType || "";
         if (oType.includes('توصيل منزلي') || oType === 'normal') {
@@ -575,7 +596,7 @@ function renderHistoryList(orders, isLoadMore = false) {
             let resDate = order.reservationDate || order.expectedDate || order.bookingDate || order.specialDate || order.spDate || order.date;
             if (resDate && (resDate.toString().includes('GMT') || resDate.toString().includes('توقيت'))) {
                 let d = new Date(resDate);
-                if (!isNaN(d.getTime())) resDate = `${d.getFullYear()}-${("0"+(d.getMonth()+1)).slice(-2)}-${("0"+d.getDate()).slice(-2)}`;
+                if (!isNaN(d.getTime())) resDate = `${d.getFullYear()}-${("0" + (d.getMonth() + 1)).slice(-2)}-${("0" + d.getDate()).slice(-2)}`;
             }
             let dateText = resDate ? `تسليم: ${resDate}` : 'حجز مسبق';
             typeBadge = `<span style="background: #c2185b; color: #fff; padding: 3px 8px; border-radius: 6px; font-size: 0.85rem; margin-right: 5px; font-weight: bold;">🗓️ ${dateText}</span>`;
@@ -623,16 +644,16 @@ window.printHistoryOrder = function (orderId) {
     // ⭐ Fix: String() comparison to prevent type mismatch (string vs number)
     let findFn = o => String(o.id) === String(orderId);
     let order = (window.orderHistoryData || []).find(findFn) ||
-                (window.searchResultsCache || []).find(findFn) ||
-                (window.pendingOrdersData || []).find(findFn) ||
-                (window.suspendedOrdersData || []).find(findFn) ||
-                (window.uncollectedOrdersData || []).find(findFn);
-    
+        (window.searchResultsCache || []).find(findFn) ||
+        (window.pendingOrdersData || []).find(findFn) ||
+        (window.suspendedOrdersData || []).find(findFn) ||
+        (window.uncollectedOrdersData || []).find(findFn);
+
     if (!order) {
         alert("⚠️ خطأ: لم يتم العثور على بيانات الطلب للطباعة.");
         // ⭐ Debug: log all available IDs to help trace mismatch
         console.warn("printHistoryOrder: could not find orderId =", orderId, typeof orderId);
-        console.log("Available history IDs:", (window.orderHistoryData||[]).map(o=>({id:o.id,type:typeof o.id})));
+        console.log("Available history IDs:", (window.orderHistoryData || []).map(o => ({ id: o.id, type: typeof o.id })));
         return;
     }
     console.log("Order Data:", order);
@@ -673,7 +694,7 @@ window.printHistoryOrder = function (orderId) {
             if (printBookingRow) printBookingRow.style.display = 'block';
             if (rDate.toString().includes('GMT') || rDate.toString().includes('توقيت')) {
                 let d = new Date(rDate);
-                if (!isNaN(d.getTime())) rDate = `${d.getFullYear()}-${("0"+(d.getMonth()+1)).slice(-2)}-${("0"+d.getDate()).slice(-2)}`;
+                if (!isNaN(d.getTime())) rDate = `${d.getFullYear()}-${("0" + (d.getMonth() + 1)).slice(-2)}-${("0" + d.getDate()).slice(-2)}`;
             }
             if (document.getElementById('print-booking-date')) document.getElementById('print-booking-date').innerText = rDate;
         } else {
@@ -735,11 +756,11 @@ window.printHistoryOrder = function (orderId) {
         let depositHtml = `<p class="print-deposit-row">تم دفع عربون: <b><span id="print-deposit">${order.deposit}</span></b></p>`;
         document.getElementById('print-deposit-container').innerHTML = depositHtml;
         document.getElementById('print-final').innerText = order.remaining !== undefined ? order.remaining : order.total;
-        if(document.getElementById('print-final-label')) document.getElementById('print-final-label').innerText = "المتبقي للدفع";
+        if (document.getElementById('print-final-label')) document.getElementById('print-final-label').innerText = "المتبقي للدفع";
     } else {
         document.getElementById('print-deposit-container').innerHTML = '';
         document.getElementById('print-final').innerText = isOldGift ? "***" : order.total;
-        if(document.getElementById('print-final-label')) document.getElementById('print-final-label').innerText = "الإجمالي النهائي";
+        if (document.getElementById('print-final-label')) document.getElementById('print-final-label').innerText = "الإجمالي النهائي";
     }
 
     if (document.getElementById('print-payment')) document.getElementById('print-payment').innerText = order.payment || "";
@@ -757,7 +778,7 @@ window.printHistoryOrder = function (orderId) {
     let qrImg = document.querySelector('img[alt="QR Code"]');
     if (qrImg) qrImg.src = 'images/qr-code.png';
 
-    setTimeout(() => { 
+    setTimeout(() => {
         if (isGovShipping) {
             let tableContainers = document.querySelectorAll('.receipt-table, .receipt-table-container');
             tableContainers.forEach(el => el.style.display = 'none');
@@ -1102,11 +1123,11 @@ if (suspendBtn) {
             gift: document.getElementById('isGiftCheckbox') ? document.getElementById('isGiftCheckbox').checked : false, prods: prods
         };
 
-        let formData = new URLSearchParams(); 
-        formData.append('action', 'suspendOrder'); 
-        formData.append('draftId', draftId); 
+        let formData = new URLSearchParams();
+        formData.append('action', 'suspendOrder');
+        formData.append('draftId', draftId);
         formData.append('draftJson', JSON.stringify(draft));
-        
+
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
                 showToast("⏸️ تم تعليق الفاتورة بنجاح!", "warning");
@@ -1119,7 +1140,7 @@ if (suspendBtn) {
 let openSuspendedBtn = document.getElementById('openSuspendedBtn');
 if (openSuspendedBtn) {
     openSuspendedBtn.addEventListener('click', () => {
-        let drafts = window.suspendedOrdersData || []; 
+        let drafts = window.suspendedOrdersData || [];
         let list = document.getElementById('suspendedOrdersList'); if (!list) return;
         list.innerHTML = '';
         if (drafts.length === 0) { list.innerHTML = '<p class="empty-msg">لا توجد طلبات معلقة</p>'; return; }
@@ -1218,9 +1239,9 @@ if (whatsappReviewBtn) {
         let nameEl = document.getElementById('customerName'); let name = nameEl ? nameEl.value.trim() : "";
         let phoneEl = document.getElementById('customerPhone'); let phone = phoneEl ? phoneEl.value.trim() : "";
         let addressEl = document.getElementById('address'); let address = addressEl ? addressEl.value.trim() : "";
-        
+
         let hasMissingData = false;
-        
+
         let displayPhone = phone;
         if (!displayPhone) {
             displayPhone = "(مطلوب)";
@@ -1255,7 +1276,7 @@ if (whatsappReviewBtn) {
 
         let message = `أهلاً بك في كاندي كلوب 🍬\nيرجى مراجعة تفاصيل طلبك:\n\n👤 الاسم: ${displayName}\n📱 الموبايل: ${displayPhone}\n📍 العنوان: ${displayAddress}\n\n🛒 تفاصيل الطلب:\n${productsText}\n`;
         message += `🛍️ إجمالي المنتجات: ${productsTotal} ج.م\n`;
-        
+
         let discountValue = document.getElementById('discount') ? parseFloat(document.getElementById('discount').value) || 0 : 0;
         if (discountValue > 0) {
             message += `🏷️ الخصم: ${discountValue} ج.م\n`;
@@ -1263,7 +1284,7 @@ if (whatsappReviewBtn) {
 
         message += `🚚 الشحن: ${document.getElementById('shippingCost') ? document.getElementById('shippingCost').value || 0 : 0} ج.م\n`;
         message += `💰 الإجمالي المستحق: ${document.getElementById('finalTotalDisplay') ? document.getElementById('finalTotalDisplay').innerText : 0} ج.م\n\n`;
-        
+
         if (hasMissingData) {
             message += `يرجى ملء البيانات الناقصة بالأعلى والرد بكلمة (تمام) لتأكيد الأوردر 🤝`;
         } else {
@@ -1292,10 +1313,10 @@ if (saveAndPrintBtn) {
             let p = parseFloat(row.querySelector('.product-price-input').value) || 0;
             let oVal = parseFloat(row.querySelector('.product-offer-input').value) || 0;
             let q = parseFloat(row.querySelector('.product-qty-input').value) || 1;
-            
+
             let finalPrice = oVal > 0 ? oVal : p;
             let rowTotal = finalPrice * q;
-            
+
             productsListText += `${n} - الكمية: ${q} (${rowTotal}ج)\n`;
 
             let nDisplay = n;
@@ -1413,11 +1434,11 @@ if (saveAndPrintBtn) {
                     let depositHtml = `<p class="print-deposit-row">تم دفع عربون: <b><span id="print-deposit">${dep}</span></b></p>`;
                     document.getElementById('print-deposit-container').innerHTML = depositHtml;
                     document.getElementById('print-final').innerText = rem;
-                    if(document.getElementById('print-final-label')) document.getElementById('print-final-label').innerText = "المتبقي للدفع";
+                    if (document.getElementById('print-final-label')) document.getElementById('print-final-label').innerText = "المتبقي للدفع";
                 } else {
                     document.getElementById('print-deposit-container').innerHTML = '';
                     document.getElementById('print-final').innerText = isGift ? "***" : finalTotalVal;
-                    if(document.getElementById('print-final-label')) document.getElementById('print-final-label').innerText = "الإجمالي النهائي";
+                    if (document.getElementById('print-final-label')) document.getElementById('print-final-label').innerText = "الإجمالي النهائي";
                 }
 
                 if (document.getElementById('print-payment')) document.getElementById('print-payment').innerText = paymentMethod ? paymentMethod.value : "";
@@ -1642,7 +1663,7 @@ function renderShippingRoom(history) {
 window.settleBranchOrder = function (orderId, btn) {
     let order = window.pendingOrdersData.find(o => o.id === orderId);
     let amountPaidText = prompt('الرجاء إدخال المبلغ المدفوع لاستلام الفرع:', order ? order.remaining : 0);
-    if (amountPaidText === null) return; 
+    if (amountPaidText === null) return;
 
     setBtnLoading(btn, true);
     let formData = new URLSearchParams();
@@ -1759,7 +1780,7 @@ let sendWaDriverBtn = document.getElementById('sendWaDriverBtn');
 if (sendWaDriverBtn) sendWaDriverBtn.addEventListener('click', () => {
     let driver = document.getElementById('assignDriverSelect').value;
     if (!driver) { showToast("اختر المندوب أولاً!", "error"); return; }
-    
+
     let courierPhone = "";
     if (shippingData && window.financialsData) {
         let courier = shippingData[driver] || window.financialsData.find(f => f.name === driver); // fallback search
@@ -1774,7 +1795,7 @@ if (sendWaDriverBtn) sendWaDriverBtn.addEventListener('click', () => {
     selected.forEach((orderId, idx) => {
         let o = orderHistoryData.find(x => x.id === orderId);
         if (o) {
-            ordersListText += `${idx+1}. العميل: ${o.name}\n📱 ${o.phone}\n📍 العنوان: ${o.address}\n💰 المطلوب: ${o.remaining} ج.م\n🛒 المنتجات: ${o.products.replace(/\n/g, ', ')}\n\n`;
+            ordersListText += `${idx + 1}. العميل: ${o.name}\n📱 ${o.phone}\n📍 العنوان: ${o.address}\n💰 المطلوب: ${o.remaining} ج.م\n🛒 المنتجات: ${o.products.replace(/\n/g, ', ')}\n\n`;
             totalCash += parseFloat(o.remaining) || 0;
         }
     });
@@ -1839,7 +1860,7 @@ function updateAdvancedDashboard(history) {
 
     // عرض الإحصائيات الأساسية
     if (document.getElementById('moneyWithDrivers')) document.getElementById('moneyWithDrivers').innerText = moneyWithDrivers;
-    
+
     // ⭐ تحديث إحصائيات اليوم محلياً بشكل صحيح
     if (document.getElementById('todayCount')) document.getElementById('todayCount').innerText = todayOrdersCount;
     if (document.getElementById('todaySales')) document.getElementById('todaySales').innerText = todaySalesTotal;
@@ -1859,8 +1880,8 @@ function buildMonthFilterOptions() {
     if (!sel) return;
     let currentVal = sel.value;
     sel.innerHTML = '<option value="">اختر الشهر</option>';
-    let arabicMonths = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-    
+    let arabicMonths = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+
     // ⭐ Fix: جمع كل الشهور الفعلية من البيانات المتاحة
     let availableMonths = new Set();
     let allDataSources = [
@@ -1868,7 +1889,7 @@ function buildMonthFilterOptions() {
         ...(window.pendingOrdersData || []),
         ...(window.uncollectedOrdersData || [])
     ];
-    
+
     allDataSources.forEach(o => {
         let d = (o.date || "").slice(0, 7); // "2026-05"
         if (d && d.length === 7 && d.includes('-')) availableMonths.add(d);
@@ -1898,8 +1919,8 @@ function buildMonthFilterOptions() {
 // ⭐ V15.1: عرض تقرير شهر محدد - يجلب من السيرفر
 function renderReportForMonth(targetMonth) {
     let statusEl = document.getElementById('reportFilterStatus');
-    let topEl    = document.getElementById('topProductsList');
-    let pltEl    = document.getElementById('platformStatsList');
+    let topEl = document.getElementById('topProductsList');
+    let pltEl = document.getElementById('platformStatsList');
     if (!targetMonth) {
         if (statusEl) statusEl.textContent = '⚠️ اختر شهراً أولاً';
         return;
@@ -1912,9 +1933,9 @@ function renderReportForMonth(targetMonth) {
     fetch(`${GOOGLE_SHEETS_URL}?date=${fetchDate}`)
         .then(r => r.json())
         .then(data => {
-            let arabicMonths = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+            let arabicMonths = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
             let [yr, mo] = targetMonth.split('-');
-            if (statusEl) statusEl.textContent = `✅ تم تحميل بيانات ${arabicMonths[parseInt(mo)-1]} ${yr}`;
+            if (statusEl) statusEl.textContent = `✅ تم تحميل بيانات ${arabicMonths[parseInt(mo) - 1]} ${yr}`;
 
             // أفضل 10 منتجات
             if (topEl) {
@@ -1924,8 +1945,8 @@ function renderReportForMonth(targetMonth) {
                 } else {
                     let maxVal = Math.max(...products.map(p => p.qty || 0)) || 1;
                     topEl.innerHTML = products.map((p, idx) => {
-                        let pct = Math.round(((p.qty||0) / maxVal) * 100);
-                        let medal = idx===0?'🥇':idx===1?'🥈':idx===2?'🥉':`${idx+1}.`;
+                        let pct = Math.round(((p.qty || 0) / maxVal) * 100);
+                        let medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx + 1}.`;
                         return `<div style="margin-bottom:12px;">
                             <div style="display:flex;justify-content:space-between;font-size:0.88rem;font-weight:bold;margin-bottom:4px;">
                                 <span>${medal} ${p.name}</span>
@@ -1948,10 +1969,10 @@ function renderReportForMonth(targetMonth) {
             if (pltEl) {
                 let raw = data.monthPlatforms || {};
                 const ORDER = [
-                    { key: 'واتساب',   emoji: '💬', color: '#25D366' },
+                    { key: 'واتساب', emoji: '💬', color: '#25D366' },
                     { key: 'انستجرام', emoji: '📸', color: '#E1306C' },
-                    { key: 'فيسبوك',   emoji: '🔵', color: '#1877F2' },
-                    { key: 'تيك توك',  emoji: '🎵', color: '#010101' },
+                    { key: 'فيسبوك', emoji: '🔵', color: '#1877F2' },
+                    { key: 'تيك توك', emoji: '🎵', color: '#010101' },
                 ];
                 // ⭐ حساب الإجمالي باستخدام includes لتغطية الإيموجي في الشيت
                 const getCount = (raw, keyword) => {
@@ -2009,7 +2030,7 @@ if (loadReportDataBtn) {
     });
 }
 
-window.shareToWhatsAppGroup = function(orderId) {
+window.shareToWhatsAppGroup = function (orderId) {
     let order;
     if (typeof orderId === 'object') {
         order = orderId;
@@ -2017,30 +2038,30 @@ window.shareToWhatsAppGroup = function(orderId) {
         // ⭐ Fix: String() comparison to prevent type mismatch (string vs number)
         let findFn = o => String(o.id) === String(orderId);
         order = (window.orderHistoryData || []).find(findFn) ||
-                (window.searchResultsCache || []).find(findFn) ||
-                (window.pendingOrdersData || []).find(findFn) ||
-                (window.suspendedOrdersData || []).find(findFn) ||
-                (window.uncollectedOrdersData || []).find(findFn);
+            (window.searchResultsCache || []).find(findFn) ||
+            (window.pendingOrdersData || []).find(findFn) ||
+            (window.suspendedOrdersData || []).find(findFn) ||
+            (window.uncollectedOrdersData || []).find(findFn);
     }
-    
+
     if (!order) {
         showToast("لم يتم العثور على الأوردر", "error");
         console.warn("shareToWhatsAppGroup: could not find orderId =", orderId, typeof orderId);
-        console.log("Available IDs in history:", (window.orderHistoryData||[]).map(o=>({id:o.id,type:typeof o.id})));
+        console.log("Available IDs in history:", (window.orderHistoryData || []).map(o => ({ id: o.id, type: typeof o.id })));
         return;
     }
     console.log("Order Data:", order);
-    
+
     // ⭐ V14.2: إصلاح شامل لـ Keys القادمة من الإكسيل - fallback لكل حقل
-    let _name     = order.name     || order.customerName  || "";
-    let _gov      = order.gov      || order.governorate   || "";
-    let _address  = order.address  || order.customerAddress || order.addr || "";
-    let _phone    = order.phone    || order.customerPhone  || order.mobile || "";
-    let _payment  = order.payment  || order.paymentMethod  || order.payMethod || "";
-    let _products = order.products || order.items          || order.productDetails || "";
+    let _name = order.name || order.customerName || "";
+    let _gov = order.gov || order.governorate || "";
+    let _address = order.address || order.customerAddress || order.addr || "";
+    let _phone = order.phone || order.customerPhone || order.mobile || "";
+    let _payment = order.payment || order.paymentMethod || order.payMethod || "";
+    let _products = order.products || order.items || order.productDetails || "";
     let _shipping = parseFloat(order.shipping || order.shippingCost || order.shippingFee || 0);
     let _remaining = order.remaining !== undefined ? order.remaining : (order.total || order.finalTotal || 0);
-    let _type     = order.orderType || order.type || order.deliveryType || "توصيل";
+    let _type = order.orderType || order.type || order.deliveryType || "توصيل";
 
     let text = `*نوع الطلب:* ${_type}\n`;
     if (_type.includes('حجز') || _type === 'special_date') {
@@ -2048,7 +2069,7 @@ window.shareToWhatsAppGroup = function(orderId) {
         if (resDate) {
             if (resDate.toString().includes('GMT') || resDate.toString().includes('توقيت')) {
                 let d = new Date(resDate);
-                if (!isNaN(d.getTime())) resDate = `${d.getFullYear()}-${("0"+(d.getMonth()+1)).slice(-2)}-${("0"+d.getDate()).slice(-2)}`;
+                if (!isNaN(d.getTime())) resDate = `${d.getFullYear()}-${("0" + (d.getMonth() + 1)).slice(-2)}-${("0" + d.getDate()).slice(-2)}`;
             }
             text += `🗓️ *تاريخ التسليم:* ${resDate}\n`;
         }
@@ -2065,7 +2086,7 @@ window.shareToWhatsAppGroup = function(orderId) {
     text += `🛍️ *إجمالي المنتجات:* ${_subtotal} ج.م\n`;
     text += `🚚 *الشحن:* ${_shipping}\n`;
     text += `💰 *الإجمالي النهائي:* ${_remaining}\n`;
-    
+
     navigator.clipboard.writeText(text).then(() => {
         showToast("تم نسخ بيانات الأوردر للحافظة بنجاح 📋", "success");
     }).catch(err => {
@@ -2078,7 +2099,7 @@ if (shareOrderBtn) {
     shareOrderBtn.addEventListener('click', () => {
         let name = document.getElementById('customerName') ? document.getElementById('customerName').value.trim() : "";
         if (!name) { showToast("برجاء إدخال بيانات الأوردر أولاً", "error"); return; }
-        
+
         let gov = document.getElementById('governorate') ? document.getElementById('governorate').value : "";
         let addressVal = document.getElementById('address') ? document.getElementById('address').value : "";
         let paymentMethod = document.getElementById('paymentMethod') ? document.getElementById('paymentMethod').value : "";
@@ -2125,10 +2146,10 @@ if (sendWaManagerBtn) sendWaManagerBtn.addEventListener('click', () => {
     report += `💰 مبيعات اليوم المتوقعة: ${tSales} ج\n`;
     report += `✅ أوردرات مكتملة (محاسب): ${compCount}\n`;
     report += `🚨 مرتجعات: ${retCount}\n\n`;
-    
+
     report += `📅 *إحصائيات الشهر:*\n`;
     report += `📈 إجمالي مبيعات الشهر: ${monthSales} ج\n\n`;
-    
+
     report += `⚠️ منتجات ناقصة: ${oosCount}\n`;
     report += `⭐ المنتج الأكثر مبيعاً: ${topP}\n\n`;
     report += `تم الإنشاء بواسطة سيستم الإدارة الآلي ⚙️`;
@@ -2354,7 +2375,7 @@ function renderCustomers(customersList) {
     let container = document.getElementById('customersListContainer');
     if (!container) return;
     container.innerHTML = '';
-    
+
     if (customersList.length === 0) {
         container.innerHTML = '<p class="empty-msg">لا يوجد عملاء مسجلين.</p>';
         return;
@@ -2423,7 +2444,7 @@ if (searchCustomerBtn && customerSearchInput) {
         if (keyword === "") {
             renderCustomers(window.customersData || []);
         } else {
-            let filtered = (window.customersData || []).filter(c => 
+            let filtered = (window.customersData || []).filter(c =>
                 c.name.toLowerCase().includes(keyword) || c.phone.toString().includes(keyword)
             );
             renderCustomers(filtered);
@@ -2534,7 +2555,7 @@ function fetchCatalogCSV() {
         .then(csvText => {
             let lines = csvText.split('\n');
             barcodeCatalogData = [];
-            
+
             // تجاهل أول سطر إذا كان عناوين الأعمدة، لكن تحسباً سنقرأ كل السطور
             lines.forEach((line, index) => {
                 let cols = line.split(',');
@@ -2542,7 +2563,7 @@ function fetchCatalogCSV() {
                     let barcode = cols[0].trim();
                     let name = cols[1].trim();
                     let price = toEnglishNumber(cols[2].trim()); // إجبار الأرقام الإنجليزية
-                    
+
                     // نتجاهل السطر لو كان فارغ
                     if (barcode && name) {
                         barcodeCatalogData.push({ barcode, name, price });
@@ -2563,15 +2584,15 @@ function playBeepSound() {
         let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let oscillator = audioCtx.createOscillator();
         let gainNode = audioCtx.createGain();
-        
+
         oscillator.connect(gainNode);
         gainNode.connect(audioCtx.destination);
-        
+
         oscillator.type = 'sine';
         oscillator.frequency.value = 800; // تردد الصوت
         gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
-        
+
         oscillator.start(audioCtx.currentTime);
         oscillator.stop(audioCtx.currentTime + 0.1);
     } catch (e) {
@@ -2637,13 +2658,13 @@ function startBarcodeScanner() {
         if (html5QrcodeScanner) {
             return;
         }
-        
+
         let formats = getSupportedFormats();
         let configObj = formats ? { formatsToSupport: formats } : undefined;
         html5QrcodeScanner = new Html5Qrcode("reader", configObj);
-        
+
         let config = { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.0 };
-        
+
         html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
             .catch(err => {
                 console.error("تعذر تشغيل الكاميرا:", err);
@@ -2663,7 +2684,7 @@ function stopBarcodeScanner() {
                 html5QrcodeScanner = null;
             }).catch(err => {
                 console.error("فشل في إيقاف الكاميرا", err);
-                try { html5QrcodeScanner.clear(); } catch(e){}
+                try { html5QrcodeScanner.clear(); } catch (e) { }
                 html5QrcodeScanner = null;
             });
         }
@@ -2688,22 +2709,22 @@ let currentScannedProduct = null;
 
 function handleBarcodeMatch(barcodeValue) {
     let matchedProduct = barcodeCatalogData.find(p => p.barcode === barcodeValue);
-    
+
     if (matchedProduct) {
         currentScannedProduct = matchedProduct;
         playBeepSound();
-        
+
         document.getElementById('scanResultName').textContent = matchedProduct.name;
         // عرض السعر بالإنجليزية القياسية
         document.getElementById('scanResultPrice').textContent = Number(matchedProduct.price);
-        
+
         scanResultModal.classList.add('active');
-        
+
         let modalContent = scanResultModal.querySelector('.modal-content');
         modalContent.classList.remove('flash-success');
         void modalContent.offsetWidth; // Trigger reflow
         modalContent.classList.add('flash-success');
-        
+
     } else {
         showToast("المنتج غير مسجل في قاعدة البيانات ❌", "error");
     }
@@ -2720,16 +2741,16 @@ if (manualSearchBtn && manualBarcodeInput) {
             showToast("يرجى إدخال رقم الباركود", "warning");
             return;
         }
-        
+
         // إغلاق النافذة وتنفيذ البحث فوراً بدون انتظار الكاميرا
         scannerModal.classList.remove('active');
         handleBarcodeMatch(val);
         manualBarcodeInput.value = '';
-        
+
         // محاولة إيقاف الكاميرا في الخلفية
         stopBarcodeScanner();
     });
-    
+
     manualBarcodeInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') manualSearchBtn.click();
     });
@@ -2746,7 +2767,7 @@ if (copyProductNameBtn) {
             copyProductNameBtn.style.background = "var(--success-light)";
             copyProductNameBtn.style.color = "var(--success)";
             copyProductNameBtn.style.borderColor = "var(--success)";
-            
+
             setTimeout(() => {
                 copyProductNameBtn.textContent = origText;
                 copyProductNameBtn.style.background = "";
@@ -2805,22 +2826,22 @@ if (barcodeImageUpload) {
     barcodeImageUpload.addEventListener('change', (e) => {
         if (e.target.files && e.target.files.length > 0) {
             let imageFile = e.target.files[0];
-            
+
             let formats = getSupportedFormats();
             let configObj = formats ? { formatsToSupport: formats } : undefined;
             let tempScanner = html5QrcodeScanner;
-            
+
             if (!tempScanner) {
                 try {
                     tempScanner = new Html5Qrcode("reader", configObj);
-                } catch(err) {
+                } catch (err) {
                     console.error("فشل تهيئة الماسح للصور:", err);
                     showToast("فشل تهيئة الماسح الضوئي، حاول مرة أخرى", "error");
                     e.target.value = '';
                     return;
                 }
             }
-            
+
             // تغيير واجهة الزر لإعطاء تأكيد مرئي ومنع تكرار الضغط
             let uploadLabel = document.querySelector('label[for="barcodeImageUpload"]');
             let originalLabelHtml = uploadLabel ? uploadLabel.innerHTML : '';
@@ -2829,10 +2850,10 @@ if (barcodeImageUpload) {
                 uploadLabel.style.pointerEvents = 'none';
                 uploadLabel.style.opacity = '0.7';
             }
-            
+
             // إضافة Toast لإعلام المستخدم
             showToast("جاري فحص الصورة...", "success");
-            
+
             // استخدام setTimeout للسماح للمتصفح بتحديث الواجهة قبل بدء المعالجة الثقيلة
             setTimeout(() => {
                 let emergencyTimeout = setTimeout(() => {
@@ -2845,17 +2866,17 @@ if (barcodeImageUpload) {
                     e.target.value = ''; // تفريغ حقل الملف
                     showToast('الصورة معقدة أو الإضاءة قوية، يرجى المحاولة بصورة أوضح', 'error');
                     // محاولة تنظيف الماسح
-                    try { tempScanner.clear(); } catch(err){}
+                    try { tempScanner.clear(); } catch (err) { }
                 }, 5000);
-                
+
                 tempScanner.scanFile(imageFile, false)
                     .then(decodedText => {
                         clearTimeout(emergencyTimeout);
                         scannerModal.classList.remove('active');
                         handleBarcodeMatch(decodedText);
-                        
+
                         // إعادة ضبط كل شيء
-                        e.target.value = ''; 
+                        e.target.value = '';
                         if (uploadLabel) {
                             uploadLabel.innerHTML = originalLabelHtml;
                             uploadLabel.style.pointerEvents = 'auto';
@@ -2867,7 +2888,7 @@ if (barcodeImageUpload) {
                         clearTimeout(emergencyTimeout);
                         console.error("فشل المسح من الصورة:", err);
                         showToast("لم يتم العثور على باركود واضح في هذه الصورة، حاول مرة أخرى", "warning");
-                        
+
                         // إعادة ضبط الواجهة لتفادي التعليق (Unblock UI)
                         e.target.value = '';
                         if (uploadLabel) {
@@ -2887,11 +2908,11 @@ if (addToCartBtn) {
         if (currentScannedProduct) {
             let productName = currentScannedProduct.name;
             let productPrice = Number(currentScannedProduct.price);
-            
+
             // 1. البحث عن المنتج في الفاتورة لزيادة الكمية بدلاً من التكرار
             let existingRows = Array.from(document.querySelectorAll('.product-row'));
             let foundRow = null;
-            
+
             for (let row of existingRows) {
                 let nameInput = row.querySelector('.product-name-input');
                 if (nameInput && nameInput.value === productName) {
@@ -2899,7 +2920,7 @@ if (addToCartBtn) {
                     break;
                 }
             }
-            
+
             if (foundRow) {
                 // زيادة الكمية للصف الحالي
                 let qtyInput = foundRow.querySelector('.product-qty-input');
@@ -2908,43 +2929,43 @@ if (addToCartBtn) {
                     // إطلاق حدث الإدخال لتحديث الإجمالي
                     qtyInput.dispatchEvent(new Event('input'));
                 }
-                
+
                 if (typeof calculateTotal === 'function') calculateTotal();
                 showToast(`تمت زيادة كمية ${productName} في الفاتورة 🛒`, "success");
-                
+
                 scanResultModal.classList.remove('active');
                 currentScannedProduct = null;
                 return; // إنهاء الدالة فوراً
             }
-            
+
             // 2. إضافة كصف جديد إذا لم يكن موجوداً
-                // إزالة الصفوف الفارغة لتجنب الفوضى
-                let emptyRows = Array.from(document.querySelectorAll('.product-row:not(.confirmed)')).filter(r => r.querySelector('.product-name-input').value === "");
-                if (emptyRows.length > 0) {
-                    emptyRows[0].parentElement.remove();
+            // إزالة الصفوف الفارغة لتجنب الفوضى
+            let emptyRows = Array.from(document.querySelectorAll('.product-row:not(.confirmed)')).filter(r => r.querySelector('.product-name-input').value === "");
+            if (emptyRows.length > 0) {
+                emptyRows[0].parentElement.remove();
+            }
+
+            // استخدام دالة إضافة المنتجات الحالية في النظام
+            if (typeof addProductRow === 'function') {
+                addProductRow(productName, productPrice, "1", true);
+
+                // تحديث الإجمالي
+                if (typeof calculateTotal === 'function') calculateTotal();
+
+                showToast(`تمت إضافة ${productName} للفاتورة بنجاح ✅`, "success");
+
+                // إغلاق النافذة
+                scanResultModal.classList.remove('active');
+
+                // التأكد من وجود صف فارغ للإدخال اليدوي
+                if (document.querySelectorAll('.product-row:not(.confirmed)').length === 0) {
+                    addProductRow();
                 }
-                
-                // استخدام دالة إضافة المنتجات الحالية في النظام
-                if (typeof addProductRow === 'function') {
-                    addProductRow(productName, productPrice, "1", true);
-                    
-                    // تحديث الإجمالي
-                    if (typeof calculateTotal === 'function') calculateTotal();
-                    
-                    showToast(`تمت إضافة ${productName} للفاتورة بنجاح ✅`, "success");
-                    
-                    // إغلاق النافذة
-                    scanResultModal.classList.remove('active');
-                    
-                    // التأكد من وجود صف فارغ للإدخال اليدوي
-                    if (document.querySelectorAll('.product-row:not(.confirmed)').length === 0) {
-                        addProductRow();
-                    }
-                    
-                    currentScannedProduct = null;
-                } else {
-                    showToast("تعذر إضافة المنتج، دالة الفاتورة غير متوفرة", "error");
-                }
+
+                currentScannedProduct = null;
+            } else {
+                showToast("تعذر إضافة المنتج، دالة الفاتورة غير متوفرة", "error");
+            }
         }
     });
 }
@@ -2956,7 +2977,7 @@ if (addToCartBtn) {
 let expiryData = [];
 
 // Fetch data only when modal opens (Lazy Loading)
-window.openExpiryDashboard = function() {
+window.openExpiryDashboard = function () {
     document.getElementById('expiryDashboardModal').style.display = 'flex';
     loadExpiryData();
 };
@@ -2983,6 +3004,9 @@ function loadExpiryData() {
             expiryData = Array.isArray(data) ? data : (data.expiries || []);
             renderExpiryDashboard();
             updateCatalogWithOffers(); // To highlight items on offer in the main cashier view
+            
+            let overlay = document.getElementById('expiry-loading-overlay');
+            if (overlay) overlay.style.display = 'none';
         })
         .catch(err => {
             if (btn) {
@@ -2993,6 +3017,9 @@ function loadExpiryData() {
             showToast("❌ حدث خطأ في تحميل الصلاحيات. يرجى مراجعة إعدادات Google Sheets", "error");
             // Also call render to clear the "loading" or show empty states
             renderExpiryDashboard();
+            
+            let overlay = document.getElementById('expiry-loading-overlay');
+            if (overlay) overlay.style.display = 'none';
         });
 }
 
@@ -3016,7 +3043,7 @@ if (openLedgerBtn) {
     });
 }
 
-window.closeLedgerModal = function() {
+window.closeLedgerModal = function () {
     ledgerModal.style.display = 'none';
 };
 
@@ -3085,19 +3112,19 @@ function renderLedgerCart() {
     });
 }
 
-window.editLedgerItem = function(index) {
+window.editLedgerItem = function (index) {
     const item = ledgerCart[index];
     document.getElementById('ledgerProdName').value = item.name;
     document.getElementById('ledgerProdQty').value = item.qty;
     document.getElementById('ledgerProdDate').value = item.expiryDate;
     document.getElementById('ledgerProdLocation').value = item.location || '';
     document.getElementById('ledgerProdNotes').value = item.notes || '';
-    
+
     ledgerCart.splice(index, 1);
     renderLedgerCart();
 };
 
-window.removeLedgerItem = function(index) {
+window.removeLedgerItem = function (index) {
     ledgerCart.splice(index, 1);
     renderLedgerCart();
 };
@@ -3170,7 +3197,7 @@ function renderExpiryDashboard() {
     let countFar = 0;
 
     let activeItems = expiryData.filter(item => item.status !== 'Done/Archived');
-    
+
     activeItems.forEach(item => {
         countTotal++;
         if (item.status === 'Active Display') countOffers++;
@@ -3189,16 +3216,16 @@ function renderExpiryDashboard() {
         }
     });
 
-    if(document.getElementById('expOffersItems')) document.getElementById('expOffersItems').innerText = countOffers;
-    if(document.getElementById('expTotalItems')) document.getElementById('expTotalItems').innerText = countTotal;
-    if(document.getElementById('expCriticalItems')) document.getElementById('expCriticalItems').innerText = countCritical;
-    if(document.getElementById('expAlertItems')) document.getElementById('expAlertItems').innerText = countAlert;
-    if(document.getElementById('expAttentionItems')) document.getElementById('expAttentionItems').innerText = countAttention;
-    if(document.getElementById('expSafeItems')) document.getElementById('expSafeItems').innerText = countSafe;
-    if(document.getElementById('expFarItems')) document.getElementById('expFarItems').innerText = countFar;
+    if (document.getElementById('expOffersItems')) document.getElementById('expOffersItems').innerText = countOffers;
+    if (document.getElementById('expTotalItems')) document.getElementById('expTotalItems').innerText = countTotal;
+    if (document.getElementById('expCriticalItems')) document.getElementById('expCriticalItems').innerText = countCritical;
+    if (document.getElementById('expAlertItems')) document.getElementById('expAlertItems').innerText = countAlert;
+    if (document.getElementById('expAttentionItems')) document.getElementById('expAttentionItems').innerText = countAttention;
+    if (document.getElementById('expSafeItems')) document.getElementById('expSafeItems').innerText = countSafe;
+    if (document.getElementById('expFarItems')) document.getElementById('expFarItems').innerText = countFar;
 }
 
-window.showExpiryDetails = function(category) {
+window.showExpiryDetails = function (category) {
     let filteredData = [];
     let title = "";
 
@@ -3247,7 +3274,7 @@ window.showExpiryDetails = function(category) {
 
     document.getElementById('detailsTitle').innerText = title;
     const detailsList = document.getElementById('detailsList');
-    
+
     if (filteredData.length === 0) {
         detailsList.innerHTML = '<p class="empty-msg">لا توجد أصناف في هذه الفئة.</p>';
     } else {
@@ -3275,7 +3302,7 @@ window.showExpiryDetails = function(category) {
 
             let formattedDate = new Date(item.expiryDate);
             formattedDate = isNaN(formattedDate.getTime()) ? item.expiryDate : formattedDate.toLocaleDateString('ar-EG');
-            
+
             let pricesHtml = "";
             if (item.status === 'Active Display') {
                 pricesHtml = `
@@ -3314,13 +3341,13 @@ window.showExpiryDetails = function(category) {
     }
 
     document.getElementById('expiryDetailsSection').style.display = 'block';
-    
+
     setTimeout(() => {
         document.getElementById('expiryDetailsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 100);
 };
 
-window.closeExpiryDetails = function() {
+window.closeExpiryDetails = function () {
     document.getElementById('expiryDetailsSection').style.display = 'none';
 };
 
@@ -3339,7 +3366,7 @@ if (searchExpiryBtn && expiryGlobalSearchInput) {
     });
 }
 
-window.customConfirm = function(message, onConfirm) {
+window.customConfirm = function (message, onConfirm) {
     const overlay = document.createElement('div');
     overlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px);";
     const modal = document.createElement('div');
@@ -3364,7 +3391,7 @@ window.customConfirm = function(message, onConfirm) {
     };
 };
 
-window.customPrompt = function(title, onConfirm) {
+window.customPrompt = function (title, onConfirm) {
     const overlay = document.createElement('div');
     overlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px);";
     const modal = document.createElement('div');
@@ -3392,7 +3419,7 @@ window.customPrompt = function(title, onConfirm) {
     };
 };
 
-window.promptNewOffer = function(id) {
+window.promptNewOffer = function (id) {
     customPrompt("تفعيل عرض جديد", (orig, offer) => {
         if (orig === "" || offer === "") {
             showToast("يرجى إدخال السعرين", "warning");
@@ -3402,10 +3429,10 @@ window.promptNewOffer = function(id) {
     });
 };
 
-window.saveExpiryOffer = function(id, status, origVal, offerVal) {
+window.saveExpiryOffer = function (id, status, origVal, offerVal) {
     let orig = origVal !== undefined ? origVal : (document.getElementById('origPrice_' + id) ? document.getElementById('origPrice_' + id).value : "");
     let offer = offerVal !== undefined ? offerVal : (document.getElementById('offerPrice_' + id) ? document.getElementById('offerPrice_' + id).value : "");
-    
+
     showToast("جاري التحديث...", "warning");
     let formData = new URLSearchParams();
     formData.append('action', 'updateExpiryStatus');
@@ -3418,7 +3445,7 @@ window.saveExpiryOffer = function(id, status, origVal, offerVal) {
         .then(() => {
             showToast("✅ تم تحديث العرض والأسعار بنجاح", "success");
             let item = expiryData.find(i => i.id == id);
-            if(item) {
+            if (item) {
                 item.status = status;
                 item.originalPrice = orig;
                 item.offerPrice = offer;
@@ -3440,7 +3467,7 @@ window.saveExpiryOffer = function(id, status, origVal, offerVal) {
 };
 
 // 3. Status Control (دورة حياة العرض)
-window.changeExpiryStatus = function(id, newStatus) {
+window.changeExpiryStatus = function (id, newStatus) {
     let msg = "";
     if (newStatus === 'Active Display') msg = "هل تريد تفعيل العرض وجعل السطر فسفوري؟ 🔥";
     else if (newStatus === 'Active') msg = "هل تريد إيقاف العرض وإعادته للحالة الطبيعية؟";
@@ -3458,7 +3485,7 @@ window.changeExpiryStatus = function(id, newStatus) {
             .then(() => {
                 showToast("✅ تم تحديث الحالة بنجاح", "success");
                 let item = expiryData.find(i => i.id == id);
-                if(item) {
+                if (item) {
                     item.status = newStatus;
                 }
                 renderExpiryDashboard();
@@ -3474,7 +3501,15 @@ window.changeExpiryStatus = function(id, newStatus) {
 
 function updateCatalogWithOffers() {
     if (!catalogData || catalogData.length === 0) return;
-    const activeOffers = expiryData.filter(item => item.status === 'Active Display').map(item => item.name);
+    
+    let activeOffers = [];
+    if (expiryData && expiryData.length > 0) {
+        activeOffers = expiryData.filter(item => item.status === 'Active Display').map(item => item.name);
+        window.cachedActiveOffers = activeOffers;
+    } else {
+        activeOffers = window.cachedActiveOffers || [];
+    }
+    
     const catalogContainer = document.getElementById('catalogListContainer');
     if (catalogContainer) {
         const rows = catalogContainer.querySelectorAll('.data-row');
@@ -3483,7 +3518,7 @@ function updateCatalogWithOffers() {
             if (nameEl) {
                 const productName = nameEl.innerText.replace('🔥', '').replace('عرض خاص', '').trim();
                 const hasOffer = activeOffers.some(offerName => productName.includes(offerName) || offerName.includes(productName));
-                
+
                 if (hasOffer) {
                     if (!nameEl.innerHTML.includes('🔥')) {
                         nameEl.innerHTML += ' <span style="background: #ffeb3b; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; color: #d35400;">عرض خاص 🔥</span>';
@@ -3505,11 +3540,11 @@ function updateCatalogWithOffers() {
 // ==========================================
 
 async function generateExcel(dataToExport, reportTitle) {
-    if(!dataToExport || dataToExport.length === 0) {
+    if (!dataToExport || dataToExport.length === 0) {
         showToast("لا توجد بيانات للتصدير في هذه القائمة", "warning");
         return;
     }
-    
+
     try {
         if (typeof ExcelJS === 'undefined') {
             showToast("جاري تجهيز محرك التصدير الذكي...", "warning");
@@ -3527,7 +3562,7 @@ async function generateExcel(dataToExport, reportTitle) {
         workbook.created = new Date();
 
         const sheet1 = workbook.addWorksheet('البيانات التفصيلية', { views: [{ rightToLeft: true }] });
-        
+
         sheet1.columns = [
             { header: 'اسم المنتج', key: 'name', width: 35 },
             { header: 'السعر الأساسي', key: 'origPrice', width: 15 },
@@ -3550,7 +3585,7 @@ async function generateExcel(dataToExport, reportTitle) {
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        
+
         let sortedData = [...dataToExport].sort((a, b) => {
             let da = new Date(a.expiryDate).getTime();
             let db = new Date(b.expiryDate).getTime();
@@ -3588,24 +3623,24 @@ async function generateExcel(dataToExport, reportTitle) {
 
             if (row.status !== 'Done/Archived' && !isNaN(daysRemaining)) {
                 if (daysRemaining < 0) {
-                    newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFCCCC' } }; 
+                    newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFCCCC' } };
                     newRow.font = { color: { argb: 'FFC0392B' }, bold: true };
                 } else if (daysRemaining < 7) {
-                    newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFD6D6' } }; 
+                    newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFD6D6' } };
                 } else if (daysRemaining < 30) {
-                    newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF9C4' } }; 
+                    newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF9C4' } };
                 } else if (daysRemaining <= 90) {
-                    newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFE0B2' } }; 
+                    newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFE0B2' } };
                 } else if (daysRemaining > 180) {
-                    newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD4E6F1' } }; 
+                    newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD4E6F1' } };
                 } else {
-                    newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD5F5E3' } }; 
+                    newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD5F5E3' } };
                 }
             }
-            
+
             if (row.status === 'Done/Archived') {
                 newRow.font = { color: { argb: 'FF95A5A6' }, italic: true };
-                newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F4F4' } }; 
+                newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F4F4' } };
             }
         });
 
@@ -3618,7 +3653,7 @@ async function generateExcel(dataToExport, reportTitle) {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
+
         showToast("✅ تم تصدير التقرير الاحترافي بنجاح", "success");
 
     } catch (error) {
@@ -3647,12 +3682,12 @@ if (btnExportMonth) {
             showToast("يرجى تحديد الشهر أولاً", "warning");
             return;
         }
-        
+
         let filtered = expiryData.filter(item => {
             if (!item.expiryDate) return false;
             return item.expiryDate.startsWith(monthVal);
         });
-        
+
         setBtnLoading(btnExportMonth, true, "تصدير...");
         generateExcel(filtered, 'شهر_' + monthVal).then(() => {
             setBtnLoading(btnExportMonth, false);
@@ -3669,13 +3704,13 @@ if (btnExportDate) {
             showToast("يرجى تحديد يوم التسجيل أولاً", "warning");
             return;
         }
-        
+
         let filtered = expiryData.filter(item => {
             if (!item.regDate) return false;
             // Handle date formats which might include time
             return item.regDate.includes(dateVal);
         });
-        
+
         setBtnLoading(btnExportDate, true, "تصدير...");
         generateExcel(filtered, 'إدخالات_يوم_' + dateVal).then(() => {
             setBtnLoading(btnExportDate, false);

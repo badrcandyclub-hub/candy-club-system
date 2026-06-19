@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -8,9 +9,11 @@
     <link rel="apple-touch-icon" href="favicon.png?v=6">
     <link rel="manifest" href="app-manifest.json?v=999">
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap"
+        rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
+
 <body>
 
     <div id="toast-container" class="toast-container"></div>
@@ -21,28 +24,33 @@
             <span class="logo-sub">نظام الإدارة V15.0</span>
         </div>
         <div class="header-actions">
-            <button id="openFinancialsBtn" class="btn-outline interactive-btn" style="background:#2c3e50; color:white; border:none;">💰 المالية</button>
-            <button id="openSuspendedBtn" class="btn-suspended interactive-btn">📂 المعلقة (<span id="suspendedCount">0</span>)</button>
+            <button id="openFinancialsBtn" class="btn-outline interactive-btn"
+                style="background:#2c3e50; color:white; border:none;">💰 المالية</button>
+            <button id="openSuspendedBtn" class="btn-suspended interactive-btn">📂 المعلقة (<span
+                    id="suspendedCount">0</span>)</button>
             <div class="status-indicator">
                 <span id="sync-status">جاري التحميل...</span>
                 <div class="status-dot"></div>
                 <!-- ⭐ زرار التحديث السريع -->
-                <button id="quickRefreshBtn" class="interactive-btn" style="background:none; border:none; cursor:pointer; font-size:1.1rem; padding:0 5px; margin-right: 5px;" title="تحديث البيانات السريع">🔄</button>
+                <button id="quickRefreshBtn" class="interactive-btn"
+                    style="background:none; border:none; cursor:pointer; font-size:1.1rem; padding:0 5px; margin-right: 5px;"
+                    title="تحديث البيانات السريع">🔄</button>
             </div>
         </div>
     </header>
 
     <main class="app-content">
-        
+
         <!-- ⭐ منبه الحجوزات القريبة -->
-        <div id="booking-alert-banner" style="display:none; background: var(--warning); color: white; padding: 12px; text-align: center; font-weight: bold; border-radius: 8px; margin-bottom: 15px;">
+        <div id="booking-alert-banner"
+            style="display:none; background: var(--warning); color: white; padding: 12px; text-align: center; font-weight: bold; border-radius: 8px; margin-bottom: 15px;">
             🔔 يوجد أوردرات محجوزة اقترب موعد تسليمها! يرجى مراجعة السجل.
         </div>
 
         <section id="create-tab" class="tab-pane active">
             <div id="orderFieldsContainer" class="section-card">
                 <h3 class="section-title">📝 إنشاء طلب جديد</h3>
-                
+
                 <form id="orderForm" onsubmit="event.preventDefault();">
                     <label>المنصة:</label>
                     <select id="platform" required>
@@ -58,7 +66,8 @@
                     <label>رقم الموبايل:</label>
                     <div class="input-with-action">
                         <input type="tel" id="customerPhone" placeholder="أدخل الرقم للبحث السريع" required>
-                        <span id="phoneCheckStatus" class="check-status-icon interactive-btn" title="ابحث عن العميل">🔍</span>
+                        <span id="phoneCheckStatus" class="check-status-icon interactive-btn"
+                            title="ابحث عن العميل">🔍</span>
                     </div>
 
                     <label>رقم بديل (اختياري):</label>
@@ -86,14 +95,15 @@
                                 <option value="">-- اختر من القائمة --</option>
                             </select>
                         </div>
-                        <div id="zoneDurationInfo" class="duration-badge hidden-field" style="margin-top: 10px;">⏳ مدة التوصيل: <span>--</span></div>
+                        <div id="zoneDurationInfo" class="duration-badge hidden-field" style="margin-top: 10px;">⏳ مدة
+                            التوصيل: <span>--</span></div>
 
                         <label>العنوان بالتفصيل:</label>
                         <textarea id="address" placeholder="اسم الشارع، رقم البيت، علامة مميزة"></textarea>
                     </div>
 
                     <div class="divider">🛒 تفاصيل المنتجات</div>
-                    
+
                     <div class="product-header-labels">
                         <span style="flex:3">اسم المنتج</span>
                         <span style="flex:1.2; text-align:center;">السعر</span>
@@ -101,24 +111,25 @@
                         <span style="flex:1; text-align:center;">الكمية</span>
                         <span style="width:90px; text-align:center;">أكشن</span>
                     </div>
-                    
+
                     <div id="productsContainer"></div>
-                    <button type="button" id="addProductBtn" class="btn-add-pro interactive-btn">+ إضافة منتج آخر</button>
+                    <button type="button" id="addProductBtn" class="btn-add-pro interactive-btn">+ إضافة منتج
+                        آخر</button>
 
                     <div class="totals-box">
                         <div class="total-item">
-                            <span>إجمالي المنتجات:</span> 
+                            <span>إجمالي المنتجات:</span>
                             <input type="number" id="productsTotal" value="" readonly placeholder="0">
                         </div>
                         <div class="total-item">
-                            <span>تكلفة الشحن:</span> 
+                            <span>تكلفة الشحن:</span>
                             <input type="number" id="shippingCost" value="" readonly placeholder="0">
                         </div>
                         <div class="total-item">
-                            <span>خصم خاص:</span> 
+                            <span>خصم خاص:</span>
                             <input type="number" id="discount" value="" placeholder="0">
                         </div>
-                        
+
                         <div class="gift-switch-container">
                             <span class="gift-label">🎁 هذا الأوردر هدية؟</span>
                             <label class="switch">
@@ -126,7 +137,7 @@
                                 <span class="slider round"></span>
                             </label>
                         </div>
-                        
+
                         <div class="delivery-prediction" id="deliveryInfo">📅 موعد التسليم: <span>--</span></div>
                         <div class="final-amount">إجمالي الفاتورة: <span id="finalTotalDisplay">0</span> ج.م</div>
                     </div>
@@ -139,16 +150,20 @@
                                 <option value="كاش 💵">كاش 💵</option>
                                 <option value="إنستا باي / محفظة 📱">إنستا باي / محفظة 📱</option>
                             </select>
-                            <button type="button" id="confirmPaymentBtn" class="btn-confirm-action interactive-btn">تأكيد ✔️</button>
+                            <button type="button" id="confirmPaymentBtn"
+                                class="btn-confirm-action interactive-btn">تأكيد ✔️</button>
                         </div>
 
                         <!-- ⭐ نظام العربون (Deposit) -->
                         <div id="depositContainer" style="padding-top: 15px; border-top: 1px dashed #ccc;">
                             <label style="color: var(--primary);">هل تم دفع عربون (حجز)؟</label>
                             <div style="display: flex; gap: 10px; align-items: center;">
-                                <input type="number" id="depositAmount" placeholder="مبلغ العربون" style="margin-bottom: 0; flex: 1;">
-                                <div style="flex: 1.5; font-weight: bold; font-size: 0.95rem; text-align: left; padding-left: 10px;">
-                                    المتبقي: <span id="remainingAmountDisplay" style="color: var(--danger); font-size: 1.2rem;">0</span> ج
+                                <input type="number" id="depositAmount" placeholder="مبلغ العربون"
+                                    style="margin-bottom: 0; flex: 1;">
+                                <div
+                                    style="flex: 1.5; font-weight: bold; font-size: 0.95rem; text-align: left; padding-left: 10px;">
+                                    المتبقي: <span id="remainingAmountDisplay"
+                                        style="color: var(--danger); font-size: 1.2rem;">0</span> ج
                                 </div>
                             </div>
                         </div>
@@ -164,32 +179,39 @@
                     </select>
 
                     <div class="main-actions-stack">
-                        <button type="button" id="whatsappReviewBtn" class="btn-whatsapp interactive-btn">📱 مراجعة التفاصيل مع العميل</button>
+                        <button type="button" id="whatsappReviewBtn" class="btn-whatsapp interactive-btn">📱 مراجعة
+                            التفاصيل مع العميل</button>
                         <div class="action-grid mt-10">
-                            <button type="button" id="suspendBtn" class="btn-outline interactive-btn">⏸️ تعليق الطلب</button>
-                            <button type="button" id="saveAndPrintBtn" class="btn-save pulse-btn">💾 حفظ وطباعة الفاتورة</button>
+                            <button type="button" id="suspendBtn" class="btn-outline interactive-btn">⏸️ تعليق
+                                الطلب</button>
+                            <button type="button" id="saveAndPrintBtn" class="btn-save pulse-btn">💾 حفظ وطباعة
+                                الفاتورة</button>
                         </div>
-                        <button type="button" id="shareOrderBtn" class="interactive-btn" style="background:#25D366; color:white; border:none; padding:12px; font-weight:bold; border-radius:8px; margin-top:10px; width:100%;">نسخ للجروب 📋</button>
+                        <button type="button" id="shareOrderBtn" class="interactive-btn"
+                            style="background:#25D366; color:white; border:none; padding:12px; font-weight:bold; border-radius:8px; margin-top:10px; width:100%;">نسخ
+                            للجروب 📋</button>
                     </div>
                 </form>
             </div>
         </section>
 
         <section id="catalog-tab" class="tab-pane">
-            
+
             <div class="section-card">
                 <h3 class="section-title">📦 الكتالوج والعروض</h3>
                 <div style="display:flex; gap:5px; margin-bottom:15px;">
                     <input type="text" id="newCatalogName" placeholder="اسم المنتج" style="flex:2; margin-bottom:0;">
                     <input type="number" id="newCatalogPrice" placeholder="السعر" style="flex:1; margin-bottom:0;">
-                    <button id="addCatalogBtn" class="btn-search interactive-btn" style="padding: 0 10px;">إضافة</button>
+                    <button id="addCatalogBtn" class="btn-search interactive-btn"
+                        style="padding: 0 10px;">إضافة</button>
                 </div>
                 <div id="catalogListContainer" class="data-list-container" style="max-height: 250px;">
                     <p class="empty-msg">جاري تحميل الكتالوج...</p>
                 </div>
-                
+
                 <!-- زرار الماسح الضوئي الذكي -->
-                <button type="button" id="openScannerBtn" class="btn-whatsapp interactive-btn pulse-btn" style="width: 100%; margin-top: 15px; font-size: 1.1rem; background: linear-gradient(135deg, #17a2b8, #0b7dda); box-shadow: 0 6px 20px rgba(23,162,184,0.3);">
+                <button type="button" id="openScannerBtn" class="btn-whatsapp interactive-btn pulse-btn"
+                    style="width: 100%; margin-top: 15px; font-size: 1.1rem; background: linear-gradient(135deg, #17a2b8, #0b7dda); box-shadow: 0 6px 20px rgba(23,162,184,0.3);">
                     📷 مسح الباركود للكشف عن السعر
                 </button>
             </div>
@@ -207,11 +229,14 @@
                             <option value="استفسار عن توفر">استفسار عن توفر</option>
                             <option value="انتظار نزول عرض">انتظار نزول عرض</option>
                         </select>
-                        <button id="addOosBtn" class="btn-save interactive-btn" style="flex:1; padding: 10px;">تسجيل</button>
+                        <button id="addOosBtn" class="btn-save interactive-btn"
+                            style="flex:1; padding: 10px;">تسجيل</button>
                     </div>
                 </div>
-                
-                <h4 style="color: var(--primary); font-size: 0.95rem; margin-bottom: 10px; border-bottom: 1px dashed #ccc; padding-bottom: 5px;">📞 عملاء في الانتظار:</h4>
+
+                <h4
+                    style="color: var(--primary); font-size: 0.95rem; margin-bottom: 10px; border-bottom: 1px dashed #ccc; padding-bottom: 5px;">
+                    📞 عملاء في الانتظار:</h4>
                 <div id="outOfStockContainer" class="data-list-container" style="max-height: 200px;">
                     <p class="empty-msg">لا يوجد نواقص مسجلة حالياً.</p>
                 </div>
@@ -248,7 +273,7 @@
                 <button id="openZoneModalBtn" class="btn-outline interactive-btn">المناطق ➕</button>
                 <button id="openDriverModalBtn" class="btn-outline interactive-btn">المناديب ➕</button>
             </div>
-            
+
             <div class="section-card" style="border-right: 4px solid var(--secondary);">
                 <h3 class="section-title">📦 تحميل المناديب (توصيل)</h3>
                 <label>اختر المندوب للاستلام:</label>
@@ -259,15 +284,18 @@
                     <p class="empty-msg">جاري تحميل الأوردرات...</p>
                 </div>
                 <div style="display: flex; gap: 10px; margin-top: 10px;">
-                    <button type="button" id="assignToDriverBtn" class="btn-save interactive-btn" style="flex: 2; font-size: 1rem;">تسليم للمندوب 🚚</button>
-                    <button type="button" id="sendWaDriverBtn" class="btn-whatsapp interactive-btn" style="flex: 1; font-size: 0.9rem;">إرسال واتس 📱</button>
+                    <button type="button" id="assignToDriverBtn" class="btn-save interactive-btn"
+                        style="flex: 2; font-size: 1rem;">تسليم للمندوب 🚚</button>
+                    <button type="button" id="sendWaDriverBtn" class="btn-whatsapp interactive-btn"
+                        style="flex: 1; font-size: 0.9rem;">إرسال واتس 📱</button>
                 </div>
             </div>
 
             <!-- ⭐ قسم الحجوزات -->
             <div class="section-card" style="border-right: 4px solid var(--primary);">
                 <h3 class="section-title">📅 طلبات الحجوزات القادمة</h3>
-                <div id="reservationsContainer" class="data-list-container mt-10" style="min-height: 100px; max-height: 250px; overflow-y: auto;">
+                <div id="reservationsContainer" class="data-list-container mt-10"
+                    style="min-height: 100px; max-height: 250px; overflow-y: auto;">
                     <p class="empty-msg">لا يوجد حجوزات قادمة...</p>
                 </div>
             </div>
@@ -279,7 +307,7 @@
                     <p class="empty-msg">جاري التحميل...</p>
                 </div>
             </div>
-            
+
             <div class="section-card" style="border-right: 4px solid var(--success);">
                 <h3 class="section-title">✅ تقفيل اليوم (حالة التوصيل)</h3>
                 <label>اختر المندوب لعرض عهدته:</label>
@@ -288,15 +316,19 @@
                     <select id="closeDriverSelect" style="margin-bottom:0; flex:1;">
                         <option value="">-- اختر المندوب --</option>
                     </select>
-                    <button type="button" id="loadDriverOrdersBtn" class="btn-search interactive-btn" style="padding: 0 15px;">عرض العهدة ✔️</button>
+                    <button type="button" id="loadDriverOrdersBtn" class="btn-search interactive-btn"
+                        style="padding: 0 15px;">عرض العهدة ✔️</button>
                 </div>
-                
+
                 <div id="shippedOrdersContainer" class="data-list-container mt-10" style="min-height: 100px;">
                     <p class="empty-msg">برجاء اختيار المندوب والضغط على "عرض العهدة"</p>
                 </div>
                 <div class="action-grid mt-10">
-                    <button type="button" id="markDeliveredBtn" class="btn-save interactive-btn" style="flex:1;">تم التوصيل ✅</button>
-                    <button type="button" id="markReturnedBtn" class="interactive-btn" style="flex:1; background-color: var(--danger); color: white; border: none; border-radius: 12px; font-weight: bold; font-family: 'Cairo', sans-serif;">مرتجع ❌</button>
+                    <button type="button" id="markDeliveredBtn" class="btn-save interactive-btn" style="flex:1;">تم
+                        التوصيل ✅</button>
+                    <button type="button" id="markReturnedBtn" class="interactive-btn"
+                        style="flex:1; background-color: var(--danger); color: white; border: none; border-radius: 12px; font-weight: bold; font-family: 'Cairo', sans-serif;">مرتجع
+                        ❌</button>
                 </div>
             </div>
         </section>
@@ -306,7 +338,9 @@
 
             <!-- ⭐ V15.1: إحصائيات اليوم -->
             <div class="section-card" style="margin-bottom:12px; border-right:4px solid var(--primary); padding:16px;">
-                <h4 style="margin:0 0 10px; font-size:0.85rem; color:var(--text-muted); text-align:center; letter-spacing:1px; text-transform:uppercase;">📅 إحصائيات اليوم</h4>
+                <h4
+                    style="margin:0 0 10px; font-size:0.85rem; color:var(--text-muted); text-align:center; letter-spacing:1px; text-transform:uppercase;">
+                    📅 إحصائيات اليوم</h4>
                 <div class="stats-row" style="margin-bottom:0; gap:8px;">
                     <div class="stat-item pink" style="padding:12px 8px;">
                         <span class="label" style="font-size:0.72rem;">🛒 أوردرات اليوم</span>
@@ -316,7 +350,8 @@
                         <span class="label" style="font-size:0.72rem;">💰 مبيعات اليوم</span>
                         <span class="value" id="todaySales" style="font-size:1.5rem;">0</span>
                     </div>
-                    <div class="stat-item" style="background:linear-gradient(135deg,#00C853,#2E7D32);color:white;padding:12px 8px;border-radius:18px;text-align:center;box-shadow:var(--shadow);">
+                    <div class="stat-item"
+                        style="background:linear-gradient(135deg,#00C853,#2E7D32);color:white;padding:12px 8px;border-radius:18px;text-align:center;box-shadow:var(--shadow);">
                         <span class="label" style="font-size:0.72rem;">✅ مكتملة اليوم</span>
                         <span class="value" id="completedCount" style="font-size:1.5rem;">0</span>
                     </div>
@@ -324,8 +359,11 @@
             </div>
 
             <!-- ⭐ V15.1: إحصائيات الشهر -->
-            <div class="section-card" style="margin-bottom:12px; border-right:4px solid var(--secondary); padding:16px;">
-                <h4 style="margin:0 0 10px; font-size:0.85rem; color:var(--text-muted); text-align:center; letter-spacing:1px; text-transform:uppercase;">📆 إحصائيات الشهر الحالي</h4>
+            <div class="section-card"
+                style="margin-bottom:12px; border-right:4px solid var(--secondary); padding:16px;">
+                <h4
+                    style="margin:0 0 10px; font-size:0.85rem; color:var(--text-muted); text-align:center; letter-spacing:1px; text-transform:uppercase;">
+                    📆 إحصائيات الشهر الحالي</h4>
                 <div class="stats-row" style="margin-bottom:8px; gap:8px;">
                     <div class="stat-item pink" style="padding:12px 8px;">
                         <span class="label" style="font-size:0.72rem;">🛒 أوردرات الشهر</span>
@@ -337,15 +375,18 @@
                     </div>
                 </div>
                 <div class="stats-row" style="margin-bottom:0; gap:8px;">
-                    <div class="stat-item" style="background:linear-gradient(135deg,#00C853,#2E7D32);color:white;padding:12px 8px;border-radius:18px;text-align:center;box-shadow:var(--shadow);">
+                    <div class="stat-item"
+                        style="background:linear-gradient(135deg,#00C853,#2E7D32);color:white;padding:12px 8px;border-radius:18px;text-align:center;box-shadow:var(--shadow);">
                         <span class="label" style="font-size:0.72rem;">✅ مكتملة الشهر</span>
                         <span class="value" id="completedMonthCount" style="font-size:1.5rem;">0</span>
                     </div>
-                    <div class="stat-item" style="background:linear-gradient(135deg,#f39c12,#e67e22);color:white;padding:12px 8px;border-radius:18px;text-align:center;box-shadow:var(--shadow);">
+                    <div class="stat-item"
+                        style="background:linear-gradient(135deg,#f39c12,#e67e22);color:white;padding:12px 8px;border-radius:18px;text-align:center;box-shadow:var(--shadow);">
                         <span class="label" style="font-size:0.72rem;">🛵 عهدة المناديب</span>
                         <span class="value" id="moneyWithDrivers" style="font-size:1.5rem;">0</span>
                     </div>
-                    <div class="stat-item" style="background:linear-gradient(135deg,#ff4d4d,#c0392b);color:white;padding:12px 8px;border-radius:18px;text-align:center;box-shadow:var(--shadow);">
+                    <div class="stat-item"
+                        style="background:linear-gradient(135deg,#ff4d4d,#c0392b);color:white;padding:12px 8px;border-radius:18px;text-align:center;box-shadow:var(--shadow);">
                         <span class="label" style="font-size:0.72rem;">🚨 مرتجعات الشهر</span>
                         <span class="value" id="returnedCount" style="font-size:1.5rem;">0</span>
                     </div>
@@ -353,7 +394,8 @@
             </div>
 
             <!-- ⭐ V15.1: زرار إظهار/إخفاء التقارير التفصيلية -->
-            <button type="button" id="loadReportsBtn" class="interactive-btn" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--primary),var(--primary-light));color:white;border:none;border-radius:14px;font-weight:bold;font-size:1rem;font-family:'Cairo',sans-serif;box-shadow:var(--shadow-pink);cursor:pointer;margin-bottom:14px;">
+            <button type="button" id="loadReportsBtn" class="interactive-btn"
+                style="width:100%;padding:14px;background:linear-gradient(135deg,var(--primary),var(--primary-light));color:white;border:none;border-radius:14px;font-weight:bold;font-size:1rem;font-family:'Cairo',sans-serif;box-shadow:var(--shadow-pink);cursor:pointer;margin-bottom:14px;">
                 📊 إظهار التقارير التفصيلية
             </button>
 
@@ -362,31 +404,41 @@
 
                 <!-- فلتر الشهر المستقل للتقارير -->
                 <div class="section-card" style="margin-bottom:12px; padding:16px;">
-                    <h4 style="margin:0 0 12px; font-size:0.95rem; color:var(--primary); font-family:'Cairo',sans-serif;">📅 اختر الشهر للتقرير</h4>
+                    <h4
+                        style="margin:0 0 12px; font-size:0.95rem; color:var(--primary); font-family:'Cairo',sans-serif;">
+                        📅 اختر الشهر للتقرير</h4>
                     <div style="display:flex; gap:10px; align-items:center;">
-                        <select id="reportMonthFilter" style="flex:1; margin-bottom:0;"><option value="">-- اختر الشهر --</option></select>
-                        <button type="button" id="loadReportDataBtn" class="btn-search interactive-btn" style="white-space:nowrap; padding:11px 18px;">عرض 🔍</button>
+                        <select id="reportMonthFilter" style="flex:1; margin-bottom:0;">
+                            <option value="">-- اختر الشهر --</option>
+                        </select>
+                        <button type="button" id="loadReportDataBtn" class="btn-search interactive-btn"
+                            style="white-space:nowrap; padding:11px 18px;">عرض 🔍</button>
                     </div>
-                    <p id="reportFilterStatus" style="margin:8px 0 0; font-size:0.8rem; color:var(--text-muted); text-align:center;"></p>
+                    <p id="reportFilterStatus"
+                        style="margin:8px 0 0; font-size:0.8rem; color:var(--text-muted); text-align:center;"></p>
                 </div>
 
                 <!-- أفضل 10 منتجات -->
                 <div class="section-card" style="margin-bottom:12px; border-right:4px solid var(--primary);">
                     <h3 class="section-title" style="font-size:1.05rem;">🏆 أكثر 10 منتجات مبيعاً</h3>
-                    <div id="topProductsList" style="padding:5px 0;"><p class="empty-msg">اختر الشهر ثم اضغط عرض</p></div>
+                    <div id="topProductsList" style="padding:5px 0;">
+                        <p class="empty-msg">اختر الشهر ثم اضغط عرض</p>
+                    </div>
                 </div>
 
                 <!-- أداء المنصات -->
                 <div class="section-card" style="margin-bottom:12px; border-right:4px solid var(--secondary);">
                     <h3 class="section-title" style="font-size:0.95rem;">📱 أداء المنصات</h3>
-                    <div id="platformStatsList" style="padding:5px 0;"><p class="empty-msg">اختر الشهر ثم اضغط عرض</p></div>
+                    <div id="platformStatsList" style="padding:5px 0;">
+                        <p class="empty-msg">اختر الشهر ثم اضغط عرض</p>
+                    </div>
                 </div>
 
             </div>
         </section>
 
         <section id="settings-tab" class="tab-pane">
-            
+
             <div class="section-card text-center">
                 <h3 class="section-title">👤 إدارة الكاشيرية (المودريتور)</h3>
                 <div style="display:flex; gap:10px; margin-bottom:15px;">
@@ -400,14 +452,17 @@
 
             <div class="section-card text-center">
                 <h3 class="section-title">🛠️ إعدادات السيستم</h3>
-                
+
                 <div class="action-grid" style="margin-bottom: 15px;">
-                    <button type="button" id="sendWaManagerBtn" class="btn-outline interactive-btn" style="width: 100%; padding: 12px; font-size: 0.95rem; border-color: var(--primary); color: var(--primary);">📊 نسخ تقرير الإدارة (اليوم والشهر)</button>
+                    <button type="button" id="sendWaManagerBtn" class="btn-outline interactive-btn"
+                        style="width: 100%; padding: 12px; font-size: 0.95rem; border-color: var(--primary); color: var(--primary);">📊
+                        نسخ تقرير الإدارة (اليوم والشهر)</button>
                 </div>
-                
+
                 <div style="margin-bottom: 25px;">
                     <!-- ⭐ زرار الإكسيل محمي بباسورد -->
-                    <button type="button" id="openGoogleSheetBtn" class="btn-outline interactive-btn" style="display: block; width:100%; text-decoration: none; padding: 15px; background: #e8f5e9; color: #2e7d32; border: 2px solid #c8e6c9; border-radius: 15px; font-weight: bold; font-family: 'Cairo', sans-serif; font-size:1rem; cursor:pointer;">
+                    <button type="button" id="openGoogleSheetBtn" class="btn-outline interactive-btn"
+                        style="display: block; width:100%; text-decoration: none; padding: 15px; background: #e8f5e9; color: #2e7d32; border: 2px solid #c8e6c9; border-radius: 15px; font-weight: bold; font-family: 'Cairo', sans-serif; font-size:1rem; cursor:pointer;">
                         📊 فتح قاعدة البيانات (الإكسيل)
                     </button>
                 </div>
@@ -434,9 +489,12 @@
                     <button id="searchCustomerBtn" class="btn-search interactive-btn">بحث</button>
                 </div>
                 <div class="text-center" style="margin-bottom: 15px;">
-                    <button type="button" id="loadCustomersBtn" class="interactive-btn" style="padding: 10px 20px; background: var(--secondary); color: white; border-radius: 8px; border: none; font-weight: bold; width: 100%;">إظهار بيانات العملاء 📂</button>
+                    <button type="button" id="loadCustomersBtn" class="interactive-btn"
+                        style="padding: 10px 20px; background: var(--secondary); color: white; border-radius: 8px; border: none; font-weight: bold; width: 100%;">إظهار
+                        بيانات العملاء 📂</button>
                 </div>
-                <div id="customersListContainer" class="data-list-container scroll-list" style="max-height: 400px; padding: 5px; display: none;">
+                <div id="customersListContainer" class="data-list-container scroll-list"
+                    style="max-height: 400px; padding: 5px; display: none;">
                     <p class="empty-msg">جاري تحميل القائمة...</p>
                 </div>
             </div>
@@ -448,112 +506,148 @@
             <div class="section-card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <h3 class="section-title" style="margin-bottom: 0;">📦 إدارة الصلاحيات والعروض</h3>
-                    <button id="openLedgerBtn" class="interactive-btn pulse-btn" style="background: linear-gradient(135deg, #8e44ad, #2980b9); color: white; border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold;">➕ تسجيل استلام بضاعة</button>
+                    <button id="openLedgerBtn" class="interactive-btn pulse-btn"
+                        style="background: linear-gradient(135deg, #8e44ad, #2980b9); color: white; border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold;">➕
+                        تسجيل استلام بضاعة</button>
                 </div>
-                
+
                 <div class="expiry-body">
 
                     <!-- بحث عام في الصلاحيات -->
                     <div class="search-box mb-15">
-                        <input type="text" id="expiryGlobalSearchInput" placeholder="بحث عام عن منتج في الصلاحيات والعروض...">
+                        <input type="text" id="expiryGlobalSearchInput"
+                            placeholder="بحث عام عن منتج في الصلاحيات والعروض...">
                         <button id="searchExpiryBtn" class="btn-search interactive-btn">بحث 🔍</button>
                     </div>
 
                     <!-- أدوات التصدير الذكية -->
-                    <div class="export-controls" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; background: var(--bg-light); padding: 15px; border-radius: 10px; border: 1px solid var(--border);">
+                    <div class="export-controls"
+                        style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; background: var(--bg-light); padding: 15px; border-radius: 10px; border: 1px solid var(--border);">
                         <div style="flex: 1; min-width: 200px;">
-                            <label style="font-size: 0.9rem; margin-bottom: 5px; display: block; color: var(--text-color);">تصدير حسب شهر الانتهاء:</label>
+                            <label
+                                style="font-size: 0.9rem; margin-bottom: 5px; display: block; color: var(--text-color);">تصدير
+                                حسب شهر الانتهاء:</label>
                             <div style="display: flex; gap: 5px;">
-                                <input type="month" id="exportMonthInput" dir="ltr" style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #ccc;">
-                                <button id="btnExportMonth" class="interactive-btn" style="background: #27ae60; color: white; border: none; padding: 8px 12px; border-radius: 8px;">تصدير</button>
+                                <input type="month" id="exportMonthInput" dir="ltr"
+                                    style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #ccc;">
+                                <button id="btnExportMonth" class="interactive-btn"
+                                    style="background: #27ae60; color: white; border: none; padding: 8px 12px; border-radius: 8px;">تصدير</button>
                             </div>
                         </div>
                         <div style="flex: 1; min-width: 200px;">
-                            <label style="font-size: 0.9rem; margin-bottom: 5px; display: block; color: var(--text-color);">تصدير حسب يوم الإدخال (التسجيل):</label>
+                            <label
+                                style="font-size: 0.9rem; margin-bottom: 5px; display: block; color: var(--text-color);">تصدير
+                                حسب يوم الإدخال (التسجيل):</label>
                             <div style="display: flex; gap: 5px;">
-                                <input type="date" id="exportDateInput" dir="ltr" style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #ccc;">
-                                <button id="btnExportDate" class="interactive-btn" style="background: #2980b9; color: white; border: none; padding: 8px 12px; border-radius: 8px;">تصدير</button>
+                                <input type="date" id="exportDateInput" dir="ltr"
+                                    style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #ccc;">
+                                <button id="btnExportDate" class="interactive-btn"
+                                    style="background: #2980b9; color: white; border: none; padding: 8px 12px; border-radius: 8px;">تصدير</button>
                             </div>
                         </div>
                     </div>
 
                     <!-- نظام البطاقات (الداشبورد) -->
-                    <div class="traffic-light-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                        
+                    <div class="traffic-light-grid"
+                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+
                         <!-- 🎁 العروض -->
-                        <div class="traffic-card traffic-offers" onclick="showExpiryDetails('Offers')" style="cursor: pointer; background: linear-gradient(135deg, #f1c40f, #f39c12); border: none; box-shadow: 0 4px 10px rgba(243, 156, 18, 0.3);">
+                        <div class="traffic-card traffic-offers" onclick="showExpiryDetails('Offers')"
+                            style="cursor: pointer; background: linear-gradient(135deg, #f1c40f, #f39c12); border: none; box-shadow: 0 4px 10px rgba(243, 156, 18, 0.3);">
                             <div class="traffic-header">
                                 <h3 style="color: #ffffff;">🎁 العروض النشطة</h3>
-                                <span class="subtitle" style="color: #fffaf0; font-weight: bold;">المنتجات داخل العرض</span>
+                                <span class="subtitle" style="color: #fffaf0; font-weight: bold;">المنتجات داخل
+                                    العرض</span>
                             </div>
-                            <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #ffffff;" id="expOffersItems">0</h2>
+                            <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #ffffff;"
+                                id="expOffersItems">0</h2>
                         </div>
 
                         <!-- 🔵 إجمالي الأصناف -->
-                        <div class="traffic-card traffic-total" onclick="showExpiryDetails('Total')" style="cursor: pointer; background: linear-gradient(135deg, #1e3c72, #2a5298); border: none; box-shadow: 0 4px 10px rgba(30, 60, 114, 0.3);">
+                        <div class="traffic-card traffic-total" onclick="showExpiryDetails('Total')"
+                            style="cursor: pointer; background: linear-gradient(135deg, #1e3c72, #2a5298); border: none; box-shadow: 0 4px 10px rgba(30, 60, 114, 0.3);">
                             <div class="traffic-header">
                                 <h3 style="color: #ffffff;">📦 إجمالي الأصناف المسجلة</h3>
-                                <span class="subtitle" style="color: #d1d8e0; font-weight: bold;">كل البضاعة في النظام</span>
+                                <span class="subtitle" style="color: #d1d8e0; font-weight: bold;">كل البضاعة في
+                                    النظام</span>
                             </div>
-                            <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #ffffff;" id="expTotalItems">0</h2>
+                            <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #ffffff;"
+                                id="expTotalItems">0</h2>
                         </div>
-                        
+
                         <!-- 🔴 Very Critical -->
-                        <div class="traffic-card traffic-red" onclick="showExpiryDetails('Critical')" style="cursor: pointer;">
+                        <div class="traffic-card traffic-red" onclick="showExpiryDetails('Critical')"
+                            style="cursor: pointer;">
                             <div class="traffic-header">
                                 <h3>🔴 حرج جداً</h3>
                                 <span class="subtitle">أقل من 7 أيام</span>
                             </div>
-                            <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #c0392b;" id="expCriticalItems">0</h2>
+                            <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #c0392b;"
+                                id="expCriticalItems">0</h2>
                         </div>
-                        
+
                         <!-- 🟠 Quick Alert -->
-                        <div class="traffic-card traffic-orange" onclick="showExpiryDetails('Alert')" style="cursor: pointer;">
+                        <div class="traffic-card traffic-orange" onclick="showExpiryDetails('Alert')"
+                            style="cursor: pointer;">
                             <div class="traffic-header">
                                 <h3>🟠 تنبيه سريع</h3>
                                 <span class="subtitle">أقل من 30 يوم</span>
                             </div>
-                            <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #d35400;" id="expAlertItems">0</h2>
+                            <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #d35400;"
+                                id="expAlertItems">0</h2>
                         </div>
-                        
+
                         <!-- 🟡 Attention -->
-                        <div class="traffic-card traffic-yellow" onclick="showExpiryDetails('Attention')" style="cursor: pointer;">
+                        <div class="traffic-card traffic-yellow" onclick="showExpiryDetails('Attention')"
+                            style="cursor: pointer;">
                             <div class="traffic-header">
                                 <h3>🟡 انتباه ومراقبة</h3>
                                 <span class="subtitle">1 إلى 3 شهور</span>
                             </div>
-                            <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #f39c12;" id="expAttentionItems">0</h2>
+                            <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #f39c12;"
+                                id="expAttentionItems">0</h2>
                         </div>
-                        
+
                         <!-- 🟢 Safe -->
-                        <div class="traffic-card traffic-green" onclick="showExpiryDetails('Safe')" style="cursor: pointer;">
+                        <div class="traffic-card traffic-green" onclick="showExpiryDetails('Safe')"
+                            style="cursor: pointer;">
                             <div class="traffic-header">
                                 <h3>🟢 مخزون آمن</h3>
                                 <span class="subtitle">3 إلى 6 شهور</span>
                             </div>
-                            <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #27ae60;" id="expSafeItems">0</h2>
+                            <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #27ae60;"
+                                id="expSafeItems">0</h2>
                         </div>
 
                         <!-- 🔵 Far Date -->
-                        <div class="traffic-card traffic-blue" onclick="showExpiryDetails('Far')" style="cursor: pointer;">
+                        <div class="traffic-card traffic-blue" onclick="showExpiryDetails('Far')"
+                            style="cursor: pointer;">
                             <div class="traffic-header">
                                 <h3>🔵 تاريخ بعيد</h3>
                                 <span class="subtitle">6 شهور أو أكثر</span>
                             </div>
-                            <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #2980b9;" id="expFarItems">0</h2>
+                            <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #2980b9;"
+                                id="expFarItems">0</h2>
                         </div>
                     </div>
-                    
+
                     <!-- منطقة عرض التفاصيل (مخفية افتراضياً) -->
-                    <div id="expiryDetailsSection" style="display: none; margin-top: 20px; border-top: 2px solid var(--border); padding-top: 20px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div id="expiryDetailsSection"
+                        style="display: none; margin-top: 20px; border-top: 2px solid var(--border); padding-top: 20px;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                             <h3 id="detailsTitle" style="color: var(--primary);">التفاصيل</h3>
                             <div style="display: flex; gap: 10px;">
-                                <button id="exportCurrentListBtn" class="interactive-btn" style="background: #27ae60; color: white; border: none; padding: 6px 12px; border-radius: 8px;">📊 تصدير Excel</button>
-                                <button onclick="closeExpiryDetails()" class="interactive-btn" style="background: #c0392b; color: white; border: none; padding: 6px 12px; border-radius: 8px;">❌ إغلاق</button>
+                                <button id="exportCurrentListBtn" class="interactive-btn"
+                                    style="background: #27ae60; color: white; border: none; padding: 6px 12px; border-radius: 8px;">📊
+                                    تصدير Excel</button>
+                                <button onclick="closeExpiryDetails()" class="interactive-btn"
+                                    style="background: #c0392b; color: white; border: none; padding: 6px 12px; border-radius: 8px;">❌
+                                    إغلاق</button>
                             </div>
                         </div>
-                        <div class="traffic-list scroll-list" id="detailsList" style="max-height: 400px; background: var(--bg-light); border-radius: 10px; padding: 10px; border: 1px solid var(--border);">
+                        <div class="traffic-list scroll-list" id="detailsList"
+                            style="max-height: 400px; background: var(--bg-light); border-radius: 10px; padding: 10px; border: 1px solid var(--border);">
                             <!-- يتم حقن العناصر هنا -->
                         </div>
                     </div>
@@ -562,31 +656,45 @@
         </section>
 
         <!-- ⭐ شاشة محضر تسجيل بضاعة (Ledger Modal) -->
-        <div id="ledgerModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
-            <div class="modal-content" style="background: #ffffff; width: 100%; max-width: 900px; border-radius: 15px; padding: 20px; max-height: 90vh; overflow-y: auto; position: relative;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid var(--border); padding-bottom: 10px;">
+        <div id="ledgerModal" class="modal-overlay"
+            style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
+            <div class="modal-content"
+                style="background: #ffffff; width: 100%; max-width: 900px; border-radius: 15px; padding: 20px; max-height: 90vh; overflow-y: auto; position: relative;">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid var(--border); padding-bottom: 10px;">
                     <h2 style="color: var(--primary); margin: 0;">📝 إذن استلام وتسجيل بضاعة</h2>
-                    <span class="close-modal" onclick="closeLedgerModal()" style="font-size: 2rem; cursor: pointer; color: #c0392b;">&times;</span>
+                    <span class="close-modal" onclick="closeLedgerModal()"
+                        style="font-size: 2rem; cursor: pointer; color: #c0392b;">&times;</span>
                 </div>
-                
-                <div class="ledger-header-info" style="display: flex; gap: 15px; margin-bottom: 20px; background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+
+                <div class="ledger-header-info"
+                    style="display: flex; gap: 15px; margin-bottom: 20px; background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                     <div style="flex: 1;">
-                        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: var(--primary);">تاريخ التسجيل <span style="color:red;">*</span></label>
-                        <input type="date" id="ledgerRegDate" dir="ltr" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
+                        <label
+                            style="display: block; margin-bottom: 5px; font-weight: bold; color: var(--primary);">تاريخ
+                            التسجيل <span style="color:red;">*</span></label>
+                        <input type="date" id="ledgerRegDate" dir="ltr"
+                            style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
                     </div>
                     <div style="flex: 1;">
-                        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: var(--primary);">اسم المسجِّل <span style="color:red;">*</span></label>
-                        <input type="text" id="ledgerRegistrarName" placeholder="اسمك" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: var(--primary);">اسم
+                            المسجِّل <span style="color:red;">*</span></label>
+                        <input type="text" id="ledgerRegistrarName" placeholder="اسمك" required
+                            style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
                     </div>
                     <div style="flex: 1;">
-                        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: var(--primary);">اسم المستلم <span style="color:red;">*</span></label>
-                        <input type="text" id="ledgerReceiverName" placeholder="اسم المستلم" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: var(--primary);">اسم
+                            المستلم <span style="color:red;">*</span></label>
+                        <input type="text" id="ledgerReceiverName" placeholder="اسم المستلم" required
+                            style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
                     </div>
                 </div>
 
-                <div class="ledger-add-item-form" style="border: 2px dashed #3498db; padding: 15px; border-radius: 10px; margin-bottom: 20px; background: #f8f9fa;">
+                <div class="ledger-add-item-form"
+                    style="border: 2px dashed #3498db; padding: 15px; border-radius: 10px; margin-bottom: 20px; background: #f8f9fa;">
                     <h4 style="margin-bottom: 15px; margin-top: 0; color: #3498db;">➕ إضافة منتج للمحضر</h4>
-                    <div class="expiry-form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                    <div class="expiry-form-grid"
+                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
                         <div style="grid-column: span 2;">
                             <label>اسم المنتج <span style="color:red;">*</span></label>
                             <input type="text" id="ledgerProdName" placeholder="اسم المنتج">
@@ -608,12 +716,16 @@
                             <input type="text" id="ledgerProdNotes" placeholder="اختياري">
                         </div>
                     </div>
-                    <button id="addLedgerItemBtn" class="interactive-btn" style="width: 100%; background: #3498db; color: white; border: none; padding: 12px; border-radius: 10px; font-weight: bold; font-size: 1.1rem; margin-top: 15px;">إضافة للقائمة 👇</button>
+                    <button id="addLedgerItemBtn" class="interactive-btn"
+                        style="width: 100%; background: #3498db; color: white; border: none; padding: 12px; border-radius: 10px; font-weight: bold; font-size: 1.1rem; margin-top: 15px;">إضافة
+                        للقائمة 👇</button>
                 </div>
 
                 <div class="ledger-cart">
-                    <h4 style="margin-bottom: 10px; margin-top: 0; color: var(--text-color);">📋 سلة المنتجات المضافة (<span id="ledgerCartCount">0</span>)</h4>
-                    <div class="table-responsive" style="max-height: 300px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 15px; background: white;">
+                    <h4 style="margin-bottom: 10px; margin-top: 0; color: var(--text-color);">📋 سلة المنتجات المضافة
+                        (<span id="ledgerCartCount">0</span>)</h4>
+                    <div class="table-responsive"
+                        style="max-height: 300px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 15px; background: white;">
                         <table class="data-table" style="width: 100%; border-collapse: collapse; text-align: right;">
                             <thead style="background: #f8f9fa; position: sticky; top: 0;">
                                 <tr>
@@ -621,19 +733,25 @@
                                     <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">الكمية</th>
                                     <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">الانتهاء</th>
                                     <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">المكان/المورد</th>
-                                    <th style="padding: 10px; border-bottom: 2px solid #dee2e6; text-align: center;">إجراء</th>
+                                    <th style="padding: 10px; border-bottom: 2px solid #dee2e6; text-align: center;">
+                                        إجراء</th>
                                 </tr>
                             </thead>
                             <tbody id="ledgerCartBody">
-                                <tr><td colspan="5" style="text-align:center; padding: 20px; color: #7f8c8d;">لا توجد منتجات مضافة حتى الآن.</td></tr>
+                                <tr>
+                                    <td colspan="5" style="text-align:center; padding: 20px; color: #7f8c8d;">لا توجد
+                                        منتجات مضافة حتى الآن.</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
-                    <button id="saveLedgerBtn" class="interactive-btn" style="width: 100%; background: #27ae60; color: white; border: none; padding: 15px; border-radius: 10px; font-size: 1.2rem; font-weight: bold; cursor: pointer;">✅ تأكيد وتسجيل استلام البضاعة</button>
+                    <button id="saveLedgerBtn" class="interactive-btn"
+                        style="width: 100%; background: #27ae60; color: white; border: none; padding: 15px; border-radius: 10px; font-size: 1.2rem; font-weight: bold; cursor: pointer;">✅
+                        تأكيد وتسجيل استلام البضاعة</button>
                 </div>
             </div>
         </div>
-        
+
     </main>
 
     <nav class="bottom-nav">
@@ -672,7 +790,8 @@
         <hr>
         <div class="receipt-info">
             <p>التاريخ: <span id="print-date"></span> <span id="print-time"></span></p>
-            <p class="print-booking-row" style="display:none; color: var(--primary);"><strong>تاريخ التسليم:</strong> <span id="print-booking-date"></span></p>
+            <p class="print-booking-row" style="display:none; color: var(--primary);"><strong>تاريخ التسليم:</strong>
+                <span id="print-booking-date"></span></p>
             <p>العميل: <span id="print-customer-name"></span></p>
             <p>الموبايل: <span id="print-phone"></span></p>
             <p class="print-address-row">العنوان: <span id="print-address"></span></p>
@@ -680,7 +799,9 @@
         </div>
         <table class="receipt-table">
             <thead>
-                <tr><th colspan="4" style="background:#f9f9f9; padding:5px;">تفاصيل الطلب</th></tr>
+                <tr>
+                    <th colspan="4" style="background:#f9f9f9; padding:5px;">تفاصيل الطلب</th>
+                </tr>
                 <!-- عناوين الأعمدة اللي كانت ناقصة عشان الفاتورة تتشرح للعميل -->
                 <tr>
                     <th style="width: 40%;">المنتج</th>
@@ -695,7 +816,9 @@
         <div class="receipt-totals">
             <p>إجمالي المنتجات: <b><span id="print-subtotal"></span></b></p>
             <p>الخصم: <b><span id="print-discount"></span></b></p>
-            <p class="print-shipping-row" style="background:#f5f5f5; border:2px dashed #555; border-radius:5px; padding:4px 7px; margin:5px 0;">■ الشحن: <b><span id="print-shipping"></span> ج.م</b></p>
+            <p class="print-shipping-row"
+                style="background:#f5f5f5; border:2px dashed #555; border-radius:5px; padding:4px 7px; margin:5px 0;">■
+                الشحن: <b><span id="print-shipping"></span> ج.م</b></p>
             <div id="print-deposit-container"></div>
             <h3><span id="print-final-label">الإجمالي النهائي</span>: <b><span id="print-final"></span></b></h3>
         </div>
@@ -703,8 +826,10 @@
             <p>طريقة الدفع: <span id="print-payment"></span></p>
             <p id="print-seller-name">البائع: ...........................</p>
 
-            <div style="margin-top: 10px; font-size: 11px; color: #555; border-top: 1px dashed #aaa; padding-top: 10px; text-align: center;">
-                <p><span dir="ltr" style="unicode-bidi: embed; font-weight: bold; font-size: 13px;">01080269555</span> 📞</p>
+            <div
+                style="margin-top: 10px; font-size: 11px; color: #555; border-top: 1px dashed #aaa; padding-top: 10px; text-align: center;">
+                <p><span dir="ltr" style="unicode-bidi: embed; font-weight: bold; font-size: 13px;">01080269555</span>
+                    📞</p>
                 <p>سكان الكود لمتابعة صفحاتنا وعروضنا الحصرية 👇</p>
                 <img src="images/qr-code.png" style="max-width: 140px; margin-top: 5px;" alt="QR Code">
             </div>
@@ -721,7 +846,7 @@
 
     <div id="zoneModal" class="modal-overlay">
         <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
-           <h3>📍 إدارة المناطق</h3>
+            <h3>📍 إدارة المناطق</h3>
             <select id="newZoneType" style="margin-bottom: 15px;">
                 <option value="same_day">إسكندرية (نفس اليوم)</option>
                 <option value="next_day">إسكندرية (تاني يوم)</option>
@@ -734,9 +859,9 @@
                 <button id="closeZoneModal" class="btn-cancel">إلغاء</button>
                 <button id="addZoneBtn" class="btn-confirm">حفظ المنطقة</button>
             </div>
-            
+
             <hr style="margin: 15px 0;">
-            
+
             <h4 style="color: var(--secondary); font-size: 1rem; margin-bottom: 5px;">⚓ مناطق الإسكندرية</h4>
             <div id="zonesAlexList" class="data-list-container" style="max-height: 120px; margin-bottom: 15px;"></div>
 
@@ -762,7 +887,8 @@
 
     <div id="financialsModal" class="modal-overlay">
         <div class="modal-content" style="max-width: 90%; max-height: 90vh; overflow-y: auto;">
-            <h3 style="color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 15px;">📊 حسابات المناديب (المالية)</h3>
+            <h3 style="color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 15px;">📊
+                حسابات المناديب (المالية)</h3>
             <div id="financialsDisplayList" class="data-list-container" style="min-height: 150px;">
                 <p class="empty-msg">جاري تحميل الحسابات من السيرفر...</p>
             </div>
@@ -774,16 +900,16 @@
         <div class="modal-content">
             <h3 style="color: var(--primary); margin-bottom: 15px;">✏️ تعديل المنتج</h3>
             <input type="hidden" id="editCatOldName">
-            
+
             <label style="text-align: right; display: block; margin-bottom: 5px;">اسم المنتج:</label>
             <input type="text" id="editCatName" readonly style="background:#eee; cursor:not-allowed;">
-            
+
             <label style="text-align: right; display: block; margin-bottom: 5px;">السعر الأساسي:</label>
             <input type="number" id="editCatPrice" placeholder="السعر الأساسي">
-            
+
             <label style="text-align: right; display: block; margin-bottom: 5px;">سعر العرض:</label>
             <input type="number" id="editCatOfferPrice" placeholder="أدخل السعر في حالة تفعيل العرض">
-            
+
             <div class="modal-actions mt-10">
                 <button id="closeEditCatModal" class="btn-cancel">إلغاء</button>
                 <button id="saveEditCatBtn" class="btn-confirm">حفظ التعديلات</button>
@@ -799,20 +925,26 @@
                     <span class="lock-icon">🔒</span>
                 </div>
                 <h3 style="margin: 0; color: var(--text-dark); font-size: 1.2rem;">منطقة محمية</h3>
-                <p style="margin: 5px 0 0; font-size: 0.85rem; color: #888;">يرجى إدخال كلمة المرور للوصول إلى قاعدة البيانات</p>
+                <p style="margin: 5px 0 0; font-size: 0.85rem; color: #888;">يرجى إدخال كلمة المرور للوصول إلى قاعدة
+                    البيانات</p>
             </div>
-            
+
             <div class="password-input-container">
                 <div style="position: relative;">
-                    <input type="password" id="excelPasswordInput" placeholder="أدخل كلمة المرور" autocomplete="off" class="password-field">
-                    <button type="button" id="togglePasswordVisibility" class="toggle-password-btn" title="إظهار/إخفاء">👁️</button>
+                    <input type="password" id="excelPasswordInput" placeholder="أدخل كلمة المرور" autocomplete="off"
+                        class="password-field">
+                    <button type="button" id="togglePasswordVisibility" class="toggle-password-btn"
+                        title="إظهار/إخفاء">👁️</button>
                 </div>
-                <p id="passwordError" style="color: #e74c3c; font-size: 0.8rem; margin: 5px 0 0; display: none; text-align: center;">❌ كلمة المرور غير صحيحة</p>
+                <p id="passwordError"
+                    style="color: #e74c3c; font-size: 0.8rem; margin: 5px 0 0; display: none; text-align: center;">❌
+                    كلمة المرور غير صحيحة</p>
             </div>
 
             <div class="modal-actions" style="margin-top: 15px;">
                 <button id="closeExcelPasswordModal" class="btn-cancel">إلغاء</button>
-                <button id="confirmExcelPassword" class="btn-confirm" style="background: linear-gradient(135deg, #2e7d32, #43a047); color: white;">فتح 🔓</button>
+                <button id="confirmExcelPassword" class="btn-confirm"
+                    style="background: linear-gradient(135deg, #2e7d32, #43a047); color: white;">فتح 🔓</button>
             </div>
         </div>
     </div>
@@ -824,21 +956,26 @@
         <div class="modal-content" style="max-width: 500px; padding: 20px; background: var(--card);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h3 style="margin: 0; color: var(--primary);">📷 الماسح الضوئي الذكي</h3>
-                <button id="closeScannerModalBtn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--danger);">✖</button>
+                <button id="closeScannerModalBtn"
+                    style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--danger);">✖</button>
             </div>
-            
+
             <!-- حاوية الكاميرا -->
-            <div id="reader" style="width: 100%; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow-sm); border: 2px solid var(--border);"></div>
-            
+            <div id="reader"
+                style="width: 100%; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow-sm); border: 2px solid var(--border);">
+            </div>
+
             <div class="divider">أو إدخال يدوي</div>
             <div style="display: flex; gap: 10px;">
-                <input type="text" id="manualBarcodeInput" placeholder="أدخل رقم الباركود..." style="margin-bottom: 0; font-family: 'Courier New', monospace; font-weight: bold; letter-spacing: 2px;">
+                <input type="text" id="manualBarcodeInput" placeholder="أدخل رقم الباركود..."
+                    style="margin-bottom: 0; font-family: 'Courier New', monospace; font-weight: bold; letter-spacing: 2px;">
                 <button id="manualSearchBtn" class="btn-search interactive-btn">بحث 🔍</button>
             </div>
-            
+
             <div style="margin-top: 15px; text-align: center;">
                 <input type="file" id="barcodeImageUpload" accept="image/*" style="display: none;">
-                <label for="barcodeImageUpload" class="btn-outline interactive-btn" style="display: block; width: 100%; padding: 10px; cursor: pointer; text-align: center; border-radius: var(--radius); font-weight: bold; border: 2px dashed var(--secondary); color: var(--secondary);">
+                <label for="barcodeImageUpload" class="btn-outline interactive-btn"
+                    style="display: block; width: 100%; padding: 10px; cursor: pointer; text-align: center; border-radius: var(--radius); font-weight: bold; border: 2px dashed var(--secondary); color: var(--secondary);">
                     أو ارفع صورة من المعرض 🖼️
                 </label>
             </div>
@@ -847,19 +984,30 @@
 
     <!-- مودال نتيجة المسح (Result Modal) -->
     <div id="scanResultModal" class="modal-overlay">
-        <div class="modal-content text-center" style="max-width: 400px; background: var(--card); border: 3px solid var(--success);">
-            <h2 id="scanResultName" style="font-size: 2rem; color: var(--text-main); margin-bottom: 10px; word-wrap: break-word; line-height: 1.2;">اسم المنتج</h2>
+        <div class="modal-content text-center"
+            style="max-width: 400px; background: var(--card); border: 3px solid var(--success);">
+            <h2 id="scanResultName"
+                style="font-size: 2rem; color: var(--text-main); margin-bottom: 10px; word-wrap: break-word; line-height: 1.2;">
+                اسم المنتج</h2>
             <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
-                <button id="copyProductNameBtn" class="btn-outline interactive-btn" style="padding: 8px 15px; font-size: 0.9rem; border-radius: 20px;">نسخ الاسم 📋</button>
-                <button id="addToCartBtn" class="btn-confirm interactive-btn" style="padding: 8px 15px; font-size: 0.9rem; border-radius: 20px; background: var(--primary); color: white; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">إضافة للفاتورة 🛒</button>
+                <button id="copyProductNameBtn" class="btn-outline interactive-btn"
+                    style="padding: 8px 15px; font-size: 0.9rem; border-radius: 20px;">نسخ الاسم 📋</button>
+                <button id="addToCartBtn" class="btn-confirm interactive-btn"
+                    style="padding: 8px 15px; font-size: 0.9rem; border-radius: 20px; background: var(--primary); color: white; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">إضافة
+                    للفاتورة 🛒</button>
             </div>
             <div style="background: #e8f5e9; border-radius: 15px; padding: 15px; margin-bottom: 20px;">
                 <span style="font-size: 1.2rem; font-weight: bold; color: #2e7d32;">السعر:</span><br>
-                <span id="scanResultPrice" style="font-size: 3rem; font-weight: 900; color: #2e7d32; text-shadow: 1px 1px 2px rgba(0,0,0,0.1);">000</span> <span style="font-size: 1.5rem; color: #2e7d32; font-weight: bold;">ج.م</span>
+                <span id="scanResultPrice"
+                    style="font-size: 3rem; font-weight: 900; color: #2e7d32; text-shadow: 1px 1px 2px rgba(0,0,0,0.1);">000</span>
+                <span style="font-size: 1.5rem; color: #2e7d32; font-weight: bold;">ج.م</span>
             </div>
             <div class="action-grid">
-                <button id="scanAnotherBtn" class="btn-whatsapp interactive-btn" style="flex: 2; font-size: 1.1rem; padding: 12px; background: linear-gradient(135deg, #17a2b8, #0b7dda); box-shadow: 0 6px 20px rgba(23,162,184,0.3);">📸 مسح منتج آخر</button>
-                <button id="closeScanResultBtn" class="btn-cancel interactive-btn" style="flex: 1; padding: 12px; font-weight: bold;">إغلاق</button>
+                <button id="scanAnotherBtn" class="btn-whatsapp interactive-btn"
+                    style="flex: 2; font-size: 1.1rem; padding: 12px; background: linear-gradient(135deg, #17a2b8, #0b7dda); box-shadow: 0 6px 20px rgba(23,162,184,0.3);">📸
+                    مسح منتج آخر</button>
+                <button id="closeScanResultBtn" class="btn-cancel interactive-btn"
+                    style="flex: 1; padding: 12px; font-weight: bold;">إغلاق</button>
             </div>
         </div>
     </div>
@@ -870,4 +1018,5 @@
     <div id="toast-container" class="toast-container"></div>
     <script src="app.js"></script>
 </body>
+
 </html>
