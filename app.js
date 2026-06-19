@@ -2,7 +2,7 @@
 // 🌐 العقل المدبر - سيستم كاندي كلوب (النسخة V13.6 - الشاملة والمحصنة)
 // ==========================================
 
-const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbz6dLvyXzuXhVKKxIt4c5ajIIv8iZtHM_5YRM8bYNuX5vwfs5_wSxP7gcZYOn8xm49OIw/exec";
+const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbwi24io7fKY7nizjIutPBpQvZHBx1O28_hu91QVcdF7PLFqTJ48dNJqFPdbqRuGDKI3Uw/exec";
 
 // ==========================================
 // 1. نظام الإشعارات (Toasts) وقفل الأزرار (Loading)
