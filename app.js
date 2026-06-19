@@ -632,7 +632,7 @@ function renderHistoryList(orders, isLoadMore = false) {
             </div>
             <div style="display: flex; justify-content: space-between; width: 100%; font-size: 0.9rem; color: #666; background: var(--bg-body); padding: 8px; border-radius: 6px;">
                 <span>⏰ ${order.time || '--'}</span>
-                <span>📱 ${order.phone}${order.phone2 ? ' | 📱 ' + order.phone2 : ''}</span>
+                <span>📱 ${order.phone}${(order.phone2 && String(order.phone2).trim() !== '') ? ' | 📱 ' + String(order.phone2).trim() : ''}</span>
                 <span style="font-weight:bold; color: var(--text-dark);">💰 ${order.total} ج.م</span>
             </div>
         `;
@@ -676,13 +676,14 @@ window.printHistoryOrder = function (orderId) {
     console.log("Order Data:", order);
 
     let isOldGift = order.notes && order.notes.includes("هدية");
-    let oType = order.orderType || "";
-    let isBranch = oType.includes('استلام من الفرع') || oType === 'branch' || (order.deliveryType || '').includes('فرع') || (order.deliveryType || '') === 'branch';
+    let oTypeStr = String(order.orderType || "").toLowerCase();
+    let dTypeStr = String(order.deliveryType || "").toLowerCase();
+    let isBranch = oTypeStr.includes('استلام') || oTypeStr.includes('فرع') || oTypeStr === 'branch' || dTypeStr.includes('استلام') || dTypeStr.includes('فرع') || dTypeStr === 'branch';
 
     let printLogo = document.getElementById('print-logo');
     if (printLogo) {
         let pay = order.payment || "";
-        let isGovShipping = oType === 'gov_shipping' || oType.includes('محافظات') || (order.deliveryType || '') === 'gov_shipping';
+        let isGovShipping = oTypeStr === 'gov_shipping' || oTypeStr.includes('محافظات') || dTypeStr === 'gov_shipping';
         let isDigitalPay = isGovShipping || pay.includes('إنستا') || pay.includes('انستاباي') || pay.includes('انستا باي') || pay.includes('محفظة') || pay.includes('فودافون') || pay.includes('تحويل');
         if (isBranch) {
             printLogo.src = 'images/logo-branch.png';
@@ -696,7 +697,7 @@ window.printHistoryOrder = function (orderId) {
 
     if (document.getElementById('receipt-type')) {
         // ⭐ V15.0: تطبيع النص - إزالة "عادي" من "توصيل منزلي عادي"
-        let typeStr = (oType || "أوردر توصيل").replace("توصيل منزلي عادي", "توصيل منزلي");
+        let typeStr = (order.orderType || "أوردر توصيل").replace("توصيل منزلي عادي", "توصيل منزلي");
         let govStr = order.gov ? order.gov + " - " : "";
         document.getElementById('receipt-type').innerText = isOldGift ? `${govStr}${typeStr} - 🎁 هدية` : `${govStr}${typeStr}`;
     }
@@ -704,7 +705,7 @@ window.printHistoryOrder = function (orderId) {
     if (document.getElementById('print-time')) document.getElementById('print-time').innerText = order.time || '';
 
     let printBookingRow = document.querySelector('.print-booking-row');
-    if (oType.includes('حجز') || oType === 'special_date') {
+    if (oTypeStr.includes('حجز') || oTypeStr === 'special_date') {
         let rDate = order.reservationDate || order.expectedDate || order.specialDate || order.spDate;
         if (rDate) {
             if (printBookingRow) printBookingRow.style.display = 'block';
@@ -734,7 +735,7 @@ window.printHistoryOrder = function (orderId) {
 
     // ⭐ V14.2: إخفاء العنوان للفرع برمجياً - لا يطبع العنوان نهائياً
     let printAddressRow = document.querySelector('.print-address-row');
-    if (oType.includes('استلام من الفرع')) {
+    if (isBranch) {
         if (printAddressRow) printAddressRow.style.display = 'none';
         if (document.getElementById('print-address')) document.getElementById('print-address').innerText = '';
     } else {
@@ -794,7 +795,7 @@ window.printHistoryOrder = function (orderId) {
     let sellerP = document.getElementById('print-seller-name');
     if (sellerP) sellerP.innerText = `الكاشير: ${order.seller || 'غير محدد'}`;
 
-    let isGovShipping = oType === 'gov_shipping' || oType.includes('محافظات') || (order.deliveryType || '') === 'gov_shipping' || oType.includes('شحن');
+    let isGovShipping = oTypeStr === 'gov_shipping' || oTypeStr.includes('محافظات') || dTypeStr === 'gov_shipping' || oTypeStr.includes('شحن');
     if (isGovShipping) {
         document.body.classList.add('print-gov-shipping', 'shipping-mode');
     } else {
@@ -2104,11 +2105,11 @@ window.shareToWhatsAppGroup = function (orderId) {
     }
     text += `*تاريخ إنشاء الأوردر:* ${order.date || new Date().toLocaleDateString('ar-EG')} ⏰ ${order.time || new Date().toLocaleTimeString('ar-EG')}\n`;
     text += `👤 *العميل:* ${_name}\n`;
-    if (!_type.includes('استلام من الفرع') && (_gov || _address)) {
+    if (!_type.includes('استلام') && !_type.includes('فرع') && (_gov || _address)) {
         text += `📍 *العنوان:* ${_gov ? _gov + " - " : ""}${_address}\n`;
     }
     if (_phone) text += `📱 *الموبايل:* ${_phone}\n`;
-    if (order.phone2) text += `📱 *رقم احتياطي:* ${order.phone2}\n`;
+    if (order.phone2 && String(order.phone2).trim() !== '') text += `📱 *رقم احتياطي:* ${String(order.phone2).trim()}\n`;
     text += `💳 *طريقة الدفع:* ${_payment}\n\n`;
     text += `📦 *المنتجات:*\n${_products}\n`;
     let _subtotal = order.subtotal || order.productsTotal || (parseFloat(order.total) - parseFloat(_shipping)) || 0;
