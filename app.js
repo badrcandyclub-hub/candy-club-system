@@ -982,6 +982,7 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
             div.classList.add('confirmed');
             confirmBtn.innerHTML = "✏️";
             calculateTotal();
+            if (typeof window.playSuccessBeep === 'function') window.playSuccessBeep();
             nameInput.readOnly = true;
             priceInput.readOnly = true;
             offerInput.readOnly = true;
@@ -1354,8 +1355,16 @@ if (saveAndPrintBtn) {
             printItemsHtml += `<tr><td>${nDisplay}</td><td>${printP}</td><td>${q}</td><td>${printTotal}</td></tr>`;
         });
 
-        if (productsListText === "") { showToast("لا يمكن حفظ أوردر بدون منتجات!", "error"); return; }
-        if (!isPaymentConfirmed) { showToast("تأكيد طريقة الدفع 🔒", "error"); return; }
+        if (productsListText === "") { 
+            showToast("لا يمكن حفظ أوردر بدون منتجات!", "error"); 
+            if (typeof window.playErrorBeep === 'function') window.playErrorBeep();
+            return; 
+        }
+        if (!isPaymentConfirmed) { 
+            showToast("تأكيد طريقة الدفع 🔒", "error"); 
+            if (typeof window.playErrorBeep === 'function') window.playErrorBeep();
+            return; 
+        }
 
         let phone = document.getElementById('customerPhone') ? document.getElementById('customerPhone').value.trim() : "";
         let name = document.getElementById('customerName') ? document.getElementById('customerName').value : "";
@@ -1365,13 +1374,44 @@ if (saveAndPrintBtn) {
 
         let moderatorSelect = document.getElementById('moderatorSelect');
         let selectedModerator = moderatorSelect ? moderatorSelect.value : "";
-        if (!selectedModerator) { showToast("يرجى اختيار اسم المسؤول عن الأوردر!", "error"); return; }
+        if (!selectedModerator) { 
+            let mel = document.getElementById('moderatorSelect');
+            if(mel){ mel.classList.add('input-error-flash'); mel.addEventListener('change', ()=>mel.classList.remove('input-error-flash'), {once:true}); }
+            showToast("يرجى اختيار اسم المسؤول عن الأوردر!", "error"); 
+            if (typeof window.playErrorBeep === 'function') window.playErrorBeep();
+            return; 
+        }
 
-        if (!phone || phone.length < 9) { showToast("رقم الموبايل غير صحيح!", "error"); return; }
-        if (!name) { showToast("اكتب اسم العميل!", "error"); return; }
-        if (delType === 'normal' && !gov) { showToast("اختر المحافظة!", "error"); return; }
-        if (delType !== 'branch' && addressVal === "") { showToast("برجاء كتابة العنوان بالتفصيل أولاً!", "error"); return; }
+        if (!phone || phone.length < 9) { 
+            let pel = document.getElementById('customerPhone');
+            if(pel){ pel.classList.add('input-error-flash'); pel.addEventListener('input', ()=>pel.classList.remove('input-error-flash'), {once:true}); }
+            showToast("رقم الموبايل غير صحيح!", "error"); 
+            if (typeof window.playErrorBeep === 'function') window.playErrorBeep();
+            return; 
+        }
+        if (!name) { 
+            let nel = document.getElementById('customerName');
+            if(nel){ nel.classList.add('input-error-flash'); nel.addEventListener('input', ()=>nel.classList.remove('input-error-flash'), {once:true}); }
+            showToast("اكتب اسم العميل!", "error"); 
+            if (typeof window.playErrorBeep === 'function') window.playErrorBeep();
+            return; 
+        }
+        if (delType === 'normal' && !gov) { 
+            let gel = document.getElementById('governorate');
+            if(gel){ gel.classList.add('input-error-flash'); gel.addEventListener('change', ()=>gel.classList.remove('input-error-flash'), {once:true}); }
+            showToast("اختر المحافظة!", "error"); 
+            if (typeof window.playErrorBeep === 'function') window.playErrorBeep();
+            return; 
+        }
+        if (delType !== 'branch' && addressVal === "") { 
+            let ael = document.getElementById('address');
+            if(ael){ ael.classList.add('input-error-flash'); ael.addEventListener('input', ()=>ael.classList.remove('input-error-flash'), {once:true}); }
+            showToast("برجاء كتابة العنوان بالتفصيل أولاً!", "error"); 
+            if (typeof window.playErrorBeep === 'function') window.playErrorBeep();
+            return; 
+        }
 
+        if (typeof window.showLoading === 'function') window.showLoading();
         setBtnLoading(saveAndPrintBtn, true);
 
         let finalExpDate = document.querySelector('#deliveryInfo span') ? document.querySelector('#deliveryInfo span').innerText : "";
@@ -1415,6 +1455,8 @@ if (saveAndPrintBtn) {
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
+                if (typeof window.hideLoading === 'function') window.hideLoading();
+                if (typeof window.playRegisterBeep === 'function') window.playRegisterBeep();
                 showToast("✅ تم حفظ الأوردر بنجاح!", "success");
 
                 let isGovShipping = orderTypeLabel === 'gov_shipping' || orderTypeLabel.includes('محافظات') || delType === 'gov_shipping';
@@ -1487,6 +1529,7 @@ if (saveAndPrintBtn) {
                 }, 1000);
 
             }).catch(() => {
+                if (typeof window.hideLoading === 'function') window.hideLoading();
                 showToast("❌ خطأ في الاتصال بالإنترنت", "error");
                 setBtnLoading(saveAndPrintBtn, false, "💾 حفظ وطباعة الفاتورة");
             });
@@ -3749,4 +3792,83 @@ if (btnExportDate) {
         });
     });
 }
+
+// =========================================
+// Advanced UX & System Protection
+// =========================================
+
+window.showLoading = function() {
+    let overlay = document.getElementById('loading-overlay');
+    if (overlay) overlay.classList.remove('loading-overlay-hidden');
+};
+
+window.hideLoading = function() {
+    let overlay = document.getElementById('loading-overlay');
+    if (overlay) overlay.classList.add('loading-overlay-hidden');
+};
+
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playBeep(frequency, type, duration, vol) {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    oscillator.type = type;
+    oscillator.frequency.value = frequency;
+    gainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + duration);
+}
+
+window.playSuccessBeep = function() { playBeep(800, 'sine', 0.1, 0.1); };
+window.playRegisterBeep = function() {
+    playBeep(523.25, 'sine', 0.1, 0.1);
+    setTimeout(() => playBeep(659.25, 'sine', 0.15, 0.1), 100);
+    setTimeout(() => playBeep(783.99, 'sine', 0.2, 0.1), 250);
+};
+window.playErrorBeep = function() { playBeep(200, 'square', 0.3, 0.1); };
+
+window.addEventListener('offline', () => {
+    let bar = document.getElementById('offline-bar');
+    if (bar) bar.style.display = 'block';
+    let saveBtns = document.querySelectorAll('#saveOrderBtn, #saveAndPrintBtn, .interactive-btn');
+    saveBtns.forEach(btn => { if(btn.innerText && btn.innerText.includes('حفظ')) btn.disabled = true; });
+});
+
+window.addEventListener('online', () => {
+    let bar = document.getElementById('offline-bar');
+    if (bar) bar.style.display = 'none';
+    let saveBtns = document.querySelectorAll('#saveOrderBtn, #saveAndPrintBtn, .interactive-btn');
+    saveBtns.forEach(btn => btn.disabled = false);
+});
+
+// Smart Auto-Focus
+document.addEventListener('DOMContentLoaded', () => {
+    let cName = document.getElementById('customerName');
+    let cPhone = document.getElementById('customerPhone');
+    let cAddress = document.getElementById('address');
+    
+    if (cName) {
+        cName.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); if (cPhone) cPhone.focus(); }
+        });
+    }
+    if (cPhone) {
+        cPhone.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); if (cAddress) cAddress.focus(); }
+        });
+    }
+    
+    // Focus Name when Add Order tab is clicked
+    let navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+        if (item.getAttribute('onclick') && item.getAttribute('onclick').includes('create-tab')) {
+            item.addEventListener('click', () => {
+                setTimeout(() => { if (cName) cName.focus(); }, 100);
+            });
+        }
+    });
+});
 
