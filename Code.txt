@@ -202,7 +202,7 @@ function setupCandyClubUX() {
       expirySheet = ss.insertSheet("📥 الاستلامات");
   }
   
-  var expiryHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "المستلم", "الحالة", "تاريخ التسجيل", "اسم المسجل", "ملاحظات", "السعر الأساسي", "سعر العرض"];
+  var expiryHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "اسم المسجل", "تاريخ التسجيل", "المستلم", "ملاحظات", "السعر الأساسي", "سعر العرض", "الحالة"];
   expirySheet.getRange(1, 1, 1, expiryHeaders.length).setValues([expiryHeaders])
              .setBackground("#2980b9").setFontColor("white").setFontFamily(headerFont).setFontSize(14).setFontWeight("bold")
              .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
@@ -384,13 +384,13 @@ function doGet(e) {
             qty: expData[i][1],
             expiryDate: expData[i][2],
             location: expData[i][3],
-            receiver: expData[i][4],
-            status: expData[i][5],
-            regDate: expData[i][6],
-            registrarName: expData[i][7],
-            notes: expData[i][8],
-            originalPrice: expData[i][9],
-            offerPrice: expData[i][10]
+            registrarName: expData[i][4],
+            regDate: expData[i][5],
+            receiver: expData[i][6],
+            notes: expData[i][7],
+            originalPrice: expData[i][8],
+            offerPrice: expData[i][9],
+            status: expData[i][10]
           });
         }
       }
@@ -859,7 +859,7 @@ function doPost(e) {
       var expirySheet = getExpirySheet(ss);
       if (!expirySheet) {
           expirySheet = ss.insertSheet("📥 الاستلامات");
-          var expiryHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "المستلم", "الحالة", "تاريخ التسجيل", "اسم المسجل", "ملاحظات", "السعر الأساسي", "سعر العرض"];
+          var expiryHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "اسم المسجل", "تاريخ التسجيل", "المستلم", "ملاحظات", "السعر الأساسي", "سعر العرض", "الحالة"];
           expirySheet.getRange(1, 1, 1, expiryHeaders.length).setValues([expiryHeaders])
                .setBackground("#2980b9").setFontColor("white").setFontFamily("Cairo").setFontSize(14).setFontWeight("bold")
                .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
@@ -869,13 +869,13 @@ function doPost(e) {
         e.parameter.qty, 
         e.parameter.expiryDate, 
         e.parameter.location, 
-        e.parameter.receiver, 
-        e.parameter.status, 
-        e.parameter.regDate,
         e.parameter.registrarName,
+        e.parameter.regDate,
+        e.parameter.receiver, 
         e.parameter.notes,
         e.parameter.originalPrice || "",
-        e.parameter.offerPrice || ""
+        e.parameter.offerPrice || "",
+        e.parameter.status
       ]);
       return ContentService.createTextOutput("success");
     }
@@ -885,7 +885,7 @@ function doPost(e) {
       var expirySheet = getExpirySheet(ss);
       if (!expirySheet) {
           expirySheet = ss.insertSheet("📥 الاستلامات");
-          var expiryHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "المستلم", "الحالة", "تاريخ التسجيل", "اسم المسجل", "ملاحظات", "السعر الأساسي", "سعر العرض"];
+          var expiryHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "اسم المسجل", "تاريخ التسجيل", "المستلم", "ملاحظات", "السعر الأساسي", "سعر العرض", "الحالة"];
           expirySheet.getRange(1, 1, 1, expiryHeaders.length).setValues([expiryHeaders])
                .setBackground("#2980b9").setFontColor("white").setFontFamily("Cairo").setFontSize(14).setFontWeight("bold")
                .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
@@ -899,13 +899,13 @@ function doPost(e) {
           item.qty,
           item.expiryDate,
           item.location,
-          item.receiver,
-          item.status,
-          item.regDate,
           item.registrarName,
+          item.regDate,
+          item.receiver,
           item.notes,
           item.originalPrice || "",
-          item.offerPrice || ""
+          item.offerPrice || "",
+          item.status
         ]);
       }
       if (rows.length > 0) {
@@ -930,14 +930,19 @@ function doPost(e) {
 
         for (var i = 1; i < expData.length; i++) {
           if (expData[i][0] == targetName && (!targetDate || expData[i][2].toString() == targetDate.toString())) {
-            expirySheet.getRange(i + 1, 6).setValue(newStatus); // Status is now col 6
+            if (newStatus === "Deleted") {
+               expirySheet.deleteRow(i + 1);
+               productName = targetName;
+               break;
+            }
+            expirySheet.getRange(i + 1, 11).setValue(newStatus); // Status is now col 11
             productName = expData[i][0];
             
-            if (e.parameter.originalPrice !== undefined) {
-               expirySheet.getRange(i + 1, 10).setValue(e.parameter.originalPrice); // Col 10
+            if (e.parameter.originalPrice !== undefined && e.parameter.originalPrice !== "") {
+               expirySheet.getRange(i + 1, 9).setValue(e.parameter.originalPrice); // Col 9
             }
-            if (e.parameter.offerPrice !== undefined) {
-               expirySheet.getRange(i + 1, 11).setValue(e.parameter.offerPrice); // Col 11
+            if (e.parameter.offerPrice !== undefined && e.parameter.offerPrice !== "") {
+               expirySheet.getRange(i + 1, 10).setValue(e.parameter.offerPrice); // Col 10
             }
             break;
           }
@@ -951,10 +956,10 @@ function doPost(e) {
             var cData = cSheet.getDataRange().getValues();
             for (var c = 1; c < cData.length; c++) {
                if (cData[c][0] === productName) {
-                  if (newStatus === "Active Display") {
+                  if (newStatus === "في عرض") {
                      cSheet.getRange(c + 1, 3).setValue("TRUE");
                      if (e.parameter.offerPrice) cSheet.getRange(c + 1, 4).setValue(e.parameter.offerPrice);
-                  } else if (newStatus === "Active" || newStatus === "Done/Archived") {
+                  } else if (newStatus === "مش في عرض" || newStatus === "Deleted") {
                      cSheet.getRange(c + 1, 3).setValue("FALSE");
                      cSheet.getRange(c + 1, 4).setValue(""); // مسح سعر العرض
                   }

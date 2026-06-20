@@ -82,7 +82,7 @@ document.querySelectorAll('.nav-item').forEach(btn => {
             // Memory cleanup: Clear expiryData when leaving the tab to free up memory
             if (typeof expiryData !== 'undefined' && expiryData.length > 0) {
                 // Save active offers before clearing so the catalog doesn't break
-                window.cachedActiveOffers = expiryData.filter(item => item.status === 'Active Display').map(item => item.name);
+                window.cachedActiveOffers = expiryData.filter(item => item.status === 'في عرض').map(item => item.name);
                 expiryData = [];
                 
                 const detailsList = document.getElementById('detailsList');
@@ -3143,7 +3143,7 @@ if (addLedgerItemBtn) {
             qty: qty,
             expiryDate: date,
             location: location,
-            status: 'Active',
+            status: 'مش في عرض',
             notes: notes
         };
 
@@ -3271,11 +3271,11 @@ function renderExpiryDashboard() {
     let countSafe = 0;
     let countFar = 0;
 
-    let activeItems = expiryData.filter(item => item.status !== 'Done/Archived');
+    let activeItems = expiryData.filter(item => item.status !== 'Deleted');
 
     activeItems.forEach(item => {
         countTotal++;
-        if (item.status === 'Active Display') countOffers++;
+        if (item.status === 'في عرض') countOffers++;
         const daysRemaining = getDaysRemaining(item.expiryDate);
 
         if (daysRemaining < 7 || isNaN(daysRemaining)) {
@@ -3304,7 +3304,7 @@ window.showExpiryDetails = function (category) {
     let filteredData = [];
     let title = "";
 
-    let activeItems = expiryData.filter(item => item.status !== 'Done/Archived');
+    let activeItems = expiryData.filter(item => item.status !== 'Deleted');
 
     activeItems.forEach(item => {
         const daysRemaining = getDaysRemaining(item.expiryDate);
@@ -3313,7 +3313,7 @@ window.showExpiryDetails = function (category) {
         if (category === 'Total') {
             matches = true;
             title = "📦 إجمالي الأصناف المسجلة";
-        } else if (category === 'Offers' && item.status === 'Active Display') {
+        } else if (category === 'Offers' && item.status === 'في عرض') {
             matches = true;
             title = "🎁 العروض النشطة";
         } else if (category === 'Search') {
@@ -3366,20 +3366,20 @@ window.showExpiryDetails = function (category) {
 
             let rowClass = "expiry-item-row";
             let activeOfferStyle = "";
-            if (item.status === 'Active Display') {
+            if (item.status === 'في عرض') {
                 rowClass += " active-offer";
                 activeOfferStyle = 'style="border: 2px solid #ffeb3b; background: #fffde7;"';
             }
 
-            const offerBtnText = item.status === 'Active Display' ? "إلغاء العرض ⏸" : "إضافة للعروض 🔥";
-            const offerBtnColor = item.status === 'Active Display' ? "#e0e0e0" : "#fff3e0";
-            const offerBtnAction = item.status === 'Active Display' ? "Active" : "Active Display";
+            const offerBtnText = item.status === 'في عرض' ? "إلغاء العرض ⏸" : "إضافة للعروض 🔥";
+            const offerBtnColor = item.status === 'في عرض' ? "#e0e0e0" : "#fff3e0";
+            const offerBtnAction = item.status === 'في عرض' ? "مش في عرض" : "في عرض";
 
             let formattedDate = new Date(item.expiryDate);
             formattedDate = isNaN(formattedDate.getTime()) ? item.expiryDate : formattedDate.toLocaleDateString('ar-EG');
 
             let pricesHtml = "";
-            if (item.status === 'Active Display') {
+            if (item.status === 'في عرض') {
                 pricesHtml = `
                     <div style="background: #fdf2e9; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px dashed #e67e22; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                         <div style="flex: 1; min-width: 120px;">
@@ -3390,7 +3390,7 @@ window.showExpiryDetails = function (category) {
                             <label style="font-size: 0.8rem; color: #d35400; font-weight: bold;">سعر العرض:</label>
                             <input type="number" id="offerPrice_${item.id}" value="${item.offerPrice || ''}" style="margin-bottom: 0; padding: 5px; height: 35px; border: 1px solid #e67e22; background: #fff;">
                         </div>
-                        <button class="btn-save interactive-btn" onclick="saveExpiryOffer('${item.id}', 'Active Display')" style="padding: 5px 15px; height: 35px; align-self: flex-end;">حفظ 💾</button>
+                        <button class="btn-save interactive-btn" onclick="saveExpiryOffer('${item.id}', 'في عرض')" style="padding: 5px 15px; height: 35px; align-self: flex-end;">حفظ 💾</button>
                     </div>
                 `;
             }
@@ -3407,8 +3407,8 @@ window.showExpiryDetails = function (category) {
                     </div>
                     ${pricesHtml}
                     <div class="expiry-item-actions">
-                        <button class="btn-activate-offer interactive-btn" style="background: ${offerBtnColor};" onclick="${item.status === 'Active Display' ? `changeExpiryStatus('${item.id}', '${offerBtnAction}')` : `promptNewOffer('${item.id}')`}">${offerBtnText}</button>
-                        <button class="btn-close-item interactive-btn" onclick="changeExpiryStatus('${item.id}', 'Done/Archived')">تم البيع ✖️</button>
+                        <button class="btn-activate-offer interactive-btn" style="background: ${offerBtnColor};" onclick="${item.status === 'في عرض' ? `changeExpiryStatus('${item.id}', '${offerBtnAction}')` : `promptNewOffer('${item.id}')`}">${offerBtnText}</button>
+                        <button class="btn-close-item interactive-btn" onclick="changeExpiryStatus('${item.id}', 'Deleted')">تم البيع ✖️</button>
                     </div>
                 </div>
             `;
@@ -3500,7 +3500,7 @@ window.promptNewOffer = function (id) {
             showToast("يرجى إدخال السعرين", "warning");
             return;
         }
-        saveExpiryOffer(id, 'Active Display', orig, offer);
+        saveExpiryOffer(id, 'في عرض', orig, offer);
     });
 };
 
@@ -3544,9 +3544,9 @@ window.saveExpiryOffer = function (id, status, origVal, offerVal) {
 // 3. Status Control (دورة حياة العرض)
 window.changeExpiryStatus = function (id, newStatus) {
     let msg = "";
-    if (newStatus === 'Active Display') msg = "هل تريد تفعيل العرض وجعل السطر فسفوري؟ 🔥";
-    else if (newStatus === 'Active') msg = "هل تريد إيقاف العرض وإعادته للحالة الطبيعية؟";
-    else if (newStatus === 'Done/Archived') msg = "هل تم الانتهاء من بيع هذا المنتج؟ سيتم إخفاؤه من هذه الشاشة. ✖️";
+    if (newStatus === 'في عرض') msg = "هل تريد تفعيل العرض وجعل السطر فسفوري؟ 🔥";
+    else if (newStatus === 'مش في عرض') msg = "هل تريد إيقاف العرض وإعادته للحالة الطبيعية؟";
+    else if (newStatus === 'Deleted') msg = "تحذير: سيتم مسح المنتج بالكامل من النظام ولن يظهر مرة أخرى. هل أنت متأكد من إتمام البيع؟ ✖️";
 
     customConfirm(msg, () => {
         showToast("جاري التحديث...", "warning");
@@ -3579,7 +3579,7 @@ function updateCatalogWithOffers() {
     
     let activeOffers = [];
     if (expiryData && expiryData.length > 0) {
-        activeOffers = expiryData.filter(item => item.status === 'Active Display').map(item => item.name);
+        activeOffers = expiryData.filter(item => item.status === 'في عرض').map(item => item.name);
         window.cachedActiveOffers = activeOffers;
     } else {
         activeOffers = window.cachedActiveOffers || [];
@@ -3640,17 +3640,17 @@ async function generateExcel(dataToExport, reportTitle) {
 
         sheet1.columns = [
             { header: 'اسم المنتج', key: 'name', width: 35 },
-            { header: 'السعر الأساسي', key: 'origPrice', width: 15 },
-            { header: 'سعر العرض', key: 'offerPrice', width: 15 },
             { header: 'الكمية', key: 'qty', width: 12 },
             { header: 'تاريخ الانتهاء', key: 'date', width: 18 },
             { header: 'الأيام المتبقية', key: 'days', width: 15 },
-            { header: 'تاريخ التسجيل', key: 'reg', width: 18 },
-            { header: 'اسم المسجل', key: 'regname', width: 22 },
             { header: 'المكان / المورد', key: 'loc', width: 22 },
+            { header: 'اسم المسجل', key: 'regname', width: 22 },
+            { header: 'تاريخ التسجيل', key: 'reg', width: 18 },
             { header: 'المستلم', key: 'rec', width: 18 },
-            { header: 'الحالة', key: 'status', width: 18 },
-            { header: 'ملاحظات', key: 'notes', width: 30 }
+            { header: 'ملاحظات', key: 'notes', width: 30 },
+            { header: 'السعر الأساسي', key: 'origPrice', width: 15 },
+            { header: 'سعر العرض', key: 'offerPrice', width: 15 },
+            { header: 'الحالة', key: 'status', width: 18 }
         ];
 
         sheet1.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
@@ -3696,7 +3696,7 @@ async function generateExcel(dataToExport, reportTitle) {
             newRow.alignment = { vertical: 'middle', horizontal: 'center' };
             newRow.height = 20;
 
-            if (row.status !== 'Done/Archived' && !isNaN(daysRemaining)) {
+            if (row.status !== 'Deleted' && !isNaN(daysRemaining)) {
                 if (daysRemaining < 0) {
                     newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFCCCC' } };
                     newRow.font = { color: { argb: 'FFC0392B' }, bold: true };
@@ -3713,7 +3713,7 @@ async function generateExcel(dataToExport, reportTitle) {
                 }
             }
 
-            if (row.status === 'Done/Archived') {
+            if (row.status === 'Deleted') {
                 newRow.font = { color: { argb: 'FF95A5A6' }, italic: true };
                 newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F4F4' } };
             }
