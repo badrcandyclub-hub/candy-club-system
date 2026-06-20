@@ -585,6 +585,17 @@
                                 id="expTotalItems">0</h2>
                         </div>
 
+                        <!-- ☠️ Expired -->
+                        <div class="traffic-card traffic-darkred" onclick="showExpiryDetails('Expired')"
+                            style="cursor: pointer; background: linear-gradient(135deg, #8b0000, #c0392b); border: none; box-shadow: 0 4px 10px rgba(139, 0, 0, 0.3);">
+                            <div class="traffic-header">
+                                <h3 style="color: #ffffff;">☠️ انتهت الصلاحية</h3>
+                                <span class="subtitle" style="color: #fffaf0; font-weight: bold;">خسارة / إعدام</span>
+                            </div>
+                            <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #ffffff;"
+                                id="expExpiredItems">0</h2>
+                        </div>
+
                         <!-- 🔴 Very Critical -->
                         <div class="traffic-card traffic-red" onclick="showExpiryDetails('Critical')"
                             style="cursor: pointer;">
@@ -638,6 +649,17 @@
                             </div>
                             <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #2980b9;"
                                 id="expFarItems">0</h2>
+                        </div>
+
+                        <!-- ♾️ No Expiry -->
+                        <div class="traffic-card traffic-grey" onclick="showExpiryDetails('NoExpiry')"
+                            style="cursor: pointer; background: linear-gradient(135deg, #7f8c8d, #95a5a6); border: none; box-shadow: 0 4px 10px rgba(127, 140, 141, 0.3);">
+                            <div class="traffic-header">
+                                <h3 style="color: #ffffff;">♾️ بدون صلاحية</h3>
+                                <span class="subtitle" style="color: #fffaf0; font-weight: bold;">أدوات / بدون تاريخ</span>
+                            </div>
+                            <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #ffffff;"
+                                id="expNoExpiryItems">0</h2>
                         </div>
                     </div>
 

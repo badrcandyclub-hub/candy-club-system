@@ -3255,9 +3255,11 @@ if (saveLedgerBtn) {
 // ==========================================
 
 function getDaysRemaining(expiryDateStr) {
+    if (!expiryDateStr || expiryDateStr.toString().includes('بدون')) return 'NoExpiry';
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const expDate = new Date(expiryDateStr);
+    if (isNaN(expDate.getTime())) return 'NoExpiry';
     const timeDiff = expDate.getTime() - today.getTime();
     return Math.ceil(timeDiff / (1000 * 3600 * 24));
 }
@@ -3270,6 +3272,8 @@ function renderExpiryDashboard() {
     let countAttention = 0;
     let countSafe = 0;
     let countFar = 0;
+    let countExpired = 0;
+    let countNoExpiry = 0;
 
     let activeItems = expiryData.filter(item => item.status !== 'Deleted');
 
@@ -3278,7 +3282,11 @@ function renderExpiryDashboard() {
         if (item.status === 'في عرض') countOffers++;
         const daysRemaining = getDaysRemaining(item.expiryDate);
 
-        if (daysRemaining < 7 || isNaN(daysRemaining)) {
+        if (daysRemaining === 'NoExpiry') {
+            countNoExpiry++;
+        } else if (daysRemaining < 0) {
+            countExpired++;
+        } else if (daysRemaining < 7) {
             countCritical++;
         } else if (daysRemaining < 30) {
             countAlert++;
@@ -3293,6 +3301,8 @@ function renderExpiryDashboard() {
 
     if (document.getElementById('expOffersItems')) document.getElementById('expOffersItems').innerText = countOffers;
     if (document.getElementById('expTotalItems')) document.getElementById('expTotalItems').innerText = countTotal;
+    if (document.getElementById('expExpiredItems')) document.getElementById('expExpiredItems').innerText = countExpired;
+    if (document.getElementById('expNoExpiryItems')) document.getElementById('expNoExpiryItems').innerText = countNoExpiry;
     if (document.getElementById('expCriticalItems')) document.getElementById('expCriticalItems').innerText = countCritical;
     if (document.getElementById('expAlertItems')) document.getElementById('expAlertItems').innerText = countAlert;
     if (document.getElementById('expAttentionItems')) document.getElementById('expAttentionItems').innerText = countAttention;
@@ -3322,7 +3332,13 @@ window.showExpiryDetails = function (category) {
                 matches = true;
                 title = `🔍 نتائج البحث عن: "${searchTerm}"`;
             }
-        } else if (category === 'Critical' && (daysRemaining < 7 || isNaN(daysRemaining))) {
+        } else if (category === 'Expired' && daysRemaining !== 'NoExpiry' && daysRemaining < 0) {
+            matches = true;
+            title = "☠️ انتهت الصلاحية";
+        } else if (category === 'NoExpiry' && daysRemaining === 'NoExpiry') {
+            matches = true;
+            title = "♾️ بدون تاريخ صلاحية";
+        } else if (category === 'Critical' && daysRemaining !== 'NoExpiry' && daysRemaining >= 0 && daysRemaining < 7) {
             matches = true;
             title = "🔴 حرج جداً (أقل من 7 أيام)";
         } else if (category === 'Alert' && daysRemaining >= 7 && daysRemaining < 30) {
@@ -3356,13 +3372,26 @@ window.showExpiryDetails = function (category) {
         detailsList.innerHTML = '';
         filteredData.forEach(item => {
             let daysColor = "";
-            if (item.daysRemaining < 0) daysColor = "#c0392b";
-            else if (item.daysRemaining < 7) daysColor = "#e74c3c";
-            else if (item.daysRemaining < 30) daysColor = "#e67e22";
-            else if (item.daysRemaining <= 90) daysColor = "#f39c12";
-            else daysColor = "#27ae60";
-
-            let daysText = item.daysRemaining < 0 ? `منتهي منذ ${Math.abs(item.daysRemaining)} يوم 🚨` : `باقي ${item.daysRemaining} يوم`;
+            let daysText = "";
+            if (item.daysRemaining === 'NoExpiry') {
+                daysColor = "#7f8c8d";
+                daysText = "بدون تاريخ صلاحية ♾️";
+            } else if (item.daysRemaining < 0) {
+                daysColor = "#c0392b";
+                daysText = `منتهي منذ ${Math.abs(item.daysRemaining)} يوم ☠️`;
+            } else if (item.daysRemaining < 7) {
+                daysColor = "#e74c3c";
+                daysText = `باقي ${item.daysRemaining} يوم`;
+            } else if (item.daysRemaining < 30) {
+                daysColor = "#e67e22";
+                daysText = `باقي ${item.daysRemaining} يوم`;
+            } else if (item.daysRemaining <= 90) {
+                daysColor = "#f39c12";
+                daysText = `باقي ${item.daysRemaining} يوم`;
+            } else {
+                daysColor = "#27ae60";
+                daysText = `باقي ${item.daysRemaining} يوم`;
+            }
 
             let rowClass = "expiry-item-row";
             let activeOfferStyle = "";
@@ -3668,15 +3697,13 @@ async function generateExcel(dataToExport, reportTitle) {
         });
 
         sortedData.forEach(row => {
-            const expDate = new Date(row.expiryDate);
-            const timeDiff = expDate.getTime() - today.getTime();
-            let daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
-            let daysFormatted = isNaN(daysRemaining) ? '-' : daysRemaining;
+            let daysRemaining = getDaysRemaining(row.expiryDate);
+            let daysFormatted = daysRemaining === 'NoExpiry' ? 'بدون' : (isNaN(daysRemaining) ? '-' : daysRemaining);
 
-            let formattedRegDate = row.regDate ? new Date(row.regDate).toISOString().split('T')[0] : '';
-            let formattedExpDate = row.expiryDate ? new Date(row.expiryDate).toISOString().split('T')[0] : '';
-            if (formattedRegDate === 'NaN-NaN-NaN') formattedRegDate = row.regDate;
-            if (formattedExpDate === 'NaN-NaN-NaN') formattedExpDate = row.expiryDate;
+            let formattedRegDate = row.regDate ? new Date(row.regDate).toLocaleDateString('en-CA') : '';
+            let formattedExpDate = row.expiryDate ? new Date(row.expiryDate).toLocaleDateString('en-CA') : '';
+            if (formattedRegDate === 'Invalid Date') formattedRegDate = row.regDate;
+            if (formattedExpDate === 'Invalid Date') formattedExpDate = row.expiryDate;
 
             const newRow = sheet1.addRow({
                 name: row.name || '',
@@ -3696,7 +3723,7 @@ async function generateExcel(dataToExport, reportTitle) {
             newRow.alignment = { vertical: 'middle', horizontal: 'center' };
             newRow.height = 20;
 
-            if (row.status !== 'Deleted' && !isNaN(daysRemaining)) {
+            if (row.status !== 'Deleted' && daysRemaining !== 'NoExpiry' && !isNaN(daysRemaining)) {
                 if (daysRemaining < 0) {
                     newRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFCCCC' } };
                     newRow.font = { color: { argb: 'FFC0392B' }, bold: true };
@@ -3760,6 +3787,11 @@ if (btnExportMonth) {
 
         let filtered = expiryData.filter(item => {
             if (!item.expiryDate) return false;
+            let d = new Date(item.expiryDate);
+            if (!isNaN(d.getTime())) {
+                let localStr = d.toLocaleDateString('en-CA').substring(0, 7);
+                return localStr === monthVal;
+            }
             return item.expiryDate.startsWith(monthVal);
         });
 
@@ -3782,7 +3814,12 @@ if (btnExportDate) {
 
         let filtered = expiryData.filter(item => {
             if (!item.regDate) return false;
-            // Handle date formats which might include time
+            // Parse the date to avoid timezone shift issues (e.g. 19T22:00:00Z matching 19 instead of 20)
+            let d = new Date(item.regDate);
+            if (!isNaN(d.getTime())) {
+                let localStr = d.toLocaleDateString('en-CA'); // Gets YYYY-MM-DD in local time
+                return localStr === dateVal;
+            }
             return item.regDate.includes(dateVal);
         });
 
