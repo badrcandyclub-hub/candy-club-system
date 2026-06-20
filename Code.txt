@@ -242,7 +242,7 @@ function buildMonthlyReport(ordersData, targetMonth) {
 
   for (var j = 1; j < ordersData.length; j++) {
     var rowDate = ordersData[j][1] instanceof Date
-      ? Utilities.formatDate(ordersData[j][1], "GMT+2", "yyyy-MM-dd")
+      ? Utilities.formatDate(ordersData[j][1], "Africa/Cairo", "yyyy-MM-dd")
       : (ordersData[j][1] ? ordersData[j][1].toString().replace(/'/g, "").trim() : "");
 
     // فقط سجلات الشهر المطلوب
@@ -330,10 +330,10 @@ function doGet(e) {
               if (id.includes(keyword) || name.includes(keyword) || phone.includes(keyword)) {
                   var rawDate = data[i][1];
                   var formattedDate = rawDate instanceof Date
-                    ? Utilities.formatDate(rawDate, "GMT+2", "yyyy-MM-dd")
+                    ? Utilities.formatDate(rawDate, "Africa/Cairo", "yyyy-MM-dd")
                     : (rawDate ? rawDate.toString().replace(/'/g, "").trim() : "");
                   var formattedResDate = data[i][12] instanceof Date
-                    ? Utilities.formatDate(data[i][12], "GMT+2", "yyyy-MM-dd")
+                    ? Utilities.formatDate(data[i][12], "Africa/Cairo", "yyyy-MM-dd")
                     : (data[i][12] ? data[i][12].toString().replace(/'/g, "").trim() : "");
                   searchResults.push({
                       id: data[i][0], date: formattedDate, time: data[i][2],
@@ -412,7 +412,7 @@ function doGet(e) {
   // ⭐ V15.1: نحدد الشهر المطلوب للتقرير
   // - إذا كان date = "2026-06-01" فمعناه فلتر السجل على يوم 1 يونيو
   // - currentMonth يُستخدم لحساب إحصائيات الشهر
-  var filterDate   = e.parameter.date || Utilities.formatDate(new Date(), "GMT+2", "yyyy-MM-dd");
+  var filterDate   = e.parameter.date || Utilities.formatDate(new Date(), "Africa/Cairo", "yyyy-MM-dd");
   var currentMonth = filterDate.substring(0, 7); // "2026-06"
 
   // ⭐ هل هذا request لتقرير شهر معين (أول يوم في الشهر)؟
@@ -508,7 +508,7 @@ function doGet(e) {
     var uniqueProducts = {};
 
     // ⭐ اليوم الفعلي (للإحصائيات الحقيقية لليوم)
-    var todayReal = Utilities.formatDate(new Date(), "GMT+2", "yyyy-MM-dd");
+    var todayReal = Utilities.formatDate(new Date(), "Africa/Cairo", "yyyy-MM-dd");
     var todayMonth = todayReal.substring(0, 7);
 
     // ⭐ V15.1: بناء التقرير الشهري باستخدام الدالة المستقلة
@@ -533,7 +533,7 @@ function doGet(e) {
     // ⭐ قراءة السجل (history) للـ filterDate المطلوبة
     for (var j = 1; j < data.length; j++) {
       var rowDate = data[j][1] instanceof Date
-        ? Utilities.formatDate(data[j][1], "GMT+2", "yyyy-MM-dd")
+        ? Utilities.formatDate(data[j][1], "Africa/Cairo", "yyyy-MM-dd")
         : (data[j][1] ? data[j][1].toString().replace(/'/g, "").trim() : "");
 
       var status      = data[j][18];
@@ -559,7 +559,7 @@ function doGet(e) {
       }
 
       var formattedResDate = data[j][12] instanceof Date
-        ? Utilities.formatDate(data[j][12], "GMT+2", "yyyy-MM-dd")
+        ? Utilities.formatDate(data[j][12], "Africa/Cairo", "yyyy-MM-dd")
         : (data[j][12] ? data[j][12].toString().replace(/'/g, "").trim() : "");
 
       // ⭐ السجل: يعرض الطلبات حسب filterDate (اليوم المختار في السجل)
@@ -614,7 +614,7 @@ function buildDailyStats(ordersData, targetDate) {
 
   for (var j = 1; j < ordersData.length; j++) {
     var rowDate = ordersData[j][1] instanceof Date
-      ? Utilities.formatDate(ordersData[j][1], "GMT+2", "yyyy-MM-dd")
+      ? Utilities.formatDate(ordersData[j][1], "Africa/Cairo", "yyyy-MM-dd")
       : (ordersData[j][1] ? ordersData[j][1].toString().replace(/'/g, "").trim() : "");
 
     if (rowDate !== targetDate) continue;
@@ -650,8 +650,8 @@ function doPost(e) {
       var tsStr = new Date().getTime().toString();
       var id    = "CANDY-" + tsStr.slice(-6);
       
-      var d = e.parameter.browserDate || Utilities.formatDate(new Date(), "GMT+2", "yyyy-MM-dd");
-      var t = Utilities.formatDate(new Date(), "GMT+2", "hh:mm a");
+      var d = e.parameter.browserDate || Utilities.formatDate(new Date(), "Africa/Cairo", "yyyy-MM-dd");
+      var t = Utilities.formatDate(new Date(), "Africa/Cairo", "hh:mm a");
 
       var row = [
         id, "'" + d, t, e.parameter.platform, e.parameter.customerName, e.parameter.gov, 
@@ -793,7 +793,7 @@ function doPost(e) {
     else if (action === "suspendOrder") {
       var draftSheet = ss.getSheetByName("📂 المعلقات");
       if (!draftSheet) draftSheet = ss.insertSheet("📂 المعلقات");
-      var timestamp = Utilities.formatDate(new Date(), "GMT+2", "yyyy-MM-dd hh:mm:ss a");
+      var timestamp = Utilities.formatDate(new Date(), "Africa/Cairo", "yyyy-MM-dd hh:mm:ss a");
       draftSheet.appendRow([e.parameter.draftId, timestamp, e.parameter.draftJson]);
       return ContentService.createTextOutput("success");
     }
@@ -838,7 +838,7 @@ function doPost(e) {
 
     else if (action === "addOutOfStock") {
       var oosSheet = ss.getSheetByName("⏳ النواقص");
-      var d = Utilities.formatDate(new Date(), "GMT+2", "yyyy-MM-dd hh:mm a");
+      var d = Utilities.formatDate(new Date(), "Africa/Cairo", "yyyy-MM-dd hh:mm a");
       oosSheet.appendRow([e.parameter.customer, "'" + e.parameter.phone, e.parameter.product, e.parameter.reason, d]);
       return ContentService.createTextOutput("success");
     }
