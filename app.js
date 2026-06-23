@@ -1714,6 +1714,13 @@ function renderShippingRoom(history) {
         const pendingOrders = window.pendingOrdersData.filter(o => o.orderType !== 'استلام من الفرع' && (!o.orderType || !o.orderType.includes('حجز')));
         const resOrders = window.pendingOrdersData.filter(o => o.orderType && o.orderType.includes('حجز'));
 
+        // ⭐ Update Reservations Badge
+        const resBadge = document.getElementById('reservationsCountBadge');
+        if (resBadge) {
+            resBadge.innerText = `العدد: ${resOrders.length}`;
+            resBadge.style.display = 'inline-block';
+        }
+
         pendingContainer.innerHTML = '';
         if (pendingOrders.length === 0) pendingContainer.innerHTML = '<p class="empty-msg">لا يوجد أوردرات شحن قيد التجهيز.</p>';
         else pendingOrders.forEach(o => {
@@ -1750,6 +1757,14 @@ function renderShippingRoom(history) {
     // ⭐ قسم أوردرات الفرع (المنفصلة تماماً عن المندوبين)
     if (branchContainer) {
         const branchOrders = window.pendingOrdersData.filter(o => o.orderType === 'استلام من الفرع');
+
+        // ⭐ Update Branch Badge
+        const branchBadge = document.getElementById('branchCountBadge');
+        if (branchBadge) {
+            branchBadge.innerText = `جاهز للاستلام: ${branchOrders.length}`;
+            branchBadge.style.display = 'inline-block';
+        }
+
         branchContainer.innerHTML = '';
         if (branchOrders.length === 0) branchContainer.innerHTML = '<p class="empty-msg">لا يوجد أوردرات استلام فرع حالياً.</p>';
         else branchOrders.forEach(o => {
@@ -1762,6 +1777,14 @@ function renderShippingRoom(history) {
                     <button class="btn-settle interactive-btn" onclick="settleBranchOrder('${o.id}', this)">تم التسليم ✅</button>
                 </div>`;
         });
+    }
+
+    // ⭐ Update Out Orders Badge
+    const outOrdersBadge = document.getElementById('outOrdersCountBadge');
+    if (outOrdersBadge && window.uncollectedOrdersData) {
+        let outCount = window.uncollectedOrdersData.length;
+        outOrdersBadge.innerText = `الاوردرات في الخارج حالياً: ${outCount}`;
+        outOrdersBadge.style.display = 'inline-block';
     }
 }
 

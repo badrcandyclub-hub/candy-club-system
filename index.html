@@ -294,7 +294,10 @@
 
             <!-- ⭐ قسم الحجوزات -->
             <div class="section-card" style="border-right: 4px solid var(--primary);">
-                <h3 class="section-title">📅 طلبات الحجوزات القادمة</h3>
+                <h3 class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>📅 طلبات الحجوزات القادمة</span>
+                    <span id="reservationsCountBadge" style="font-size: 0.85rem; background: var(--primary); color: white; padding: 4px 10px; border-radius: 12px; font-weight: bold;">العدد: 0</span>
+                </h3>
                 <div id="reservationsContainer" class="data-list-container mt-10"
                     style="min-height: 100px; max-height: 250px; overflow-y: auto;">
                     <p class="empty-msg">لا يوجد حجوزات قادمة...</p>
@@ -303,14 +306,20 @@
 
             <!-- ⭐ قسم استلام الفرع المنفصل -->
             <div class="section-card" style="border-right: 4px solid var(--warning);">
-                <h3 class="section-title">🏪 أوردرات استلام الفرع</h3>
+                <h3 class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>🏪 أوردرات استلام الفرع</span>
+                    <span id="branchCountBadge" style="font-size: 0.85rem; background: var(--warning); color: #000; padding: 4px 10px; border-radius: 12px; font-weight: bold;">العدد: 0</span>
+                </h3>
                 <div id="branchOrdersContainer" class="data-list-container mt-10" style="min-height: 100px;">
                     <p class="empty-msg">جاري التحميل...</p>
                 </div>
             </div>
 
             <div class="section-card" style="border-right: 4px solid var(--success);">
-                <h3 class="section-title">✅ تقفيل اليوم (حالة التوصيل)</h3>
+                <h3 class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>✅ تقفيل اليوم (حالة التوصيل)</span>
+                    <span id="outOrdersCountBadge" style="font-size: 0.85rem; background: var(--success); color: white; padding: 4px 10px; border-radius: 12px; font-weight: bold;">الاوردرات في الخارج حالياً: 0</span>
+                </h3>
                 <label>اختر المندوب لعرض عهدته:</label>
                 <!-- ⭐ زرار التأكيد الجديد لمنع العشوائية -->
                 <div style="display:flex; gap:10px; margin-bottom:10px;">
