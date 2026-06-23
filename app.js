@@ -1781,8 +1781,8 @@ function renderShippingRoom(history) {
 
     // ⭐ Update Out Orders Badge
     const outOrdersBadge = document.getElementById('outOrdersCountBadge');
-    if (outOrdersBadge && window.uncollectedOrdersData) {
-        let outCount = window.uncollectedOrdersData.length;
+    if (outOrdersBadge && window.latestServerData && window.latestServerData.shippedOrders) {
+        let outCount = window.latestServerData.shippedOrders.length;
         outOrdersBadge.innerText = `الاوردرات في الخارج حالياً: ${outCount}`;
         outOrdersBadge.style.display = 'inline-block';
     }
