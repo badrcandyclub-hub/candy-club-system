@@ -10,8 +10,13 @@ const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbwi24io7fKY7n
 const orderAudio = new Audio('صوت اوردر.mp3');
 
 function playOrderSound() {
-    // Only play if audio is loaded and allowed by browser
-    orderAudio.play().catch(e => console.log('Audio play failed (maybe needs user interaction):', e));
+    let playPromise = orderAudio.play();
+    if (playPromise !== undefined) {
+        playPromise.catch(e => {
+            console.log('Audio play failed (maybe needs user interaction):', e);
+            alert("🔔 يوجد أوردر جديد قيد التجهيز! \n\n(تنبيه: المتصفح منع تشغيل الصوت. يرجى الضغط في أي مكان في الشاشة لتفعيل الصوت للأوردرات القادمة)");
+        });
+    }
 }
 
 function showToast(message, type = 'success') {
