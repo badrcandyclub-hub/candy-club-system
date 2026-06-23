@@ -944,14 +944,8 @@ function doPost(e) {
 
         for (var i = 1; i < expData.length; i++) {
           if (expData[i][0] == targetName && (!targetDate || expData[i][2].toString() == targetDate.toString())) {
+            // ⭐ الأرشفة: عند الضغط على "تم البيع" (التي ترسل 'Deleted')
             if (newStatus === "Deleted") {
-               expirySheet.deleteRow(i + 1);
-               productName = targetName;
-               break;
-            }
-            
-            // ⭐ الأرشفة: عند الضغط على "تم البيع"
-            if (newStatus === "تم البيع") {
                var archiveSheet = ss.getSheetByName("أرشيف المبيعات");
                if (!archiveSheet) {
                   archiveSheet = ss.insertSheet("أرشيف المبيعات");
