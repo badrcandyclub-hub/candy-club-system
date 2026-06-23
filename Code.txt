@@ -935,6 +935,26 @@ function doPost(e) {
                productName = targetName;
                break;
             }
+            
+            // ⭐ الأرشفة: عند الضغط على "تم البيع"
+            if (newStatus === "تم البيع") {
+               var archiveSheet = ss.getSheetByName("أرشيف المبيعات");
+               if (!archiveSheet) {
+                  archiveSheet = ss.insertSheet("أرشيف المبيعات");
+                  var archiveHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "اسم المسجل", "تاريخ التسجيل", "المستلم", "ملاحظات", "السعر الأساسي", "سعر العرض", "الحالة", "تاريخ البيع/الأرشفة"];
+                  archiveSheet.getRange(1, 1, 1, archiveHeaders.length).setValues([archiveHeaders])
+                       .setBackground("#2c3e50").setFontColor("white").setFontFamily("Cairo").setFontSize(14).setFontWeight("bold")
+                       .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
+               }
+               var rowToArchive = expData[i].slice(0, 11);
+               rowToArchive[10] = "تم البيع";
+               rowToArchive.push(Utilities.formatDate(new Date(), "Africa/Cairo", "yyyy-MM-dd hh:mm a"));
+               archiveSheet.appendRow(rowToArchive);
+               expirySheet.deleteRow(i + 1);
+               productName = targetName;
+               break;
+            }
+
             expirySheet.getRange(i + 1, 11).setValue(newStatus); // Status is now col 11
             productName = expData[i][0];
             
