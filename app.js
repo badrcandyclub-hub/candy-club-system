@@ -5,8 +5,15 @@
 const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbwi24io7fKY7nizjIutPBpQvZHBx1O28_hu91QVcdF7PLFqTJ48dNJqFPdbqRuGDKI3Uw/exec";
 
 // ==========================================
-// 1. نظام الإشعارات (Toasts) وقفل الأزرار (Loading)
+// 1. نظام الإشعارات (Toasts) وقفل الأزرار (Loading) والصوتيات
 // ==========================================
+const orderAudio = new Audio('صوت اوردر.mp3');
+
+function playOrderSound() {
+    // Only play if audio is loaded and allowed by browser
+    orderAudio.play().catch(e => console.log('Audio play failed (maybe needs user interaction):', e));
+}
+
 function showToast(message, type = 'success') {
     const container = document.getElementById('toast-container');
     if (!container) return;
@@ -163,6 +170,27 @@ function loadDataFromServer() {
         .then(res => res.json())
         .then(data => {
             if (syncStatus) { syncStatus.innerText = "متصل"; syncStatus.style.color = "#00C853"; }
+
+            // ⭐ Play sound on new order arrival
+            if (window.isFirstLoad === undefined) {
+                window.isFirstLoad = false;
+                window.lastFilterDate = currentFilterDate;
+            } else {
+                if (window.lastFilterDate === currentFilterDate) {
+                    let oldPendingIds = (window.pendingOrdersData || []).map(o => o.id);
+                    let newPendingIds = (data.pendingOrders || []).map(o => o.id);
+                    let hasNewPending = newPendingIds.some(id => !oldPendingIds.includes(id));
+
+                    let oldHistoryIds = (window.orderHistoryData || []).map(o => o.id);
+                    let newHistoryIds = (data.history || []).map(o => o.id);
+                    let hasNewHistory = newHistoryIds.some(id => !oldHistoryIds.includes(id));
+
+                    if (hasNewPending || hasNewHistory) {
+                        playOrderSound();
+                    }
+                }
+                window.lastFilterDate = currentFilterDate;
+            }
 
             orderHistoryData = data.history || [];
             window.orderHistoryData = orderHistoryData; // ⭐ keep window ref in sync
