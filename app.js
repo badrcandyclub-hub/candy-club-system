@@ -177,15 +177,12 @@ function loadDataFromServer() {
                 window.lastFilterDate = currentFilterDate;
             } else {
                 if (window.lastFilterDate === currentFilterDate) {
-                    let oldPendingIds = (window.pendingOrdersData || []).map(o => o.id);
-                    let newPendingIds = (data.pendingOrders || []).map(o => o.id);
-                    let hasNewPending = newPendingIds.some(id => !oldPendingIds.includes(id));
-
                     let oldHistoryIds = (window.orderHistoryData || []).map(o => o.id);
                     let newHistoryIds = (data.history || []).map(o => o.id);
                     let hasNewHistory = newHistoryIds.some(id => !oldHistoryIds.includes(id));
 
-                    if (hasNewPending || hasNewHistory) {
+                    // تشغيل الصوت فقط إذا نزل الأوردر في السجل (وليس المعلق)
+                    if (hasNewHistory) {
                         playOrderSound();
                     }
                 }
