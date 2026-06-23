@@ -1330,8 +1330,12 @@ if (whatsappReviewBtn) {
 
         let productsText = "";
         document.querySelectorAll('.product-row.confirmed').forEach(row => {
-            let n = row.querySelector('.product-name-input').value, p = row.querySelector('.product-price-input').value, q = row.querySelector('.product-qty-input').value;
-            productsText += `- ${n} (السعر: ${parseFloat(p) || 0}ج) - الكمية: ${q} - الإجمالي: ${(parseFloat(p) || 0) * (parseFloat(q) || 1)} ج.م\n`;
+            let n = row.querySelector('.product-name-input').value;
+            let price = parseFloat(row.querySelector('.product-price-input').value) || 0;
+            let offer = parseFloat(row.querySelector('.product-offer-input').value) || 0;
+            let finalPrice = offer > 0 ? offer : price;
+            let q = parseFloat(row.querySelector('.product-qty-input').value) || 1;
+            productsText += `- ${n} (السعر: ${finalPrice}ج) - الكمية: ${q} - الإجمالي: ${finalPrice * q} ج.م\n`;
         });
         if (productsText === "") productsText = "لم يتم تأكيد أي منتجات.\n";
 
@@ -2204,6 +2208,12 @@ window.shareToWhatsAppGroup = function (orderId) {
         }
     }
     text += `*تاريخ إنشاء الأوردر:* ${order.date || new Date().toLocaleDateString('ar-EG')} ⏰ ${order.time || new Date().toLocaleTimeString('ar-EG')}\n`;
+    
+    let tCount = document.getElementById('todayCount') ? document.getElementById('todayCount').innerText : "0";
+    let mCount = document.getElementById('monthCount') ? document.getElementById('monthCount').innerText : "0";
+    text += `عدد اوردرات اليوم : ${tCount}\n`;
+    text += `عدد اوردرات الشهر : ${mCount}\n`;
+
     text += `👤 *العميل:* ${_name}\n`;
     if (!_type.includes('استلام') && !_type.includes('فرع') && (_gov || _address)) {
         text += `📍 *العنوان:* ${_gov ? _gov + " - " : ""}${_address}\n`;
@@ -2235,8 +2245,12 @@ if (shareOrderBtn) {
         let paymentMethod = document.getElementById('paymentMethod') ? document.getElementById('paymentMethod').value : "";
         let productsListText = "";
         document.querySelectorAll('.product-row.confirmed').forEach(row => {
-            let n = row.querySelector('.product-name-input').value, p = row.querySelector('.product-price-input').value, q = row.querySelector('.product-qty-input').value;
-            productsListText += `${n} - الكمية: ${q} (${(parseFloat(p) || 0) * (parseFloat(q) || 1)}ج)\n`;
+            let n = row.querySelector('.product-name-input').value;
+            let price = parseFloat(row.querySelector('.product-price-input').value) || 0;
+            let offer = parseFloat(row.querySelector('.product-offer-input').value) || 0;
+            let finalPrice = offer > 0 ? offer : price;
+            let q = parseFloat(row.querySelector('.product-qty-input').value) || 1;
+            productsListText += `${n} - الكمية: ${q} (${finalPrice * q}ج)\n`;
         });
         let shipping = document.getElementById('shippingCost') ? document.getElementById('shippingCost').value : 0;
         let rem = document.getElementById('remainingAmountDisplay') ? document.getElementById('remainingAmountDisplay').innerText : (document.getElementById('finalTotalDisplay') ? document.getElementById('finalTotalDisplay').innerText : 0);
