@@ -211,9 +211,23 @@ function setupCandyClubUX() {
   expirySheet.setColumnWidth(1, 120);
   expirySheet.setColumnWidth(2, 220);
 
+  // ============================================================
+  // 9. أرشيف المبيعات
+  // ============================================================
+  var archiveSheet = ss.getSheetByName("أرشيف المبيعات");
+  if (!archiveSheet) {
+      archiveSheet = ss.insertSheet("أرشيف المبيعات");
+      var archiveHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "اسم المسجل", "تاريخ التسجيل", "المستلم", "ملاحظات", "السعر الأساسي", "سعر العرض", "الحالة", "تاريخ البيع/الأرشفة"];
+      archiveSheet.getRange(1, 1, 1, archiveHeaders.length).setValues([archiveHeaders])
+           .setBackground("#2c3e50").setFontColor("white").setFontFamily(headerFont).setFontSize(14).setFontWeight("bold")
+           .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
+      archiveSheet.setRowHeight(1, 45);
+      archiveSheet.setFrozenRows(1);
+  }
+
   calculateFinancials();
 
-  SpreadsheetApp.getUi().alert("✅ تم التحديث الآمن للنظام الشامل V15.2 بنجاح بدون فقدان أي بيانات!");
+  SpreadsheetApp.getUi().alert("✅ تم التحديث الآمن للنظام الشامل V15.2 بنجاح بدون فقدان أي بيانات! وتم إنشاء أرشيف المبيعات.");
 }
 
 // ============================================================
