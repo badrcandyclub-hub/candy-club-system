@@ -178,11 +178,15 @@ function loadDataFromServer() {
             } else {
                 if (window.lastFilterDate === currentFilterDate) {
                     let oldHistoryIds = (window.orderHistoryData || []).map(o => o.id);
-                    let newHistoryIds = (data.history || []).map(o => o.id);
-                    let hasNewHistory = newHistoryIds.some(id => !oldHistoryIds.includes(id));
+                    let newHistory = data.history || [];
+                    
+                    // تشغيل الصوت فقط إذا نزل الأوردر في السجل وكانت حالته "قيد التجهيز"
+                    let hasNewProcessing = newHistory.some(o => 
+                        !oldHistoryIds.includes(o.id) && 
+                        o.status && o.status.includes("تجهيز")
+                    );
 
-                    // تشغيل الصوت فقط إذا نزل الأوردر في السجل (وليس المعلق)
-                    if (hasNewHistory) {
+                    if (hasNewProcessing) {
                         playOrderSound();
                     }
                 }
