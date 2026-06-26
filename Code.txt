@@ -351,7 +351,7 @@ function doGet(e) {
                     : (data[i][12] ? data[i][12].toString().replace(/'/g, "").trim() : "");
                   searchResults.push({
                       id: data[i][0], date: formattedDate, time: data[i][2],
-                      name: data[i][4], phone: phone, address: data[i][6],
+                      name: data[i][4], phone: phone, phone2: data[i][8] ? data[i][8].toString().replace(/'/g, "") : "", address: data[i][6],
                       products: data[i][13], subtotal: data[i][14], discount: data[i][15],
                       shipping: data[i][16], total: parseFloat(data[i][17]) || 0,
                       status: data[i][18], payment: data[i][10], seller: data[i][20],
@@ -560,7 +560,7 @@ function doGet(e) {
       if (status === "تم التوصيل" && driver) {
         response.uncollectedOrders.push({
           id: data[j][0], driver: driver, total: finalTotal, remaining: remainingCash,
-          payment: data[j][10], shipping: data[j][16]
+          payment: data[j][10], shipping: data[j][16], phone2: data[j][8] ? data[j][8].toString().replace(/'/g, "") : ""
         });
       }
 
@@ -568,7 +568,7 @@ function doGet(e) {
       if (status === "في الشحن" && driver) {
         response.shippedOrders.push({
           id: data[j][0], driver: driver, total: finalTotal, remaining: remainingCash,
-          payment: data[j][10], shipping: data[j][16], name: data[j][4], phone: data[j][7].toString().replace(/'/g, ""), address: data[j][6]
+          payment: data[j][10], shipping: data[j][16], name: data[j][4], phone: data[j][7].toString().replace(/'/g, ""), phone2: data[j][8] ? data[j][8].toString().replace(/'/g, "") : "", address: data[j][6]
         });
       }
 
@@ -580,7 +580,7 @@ function doGet(e) {
       if (rowDate === filterDate) {
         response.history.push({
           id: data[j][0], date: rowDate, time: data[j][2], name: data[j][4],
-          phone: data[j][7].toString().replace(/'/g, ""), address: data[j][6],
+          phone: data[j][7].toString().replace(/'/g, ""), phone2: data[j][8] ? data[j][8].toString().replace(/'/g, "") : "", address: data[j][6],
           products: data[j][13], subtotal: data[j][14], discount: data[j][15],
           shipping: data[j][16], total: finalTotal, status: status,
           payment: data[j][10], seller: data[j][20], orderType: data[j][9],
@@ -594,7 +594,7 @@ function doGet(e) {
       if (status === "قيد التجهيز") {
         response.pendingOrders.push({
           id: data[j][0], name: data[j][4],
-          phone: data[j][7].toString().replace(/'/g, ""),
+          phone: data[j][7].toString().replace(/'/g, ""), phone2: data[j][8] ? data[j][8].toString().replace(/'/g, "") : "",
           total: finalTotal, remaining: remainingCash,
           payment: data[j][10], date: rowDate,
           orderType: data[j][9],
