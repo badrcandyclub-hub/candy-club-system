@@ -666,7 +666,7 @@ function renderHistoryList(orders, isLoadMore = false) {
             </div>
             <div style="display: flex; justify-content: space-between; width: 100%; font-size: 0.9rem; color: #666; background: var(--bg-body); padding: 8px; border-radius: 6px;">
                 <span>⏰ ${order.time || '--'}</span>
-                <span>📱 ${order.phone}${(order.phone2 && String(order.phone2).trim() !== '') ? ' | 📱 ' + String(order.phone2).trim() : ''}</span>
+                <span>📱 ${order.phone}${((order.phone2 || order.secondPhone || order.backupPhone || order.altPhone || order.customerPhone2 || order.otherPhone) && String(order.phone2 || order.secondPhone || order.backupPhone || order.altPhone || order.customerPhone2 || order.otherPhone).trim() !== '') ? ' | 📱 ' + String(order.phone2 || order.secondPhone || order.backupPhone || order.altPhone || order.customerPhone2 || order.otherPhone).trim() : ''}</span>
                 <span style="font-weight:bold; color: var(--text-dark);">💰 ${order.total} ج.م</span>
             </div>
         `;
@@ -757,11 +757,12 @@ window.printHistoryOrder = function (orderId) {
     if (document.getElementById('print-customer-name')) document.getElementById('print-customer-name').innerText = order.name || '';
     if (document.getElementById('print-phone')) document.getElementById('print-phone').innerText = order.phone || '';
 
+    let _phone2Val = order.phone2 || order.secondPhone || order.backupPhone || order.altPhone || order.customerPhone2 || order.otherPhone || "";
     let printPhone2Row = document.getElementById('print-phone2-row');
     if (printPhone2Row) {
-        if (order.phone2 && String(order.phone2).trim() !== '') {
+        if (_phone2Val && String(_phone2Val).trim() !== '') {
             printPhone2Row.style.display = 'block';
-            if (document.getElementById('print-phone2')) document.getElementById('print-phone2').innerText = order.phone2;
+            if (document.getElementById('print-phone2')) document.getElementById('print-phone2').innerText = String(_phone2Val).trim();
         } else {
             printPhone2Row.style.display = 'none';
         }
@@ -1341,7 +1342,7 @@ if (whatsappReviewBtn) {
 
         let productsTotal = document.getElementById('productsTotal') ? document.getElementById('productsTotal').value || 0 : 0;
 
-        let phoneStr = phone2 ? `${displayPhone} | 📱 ${phone2}` : displayPhone;
+        let phoneStr = phone2 ? `${displayPhone}\n📱 رقم احتياطي: ${phone2}` : displayPhone;
         let message = `أهلاً بك في كاندي كلوب 🍬\nيرجى مراجعة تفاصيل طلبك:\n\n👤 الاسم: ${displayName}\n📱 الموبايل: ${phoneStr}\n📍 العنوان: ${displayAddress}\n\n🛒 تفاصيل الطلب:\n${productsText}\n`;
         message += `🛍️ إجمالي المنتجات: ${productsTotal} ج.م\n`;
 
@@ -1532,6 +1533,18 @@ if (saveAndPrintBtn) {
 
                 if (document.getElementById('print-customer-name')) document.getElementById('print-customer-name').innerText = name;
                 if (document.getElementById('print-phone')) document.getElementById('print-phone').innerText = phone;
+
+                let p2Val = document.getElementById('phone2') ? document.getElementById('phone2').value.trim() : "";
+                let printPhone2Row = document.getElementById('print-phone2-row');
+                if (printPhone2Row) {
+                    if (p2Val !== '') {
+                        printPhone2Row.style.display = 'block';
+                        if (document.getElementById('print-phone2')) document.getElementById('print-phone2').innerText = p2Val;
+                    } else {
+                        printPhone2Row.style.display = 'none';
+                    }
+                }
+
                 if (document.getElementById('print-address')) document.getElementById('print-address').innerText = addressVal;
                 if (document.getElementById('print-items-body')) document.getElementById('print-items-body').innerHTML = printItemsHtml;
 
@@ -2190,6 +2203,7 @@ window.shareToWhatsAppGroup = function (orderId) {
     let _gov = order.gov || order.governorate || "";
     let _address = order.address || order.customerAddress || order.addr || "";
     let _phone = order.phone || order.customerPhone || order.mobile || "";
+    let _phone2 = order.phone2 || order.secondPhone || order.backupPhone || order.altPhone || order.customerPhone2 || order.otherPhone || "";
     let _payment = order.payment || order.paymentMethod || order.payMethod || "";
     let _products = order.products || order.items || order.productDetails || "";
     let _shipping = parseFloat(order.shipping || order.shippingCost || order.shippingFee || 0);
@@ -2219,7 +2233,7 @@ window.shareToWhatsAppGroup = function (orderId) {
         text += `📍 *العنوان:* ${_gov ? _gov + " - " : ""}${_address}\n`;
     }
     if (_phone) text += `📱 *الموبايل:* ${_phone}\n`;
-    if (order.phone2 && String(order.phone2).trim() !== '') text += `📱 *رقم احتياطي:* ${String(order.phone2).trim()}\n`;
+    if (_phone2 && String(_phone2).trim() !== '') text += `📱 *رقم احتياطي:* ${String(_phone2).trim()}\n`;
     text += `💳 *طريقة الدفع:* ${_payment}\n\n`;
     text += `📦 *المنتجات:*\n${_products}\n`;
     let _subtotal = order.subtotal || order.productsTotal || (parseFloat(order.total) - parseFloat(_shipping)) || 0;
