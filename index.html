@@ -887,43 +887,54 @@
     </div>
 
     <div id="zoneModal" class="modal-overlay">
-        <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
-            <h3>📍 إدارة المناطق</h3>
-            <select id="newZoneType" style="margin-bottom: 15px;">
-                <option value="same_day">إسكندرية (نفس اليوم)</option>
-                <option value="next_day">إسكندرية (تاني يوم)</option>
-                <option value="gov">محافظات</option>
-            </select>
-            <input type="text" id="newZoneName" placeholder="اسم المنطقة">
-            <input type="number" id="newZonePrice" placeholder="سعر الشحن">
-            <input type="text" id="newZoneDuration" placeholder="مدة التوصيل">
-            <div class="modal-actions">
-                <button id="closeZoneModal" class="btn-cancel">إلغاء</button>
-                <button id="addZoneBtn" class="btn-confirm">حفظ المنطقة</button>
+        <div class="modal-content" style="max-height: 90vh; overflow-y: auto; max-width: 700px;">
+            <h3 style="color: var(--primary); border-bottom: 2px solid var(--border); padding-bottom: 10px; margin-bottom: 15px;">📍 إدارة المناطق</h3>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 15px; background: var(--bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border);">
+                <select id="newZoneType" style="margin-bottom: 0;">
+                    <option value="same_day">إسكندرية (نفس اليوم)</option>
+                    <option value="next_day">إسكندرية (تاني يوم)</option>
+                    <option value="gov">محافظات</option>
+                </select>
+                <input type="text" id="newZoneName" placeholder="اسم المنطقة" style="margin-bottom: 0;">
+                <input type="number" id="newZonePrice" placeholder="سعر الشحن" style="margin-bottom: 0;">
+                <input type="text" id="newZoneDuration" placeholder="مدة التوصيل" style="margin-bottom: 0;">
+            </div>
+            
+            <div class="modal-actions" style="margin-bottom: 20px;">
+                <button id="addZoneBtn" class="btn-confirm" style="flex: 2;">حفظ المنطقة 💾</button>
+                <button id="closeZoneModal" class="btn-cancel" style="flex: 1;">إغلاق</button>
             </div>
 
-            <hr style="margin: 15px 0;">
-
-            <h4 style="color: var(--secondary); font-size: 1rem; margin-bottom: 5px;">⚓ مناطق الإسكندرية</h4>
-            <div id="zonesAlexList" class="data-list-container" style="max-height: 120px; margin-bottom: 15px;"></div>
-
-            <h4 style="color: var(--primary); font-size: 1rem; margin-bottom: 5px;">🚚 المحافظات</h4>
-            <div id="zonesGovList" class="data-list-container" style="max-height: 120px;"></div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                    <h4 style="color: var(--secondary); font-size: 1rem; margin-bottom: 8px;">⚓ مناطق الإسكندرية</h4>
+                    <div id="zonesAlexList" class="data-list-container" style="max-height: 250px; display: flex; flex-direction: column; gap: 8px; background: transparent; border: none; padding: 0;"></div>
+                </div>
+                <div>
+                    <h4 style="color: var(--warning); font-size: 1rem; margin-bottom: 8px;">🚚 المحافظات</h4>
+                    <div id="zonesGovList" class="data-list-container" style="max-height: 250px; display: flex; flex-direction: column; gap: 8px; background: transparent; border: none; padding: 0;"></div>
+                </div>
+            </div>
         </div>
     </div>
 
     <div id="driverModal" class="modal-overlay">
-        <div class="modal-content">
-            <h3>🛵 إدارة المناديب</h3>
-            <input type="text" id="newDriverName" placeholder="اسم المندوب">
-            <input type="tel" id="newDriverPhone" placeholder="رقم الموبايل">
-            <div class="modal-actions">
-                <button id="closeDriverModal" class="btn-cancel">إلغاء</button>
-                <button id="addDriverBtn" class="btn-confirm">حفظ المندوب</button>
+        <div class="modal-content" style="max-width: 600px;">
+            <h3 style="color: var(--primary); border-bottom: 2px solid var(--border); padding-bottom: 10px; margin-bottom: 15px;">🛵 إدارة المناديب</h3>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 15px; background: var(--bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border);">
+                <input type="text" id="newDriverName" placeholder="اسم المندوب" style="margin-bottom: 0; flex: 1;">
+                <input type="tel" id="newDriverPhone" placeholder="رقم الموبايل" style="margin-bottom: 0; flex: 1;">
             </div>
-            <hr style="margin: 15px 0;">
-            <h4 style="color: #555; font-size: 0.95rem; margin-bottom: 10px;">🛵 المناديب المسجلين:</h4>
-            <div id="driversDisplayList" class="data-list-container" style="max-height: 150px;"></div>
+            
+            <div class="modal-actions" style="margin-bottom: 20px;">
+                <button id="addDriverBtn" class="btn-confirm" style="flex: 2;">حفظ المندوب 💾</button>
+                <button id="closeDriverModal" class="btn-cancel" style="flex: 1;">إغلاق</button>
+            </div>
+            
+            <h4 style="color: var(--text-main); font-size: 1rem; margin-bottom: 10px;">🛵 المناديب المسجلين:</h4>
+            <div id="driversDisplayList" class="data-list-container" style="max-height: 200px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; background: transparent; border: none; padding: 0;"></div>
         </div>
     </div>
 

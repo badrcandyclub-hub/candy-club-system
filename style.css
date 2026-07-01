@@ -1365,6 +1365,201 @@ body.dark-mode .data-row:hover { background: #242740; }
 body.dark-mode .gift-switch-container {
     background: #2D1520;
     border-color: var(--primary);
+width: 100%;
+        border-collapse: collapse;
+        margin: 10px 0;
+        font-size: 15px;
+        font-weight: 600 !important;
+    }
+
+    .receipt-table th {
+        background-color: #f0f0f0 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        padding: 8px !important;
+        border: 1px solid #000 !important;
+    }
+
+    .receipt-table th,
+    .receipt-table td {
+        border: 1px solid #000 !important;
+        padding: 8px !important;
+        text-align: center;
+        color: #000000 !important;
+        font-weight: 600 !important;
+    }
+
+    .receipt-totals { margin-top: 10px; font-weight: 600; font-size: 15px; }
+    .receipt-totals p { margin: 4px 0; display: flex; justify-content: flex-start; gap: 5px; align-items: baseline; }
+    .receipt-totals h3 {
+        margin: 5px 0;
+        display: flex;
+        justify-content: flex-start;
+        gap: 5px;
+        font-size: 18px;
+        border-top: 2px solid #000 !important;
+        padding: 8px !important;
+        font-weight: 800 !important;
+        background-color: #000000 !important;
+        color: #ffffff !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    
+    .receipt-totals h3 * {
+        color: #ffffff !important;
+    }
+
+    .print-deposit-row {
+        font-weight: 600 !important;
+        color: #000000 !important;
+    }
+
+    .receipt-footer {
+        text-align: center;
+        margin-top: 15px;
+        font-size: 13px;
+        padding-top: 10px;
+        font-weight: 600;
+    }
+    
+    .print-only hr {
+        border: none !important;
+        border-top: 2px solid #000 !important;
+        margin: 8px 0 !important;
+    }
+
+    .print-only [style*="dashed"],
+    .print-only [style*="dotted"] {
+        border-style: solid !important;
+        border-color: #000000 !important;
+    }
+
+    .print-shipping-row {
+        border: 2px solid #000 !important;
+    }
+
+    /* Force remove borders from footer and ALL its children */
+    .print-only .receipt-footer, 
+    .print-only .receipt-footer *,
+    .print-only .receipt-footer [style*="dashed"],
+    .print-only .receipt-footer [style*="dotted"],
+    .print-only #print-footer,
+    .print-only #print-footer *,
+    .print-only #print-qr-code,
+    .print-only .print-qr-container,
+    .print-only .print-qr-container * {
+        border: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+    }
+}
+/* =========================================
+   17. الوضع الليلي (Dark Mode)
+   ========================================= */
+body.dark-mode {
+    --bg:         #0F1117;
+    --card:       #1A1D2E;
+    --white:      #1A1D2E;
+    --border:     #2D3150;
+    --text-main:  #E8EAF6;
+    --text-muted: #8892B0;
+    --text-light: #5A6380;
+    --shadow:     0 6px 24px rgba(0,0,0,0.35);
+    --shadow-lg:  0 12px 40px rgba(0,0,0,0.5);
+}
+
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea {
+    background: #242740;
+    color: var(--text-main);
+    border-color: var(--border);
+}
+
+body.dark-mode input::placeholder,
+body.dark-mode textarea::placeholder { color: var(--text-light); }
+
+body.dark-mode .section-card,
+body.dark-mode .app-header,
+body.dark-mode .bottom-nav,
+body.dark-mode .modal-content,
+body.dark-mode .toast {
+    background: var(--card);
+    border-color: var(--border);
+}
+
+body.dark-mode .toast { color: var(--text-main); }
+
+body.dark-mode label { color: var(--text-muted); }
+
+body.dark-mode .total-item { color: var(--text-muted); }
+
+body.dark-mode .total-item input {
+    background: #242740;
+    color: var(--text-main);
+    border-color: var(--border);
+}
+
+body.dark-mode .data-list-container,
+body.dark-mode .payment-section,
+body.dark-mode .totals-box {
+    background: #13151F;
+    border-color: var(--border);
+}
+
+body.dark-mode .empty-msg {
+    background: #13151F;
+    color: var(--text-light);
+    border-color: var(--border);
+}
+
+body.dark-mode .btn-suspended,
+body.dark-mode .btn-add-pro {
+    background: #242740;
+    color: var(--text-muted);
+    border-color: var(--border);
+}
+
+body.dark-mode .btn-outline {
+    background: transparent;
+    color: var(--text-muted);
+    border-color: var(--border);
+}
+
+body.dark-mode .btn-cancel {
+    background: #242740;
+    color: var(--text-muted);
+    border-color: var(--border);
+}
+
+body.dark-mode .product-row {
+    background: #242740;
+    border-color: var(--border);
+}
+
+body.dark-mode .product-row.confirmed {
+    background: #1a2e1a;
+    border-color: #2e5e2e;
+}
+
+body.dark-mode .product-row.confirmed input {
+    color: #81c784;
+}
+
+body.dark-mode .bottom-nav {
+    box-shadow: 0 -2px 20px rgba(0,0,0,0.4);
+}
+
+body.dark-mode .divider::before,
+body.dark-mode .divider::after { background: var(--border); }
+
+body.dark-mode .data-row { border-bottom-color: var(--border); }
+body.dark-mode .data-row:hover { background: #242740; }
+
+body.dark-mode .gift-switch-container {
+    background: #2D1520;
+    border-color: var(--primary);
 }
 
 body.dark-mode .section-title { color: var(--text-main); border-bottom-color: var(--border); }
@@ -1380,50 +1575,297 @@ body.dark-mode .delivery-prediction {
 }
 
 /* =========================================
-   18. غرفة الشحن
+   12. الشحن والمناديب
    ========================================= */
-.order-checkbox-row {
+.shipping-actions-row {
     display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 13px 10px;
-    border-bottom: 1px solid var(--border);
-    transition: background 0.15s;
-    border-radius: 9px;
+    gap: 10px;
+    margin-bottom: 16px;
 }
 
-body.dark-mode .order-checkbox-row { border-bottom-color: var(--border); }
-.order-checkbox-row:last-child { border-bottom: none; }
-.order-checkbox-row:hover { background: var(--bg); }
-body.dark-mode .order-checkbox-row:hover { background: #242740; }
+.shipping-actions-row .btn-outline {
+    flex: 1;
+    padding: 12px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    border-radius: var(--radius);
+    text-align: center;
+}
 
-.order-checkbox {
+.data-list-container {
+    max-height: 240px;
+    overflow-y: auto;
+    background: var(--bg);
+    border-radius: var(--radius);
+    padding: 6px;
+    border: 1.5px solid var(--border);
+}
+
+/* =========================================
+   🚚 بطاقة الأوردر في قسم الشحن (REDESIGN)
+   ========================================= */
+.shipping-order-card {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    gap: 0 12px;
+    align-items: start;
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 10px;
+    margin-bottom: 8px;
+    transition: box-shadow 0.2s, border-color 0.2s;
+    cursor: pointer;
+    position: relative;
+}
+
+.shipping-order-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 4px 16px var(--primary-glow);
+}
+
+body.dark-mode .shipping-order-card {
+    background: #1A1D2E;
+    border-color: #2a2d40;
+}
+
+body.dark-mode .shipping-order-card:hover {
+    border-color: var(--primary);
+}
+
+.shipping-order-card .soc-checkbox {
     width: 20px !important;
     height: 20px !important;
     margin: 0 !important;
+    margin-top: 3px !important;
     cursor: pointer;
     accent-color: var(--primary);
     flex-shrink: 0;
 }
 
-.order-details-compact {
-    flex: 1;
+.shipping-order-card .soc-body {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
+    min-width: 0;
 }
 
-.order-details-compact .order-id-name {
+.soc-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.soc-id {
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: var(--text-main);
+    font-family: 'Cairo', sans-serif;
+    white-space: nowrap;
+}
+
+.soc-type-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.soc-type-badge.normal  { background: rgba(0,180,216,0.12); color: var(--secondary); }
+.soc-type-badge.gov     { background: rgba(255,140,0,0.12);  color: var(--warning); }
+.soc-type-badge.booking { background: rgba(233,30,140,0.12); color: var(--primary); }
+.soc-type-badge.branch  { background: rgba(0,200,83,0.12);   color: var(--success); }
+
+.soc-name {
+    font-size: 1rem;
     font-weight: 700;
     color: var(--primary);
+    font-family: 'Cairo', sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.soc-info-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    padding: 7px 10px;
+    background: var(--bg);
+    border-radius: 8px;
+}
+
+body.dark-mode .soc-info-row {
+    background: #242740;
+}
+
+.soc-info-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+}
+
+.soc-info-item.highlight {
+    color: var(--text-main);
+    font-weight: 700;
+}
+
+.soc-info-item.money {
+    color: var(--success);
+    font-weight: 800;
     font-size: 0.9rem;
 }
 
-.order-details-compact .order-address-price {
-    font-size: 0.82rem;
+.soc-info-item.remaining {
+    color: var(--danger);
+    font-weight: 800;
+    font-size: 0.9rem;
+}
+
+.soc-address {
+    font-size: 0.8rem;
     color: var(--text-muted);
     display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    line-height: 1.4;
+    border-top: 1px dashed var(--border);
+    padding-top: 6px;
+    margin-top: 2px;
+}
+
+.soc-date-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+
+/* بطاقة الحجوزات والفرع مع أكشن بوتونات */
+.shipping-action-card {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    transition: box-shadow 0.2s;
+}
+
+body.dark-mode .shipping-action-card {
+    background: #1A1D2E;
+    border-color: #2a2d40;
+}
+
+.shipping-action-card .sac-header {
+    display: flex;
     justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.sac-name {
+    font-weight: 800;
+    font-size: 1rem;
+    color: var(--text-main);
+    font-family: 'Cairo', sans-serif;
+}
+
+.sac-id {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.sac-finance-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+    padding: 8px 10px;
+    background: var(--bg);
+    border-radius: 8px;
+    font-size: 0.85rem;
+}
+
+body.dark-mode .sac-finance-row {
+    background: #242740;
+}
+
+.sac-total   { color: var(--text-main); font-weight: 700; }
+.sac-remain  { color: var(--danger); font-weight: 800; font-size: 0.9rem; }
+.sac-phone   { color: var(--secondary); font-weight: 700; }
+.sac-date    { color: var(--primary); font-weight: 700; }
+
+.sac-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.sac-actions button {
+    flex: 1;
+    min-width: 120px;
+    padding: 9px 10px;
+    font-size: 0.85rem;
+    border-radius: 10px;
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Cairo', sans-serif;
+    transition: var(--transition);
+}
+
+.sac-btn-deliver {
+    background: linear-gradient(135deg, var(--success), #00a040);
+    color: white;
+    box-shadow: 0 3px 10px rgba(0,200,83,0.25);
+}
+
+.sac-btn-deliver:hover { filter: brightness(1.1); }
+
+.sac-btn-convert {
+    background: linear-gradient(135deg, var(--secondary), #0090b0);
+    color: white;
+    box-shadow: 0 3px 10px rgba(0,180,216,0.25);
+}
+
+.sac-btn-convert:hover { filter: brightness(1.1); }
+
+/* بطاقة تقفيل المندوب */
+.shipped-order-card {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    gap: 0 12px;
+    align-items: start;
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 10px;
+    margin-bottom: 8px;
+    transition: box-shadow 0.2s;
+}
+
+body.dark-mode .shipped-order-card {
+    background: #1A1D2E;
+    border-color: #2a2d40;
+}
+
+.shipped-order-card:hover {
+    border-color: var(--success);
+    box-shadow: 0 4px 14px rgba(0,200,83,0.15);
 }
 
 /* =========================================
@@ -1746,23 +2188,25 @@ body.dark-mode .financial-order-item {
     background: #1A1D2E;
 }
 .btn-settle {
-    background: #e8f5e9;
-    color: #2e7d32;
-    border: 1px solid #c8e6c9;
-    padding: 4px 8px;
-    border-radius: 6px;
+    background: linear-gradient(135deg, var(--success), #00a040);
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 8px;
     cursor: pointer;
-    font-weight: bold;
-    font-size: 0.75rem;
+    font-weight: 700;
+    font-size: 0.82rem;
     transition: 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 .btn-settle:hover {
-    background: #c8e6c9;
+    filter: brightness(1.1);
+    box-shadow: 0 3px 10px rgba(0,200,83,0.25);
 }
 body.dark-mode .btn-settle {
-    background: #1b3320;
+    background: linear-gradient(135deg, #1b6b3a, #1b4d2e);
     color: #81c784;
-    border-color: #2e5e2e;
 }
 
 /* =========================================

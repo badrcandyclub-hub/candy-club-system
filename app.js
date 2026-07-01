@@ -232,11 +232,15 @@ function loadDataFromServer() {
                 if (container) {
                     let specialClass = z.type === 'next_day' ? 'zone-next-day' : '';
                     container.innerHTML += `
-                        <div class="data-row ${specialClass}" style="align-items:center;">
-                            <div style="flex:1; text-align:right;"><strong>${z.name}</strong> <br> <span class="price-badge">${z.price} ج.م</span> <small style="color:#777;">${z.duration}</small></div>
-                            <div style="display:flex; gap:5px;">
-                                <button type="button" class="btn-outline interactive-btn" style="padding: 4px 8px; font-size:0.8rem;" onclick="editZoneUI('${z.name}', '${z.price}', '${z.type}', '${z.duration}')">✏️</button>
-                                <button type="button" class="interactive-btn" style="padding: 4px 8px; font-size:0.8rem; background:var(--danger); color:white; border:none; border-radius:8px;" onclick="deleteItem('deleteShipping', '${z.name}', '${zoneType}')">❌</button>
+                        <div class="data-row ${specialClass}" style="display: flex; justify-content: space-between; align-items: center; background: var(--white); padding: 10px; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                            <div style="text-align:right;">
+                                <strong style="color: var(--text-main); font-size: 0.95rem;">${z.name}</strong><br>
+                                <span class="price-badge" style="margin-top: 5px; display: inline-block;">${z.price} ج.م</span> 
+                                <small style="color:var(--text-muted); margin-right: 5px; font-weight: bold;">${z.duration}</small>
+                            </div>
+                            <div style="display:flex; flex-direction: column; gap:5px;">
+                                <button type="button" class="btn-outline interactive-btn" style="padding: 4px 10px; font-size:0.8rem; border-radius: 6px;" onclick="editZoneUI('${z.name}', '${z.price}', '${z.type}', '${z.duration}')">تعديل ✏️</button>
+                                <button type="button" class="interactive-btn" style="padding: 4px 10px; font-size:0.8rem; background:var(--danger); color:white; border:none; border-radius:6px;" onclick="deleteItem('deleteShipping', '${z.name}', '${zoneType}')">حذف ❌</button>
                             </div>
                         </div>`;
                 }
@@ -270,11 +274,14 @@ function loadDataFromServer() {
                     if (closeDriverSelect) closeDriverSelect.innerHTML += `<option value="${c.name}">${c.name}</option>`;
                     if (driversDisplayList) {
                         driversDisplayList.innerHTML += `
-                            <div class="data-row" style="align-items:center;">
-                                <div style="flex:1; text-align:right;"><strong>🛵 ${c.name}</strong> <br> <span class="phone-badge">${c.phone}</span></div>
-                                <div style="display:flex; gap:5px;">
-                                    <button type="button" class="btn-outline interactive-btn" style="padding: 4px 8px; font-size:0.8rem;" onclick="editDriverUI('${c.name}', '${c.phone}')">✏️</button>
-                                    <button type="button" class="interactive-btn" style="padding: 4px 8px; font-size:0.8rem; background:var(--danger); color:white; border:none; border-radius:8px;" onclick="deleteItem('deleteDriver', '${c.name}')">❌</button>
+                            <div class="data-row" style="display: flex; flex-direction: column; gap: 10px; background: var(--white); padding: 12px; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); text-align: center;">
+                                <div>
+                                    <strong style="color: var(--primary); font-size: 1.05rem;">🛵 ${c.name}</strong><br>
+                                    <span class="phone-badge" style="margin-top: 5px; display: inline-block;">📱 ${c.phone}</span>
+                                </div>
+                                <div style="display:flex; justify-content: space-between; gap:5px; width: 100%;">
+                                    <button type="button" class="btn-outline interactive-btn" style="flex: 1; padding: 6px; font-size:0.8rem; border-radius: 6px;" onclick="editDriverUI('${c.name}', '${c.phone}')">تعديل ✏️</button>
+                                    <button type="button" class="interactive-btn" style="flex: 1; padding: 6px; font-size:0.8rem; background:var(--danger); color:white; border:none; border-radius:6px;" onclick="deleteItem('deleteDriver', '${c.name}')">حذف ❌</button>
                                 </div>
                             </div>`;
                     }
@@ -1741,31 +1748,48 @@ function renderShippingRoom(history) {
         pendingContainer.innerHTML = '';
         if (pendingOrders.length === 0) pendingContainer.innerHTML = '<p class="empty-msg">لا يوجد أوردرات شحن قيد التجهيز.</p>';
         else pendingOrders.forEach(o => {
+            let badgeClass = "normal";
+            let typeText = o.orderType || "توصيل منزلي";
+            if(typeText.includes("محافظات") || typeText === "gov_shipping") { badgeClass = "gov"; typeText = "محافظات"; }
+            
             pendingContainer.innerHTML += `
-                <div class="order-checkbox-row">
-                    <input type="checkbox" class="order-checkbox pending-checkbox" value="${o.id}">
-                    <div class="order-details-compact">
-                        <span class="order-id-name">${o.id} | ${o.name}</span>
-                        <span class="order-address-price">📱 ${o.phone} | 💰 ${o.total} ج.م</span>
+                <label class="shipping-order-card">
+                    <input type="checkbox" class="soc-checkbox pending-checkbox" value="${o.id}">
+                    <div class="soc-body">
+                        <div class="soc-top">
+                            <span class="soc-id">#${o.id}</span>
+                            <span class="soc-type-badge ${badgeClass}">${typeText}</span>
+                        </div>
+                        <div class="soc-name">${o.name}</div>
+                        <div class="soc-info-row">
+                            <div class="soc-info-item highlight">📱 ${o.phone}</div>
+                            <div class="soc-info-item money">💰 ${o.total} ج.م</div>
+                        </div>
+                        <div class="soc-address">
+                            <span>📍 ${o.address || o.zone || 'بدون عنوان'}</span>
+                        </div>
                     </div>
-                </div>`;
+                </label>`;
         });
 
         resContainer.innerHTML = '';
         if (resOrders.length === 0) resContainer.innerHTML = '<p class="empty-msg">لا يوجد حجوزات قادمة.</p>';
         else resOrders.forEach(o => {
             resContainer.innerHTML += `
-                <div class="financial-order-item" style="border-right: 4px solid var(--primary); margin-bottom: 10px; padding: 10px; background: #fff; border-radius: 8px; border: 1px solid #eee;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <div>
-                            <span style="font-weight:bold;">${o.id} | ${o.name}</span><br>
-                            <span style="font-size:0.85rem; color:var(--primary); font-weight: bold;">📅 ${o.date} | 📱 ${o.phone}</span><br>
-                            <span style="font-size:0.75rem; color:#777;">الإجمالي: ${o.total}ج | المتبقي: <span style="color:var(--danger); font-weight:bold;">${o.remaining}ج</span></span>
-                        </div>
+                <div class="shipping-action-card" style="border-right: 4px solid var(--primary);">
+                    <div class="sac-header">
+                        <span class="sac-name">${o.name}</span>
+                        <span class="sac-id">#${o.id}</span>
                     </div>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn-settle interactive-btn" style="flex: 1; padding: 8px; font-size: 0.85rem; border-radius: 6px; border: none; background: var(--success); color: white; font-weight: bold;" onclick="settleBranchOrder('${o.id}', this)">تم التسليم ✅</button>
-                        <button class="interactive-btn" style="flex: 1.5; padding: 8px; font-size: 0.85rem; border-radius: 6px; border: none; background: var(--secondary); color: white; font-weight: bold;" onclick="convertToNormalDelivery('${o.id}', this)">تحويل لتوصيل عادي 🚚</button>
+                    <div class="sac-finance-row">
+                        <div class="sac-date">📅 ${o.date || 'حجز'}</div>
+                        <div class="sac-phone">📱 ${o.phone}</div>
+                        <div class="sac-total">الإجمالي: ${o.total}ج</div>
+                        <div class="sac-remain">المتبقي: ${o.remaining}ج</div>
+                    </div>
+                    <div class="sac-actions">
+                        <button class="sac-btn-deliver interactive-btn" onclick="settleBranchOrder('${o.id}', this)">تم التسليم ✅</button>
+                        <button class="sac-btn-convert interactive-btn" onclick="convertToNormalDelivery('${o.id}', this)">تحويل لعادي 🚚</button>
                     </div>
                 </div>`;
         });
@@ -1786,12 +1810,19 @@ function renderShippingRoom(history) {
         if (branchOrders.length === 0) branchContainer.innerHTML = '<p class="empty-msg">لا يوجد أوردرات استلام فرع حالياً.</p>';
         else branchOrders.forEach(o => {
             branchContainer.innerHTML += `
-                <div class="financial-order-item" style="border-right: 4px solid var(--warning);">
-                    <div>
-                        <span style="font-weight:bold;">${o.id} | ${o.name}</span><br>
-                        <span style="font-size:0.75rem; color:#777;">الإجمالي: ${o.total}ج | المتبقي للدفع: <span style="color:var(--danger); font-weight:bold;">${o.remaining}ج</span></span>
+                <div class="shipping-action-card" style="border-right: 4px solid var(--warning);">
+                    <div class="sac-header">
+                        <span class="sac-name">${o.name}</span>
+                        <span class="sac-id">#${o.id}</span>
                     </div>
-                    <button class="btn-settle interactive-btn" onclick="settleBranchOrder('${o.id}', this)">تم التسليم ✅</button>
+                    <div class="sac-finance-row">
+                        <div class="sac-phone">📱 ${o.phone}</div>
+                        <div class="sac-total">الإجمالي: ${o.total}ج</div>
+                        <div class="sac-remain">المتبقي: ${o.remaining}ج</div>
+                    </div>
+                    <div class="sac-actions">
+                        <button class="sac-btn-deliver interactive-btn" style="width: 100%;" onclick="settleBranchOrder('${o.id}', this)">تم تسليم الفرع ✅</button>
+                    </div>
                 </div>`;
         });
     }
@@ -1879,13 +1910,19 @@ function renderDriverShippedOrders(shippedOrders, container) {
     } else {
         shippedOrders.forEach(o => {
             container.innerHTML += `
-                <div class="order-checkbox-row">
-                    <input type="checkbox" class="order-checkbox shipped-checkbox" value="${o.id}">
-                    <div class="order-details-compact">
-                        <span class="order-id-name">${o.id} | ${o.name}</span>
-                        <span class="order-address-price">📱 ${o.phone} | 💰 ${o.remaining} ج.م</span>
+                <label class="shipped-order-card">
+                    <input type="checkbox" class="soc-checkbox shipped-checkbox" value="${o.id}">
+                    <div class="soc-body">
+                        <div class="soc-top">
+                            <span class="soc-id">#${o.id}</span>
+                            <span class="soc-name" style="font-size: 0.95rem;">${o.name}</span>
+                        </div>
+                        <div class="soc-info-row">
+                            <div class="soc-info-item highlight">📱 ${o.phone}</div>
+                            <div class="soc-info-item remaining">💰 عهدة: ${o.remaining} ج.م</div>
+                        </div>
                     </div>
-                </div>`;
+                </label>`;
         });
     }
 }
