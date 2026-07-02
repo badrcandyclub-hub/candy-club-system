@@ -96,26 +96,19 @@ document.addEventListener('DOMContentLoaded', () => {
         let items = [];
         const lines = text.split('\n');
         
-        // Basic heuristic: check if line contains any known catalog product name
-        // And try to find numbers in the line for quantity.
-        
         const catalogNames = (window.catalogData || []).map(p => p.name);
         
         lines.forEach(line => {
-            let matchedName = null;
-            // 1. Try to match catalog items
-            for (let name of catalogNames) {
-                if (line.includes(name)) {
-                    matchedName = name;
-                    break;
-                }
-            }
-            
-            // 2. Extract number (qty) from the line
+            let cleanLine = line.trim();
+            if (cleanLine.length < 2) return; // تجاهل السطور الفارغة جداً
+
+            let matchedName = cleanLine;
             let qty = 1;
-            const numbers = line.match(/\d+/g);
+
+            // 1. محاولة استخراج الأرقام (الكمية) أولاً وإزالتها من الاسم
+            const numbers = cleanLine.match(/\d+/g);
             if (numbers && numbers.length > 0) {
-                // Heuristic: usually qty is the first or last small number, or just take the first number < 1000
+                // البحث عن أول رقم معقول للكمية
                 for (let num of numbers) {
                     let n = parseInt(num);
                     if (n > 0 && n < 1000) {
@@ -125,19 +118,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            if (matchedName) {
-                items.push({ name: matchedName, qty: qty });
-            } else if (line.trim().length > 4 && line.trim().length < 50) {
-                // If it looks like an item but didn't match catalog perfectly
-                // Only push if it has some arabic characters
-                const hasArabic = /[\u0600-\u06FF]/.test(line);
-                if (hasArabic) {
-                    items.push({ name: line.trim(), qty: qty });
+            // 2. البحث عن تطابق مع الكتالوج لتصحيح الاسم تلقائياً
+            let foundMatch = false;
+            for (let name of catalogNames) {
+                if (cleanLine.includes(name)) {
+                    matchedName = name;
+                    foundMatch = true;
+                    break;
                 }
+            }
+            
+            // 3. إذا لم يجد تطابقاً كاملاً، نقوم بعرض النص الذي استخرجه كما هو ليتيح للمستخدم التعديل
+            if (!foundMatch) {
+                // تنظيف الاسم من الأرقام ليكون قابلاً للقراءة
+                matchedName = cleanLine.replace(/\d+/g, '').trim();
+            }
+
+            // إذا كان السطر يحتوي على نصوص عربية أو إنجليزية، نعرضه للمراجعة
+            if (matchedName.length > 1 && /[a-zA-Z\u0600-\u06FF]/.test(matchedName)) {
+                items.push({ name: matchedName, qty: qty });
             }
         });
         
-        // Remove duplicates or noise (optional)
+        // إذا فشل الذكاء الاصطناعي تماماً في استخراج أي شيء
+        if (items.length === 0) {
+            items.push({ name: "", qty: 1 }); // سطر فارغ ليكتبه المستخدم
+        }
+        
+        // إزالة التكرار
         return items.filter((item, index, self) => 
             index === self.findIndex((t) => (t.name === item.name))
         );
