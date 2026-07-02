@@ -2413,7 +2413,7 @@ function renderCatalog() {
     container.innerHTML = '';
 
     // فلترة بناءً على البحث
-    currentFilteredCatalog = window.catalogData || [];
+    currentFilteredCatalog = catalogData || [];
     if (catalogSearchQuery.trim() !== "") {
         let q = catalogSearchQuery.trim().toLowerCase();
         currentFilteredCatalog = currentFilteredCatalog.filter(p => p.name.toLowerCase().includes(q));
