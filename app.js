@@ -2380,18 +2380,52 @@ window.pushCatalogUpdate = function (name, price, isOffer, offerPrice) {
     fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData });
 };
 
-// عرض الكتالوج (مع ربط شاشة التعديل الاحترافية)
-function renderCatalog(catalogList) {
+// متغيرات نظام تقسيم صفحات الكتالوج (Pagination)
+let catalogCurrentPage = 1;
+const CATALOG_ITEMS_PER_PAGE = 50;
+let catalogSearchQuery = "";
+let currentFilteredCatalog = [];
+
+function updateCatalogPaginationUI() {
+    let totalPages = Math.ceil(currentFilteredCatalog.length / CATALOG_ITEMS_PER_PAGE) || 1;
+    let prevBtn = document.getElementById('catalogPrevPage');
+    let nextBtn = document.getElementById('catalogNextPage');
+    let pageInfo = document.getElementById('catalogPageInfo');
+    
+    if (prevBtn) prevBtn.disabled = catalogCurrentPage <= 1;
+    if (nextBtn) nextBtn.disabled = catalogCurrentPage >= totalPages;
+    if (pageInfo) pageInfo.innerText = `صفحة ${catalogCurrentPage} من ${totalPages}`;
+}
+
+// دالة العرض الأساسية للكتالوج (مجهزة بالصفحات والبحث)
+function renderCatalog() {
     let container = document.getElementById('catalogListContainer');
     if (!container) return;
     container.innerHTML = '';
 
-    if (catalogList.length === 0) {
-        container.innerHTML = '<p class="empty-msg">الكتالوج فارغ.</p>';
+    // فلترة بناءً على البحث
+    currentFilteredCatalog = window.catalogData || [];
+    if (catalogSearchQuery.trim() !== "") {
+        let q = catalogSearchQuery.trim().toLowerCase();
+        currentFilteredCatalog = currentFilteredCatalog.filter(p => p.name.toLowerCase().includes(q));
+    }
+
+    if (currentFilteredCatalog.length === 0) {
+        container.innerHTML = '<p class="empty-msg">لا يوجد منتجات لعرضها.</p>';
+        updateCatalogPaginationUI();
         return;
     }
 
-    catalogList.forEach(p => {
+    // حساب المنتجات التي ستظهر في الصفحة الحالية
+    let totalPages = Math.ceil(currentFilteredCatalog.length / CATALOG_ITEMS_PER_PAGE) || 1;
+    if (catalogCurrentPage > totalPages) catalogCurrentPage = totalPages;
+    if (catalogCurrentPage < 1) catalogCurrentPage = 1;
+
+    let startIndex = (catalogCurrentPage - 1) * CATALOG_ITEMS_PER_PAGE;
+    let endIndex = startIndex + CATALOG_ITEMS_PER_PAGE;
+    let itemsToShow = currentFilteredCatalog.slice(startIndex, endIndex);
+
+    itemsToShow.forEach(p => {
         let isOfferActive = p.isOffer === true || p.isOffer === "true" || p.isOffer === 1;
         let div = document.createElement('div');
         div.className = 'data-row catalog-row';
@@ -2438,7 +2472,42 @@ function renderCatalog(catalogList) {
 
         container.appendChild(div);
     });
+
+    updateCatalogPaginationUI();
 }
+
+// أحداث شريط البحث والتنقل
+document.addEventListener('DOMContentLoaded', () => {
+    let sInput = document.getElementById('catalogSearchInput');
+    if (sInput) {
+        sInput.addEventListener('input', (e) => {
+            catalogSearchQuery = e.target.value;
+            catalogCurrentPage = 1; // الرجوع لأول صفحة عند البحث
+            renderCatalog();
+        });
+    }
+
+    let pBtn = document.getElementById('catalogPrevPage');
+    if (pBtn) {
+        pBtn.addEventListener('click', () => {
+            if (catalogCurrentPage > 1) {
+                catalogCurrentPage--;
+                renderCatalog();
+            }
+        });
+    }
+
+    let nBtn = document.getElementById('catalogNextPage');
+    if (nBtn) {
+        nBtn.addEventListener('click', () => {
+            let totalPages = Math.ceil(currentFilteredCatalog.length / CATALOG_ITEMS_PER_PAGE);
+            if (catalogCurrentPage < totalPages) {
+                catalogCurrentPage++;
+                renderCatalog();
+            }
+        });
+    }
+});
 
 let closeEditCatModal = document.getElementById('closeEditCatModal');
 let saveEditCatBtn = document.getElementById('saveEditCatBtn');
@@ -3446,67 +3515,103 @@ function renderExpiryDashboard() {
     if (document.getElementById('expFarItems')) document.getElementById('expFarItems').innerText = countFar;
 }
 
-window.showExpiryDetails = function (category) {
-    let filteredData = [];
+// متغيرات نظام تقسيم صفحات الصلاحيات
+let expiryFilteredData = [];
+let expiryCurrentPage = 1;
+const EXPIRY_ITEMS_PER_PAGE = 50;
+let expiryCurrentCategory = "";
+
+function updateExpiryPaginationUI() {
+    let totalPages = Math.ceil(expiryFilteredData.length / EXPIRY_ITEMS_PER_PAGE) || 1;
+    let prevBtn = document.getElementById('expiryPrevPage');
+    let nextBtn = document.getElementById('expiryNextPage');
+    let pageInfo = document.getElementById('expiryPageInfo');
+    
+    if (prevBtn) prevBtn.disabled = expiryCurrentPage <= 1;
+    if (nextBtn) nextBtn.disabled = expiryCurrentPage >= totalPages;
+    if (pageInfo) pageInfo.innerText = `صفحة ${expiryCurrentPage} من ${totalPages}`;
+}
+
+window.showExpiryDetails = function (category, resetPage = true) {
+    if (resetPage) {
+        expiryCurrentPage = 1;
+    }
+    
     let title = "";
-
     let activeItems = expiryData.filter(item => item.status !== 'Deleted');
+    
+    // إذا كان البحث جديد أو فئة جديدة نقوم بالفلترة من جديد
+    if (resetPage) {
+        let tempFiltered = [];
+        activeItems.forEach(item => {
+            const daysRemaining = getDaysRemaining(item.expiryDate);
+            let matches = false;
 
-    activeItems.forEach(item => {
-        const daysRemaining = getDaysRemaining(item.expiryDate);
-        let matches = false;
-
-        if (category === 'Total') {
-            matches = true;
-            title = "📦 إجمالي الأصناف المسجلة";
-        } else if (category === 'Offers' && item.status === 'في عرض') {
-            matches = true;
-            title = "🎁 العروض النشطة";
-        } else if (category === 'Search') {
-            const searchTerm = document.getElementById('expiryGlobalSearchInput').value.toLowerCase().trim();
-            if (item.name && item.name.toLowerCase().includes(searchTerm)) {
+            if (category === 'Total') {
                 matches = true;
-                title = `🔍 نتائج البحث عن: "${searchTerm}"`;
+                title = "📦 إجمالي الأصناف المسجلة";
+            } else if (category === 'Offers' && item.status === 'في عرض') {
+                matches = true;
+                title = "🎁 العروض النشطة";
+            } else if (category === 'Search') {
+                const searchTerm = document.getElementById('expiryGlobalSearchInput').value.toLowerCase().trim();
+                if (item.name && item.name.toLowerCase().includes(searchTerm)) {
+                    matches = true;
+                    title = `🔍 نتائج البحث عن: "${searchTerm}"`;
+                }
+            } else if (category === 'Expired' && daysRemaining !== 'NoExpiry' && daysRemaining < 0) {
+                matches = true;
+                title = "☠️ انتهت الصلاحية";
+            } else if (category === 'NoExpiry' && daysRemaining === 'NoExpiry') {
+                matches = true;
+                title = "♾️ بدون تاريخ صلاحية";
+            } else if (category === 'Critical' && daysRemaining !== 'NoExpiry' && daysRemaining >= 0 && daysRemaining < 7) {
+                matches = true;
+                title = "🔴 حرج جداً (أقل من 7 أيام)";
+            } else if (category === 'Alert' && daysRemaining >= 7 && daysRemaining < 30) {
+                matches = true;
+                title = "🟠 تنبيه سريع (أقل من 30 يوم)";
+            } else if (category === 'Attention' && daysRemaining >= 30 && daysRemaining <= 90) {
+                matches = true;
+                title = "🟡 انتباه ومراقبة (1 إلى 3 شهور)";
+            } else if (category === 'Safe' && daysRemaining > 90 && daysRemaining <= 180) {
+                matches = true;
+                title = "🟢 مخزون آمن (3 إلى 6 شهور)";
+            } else if (category === 'Far' && daysRemaining > 180) {
+                matches = true;
+                title = "🔵 تاريخ بعيد (أكثر من 6 شهور)";
             }
-        } else if (category === 'Expired' && daysRemaining !== 'NoExpiry' && daysRemaining < 0) {
-            matches = true;
-            title = "☠️ انتهت الصلاحية";
-        } else if (category === 'NoExpiry' && daysRemaining === 'NoExpiry') {
-            matches = true;
-            title = "♾️ بدون تاريخ صلاحية";
-        } else if (category === 'Critical' && daysRemaining !== 'NoExpiry' && daysRemaining >= 0 && daysRemaining < 7) {
-            matches = true;
-            title = "🔴 حرج جداً (أقل من 7 أيام)";
-        } else if (category === 'Alert' && daysRemaining >= 7 && daysRemaining < 30) {
-            matches = true;
-            title = "🟠 تنبيه سريع (أقل من 30 يوم)";
-        } else if (category === 'Attention' && daysRemaining >= 30 && daysRemaining <= 90) {
-            matches = true;
-            title = "🟡 انتباه ومراقبة (1 إلى 3 شهور)";
-        } else if (category === 'Safe' && daysRemaining > 90 && daysRemaining <= 180) {
-            matches = true;
-            title = "🟢 مخزون آمن (3 إلى 6 شهور)";
-        } else if (category === 'Far' && daysRemaining > 180) {
-            matches = true;
-            title = "🔵 تاريخ بعيد (أكثر من 6 شهور)";
-        }
 
-        if (matches) {
-            filteredData.push(Object.assign({}, item, { daysRemaining: daysRemaining }));
-        }
-    });
+            if (matches) {
+                tempFiltered.push(Object.assign({}, item, { daysRemaining: daysRemaining }));
+            }
+        });
+        
+        expiryFilteredData = tempFiltered;
+        expiryCurrentCategory = category;
+        
+        currentExportData = expiryFilteredData;
+        currentExportCategory = title;
+        document.getElementById('detailsTitle').innerText = title;
+    }
 
-    currentExportData = filteredData;
-    currentExportCategory = title;
-
-    document.getElementById('detailsTitle').innerText = title;
     const detailsList = document.getElementById('detailsList');
 
-    if (filteredData.length === 0) {
+    if (expiryFilteredData.length === 0) {
         detailsList.innerHTML = '<p class="empty-msg">لا توجد أصناف في هذه الفئة.</p>';
+        updateExpiryPaginationUI();
     } else {
         detailsList.innerHTML = '';
-        filteredData.forEach(item => {
+        
+        let totalPages = Math.ceil(expiryFilteredData.length / EXPIRY_ITEMS_PER_PAGE) || 1;
+        if (expiryCurrentPage > totalPages) expiryCurrentPage = totalPages;
+        if (expiryCurrentPage < 1) expiryCurrentPage = 1;
+
+        let startIndex = (expiryCurrentPage - 1) * EXPIRY_ITEMS_PER_PAGE;
+        let endIndex = startIndex + EXPIRY_ITEMS_PER_PAGE;
+        let itemsToShow = expiryFilteredData.slice(startIndex, endIndex);
+        
+        itemsToShow.forEach(item => {
             let daysColor = "";
             let daysText = "";
             if (item.daysRemaining === 'NoExpiry') {
@@ -3578,14 +3683,42 @@ window.showExpiryDetails = function (category) {
                 </div>
             `;
         });
+        
+        updateExpiryPaginationUI();
     }
 
     document.getElementById('expiryDetailsSection').style.display = 'block';
 
-    setTimeout(() => {
-        document.getElementById('expiryDetailsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
+    if (resetPage) {
+        setTimeout(() => {
+            document.getElementById('expiryDetailsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+    }
 };
+
+// إعداد أحداث أزرار صفحات الصلاحيات
+document.addEventListener('DOMContentLoaded', () => {
+    let pBtn = document.getElementById('expiryPrevPage');
+    if (pBtn) {
+        pBtn.addEventListener('click', () => {
+            if (expiryCurrentPage > 1) {
+                expiryCurrentPage--;
+                showExpiryDetails(expiryCurrentCategory, false);
+            }
+        });
+    }
+
+    let nBtn = document.getElementById('expiryNextPage');
+    if (nBtn) {
+        nBtn.addEventListener('click', () => {
+            let totalPages = Math.ceil(expiryFilteredData.length / EXPIRY_ITEMS_PER_PAGE);
+            if (expiryCurrentPage < totalPages) {
+                expiryCurrentPage++;
+                showExpiryDetails(expiryCurrentCategory, false);
+            }
+        });
+    }
+});
 
 window.closeExpiryDetails = function () {
     document.getElementById('expiryDetailsSection').style.display = 'none';

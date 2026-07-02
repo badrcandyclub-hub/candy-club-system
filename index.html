@@ -12,6 +12,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap"
         rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <!-- مكتبة الذكاء الاصطناعي لقراءة الصور OCR -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
 
 <body>
@@ -203,11 +205,20 @@
                 <div style="display:flex; gap:5px; margin-bottom:15px;">
                     <input type="text" id="newCatalogName" placeholder="اسم المنتج" style="flex:2; margin-bottom:0;">
                     <input type="number" id="newCatalogPrice" placeholder="السعر" style="flex:1; margin-bottom:0;">
-                    <button id="addCatalogBtn" class="btn-search interactive-btn"
-                        style="padding: 0 10px;">إضافة</button>
+                    <button id="addCatalogBtn" class="btn-search interactive-btn" style="padding: 0 10px;">إضافة</button>
                 </div>
-                <div id="catalogListContainer" class="data-list-container" style="max-height: 250px;">
+                <!-- بحث فوري في الكتالوج -->
+                <div style="margin-bottom: 10px;">
+                    <input type="text" id="catalogSearchInput" placeholder="🔍 ابحث في الكتالوج للفلترة الفورية..." style="width: 100%; border-radius: 8px; padding: 8px; box-sizing: border-box;">
+                </div>
+                <div id="catalogListContainer" class="data-list-container" style="max-height: 250px; overflow-y: auto;">
                     <p class="empty-msg">جاري تحميل الكتالوج...</p>
+                </div>
+                <!-- نظام تقسيم الصفحات (Pagination) -->
+                <div id="catalogPagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                    <button id="catalogPrevPage" class="btn-outline interactive-btn" style="padding: 5px 15px;" disabled>⬅️ السابق</button>
+                    <span id="catalogPageInfo" style="font-size: 0.9rem; font-weight: bold; color: var(--text-dark);">صفحة 1</span>
+                    <button id="catalogNextPage" class="btn-outline interactive-btn" style="padding: 5px 15px;" disabled>التالي ➡️</button>
                 </div>
 
                 <!-- زرار الماسح الضوئي الذكي -->
@@ -1084,9 +1095,31 @@
     <div id="toast-container" class="toast-container"></div>
     <div id="loading-overlay" class="loading-overlay-hidden">
         <div class="spinner"></div>
-        <p>جاري تنفيذ طلبك، برجاء الانتظار...</p>
+        <input type="file" id="ocrImageInput" accept="image/*" style="display: none;">
+    <!-- شاشة معالجة الـ OCR -->
+    <div id="ocrProcessingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 10005; flex-direction: column; justify-content: center; align-items: center;">
+        <div style="border: 6px solid #f3f3f3; border-top: 6px solid #17a2b8; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
+        <h3 id="ocrProcessingText" style="color: white; font-weight: bold; font-family: 'Cairo', sans-serif;">جاري تحليل الصورة واستخراج البيانات...</h3>
+        <p style="color: #ccc; font-size: 0.9rem;">الرجاء الانتظار، قد تستغرق العملية ثواني معدودة</p>
     </div>
-    <script src="app.js?v=2.1"></script>
+
+    <!-- شاشة مراجعة البيانات المستخرجة -->
+    <div id="ocrReviewModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; justify-content: center; align-items: center; padding: 15px;">
+        <div class="modal-content" style="background: #ffffff; width: 100%; max-width: 600px; border-radius: 15px; padding: 20px; max-height: 90vh; overflow-y: auto; display:flex; flex-direction:column;">
+            <h2 style="color: var(--primary); border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top:0;">🔎 مراجعة الفاتورة المصورة</h2>
+            <p style="color: #e67e22; font-size:0.9rem; font-weight:bold;">⚠️ قم بمراجعة الأرقام والكميات المستخرجة قبل إضافتها للمحضر.</p>
+            <div id="ocrReviewList" style="flex:1; overflow-y:auto; margin: 15px 0; display:flex; flex-direction:column; gap:10px;">
+                <!-- Review items will be injected here -->
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: auto;">
+                <button id="confirmOcrBtn" class="btn-confirm interactive-btn" style="flex: 2; padding:12px; font-size:1.1rem;">✅ اعتماد وإضافة للمحضر</button>
+                <button id="cancelOcrBtn" class="btn-cancel interactive-btn" style="flex: 1; padding:12px;">❌ إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="ocr.js"></script>
 </body>
 
 </html>
