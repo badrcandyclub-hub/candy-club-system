@@ -2391,7 +2391,7 @@ window.pushCatalogUpdate = function (name, price, isOffer, offerPrice) {
 
 // متغيرات نظام تقسيم صفحات الكتالوج (Pagination)
 let catalogCurrentPage = 1;
-const CATALOG_ITEMS_PER_PAGE = 150;
+const CATALOG_ITEMS_PER_PAGE = 50;
 let catalogSearchQuery = "";
 let currentFilteredCatalog = [];
 
@@ -2425,13 +2425,20 @@ function renderCatalog() {
         return;
     }
 
-    // حساب المنتجات التي ستظهر في الصفحة الحالية
+    // حساب المنتجات التي ستظهر في الصفحة الحالية (Sliding Window: 3 Pages Max)
     let totalPages = Math.ceil(currentFilteredCatalog.length / CATALOG_ITEMS_PER_PAGE) || 1;
     if (catalogCurrentPage > totalPages) catalogCurrentPage = totalPages;
     if (catalogCurrentPage < 1) catalogCurrentPage = 1;
 
-    let startIndex = (catalogCurrentPage - 1) * CATALOG_ITEMS_PER_PAGE;
-    let endIndex = startIndex + CATALOG_ITEMS_PER_PAGE;
+    let startPage = Math.max(1, catalogCurrentPage - 1);
+    let endPage = Math.min(totalPages, catalogCurrentPage + 1);
+    
+    // الحفاظ على 3 صفحات دائماً إذا أمكن (لتحسين تجربة المستخدم وتقليل إعادة التحميل)
+    if (catalogCurrentPage === 1 && totalPages >= 3) { endPage = 3; }
+    if (catalogCurrentPage === totalPages && totalPages >= 3) { startPage = totalPages - 2; }
+
+    let startIndex = (startPage - 1) * CATALOG_ITEMS_PER_PAGE;
+    let endIndex = endPage * CATALOG_ITEMS_PER_PAGE;
     let itemsToShow = currentFilteredCatalog.slice(startIndex, endIndex);
 
     itemsToShow.forEach(p => {
@@ -3527,7 +3534,7 @@ function renderExpiryDashboard() {
 // متغيرات نظام تقسيم صفحات الصلاحيات
 let expiryFilteredData = [];
 let expiryCurrentPage = 1;
-const EXPIRY_ITEMS_PER_PAGE = 150;
+const EXPIRY_ITEMS_PER_PAGE = 50;
 let expiryCurrentCategory = "";
 
 function updateExpiryPaginationUI() {
@@ -3616,8 +3623,15 @@ window.showExpiryDetails = function (category, resetPage = true) {
         if (expiryCurrentPage > totalPages) expiryCurrentPage = totalPages;
         if (expiryCurrentPage < 1) expiryCurrentPage = 1;
 
-        let startIndex = (expiryCurrentPage - 1) * EXPIRY_ITEMS_PER_PAGE;
-        let endIndex = startIndex + EXPIRY_ITEMS_PER_PAGE;
+        // Sliding Window (3 Pages Max)
+        let startPage = Math.max(1, expiryCurrentPage - 1);
+        let endPage = Math.min(totalPages, expiryCurrentPage + 1);
+        
+        if (expiryCurrentPage === 1 && totalPages >= 3) { endPage = 3; }
+        if (expiryCurrentPage === totalPages && totalPages >= 3) { startPage = totalPages - 2; }
+
+        let startIndex = (startPage - 1) * EXPIRY_ITEMS_PER_PAGE;
+        let endIndex = endPage * EXPIRY_ITEMS_PER_PAGE;
         let itemsToShow = expiryFilteredData.slice(startIndex, endIndex);
         
         itemsToShow.forEach(item => {

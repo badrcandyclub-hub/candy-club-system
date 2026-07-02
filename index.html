@@ -702,6 +702,12 @@
                             style="max-height: 400px; background: var(--bg-light); border-radius: 10px; padding: 10px; border: 1px solid var(--border);">
                             <!-- يتم حقن العناصر هنا -->
                         </div>
+                        <!-- نظام تقسيم الصفحات للصلاحيات -->
+                        <div id="expiryPagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding: 10px; background: #fff; border-radius: 8px;">
+                            <button id="expiryPrevPage" class="btn-outline interactive-btn" style="padding: 5px 15px;" disabled>⬅️ السابق</button>
+                            <span id="expiryPageInfo" style="font-size: 0.9rem; font-weight: bold; color: var(--text-dark);">صفحة 1</span>
+                            <button id="expiryNextPage" class="btn-outline interactive-btn" style="padding: 5px 15px;" disabled>التالي ➡️</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -714,7 +720,12 @@
                 style="background: #ffffff; width: 100%; max-width: 900px; border-radius: 15px; padding: 20px; max-height: 90vh; overflow-y: auto; position: relative;">
                 <div
                     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid var(--border); padding-bottom: 10px;">
-                    <h2 style="color: var(--primary); margin: 0;">📝 إذن استلام وتسجيل بضاعة</h2>
+                    <h2 style="color: var(--primary); margin: 0; display:flex; align-items:center; gap:10px;">
+                        📝 إذن استلام وتسجيل بضاعة
+                        <button type="button" id="startOcrScannerBtn" class="interactive-btn pulse-btn" style="background: linear-gradient(135deg, #17a2b8, #0b7dda); color: white; border: none; padding: 5px 15px; border-radius: 8px; font-size: 0.9rem; display:flex; align-items:center; gap:5px;">
+                            📸 مسح بالذكاء الاصطناعي
+                        </button>
+                    </h2>
                     <span class="close-modal" onclick="closeLedgerModal()"
                         style="font-size: 2rem; cursor: pointer; color: #c0392b;">&times;</span>
                 </div>
