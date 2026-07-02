@@ -1753,6 +1753,14 @@ function renderShippingRoom(history) {
             let typeText = o.orderType || "توصيل منزلي";
             if(typeText.includes("محافظات") || typeText === "gov_shipping") { badgeClass = "gov"; typeText = "محافظات"; }
             
+            // محاولة جلب اسم المنطقة فقط بدلاً من العنوان الكامل
+            let shortAddress = o.gov || o.zone || o.governorate || "";
+            if (!shortAddress && o.address) {
+                // نأخذ الجزء الأول قبل أي فاصلة أو شرطة أو سطر جديد
+                shortAddress = o.address.split(/[-،,\n]/)[0].trim();
+            }
+            if (!shortAddress) shortAddress = "بدون عنوان";
+
             pendingContainer.innerHTML += `
                 <label class="shipping-order-card">
                     <input type="checkbox" class="soc-checkbox pending-checkbox" value="${o.id}">
@@ -1765,7 +1773,7 @@ function renderShippingRoom(history) {
                         <div class="soc-info-row">
                             <div class="soc-info-item highlight">📱 ${o.phone}</div>
                             <div class="soc-info-item money">💰 ${o.total} ج.م</div>
-                            <div class="soc-info-item">📍 ${o.gov || o.zone || o.governorate || 'غير محدد'}</div>
+                            <div class="soc-info-item">📍 ${shortAddress}</div>
                         </div>
                     </div>
                 </label>`;
