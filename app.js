@@ -268,50 +268,59 @@ function loadDataFromServer() {
             if (closeDriverSelect) closeDriverSelect.innerHTML = '<option value="">اختر المندوب</option>';
 
             if (data.couriers && data.couriers.length > 0) {
+                let driverSelectHtml = '<option value="">اختر المندوب</option>';
+                let displayListHtml = '';
+                
                 data.couriers.forEach(c => {
-                    if (driverSelect) driverSelect.innerHTML += `<option value="${c.name}">${c.name}</option>`;
-                    if (assignDriverSelect) assignDriverSelect.innerHTML += `<option value="${c.name}">${c.name}</option>`;
-                    if (closeDriverSelect) closeDriverSelect.innerHTML += `<option value="${c.name}">${c.name}</option>`;
-                    if (driversDisplayList) {
-                        driversDisplayList.innerHTML += `
-                            <div class="data-row" style="display: flex; flex-direction: column; gap: 10px; background: var(--white); padding: 12px; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); text-align: center;">
-                                <div>
-                                    <strong style="color: var(--primary); font-size: 1.05rem;">🛵 ${c.name}</strong><br>
-                                    <span class="phone-badge" style="margin-top: 5px; display: inline-block;">📱 ${c.phone}</span>
-                                </div>
-                                <div style="display:flex; justify-content: space-between; gap:5px; width: 100%;">
-                                    <button type="button" class="btn-outline interactive-btn" style="flex: 1; padding: 6px; font-size:0.8rem; border-radius: 6px;" onclick="editDriverUI('${c.name}', '${c.phone}')">تعديل ✏️</button>
-                                    <button type="button" class="interactive-btn" style="flex: 1; padding: 6px; font-size:0.8rem; background:var(--danger); color:white; border:none; border-radius:6px;" onclick="deleteItem('deleteDriver', '${c.name}')">حذف ❌</button>
-                                </div>
-                            </div>`;
-                    }
+                    driverSelectHtml += `<option value="${c.name}">${c.name}</option>`;
+                    displayListHtml += `
+                        <div class="data-row" style="display: flex; flex-direction: column; gap: 10px; background: var(--white); padding: 12px; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); text-align: center;">
+                            <div>
+                                <strong style="color: var(--primary); font-size: 1.05rem;">🛵 ${c.name}</strong><br>
+                                <span class="phone-badge" style="margin-top: 5px; display: inline-block;">📱 ${c.phone}</span>
+                            </div>
+                            <div style="display:flex; justify-content: space-between; gap:5px; width: 100%;">
+                                <button type="button" class="btn-outline interactive-btn" style="flex: 1; padding: 6px; font-size:0.8rem; border-radius: 6px;" onclick="editDriverUI('${c.name}', '${c.phone}')">تعديل ✏️</button>
+                                <button type="button" class="interactive-btn" style="flex: 1; padding: 6px; font-size:0.8rem; background:var(--danger); color:white; border:none; border-radius:6px;" onclick="deleteItem('deleteDriver', '${c.name}')">حذف ❌</button>
+                            </div>
+                        </div>`;
                 });
+                
+                if (driverSelect) driverSelect.innerHTML = driverSelectHtml;
+                if (assignDriverSelect) assignDriverSelect.innerHTML = driverSelectHtml;
+                if (closeDriverSelect) closeDriverSelect.innerHTML = driverSelectHtml;
+                if (driversDisplayList) driversDisplayList.innerHTML = displayListHtml;
             }
 
             const smartProductsList = document.getElementById('smartProductsList');
             if (smartProductsList) {
-                smartProductsList.innerHTML = '';
-                catalogData.forEach(p => { smartProductsList.innerHTML += `<option value="${p.name}">`; });
+                let smartHtml = '';
+                catalogData.forEach(p => { smartHtml += `<option value="${p.name}">`; });
+                smartProductsList.innerHTML = smartHtml;
             }
 
             const modSelect = document.getElementById('moderatorSelect');
             let currentMod = modSelect ? modSelect.value : "";
             const modsList = document.getElementById('moderatorsList');
-            if (modSelect) modSelect.innerHTML = '<option value="">اختر اسمك</option>';
-            if (modsList) modsList.innerHTML = '';
+            
             if (data.moderators && data.moderators.length > 0) {
+                let modSelectHtml = '<option value="">اختر اسمك</option>';
+                let modsListHtml = '';
+                
                 data.moderators.forEach(m => {
-                    if (modSelect) modSelect.innerHTML += `<option value="${m}">${m}</option>`;
-                    if (modsList) {
-                        modsList.innerHTML += `
-                            <div class="data-row" style="align-items:center; padding:5px;">
-                                <span style="flex:1;">👤 ${m}</span>
-                                <button type="button" class="interactive-btn" style="padding: 4px 8px; font-size:0.8rem; background:var(--danger); color:white; border:none; border-radius:8px;" onclick="deleteItem('deleteModerator', '${m}')">❌</button>
-                            </div>`;
-                    }
+                    modSelectHtml += `<option value="${m}">${m}</option>`;
+                    modsListHtml += `
+                        <div class="data-row" style="align-items:center; padding:5px;">
+                            <span style="flex:1;">👤 ${m}</span>
+                            <button type="button" class="interactive-btn" style="padding: 4px 8px; font-size:0.8rem; background:var(--danger); color:white; border:none; border-radius:8px;" onclick="deleteItem('deleteModerator', '${m}')">❌</button>
+                        </div>`;
                 });
-            } else if (modsList) {
-                modsList.innerHTML = '<p class="empty-msg">لا يوجد كاشيرية مسجلين</p>';
+                
+                if (modSelect) modSelect.innerHTML = modSelectHtml;
+                if (modsList) modsList.innerHTML = modsListHtml;
+            } else {
+                if (modSelect) modSelect.innerHTML = '<option value="">اختر اسمك</option>';
+                if (modsList) modsList.innerHTML = '<p class="empty-msg">لا يوجد كاشيرية مسجلين</p>';
             }
             if (modSelect && currentMod) modSelect.value = currentMod;
 
@@ -2382,7 +2391,7 @@ window.pushCatalogUpdate = function (name, price, isOffer, offerPrice) {
 
 // متغيرات نظام تقسيم صفحات الكتالوج (Pagination)
 let catalogCurrentPage = 1;
-const CATALOG_ITEMS_PER_PAGE = 50;
+const CATALOG_ITEMS_PER_PAGE = 150;
 let catalogSearchQuery = "";
 let currentFilteredCatalog = [];
 
@@ -3518,7 +3527,7 @@ function renderExpiryDashboard() {
 // متغيرات نظام تقسيم صفحات الصلاحيات
 let expiryFilteredData = [];
 let expiryCurrentPage = 1;
-const EXPIRY_ITEMS_PER_PAGE = 50;
+const EXPIRY_ITEMS_PER_PAGE = 150;
 let expiryCurrentCategory = "";
 
 function updateExpiryPaginationUI() {
