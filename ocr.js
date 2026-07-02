@@ -23,11 +23,32 @@ document.addEventListener('DOMContentLoaded', () => {
             const file = e.target.files[0];
             if (!file) return;
 
+            if (typeof Tesseract === 'undefined') {
+                alert("❌ عذراً، لم يتم تحميل مكتبة الذكاء الاصطناعي! تأكد من اتصالك بالإنترنت.");
+                return;
+            }
+
+            const progressText = document.getElementById('ocrProcessingText');
+            if (progressText) {
+                progressText.innerText = "جاري تجهيز محرك الذكاء الاصطناعي...";
+                progressText.style.color = "white";
+            }
             overlay.style.display = 'flex';
             
             try {
-                // Initialize Tesseract worker
-                const worker = await Tesseract.createWorker('ara+eng');
+                // Initialize Tesseract worker with progress logger
+                const worker = await Tesseract.createWorker('ara+eng', 1, {
+                    logger: m => {
+                        console.log(m);
+                        if (progressText) {
+                            if (m.status === 'recognizing text') {
+                                progressText.innerText = `جاري قراءة الصورة: ${Math.round(m.progress * 100)}%`;
+                            } else {
+                                progressText.innerText = `جاري تهيئة النظام... (${m.status})`;
+                            }
+                        }
+                    }
+                });
                 
                 // Recognize text
                 const { data: { text } } = await worker.recognize(file);
@@ -39,9 +60,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 extractedItems = parseOcrText(text);
 
                 overlay.style.display = 'none';
+                
+                const title = document.querySelector('#ocrReviewModal h2');
+                if (title) {
+                    title.innerHTML = `🔎 مراجعة الفاتورة المصورة <br><span style="font-size:1rem; color:#27ae60;">(تمت قراءة ${extractedItems.length} سطر بنجاح)</span>`;
+                }
 
                 if (extractedItems.length === 0) {
-                    showToast('لم يتم العثور على منتجات معروفة في الفاتورة.', 'warning');
+                    showToast('لم يتم العثور على أي نصوص في الصورة.', 'warning');
                 } else {
                     renderReviewModal(extractedItems);
                     reviewModal.style.display = 'flex';
@@ -49,8 +75,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             } catch (error) {
                 console.error("OCR Error:", error);
-                overlay.style.display = 'none';
-                showToast('حدث خطأ أثناء قراءة الصورة.', 'error');
+                if (progressText) {
+                    progressText.innerText = "❌ فشلت العملية: " + error.message;
+                    progressText.style.color = "#ff4d4d";
+                }
+                setTimeout(() => { overlay.style.display = 'none'; }, 5000);
             }
         });
     }
