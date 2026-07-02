@@ -598,7 +598,8 @@ function doGet(e) {
           total: finalTotal, remaining: remainingCash,
           payment: data[j][10], date: rowDate,
           orderType: data[j][9],
-          reservationDate: formattedResDate
+          reservationDate: formattedResDate,
+          gov: data[j][5], address: data[j][6]
         });
       }
 
