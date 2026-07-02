@@ -2441,6 +2441,8 @@ function renderCatalog() {
     let endIndex = endPage * CATALOG_ITEMS_PER_PAGE;
     let itemsToShow = currentFilteredCatalog.slice(startIndex, endIndex);
 
+    let fragment = document.createDocumentFragment();
+
     itemsToShow.forEach(p => {
         let isOfferActive = p.isOffer === true || p.isOffer === "true" || p.isOffer === 1;
         let div = document.createElement('div');
@@ -2486,8 +2488,10 @@ function renderCatalog() {
             document.getElementById('editCatalogModal').classList.add('active');
         });
 
-        container.appendChild(div);
+        fragment.appendChild(div);
     });
+    
+    container.appendChild(fragment);
 
     updateCatalogPaginationUI();
 }
@@ -3634,6 +3638,8 @@ window.showExpiryDetails = function (category, resetPage = true) {
         let endIndex = endPage * EXPIRY_ITEMS_PER_PAGE;
         let itemsToShow = expiryFilteredData.slice(startIndex, endIndex);
         
+        let fragment = document.createDocumentFragment();
+        
         itemsToShow.forEach(item => {
             let daysColor = "";
             let daysText = "";
@@ -3688,25 +3694,31 @@ window.showExpiryDetails = function (category, resetPage = true) {
                 `;
             }
 
-            detailsList.innerHTML += `
-                <div class="${rowClass}" ${activeOfferStyle}>
-                    <h4>📦 ${item.name}</h4>
-                    <div class="expiry-item-details">
-                        <span>الكمية: ${item.qty}</span>
-                        <span style="color: ${daysColor}; font-weight: bold;">${daysText}</span>
-                    </div>
-                    <div style="font-size: 0.8rem; color: #7f8c8d; margin-bottom: 8px;">
-                        📅 انتهاء: ${formattedDate} | 🏢 مكان: ${item.location || '-'}
-                    </div>
-                    ${pricesHtml}
-                    <div class="expiry-item-actions">
-                        <button class="btn-activate-offer interactive-btn" style="background: ${offerBtnColor};" onclick="${item.status === 'في عرض' ? `changeExpiryStatus('${item.id}', '${offerBtnAction}')` : `promptNewOffer('${item.id}')`}">${offerBtnText}</button>
-                        <button class="btn-close-item interactive-btn" onclick="changeExpiryStatus('${item.id}', 'Deleted')">تم البيع ✖️</button>
-                    </div>
+            let itemDiv = document.createElement('div');
+            itemDiv.className = rowClass;
+            if (item.status === 'في عرض') {
+                itemDiv.style.border = '2px solid #ffeb3b';
+                itemDiv.style.background = '#fffde7';
+            }
+            itemDiv.innerHTML = `
+                <h4>📦 ${item.name}</h4>
+                <div class="expiry-item-details">
+                    <span>الكمية: ${item.qty}</span>
+                    <span style="color: ${daysColor}; font-weight: bold;">${daysText}</span>
+                </div>
+                <div style="font-size: 0.8rem; color: #7f8c8d; margin-bottom: 8px;">
+                    📅 انتهاء: ${formattedDate} | 🏢 مكان: ${item.location || '-'}
+                </div>
+                ${pricesHtml}
+                <div class="expiry-item-actions">
+                    <button class="btn-activate-offer interactive-btn" style="background: ${offerBtnColor};" onclick="${item.status === 'في عرض' ? `changeExpiryStatus('${item.id}', '${offerBtnAction}')` : `promptNewOffer('${item.id}')`}">${offerBtnText}</button>
+                    <button class="btn-close-item interactive-btn" onclick="changeExpiryStatus('${item.id}', 'Deleted')">تم البيع ✖️</button>
                 </div>
             `;
+            fragment.appendChild(itemDiv);
         });
         
+        detailsList.appendChild(fragment);
         updateExpiryPaginationUI();
     }
 

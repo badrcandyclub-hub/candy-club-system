@@ -215,10 +215,14 @@
                     <p class="empty-msg">جاري تحميل الكتالوج...</p>
                 </div>
                 <!-- نظام تقسيم الصفحات (Pagination) -->
-                <div id="catalogPagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
-                    <button id="catalogPrevPage" class="btn-outline interactive-btn" style="padding: 5px 15px;" disabled>⬅️ السابق</button>
-                    <span id="catalogPageInfo" style="font-size: 0.9rem; font-weight: bold; color: var(--text-dark);">صفحة 1</span>
-                    <button id="catalogNextPage" class="btn-outline interactive-btn" style="padding: 5px 15px;" disabled>التالي ➡️</button>
+                <div id="catalogPagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding: 15px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border: 1px solid #ced4da; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                    <button id="catalogPrevPage" class="interactive-btn" style="padding: 8px 20px; border-radius: 8px; font-weight: bold; font-family: 'Cairo', sans-serif; background: #ffffff; color: var(--primary); border: 2px solid var(--primary); display: flex; align-items: center; gap: 8px; font-size: 0.9rem;" disabled>
+                        <span style="font-size:1.2rem; line-height:1;">&laquo;</span> السابق
+                    </button>
+                    <span id="catalogPageInfo" style="font-size: 1rem; font-weight: bold; color: var(--text-dark); background: #ffffff; padding: 6px 20px; border-radius: 25px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #dee2e6;">صفحة 1</span>
+                    <button id="catalogNextPage" class="interactive-btn" style="padding: 8px 20px; border-radius: 8px; font-weight: bold; font-family: 'Cairo', sans-serif; background: var(--primary); color: #ffffff; border: 2px solid var(--primary); display: flex; align-items: center; gap: 8px; font-size: 0.9rem;" disabled>
+                        التالي <span style="font-size:1.2rem; line-height:1;">&raquo;</span>
+                    </button>
                 </div>
 
                 <!-- زرار الماسح الضوئي الذكي -->
@@ -703,10 +707,14 @@
                             <!-- يتم حقن العناصر هنا -->
                         </div>
                         <!-- نظام تقسيم الصفحات للصلاحيات -->
-                        <div id="expiryPagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding: 10px; background: #fff; border-radius: 8px;">
-                            <button id="expiryPrevPage" class="btn-outline interactive-btn" style="padding: 5px 15px;" disabled>⬅️ السابق</button>
-                            <span id="expiryPageInfo" style="font-size: 0.9rem; font-weight: bold; color: var(--text-dark);">صفحة 1</span>
-                            <button id="expiryNextPage" class="btn-outline interactive-btn" style="padding: 5px 15px;" disabled>التالي ➡️</button>
+                        <div id="expiryPagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding: 15px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border: 1px solid #ced4da; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                            <button id="expiryPrevPage" class="interactive-btn" style="padding: 8px 20px; border-radius: 8px; font-weight: bold; font-family: 'Cairo', sans-serif; background: #ffffff; color: var(--primary); border: 2px solid var(--primary); display: flex; align-items: center; gap: 8px; font-size: 0.9rem;" disabled>
+                                <span style="font-size:1.2rem; line-height:1;">&laquo;</span> السابق
+                            </button>
+                            <span id="expiryPageInfo" style="font-size: 1rem; font-weight: bold; color: var(--text-dark); background: #ffffff; padding: 6px 20px; border-radius: 25px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #dee2e6;">صفحة 1</span>
+                            <button id="expiryNextPage" class="interactive-btn" style="padding: 8px 20px; border-radius: 8px; font-weight: bold; font-family: 'Cairo', sans-serif; background: var(--primary); color: #ffffff; border: 2px solid var(--primary); display: flex; align-items: center; gap: 8px; font-size: 0.9rem;" disabled>
+                                التالي <span style="font-size:1.2rem; line-height:1;">&raquo;</span>
+                            </button>
                         </div>
                     </div>
                 </div>
