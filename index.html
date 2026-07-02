@@ -271,7 +271,7 @@
 
         <section id="shipping-tab" class="tab-pane">
             <div class="shipping-actions-row mb-15">
-                <button id="openZoneModalBtn" class="btn-outline interactive-btn">المناطق ➕</button>
+                <button id="openZoneModalBtn" class="btn-outline interactive-btn">المناطق واسعار الشحن ➕</button>
                 <button id="openDriverModalBtn" class="btn-outline interactive-btn">المناديب ➕</button>
             </div>
 
@@ -887,33 +887,46 @@
     </div>
 
     <div id="zoneModal" class="modal-overlay">
-        <div class="modal-content" style="max-height: 90vh; overflow-y: auto; max-width: 700px;">
-            <h3 style="color: var(--primary); border-bottom: 2px solid var(--border); padding-bottom: 10px; margin-bottom: 15px;">📍 إدارة المناطق</h3>
-            
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 15px; background: var(--bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border);">
-                <select id="newZoneType" style="margin-bottom: 0;">
-                    <option value="same_day">إسكندرية (نفس اليوم)</option>
-                    <option value="next_day">إسكندرية (تاني يوم)</option>
-                    <option value="gov">محافظات</option>
-                </select>
-                <input type="text" id="newZoneName" placeholder="اسم المنطقة" style="margin-bottom: 0;">
-                <input type="number" id="newZonePrice" placeholder="سعر الشحن" style="margin-bottom: 0;">
-                <input type="text" id="newZoneDuration" placeholder="مدة التوصيل" style="margin-bottom: 0;">
+        <div class="modal-content" style="width: 95vw; max-width: 1400px; height: 95vh; display: flex; flex-direction: column; overflow: hidden; padding: 30px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 15px; margin-bottom: 20px;">
+                <h2 style="color: var(--primary); margin: 0; font-size: 1.8rem;">📍 إدارة المناطق واسعار الشحن</h2>
+                <button id="closeZoneModal" class="btn-cancel" style="padding: 10px 20px; font-size: 1.1rem; border-radius: 8px;">إغلاق ❌</button>
             </div>
             
-            <div class="modal-actions" style="margin-bottom: 20px;">
-                <button id="addZoneBtn" class="btn-confirm" style="flex: 2;">حفظ المنطقة 💾</button>
-                <button id="closeZoneModal" class="btn-cancel" style="flex: 1;">إغلاق</button>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; background: var(--bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border);">
                 <div>
-                    <h4 style="color: var(--secondary); font-size: 1rem; margin-bottom: 8px;">⚓ مناطق الإسكندرية</h4>
-                    <div id="zonesAlexList" class="data-list-container" style="max-height: 250px; display: flex; flex-direction: column; gap: 8px; background: transparent; border: none; padding: 0;"></div>
+                    <label style="display:block; margin-bottom: 5px; font-weight: bold; color: var(--text-main);">نوع المنطقة:</label>
+                    <select id="newZoneType" style="margin-bottom: 0; width: 100%; padding: 12px; font-size: 1.05rem;">
+                        <option value="same_day">إسكندرية (نفس اليوم)</option>
+                        <option value="next_day">إسكندرية (تاني يوم)</option>
+                        <option value="gov">محافظات</option>
+                    </select>
                 </div>
                 <div>
-                    <h4 style="color: var(--warning); font-size: 1rem; margin-bottom: 8px;">🚚 المحافظات</h4>
-                    <div id="zonesGovList" class="data-list-container" style="max-height: 250px; display: flex; flex-direction: column; gap: 8px; background: transparent; border: none; padding: 0;"></div>
+                    <label style="display:block; margin-bottom: 5px; font-weight: bold; color: var(--text-main);">اسم المنطقة:</label>
+                    <input type="text" id="newZoneName" placeholder="اسم المنطقة" style="margin-bottom: 0; width: 100%; padding: 12px; font-size: 1.05rem;">
+                </div>
+                <div>
+                    <label style="display:block; margin-bottom: 5px; font-weight: bold; color: var(--text-main);">سعر الشحن:</label>
+                    <input type="number" id="newZonePrice" placeholder="سعر الشحن" style="margin-bottom: 0; width: 100%; padding: 12px; font-size: 1.05rem;">
+                </div>
+                <div>
+                    <label style="display:block; margin-bottom: 5px; font-weight: bold; color: var(--text-main);">مدة التوصيل:</label>
+                    <input type="text" id="newZoneDuration" placeholder="مدة التوصيل" style="margin-bottom: 0; width: 100%; padding: 12px; font-size: 1.05rem;">
+                </div>
+                <div style="display: flex; align-items: flex-end;">
+                    <button id="addZoneBtn" class="btn-confirm" style="width: 100%; padding: 12px; font-size: 1.1rem; border-radius: 8px;">حفظ المنطقة 💾</button>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; flex: 1; overflow: hidden;">
+                <div style="display: flex; flex-direction: column; overflow: hidden; background: #FAFBFF; padding: 20px; border-radius: 12px; border: 1px solid var(--border);">
+                    <h3 style="color: var(--secondary); font-size: 1.3rem; margin-bottom: 15px; border-bottom: 1px dashed var(--border); padding-bottom: 10px;">⚓ مناطق الإسكندرية</h3>
+                    <div id="zonesAlexList" class="data-list-container" style="flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; background: transparent; border: none; padding: 0; max-height: none;"></div>
+                </div>
+                <div style="display: flex; flex-direction: column; overflow: hidden; background: #FAFBFF; padding: 20px; border-radius: 12px; border: 1px solid var(--border);">
+                    <h3 style="color: var(--warning); font-size: 1.3rem; margin-bottom: 15px; border-bottom: 1px dashed var(--border); padding-bottom: 10px;">🚚 المحافظات</h3>
+                    <div id="zonesGovList" class="data-list-container" style="flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; background: transparent; border: none; padding: 0; max-height: none;"></div>
                 </div>
             </div>
         </div>

@@ -14,7 +14,7 @@ function playOrderSound() {
     if (playPromise !== undefined) {
         playPromise.catch(e => {
             console.log('Audio play failed (maybe needs user interaction):', e);
-            alert("🔔 يوجد أوردر جديد قيد التجهيز! \n\n(تنبيه: المتصفح منع تشغيل الصوت. يرجى الضغط في أي مكان في الشاشة لتفعيل الصوت للأوردرات القادمة)");
+            customAlert("🔔 يوجد أوردر جديد قيد التجهيز! \n\n(تنبيه: المتصفح منع تشغيل الصوت. يرجى الضغط في أي مكان في الشاشة لتفعيل الصوت للأوردرات القادمة)");
         });
     }
 }
@@ -433,24 +433,24 @@ window.settleDriverOrder = function (orderId, btn, payMethod) {
     if (payMethod.includes('كاش')) msg = `هل استلمت النقدية من المندوب الخاصة بالأوردر (${orderId})؟`;
     else msg = `هل قمت بصرف حق الشحن للمندوب عن الأوردر (${orderId}) المدفوع إلكترونياً؟`;
 
-    if (!confirm(msg)) return;
+    customConfirm(msg, () => {
+        btn.innerText = "جاري...";
+        btn.disabled = true;
 
-    btn.innerText = "جاري...";
-    btn.disabled = true;
+        let formData = new URLSearchParams();
+        formData.append('action', 'settleOrder');
+        formData.append('orderId', orderId);
 
-    let formData = new URLSearchParams();
-    formData.append('action', 'settleOrder');
-    formData.append('orderId', orderId);
-
-    fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
-        .then(() => {
-            showToast("✅ تمت المحاسبة وتسوية الأوردر!", "success");
-            loadDataFromServer();
-        }).catch(() => {
-            showToast("❌ حدث خطأ في الاتصال", "error");
-            btn.innerText = "تسوية 💸";
-            btn.disabled = false;
-        });
+        fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
+            .then(() => {
+                showToast("✅ تمت المحاسبة وتسوية الأوردر!", "success");
+                loadDataFromServer();
+            }).catch(() => {
+                showToast("❌ حدث خطأ في الاتصال", "error");
+                btn.innerText = "تسوية 💸";
+                btn.disabled = false;
+            });
+    });
 };
 
 // ==========================================
@@ -708,7 +708,7 @@ window.printHistoryOrder = function (orderId) {
         (window.uncollectedOrdersData || []).find(findFn);
 
     if (!order) {
-        alert("⚠️ خطأ: لم يتم العثور على بيانات الطلب للطباعة.");
+        customAlert("⚠️ خطأ: لم يتم العثور على بيانات الطلب للطباعة.");
         // ⭐ Debug: log all available IDs to help trace mismatch
         console.warn("printHistoryOrder: could not find orderId =", orderId, typeof orderId);
         console.log("Available history IDs:", (window.orderHistoryData || []).map(o => ({ id: o.id, type: typeof o.id })));
@@ -1040,17 +1040,17 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
                 let offerP = parseFloat(cProd.offerPrice) || 0;
 
                 if (currentOffer > 0 && currentOffer !== offerP) {
-                    if (confirm("تم تعديل سعر العرض لـ " + currentOffer + " هل تريد حفظه كسعر عرض دائم للمنتج وتفعيله في الكتالوج؟")) {
+                    customConfirm("تم تعديل سعر العرض لـ " + currentOffer + " هل تريد حفظه كسعر عرض دائم للمنتج وتفعيله في الكتالوج؟", () => {
                         window.pushCatalogUpdate(cProd.name, baseP, true, currentOffer);
                         cProd.offerPrice = currentOffer;
                         cProd.isOffer = true;
-                    }
+                    });
                 } else if (currentOffer === 0 && currentPrice !== baseP) {
-                    if (confirm("تم تعديل السعر الأساسي لـ " + currentPrice + " هل تريد حفظه كسعر أساسي دائم في الكتالوج؟")) {
+                    customConfirm("تم تعديل السعر الأساسي لـ " + currentPrice + " هل تريد حفظه كسعر أساسي دائم في الكتالوج؟", () => {
                         window.pushCatalogUpdate(cProd.name, currentPrice, false, offerP);
                         cProd.price = currentPrice;
                         cProd.isOffer = false;
-                    }
+                    });
                 }
             } else {
                 window.pushCatalogUpdate(nameInput.value, currentPrice, currentOffer > 0, currentOffer);
@@ -1599,18 +1599,19 @@ if (saveAndPrintBtn) {
 // ==========================================
 
 window.deleteItem = function (action, name, zoneType = '') {
-    if (!confirm(`هل أنت متأكد من حذف (${name}) نهائياً؟`)) return;
-    let formData = new URLSearchParams();
-    formData.append('action', action);
-    formData.append('name', name);
-    if (zoneType) formData.append('zoneType', zoneType);
+    customConfirm(`هل أنت متأكد من حذف (${name}) نهائياً؟`, () => {
+        let formData = new URLSearchParams();
+        formData.append('action', action);
+        formData.append('name', name);
+        if (zoneType) formData.append('zoneType', zoneType);
 
-    showToast("⏳ جاري الحذف...", "warning");
-    fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
-        .then(() => {
-            showToast("✅ تم الحذف بنجاح!", "success");
-            loadDataFromServer();
-        });
+        showToast("⏳ جاري الحذف...", "warning");
+        fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
+            .then(() => {
+                showToast("✅ تم الحذف بنجاح!", "success");
+                loadDataFromServer();
+            });
+    });
 };
 
 window.editZoneUI = function (name, price, type, duration) {
@@ -1764,9 +1765,7 @@ function renderShippingRoom(history) {
                         <div class="soc-info-row">
                             <div class="soc-info-item highlight">📱 ${o.phone}</div>
                             <div class="soc-info-item money">💰 ${o.total} ج.م</div>
-                        </div>
-                        <div class="soc-address">
-                            <span>📍 ${o.address || o.zone || 'بدون عنوان'}</span>
+                            <div class="soc-info-item">📍 ${o.gov || o.zone || o.governorate || 'غير محدد'}</div>
                         </div>
                     </div>
                 </label>`;
@@ -1839,38 +1838,39 @@ function renderShippingRoom(history) {
 // ⭐ دالة تسليم الفرع الفورية
 window.settleBranchOrder = function (orderId, btn) {
     let order = window.pendingOrdersData.find(o => o.id === orderId);
-    let amountPaidText = prompt('الرجاء إدخال المبلغ المدفوع لاستلام الفرع:', order ? order.remaining : 0);
-    if (amountPaidText === null) return;
+    customSinglePrompt('الرجاء إدخال المبلغ المدفوع لاستلام الفرع:', order ? order.remaining : 0, (amountPaidText) => {
+        if (!amountPaidText) return;
 
-    setBtnLoading(btn, true);
-    let formData = new URLSearchParams();
-    formData.append('action', 'updateOrderStatus');
-    formData.append('orderId', orderId);
-    formData.append('status', 'تم التوصيل ومُحاسب');
+        setBtnLoading(btn, true);
+        let formData = new URLSearchParams();
+        formData.append('action', 'updateOrderStatus');
+        formData.append('orderId', orderId);
+        formData.append('status', 'تم التوصيل ومُحاسب');
 
-    fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
-        .then(() => {
-            showToast(`✅ تم التسليم وتصفية مبلغ (${amountPaidText} ج.م) بنجاح!`, "success");
-            loadDataFromServer();
-        }).catch(() => setBtnLoading(btn, false, "تم التسليم ✅"));
+        fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
+            .then(() => {
+                showToast(`✅ تم التسليم وتصفية مبلغ (${amountPaidText} ج.م) بنجاح!`, "success");
+                loadDataFromServer();
+            }).catch(() => setBtnLoading(btn, false, "تم التسليم ✅"));
+    });
 };
 
 // ⭐ دالة تحويل الحجز لتوصيل عادي
 window.convertToNormalDelivery = function (orderId, btn) {
-    if (!confirm('هل أنت متأكد من تحويل هذا الحجز إلى توصيل فوري عادي؟')) return;
+    customConfirm('هل أنت متأكد من تحويل هذا الحجز إلى توصيل فوري عادي؟', () => {
+        setBtnLoading(btn, true);
+        let formData = new URLSearchParams();
+        formData.append('action', 'updateOrderStatus');
+        formData.append('orderId', orderId);
+        formData.append('status', 'قيد التجهيز');
+        formData.append('orderType', 'توصيل منزلي عادي');
 
-    setBtnLoading(btn, true);
-    let formData = new URLSearchParams();
-    formData.append('action', 'updateOrderStatus');
-    formData.append('orderId', orderId);
-    formData.append('status', 'قيد التجهيز');
-    formData.append('orderType', 'توصيل منزلي عادي');
-
-    fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
-        .then(() => {
-            showToast("✅ تم التحويل لتوصيل فوري بنجاح!", "success");
-            loadDataFromServer();
-        }).catch(() => setBtnLoading(btn, false, "تحويل لتوصيل عادي 🚚"));
+        fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
+            .then(() => {
+                showToast("✅ تم التحويل لتوصيل فوري بنجاح!", "success");
+                loadDataFromServer();
+            }).catch(() => setBtnLoading(btn, false, "تحويل لتوصيل عادي 🚚"));
+    });
 };
 
 // ⭐ حماية زرار (تقفيل المندوبين)
@@ -2406,13 +2406,18 @@ function renderCatalog(catalogList) {
             let newState = e.target.checked;
             let currentOffer = p.offerPrice || p.price;
             if (newState && !p.offerPrice) {
-                currentOffer = prompt(`أدخل سعر العرض لـ ${p.name}:`, p.price);
-                if (!currentOffer) { e.target.checked = false; return; }
+                customSinglePrompt(`أدخل سعر العرض لـ ${p.name}:`, p.price, (val) => {
+                    if (!val) { e.target.checked = false; return; }
+                    currentOffer = val;
+                    window.pushCatalogUpdate(p.name, p.price, newState, currentOffer);
+                    showToast("✅ تم تفعيل العرض", "success");
+                    setTimeout(loadDataFromServer, 2000);
+                });
+            } else {
+                window.pushCatalogUpdate(p.name, p.price, newState, currentOffer);
+                showToast(newState ? "✅ تم تفعيل العرض" : "❌ تم إيقاف العرض", "success");
+                setTimeout(loadDataFromServer, 2000);
             }
-            window.pushCatalogUpdate(p.name, p.price, newState, currentOffer);
-            showToast(newState ? "✅ تم تفعيل العرض" : "❌ تم إيقاف العرض", "success");
-            // استخدمنا الـ timeout عشان الداتا تلحق تتسجل
-            setTimeout(loadDataFromServer, 2000);
         });
 
         div.querySelector('.edit-cat-btn').addEventListener('click', () => {
@@ -2505,14 +2510,15 @@ function renderOutOfStock(oosList) {
         });
 
         div.querySelector('.del-oos-btn').addEventListener('click', () => {
-            if (!confirm("مسح العميل من قائمة النواقص؟")) return;
-            let formData = new URLSearchParams();
-            formData.append('action', 'deleteOutOfStock');
-            formData.append('phone', item.phone);
-            formData.append('product', item.product);
-            fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData });
-            div.remove();
-            showToast("تم الحذف بنجاح", "success");
+            customConfirm("مسح العميل من قائمة النواقص؟", () => {
+                let formData = new URLSearchParams();
+                formData.append('action', 'deleteOutOfStock');
+                formData.append('phone', item.phone);
+                formData.append('product', item.product);
+                fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData });
+                div.remove();
+                showToast("تم الحذف بنجاح", "success");
+            });
         });
 
         container.appendChild(div);
@@ -3591,6 +3597,57 @@ if (searchExpiryBtn && expiryGlobalSearchInput) {
         if (e.key === 'Enter') searchExpiryBtn.click();
     });
 }
+
+window.customAlert = function (message) {
+    const overlay = document.createElement('div');
+    overlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px);";
+    const modal = document.createElement('div');
+    modal.style = "background: var(--bg); padding: 25px; border-radius: 15px; text-align: center; max-width: 400px; width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid var(--border);";
+    modal.innerHTML = `
+        <h3 style="color: var(--primary); margin-top: 0; font-family: 'Cairo', sans-serif;">تنبيه</h3>
+        <p style="font-size: 1.1rem; color: var(--text-main); margin-bottom: 25px; font-family: 'Cairo', sans-serif; white-space: pre-line;">${message}</p>
+        <button id="btnAlertOk" class="interactive-btn" style="background: var(--primary); color: white; border: none; padding: 10px 30px; border-radius: 8px; font-weight: bold; font-family: 'Cairo', sans-serif;">موافق</button>
+    `;
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    document.getElementById('btnAlertOk').onclick = () => {
+        document.body.removeChild(overlay);
+    };
+};
+
+window.customSinglePrompt = function (title, defaultValue, onConfirm) {
+    const overlay = document.createElement('div');
+    overlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px);";
+    const modal = document.createElement('div');
+    modal.style = "background: var(--bg); padding: 25px; border-radius: 15px; text-align: center; max-width: 400px; width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid var(--border);";
+    modal.innerHTML = `
+        <h3 style="color: var(--primary); margin-top: 0; font-family: 'Cairo', sans-serif;">${title}</h3>
+        <input type="text" id="promptInput" value="${defaultValue || ''}" style="width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 8px; border: 1px solid var(--border); background: var(--white); color: var(--text-main); font-size: 1.1rem; text-align: center;">
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button id="btnPromptYes" class="interactive-btn" style="background: var(--success); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1; font-family: 'Cairo', sans-serif;">حفظ ✅</button>
+            <button id="btnPromptNo" class="interactive-btn" style="background: var(--danger); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1; font-family: 'Cairo', sans-serif;">إلغاء ❌</button>
+        </div>
+    `;
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    
+    setTimeout(() => {
+        const input = document.getElementById('promptInput');
+        input.focus();
+        input.select();
+    }, 100);
+
+    document.getElementById('btnPromptYes').onclick = () => {
+        let val = document.getElementById('promptInput').value;
+        document.body.removeChild(overlay);
+        onConfirm(val);
+    };
+    document.getElementById('btnPromptNo').onclick = () => {
+        document.body.removeChild(overlay);
+        // Do not call onConfirm to simulate returning null in prompt
+    };
+};
 
 window.customConfirm = function (message, onConfirm) {
     const overlay = document.createElement('div');
