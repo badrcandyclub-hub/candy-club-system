@@ -766,10 +766,6 @@
                     <div class="expiry-form-grid"
                         style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
                         <div style="grid-column: span 2;">
-                            <label>الباركود <span style="color:red;">*</span></label>
-                            <input type="text" id="ledgerBarcode" placeholder="باركود المنتج" autofocus>
-                        </div>
-                        <div style="grid-column: span 2;">
                             <label>اسم المنتج <span style="color:red;">*</span></label>
                             <input type="text" id="ledgerProdName" placeholder="اسم المنتج">
                         </div>
@@ -780,6 +776,14 @@
                         <div>
                             <label>تاريخ الانتهاء <span style="color:red;">*</span></label>
                             <input type="date" id="ledgerProdDate" dir="ltr">
+                        </div>
+                        <div style="grid-column: span 2;">
+                            <label>المكان / المورد</label>
+                            <input type="text" id="ledgerProdLocation" placeholder="اختياري">
+                        </div>
+                        <div style="grid-column: span 4;">
+                            <label>ملاحظات</label>
+                            <input type="text" id="ledgerProdNotes" placeholder="اختياري">
                         </div>
                     </div>
                     <button id="addLedgerItemBtn" class="interactive-btn"
@@ -798,6 +802,7 @@
                                     <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">المنتج</th>
                                     <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">الكمية</th>
                                     <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">الانتهاء</th>
+                                    <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">المكان/المورد</th>
                                     <th style="padding: 10px; border-bottom: 2px solid #dee2e6; text-align: center;">
                                         إجراء</th>
                                 </tr>

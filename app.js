@@ -3003,12 +3003,20 @@ function onScanSuccess(decodedText, decodedResult) {
     scannerModal.classList.remove('active');
     
     if (currentScannerMode === 'ledger') {
-        const ledgerBarcode = document.getElementById('ledgerBarcode');
+        const ledgerProdName = document.getElementById('ledgerProdName');
         const ledgerProdQty = document.getElementById('ledgerProdQty');
-        if (ledgerBarcode) {
-            ledgerBarcode.value = decodedText;
-            ledgerBarcode.dispatchEvent(new Event('input', { bubbles: true }));
+        
+        if (decodedText && barcodeCatalogData) {
+            const found = barcodeCatalogData.find(p => p.barcode === decodedText);
+            if (found) {
+                if (ledgerProdName) ledgerProdName.value = found.name;
+                showToast("✅ تم إيجاد المنتج: " + found.name, "success");
+            } else {
+                if (ledgerProdName) ledgerProdName.value = '';
+                showToast("⚠️ الباركود غير مسجل، يرجى كتابة اسم المنتج يدوياً", "warning");
+            }
         }
+        
         playBeepSound();
         if (ledgerProdQty) {
             ledgerProdQty.focus();
@@ -3381,26 +3389,6 @@ if (startLedgerCameraScannerBtn) {
     });
 }
 
-// Barcode Scanner Logic for Ledger
-const ledgerBarcode = document.getElementById('ledgerBarcode');
-const ledgerProdName = document.getElementById('ledgerProdName');
-if (ledgerBarcode) {
-    ledgerBarcode.addEventListener('input', (e) => {
-        const val = e.target.value.trim();
-        // نبحث إذا كان الباركود موجوداً في الكتالوج
-        if (val.length >= 3 && barcodeCatalogData) {
-            const found = barcodeCatalogData.find(p => p.barcode === val);
-            if (found) {
-                ledgerProdName.value = found.name;
-                showToast("✅ تم إيجاد المنتج: " + found.name, "success");
-            } else {
-                ledgerProdName.value = '';
-                showToast("⚠️ الباركود غير مسجل، يرجى كتابة اسم المنتج يدوياً", "warning");
-            }
-        }
-    });
-}
-
 // Add Item to Cart
 const addLedgerItemBtn = document.getElementById('addLedgerItemBtn');
 if (addLedgerItemBtn) {
@@ -3408,7 +3396,8 @@ if (addLedgerItemBtn) {
         const name = document.getElementById('ledgerProdName').value;
         const qty = document.getElementById('ledgerProdQty').value;
         const date = document.getElementById('ledgerProdDate').value;
-        const barcode = document.getElementById('ledgerBarcode') ? document.getElementById('ledgerBarcode').value : '';
+        const location = document.getElementById('ledgerProdLocation').value;
+        const notes = document.getElementById('ledgerProdNotes').value;
 
         if (!name || !qty || !date) {
             showToast("يرجى إكمال البيانات الأساسية (الاسم، الكمية، التاريخ)", "warning");
@@ -3420,17 +3409,19 @@ if (addLedgerItemBtn) {
             name: name,
             qty: qty,
             expiryDate: date,
-            barcode: barcode,
-            status: 'مش في عرض'
+            location: location,
+            status: 'مش في عرض',
+            notes: notes
         };
 
         ledgerCart.push(item);
         renderLedgerCart();
 
-        if (document.getElementById('ledgerBarcode')) document.getElementById('ledgerBarcode').value = '';
         document.getElementById('ledgerProdName').value = '';
         document.getElementById('ledgerProdQty').value = '';
         document.getElementById('ledgerProdDate').value = '';
+        document.getElementById('ledgerProdLocation').value = '';
+        document.getElementById('ledgerProdNotes').value = '';
     });
 }
 
@@ -3453,6 +3444,7 @@ function renderLedgerCart() {
                 <td style="padding: 8px;">${item.name}</td>
                 <td style="padding: 8px;">${item.qty}</td>
                 <td style="padding: 8px;" dir="ltr">${item.expiryDate}</td>
+                <td style="padding: 8px;">${item.location || '-'}</td>
                 <td style="padding: 8px; text-align: center; display: flex; gap: 5px; justify-content: center;">
                     <button class="interactive-btn" style="background: #f39c12; color: white; border: none; padding: 5px 10px; border-radius: 5px;" onclick="editLedgerItem(${index})">تعديل</button>
                     <button class="interactive-btn" style="background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 5px;" onclick="removeLedgerItem(${index})">حذف</button>
@@ -3464,10 +3456,11 @@ function renderLedgerCart() {
 
 window.editLedgerItem = function (index) {
     const item = ledgerCart[index];
-    if (document.getElementById('ledgerBarcode')) document.getElementById('ledgerBarcode').value = item.barcode || '';
     document.getElementById('ledgerProdName').value = item.name;
     document.getElementById('ledgerProdQty').value = item.qty;
     document.getElementById('ledgerProdDate').value = item.expiryDate;
+    document.getElementById('ledgerProdLocation').value = item.location || '';
+    document.getElementById('ledgerProdNotes').value = item.notes || '';
 
     ledgerCart.splice(index, 1);
     renderLedgerCart();
