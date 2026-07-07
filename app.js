@@ -3004,11 +3004,15 @@ function onScanSuccess(decodedText, decodedResult) {
     
     if (currentScannerMode === 'ledger') {
         const ledgerBarcode = document.getElementById('ledgerBarcode');
+        const ledgerProdQty = document.getElementById('ledgerProdQty');
         if (ledgerBarcode) {
             ledgerBarcode.value = decodedText;
             ledgerBarcode.dispatchEvent(new Event('input', { bubbles: true }));
         }
         playBeepSound();
+        if (ledgerProdQty) {
+            ledgerProdQty.focus();
+        }
     } else {
         handleBarcodeMatch(decodedText);
     }
@@ -3388,6 +3392,10 @@ if (ledgerBarcode) {
             const found = barcodeCatalogData.find(p => p.barcode === val);
             if (found) {
                 ledgerProdName.value = found.name;
+                showToast("✅ تم إيجاد المنتج: " + found.name, "success");
+            } else {
+                ledgerProdName.value = '';
+                showToast("⚠️ الباركود غير مسجل، يرجى كتابة اسم المنتج يدوياً", "warning");
             }
         }
     });
