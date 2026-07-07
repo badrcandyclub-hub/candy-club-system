@@ -2909,8 +2909,11 @@ let scanResultModal = document.getElementById('scanResultModal');
 let closeScanResultBtn = document.getElementById('closeScanResultBtn');
 let scanAnotherBtn = document.getElementById('scanAnotherBtn');
 
+let currentScannerMode = 'price';
+
 if (openScannerBtn) {
     openScannerBtn.addEventListener('click', () => {
+        currentScannerMode = 'price';
         scannerModal.classList.add('active');
         startBarcodeScanner();
     });
@@ -2931,6 +2934,7 @@ if (closeScanResultBtn) {
 
 if (scanAnotherBtn) {
     scanAnotherBtn.addEventListener('click', () => {
+        currentScannerMode = 'price';
         scanResultModal.classList.remove('active');
         scannerModal.classList.add('active');
         startBarcodeScanner();
@@ -2997,7 +3001,17 @@ function stopBarcodeScanner() {
 function onScanSuccess(decodedText, decodedResult) {
     stopBarcodeScanner();
     scannerModal.classList.remove('active');
-    handleBarcodeMatch(decodedText);
+    
+    if (currentScannerMode === 'ledger') {
+        const ledgerBarcode = document.getElementById('ledgerBarcode');
+        if (ledgerBarcode) {
+            ledgerBarcode.value = decodedText;
+            ledgerBarcode.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        playBeepSound();
+    } else {
+        handleBarcodeMatch(decodedText);
+    }
 }
 
 function onScanFailure(error) {
@@ -3346,6 +3360,22 @@ if (openLedgerBtn) {
 window.closeLedgerModal = function () {
     ledgerModal.style.display = 'none';
 };
+
+const startLedgerCameraScannerBtn = document.getElementById('startLedgerCameraScannerBtn');
+if (startLedgerCameraScannerBtn) {
+    startLedgerCameraScannerBtn.addEventListener('click', () => {
+        if (typeof currentScannerMode !== 'undefined') {
+            currentScannerMode = 'ledger';
+        }
+        const scannerModal = document.getElementById('scannerModal');
+        if (scannerModal) {
+            scannerModal.classList.add('active');
+            if (typeof startBarcodeScanner === 'function') {
+                startBarcodeScanner();
+            }
+        }
+    });
+}
 
 // Barcode Scanner Logic for Ledger
 const ledgerBarcode = document.getElementById('ledgerBarcode');
