@@ -12,8 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap"
         rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <!-- مكتبة الذكاء الاصطناعي لقراءة الصور OCR -->
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
 </head>
 
 <body>
@@ -730,9 +729,6 @@
                     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid var(--border); padding-bottom: 10px;">
                     <h2 style="color: var(--primary); margin: 0; display:flex; align-items:center; gap:10px;">
                         📝 إذن استلام وتسجيل بضاعة
-                        <button type="button" id="startOcrScannerBtn" class="interactive-btn pulse-btn" style="background: linear-gradient(135deg, #17a2b8, #0b7dda); color: white; border: none; padding: 5px 15px; border-radius: 8px; font-size: 0.9rem; display:flex; align-items:center; gap:5px;">
-                            📸 مسح بالذكاء الاصطناعي
-                        </button>
                     </h2>
                     <span class="close-modal" onclick="closeLedgerModal()"
                         style="font-size: 2rem; cursor: pointer; color: #c0392b;">&times;</span>
@@ -767,6 +763,10 @@
                     <div class="expiry-form-grid"
                         style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
                         <div style="grid-column: span 2;">
+                            <label>الباركود <span style="color:red;">*</span></label>
+                            <input type="text" id="ledgerBarcode" placeholder="باركود المنتج" autofocus>
+                        </div>
+                        <div style="grid-column: span 2;">
                             <label>اسم المنتج <span style="color:red;">*</span></label>
                             <input type="text" id="ledgerProdName" placeholder="اسم المنتج">
                         </div>
@@ -777,14 +777,6 @@
                         <div>
                             <label>تاريخ الانتهاء <span style="color:red;">*</span></label>
                             <input type="date" id="ledgerProdDate" dir="ltr">
-                        </div>
-                        <div style="grid-column: span 2;">
-                            <label>المكان / المورد</label>
-                            <input type="text" id="ledgerProdLocation" placeholder="اختياري">
-                        </div>
-                        <div style="grid-column: span 4;">
-                            <label>ملاحظات</label>
-                            <input type="text" id="ledgerProdNotes" placeholder="اختياري">
                         </div>
                     </div>
                     <button id="addLedgerItemBtn" class="interactive-btn"
@@ -803,7 +795,6 @@
                                     <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">المنتج</th>
                                     <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">الكمية</th>
                                     <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">الانتهاء</th>
-                                    <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">المكان/المورد</th>
                                     <th style="padding: 10px; border-bottom: 2px solid #dee2e6; text-align: center;">
                                         إجراء</th>
                                 </tr>
@@ -1141,7 +1132,7 @@
 
     <!-- ⭐ التأكد من ترتيب تحميل السكربتات -->
     <script src="app.js?v=15.1"></script>
-    <script src="ocr.js?v=1.1"></script>
+
 </body>
 
 </html>
