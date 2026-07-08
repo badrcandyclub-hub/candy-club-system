@@ -1045,12 +1045,23 @@ input:checked + .slider:before { transform: translateX(24px); }
     height: var(--nav-height);
     background: var(--white);
     display: flex;
-    justify-content: space-around;
+    justify-content: flex-start;
     align-items: center;
     box-shadow: 0 -2px 20px rgba(30,40,90,0.08);
     border-top: 1px solid var(--border);
     z-index: 999;
     padding: 0 8px;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    gap: 15px;
+}
+.bottom-nav::-webkit-scrollbar {
+    display: none;
+}
+.bottom-nav {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
 
 .nav-item {
@@ -1063,6 +1074,7 @@ input:checked + .slider:before { transform: translateX(24px); }
     transition: var(--transition);
     cursor: pointer;
     padding: 8px 14px;
+    flex: 0 0 auto;
     border-radius: var(--radius);
     position: relative;
     min-width: 60px;
@@ -1860,6 +1872,16 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
         max-height: 95vh; 
         border-radius: 12px; 
         width: 95%;
+    }
+    
+    /* تحسين أزرار الإجراءات في الجداول لتجنب التداخل */
+    td[style*="display: flex"] {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+    td[style*="display: flex"] button {
+        width: 100% !important;
+        padding: 8px !important;
     }
     
     /* تحسين الجداول لمنع التداخل */
