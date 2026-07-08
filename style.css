@@ -1839,16 +1839,60 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
    22. موبايل
    ========================================= */
 @media (max-width: 899px) {
-    .app-content { padding: 14px 14px; }
+    .app-content { padding: 10px 10px 80px 10px; } /* مساحة إضافية بالأسفل لتجنب تغطية شريط التنقل */
     .app-header { padding: 0 16px; }
     .logo-text { font-size: 1.2rem; }
-    .section-card { padding: 18px 16px; }
+    .section-card { padding: 16px 12px; margin-bottom: 15px; border-radius: 12px; }
     .stats-row { flex-wrap: wrap; }
     .stats-row .stat-item { min-width: calc(50% - 6px); }
-    .bottom-nav { height: 68px; }
-    .nav-item { padding: 6px 10px; min-width: 50px; }
-    .nav-item .icon { font-size: 1.2rem; }
-    .modal-content { padding: 22px 18px; }
+    .bottom-nav { 
+        height: auto; 
+        padding-bottom: env(safe-area-inset-bottom, 10px); 
+        padding-top: 10px;
+    }
+    .nav-item { padding: 6px; min-width: 45px; }
+    .nav-item .icon { font-size: 1.3rem; margin-bottom: 2px; }
+    .nav-item .label { font-size: 0.7rem; }
+    
+    /* تحسين النوافذ المنبثقة (Modals) لتناسب الموبايل */
+    .modal-content { 
+        padding: 15px 12px; 
+        max-height: 95vh; 
+        border-radius: 12px; 
+        width: 95%;
+    }
+    
+    /* تحسين الجداول لمنع التداخل */
+    .table-responsive, .data-table, .receipt-table { 
+        display: block; 
+        width: 100%; 
+        overflow-x: auto; 
+        white-space: nowrap; 
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* جعل النماذج عمودية (Grid to Column) */
+    .expiry-form-grid, .invoice-details-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px;
+    }
+    
+    /* جعل عناصر الإدخال تملأ الشاشة بالكامل في الموبايل */
+    .expiry-form-grid > div {
+        grid-column: span 1 !important;
+    }
+    
+    /* تكبير حقول الإدخال لتسهيل اللمس */
+    input, select, textarea {
+        font-size: 16px !important; /* لمنع Zoom في الآيفون/الأندرويد */
+        padding: 12px 10px !important;
+    }
+    
+    .interactive-btn {
+        padding: 14px !important;
+        font-size: 1.1rem !important;
+    }
+    
     .toast-container { top: 72px; }
 }
 
