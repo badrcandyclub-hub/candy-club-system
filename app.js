@@ -212,6 +212,22 @@ function loadDataFromServer() {
             if (typeof renderFinancials === 'function') renderFinancials(window.financialsData);
 
             catalogData = data.catalog || [];
+            
+            // ⭐ دمج منتجات Firebase في الكتالوج إذا لم تكن موجودة من الإكسل
+            if (barcodeCatalogData.length > 0) {
+                const existingNames = new Set(catalogData.map(p => p.name.toLowerCase()));
+                barcodeCatalogData.forEach(fbProduct => {
+                    if (!existingNames.has(fbProduct.name.toLowerCase())) {
+                        catalogData.push({
+                            name: fbProduct.name,
+                            price: fbProduct.price,
+                            isOffer: false,
+                            offerPrice: 0
+                        });
+                    }
+                });
+            }
+            
             renderCatalog(catalogData);
 
             oosData = data.outOfStock || [];
@@ -292,12 +308,8 @@ function loadDataFromServer() {
                 if (driversDisplayList) driversDisplayList.innerHTML = displayListHtml;
             }
 
-            const smartProductsList = document.getElementById('smartProductsList');
-            if (smartProductsList) {
-                let smartHtml = '';
-                catalogData.forEach(p => { smartHtml += `<option value="${p.name}">`; });
-                smartProductsList.innerHTML = smartHtml;
-            }
+            // ⭐ اقتراحات المنتجات تأتي من Firebase بدلاً من الإكسل
+            updateSmartSuggestionsFromFirebase();
 
             const modSelect = document.getElementById('moderatorSelect');
             let currentMod = modSelect ? modSelect.value : "";
@@ -1072,14 +1084,8 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
 }
 
 function updateSmartProductsList() {
-    let dl = document.getElementById('smartProductsList');
-    if (!dl) return;
-    dl.innerHTML = '';
-    catalogData.forEach(p => {
-        let opt = document.createElement('option');
-        opt.value = p.name;
-        dl.appendChild(opt);
-    });
+    // ⭐ الاقتراحات تأتي من Firebase أولاً، وإذا لم تتوفر يأخذ من catalogData
+    updateSmartSuggestionsFromFirebase();
 }
 if (document.getElementById('addProductBtn')) document.getElementById('addProductBtn').addEventListener('click', () => addProductRow());
 if (productsContainer && productsContainer.children.length === 0) addProductRow();
@@ -2839,10 +2845,56 @@ if (excelPasswordInput) {
 let barcodeCatalogData = [];
 let html5QrcodeScanner = null;
 
-// 1. جلب بيانات المنتجات من Firebase Realtime Database
+// 1. جلب بيانات المنتجات من Firebase Realtime Database مع Cache ذكي
 const FIREBASE_PRODUCTS_URL = 'https://candyclubsync-default-rtdb.firebaseio.com/products.json';
+const FIREBASE_CACHE_KEY = 'candy_firebase_products_cache';
+
+// تحويل بيانات Firebase الخام إلى مصفوفة منتجات
+function parseFirebaseProducts(data) {
+    const result = [];
+    if (data) {
+        const items = Array.isArray(data) ? data : Object.values(data);
+        items.forEach(item => {
+            if (item && item.Barcode && item.Name) {
+                result.push({
+                    barcode: String(item.Barcode).trim(),
+                    name: String(item.Name).trim(),
+                    price: Number(item.Price) || 0,
+                    stock: Number(item.Stock) || 0
+                });
+            }
+        });
+    }
+    return result;
+}
+
+// تحديث اقتراحات المنتجات الذكية من Firebase
+function updateSmartSuggestionsFromFirebase() {
+    const smartProductsList = document.getElementById('smartProductsList');
+    if (!smartProductsList) return;
+    smartProductsList.innerHTML = '';
+    // نعرض أول 200 منتج فقط في الـ datalist لمنع التعليق
+    const maxSuggestions = 200;
+    const items = barcodeCatalogData.slice(0, maxSuggestions);
+    items.forEach(p => {
+        smartProductsList.innerHTML += `<option value="${p.name}">`;
+    });
+}
 
 function fetchCatalogFromFirebase() {
+    // ⚡ الخطوة 1: قراءة الكاش أولاً (فوري بدون انتظار)
+    try {
+        const cached = localStorage.getItem(FIREBASE_CACHE_KEY);
+        if (cached) {
+            barcodeCatalogData = JSON.parse(cached);
+            console.log("⚡ تم تحميل الكاش المحلي: ", barcodeCatalogData.length, "منتج");
+            updateSmartSuggestionsFromFirebase();
+        }
+    } catch (e) {
+        console.warn("تعذر قراءة الكاش المحلي:", e);
+    }
+
+    // 🌐 الخطوة 2: جلب البيانات الطازجة من Firebase في الخلفية
     console.log("⏳ جاري تحميل بيانات المنتجات من Firebase...");
     fetch(FIREBASE_PRODUCTS_URL)
         .then(response => {
@@ -2850,26 +2902,23 @@ function fetchCatalogFromFirebase() {
             return response.json();
         })
         .then(data => {
-            barcodeCatalogData = [];
-            if (data) {
-                // Firebase قد تُرجع object أو array
-                const items = Array.isArray(data) ? data : Object.values(data);
-                items.forEach(item => {
-                    if (item && item.Barcode && item.Name) {
-                        barcodeCatalogData.push({
-                            barcode: String(item.Barcode).trim(),
-                            name: String(item.Name).trim(),
-                            price: Number(item.Price) || 0,
-                            stock: Number(item.Stock) || 0
-                        });
-                    }
-                });
+            barcodeCatalogData = parseFirebaseProducts(data);
+            
+            // حفظ في الكاش المحلي
+            try {
+                localStorage.setItem(FIREBASE_CACHE_KEY, JSON.stringify(barcodeCatalogData));
+            } catch (e) {
+                console.warn("تعذر حفظ الكاش المحلي:", e);
             }
+
             console.log("✅ تم تحميل بيانات المنتجات من Firebase: ", barcodeCatalogData.length, "منتج");
+            updateSmartSuggestionsFromFirebase();
         })
         .catch(err => {
             console.error("❌ خطأ في تحميل المنتجات من Firebase:", err);
-            showToast("⚠️ فشل تحميل بيانات المنتجات من السيرفر", "error");
+            if (barcodeCatalogData.length === 0) {
+                showToast("⚠️ فشل تحميل بيانات المنتجات من السيرفر", "error");
+            }
         });
 }
 
