@@ -981,21 +981,19 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
     const div = document.createElement('div');
     div.className = 'product-row';
     if (isConfirmed) div.classList.add('confirmed');
-    div.style.display = 'flex';
-    div.style.gap = '5px';
-    div.style.alignItems = 'center';
+
 
     let rOnly = isConfirmed ? 'readonly' : '';
 
     div.innerHTML = `
-        <input type="text" list="smartProductsList" class="product-name-input" placeholder="اسم المنتج..." value="${nameVal}" required style="flex:3;" ${rOnly}>
-        <input type="number" class="product-price-input" placeholder="السعر" value="${priceVal}" required style="flex:1.2; text-align:center;" ${rOnly}>
-        
-        <input type="number" class="product-offer-input" placeholder="عرض" style="flex:0.8; text-align:center;" ${rOnly}>
-
-        <input type="number" class="product-qty-input" placeholder="الكمية" value="${qtyVal}" min="1" required style="flex:1; text-align:center;" ${rOnly}>
-        <button type="button" class="btn-confirm-pro interactive-btn" style="flex: 0 0 36px;">✔️</button>
-        <button type="button" class="remove-product-btn interactive-btn" style="flex: 0 0 36px;">❌</button>
+        <input type="text" list="smartProductsList" class="product-name-input" placeholder="اسم المنتج..." value="${nameVal}" required ${rOnly}>
+        <input type="number" class="product-price-input" placeholder="السعر" value="${priceVal}" required ${rOnly}>
+        <input type="number" class="product-offer-input" placeholder="سعر العرض" ${rOnly}>
+        <input type="number" class="product-qty-input" placeholder="الكمية" value="${qtyVal}" min="1" required ${rOnly}>
+        <div class="product-row-actions">
+            <button type="button" class="btn-confirm-pro interactive-btn">✔️</button>
+            <button type="button" class="remove-product-btn interactive-btn">❌</button>
+        </div>
     `;
 
     wrapper.appendChild(div);

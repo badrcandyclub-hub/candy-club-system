@@ -423,7 +423,8 @@ body.dark-mode input[readonly] {
 }
 
 .product-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: 3fr 1fr 1fr 1fr auto auto;
     gap: 8px;
     margin-bottom: 10px;
     align-items: center;
@@ -442,6 +443,7 @@ body.dark-mode input[readonly] {
     background: transparent;
     border: none;
     box-shadow: none;
+    width: 100%;
 }
 
 .product-row input:focus {
@@ -450,9 +452,9 @@ body.dark-mode input[readonly] {
     box-shadow: none;
 }
 
-.product-name-input  { flex: 3; }
-.product-price-input { flex: 1; text-align: center; color: var(--primary); font-weight: 700; }
-.product-qty-input   { flex: 0.8; text-align: center; font-weight: 700; }
+.product-price-input { text-align: center; color: var(--primary); font-weight: 700; }
+.product-offer-input { text-align: center; color: var(--secondary); font-weight: 700; }
+.product-qty-input   { text-align: center; font-weight: 700; }
 
 .product-row.confirmed {
     background: var(--success-light);
@@ -1851,11 +1853,47 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
    22. موبايل
    ========================================= */
 @media (max-width: 899px) {
-    .app-content { padding: 10px 10px 80px 10px; } /* مساحة إضافية بالأسفل لتجنب تغطية شريط التنقل */
+    .app-content { padding: 10px 10px 90px 10px; } /* مساحة إضافية بالأسفل لتجنب تغطية شريط التنقل */
     .app-header { padding: 0 16px; }
     .logo-text { font-size: 1.2rem; }
     .section-card { padding: 16px 12px; margin-bottom: 15px; border-radius: 12px; }
     .stats-row { flex-wrap: wrap; }
+    
+    /* إصلاح زراير الشحن المخفية على الموبايل */
+    .shipping-actions-row {
+        flex-direction: column;
+    }
+
+    /* تصميم شبكي مخصص لخانة المنتجات في الفاتورة على الموبايل */
+    .product-row {
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas:
+            "name name"
+            "price offer"
+            "qty actions";
+        align-items: stretch;
+    }
+    
+    .product-name-input { grid-area: name; font-size: 1.1rem !important; }
+    .product-price-input { grid-area: price; }
+    .product-offer-input { grid-area: offer; }
+    .product-qty-input { grid-area: qty; }
+    
+    .btn-confirm-pro, .remove-product-btn { display: inline-block; }
+    
+    .product-row-actions {
+        grid-area: actions;
+        display: flex;
+        gap: 5px;
+        width: 100%;
+    }
+    
+    .product-row-actions button {
+        flex: 1;
+        padding: 8px !important;
+        border-radius: var(--radius) !important;
+    }
+    
     .stats-row .stat-item { min-width: calc(50% - 6px); }
     .bottom-nav { 
         height: auto; 
