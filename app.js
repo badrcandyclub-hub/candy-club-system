@@ -2839,44 +2839,42 @@ if (excelPasswordInput) {
 let barcodeCatalogData = [];
 let html5QrcodeScanner = null;
 
-// 1. جلب وتحليل ملف الـ CSV
-const toEnglishNumber = str => {
-    if (!str) return 0;
-    let engStr = String(str).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
-    return parseFloat(engStr) || 0;
-};
+// 1. جلب بيانات المنتجات من Firebase Realtime Database
+const FIREBASE_PRODUCTS_URL = 'https://candyclubsync-default-rtdb.firebaseio.com/products.json';
 
-function fetchCatalogCSV() {
-    fetch('products.csv.csv')
+function fetchCatalogFromFirebase() {
+    console.log("⏳ جاري تحميل بيانات المنتجات من Firebase...");
+    fetch(FIREBASE_PRODUCTS_URL)
         .then(response => {
-            if (!response.ok) throw new Error("لم يتم العثور على ملف products.csv.csv");
-            return response.text();
+            if (!response.ok) throw new Error("فشل الاتصال بـ Firebase: " + response.status);
+            return response.json();
         })
-        .then(csvText => {
-            let lines = csvText.split('\n');
+        .then(data => {
             barcodeCatalogData = [];
-
-            // تجاهل أول سطر إذا كان عناوين الأعمدة، لكن تحسباً سنقرأ كل السطور
-            lines.forEach((line, index) => {
-                let cols = line.split(',');
-                if (cols.length >= 3) {
-                    let barcode = cols[0].trim();
-                    let name = cols[1].trim();
-                    let price = toEnglishNumber(cols[2].trim()); // إجبار الأرقام الإنجليزية
-
-                    // نتجاهل السطر لو كان فارغ
-                    if (barcode && name) {
-                        barcodeCatalogData.push({ barcode, name, price });
+            if (data) {
+                // Firebase قد تُرجع object أو array
+                const items = Array.isArray(data) ? data : Object.values(data);
+                items.forEach(item => {
+                    if (item && item.Barcode && item.Name) {
+                        barcodeCatalogData.push({
+                            barcode: String(item.Barcode).trim(),
+                            name: String(item.Name).trim(),
+                            price: Number(item.Price) || 0,
+                            stock: Number(item.Stock) || 0
+                        });
                     }
-                }
-            });
-            console.log("تم تحميل بيانات الكتالوج للمسح الضوئي: ", barcodeCatalogData.length, "منتج");
+                });
+            }
+            console.log("✅ تم تحميل بيانات المنتجات من Firebase: ", barcodeCatalogData.length, "منتج");
         })
-        .catch(err => console.error("خطأ في تحميل الكتالوج للباركود:", err));
+        .catch(err => {
+            console.error("❌ خطأ في تحميل المنتجات من Firebase:", err);
+            showToast("⚠️ فشل تحميل بيانات المنتجات من السيرفر", "error");
+        });
 }
 
 // تشغيل الدالة فور تحميل الصفحة
-window.addEventListener('load', fetchCatalogCSV);
+window.addEventListener('load', fetchCatalogFromFirebase);
 
 // 2. إصدار صوت Beep قصير عند نجاح المسح
 function playBeepSound() {
@@ -3011,10 +3009,10 @@ function onScanSuccess(decodedText, decodedResult) {
             const found = barcodeCatalogData.find(p => String(p.barcode).trim() === val);
             if (found) {
                 if (ledgerProdName) ledgerProdName.value = found.name;
-                showToast("✅ تم إيجاد المنتج: " + found.name, "success");
+                showToast("✅ " + found.name + " | الكمية: " + found.stock + " | السعر: " + found.price + " ج.م", "success");
             } else {
                 if (ledgerProdName) ledgerProdName.value = '';
-                showToast("⚠️ الباركود (" + val + ") غير مسجل", "warning");
+                showToast("⚠️ الباركود (" + val + ") غير مسجل، اكتب الاسم يدوياً", "warning");
             }
         } else {
             showToast("⚠️ لم يتم التعرف على النص أو الكتالوج فارغ", "error");
@@ -3046,6 +3044,28 @@ function handleBarcodeMatch(barcodeValue) {
         document.getElementById('scanResultName').textContent = matchedProduct.name;
         // عرض السعر بالإنجليزية القياسية
         document.getElementById('scanResultPrice').textContent = Number(matchedProduct.price);
+        // عرض الكمية المتاحة (Stock)
+        const stockEl = document.getElementById('scanResultStock');
+        if (stockEl) {
+            stockEl.textContent = Number(matchedProduct.stock);
+            // تلوين الكمية حسب المخزون
+            const stockContainer = document.getElementById('scanResultStockContainer');
+            if (stockContainer) {
+                if (matchedProduct.stock <= 0) {
+                    stockContainer.style.background = '#fbe9e7';
+                    stockContainer.querySelector('.stock-label').style.color = '#c62828';
+                    stockEl.style.color = '#c62828';
+                } else if (matchedProduct.stock <= 5) {
+                    stockContainer.style.background = '#fff3e0';
+                    stockContainer.querySelector('.stock-label').style.color = '#e65100';
+                    stockEl.style.color = '#e65100';
+                } else {
+                    stockContainer.style.background = '#e3f2fd';
+                    stockContainer.querySelector('.stock-label').style.color = '#1565c0';
+                    stockEl.style.color = '#1565c0';
+                }
+            }
+        }
 
         scanResultModal.classList.add('active');
 
