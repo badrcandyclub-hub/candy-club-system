@@ -370,7 +370,26 @@ function loadDataFromServer() {
 function checkBookingAlerts() {
     let banner = document.getElementById('booking-alert-banner');
     if (!banner) return;
-    let hasAlert = window.pendingOrdersData.some(o => o.orderType && o.orderType.includes('حجز'));
+    
+    let today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let hasAlert = window.pendingOrdersData.some(o => {
+        if (!o.orderType || !o.orderType.includes('حجز')) return false;
+        
+        let resDateStr = o.reservationDate || o.expectedDate || o.specialDate || o.spDate;
+        if (!resDateStr) return false;
+        
+        let resDate = new Date(resDateStr);
+        if (isNaN(resDate.getTime())) return false;
+        
+        resDate.setHours(0, 0, 0, 0);
+        let diffTime = resDate - today;
+        let diffDays = diffTime / (1000 * 60 * 60 * 24);
+        
+        return diffDays >= 0 && diffDays <= 2;
+    });
+
     if (hasAlert) banner.style.display = 'block';
     else banner.style.display = 'none';
 }

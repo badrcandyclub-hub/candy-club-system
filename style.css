@@ -1421,6 +1421,67 @@ body.dark-mode .delivery-prediction {
 }
 
 /* =========================================
+   تنسيق قوائم مناطق الشحن (Accordion)
+   ========================================= */
+.zones-lists-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+    flex: 1;
+}
+
+.zone-details {
+    background: #FAFBFF;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.zone-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    font-size: 1.3rem;
+    font-weight: bold;
+    cursor: pointer;
+    background: #FAFBFF;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    user-select: none;
+    list-style: none; /* إخفاء المثلث الافتراضي */
+}
+
+/* إخفاء المثلث الافتراضي في Safari/Chrome */
+.zone-summary::-webkit-details-marker {
+    display: none;
+}
+
+.zone-summary .arrow {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    transition: transform 0.3s ease;
+}
+
+.zone-details[open] .zone-summary {
+    border-radius: 12px 12px 0 0;
+    border-bottom: 1px dashed var(--border);
+}
+
+.zone-details[open] .zone-summary .arrow {
+    transform: rotate(180deg);
+}
+
+.zone-list-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+}
+
+body.dark-mode .zone-details,
+body.dark-mode .zone-summary {
+    background: var(--card);
+}
+
    🚚 بطاقة الأوردر في قسم الشحن (REDESIGN)
    ========================================= */
 .shipping-order-card {
@@ -1892,6 +1953,11 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
         flex: 1;
         padding: 8px !important;
         border-radius: var(--radius) !important;
+    }
+    
+    .zones-lists-container {
+        grid-template-columns: 1fr; /* ترتيب قوائم مناطق الشحن فوق بعضها */
+        gap: 15px;
     }
     
     .stats-row .stat-item { min-width: calc(50% - 6px); }
