@@ -3085,9 +3085,11 @@ function onScanSuccess(decodedText, decodedResult) {
             const found = barcodeCatalogData.find(p => String(p.barcode).trim() === val);
             if (found) {
                 if (ledgerProdName) ledgerProdName.value = found.name;
+                if (ledgerProdQty) ledgerProdQty.value = found.stock ? Number(found.stock) : 0;
                 showToast("✅ " + found.name + " | الكمية: " + found.stock + " | السعر: " + found.price + " ج.م", "success");
             } else {
                 if (ledgerProdName) ledgerProdName.value = '';
+                if (ledgerProdQty) ledgerProdQty.value = '';
                 showToast("⚠️ الباركود (" + val + ") غير مسجل، اكتب الاسم يدوياً", "warning");
             }
         } else {
