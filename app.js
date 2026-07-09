@@ -2386,6 +2386,19 @@ if (sendWaManagerBtn) sendWaManagerBtn.addEventListener('click', () => {
 // ==========================================
 
 window.pushCatalogUpdate = function (name, price, isOffer, offerPrice) {
+    // تحديث البيانات محلياً فوراً لمنع اختفاء التعديل
+    let existing = catalogData.find(p => p.name === name);
+    if (existing) {
+        existing.isOffer = isOffer;
+        existing.offerPrice = offerPrice;
+        existing.price = price;
+    } else {
+        catalogData.push({ name, price, isOffer, offerPrice });
+    }
+    
+    // إعادة الرسم فوراً ليرى المستخدم النتيجة بدون انتظار
+    renderCatalog();
+
     let formData = new URLSearchParams();
     formData.append('action', 'updateCatalog');
     formData.append('name', name);
@@ -2477,12 +2490,10 @@ function renderCatalog() {
                     currentOffer = val;
                     window.pushCatalogUpdate(p.name, p.price, newState, currentOffer);
                     showToast("✅ تم تفعيل العرض", "success");
-                    setTimeout(loadDataFromServer, 2000);
                 });
             } else {
                 window.pushCatalogUpdate(p.name, p.price, newState, currentOffer);
                 showToast(newState ? "✅ تم تفعيل العرض" : "❌ تم إيقاف العرض", "success");
-                setTimeout(loadDataFromServer, 2000);
             }
         });
 
@@ -2555,7 +2566,6 @@ if (saveEditCatBtn) {
             showToast("✅ تم التعديل بنجاح", "success");
             setBtnLoading(saveEditCatBtn, false, "حفظ التعديلات");
             document.getElementById('editCatalogModal').classList.remove('active');
-            loadDataFromServer();
         }, 1500);
     });
 }
