@@ -64,7 +64,7 @@ document.querySelectorAll('.nav-item').forEach(btn => {
                 // Create overlay dynamically if it doesn't exist to bypass HTML caching
                 overlay = document.createElement('div');
                 overlay.id = 'expiry-loading-overlay';
-                overlay.style.cssText = 'display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.95); z-index: 1000; flex-direction: column; justify-content: center; align-items: center; border-radius: 15px; backdrop-filter: blur(5px);';
+                overlay.style.cssText = 'display: none; position: fixed; top: 130px; bottom: 80px; left: 0; right: 0; background: rgba(255, 255, 255, 0.95); z-index: 90; flex-direction: column; justify-content: center; align-items: center; border-radius: 15px; backdrop-filter: blur(5px);';
                 overlay.innerHTML = `
                     <div style="border: 6px solid #f3f3f3; border-top: 6px solid #2980b9; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite;"></div>
                     <h3 style="color: #2c3e50; margin-top: 20px; font-weight: bold;">جاري سحب بيانات الصلاحيات...</h3>

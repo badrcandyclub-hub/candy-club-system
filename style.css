@@ -1914,6 +1914,7 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
    22. موبايل
    ========================================= */
 @media (max-width: 899px) {
+    body { padding-top: 130px; } /* عشان الهيدر لما بيلف ويزيد طوله ميغطيش على المحتوى */
     .app-content { padding: 10px 10px 100px 10px; } /* مساحة إضافية بالأسفل لتجنب تغطية شريط التنقل */
     .app-header { 
         padding: 10px 16px; 
