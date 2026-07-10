@@ -879,6 +879,17 @@ function doPost(e) {
           expirySheet.getRange(1, 1, 1, expiryHeaders.length).setValues([expiryHeaders])
                .setBackground("#2980b9").setFontColor("white").setFontFamily("Cairo").setFontSize(14).setFontWeight("bold")
                .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
+      } else {
+          // ⭐ إذا كانت الشيت موجودة تأكد من وجود عمود الباركود
+          var currentCols = expirySheet.getLastColumn();
+          if (currentCols > 0) {
+            var currentHeaders = expirySheet.getRange(1, 1, 1, currentCols).getValues()[0];
+            if (currentHeaders.indexOf("الباركود") === -1) {
+                expirySheet.getRange(1, currentCols + 1).setValue("الباركود")
+                     .setBackground("#2980b9").setFontColor("white").setFontFamily("Cairo").setFontSize(14).setFontWeight("bold")
+                     .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
+            }
+          }
       }
       expirySheet.appendRow([
         e.parameter.name, 
@@ -906,6 +917,17 @@ function doPost(e) {
           expirySheet.getRange(1, 1, 1, expiryHeaders.length).setValues([expiryHeaders])
                .setBackground("#2980b9").setFontColor("white").setFontFamily("Cairo").setFontSize(14).setFontWeight("bold")
                .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
+      } else {
+          // ⭐ إذا كانت الشيت موجودة تأكد من وجود عمود الباركود
+          var currentCols = expirySheet.getLastColumn();
+          if (currentCols > 0) {
+            var currentHeaders = expirySheet.getRange(1, 1, 1, currentCols).getValues()[0];
+            if (currentHeaders.indexOf("الباركود") === -1) {
+                expirySheet.getRange(1, currentCols + 1).setValue("الباركود")
+                     .setBackground("#2980b9").setFontColor("white").setFontFamily("Cairo").setFontSize(14).setFontWeight("bold")
+                     .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
+            }
+          }
       }
       var items = JSON.parse(e.parameter.batchData);
       var rows = [];
