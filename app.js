@@ -2990,20 +2990,24 @@ window.addEventListener('load', fetchCatalogFromFirebase);
 // 2. إصدار صوت Beep قصير عند نجاح المسح
 function playBeepSound() {
     try {
-        let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        let oscillator = audioCtx.createOscillator();
-        let gainNode = audioCtx.createGain();
+        if (typeof window.playSuccessBeep === 'function') {
+            window.playSuccessBeep();
+        } else {
+            let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            let oscillator = audioCtx.createOscillator();
+            let gainNode = audioCtx.createGain();
 
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
 
-        oscillator.type = 'sine';
-        oscillator.frequency.value = 800; // تردد الصوت
-        gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+            oscillator.type = 'square';
+            oscillator.frequency.value = 2600; // تردد الكاشير الحقيقي
+            gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
 
-        oscillator.start(audioCtx.currentTime);
-        oscillator.stop(audioCtx.currentTime + 0.1);
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + 0.08);
+        }
     } catch (e) {
         console.warn("Web Audio API غير مدعوم في هذا المتصفح");
     }
@@ -4423,13 +4427,12 @@ function playBeep(frequency, type, duration, vol) {
     oscillator.stop(audioCtx.currentTime + duration);
 }
 
-window.playSuccessBeep = function() { playBeep(800, 'sine', 0.1, 0.1); };
+window.playSuccessBeep = function() { playBeep(2600, 'square', 0.08, 0.05); };
 window.playRegisterBeep = function() {
-    playBeep(523.25, 'sine', 0.1, 0.1);
-    setTimeout(() => playBeep(659.25, 'sine', 0.15, 0.1), 100);
-    setTimeout(() => playBeep(783.99, 'sine', 0.2, 0.1), 250);
+    playBeep(2600, 'square', 0.08, 0.05);
+    setTimeout(() => playBeep(2600, 'square', 0.08, 0.05), 120);
 };
-window.playErrorBeep = function() { playBeep(200, 'square', 0.3, 0.1); };
+window.playErrorBeep = function() { playBeep(300, 'sawtooth', 0.4, 0.1); };
 
 window.addEventListener('offline', () => {
     let bar = document.getElementById('offline-bar');
