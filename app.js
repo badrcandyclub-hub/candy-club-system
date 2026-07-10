@@ -259,15 +259,17 @@ function loadDataFromServer() {
                 if (container) {
                     let specialClass = z.type === 'next_day' ? 'zone-next-day' : '';
                     container.innerHTML += `
-                        <div class="data-row ${specialClass}" style="display: flex; justify-content: space-between; align-items: center; background: var(--white); padding: 10px; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
-                            <div style="text-align:right;">
-                                <strong style="color: var(--text-main); font-size: 0.95rem;">${z.name}</strong><br>
-                                <span class="price-badge" style="margin-top: 5px; display: inline-block;">${z.price} ج.م</span> 
-                                <small style="color:var(--text-muted); margin-right: 5px; font-weight: bold;">${z.duration}</small>
+                        <div class="zone-premium-card ${specialClass}">
+                            <div class="zone-info-main">
+                                <strong class="zone-title">📍 ${z.name}</strong>
+                                <div class="zone-details-row">
+                                    <span class="price-badge premium-badge">💰 ${z.price} ج.م</span> 
+                                    <span class="duration-badge">⏱️ ${z.duration}</span>
+                                </div>
                             </div>
-                            <div style="display:flex; flex-direction: column; gap:5px;">
-                                <button type="button" class="btn-outline interactive-btn" style="padding: 4px 10px; font-size:0.8rem; border-radius: 6px;" onclick="editZoneUI('${z.name}', '${z.price}', '${z.type}', '${z.duration}')">تعديل ✏️</button>
-                                <button type="button" class="interactive-btn" style="padding: 4px 10px; font-size:0.8rem; background:var(--danger); color:white; border:none; border-radius:6px;" onclick="deleteItem('deleteShipping', '${z.name}', '${zoneType}')">حذف ❌</button>
+                            <div class="zone-actions">
+                                <button type="button" class="btn-outline interactive-btn" onclick="editZoneUI('${z.name}', '${z.price}', '${z.type}', '${z.duration}')">تعديل ✏️</button>
+                                <button type="button" class="btn-danger interactive-btn" onclick="deleteItem('deleteShipping', '${z.name}', '${zoneType}')">حذف ❌</button>
                             </div>
                         </div>`;
                 }

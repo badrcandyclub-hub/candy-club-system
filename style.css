@@ -1474,7 +1474,141 @@ body.dark-mode .delivery-prediction {
 .zone-list-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 12px;
+    gap: 15px;
+}
+
+/* ⭐ Premium Zone Cards CSS */
+.zone-premium-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    background: var(--white);
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+
+.zone-premium-card::before {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    background: var(--primary);
+    border-radius: 0 12px 12px 0;
+}
+
+.zone-premium-card.zone-next-day::before {
+    background: var(--warning);
+}
+
+.zone-premium-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+}
+
+.zone-info-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-right: 12px;
+}
+
+.zone-title {
+    color: var(--text-main);
+    font-size: 1.15rem;
+    margin-bottom: 8px;
+    font-family: 'Cairo', sans-serif;
+}
+
+.zone-details-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.premium-badge {
+    background: rgba(41, 128, 185, 0.1);
+    color: #2980b9;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    border: 1px solid rgba(41, 128, 185, 0.2);
+}
+
+.duration-badge {
+    background: rgba(149, 165, 166, 0.1);
+    color: #7f8c8d;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    border: 1px solid rgba(149, 165, 166, 0.2);
+}
+
+.zone-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    justify-content: center;
+    padding-right: 15px;
+    border-right: 1px dashed var(--border);
+}
+
+.zone-actions button {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.zone-actions .edit-btn {
+    background: var(--white);
+    color: var(--primary);
+    border: 1px solid var(--primary);
+}
+.zone-actions .edit-btn:hover {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-danger {
+    background: var(--danger);
+    color: white;
+    border: none;
+}
+.btn-danger:hover {
+    background: #c0392b;
+    box-shadow: 0 2px 6px rgba(231, 76, 60, 0.3);
+}
+
+body.dark-mode .zone-premium-card {
+    background: var(--card-bg);
+}
+
+body.dark-mode .premium-badge {
+    background: rgba(41, 128, 185, 0.2);
+    color: #6bb9f0;
+}
+
+body.dark-mode .duration-badge {
+    color: #bdc3c7;
+}
+
+body.dark-mode .zone-actions .edit-btn {
+    background: transparent;
+    color: var(--primary-light);
+    border-color: var(--primary-light);
 }
 
 body.dark-mode .zone-details,
