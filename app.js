@@ -4401,6 +4401,152 @@ if (btnExportDate) {
     });
 }
 
+const btnExportDatePDF = document.getElementById('btnExportDatePDF');
+if (btnExportDatePDF) {
+    btnExportDatePDF.addEventListener('click', () => {
+        const dateVal = document.getElementById('exportDateInput').value; // YYYY-MM-DD
+        if (!dateVal) {
+            showToast("يرجى تحديد يوم التسجيل أولاً", "warning");
+            return;
+        }
+
+        let filtered = expiryData.filter(item => {
+            if (!item.regDate) return false;
+            let d = new Date(item.regDate);
+            if (!isNaN(d.getTime())) {
+                let localStr = d.toLocaleDateString('en-CA');
+                return localStr === dateVal;
+            }
+            return item.regDate.includes(dateVal);
+        });
+
+        if (filtered.length === 0) {
+            showToast("لا توجد بيانات مسجلة في هذا اليوم", "warning");
+            return;
+        }
+
+        generatePDFReceipt(filtered, dateVal);
+    });
+}
+
+function generatePDFReceipt(filteredData, dateVal) {
+    // Determine receiver and registrar from the first item (assuming same batch)
+    let receiver = filteredData[0].receiver || '.........................';
+    let registrar = filteredData[0].registrarName || '.........................';
+
+    let printWindow = window.open('', '_blank', 'height=800,width=800');
+    if (!printWindow) {
+        showToast("يرجى السماح بالنوافذ المنبثقة (Pop-ups) لفتح ملف الطباعة", "error");
+        return;
+    }
+
+    let html = `
+        <html dir="rtl" lang="ar">
+        <head>
+            <title>محضر استلام بضاعة - ${dateVal}</title>
+            <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+            <style>
+                body { font-family: 'Cairo', sans-serif; padding: 40px; color: #333; background: #fff; direction: rtl; }
+                .header { text-align: center; border-bottom: 3px solid #E91E8C; padding-bottom: 20px; margin-bottom: 30px; }
+                .logo { font-size: 40px; font-weight: 900; color: #E91E8C; letter-spacing: 2px; margin-bottom: 5px; }
+                .title { font-size: 24px; font-weight: bold; color: #2c3e50; }
+                .info-section { display: flex; justify-content: space-between; margin-bottom: 30px; font-size: 16px; gap: 20px; }
+                .info-box { background: #f8f9fa; padding: 15px 20px; border-radius: 8px; border: 1px solid #e0e0e0; flex: 1; }
+                .info-label { font-weight: bold; color: #7f8c8d; display: inline-block; width: 120px; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 40px; font-size: 14px; page-break-inside: auto; }
+                tr { page-break-inside: avoid; page-break-after: auto; }
+                th { background: #E91E8C; color: white; padding: 12px; text-align: right; border: 1px solid #ddd; }
+                td { padding: 10px; border: 1px solid #ddd; vertical-align: middle; }
+                tr:nth-child(even) { background-color: #f9f9f9; }
+                .footer { text-align: center; margin-top: 50px; font-size: 14px; color: #7f8c8d; border-top: 1px solid #eee; padding-top: 20px; page-break-inside: avoid; }
+                .signatures { display: flex; justify-content: space-between; margin-top: 50px; padding: 0 50px; page-break-inside: avoid; }
+                .sig-box { text-align: center; width: 200px; }
+                .sig-line { width: 100%; border-bottom: 1px dashed #333; margin-top: 40px; }
+                @media print {
+                    @page { margin: 20mm; }
+                    body { padding: 0; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <div class="logo">CANDY CLUB</div>
+                <div class="title">محضر استلام بضاعة</div>
+            </div>
+            
+            <div class="info-section">
+                <div class="info-box">
+                    <div><span class="info-label">تاريخ التسجيل:</span> <span style="font-weight:bold; color:#E91E8C;">${dateVal}</span></div>
+                    <div style="margin-top: 10px;"><span class="info-label">اسم المسجل:</span> <strong>${registrar}</strong></div>
+                </div>
+                <div class="info-box">
+                    <div><span class="info-label">اسم المستلم:</span> <span style="font-weight:bold; font-size:1.1em;">${receiver}</span></div>
+                    <div style="margin-top: 10px;"><span class="info-label">إجمالي الأصناف:</span> <strong>${filteredData.length}</strong></div>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 5%;">م</th>
+                        <th style="width: 30%;">اسم المنتج</th>
+                        <th style="width: 15%;">الباركود</th>
+                        <th style="width: 10%;">العدد</th>
+                        <th style="width: 15%;">تاريخ الانتهاء</th>
+                        <th style="width: 15%;">المكان</th>
+                        <th style="width: 10%;">ملاحظات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${filteredData.map((item, index) => {
+                        let expDate = new Date(item.expiryDate);
+                        let formattedExp = isNaN(expDate.getTime()) ? item.expiryDate : expDate.toLocaleDateString('ar-EG');
+                        return \`
+                        <tr>
+                            <td>\${index + 1}</td>
+                            <td style="font-weight: bold;">\${item.name || '-'}</td>
+                            <td dir="ltr" style="text-align: right;">\${item.barcode || '-'}</td>
+                            <td style="font-weight: bold; text-align: center; color: #27ae60; font-size: 1.1em;">\${item.qty || '-'}</td>
+                            <td dir="ltr" style="text-align: right;">\${formattedExp || '-'}</td>
+                            <td>\${item.location || '-'}</td>
+                            <td></td>
+                        </tr>
+                        \`;
+                    }).join('')}
+                </tbody>
+            </table>
+
+            <div class="signatures">
+                <div class="sig-box">
+                    <div style="font-weight: bold; color: #333;">توقيع المُسلم (المسجل)</div>
+                    <div class="sig-line"></div>
+                </div>
+                <div class="sig-box">
+                    <div style="font-weight: bold; color: #333;">توقيع المُستلم</div>
+                    <div class="sig-line"></div>
+                </div>
+            </div>
+
+            <div class="footer">
+                تم استخراج هذا الإيصال آلياً من نظام Candy Club - ${new Date().toLocaleString('ar-EG')}
+            </div>
+            
+            <script>
+                window.onload = function() {
+                    // Slight delay to ensure fonts load
+                    setTimeout(function() {
+                        window.print();
+                        // Optional: close after printing, but better leave it open for user to review
+                    }, 500);
+                }
+            </script>
+        </body>
+        </html>
+    `;
+    printWindow.document.write(html);
+    printWindow.document.close();
+}
+
 // =========================================
 // Advanced UX & System Protection
 // =========================================

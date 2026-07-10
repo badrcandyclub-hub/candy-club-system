@@ -8,7 +8,7 @@
     <link rel="icon" type="image/png" href="favicon.png?v=6">
     <link rel="apple-touch-icon" href="favicon.png?v=6">
     <link rel="manifest" href="app-manifest.json?v=999">
-    <link rel="stylesheet" href="style.css?v=18.7">
+    <link rel="stylesheet" href="style.css?v=18.8">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap"
         rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -572,8 +572,10 @@
                                 style="font-size: 0.9rem; margin-bottom: 5px; display: block; color: var(--text-color);">تصدير
                                 حسب يوم الإدخال (التسجيل):</label>
                             <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                                <button id="btnExportDatePDF" class="interactive-btn"
+                                    style="background: #E91E8C; color: white; border: none; padding: 8px 15px; border-radius: 8px; flex-shrink: 0; font-weight: bold;">🖨️ طباعة PDF</button>
                                 <button id="btnExportDate" class="interactive-btn"
-                                    style="background: #2980b9; color: white; border: none; padding: 8px 15px; border-radius: 8px; flex-shrink: 0;">تصدير</button>
+                                    style="background: #2980b9; color: white; border: none; padding: 8px 15px; border-radius: 8px; flex-shrink: 0;">📊 إكسيل</button>
                                 <input type="date" id="exportDateInput" dir="ltr"
                                     style="flex: 1; min-width: 150px; padding: 8px; border-radius: 8px; border: 1px solid #ccc; margin: 0;">
                             </div>
@@ -1152,7 +1154,7 @@
     </div>
 
     <!-- ⭐ التأكد من ترتيب تحميل السكربتات -->
-    <script src="app.js?v=18.7"></script>
+    <script src="app.js?v=18.8"></script>
 
 </body>
 
