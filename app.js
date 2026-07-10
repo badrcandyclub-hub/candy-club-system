@@ -3149,7 +3149,7 @@ function onScanFailure(error) {
 let currentScannedProduct = null;
 
 function handleBarcodeMatch(barcodeValue) {
-    let matchedProduct = barcodeCatalogData.find(p => p.barcode === barcodeValue);
+    let matchedProduct = barcodeCatalogData.find(p => String(p.barcode).trim() === String(barcodeValue).trim());
 
     if (matchedProduct) {
         currentScannedProduct = matchedProduct;
