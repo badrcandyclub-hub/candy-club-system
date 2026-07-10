@@ -216,18 +216,18 @@ function loadDataFromServer() {
             // ⭐ دمج منتجات Firebase في الكتالوج إذا لم تكن موجودة من الإكسل وإضافة الباركود
             if (barcodeCatalogData.length > 0) {
                 const fbMap = new Map();
-                barcodeCatalogData.forEach(p => fbMap.set(p.name.toLowerCase(), p));
+                barcodeCatalogData.forEach(p => fbMap.set(String(p.name).toLowerCase(), p));
 
                 catalogData.forEach(p => {
-                    let fb = fbMap.get(p.name.toLowerCase());
+                    let fb = fbMap.get(String(p.name).toLowerCase());
                     if (fb && !p.barcode) {
                         p.barcode = fb.barcode;
                     }
                 });
 
-                const existingNames = new Set(catalogData.map(p => p.name.toLowerCase()));
+                const existingNames = new Set(catalogData.map(p => String(p.name).toLowerCase()));
                 barcodeCatalogData.forEach(fbProduct => {
-                    if (!existingNames.has(fbProduct.name.toLowerCase())) {
+                    if (!existingNames.has(String(fbProduct.name).toLowerCase())) {
                         catalogData.push({
                             name: fbProduct.name,
                             price: fbProduct.price,
@@ -2958,12 +2958,12 @@ function fetchCatalogFromFirebase() {
             // ⭐ Re-enrich Expiry Data in case it loaded before Firebase
             if (typeof expiryData !== 'undefined' && expiryData.length > 0) {
                 const fbMap = new Map();
-                barcodeCatalogData.forEach(p => fbMap.set(p.name.trim().toLowerCase(), p));
+                barcodeCatalogData.forEach(p => fbMap.set(String(p.name).trim().toLowerCase(), p));
                 let enriched = false;
                 expiryData.forEach(exp => {
                     if (exp.name) {
-                        let fb = fbMap.get(exp.name.trim().toLowerCase());
-                        if (fb && (!exp.barcode || exp.barcode.trim() === '')) {
+                        let fb = fbMap.get(String(exp.name).trim().toLowerCase());
+                        if (fb && (!exp.barcode || String(exp.barcode).trim() === '')) {
                             exp.barcode = fb.barcode;
                             enriched = true;
                         }
@@ -3273,12 +3273,12 @@ function loadExpiryData() {
             // ⭐ سحب الباركود للمنتجات القديمة من الفايربيز أو إذا كان العمود غير موجود في الإكسيل
             if (barcodeCatalogData && barcodeCatalogData.length > 0) {
                 const fbMap = new Map();
-                barcodeCatalogData.forEach(p => fbMap.set(p.name.trim().toLowerCase(), p));
+                barcodeCatalogData.forEach(p => fbMap.set(String(p.name).trim().toLowerCase(), p));
                 
                 expiryData.forEach(exp => {
                     if (exp.name) {
-                        let fb = fbMap.get(exp.name.trim().toLowerCase());
-                        if (fb && (!exp.barcode || exp.barcode.trim() === '')) {
+                        let fb = fbMap.get(String(exp.name).trim().toLowerCase());
+                        if (fb && (!exp.barcode || String(exp.barcode).trim() === '')) {
                             exp.barcode = fb.barcode;
                         }
                     }
