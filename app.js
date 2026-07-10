@@ -2954,6 +2954,25 @@ function fetchCatalogFromFirebase() {
 
             console.log("✅ تم تحميل بيانات المنتجات من Firebase: ", barcodeCatalogData.length, "منتج");
             updateSmartSuggestionsFromFirebase();
+            
+            // ⭐ Re-enrich Expiry Data in case it loaded before Firebase
+            if (typeof expiryData !== 'undefined' && expiryData.length > 0) {
+                const fbMap = new Map();
+                barcodeCatalogData.forEach(p => fbMap.set(p.name.trim().toLowerCase(), p));
+                let enriched = false;
+                expiryData.forEach(exp => {
+                    if (exp.name) {
+                        let fb = fbMap.get(exp.name.trim().toLowerCase());
+                        if (fb && (!exp.barcode || exp.barcode.trim() === '')) {
+                            exp.barcode = fb.barcode;
+                            enriched = true;
+                        }
+                    }
+                });
+                if (enriched && typeof renderExpiryDashboard === 'function') {
+                    renderExpiryDashboard();
+                }
+            }
         })
         .catch(err => {
             console.error("❌ خطأ في تحميل المنتجات من Firebase:", err);
