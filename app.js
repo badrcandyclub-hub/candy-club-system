@@ -213,8 +213,18 @@ function loadDataFromServer() {
 
             catalogData = data.catalog || [];
             
-            // ⭐ دمج منتجات Firebase في الكتالوج إذا لم تكن موجودة من الإكسل
+            // ⭐ دمج منتجات Firebase في الكتالوج إذا لم تكن موجودة من الإكسل وإضافة الباركود
             if (barcodeCatalogData.length > 0) {
+                const fbMap = new Map();
+                barcodeCatalogData.forEach(p => fbMap.set(p.name.toLowerCase(), p));
+
+                catalogData.forEach(p => {
+                    let fb = fbMap.get(p.name.toLowerCase());
+                    if (fb && !p.barcode) {
+                        p.barcode = fb.barcode;
+                    }
+                });
+
                 const existingNames = new Set(catalogData.map(p => p.name.toLowerCase()));
                 barcodeCatalogData.forEach(fbProduct => {
                     if (!existingNames.has(fbProduct.name.toLowerCase())) {
@@ -222,7 +232,8 @@ function loadDataFromServer() {
                             name: fbProduct.name,
                             price: fbProduct.price,
                             isOffer: false,
-                            offerPrice: 0
+                            offerPrice: 0,
+                            barcode: fbProduct.barcode
                         });
                     }
                 });
@@ -2452,7 +2463,10 @@ function renderCatalog() {
     currentFilteredCatalog = catalogData || [];
     if (catalogSearchQuery.trim() !== "") {
         let q = catalogSearchQuery.trim().toLowerCase();
-        currentFilteredCatalog = currentFilteredCatalog.filter(p => p.name.toLowerCase().includes(q));
+        currentFilteredCatalog = currentFilteredCatalog.filter(p => 
+            p.name.toLowerCase().includes(q) || 
+            (p.barcode && String(p.barcode).toLowerCase().includes(q))
+        );
     }
 
     if (currentFilteredCatalog.length === 0) {
@@ -3079,6 +3093,7 @@ function onScanSuccess(decodedText, decodedResult) {
     if (currentScannerMode === 'ledger') {
         const ledgerProdName = document.getElementById('ledgerProdName');
         const ledgerProdQty = document.getElementById('ledgerProdQty');
+        const ledgerProdBarcode = document.getElementById('ledgerProdBarcode');
         
         let val = String(decodedText).trim();
         if (val && barcodeCatalogData) {
@@ -3086,10 +3101,12 @@ function onScanSuccess(decodedText, decodedResult) {
             if (found) {
                 if (ledgerProdName) ledgerProdName.value = found.name;
                 if (ledgerProdQty) ledgerProdQty.value = found.stock ? Number(found.stock) : 0;
+                if (ledgerProdBarcode) ledgerProdBarcode.value = val;
                 showToast("✅ " + found.name + " | الكمية: " + found.stock + " | السعر: " + found.price + " ج.م", "success");
             } else {
                 if (ledgerProdName) ledgerProdName.value = '';
                 if (ledgerProdQty) ledgerProdQty.value = '';
+                if (ledgerProdBarcode) ledgerProdBarcode.value = val; // Still put the scanned barcode even if not found!
                 showToast("⚠️ الباركود (" + val + ") غير مسجل، اكتب الاسم يدوياً", "warning");
             }
         } else {
@@ -3233,6 +3250,22 @@ function loadExpiryData() {
             }
             // Assuming data is an array of objects: { id, name, qty, expiryDate, location, receiver, notes, status }
             expiryData = Array.isArray(data) ? data : (data.expiries || []);
+            
+            // ⭐ سحب الباركود للمنتجات القديمة من الفايربيز أو إذا كان العمود غير موجود في الإكسيل
+            if (barcodeCatalogData && barcodeCatalogData.length > 0) {
+                const fbMap = new Map();
+                barcodeCatalogData.forEach(p => fbMap.set(p.name.trim().toLowerCase(), p));
+                
+                expiryData.forEach(exp => {
+                    if (exp.name) {
+                        let fb = fbMap.get(exp.name.trim().toLowerCase());
+                        if (fb && (!exp.barcode || exp.barcode.trim() === '')) {
+                            exp.barcode = fb.barcode;
+                        }
+                    }
+                });
+            }
+
             renderExpiryDashboard();
             updateCatalogWithOffers(); // To highlight items on offer in the main cashier view
         })
@@ -3499,6 +3532,7 @@ if (addLedgerItemBtn) {
         const date = document.getElementById('ledgerProdDate').value;
         const location = document.getElementById('ledgerProdLocation').value;
         const notes = document.getElementById('ledgerProdNotes').value;
+        const barcode = document.getElementById('ledgerProdBarcode') ? document.getElementById('ledgerProdBarcode').value : '';
 
         if (!name || !qty || !date) {
             showToast("يرجى إكمال البيانات الأساسية (الاسم، الكمية، التاريخ)", "warning");
@@ -3512,7 +3546,8 @@ if (addLedgerItemBtn) {
             expiryDate: date,
             location: location,
             status: 'مش في عرض',
-            notes: notes
+            notes: notes,
+            barcode: barcode
         };
 
         ledgerCart.push(item);
@@ -3523,6 +3558,7 @@ if (addLedgerItemBtn) {
         document.getElementById('ledgerProdDate').value = '';
         document.getElementById('ledgerProdLocation').value = '';
         document.getElementById('ledgerProdNotes').value = '';
+        if (document.getElementById('ledgerProdBarcode')) document.getElementById('ledgerProdBarcode').value = '';
     });
 }
 
@@ -3718,7 +3754,8 @@ window.showExpiryDetails = function (category, resetPage = true) {
                 title = "🎁 العروض النشطة";
             } else if (category === 'Search') {
                 const searchTerm = document.getElementById('expiryGlobalSearchInput').value.toLowerCase().trim();
-                if (item.name && item.name.toLowerCase().includes(searchTerm)) {
+                if ((item.name && item.name.toLowerCase().includes(searchTerm)) || 
+                    (item.barcode && String(item.barcode).toLowerCase().includes(searchTerm))) {
                     matches = true;
                     title = `🔍 نتائج البحث عن: "${searchTerm}"`;
                 }
@@ -3844,7 +3881,7 @@ window.showExpiryDetails = function (category, resetPage = true) {
                 itemDiv.style.background = '#fffde7';
             }
             itemDiv.innerHTML = `
-                <h4>📦 ${item.name}</h4>
+                <h4>📦 ${item.name} <span style="font-size: 0.85rem; color: #7f8c8d; font-weight: normal; background: #eee; padding: 3px 8px; border-radius: 12px; margin-right: 10px;">${item.barcode ? '|||| ' + item.barcode : 'لا يوجد باركود'}</span></h4>
                 <div class="expiry-item-details">
                     <span>الكمية: ${item.qty}</span>
                     <span style="color: ${daysColor}; font-weight: bold;">${daysText}</span>

@@ -404,7 +404,8 @@ function doGet(e) {
             notes: expData[i][7],
             originalPrice: expData[i][8],
             offerPrice: expData[i][9],
-            status: expData[i][10]
+            status: expData[i][10],
+            barcode: expData[i][11] || ""
           });
         }
       }
@@ -874,7 +875,7 @@ function doPost(e) {
       var expirySheet = getExpirySheet(ss);
       if (!expirySheet) {
           expirySheet = ss.insertSheet("📥 الاستلامات");
-          var expiryHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "اسم المسجل", "تاريخ التسجيل", "المستلم", "ملاحظات", "السعر الأساسي", "سعر العرض", "الحالة"];
+          var expiryHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "اسم المسجل", "تاريخ التسجيل", "المستلم", "ملاحظات", "السعر الأساسي", "سعر العرض", "الحالة", "الباركود"];
           expirySheet.getRange(1, 1, 1, expiryHeaders.length).setValues([expiryHeaders])
                .setBackground("#2980b9").setFontColor("white").setFontFamily("Cairo").setFontSize(14).setFontWeight("bold")
                .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
@@ -890,7 +891,8 @@ function doPost(e) {
         e.parameter.notes,
         e.parameter.originalPrice || "",
         e.parameter.offerPrice || "",
-        e.parameter.status
+        e.parameter.status,
+        e.parameter.barcode || ""
       ]);
       return ContentService.createTextOutput("success");
     }
@@ -900,7 +902,7 @@ function doPost(e) {
       var expirySheet = getExpirySheet(ss);
       if (!expirySheet) {
           expirySheet = ss.insertSheet("📥 الاستلامات");
-          var expiryHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "اسم المسجل", "تاريخ التسجيل", "المستلم", "ملاحظات", "السعر الأساسي", "سعر العرض", "الحالة"];
+          var expiryHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "اسم المسجل", "تاريخ التسجيل", "المستلم", "ملاحظات", "السعر الأساسي", "سعر العرض", "الحالة", "الباركود"];
           expirySheet.getRange(1, 1, 1, expiryHeaders.length).setValues([expiryHeaders])
                .setBackground("#2980b9").setFontColor("white").setFontFamily("Cairo").setFontSize(14).setFontWeight("bold")
                .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
@@ -920,7 +922,8 @@ function doPost(e) {
           item.notes,
           item.originalPrice || "",
           item.offerPrice || "",
-          item.status
+          item.status,
+          item.barcode || ""
         ]);
       }
       if (rows.length > 0) {
