@@ -2073,6 +2073,27 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
         flex-direction: column;
     }
 
+    /* ⭐ تصغير حجم كروت مناطق الشحن على الموبايل لتوفير مساحة */
+    .zone-premium-card {
+        padding: 10px 12px;
+    }
+    .zone-title {
+        font-size: 0.95rem;
+        margin-bottom: 5px;
+    }
+    .premium-badge, .duration-badge {
+        font-size: 0.75rem;
+        padding: 3px 6px;
+    }
+    .zone-actions button {
+        padding: 4px 8px;
+        font-size: 0.75rem;
+    }
+    .zone-actions {
+        gap: 5px;
+        padding-right: 10px;
+    }
+
     /* تصميم شبكي مخصص لخانة المنتجات في الفاتورة على الموبايل */
     .product-row {
         grid-template-columns: 1fr 1fr;
