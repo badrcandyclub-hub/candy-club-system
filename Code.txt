@@ -7,6 +7,7 @@ function onOpen() {
   var ui = SpreadsheetApp.getUi();
   ui.createMenu('🍬 إدارة كاندي كلوب')
       .addItem('🔄 بناء وتحديث النظام الشامل', 'setupCandyClubUX')
+      .addItem('⚡ تحديث باركود المنتجات القديمة (مؤقت)', 'backfillBarcodes')
       .addToUi();
 }
 
@@ -1157,4 +1158,62 @@ function analyzeVIPs() {
   });
   
   return vipList;
+}
+
+// ============================================================
+// ⭐ دالة مؤقتة لسحب الباركود للمنتجات القديمة وتخزينه في الإكسيل
+// ============================================================
+function backfillBarcodes() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("📥 الاستلامات");
+  if (!sheet) {
+    SpreadsheetApp.getUi().alert("لم يتم العثور على شيت '📥 الاستلامات'.");
+    return;
+  }
+  
+  SpreadsheetApp.getUi().alert("جاري الاتصال بـ Firebase لجلب الباركودات... يرجى الانتظار ثواني.");
+  
+  try {
+    var response = UrlFetchApp.fetch("https://candyclubsync-default-rtdb.firebaseio.com/products.json");
+    var fbData = JSON.parse(response.getContentText());
+    
+    var fbMap = {};
+    for (var key in fbData) {
+      if (fbData[key].Name) {
+        fbMap[fbData[key].Name.trim().toLowerCase()] = fbData[key].Barcode;
+      }
+    }
+    
+    var data = sheet.getDataRange().getValues();
+    if (data.length < 2) {
+      SpreadsheetApp.getUi().alert("لا توجد منتجات قديمة لتحديثها.");
+      return;
+    }
+    
+    var headers = data[0];
+    var barcodeColIndex = headers.indexOf("الباركود");
+    if (barcodeColIndex === -1) {
+      barcodeColIndex = headers.length; 
+      sheet.getRange(1, barcodeColIndex + 1).setValue("الباركود")
+           .setBackground("#2980b9").setFontColor("white").setFontFamily("Cairo").setFontSize(14).setFontWeight("bold")
+           .setHorizontalAlignment("center").setVerticalAlignment("middle");
+    }
+    
+    var updates = 0;
+    
+    for (var i = 1; i < data.length; i++) {
+      var name = data[i][0];
+      if (name) {
+        var matchedBarcode = fbMap[name.trim().toLowerCase()];
+        if (matchedBarcode && (!data[i][barcodeColIndex] || data[i][barcodeColIndex].toString().trim() === '')) {
+          sheet.getRange(i + 1, barcodeColIndex + 1).setValue(matchedBarcode);
+          updates++;
+        }
+      }
+    }
+    
+    SpreadsheetApp.getUi().alert("✅ تمت العملية بنجاح! تم العثور على " + updates + " منتج قديم وتم كتابة الباركود لهم في الإكسيل.");
+  } catch (e) {
+    SpreadsheetApp.getUi().alert("❌ حدث خطأ أثناء التحديث: " + e.message);
+  }
 }
