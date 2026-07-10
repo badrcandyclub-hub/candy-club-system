@@ -3901,7 +3901,10 @@ window.showExpiryDetails = function (category, resetPage = true) {
                 itemDiv.style.background = '#fffde7';
             }
             itemDiv.innerHTML = `
-                <h4>📦 ${item.name} <span style="font-size: 0.85rem; color: #7f8c8d; font-weight: normal; background: #eee; padding: 3px 8px; border-radius: 12px; margin-right: 10px;">${item.barcode ? '|||| ' + item.barcode : 'لا يوجد باركود'}</span></h4>
+                <h4 style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+                    <span style="flex: 1;">📦 ${item.name}</span>
+                    <span style="font-size: 0.8rem; color: #7f8c8d; font-weight: normal; background: #eee; padding: 3px 8px; border-radius: 12px; white-space: nowrap;">${item.barcode ? 'الباركود: ' + item.barcode : 'لا يوجد باركود'}</span>
+                </h4>
                 <div class="expiry-item-details">
                     <span>الكمية: ${item.qty}</span>
                     <span style="color: ${daysColor}; font-weight: bold;">${daysText}</span>
