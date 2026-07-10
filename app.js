@@ -3000,10 +3000,13 @@ function playBeepSound() {
             oscillator.connect(gainNode);
             gainNode.connect(audioCtx.destination);
 
-            oscillator.type = 'square';
-            oscillator.frequency.value = 2600; // تردد الكاشير الحقيقي
-            gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+            oscillator.type = 'sine';
+            oscillator.frequency.value = 2750; // تردد الكاشير الحقيقي
+            
+            // Flat volume (sustain) then abrupt stop
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime + 0.07);
+            gainNode.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
 
             oscillator.start(audioCtx.currentTime);
             oscillator.stop(audioCtx.currentTime + 0.08);
@@ -4419,18 +4422,22 @@ function playBeep(frequency, type, duration, vol) {
     const gainNode = audioCtx.createGain();
     oscillator.type = type;
     oscillator.frequency.value = frequency;
+    
+    // Flat volume (sustain) then abrupt stop (mimics a real scanner/piezo buzzer)
     gainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    gainNode.gain.setValueAtTime(vol, audioCtx.currentTime + duration - 0.01);
+    gainNode.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    
     oscillator.connect(gainNode);
     gainNode.connect(audioCtx.destination);
     oscillator.start();
     oscillator.stop(audioCtx.currentTime + duration);
 }
 
-window.playSuccessBeep = function() { playBeep(2600, 'square', 0.08, 0.05); };
+window.playSuccessBeep = function() { playBeep(2750, 'sine', 0.08, 0.5); };
 window.playRegisterBeep = function() {
-    playBeep(2600, 'square', 0.08, 0.05);
-    setTimeout(() => playBeep(2600, 'square', 0.08, 0.05), 120);
+    playBeep(2750, 'sine', 0.08, 0.5);
+    setTimeout(() => playBeep(2750, 'sine', 0.08, 0.5), 140);
 };
 window.playErrorBeep = function() { playBeep(300, 'sawtooth', 0.4, 0.1); };
 
