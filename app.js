@@ -3105,16 +3105,12 @@ function stopBarcodeScanner() {
     }
 }
 
-function onScanSuccess(decodedText, decodedResult) {
-    stopBarcodeScanner();
-    scannerModal.classList.remove('active');
-    
+function processBarcodeAction(val) {
     if (currentScannerMode === 'ledger') {
         const ledgerProdName = document.getElementById('ledgerProdName');
         const ledgerProdQty = document.getElementById('ledgerProdQty');
         const ledgerProdBarcode = document.getElementById('ledgerProdBarcode');
         
-        let val = String(decodedText).trim();
         if (val && barcodeCatalogData) {
             const found = barcodeCatalogData.find(p => String(p.barcode).trim() === val);
             if (found) {
@@ -3125,7 +3121,7 @@ function onScanSuccess(decodedText, decodedResult) {
             } else {
                 if (ledgerProdName) ledgerProdName.value = '';
                 if (ledgerProdQty) ledgerProdQty.value = '';
-                if (ledgerProdBarcode) ledgerProdBarcode.value = val; // Still put the scanned barcode even if not found!
+                if (ledgerProdBarcode) ledgerProdBarcode.value = val; 
                 showToast("⚠️ الباركود (" + val + ") غير مسجل، اكتب الاسم يدوياً", "warning");
             }
         } else {
@@ -3137,8 +3133,16 @@ function onScanSuccess(decodedText, decodedResult) {
             ledgerProdQty.focus();
         }
     } else {
-        handleBarcodeMatch(decodedText);
+        handleBarcodeMatch(val);
     }
+}
+
+function onScanSuccess(decodedText, decodedResult) {
+    stopBarcodeScanner();
+    scannerModal.classList.remove('active');
+    
+    let val = String(decodedText).trim();
+    processBarcodeAction(val);
 }
 
 function onScanFailure(error) {
@@ -3207,7 +3211,7 @@ if (manualSearchBtn && manualBarcodeInput) {
 
         // إغلاق النافذة وتنفيذ البحث فوراً بدون انتظار الكاميرا
         scannerModal.classList.remove('active');
-        handleBarcodeMatch(val);
+        processBarcodeAction(val);
         manualBarcodeInput.value = '';
 
         // محاولة إيقاف الكاميرا في الخلفية
