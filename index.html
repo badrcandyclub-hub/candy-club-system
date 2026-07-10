@@ -8,7 +8,7 @@
     <link rel="icon" type="image/png" href="favicon.png?v=6">
     <link rel="apple-touch-icon" href="favicon.png?v=6">
     <link rel="manifest" href="app-manifest.json?v=999">
-    <link rel="stylesheet" href="style.css?v=3.2">
+    <link rel="stylesheet" href="style.css?v=18.0">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap"
         rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -214,12 +214,12 @@
                     <p class="empty-msg">جاري تحميل الكتالوج...</p>
                 </div>
                 <!-- نظام تقسيم الصفحات (Pagination) -->
-                <div id="catalogPagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding: 15px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border: 1px solid #ced4da; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
-                    <button id="catalogPrevPage" class="interactive-btn" style="padding: 8px 20px; border-radius: 8px; font-weight: bold; font-family: 'Cairo', sans-serif; background: #ffffff; color: var(--primary); border: 2px solid var(--primary); display: flex; align-items: center; gap: 8px; font-size: 0.9rem;" disabled>
+                <div id="catalogPagination" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; align-items: center; margin-top: 15px; padding: 15px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border: 1px solid #ced4da; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                    <button id="catalogPrevPage" class="interactive-btn" style="flex: 1 1 80px; justify-content: center; padding: 8px 10px; border-radius: 8px; font-weight: bold; font-family: 'Cairo', sans-serif; background: #ffffff; color: var(--primary); border: 2px solid var(--primary); display: flex; align-items: center; gap: 5px; font-size: 0.9rem;" disabled>
                         <span style="font-size:1.2rem; line-height:1;">&laquo;</span> السابق
                     </button>
-                    <span id="catalogPageInfo" style="font-size: 1rem; font-weight: bold; color: var(--text-dark); background: #ffffff; padding: 6px 20px; border-radius: 25px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #dee2e6;">صفحة 1</span>
-                    <button id="catalogNextPage" class="interactive-btn" style="padding: 8px 20px; border-radius: 8px; font-weight: bold; font-family: 'Cairo', sans-serif; background: var(--primary); color: #ffffff; border: 2px solid var(--primary); display: flex; align-items: center; gap: 8px; font-size: 0.9rem;" disabled>
+                    <span id="catalogPageInfo" style="font-size: 1rem; font-weight: bold; color: var(--text-dark); background: #ffffff; padding: 6px 15px; border-radius: 25px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #dee2e6; text-align: center;">صفحة 1</span>
+                    <button id="catalogNextPage" class="interactive-btn" style="flex: 1 1 80px; justify-content: center; padding: 8px 10px; border-radius: 8px; font-weight: bold; font-family: 'Cairo', sans-serif; background: var(--primary); color: #ffffff; border: 2px solid var(--primary); display: flex; align-items: center; gap: 5px; font-size: 0.9rem;" disabled>
                         التالي <span style="font-size:1.2rem; line-height:1;">&raquo;</span>
                     </button>
                 </div>
@@ -234,18 +234,18 @@
             <div class="section-card">
                 <h3 class="section-title">⏳ تسجيل النواقص</h3>
                 <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:15px;">
-                    <div style="display:flex; gap:10px;">
-                        <input type="text" id="oosCustomer" placeholder="اسم العميل" style="margin-bottom:0;">
-                        <input type="tel" id="oosPhone" placeholder="الموبايل" style="margin-bottom:0;">
+                    <div style="display:flex; flex-wrap:wrap; gap:10px;">
+                        <input type="text" id="oosCustomer" placeholder="اسم العميل" style="flex:1; min-width: 130px; margin-bottom:0;">
+                        <input type="tel" id="oosPhone" placeholder="الموبايل" style="flex:1; min-width: 130px; margin-bottom:0;">
                     </div>
-                    <div style="display:flex; gap:10px;">
-                        <input type="text" id="oosProduct" placeholder="المنتج الناقص" style="flex:2; margin-bottom:0;">
-                        <select id="oosReason" style="flex:1.5; margin-bottom:0; font-size:0.85rem;" required>
+                    <div style="display:flex; flex-wrap:wrap; gap:10px;">
+                        <input type="text" id="oosProduct" placeholder="المنتج الناقص" style="flex:1 1 100%; margin-bottom:0;">
+                        <select id="oosReason" style="flex:2; min-width: 140px; margin-bottom:0; font-size:0.85rem;" required>
                             <option value="استفسار عن توفر">استفسار عن توفر</option>
                             <option value="انتظار نزول عرض">انتظار نزول عرض</option>
                         </select>
                         <button id="addOosBtn" class="btn-save interactive-btn"
-                            style="flex:1; padding: 10px;">تسجيل</button>
+                            style="flex:1; min-width: 100px; padding: 10px;">تسجيل</button>
                     </div>
                 </div>
 
@@ -298,11 +298,11 @@
                 <div id="pendingOrdersContainer" class="data-list-container mt-10" style="min-height: 100px;">
                     <p class="empty-msg">جاري تحميل الأوردرات...</p>
                 </div>
-                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
                     <button type="button" id="assignToDriverBtn" class="btn-save interactive-btn"
-                        style="flex: 2; font-size: 1rem;">تسليم للمندوب 🚚</button>
+                        style="flex: 1 1 180px; font-size: 1rem;">تسليم للمندوب 🚚</button>
                     <button type="button" id="sendWaDriverBtn" class="btn-whatsapp interactive-btn"
-                        style="flex: 1; font-size: 0.9rem;">إرسال واتس 📱</button>
+                        style="flex: 1 1 100px; font-size: 0.9rem;">إرسال واتس 📱</button>
                 </div>
             </div>
 
@@ -537,45 +537,45 @@
             </div>
 
             <div class="section-card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px;">
                     <h3 class="section-title" style="margin-bottom: 0;">📦 إدارة الصلاحيات والعروض</h3>
                     <button id="openLedgerBtn" class="interactive-btn pulse-btn"
-                        style="background: linear-gradient(135deg, #8e44ad, #2980b9); color: white; border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold;">➕
+                        style="background: linear-gradient(135deg, #8e44ad, #2980b9); color: white; border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold; flex: 1 1 200px; max-width: 100%;">➕
                         تسجيل استلام بضاعة</button>
                 </div>
 
                 <div class="expiry-body">
 
                     <!-- بحث عام في الصلاحيات -->
-                    <div class="search-box mb-15">
+                    <div class="search-box mb-15" style="display: flex; flex-wrap: nowrap; gap: 10px;">
                         <input type="text" id="expiryGlobalSearchInput"
-                            placeholder="بحث عام عن منتج في الصلاحيات والعروض...">
-                        <button id="searchExpiryBtn" class="btn-search interactive-btn">بحث 🔍</button>
+                            placeholder="بحث عام عن منتج في الصلاحيات والعروض..." style="flex: 1; min-width: 0;">
+                        <button id="searchExpiryBtn" class="btn-search interactive-btn" style="flex-shrink: 0; white-space: nowrap;">بحث 🔍</button>
                     </div>
 
                     <!-- أدوات التصدير الذكية -->
                     <div class="export-controls"
-                        style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; background: var(--bg-light); padding: 15px; border-radius: 10px; border: 1px solid var(--border);">
-                        <div style="flex: 1; min-width: 200px;">
+                        style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px; background: var(--bg-light); padding: 15px; border-radius: 10px; border: 1px solid var(--border);">
+                        <div style="flex: 1 1 100%;">
                             <label
                                 style="font-size: 0.9rem; margin-bottom: 5px; display: block; color: var(--text-color);">تصدير
                                 حسب شهر الانتهاء:</label>
-                            <div style="display: flex; gap: 5px;">
-                                <input type="month" id="exportMonthInput" dir="ltr"
-                                    style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #ccc;">
+                            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
                                 <button id="btnExportMonth" class="interactive-btn"
-                                    style="background: #27ae60; color: white; border: none; padding: 8px 12px; border-radius: 8px;">تصدير</button>
+                                    style="background: #27ae60; color: white; border: none; padding: 8px 15px; border-radius: 8px; flex-shrink: 0;">تصدير</button>
+                                <input type="month" id="exportMonthInput" dir="ltr"
+                                    style="flex: 1; min-width: 150px; padding: 8px; border-radius: 8px; border: 1px solid #ccc; margin: 0;">
                             </div>
                         </div>
-                        <div style="flex: 1; min-width: 200px;">
+                        <div style="flex: 1 1 100%;">
                             <label
                                 style="font-size: 0.9rem; margin-bottom: 5px; display: block; color: var(--text-color);">تصدير
                                 حسب يوم الإدخال (التسجيل):</label>
-                            <div style="display: flex; gap: 5px;">
-                                <input type="date" id="exportDateInput" dir="ltr"
-                                    style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #ccc;">
+                            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
                                 <button id="btnExportDate" class="interactive-btn"
-                                    style="background: #2980b9; color: white; border: none; padding: 8px 12px; border-radius: 8px;">تصدير</button>
+                                    style="background: #2980b9; color: white; border: none; padding: 8px 15px; border-radius: 8px; flex-shrink: 0;">تصدير</button>
+                                <input type="date" id="exportDateInput" dir="ltr"
+                                    style="flex: 1; min-width: 150px; padding: 8px; border-radius: 8px; border: 1px solid #ccc; margin: 0;">
                             </div>
                         </div>
                     </div>
@@ -706,12 +706,12 @@
                             <!-- يتم حقن العناصر هنا -->
                         </div>
                         <!-- نظام تقسيم الصفحات للصلاحيات -->
-                        <div id="expiryPagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding: 15px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border: 1px solid #ced4da; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
-                            <button id="expiryPrevPage" class="interactive-btn" style="padding: 8px 20px; border-radius: 8px; font-weight: bold; font-family: 'Cairo', sans-serif; background: #ffffff; color: var(--primary); border: 2px solid var(--primary); display: flex; align-items: center; gap: 8px; font-size: 0.9rem;" disabled>
+                        <div id="expiryPagination" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; align-items: center; margin-top: 15px; padding: 15px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border: 1px solid #ced4da; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                            <button id="expiryPrevPage" class="interactive-btn" style="flex: 1 1 80px; justify-content: center; padding: 8px 10px; border-radius: 8px; font-weight: bold; font-family: 'Cairo', sans-serif; background: #ffffff; color: var(--primary); border: 2px solid var(--primary); display: flex; align-items: center; gap: 5px; font-size: 0.9rem;" disabled>
                                 <span style="font-size:1.2rem; line-height:1;">&laquo;</span> السابق
                             </button>
-                            <span id="expiryPageInfo" style="font-size: 1rem; font-weight: bold; color: var(--text-dark); background: #ffffff; padding: 6px 20px; border-radius: 25px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #dee2e6;">صفحة 1</span>
-                            <button id="expiryNextPage" class="interactive-btn" style="padding: 8px 20px; border-radius: 8px; font-weight: bold; font-family: 'Cairo', sans-serif; background: var(--primary); color: #ffffff; border: 2px solid var(--primary); display: flex; align-items: center; gap: 8px; font-size: 0.9rem;" disabled>
+                            <span id="expiryPageInfo" style="font-size: 1rem; font-weight: bold; color: var(--text-dark); background: #ffffff; padding: 6px 15px; border-radius: 25px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #dee2e6; text-align: center;">صفحة 1</span>
+                            <button id="expiryNextPage" class="interactive-btn" style="flex: 1 1 80px; justify-content: center; padding: 8px 10px; border-radius: 8px; font-weight: bold; font-family: 'Cairo', sans-serif; background: var(--primary); color: #ffffff; border: 2px solid var(--primary); display: flex; align-items: center; gap: 5px; font-size: 0.9rem;" disabled>
                                 التالي <span style="font-size:1.2rem; line-height:1;">&raquo;</span>
                             </button>
                         </div>
@@ -738,24 +738,21 @@
                 </div>
 
                 <div class="ledger-header-info"
-                    style="display: flex; gap: 15px; margin-bottom: 20px; background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                    <div style="flex: 1;">
+                    style="display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <div style="flex: 1 1 140px;">
                         <label
-                            style="display: block; margin-bottom: 5px; font-weight: bold; color: var(--primary);">تاريخ
-                            التسجيل <span style="color:red;">*</span></label>
+                            style="display: block; margin-bottom: 5px; font-weight: bold; color: var(--primary);">تاريخ التسجيل <span style="color:red;">*</span></label>
                         <input type="date" id="ledgerRegDate" dir="ltr"
                             style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
                     </div>
-                    <div style="flex: 1;">
-                        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: var(--primary);">اسم
-                            المسجِّل <span style="color:red;">*</span></label>
-                        <input type="text" id="ledgerRegistrarName" placeholder="اسمك" required
+                    <div style="flex: 1 1 100px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: var(--primary);">اسم المسجِّل <span style="color:red;">*</span></label>
+                        <input type="text" id="ledgerRegistrarName" placeholder="الاسم" required
                             style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
                     </div>
-                    <div style="flex: 1;">
-                        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: var(--primary);">اسم
-                            المستلم <span style="color:red;">*</span></label>
-                        <input type="text" id="ledgerReceiverName" placeholder="اسم المستلم" required
+                    <div style="flex: 1 1 100px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: var(--primary);">اسم المستلم <span style="color:red;">*</span></label>
+                        <input type="text" id="ledgerReceiverName" placeholder="الاسم" required
                             style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
                     </div>
                 </div>
@@ -973,14 +970,14 @@
         <div class="modal-content" style="max-width: 600px;">
             <h3 style="color: var(--primary); border-bottom: 2px solid var(--border); padding-bottom: 10px; margin-bottom: 15px;">🛵 إدارة المناديب</h3>
             
-            <div style="display: flex; gap: 10px; margin-bottom: 15px; background: var(--bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border);">
-                <input type="text" id="newDriverName" placeholder="اسم المندوب" style="margin-bottom: 0; flex: 1;">
-                <input type="tel" id="newDriverPhone" placeholder="رقم الموبايل" style="margin-bottom: 0; flex: 1;">
+            <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; background: var(--bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border);">
+                <input type="text" id="newDriverName" placeholder="اسم المندوب" style="margin-bottom: 0; flex: 1 1 150px;">
+                <input type="tel" id="newDriverPhone" placeholder="رقم الموبايل" style="margin-bottom: 0; flex: 1 1 150px;">
             </div>
             
-            <div class="modal-actions" style="margin-bottom: 20px;">
-                <button id="addDriverBtn" class="btn-confirm" style="flex: 2;">حفظ المندوب 💾</button>
-                <button id="closeDriverModal" class="btn-cancel" style="flex: 1;">إغلاق</button>
+            <div class="modal-actions" style="margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 10px;">
+                <button id="addDriverBtn" class="btn-confirm" style="flex: 1 1 200px;">حفظ المندوب 💾</button>
+                <button id="closeDriverModal" class="btn-cancel" style="flex: 1 1 100px;">إغلاق</button>
             </div>
             
             <h4 style="color: var(--text-main); font-size: 1rem; margin-bottom: 10px;">🛵 المناديب المسجلين:</h4>
@@ -1155,7 +1152,7 @@
     </div>
 
     <!-- ⭐ التأكد من ترتيب تحميل السكربتات -->
-    <script src="app.js?v=17.9"></script>
+    <script src="app.js?v=18.0"></script>
 
 </body>
 

@@ -1914,9 +1914,22 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
    22. موبايل
    ========================================= */
 @media (max-width: 899px) {
-    .app-content { padding: 10px 10px 90px 10px; } /* مساحة إضافية بالأسفل لتجنب تغطية شريط التنقل */
-    .app-header { padding: 0 16px; }
-    .logo-text { font-size: 1.2rem; }
+    .app-content { padding: 10px 10px 100px 10px; } /* مساحة إضافية بالأسفل لتجنب تغطية شريط التنقل */
+    .app-header { 
+        padding: 10px 16px; 
+        height: auto; 
+        min-height: var(--header-height); 
+        flex-wrap: wrap; 
+        gap: 10px; 
+    }
+    .header-actions {
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 100%;
+        gap: 8px;
+    }
+    .logo-container { width: 100%; justify-content: center; }
+    .logo-text { font-size: 1.3rem; }
     .section-card { padding: 16px 12px; margin-bottom: 15px; border-radius: 12px; }
     .stats-row { flex-wrap: wrap; }
     
