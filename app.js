@@ -4501,17 +4501,17 @@ function generatePDFReceipt(filteredData, dateVal) {
                     ${filteredData.map((item, index) => {
                         let expDate = new Date(item.expiryDate);
                         let formattedExp = isNaN(expDate.getTime()) ? item.expiryDate : expDate.toLocaleDateString('ar-EG');
-                        return \`
+                        return `
                         <tr>
-                            <td>\${index + 1}</td>
-                            <td style="font-weight: bold;">\${item.name || '-'}</td>
-                            <td dir="ltr" style="text-align: right;">\${item.barcode || '-'}</td>
-                            <td style="font-weight: bold; text-align: center; color: #27ae60; font-size: 1.1em;">\${item.qty || '-'}</td>
-                            <td dir="ltr" style="text-align: right;">\${formattedExp || '-'}</td>
-                            <td>\${item.location || '-'}</td>
+                            <td>${index + 1}</td>
+                            <td style="font-weight: bold;">${item.name || '-'}</td>
+                            <td dir="ltr" style="text-align: right;">${item.barcode || '-'}</td>
+                            <td style="font-weight: bold; text-align: center; color: #27ae60; font-size: 1.1em;">${item.qty || '-'}</td>
+                            <td dir="ltr" style="text-align: right;">${formattedExp || '-'}</td>
+                            <td>${item.location || '-'}</td>
                             <td></td>
                         </tr>
-                        \`;
+                        `;
                     }).join('')}
                 </tbody>
             </table>
