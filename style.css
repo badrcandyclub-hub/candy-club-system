@@ -781,6 +781,7 @@ input:checked + .slider:before { transform: translateX(24px); }
 .scroll-list {
     max-height: 360px;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 4px;
 }
 
@@ -1414,6 +1415,7 @@ body.dark-mode .delivery-prediction {
 .data-list-container {
     max-height: 240px;
     overflow-y: auto;
+    overflow-x: hidden;
     background: var(--bg);
     border-radius: var(--radius);
     padding: 6px;
