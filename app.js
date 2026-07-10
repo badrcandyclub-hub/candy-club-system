@@ -3598,6 +3598,7 @@ window.editLedgerItem = function (index) {
     document.getElementById('ledgerProdDate').value = item.expiryDate;
     document.getElementById('ledgerProdLocation').value = item.location || '';
     document.getElementById('ledgerProdNotes').value = item.notes || '';
+    if (document.getElementById('ledgerProdBarcode')) document.getElementById('ledgerProdBarcode').value = item.barcode || '';
 
     ledgerCart.splice(index, 1);
     renderLedgerCart();
