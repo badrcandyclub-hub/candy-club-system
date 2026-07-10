@@ -1482,7 +1482,7 @@ body.dark-mode .zone-summary {
     background: var(--card);
 }
 
-   🚚 بطاقة الأوردر في قسم الشحن (REDESIGN)
+/* 🚚 بطاقة الأوردر في قسم الشحن (REDESIGN)
    ========================================= */
 .shipping-order-card {
     display: grid;
