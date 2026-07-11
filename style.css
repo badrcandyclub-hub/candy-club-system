@@ -3167,74 +3167,251 @@ body.dark-mode .expiry-form-grid input {
 
 .input-error-flash { border: 2px solid #ff1744 !important; animation: flash 0.5s ease-in-out 2; }
 @keyframes flash { 0%, 100% {opacity:1;} 50% {opacity:0.5;} }
- 
- / *   = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-       2 1 .   E x p i r y   I t e m   C a r d s   ( M o b i l e   &   D e s k t o p ) 
-       = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =   * / 
- . e x p i r y - i t e m - r o w   { 
-         b a c k g r o u n d :   v a r ( - - c a r d ) ; 
-         b o r d e r - r a d i u s :   v a r ( - - r a d i u s ) ; 
-         p a d d i n g :   1 6 p x ; 
-         m a r g i n - b o t t o m :   1 5 p x ; 
-         b o x - s h a d o w :   v a r ( - - s h a d o w - s m ) ; 
-         b o r d e r :   1 p x   s o l i d   v a r ( - - b o r d e r ) ; 
-         t r a n s i t i o n :   v a r ( - - t r a n s i t i o n ) ; 
-         d i s p l a y :   f l e x ; 
-         f l e x - d i r e c t i o n :   c o l u m n ; 
-         g a p :   1 2 p x ; 
- } 
- 
- . e x p i r y - i t e m - r o w : h o v e r   { 
-         b o x - s h a d o w :   v a r ( - - s h a d o w ) ; 
-         t r a n s f o r m :   t r a n s l a t e Y ( - 2 p x ) ; 
-         b o r d e r - c o l o r :   v a r ( - - p r i m a r y - l i g h t ) ; 
- } 
- 
- . e x p i r y - i t e m - d e t a i l s   { 
-         d i s p l a y :   f l e x ; 
-         j u s t i f y - c o n t e n t :   s p a c e - b e t w e e n ; 
-         a l i g n - i t e m s :   c e n t e r ; 
-         b a c k g r o u n d :   v a r ( - - b g ) ; 
-         p a d d i n g :   1 0 p x   1 4 p x ; 
-         b o r d e r - r a d i u s :   v a r ( - - r a d i u s - s m ) ; 
-         f o n t - s i z e :   0 . 9 5 r e m ; 
- } 
- 
- . e x p i r y - i t e m - a c t i o n s   { 
-         d i s p l a y :   f l e x ; 
-         g a p :   1 0 p x ; 
-         m a r g i n - t o p :   8 p x ; 
- } 
- 
- . e x p i r y - i t e m - a c t i o n s   b u t t o n   { 
-         f l e x :   1 ; 
-         p a d d i n g :   1 2 p x ; 
-         b o r d e r - r a d i u s :   v a r ( - - r a d i u s - s m ) ; 
-         f o n t - s i z e :   0 . 9 5 r e m ; 
-         f o n t - w e i g h t :   b o l d ; 
-         b o r d e r :   n o n e ; 
- }  
- / *   = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-       2 2 .   R e s p o n s i v e   G r i d   a d j u s t m e n t s   ( M o b i l e ) 
-       = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =   * / 
- @ m e d i a   ( m a x - w i d t h :   7 6 8 p x )   { 
-         . p r o d u c t - r o w   { 
-                 g r i d - t e m p l a t e - c o l u m n s :   1 f r ; 
-                 p a d d i n g :   1 5 p x ; 
-                 g a p :   1 2 p x ; 
-         } 
- 
-         . p r o d u c t - h e a d e r - l a b e l s   { 
-                 d i s p l a y :   n o n e ;   / *   H i d e   t a b l e   h e a d e r s   o n   m o b i l e   * / 
-         } 
- 
-         . p r o d u c t - r o w   i n p u t   { 
-                 b o r d e r :   1 p x   s o l i d   v a r ( - - b o r d e r )   ! i m p o r t a n t ; 
-                 b a c k g r o u n d :   v a r ( - - w h i t e )   ! i m p o r t a n t ; 
-                 t e x t - a l i g n :   r i g h t   ! i m p o r t a n t ; 
-         } 
- 
-         / *   S i m u l a t e   L a b e l s   i n s i d e   i n p u t s   u s i n g   : : b e f o r e   o r   p l a c e h o l d e r s   * / 
-         . p r o d u c t - r o w   . p r o d u c t - p r i c e - i n p u t   {   t e x t - a l i g n :   l e f t   ! i m p o r t a n t ;   } 
- }  
- 
+
+/* =========================================
+   21. Expiry Item Cards (Mobile & Desktop)
+   ========================================= */
+.expiry-item-row {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 15px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
+    transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.expiry-item-row:hover {
+    box-shadow: var(--shadow);
+    transform: translateY(-2px);
+    border-color: var(--primary-light);
+}
+
+.expiry-item-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg);
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+}
+
+.expiry-item-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.expiry-item-actions button {
+    flex: 1;
+    padding: 12px;
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+    font-weight: bold;
+    border: none;
+}
+
+/* =========================================
+   22. Responsive Grid adjustments (Mobile)
+   ========================================= */
+@media (max-width: 768px) {
+    .product-row {
+        grid-template-columns: 1fr;
+        padding: 15px;
+        gap: 12px;
+    }
+
+    .product-header-labels {
+        display: none;
+    }
+
+    .product-row input {
+        border: 1px solid var(--border) !important;
+        background: var(--white) !important;
+        text-align: right !important;
+    }
+
+    .product-row .product-price-input { text-align: left !important; }
+}
+
+/* =========================================
+   23. Sidebar Navigation & WhatsApp Campaigns
+   ========================================= */
+.menu-toggle-btn {
+    background: none;
+    border: none;
+    color: var(--white);
+    font-size: 1.5rem;
+    cursor: pointer;
+    margin-left: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 9999;
+    display: none;
+    backdrop-filter: blur(2px);
+}
+
+.sidebar-overlay.active {
+    display: block;
+}
+
+.app-sidebar {
+    position: fixed;
+    top: 0;
+    left: -300px;
+    width: 280px;
+    height: 100%;
+    background: var(--white);
+    z-index: 10000;
+    box-shadow: 2px 0 20px rgba(0,0,0,0.1);
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+}
+
+body.dark-mode .app-sidebar {
+    background: var(--card-bg);
+}
+
+.app-sidebar.open {
+    left: 0;
+}
+
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--primary);
+    color: white;
+}
+
+.sidebar-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.close-sidebar-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+.sidebar-menu {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sidebar-menu .nav-item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 14px 18px;
+    gap: 15px;
+    border-radius: var(--radius-sm);
+    color: var(--text-main);
+    background: none;
+    border: none;
+    width: 100%;
+    cursor: pointer;
+    transition: var(--transition);
+    font-weight: 600;
+}
+
+.sidebar-menu .nav-item:hover {
+    background: var(--bg);
+}
+
+.sidebar-menu .nav-item.active {
+    background: var(--primary-glow);
+    color: var(--primary);
+}
+
+.sidebar-menu .nav-item .icon {
+    font-size: 1.4rem;
+}
+
+/* WhatsApp Campaign */
+.wa-customer-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--white);
+    border: 1px solid var(--border);
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    border-radius: var(--radius-sm);
+}
+
+.wa-send-btn {
+    background: #25D366;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.wa-send-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+/* Desktop Sidebar Tweaks */
+@media (min-width: 900px) {
+    .menu-toggle-btn {
+        display: none; /* Hide hamburger on desktop */
+    }
+    
+    .app-sidebar {
+        left: 0; /* Always visible */
+        box-shadow: 1px 0 0 var(--border);
+    }
+    
+    .sidebar-overlay {
+        display: none !important;
+    }
+    
+    .close-sidebar-btn {
+        display: none;
+    }
+    
+    body {
+        padding-left: 280px; /* Push content to right to accommodate sidebar on the left */
+        padding-bottom: 0;
+    }
+    
+    .app-header {
+        left: 280px;
+        width: calc(100% - 280px);
+    }
+    
+    .toast-container {
+        left: 320px;
+    }
+}
