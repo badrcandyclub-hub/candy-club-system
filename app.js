@@ -54,8 +54,15 @@ document.querySelectorAll('.nav-item').forEach(btn => {
         document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-pane').forEach(c => c.classList.remove('active'));
         btn.classList.add('active');
-        let targetElement = document.getElementById(btn.getAttribute('data-target'));
+        let targetId = btn.getAttribute('data-target');
+        let targetElement = document.getElementById(targetId);
         if (targetElement) targetElement.classList.add('active');
+        
+        // Hide suspended button unless in create-tab
+        const suspendedBtn = document.getElementById('openSuspendedBtn');
+        if (suspendedBtn) {
+            suspendedBtn.style.display = (targetId === 'create-tab') ? 'inline-block' : 'none';
+        }
 
         // Load expiry data every time the tab is opened, with a custom loading screen
         if (btn.getAttribute('data-target') === 'expiry-tab') {

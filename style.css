@@ -2086,19 +2086,19 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
     .app-content { padding: 10px 10px 100px 10px; } /* مساحة إضافية بالأسفل لتجنب تغطية شريط التنقل */
     .app-header { 
         padding: 10px 16px; 
-        height: auto; 
-        min-height: var(--header-height); 
-        flex-wrap: wrap; 
+        height: var(--header-height); 
+        flex-wrap: nowrap; 
         gap: 10px; 
     }
     .header-actions {
-        flex-wrap: wrap;
-        justify-content: center;
-        width: 100%;
-        gap: 8px;
+        flex-wrap: nowrap;
+        width: auto;
+        justify-content: flex-end;
     }
-    .logo-container { width: 100%; justify-content: center; }
+    .logo-container { width: auto; justify-content: center; }
+    .header-right { min-width: unset !important; }
     .logo-text { font-size: 1.3rem; }
+    .logo-sub { display: none; }
     .section-card { padding: 16px 12px; margin-bottom: 15px; border-radius: 12px; }
     .stats-row { flex-wrap: wrap; }
     
@@ -3323,7 +3323,8 @@ body.dark-mode .app-sidebar {
     gap: 8px;
 }
 
-.sidebar-menu .nav-item {
+.sidebar-menu .nav-item,
+.sidebar-menu .sidebar-action-btn {
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -3339,7 +3340,8 @@ body.dark-mode .app-sidebar {
     font-weight: 600;
 }
 
-.sidebar-menu .nav-item:hover {
+.sidebar-menu .nav-item:hover,
+.sidebar-menu .sidebar-action-btn:hover {
     background: var(--bg);
 }
 
@@ -3348,7 +3350,8 @@ body.dark-mode .app-sidebar {
     color: var(--primary);
 }
 
-.sidebar-menu .nav-item .icon {
+.sidebar-menu .nav-item .icon,
+.sidebar-menu .sidebar-action-btn .icon {
     font-size: 1.4rem;
 }
 
