@@ -3660,10 +3660,12 @@ if (saveLedgerBtn) {
         }
 
         // Attach reg info to all items
+        const currentBatchId = Date.now().toString();
         const payload = ledgerCart.map(item => Object.assign({}, item, {
             regDate: regDate,
             registrarName: regName,
-            receiver: receiverName
+            receiver: receiverName,
+            batchId: currentBatchId
         }));
 
         setBtnLoading(saveLedgerBtn, true, "جاري الحفظ...");
@@ -4425,8 +4427,112 @@ if (btnExportDatePDF) {
             return;
         }
 
-        generatePDFReceipt(filtered, dateVal);
+        // Group by batchId
+        let batches = {};
+        let legacyBatch = [];
+        filtered.forEach(item => {
+            if (item.batchId) {
+                if (!batches[item.batchId]) batches[item.batchId] = [];
+                batches[item.batchId].push(item);
+            } else {
+                legacyBatch.push(item);
+            }
+        });
+
+        let batchKeys = Object.keys(batches);
+        
+        // If there is only 1 batch and no legacy, or just legacy, print directly
+        if (batchKeys.length === 0) {
+            generatePDFReceipt(legacyBatch, dateVal);
+            return;
+        }
+        if (batchKeys.length === 1 && legacyBatch.length === 0) {
+            generatePDFReceipt(batches[batchKeys[0]], dateVal);
+            return;
+        }
+
+        // Otherwise, show a custom UI to select which batch to print
+        showBatchSelectionModal(batches, legacyBatch, dateVal);
     });
+}
+
+function showBatchSelectionModal(batches, legacyBatch, dateVal) {
+    const overlay = document.createElement('div');
+    overlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px);";
+    
+    const modal = document.createElement('div');
+    modal.style = "background: var(--bg); padding: 25px; border-radius: 15px; max-width: 500px; width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid var(--border); max-height: 80vh; overflow-y: auto;";
+    
+    let html = `
+        <h3 style="color: var(--primary); margin-top: 0; font-family: 'Cairo', sans-serif; text-align: center;">طباعة استلامات يوم ${dateVal}</h3>
+        <p style="font-size: 0.95rem; color: var(--text-main); margin-bottom: 20px; text-align: center;">لقد قمت بأكثر من عملية استلام في هذا اليوم، برجاء اختيار المحضر المراد طباعته:</p>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+    `;
+
+    Object.keys(batches).forEach((bId, idx) => {
+        let items = batches[bId];
+        let d = new Date(parseInt(bId));
+        let timeStr = isNaN(d.getTime()) ? 'غير معروف' : d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+        html += `
+            <button class="interactive-btn batch-select-btn" data-batch="${bId}" style="background: var(--bg-light); color: var(--text-main); border: 1px solid var(--border); padding: 15px; border-radius: 8px; text-align: right; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s;">
+                <span>🕒 استلامة الساعة ${timeStr}</span>
+                <span style="background: var(--primary); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">${items.length} أصناف</span>
+            </button>
+        `;
+    });
+
+    if (legacyBatch.length > 0) {
+        html += `
+            <button class="interactive-btn batch-select-btn" data-batch="legacy" style="background: var(--bg-light); color: var(--text-main); border: 1px solid var(--border); padding: 15px; border-radius: 8px; text-align: right; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s;">
+                <span>📦 استلامات مجمعة (قديمة)</span>
+                <span style="background: var(--primary); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">${legacyBatch.length} أصناف</span>
+            </button>
+        `;
+    }
+
+    html += `
+            <button class="interactive-btn batch-select-btn" data-batch="all" style="background: #27ae60; color: white; border: none; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 10px; cursor: pointer;">
+                طباعة كل استلامات اليوم معاً 🖨️
+            </button>
+            <button id="closeBatchModalBtn" style="background: transparent; color: var(--text-muted); border: none; padding: 10px; border-radius: 8px; text-align: center; cursor: pointer; text-decoration: underline; margin-top: 5px;">إلغاء</button>
+        </div>
+    `;
+
+    modal.innerHTML = html;
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    // Add slight hover effect to buttons since they have bg-light
+    modal.querySelectorAll('.batch-select-btn').forEach(btn => {
+        btn.addEventListener('mouseover', function() {
+            if (this.getAttribute('data-batch') !== 'all') {
+                this.style.borderColor = 'var(--primary)';
+            }
+        });
+        btn.addEventListener('mouseout', function() {
+            if (this.getAttribute('data-batch') !== 'all') {
+                this.style.borderColor = 'var(--border)';
+            }
+        });
+
+        btn.addEventListener('click', function() {
+            let type = this.getAttribute('data-batch');
+            document.body.removeChild(overlay);
+            
+            if (type === 'all') {
+                let allItems = [];
+                Object.values(batches).forEach(arr => allItems = allItems.concat(arr));
+                allItems = allItems.concat(legacyBatch);
+                generatePDFReceipt(allItems, dateVal);
+            } else if (type === 'legacy') {
+                generatePDFReceipt(legacyBatch, dateVal);
+            } else {
+                generatePDFReceipt(batches[type], dateVal);
+            }
+        });
+    });
+
+    document.getElementById('closeBatchModalBtn').onclick = () => document.body.removeChild(overlay);
 }
 
 function generatePDFReceipt(filteredData, dateVal) {
