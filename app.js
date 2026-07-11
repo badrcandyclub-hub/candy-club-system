@@ -4494,8 +4494,11 @@ function showBatchSelectionModal(batches, legacyBatch, dateVal) {
     if (legacyBatch.length > 0) {
         html += `
             <button class="interactive-btn batch-select-btn" data-batch="legacy" style="background: var(--bg-light); color: var(--text-main); border: 1px solid var(--border); padding: 15px; border-radius: 8px; text-align: right; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s;">
-                <span>📦 استلامات مجمعة (قديمة)</span>
+                <span>📦 استلامات مجمعة (قديمة) - طباعة الكل</span>
                 <span style="background: var(--primary); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">${legacyBatch.length} أصناف</span>
+            </button>
+            <button class="interactive-btn batch-select-btn" data-batch="manual" style="background: var(--bg-light); color: #e67e22; border: 1px dashed #e67e22; padding: 15px; border-radius: 8px; text-align: right; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; margin-top: -5px;">
+                <span>✂️ تقسيم الاستلامات القديمة يدوياً (تحديد واختيار)</span>
             </button>
         `;
     }
@@ -4515,12 +4518,12 @@ function showBatchSelectionModal(batches, legacyBatch, dateVal) {
     // Add slight hover effect to buttons since they have bg-light
     modal.querySelectorAll('.batch-select-btn').forEach(btn => {
         btn.addEventListener('mouseover', function() {
-            if (this.getAttribute('data-batch') !== 'all') {
+            if (this.getAttribute('data-batch') !== 'all' && this.getAttribute('data-batch') !== 'manual') {
                 this.style.borderColor = 'var(--primary)';
             }
         });
         btn.addEventListener('mouseout', function() {
-            if (this.getAttribute('data-batch') !== 'all') {
+            if (this.getAttribute('data-batch') !== 'all' && this.getAttribute('data-batch') !== 'manual') {
                 this.style.borderColor = 'var(--border)';
             }
         });
@@ -4536,6 +4539,8 @@ function showBatchSelectionModal(batches, legacyBatch, dateVal) {
                 generatePDFReceipt(allItems, dateVal);
             } else if (type === 'legacy') {
                 generatePDFReceipt(legacyBatch, dateVal);
+            } else if (type === 'manual') {
+                showManualSelectionModal(legacyBatch, dateVal);
             } else {
                 generatePDFReceipt(batches[type], dateVal);
             }
@@ -4543,6 +4548,86 @@ function showBatchSelectionModal(batches, legacyBatch, dateVal) {
     });
 
     document.getElementById('closeBatchModalBtn').onclick = () => document.body.removeChild(overlay);
+}
+
+function showManualSelectionModal(legacyBatch, dateVal) {
+    const overlay = document.createElement('div');
+    overlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px);";
+    
+    const modal = document.createElement('div');
+    modal.style = "background: var(--bg); padding: 25px; border-radius: 15px; max-width: 600px; width: 95%; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid var(--border); max-height: 90vh; display: flex; flex-direction: column;";
+    
+    let html = `
+        <h3 style="color: var(--primary); margin-top: 0; font-family: 'Cairo', sans-serif; text-align: center;">تقسيم الاستلامات يدوياً ✂️</h3>
+        <p style="font-size: 0.9rem; color: var(--text-main); margin-bottom: 15px; text-align: center;">حدد الأصناف التي تريد طباعتها معاً في استلامة واحدة:</p>
+        
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; padding: 0 10px;">
+            <label style="cursor: pointer; font-weight: bold; color: var(--primary);">
+                <input type="checkbox" id="selectAllManualBtn"> تحديد الكل
+            </label>
+            <span style="font-size: 0.85rem; color: var(--text-muted);">إجمالي الأصناف: ${legacyBatch.length}</span>
+        </div>
+
+        <div style="flex: 1; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 8px; background: var(--bg-light);">
+    `;
+
+    legacyBatch.forEach((item, index) => {
+        html += `
+            <label style="display: flex; align-items: center; gap: 10px; padding: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; transition: 0.2s;">
+                <input type="checkbox" class="manual-item-checkbox" value="${index}" style="width: 18px; height: 18px; accent-color: var(--primary);">
+                <div style="flex: 1;">
+                    <div style="font-weight: bold; color: var(--text-main);">${item.name || 'بدون اسم'}</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">العدد: <strong style="color: #27ae60;">${item.qty}</strong> | المسجل: ${item.registrarName || '-'} | المستلم: ${item.receiver || '-'}</div>
+                </div>
+            </label>
+        `;
+    });
+
+    html += `
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button id="printManualSelectedBtn" style="flex: 2; background: #E91E8C; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem;">
+                🖨️ طباعة المحدد فقط (<span id="selectedCountSpan">0</span>)
+            </button>
+            <button id="closeManualModalBtn" style="flex: 1; background: var(--bg-light); color: var(--text-main); border: 1px solid var(--border); padding: 12px; border-radius: 8px; cursor: pointer;">إلغاء</button>
+        </div>
+    `;
+
+    modal.innerHTML = html;
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    const checkboxes = modal.querySelectorAll('.manual-item-checkbox');
+    const selectAllBtn = modal.querySelector('#selectAllManualBtn');
+    const countSpan = modal.querySelector('#selectedCountSpan');
+
+    function updateCount() {
+        let count = modal.querySelectorAll('.manual-item-checkbox:checked').length;
+        countSpan.innerText = count;
+    }
+
+    checkboxes.forEach(cb => cb.addEventListener('change', updateCount));
+
+    selectAllBtn.addEventListener('change', function() {
+        let isChecked = this.checked;
+        checkboxes.forEach(cb => cb.checked = isChecked);
+        updateCount();
+    });
+
+    modal.querySelector('#printManualSelectedBtn').addEventListener('click', () => {
+        let selectedIndices = Array.from(modal.querySelectorAll('.manual-item-checkbox:checked')).map(cb => parseInt(cb.value));
+        if (selectedIndices.length === 0) {
+            showToast("يرجى تحديد صنف واحد على الأقل للطباعة", "warning");
+            return;
+        }
+        let selectedItems = selectedIndices.map(idx => legacyBatch[idx]);
+        document.body.removeChild(overlay);
+        generatePDFReceipt(selectedItems, dateVal);
+    });
+
+    modal.querySelector('#closeManualModalBtn').addEventListener('click', () => {
+        document.body.removeChild(overlay);
+    });
 }
 
 function generatePDFReceipt(filteredData, dateVal) {
