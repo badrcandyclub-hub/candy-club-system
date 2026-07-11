@@ -4402,6 +4402,39 @@ async function generateExcel(dataToExport, reportTitle) {
 }
 
 // Export Current List Button (inside Details Section)
+const expirySortSelect = document.getElementById('expirySortSelect');
+if (expirySortSelect) {
+    expirySortSelect.addEventListener('change', (e) => {
+        let sortVal = e.target.value;
+        if (!expiryFilteredData || expiryFilteredData.length === 0) return;
+        
+        if (sortVal === 'default') {
+            showExpiryDetails(expiryCurrentCategory, true);
+            return;
+        }
+        
+        let sorted = [...expiryFilteredData];
+        
+        if (sortVal === 'expiry_asc') {
+            sorted.sort((a, b) => new Date(a.expiryDate || '9999-12-31') - new Date(b.expiryDate || '9999-12-31'));
+        } else if (sortVal === 'expiry_desc') {
+            sorted.sort((a, b) => new Date(b.expiryDate || '9999-12-31') - new Date(a.expiryDate || '9999-12-31'));
+        } else if (sortVal === 'qty_asc') {
+            sorted.sort((a, b) => (Number(a.qty) || 0) - (Number(b.qty) || 0));
+        } else if (sortVal === 'qty_desc') {
+            sorted.sort((a, b) => (Number(b.qty) || 0) - (Number(a.qty) || 0));
+        } else if (sortVal === 'name_asc') {
+            sorted.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'ar'));
+        }
+        
+        expiryFilteredData = sorted;
+        currentExportData = sorted; // Update export data to match sorted list
+        expiryCurrentPage = 1;
+        updateExpiryPaginationUI();
+        showExpiryDetails(expiryCurrentCategory, false);
+    });
+}
+
 const exportCurrentListBtn = document.getElementById('exportCurrentListBtn');
 if (exportCurrentListBtn) {
     exportCurrentListBtn.addEventListener('click', () => {
