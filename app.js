@@ -3492,8 +3492,17 @@ function loadExpiryData() {
                 btn.style.opacity = "1";
                 btn.style.pointerEvents = "auto";
             }
-            // Assuming data is an array of objects: { id, name, qty, expiryDate, location, receiver, notes, status }
-            expiryData = Array.isArray(data) ? data : (data.expiries || []);
+            let rawData = Array.isArray(data) ? data : (data.expiries || []);
+            // Extract batchId from overloaded regDate if present
+            expiryData = rawData.map(item => {
+                if (item.regDate && item.regDate.includes("||")) {
+                    let parts = item.regDate.split("||");
+                    item.regDate = parts[0];
+                    item.batchId = parts[1];
+                }
+                return item;
+            });
+
             renderExpiryDashboard();
             updateCatalogWithOffers(); // To highlight items on offer in the main cashier view
             
@@ -3662,7 +3671,8 @@ if (saveLedgerBtn) {
         // Attach reg info to all items
         const currentBatchId = Date.now().toString();
         const payload = ledgerCart.map(item => Object.assign({}, item, {
-            regDate: regDate,
+            // Overload regDate to sneak the batchId past the Apps Script, which only writes known columns
+            regDate: regDate + "||" + currentBatchId,
             registrarName: regName,
             receiver: receiverName,
             batchId: currentBatchId
