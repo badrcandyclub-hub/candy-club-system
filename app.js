@@ -1,4 +1,4 @@
-// ==========================================
+﻿// ==========================================
 // 🌐 العقل المدبر - سيستم كاندي كلوب (النسخة V13.6 - الشاملة والمحصنة)
 // ==========================================
 
@@ -4882,20 +4882,87 @@ function sanitizePhone(phone) {
     return cleaned;
 }
 
-const waLoadBtn = document.getElementById("waLoadCustomersBtn");
-if(waLoadBtn) {
-    waLoadBtn.addEventListener("click", () => {
+// --- WhatsApp Campaigns Pro Logic ---
+const waTargetGroup = document.getElementById("waTargetGroup");
+const waCustomNumbersDiv = document.getElementById("waCustomNumbersDiv");
+if(waTargetGroup && waCustomNumbersDiv) {
+    waTargetGroup.addEventListener("change", (e) => {
+        waCustomNumbersDiv.style.display = e.target.value === "custom" ? "block" : "none";
+    });
+}
+
+// Image handling
+const waImageInput = document.getElementById("waImageInput");
+const waImagePreviewContainer = document.getElementById("waImagePreviewContainer");
+const waImagePreview = document.getElementById("waImagePreview");
+const waCopyImageBtn = document.getElementById("waCopyImageBtn");
+
+if(waImageInput) {
+    waImageInput.addEventListener("change", (e) => {
+        if(e.target.files && e.target.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                waImagePreview.src = ev.target.result;
+                waImagePreviewContainer.style.display = "flex";
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        }
+    });
+}
+
+if(waCopyImageBtn) {
+    waCopyImageBtn.addEventListener("click", async () => {
+        try {
+            const canvas = document.createElement("canvas");
+            canvas.width = waImagePreview.naturalWidth;
+            canvas.height = waImagePreview.naturalHeight;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(waImagePreview, 0, 0);
+            canvas.toBlob(async (blob) => {
+                const item = new ClipboardItem({ "image/png": blob });
+                await navigator.clipboard.write([item]);
+                alert("✅ تم نسخ الصورة بنجاح! يمكنك الآن لصقها (Paste) في شات الواتساب.");
+            }, "image/png");
+        } catch (err) {
+            alert("حدث خطأ أثناء نسخ الصورة. قد لا يدعم متصفحك هذه الخاصية.");
+        }
+    });
+}
+
+const waStartCampaignBtn = document.getElementById("waStartCampaignBtn");
+if(waStartCampaignBtn) {
+    waStartCampaignBtn.addEventListener("click", () => {
         const list = document.getElementById("waCustomerList");
         const countSpan = document.getElementById("waQueueCount");
         const container = document.getElementById("waQueueContainer");
+        const targetType = waTargetGroup ? waTargetGroup.value : "all";
         
-        if(!customersData || customersData.length === 0) {
-            alert("لا يوجد عملاء مسجلين حالياً.");
-            return;
+        let validCustomers = [];
+        
+        if (targetType === "custom") {
+            const text = document.getElementById("waCustomNumbers").value;
+            const numbers = text.split(/[\n,]+/).map(n => n.trim()).filter(n => n);
+            validCustomers = numbers.map(n => ({ name: "عميل", phone: n }));
+        } else {
+            if(!window.customersData || window.customersData.length === 0) {
+                alert("لا يوجد عملاء مسجلين حالياً.");
+                return;
+            }
+            let baseCustomers = window.customersData.filter(c => c.phone && c.phone.length >= 10);
+            
+            if (targetType === "vip") {
+                validCustomers = baseCustomers.filter(c => (parseInt(c.visits) || 0) >= 3);
+            } else if (targetType === "inactive") {
+                validCustomers = baseCustomers.filter(c => (parseInt(c.visits) || 0) <= 1);
+            } else {
+                validCustomers = baseCustomers;
+            }
         }
         
-        // Filter out customers without valid phones
-        const validCustomers = customersData.filter(c => c.phone && c.phone.length >= 10);
+        if(validCustomers.length === 0) {
+            alert("لا يوجد عملاء في هذه الفئة المستهدفة.");
+            return;
+        }
         
         list.innerHTML = "";
         countSpan.innerText = validCustomers.length;
@@ -4905,16 +4972,19 @@ if(waLoadBtn) {
             let div = document.createElement("div");
             div.className = "wa-customer-row";
             div.id = `wa-row-${index}`;
+            div.style.cssText = "display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid #eee; padding: 12px 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); margin-bottom: 8px;";
             
             div.innerHTML = `
                 <div>
-                    <strong>👤 ${c.name}</strong><br>
-                    <span style="font-size:0.8rem; color:#7f8c8d;">📞 ${c.phone} | 🛍️ زيارات: ${c.visits || 0}</span>
+                    <strong style="color: var(--primary);">👤 ${c.name}</strong><br>
+                    <span style="font-size:0.8rem; color:#7f8c8d;">📞 ${c.phone} ${c.visits !== undefined ? `| 🛍️ زيارات: ${c.visits}` : ''}</span>
                 </div>
-                <button class="wa-send-btn interactive-btn" id="wa-btn-${index}" onclick="sendWaCampaign(${index}, '${c.name}', '${c.phone}')">إرسال 🚀</button>
+                <button class="wa-send-btn interactive-btn" id="wa-btn-${index}" onclick="sendWaCampaign(${index}, '${c.name}', '${c.phone}')" style="background: #25D366; color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">إرسال 🚀</button>
             `;
             list.appendChild(div);
         });
+        
+        container.scrollIntoView({ behavior: "smooth" });
     });
 }
 
@@ -4934,7 +5004,6 @@ window.sendWaCampaign = function(index, name, phone) {
         return;
     }
     
-    // Replace placeholder
     text = text.replace(/\[الاسم\]/g, name);
     
     let cleanPhone = sanitizePhone(phone);
@@ -4946,16 +5015,16 @@ window.sendWaCampaign = function(index, name, phone) {
     let url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
     window.open(url, "_blank");
     
-    // Mark as sent
     let btn = document.getElementById(`wa-btn-${index}`);
     if(btn) {
         btn.innerText = "تم الإرسال ✅";
         btn.style.background = "#bdc3c7";
+        btn.style.color = "#2c3e50";
         btn.disabled = true;
     }
     
-    // Start Cooldown (12 seconds)
-    startWaCooldown(12); 
+    // Start Cooldown (15 seconds recommended for anti-ban)
+    startWaCooldown(15); 
 };
 
 function startWaCooldown(seconds) {
@@ -4965,7 +5034,6 @@ function startWaCooldown(seconds) {
     
     timerSpan.style.display = "inline";
     
-    // Disable all buttons
     document.querySelectorAll(".wa-send-btn").forEach(b => {
         if(!b.innerText.includes("✅")) b.disabled = true;
     });
@@ -4974,15 +5042,191 @@ function startWaCooldown(seconds) {
     
     waCooldownInterval = setInterval(() => {
         waCooldownTime--;
-        timerSpan.innerText = `⏳ انتظر ${waCooldownTime} ثانية...`;
+        timerSpan.innerText = `⏳ انتظر ${waCooldownTime} ثانية لحماية حسابك...`;
         
         if(waCooldownTime <= 0) {
             clearInterval(waCooldownInterval);
             timerSpan.style.display = "none";
-            // Re-enable buttons
             document.querySelectorAll(".wa-send-btn").forEach(b => {
                 if(!b.innerText.includes("✅")) b.disabled = false;
             });
         }
     }, 1000);
 }
+
+// --- Override renderFinancials to fix broken HTML and add Checkboxes ---
+function renderFinancials(finList) {
+    let container = document.getElementById('financialsDisplayList');
+    if (!container) return;
+    container.innerHTML = '';
+
+    let allDrivers = window.driversList || [];
+    let driversMap = {};
+    allDrivers.forEach(d => {
+        driversMap[d.name] = { name: d.name, ordersCount: 0, cashCollected: 0, shippingFees: 0, netDue: 0, statusText: "لا توجد مديونية" };
+    });
+
+    finList.forEach(f => {
+        if (!driversMap[f.name]) {
+            driversMap[f.name] = f;
+        } else {
+            driversMap[f.name] = { ...driversMap[f.name], ...f };
+        }
+    });
+
+    let driversArray = Object.values(driversMap);
+    if (driversArray.length === 0) {
+        container.innerHTML = '<p class="empty-msg">لا توجد مناديب مسجلة.</p>';
+        return;
+    }
+
+    driversArray.forEach(f => {
+        let netDue = parseFloat(f.netDue) || 0;
+        let isSettled = netDue === 0;
+        let statusColor = netDue > 0 ? "#27ae60" : (netDue < 0 ? "#c0392b" : "#9e9e9e");
+        let cardClass = isSettled ? "financial-row driver-card settled" : "financial-row driver-card";
+        let cardShadow = isSettled ? "none" : "0 4px 6px rgba(0,0,0,0.05)";
+        let cardOpacity = isSettled ? "0.8" : "1";
+        let cardBorderColor = isSettled ? "#e0e0e0" : "#eaeaea";
+
+        let driverOrders = (window.uncollectedOrdersData || []).filter(o => o.driver === f.name);
+        let ordersHtml = '';
+        if (driverOrders.length > 0) {
+            ordersHtml = `<div style="margin-top: 10px; border-top: 1px dashed #ccc; padding-top: 10px;">
+                <strong style="font-size:0.85rem; color:var(--primary);">📦 أوردرات معلقة (لم يتم تسويتها):</strong>`;
+            driverOrders.forEach(o => {
+                ordersHtml += `
+                    <div class="financial-order-item" style="background:#fdfdfd; padding:8px; border:1px solid #eee; border-radius:6px; margin-top:5px; display:flex; justify-content:space-between; align-items:center;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" class="financial-order-checkbox" data-order-id="${o.id}" data-payment="${o.payment}" style="width: 18px; height: 18px; cursor: pointer;">
+                            <div>
+                                <span style="font-weight:bold; color:var(--text-dark);">${o.id}</span><br>
+                                <span style="font-size:0.75rem; color:#777;">${o.payment} | إجمالي: ${o.total}ج | شحن: ${o.shipping}ج</span><br>
+                                <span style="font-size:0.85rem; font-weight:bold; color:var(--danger);">المطلوب تحصيله: ${o.remaining}ج</span>
+                            </div>
+                        </div>
+                        <button class="btn-settle interactive-btn" onclick="settleDriverOrder('${o.id}', this, '${o.payment}')" style="background:var(--success); color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">تسوية 💸</button>
+                    </div>
+                `;
+            });
+            ordersHtml += `</div>`;
+        }
+
+        container.innerHTML += `
+            <div class="${cardClass}" style="background: #fff; padding: 15px; border-radius: 12px; border: 1px solid ${cardBorderColor}; margin-bottom: 12px; box-shadow: ${cardShadow}; opacity: ${cardOpacity}; transition: all 0.3s ease;">
+                <div class="financial-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #f0f0f0; padding-bottom:8px; margin-bottom:10px;">
+                    <span style="font-weight:bold; font-size:1.1rem; color:var(--text-dark);">🛵 ${f.name}</span>
+                    <span style="font-size: 0.85rem; background:#f0f0f0; color:var(--text-dark); padding:3px 8px; border-radius:12px; font-weight:bold;">${f.ordersCount || 0} طلب</span>
+                </div>
+                <div class="financial-details" style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:10px;">
+                    <span style="background:#e8f4f8; padding:5px 10px; border-radius:6px; color:#555;">الكاش: <strong style="color:#2980b9;">${f.cashCollected || 0}</strong> ج</span>
+                    <span style="background:#f9ebea; padding:5px 10px; border-radius:6px; color:#555;">الشحن: <strong style="color:#c0392b;">${f.shippingFees || 0}</strong> ج</span>
+                </div>
+                <div class="financial-status" style="background: ${statusColor}15; color: ${statusColor}; padding: 8px; border-radius: 6px; text-align:center; font-weight:bold; border: 1px dashed ${statusColor};">
+                    ${f.statusText} (${netDue} ج)
+                </div>
+                ${ordersHtml}
+            </div>
+        `;
+    });
+}
+
+// --- Mobile Back Button (History API) & Sidebar Animation ---
+document.addEventListener('DOMContentLoaded', () => {
+    const sidebar = document.getElementById('app-sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    const menuBtn = document.getElementById('menuToggleBtn');
+
+    function openSidebar() {
+        if(sidebar) sidebar.classList.add('open');
+        if(overlay) overlay.classList.add('active');
+        if(menuBtn) menuBtn.style.transform = 'rotate(90deg)';
+        history.pushState({ sidebarOpen: true }, '');
+    }
+
+    function closeSidebar() {
+        if(sidebar) sidebar.classList.remove('open');
+        if(overlay) overlay.classList.remove('active');
+        if(menuBtn) menuBtn.style.transform = 'rotate(0deg)';
+    }
+
+    if(menuBtn) {
+        // Remove old listener to avoid duplicates
+        menuBtn.removeEventListener("click", toggleSidebar);
+        menuBtn.addEventListener('click', () => {
+            if (sidebar.classList.contains('open')) {
+                history.back(); // Triggers popstate which closes it
+            } else {
+                openSidebar();
+            }
+        });
+    }
+
+    if(overlay) {
+        overlay.addEventListener('click', () => {
+            if (sidebar.classList.contains('open')) history.back();
+        });
+    }
+
+    window.addEventListener('popstate', (e) => {
+        closeSidebar();
+    });
+
+    // Close sidebar on item click
+    document.querySelectorAll(".nav-item").forEach(item => {
+        item.addEventListener("click", () => {
+            if (sidebar && sidebar.classList.contains("open")) {
+                closeSidebar();
+            }
+        });
+    });
+});
+
+// --- Financials "Select All" Logic ---
+document.addEventListener('DOMContentLoaded', () => {
+    const selectAllCheckbox = document.getElementById('selectAllFinancialsCheckbox');
+    const closeSelectedBtn = document.getElementById('closeSelectedFinancialsBtn');
+
+    if(selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', (e) => {
+            const isChecked = e.target.checked;
+            const checkboxes = document.querySelectorAll('.financial-order-checkbox');
+            checkboxes.forEach(cb => cb.checked = isChecked);
+            updateCloseBtnVisibility();
+        });
+    }
+
+    document.getElementById('financialsDisplayList')?.addEventListener('change', (e) => {
+        if(e.target.classList.contains('financial-order-checkbox')) {
+            updateCloseBtnVisibility();
+            const allCheckboxes = document.querySelectorAll('.financial-order-checkbox');
+            const allChecked = Array.from(allCheckboxes).every(cb => cb.checked);
+            if(selectAllCheckbox) selectAllCheckbox.checked = allChecked;
+        }
+    });
+
+    function updateCloseBtnVisibility() {
+        const checkedCount = document.querySelectorAll('.financial-order-checkbox:checked').length;
+        if(closeSelectedBtn) {
+            closeSelectedBtn.style.display = checkedCount > 0 ? 'inline-block' : 'none';
+        }
+    }
+
+    if(closeSelectedBtn) {
+        closeSelectedBtn.addEventListener('click', () => {
+            const checkedBoxes = document.querySelectorAll('.financial-order-checkbox:checked');
+            if(checkedBoxes.length === 0) return;
+            
+            if(!confirm(`هل أنت متأكد من تسوية عدد ${checkedBoxes.length} أوردر محدد؟`)) return;
+
+            checkedBoxes.forEach(cb => {
+                const orderId = cb.getAttribute('data-order-id');
+                const paymentMethod = cb.getAttribute('data-payment');
+                settleDriverOrder(orderId, cb.closest('.financial-order-item').querySelector('.btn-settle'), paymentMethod);
+            });
+            
+            if(selectAllCheckbox) selectAllCheckbox.checked = false;
+            updateCloseBtnVisibility();
+        });
+    }
+});

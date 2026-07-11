@@ -34,7 +34,7 @@
 
         <!-- Left Side (RTL) -->
         <div class="header-actions" style="display: flex; align-items: center; justify-content: flex-end; min-width: 60px; gap: 8px;">
-            <button id="openSuspendedBtn" class="btn-suspended interactive-btn" style="display: none;">📂 المعلقة (<span id="suspendedCount">0</span>)</button>
+            <button id="openSuspendedBtn" class="btn-suspended interactive-btn" style="display: inline-block;">📂 المعلقة (<span id="suspendedCount">0</span>)</button>
             <div class="status-indicator">
                 <span id="sync-status">جاري التحميل...</span>
                 <div class="status-dot"></div>
@@ -465,30 +465,64 @@
 
         <!-- ⭐ شاشة حملات الواتساب (WhatsApp Campaigns) -->
         <section id="whatsapp-campaign-tab" class="tab-pane">
-            <div class="section-card" style="border-right: 4px solid #25D366;">
-                <h3 class="section-title">💬 حملات الواتساب الذكية</h3>
-                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px;">
-                    أرسل عروضك للعملاء بأمان. أضف <strong>[الاسم]</strong> في نص الرسالة ليتم استبدالها باسم العميل تلقائياً.
-                </p>
-
-                <!-- إعدادات الحملة -->
-                <div style="background: var(--bg); padding: 15px; border-radius: var(--radius); margin-bottom: 20px; border: 1px solid var(--border);">
-                    <label>نص رسالة العرض <span style="color:red;">*</span></label>
-                    <textarea id="waCampaignText" placeholder="مثال: أهلاً يا [الاسم]! متوفر الآن منتجات جديدة في كاندي كلاب..."></textarea>
-                    
-                    <button id="waLoadCustomersBtn" class="interactive-btn" style="width: 100%; background: #25D366; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 1rem;">
-                        🔄 استدعاء قائمة العملاء المستهدفين
-                    </button>
+            <div class="section-card" style="border-right: 4px solid #25D366; background: #fdfdfd;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px;">
+                    <h2 style="color: #075E54; margin: 0; display: flex; align-items: center; gap: 8px;">
+                        <i class="icon" style="font-size: 1.5rem;">💬</i> حملات الواتساب الاحترافية
+                    </h2>
+                    <span style="background: #25D366; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">Pro Mode</span>
                 </div>
 
-                <!-- طابور الإرسال -->
-                <div id="waQueueContainer" style="display: none;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <h4 style="margin: 0;">🎯 طابور الإرسال (<span id="waQueueCount">0</span> عميل)</h4>
-                        <span id="waCooldownTimer" style="font-size: 0.9rem; color: #e67e22; font-weight: bold; display: none;">⏳ انتظر 10 ثواني...</span>
+                <!-- 1. إعداد الاستهداف -->
+                <div class="wa-setup-box" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px;">
+                    <h3 style="margin-top:0; font-size: 1.1rem; color: var(--primary);">1️⃣ تحديد الفئة المستهدفة</h3>
+                    <select id="waTargetGroup" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; margin-bottom: 15px;">
+                        <option value="all">👥 جميع العملاء المسجلين (قاعدة البيانات كاملة)</option>
+                        <option value="vip">⭐ عملاء VIP (اشتروا 3 مرات فأكثر)</option>
+                        <option value="inactive">💤 عملاء خاملين (لم يشتروا منذ فترة)</option>
+                        <option value="custom">✍️ إدخال أرقام مخصصة (خارجية)</option>
+                    </select>
+
+                    <div id="waCustomNumbersDiv" style="display: none;">
+                        <label>الصق الأرقام هنا (رقم في كل سطر أو مفصولة بفاصلة):</label>
+                        <textarea id="waCustomNumbers" rows="4" placeholder="مثال:&#10;01012345678&#10;01123456789" style="width: 100%; border: 1px solid #ccc; border-radius: 8px; padding: 10px;"></textarea>
+                    </div>
+                </div>
+
+                <!-- 2. محتوى الرسالة -->
+                <div class="wa-setup-box" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px;">
+                    <h3 style="margin-top:0; font-size: 1.1rem; color: var(--primary);">2️⃣ تجهيز الرسالة</h3>
+                    <p style="font-size: 0.85rem; color: #7f8c8d; margin-bottom: 15px;">
+                        💡 استخدم <strong>[الاسم]</strong> ليقوم النظام بوضع اسم العميل تلقائياً ليشعره بالاهتمام.
+                    </p>
+                    
+                    <textarea id="waCampaignText" rows="5" placeholder="أهلاً يا [الاسم]! 🎉&#10;عروض كاندي كلاب وصلت! اطلب الآن واحصل على خصم..." style="width: 100%; border: 1px solid #ccc; border-radius: 8px; padding: 12px; font-size: 1rem; resize: vertical;"></textarea>
+
+                    <div style="margin-top: 15px; border-top: 1px dashed #eee; padding-top: 15px;">
+                        <label style="display: block; font-weight: bold; margin-bottom: 8px;">إرفاق صورة للحملة (اختياري)</label>
+                        <input type="file" id="waImageInput" accept="image/*" style="margin-bottom: 10px; width: 100%;">
+                        <div id="waImagePreviewContainer" style="display: none; align-items: flex-start; gap: 15px; background: #f9f9f9; padding: 10px; border-radius: 8px;">
+                            <img id="waImagePreview" src="" alt="معاينة" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd;">
+                            <div style="flex: 1;">
+                                <p style="font-size: 0.8rem; color: #e67e22; margin: 0 0 10px 0;">⚠️ واتساب لا يرسل الصور تلقائياً. اضغط على الزر لنسخ الصورة، ثم قم بلصقها (Paste) في شات العميل مع الرسالة.</p>
+                                <button id="waCopyImageBtn" class="btn-primary" style="background: #3498db; width: auto; font-size: 0.9rem;">📋 نسخ الصورة للحافظة</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="waStartCampaignBtn" class="interactive-btn" style="width: 100%; background: #25D366; color: white; border: none; padding: 15px; border-radius: 12px; font-weight: bold; font-size: 1.2rem; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);">
+                    🚀 استدعاء العملاء وبدء الحملة
+                </button>
+
+                <!-- 3. طابور الإرسال (يظهر بعد بدء الحملة) -->
+                <div id="waQueueContainer" style="display: none; margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: #e8f5e9; padding: 10px 15px; border-radius: 8px; border-right: 4px solid #25D366;">
+                        <h4 style="margin: 0; color: #1b5e20;">🎯 العملاء المستهدفين: <strong id="waQueueCount" style="font-size: 1.2rem;">0</strong></h4>
+                        <span id="waCooldownTimer" style="font-size: 0.9rem; color: #c0392b; font-weight: bold; display: none;">⏳ انتظر... حماية من الحظر</span>
                     </div>
                     
-                    <div id="waCustomerList" class="data-list-container scroll-list" style="max-height: 400px; padding: 5px;">
+                    <div id="waCustomerList" class="data-list-container scroll-list" style="max-height: 500px; padding: 5px; display: flex; flex-direction: column; gap: 10px; background: transparent; border: none;">
                         <!-- العملاء هنا -->
                     </div>
                 </div>
