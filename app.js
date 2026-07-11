@@ -35,7 +35,7 @@ function setBtnLoading(btn, isLoading, originalText = "") {
     if (isLoading) {
         btn.disabled = true;
         btn.dataset.origText = btn.innerText;
-        btn.innerText = "جاري التحميل <i class=\'fa-solid fa-hourglass-half\'></i>...";
+        btn.innerHTML = "جاري التحميل <i class=\'fa-solid fa-hourglass-half\'></i>...";
         btn.style.opacity = "0.7";
         btn.style.cursor = "not-allowed";
     } else {
@@ -504,7 +504,7 @@ window.settleDriverOrder = function (orderId, btn, payMethod) {
                 loadDataFromServer();
             }).catch(() => {
                 showToast("<i class=\'fa-solid fa-xmark\'></i> حدث خطأ في الاتصال", "error");
-                btn.innerText = "تسوية <i class=\'fa-solid fa-money-bill\'></i>";
+                btn.innerHTML = "تسوية <i class=\'fa-solid fa-money-bill\'></i>";
                 btn.disabled = false;
             });
     });
@@ -544,7 +544,7 @@ if (deliveryTypeSelect) {
             if (addressFields) addressFields.classList.add('hidden-field');
             if (specialDateContainer) specialDateContainer.classList.add('hidden-field');
             if (document.getElementById('shippingCost')) document.getElementById('shippingCost').value = 0;
-            let infoSpan = document.querySelector('#deliveryInfo span'); if (infoSpan) infoSpan.innerText = "استلام من الفرع <i class=\'fa-solid fa-store\'></i>";
+            let infoSpan = document.querySelector('#deliveryInfo span'); if (infoSpan) infoSpan.innerHTML = "استلام من الفرع <i class=\'fa-solid fa-store\'></i>";
         } else if (type === 'gov_shipping') {
             if (addressFields) addressFields.classList.remove('hidden-field');
             if (specialDateContainer) specialDateContainer.classList.add('hidden-field');
@@ -612,9 +612,9 @@ function triggerGovCalc() {
     if (dateDisplay) {
         let type = deliveryTypeSelect ? deliveryTypeSelect.value : 'normal';
         if (type === 'special_date') {
-            dateDisplay.innerText = "حسب التاريخ المختار <i class=\'fa-regular fa-calendar-days\'></i>";
+            dateDisplay.innerHTML = "حسب التاريخ المختار <i class=\'fa-regular fa-calendar-days\'></i>";
         } else if (info.type === 'next_day') {
-            dateDisplay.innerText = "تاني يوم <i class=\'fa-solid fa-truck-fast\'></i>";
+            dateDisplay.innerHTML = "تاني يوم <i class=\'fa-solid fa-truck-fast\'></i>";
         } else {
             let exactDate = calculateDeliveryDateSkippingFriday(info.duration);
             dateDisplay.innerText = exactDate ? `المتوقع: ${exactDate}` : `خلال ${info.duration}`;
@@ -797,7 +797,7 @@ window.printHistoryOrder = function (orderId) {
         // <i class=\'fa-solid fa-star\'></i> V15.0: تطبيع النص - إزالة "عادي" من "توصيل منزلي عادي"
         let typeStr = (order.orderType || "أوردر توصيل").replace("توصيل منزلي عادي", "توصيل منزلي");
         let govStr = order.gov ? order.gov + " - " : "";
-        document.getElementById('receipt-type').innerText = isOldGift ? `${govStr}${typeStr} - <i class=\'fa-solid fa-gift\'></i> هدية` : `${govStr}${typeStr}`;
+        document.getElementById('receipt-type').innerHTML = isOldGift ? `${govStr}${typeStr} - <i class=\'fa-solid fa-gift\'></i> هدية` : `${govStr}${typeStr}`;
     }
     if (document.getElementById('print-date')) document.getElementById('print-date').innerText = order.date || new Date().toLocaleDateString('ar-EG');
     if (document.getElementById('print-time')) document.getElementById('print-time').innerText = order.time || '';
@@ -962,7 +962,7 @@ function performPhoneSearch() {
     if (!phoneInput || !phoneStatus) return;
     let phoneVal = phoneInput.value.trim().replace(/\D/g, '');
     if (phoneVal.length >= 9) {
-        phoneStatus.innerText = "<i class=\'fa-solid fa-hourglass-half\'></i>";
+        phoneStatus.innerHTML = "<i class=\'fa-solid fa-hourglass-half\'></i>";
 
         let foundCustomer = null;
         if (orderHistoryData && orderHistoryData.length > 0) foundCustomer = orderHistoryData.find(o => o.phone.toString().replace(/\D/g, '').includes(phoneVal));
@@ -977,10 +977,10 @@ function performPhoneSearch() {
                 .then(data => {
                     if (data.length > 0) fillCustomerData(data[0]);
                     else phoneStatus.innerText = "🆕";
-                }).catch(() => phoneStatus.innerText = "<i class=\'fa-solid fa-magnifying-glass\'></i>");
+                }).catch(() => phoneStatus.innerHTML = "<i class=\'fa-solid fa-magnifying-glass\'></i>");
         }
     } else {
-        phoneStatus.innerText = "<i class=\'fa-solid fa-magnifying-glass\'></i>";
+        phoneStatus.innerHTML = "<i class=\'fa-solid fa-magnifying-glass\'></i>";
     }
 }
 
@@ -989,7 +989,7 @@ function fillCustomerData(cust) {
     if (document.getElementById('address') && cust.address && cust.address !== 'استلام من الفرع') {
         document.getElementById('address').value = cust.address;
     }
-    phoneStatus.innerText = "<i class=\'fa-solid fa-check\'></i>";
+    phoneStatus.innerHTML = "<i class=\'fa-solid fa-check\'></i>";
     showToast(`أهلاً بعودتك يا ${cust.name}!`, "success");
 }
 
@@ -1345,7 +1345,7 @@ function resetForm() {
     if (paymentMethod) { paymentMethod.classList.remove('locked-field'); paymentMethod.disabled = false; }
     toggleGlobalLock(false);
     if (deliveryTypeSelect) deliveryTypeSelect.dispatchEvent(new Event('change'));
-    if (phoneStatus) phoneStatus.innerText = "<i class=\'fa-solid fa-magnifying-glass\'></i>";
+    if (phoneStatus) phoneStatus.innerHTML = "<i class=\'fa-solid fa-magnifying-glass\'></i>";
     let hint = document.getElementById('giftHint'); if (hint) hint.remove();
 }
 
@@ -4386,7 +4386,8 @@ async function generateExcel(dataToExport, reportTitle) {
         const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        let safeTitle = reportTitle.replace(/[^a-zA-Z0-9أ-ي]/g, '_');
+        let cleanTitle = reportTitle.replace(/<[^>]*>?/gm, '').trim();
+        let safeTitle = cleanTitle.replace(/[^a-zA-Z0-9أ-ي]/g, '_');
         link.download = `تقرير_${safeTitle}_${new Date().toLocaleDateString('en-CA')}.xlsx`;
         document.body.appendChild(link);
         link.click();
@@ -4731,11 +4732,12 @@ function generateCategoryPDF(filteredData, categoryName) {
 
     let baseUrl = window.location.href.split('?')[0].replace(/[^/]*$/, '');
     let logoUrl = baseUrl + 'favicon.png';
+    let cleanCategoryName = categoryName.replace(/<[^>]*>?/gm, '').trim();
 
     let html = `
         <html dir="rtl" lang="ar">
         <head>
-            <title>تقرير حالة الصلاحيات - ${categoryName}</title>
+            <title>تقرير حالة الصلاحيات - ${cleanCategoryName}</title>
             <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
             <style>
                 * { box-sizing: border-box; }
