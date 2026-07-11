@@ -4841,29 +4841,144 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-/ /   - - -   S i d e b a r   N a v i g a t i o n   - - - 
- c o n s t   s i d e b a r O v e r l a y   =   d o c u m e n t . g e t E l e m e n t B y I d ( " s i d e b a r - o v e r l a y " ) ; 
- c o n s t   a p p S i d e b a r   =   d o c u m e n t . g e t E l e m e n t B y I d ( " a p p - s i d e b a r " ) ; 
- c o n s t   m e n u T o g g l e B t n   =   d o c u m e n t . g e t E l e m e n t B y I d ( " m e n u T o g g l e B t n " ) ; 
- c o n s t   c l o s e S i d e b a r B t n   =   d o c u m e n t . g e t E l e m e n t B y I d ( " c l o s e S i d e b a r B t n " ) ; 
- 
- f u n c t i o n   t o g g l e S i d e b a r ( )   { 
-         a p p S i d e b a r . c l a s s L i s t . t o g g l e ( " o p e n " ) ; 
-         s i d e b a r O v e r l a y . c l a s s L i s t . t o g g l e ( " a c t i v e " ) ; 
- } 
- 
- i f ( m e n u T o g g l e B t n )   m e n u T o g g l e B t n . a d d E v e n t L i s t e n e r ( " c l i c k " ,   t o g g l e S i d e b a r ) ; 
- i f ( c l o s e S i d e b a r B t n )   c l o s e S i d e b a r B t n . a d d E v e n t L i s t e n e r ( " c l i c k " ,   t o g g l e S i d e b a r ) ; 
- i f ( s i d e b a r O v e r l a y )   s i d e b a r O v e r l a y . a d d E v e n t L i s t e n e r ( " c l i c k " ,   t o g g l e S i d e b a r ) ; 
- 
- / /   O v e r r i d e   e x i s t i n g   t a b   l o g i c   t o   c l o s e   s i d e b a r   o n   m o b i l e   w h e n   a   t a b   i s   c l i c k e d 
- d o c u m e n t . q u e r y S e l e c t o r A l l ( " . n a v - i t e m " ) . f o r E a c h ( i t e m   = >   { 
-         i t e m . a d d E v e n t L i s t e n e r ( " c l i c k " ,   ( )   = >   { 
-                 i f ( w i n d o w . i n n e r W i d t h   <   9 0 0 )   { 
-                         a p p S i d e b a r . c l a s s L i s t . r e m o v e ( " o p e n " ) ; 
-                         s i d e b a r O v e r l a y . c l a s s L i s t . r e m o v e ( " a c t i v e " ) ; 
-                 } 
-         } ) ; 
- } ) ; 
-  
- 
+// --- Sidebar Navigation ---
+const sidebarOverlay = document.getElementById("sidebar-overlay");
+const appSidebar = document.getElementById("app-sidebar");
+const menuToggleBtn = document.getElementById("menuToggleBtn");
+const closeSidebarBtn = document.getElementById("closeSidebarBtn");
+
+function toggleSidebar() {
+    if(appSidebar) appSidebar.classList.toggle("open");
+    if(sidebarOverlay) sidebarOverlay.classList.toggle("active");
+}
+
+if(menuToggleBtn) menuToggleBtn.addEventListener("click", toggleSidebar);
+if(closeSidebarBtn) closeSidebarBtn.addEventListener("click", toggleSidebar);
+if(sidebarOverlay) sidebarOverlay.addEventListener("click", toggleSidebar);
+
+// Override existing tab logic to close sidebar when a tab is clicked
+document.querySelectorAll(".nav-item").forEach(item => {
+    item.addEventListener("click", () => {
+        if (appSidebar && appSidebar.classList.contains("open")) {
+            appSidebar.classList.remove("open");
+            if(sidebarOverlay) sidebarOverlay.classList.remove("active");
+        }
+    });
+});
+
+// --- WhatsApp Campaigns Logic ---
+let waCooldownTime = 0;
+let waCooldownInterval = null;
+
+function sanitizePhone(phone) {
+    if(!phone) return "";
+    let cleaned = phone.toString().replace(/\D/g, "");
+    if(cleaned.startsWith("0")) cleaned = "2" + cleaned; // Assume Egypt 20 if starts with 0
+    else if(!cleaned.startsWith("20") && cleaned.length === 10) cleaned = "20" + cleaned; 
+    return cleaned;
+}
+
+const waLoadBtn = document.getElementById("waLoadCustomersBtn");
+if(waLoadBtn) {
+    waLoadBtn.addEventListener("click", () => {
+        const list = document.getElementById("waCustomerList");
+        const countSpan = document.getElementById("waQueueCount");
+        const container = document.getElementById("waQueueContainer");
+        
+        if(!customersData || customersData.length === 0) {
+            alert("لا يوجد عملاء مسجلين حالياً.");
+            return;
+        }
+        
+        // Filter out customers without valid phones
+        const validCustomers = customersData.filter(c => c.phone && c.phone.length >= 10);
+        
+        list.innerHTML = "";
+        countSpan.innerText = validCustomers.length;
+        container.style.display = "block";
+        
+        validCustomers.forEach((c, index) => {
+            let div = document.createElement("div");
+            div.className = "wa-customer-row";
+            div.id = `wa-row-${index}`;
+            
+            div.innerHTML = `
+                <div>
+                    <strong>👤 ${c.name}</strong><br>
+                    <span style="font-size:0.8rem; color:#7f8c8d;">📞 ${c.phone} | 🛍️ زيارات: ${c.visits || 0}</span>
+                </div>
+                <button class="wa-send-btn interactive-btn" id="wa-btn-${index}" onclick="sendWaCampaign(${index}, '${c.name}', '${c.phone}')">إرسال 🚀</button>
+            `;
+            list.appendChild(div);
+        });
+    });
+}
+
+window.sendWaCampaign = function(index, name, phone) {
+    if(waCooldownTime > 0) {
+        alert("برجاء الانتظار حتى ينتهي العداد لحماية رقمك من الحظر.");
+        return;
+    }
+    
+    let textElem = document.getElementById("waCampaignText");
+    if(!textElem) return;
+    
+    let text = textElem.value;
+    if(!text.trim()) {
+        alert("برجاء كتابة نص رسالة العرض أولاً.");
+        textElem.focus();
+        return;
+    }
+    
+    // Replace placeholder
+    text = text.replace(/\[الاسم\]/g, name);
+    
+    let cleanPhone = sanitizePhone(phone);
+    if(!cleanPhone) {
+        alert("رقم الهاتف غير صالح.");
+        return;
+    }
+    
+    let url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
+    window.open(url, "_blank");
+    
+    // Mark as sent
+    let btn = document.getElementById(`wa-btn-${index}`);
+    if(btn) {
+        btn.innerText = "تم الإرسال ✅";
+        btn.style.background = "#bdc3c7";
+        btn.disabled = true;
+    }
+    
+    // Start Cooldown (12 seconds)
+    startWaCooldown(12); 
+};
+
+function startWaCooldown(seconds) {
+    waCooldownTime = seconds;
+    const timerSpan = document.getElementById("waCooldownTimer");
+    if(!timerSpan) return;
+    
+    timerSpan.style.display = "inline";
+    
+    // Disable all buttons
+    document.querySelectorAll(".wa-send-btn").forEach(b => {
+        if(!b.innerText.includes("✅")) b.disabled = true;
+    });
+    
+    if(waCooldownInterval) clearInterval(waCooldownInterval);
+    
+    waCooldownInterval = setInterval(() => {
+        waCooldownTime--;
+        timerSpan.innerText = `⏳ انتظر ${waCooldownTime} ثانية...`;
+        
+        if(waCooldownTime <= 0) {
+            clearInterval(waCooldownInterval);
+            timerSpan.style.display = "none";
+            // Re-enable buttons
+            document.querySelectorAll(".wa-send-btn").forEach(b => {
+                if(!b.innerText.includes("✅")) b.disabled = false;
+            });
+        }
+    }, 1000);
+}

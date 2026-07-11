@@ -3382,36 +3382,19 @@ body.dark-mode .app-sidebar {
     cursor: not-allowed;
 }
 
-/* Desktop Sidebar Tweaks */
+/* Desktop Sidebar Tweaks (Removed per user request to keep it a slide-out drawer on all screens) */
 @media (min-width: 900px) {
-    .menu-toggle-btn {
-        display: none; /* Hide hamburger on desktop */
-    }
-    
-    .app-sidebar {
-        left: 0; /* Always visible */
-        box-shadow: 1px 0 0 var(--border);
-    }
-    
-    .sidebar-overlay {
-        display: none !important;
-    }
-    
-    .close-sidebar-btn {
-        display: none;
-    }
-    
+    /* Preserve main container padding if necessary, but actually we don't need padding if it's off-canvas */
     body {
-        padding-left: 280px; /* Push content to right to accommodate sidebar on the left */
-        padding-bottom: 0;
+        padding-left: 0;
     }
     
     .app-header {
-        left: 280px;
-        width: calc(100% - 280px);
+        left: 0;
+        width: 100%;
     }
     
     .toast-container {
-        left: 320px;
+        left: 20px;
     }
 }
