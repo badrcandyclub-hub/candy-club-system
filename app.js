@@ -4718,6 +4718,9 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
         return;
     }
 
+    let baseUrl = window.location.href.split('?')[0].replace(/[^/]*$/, '');
+    let logoUrl = baseUrl + 'favicon.png';
+
     let html = `
         <html dir="rtl" lang="ar">
         <head>
@@ -4735,8 +4738,10 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
                     padding: 15mm; 
                 }
                 .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #E91E8C; padding-bottom: 20px; margin-bottom: 30px; }
-                .logo { font-size: 36px; font-weight: 900; color: #E91E8C; letter-spacing: 2px; margin: 0; display: flex; align-items: center; gap: 10px; }
-                .logo span { background: #E91E8C; color: white; padding: 5px 15px; border-radius: 8px; font-size: 24px; }
+                .logo-container { display: flex; align-items: center; gap: 15px; direction: ltr; }
+                .logo-img { height: 70px; object-fit: contain; }
+                .logo-text { font-size: 36px; font-weight: 900; color: #E91E8C; letter-spacing: 2px; margin: 0; }
+                .logo-text span { background: #E91E8C; color: white; padding: 5px 15px; border-radius: 8px; font-size: 24px; vertical-align: middle; }
                 .title-box { text-align: left; }
                 .title { font-size: 22px; font-weight: bold; color: #2c3e50; margin: 0; margin-bottom: 5px; }
                 .subtitle { font-size: 16px; color: #7f8c8d; margin: 0; }
@@ -4753,7 +4758,10 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
         </head>
         <body>
             <div class="header">
-                <h1 class="logo">Candy <span>Club</span></h1>
+                <div class="logo-container">
+                    <img src="${logoUrl}" alt="Logo" class="logo-img">
+                    <h1 class="logo-text">Candy <span>Club</span></h1>
+                </div>
                 <div class="title-box">
                     <h2 class="title">تقرير انتهاء الصلاحية</h2>
                     <p class="subtitle">منتجات تنتهي في شهر: <strong dir="ltr">${monthVal}</strong></p>
@@ -4823,6 +4831,9 @@ function generatePDFReceipt(filteredData, dateVal) {
         return;
     }
 
+    let baseUrl = window.location.href.split('?')[0].replace(/[^/]*$/, '');
+    let logoUrl = baseUrl + 'favicon.png';
+
     let html = `
         <html dir="rtl" lang="ar">
         <head>
@@ -4840,8 +4851,11 @@ function generatePDFReceipt(filteredData, dateVal) {
                     padding: 15mm; 
                     box-shadow: 0 0 10px rgba(0,0,0,0.1);
                 }
-                .header { text-align: center; border-bottom: 3px solid #E91E8C; padding-bottom: 20px; margin-bottom: 20px; }
-                .logo { font-size: 36px; font-weight: 900; color: #E91E8C; letter-spacing: 2px; margin-bottom: 5px; }
+                .header { display: flex; flex-direction: column; align-items: center; border-bottom: 3px solid #E91E8C; padding-bottom: 20px; margin-bottom: 20px; }
+                .logo-container { display: flex; align-items: center; gap: 15px; direction: ltr; margin-bottom: 10px; }
+                .logo-img { height: 70px; object-fit: contain; }
+                .logo-text { font-size: 36px; font-weight: 900; color: #E91E8C; letter-spacing: 2px; margin: 0; }
+                .logo-text span { background: #E91E8C; color: white; padding: 5px 15px; border-radius: 8px; font-size: 24px; vertical-align: middle; }
                 .title { font-size: 22px; font-weight: bold; color: #2c3e50; }
                 .info-section { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 15px; gap: 20px; }
                 .info-box { background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0; flex: 1; }
@@ -4864,7 +4878,10 @@ function generatePDFReceipt(filteredData, dateVal) {
         </head>
         <body>
             <div class="header">
-                <div class="logo">CANDY CLUB</div>
+                <div class="logo-container">
+                    <img src="${logoUrl}" alt="Logo" class="logo-img">
+                    <h1 class="logo-text">Candy <span>Club</span></h1>
+                </div>
                 <div class="title">بيان استلام بضاعة</div>
             </div>
             
