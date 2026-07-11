@@ -4443,7 +4443,7 @@ function generatePDFReceipt(filteredData, dateVal) {
     let html = `
         <html dir="rtl" lang="ar">
         <head>
-            <title>محضر استلام بضاعة - ${dateVal}</title>
+            <title>بيان استلام بضاعة - ${dateVal}</title>
             <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
             <style>
                 * { box-sizing: border-box; }
@@ -4482,7 +4482,7 @@ function generatePDFReceipt(filteredData, dateVal) {
         <body>
             <div class="header">
                 <div class="logo">CANDY CLUB</div>
-                <div class="title">محضر استلام بضاعة</div>
+                <div class="title">بيان استلام بضاعة</div>
             </div>
             
             <div class="info-section">
