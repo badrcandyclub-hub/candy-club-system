@@ -13,6 +13,8 @@
         rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
@@ -572,22 +574,72 @@
 
             </div>
         </section>
-        <!-- ⭐ قسم قاعدة العملاء -->
+        <!-- ⭐ قسم قاعدة العملاء (Dashboard) -->
         <section id="customers-tab" class="tab-pane">
-            <div class="section-card">
-                <h3 class="section-title">👥 قاعدة العملاء</h3>
-                <div class="search-box mb-15">
-                    <input type="text" id="customerSearchInput" placeholder="ابحث باسم العميل أو رقم الموبايل...">
-                    <button id="searchCustomerBtn" class="btn-search interactive-btn">بحث</button>
+            <div class="section-card" style="background: transparent; box-shadow: none; padding: 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="color: var(--text-dark); margin: 0; display: flex; align-items: center; gap: 10px;">
+                        <i class="fa-solid fa-users-viewfinder" style="color: var(--primary);"></i> قاعدة العملاء
+                    </h2>
+                    <button type="button" id="loadCustomersBtn" class="interactive-btn" style="background: linear-gradient(135deg, #3498db, #2980b9); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);">
+                        <i class="fa-solid fa-rotate"></i> تحديث البيانات
+                    </button>
                 </div>
-                <div class="text-center" style="margin-bottom: 15px;">
-                    <button type="button" id="loadCustomersBtn" class="interactive-btn"
-                        style="padding: 10px 20px; background: var(--secondary); color: white; border-radius: 8px; border: none; font-weight: bold; width: 100%;">إظهار
-                        بيانات العملاء 📂</button>
+
+                <!-- إحصائيات سريعة (Summary Cards) -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                    <div class="dash-card" style="background: linear-gradient(135deg, #ffffff, #fdfdfd); border-radius: 12px; padding: 20px; border-left: 4px solid var(--primary); box-shadow: 0 4px 15px rgba(0,0,0,0.03); display: flex; align-items: center; gap: 15px;">
+                        <div style="background: var(--primary-glow); color: var(--primary); width: 50px; height: 50px; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 1.5rem;">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+                        <div>
+                            <p style="margin: 0; color: #7f8c8d; font-size: 0.9rem;">إجمالي العملاء</p>
+                            <h3 id="dashTotalCustomers" style="margin: 0; color: var(--text-dark); font-size: 1.5rem;">0</h3>
+                        </div>
+                    </div>
+                    
+                    <div class="dash-card" style="background: linear-gradient(135deg, #ffffff, #fdfdfd); border-radius: 12px; padding: 20px; border-left: 4px solid #f1c40f; box-shadow: 0 4px 15px rgba(0,0,0,0.03); display: flex; align-items: center; gap: 15px;">
+                        <div style="background: rgba(241, 196, 15, 0.1); color: #f39c12; width: 50px; height: 50px; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 1.5rem;">
+                            <i class="fa-solid fa-crown"></i>
+                        </div>
+                        <div>
+                            <p style="margin: 0; color: #7f8c8d; font-size: 0.9rem;">عملاء VIP</p>
+                            <h3 id="dashVipCustomers" style="margin: 0; color: var(--text-dark); font-size: 1.5rem;">0</h3>
+                        </div>
+                    </div>
+
+                    <div class="dash-card" style="background: linear-gradient(135deg, #ffffff, #fdfdfd); border-radius: 12px; padding: 20px; border-left: 4px solid #2ecc71; box-shadow: 0 4px 15px rgba(0,0,0,0.03); display: flex; align-items: center; gap: 15px;">
+                        <div style="background: rgba(46, 204, 113, 0.1); color: #27ae60; width: 50px; height: 50px; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 1.5rem;">
+                            <i class="fa-solid fa-cart-shopping"></i>
+                        </div>
+                        <div>
+                            <p style="margin: 0; color: #7f8c8d; font-size: 0.9rem;">إجمالي الطلبات</p>
+                            <h3 id="dashTotalOrders" style="margin: 0; color: var(--text-dark); font-size: 1.5rem;">0</h3>
+                        </div>
+                    </div>
                 </div>
-                <div id="customersListContainer" class="data-list-container scroll-list"
-                    style="max-height: 400px; padding: 5px; display: none;">
-                    <p class="empty-msg">جاري تحميل القائمة...</p>
+
+                <!-- الفلتر والبحث -->
+                <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); margin-bottom: 20px;">
+                    <div style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px;" class="filter-tabs">
+                            <button class="filter-btn active" data-filter="all" style="background: var(--primary); color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold;">الكل</button>
+                            <button class="filter-btn" data-filter="vip" style="background: #f0f0f0; color: #555; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold;"><i class="fa-solid fa-star" style="color: #f1c40f;"></i> VIP</button>
+                        </div>
+                        
+                        <div class="search-box" style="flex: 1; min-width: 250px; max-width: 400px; display: flex; align-items: center; background: #f9f9f9; border-radius: 8px; padding: 5px 15px; border: 1px solid #eee;">
+                            <i class="fa-solid fa-magnifying-glass" style="color: #aaa;"></i>
+                            <input type="text" id="customerSearchInput" placeholder="بحث بالاسم أو الموبايل..." style="border: none; background: transparent; padding: 8px; width: 100%; outline: none;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- شبكة كروت العملاء (Grid View) -->
+                <div id="customersListContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; max-height: 600px; overflow-y: auto; padding: 5px;">
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #999;">
+                        <i class="fa-solid fa-cloud-arrow-down" style="font-size: 3rem; margin-bottom: 10px;"></i>
+                        <p>اضغط على "تحديث البيانات" لعرض قاعدة العملاء</p>
+                    </div>
                 </div>
             </div>
         </section>
@@ -923,34 +975,34 @@
         </div>
         <div class="sidebar-menu">
             <button class="nav-item active" data-target="create-tab">
-                <span class="icon">📝</span><span class="label">إنشاء</span>
+                <span class="icon"><i class="fa-solid fa-pen-to-square"></i></span><span class="label">إنشاء</span>
             </button>
             <button class="nav-item" data-target="catalog-tab">
-                <span class="icon">📦</span><span class="label">الكتالوج</span>
+                <span class="icon"><i class="fa-solid fa-box-open"></i></span><span class="label">الكتالوج</span>
             </button>
             <button class="nav-item" data-target="shipping-tab">
-                <span class="icon">🚚</span><span class="label">الشحن</span>
+                <span class="icon"><i class="fa-solid fa-truck-fast"></i></span><span class="label">الشحن</span>
             </button>
             <button class="nav-item" data-target="history-tab">
-                <span class="icon">🧾</span><span class="label">السجل</span>
+                <span class="icon"><i class="fa-solid fa-clock-rotate-left"></i></span><span class="label">السجل</span>
             </button>
             <button class="nav-item" data-target="customers-tab">
-                <span class="icon">👥</span><span class="label">العملاء</span>
+                <span class="icon"><i class="fa-solid fa-users"></i></span><span class="label">العملاء</span>
             </button>
             <button class="nav-item" data-target="reports-tab">
-                <span class="icon">📊</span><span class="label">التقارير</span>
+                <span class="icon"><i class="fa-solid fa-chart-line"></i></span><span class="label">التقارير</span>
             </button>
             <button class="nav-item" data-target="expiry-tab">
-                <span class="icon">⏳</span><span class="label">الصلاحيات</span>
+                <span class="icon"><i class="fa-solid fa-hourglass-half"></i></span><span class="label">الصلاحيات</span>
             </button>
             <button class="nav-item" data-target="whatsapp-campaign-tab">
-                <span class="icon">💬</span><span class="label">حملات الواتساب</span>
+                <span class="icon"><i class="fa-brands fa-whatsapp"></i></span><span class="label">حملات الواتساب</span>
             </button>
             <button class="nav-item" data-target="settings-tab">
-                <span class="icon">⚙️</span><span class="label">الإعدادات</span>
+                <span class="icon"><i class="fa-solid fa-gear"></i></span><span class="label">الإعدادات</span>
             </button>
             <button id="openFinancialsBtn" class="nav-item" data-target="financials-tab" style="color: #e67e22;">
-                <span class="icon">💰</span><span class="label">حساب المناديب</span>
+                <span class="icon"><i class="fa-solid fa-wallet"></i></span><span class="label">حساب المناديب</span>
             </button>
         </div>
     </nav>

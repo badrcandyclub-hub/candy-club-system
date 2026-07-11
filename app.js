@@ -1,4 +1,4 @@
-﻿// ==========================================
+// ==========================================
 // 🌐 العقل المدبر - سيستم كاندي كلوب (النسخة V13.6 - الشاملة والمحصنة)
 // ==========================================
 
@@ -2724,87 +2724,136 @@ if (darkModeToggle) {
     });
 }
 
+let currentCustomerFilter = 'all';
+
 function renderCustomers(customersList) {
     let container = document.getElementById('customersListContainer');
     if (!container) return;
     container.innerHTML = '';
 
+    // Update Dashboard Stats
+    let dashTotalCustomers = document.getElementById('dashTotalCustomers');
+    let dashVipCustomers = document.getElementById('dashVipCustomers');
+    let dashTotalOrders = document.getElementById('dashTotalOrders');
+    
+    let allData = window.customersData || [];
+    let vipCount = allData.filter(c => (parseInt(c.visits) || 0) >= 3).length;
+    let totalOrders = allData.reduce((sum, c) => sum + (parseInt(c.count) || 0), 0);
+
+    if(dashTotalCustomers) dashTotalCustomers.innerText = allData.length;
+    if(dashVipCustomers) dashVipCustomers.innerText = vipCount;
+    if(dashTotalOrders) dashTotalOrders.innerText = totalOrders;
+
     if (customersList.length === 0) {
-        container.innerHTML = '<p class="empty-msg">لا يوجد عملاء مسجلين.</p>';
+        container.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #999;"><i class="fa-solid fa-box-open" style="font-size: 3rem; margin-bottom: 10px;"></i><p>لا يوجد عملاء مطابقين للبحث.</p></div>';
         return;
     }
 
     customersList.forEach(c => {
         let div = document.createElement('div');
-        div.className = 'history-item';
-        div.style.borderRightColor = 'var(--secondary)';
+        let isVip = (parseInt(c.visits) || 0) >= 3;
+        div.className = 'dash-card';
+        div.style.cssText = `background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border-top: 4px solid ${isVip ? '#f1c40f' : 'var(--primary)'}; position: relative;`;
+        
+        let vipBadge = isVip ? '<span style="position: absolute; top: 10px; left: 10px; background: rgba(241, 196, 15, 0.2); color: #f39c12; padding: 3px 8px; border-radius: 20px; font-size: 0.75rem; font-weight: bold;"><i class="fa-solid fa-star"></i> VIP</span>' : '';
+
         div.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <strong style="font-size: 1.05rem;">👤 ${c.name}</strong>
-                <span style="color: var(--secondary); font-weight: bold; font-size: 0.85rem;">📞 ${c.phone}</span>
+            ${vipBadge}
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                <div style="width: 45px; height: 45px; border-radius: 50%; background: var(--bg); display: flex; justify-content: center; align-items: center; font-size: 1.2rem; color: var(--primary);">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div>
+                    <h4 style="margin: 0; font-size: 1.1rem; color: var(--text-dark);">${c.name}</h4>
+                    <span style="font-size: 0.85rem; color: #7f8c8d;"><i class="fa-solid fa-phone" style="font-size: 0.75rem;"></i> ${c.phone}</span>
+                </div>
             </div>
-            <div style="font-size: 0.9rem; color: #555; margin-top: 5px;">
-                <span>📍 ${c.gov} - ${c.address}</span><br>
-                <span>🛒 إجمالي الطلبات: <strong style="color: var(--text-dark);">${c.count || 0}</strong> | 💰 إجمالي المدفوعات: <strong style="color: var(--success);">${c.total || 0} ج.م</strong></span><br>
-                <span style="font-size: 0.8rem; color: #888;">📅 آخر طلب: ${c.lastDate ? String(c.lastDate).split('T')[0] : '--'}</span>
+            <div style="font-size: 0.85rem; color: #555; display: flex; flex-direction: column; gap: 6px;">
+                <span><i class="fa-solid fa-location-dot" style="color: #e74c3c;"></i> ${c.gov || 'غير محدد'} - ${c.address || ''}</span>
+                <div style="display: flex; justify-content: space-between; background: #f9f9f9; padding: 8px; border-radius: 8px; margin-top: 5px;">
+                    <span><i class="fa-solid fa-cart-shopping" style="color: #3498db;"></i> طلبات: <strong>${c.count || 0}</strong></span>
+                    <span><i class="fa-solid fa-money-bill-wave" style="color: #27ae60;"></i> مدفوعات: <strong>${c.total || 0}ج</strong></span>
+                </div>
+                <span style="font-size: 0.75rem; color: #999; text-align: left; margin-top: 5px;"><i class="fa-regular fa-calendar"></i> آخر طلب: ${c.lastDate ? String(c.lastDate).split('T')[0] : '--'}</span>
             </div>
         `;
         container.appendChild(div);
     });
 }
 
+function applyCustomerFilters(keyword = '') {
+    let allData = window.customersData || [];
+    let filtered = allData;
+    
+    if (currentCustomerFilter === 'vip') {
+        filtered = filtered.filter(c => (parseInt(c.visits) || 0) >= 3);
+    }
+    
+    if (keyword.trim() !== '') {
+        let lower = keyword.trim().toLowerCase();
+        filtered = filtered.filter(c => 
+            c.name.toLowerCase().includes(lower) || c.phone.toString().includes(lower)
+        );
+    }
+    
+    renderCustomers(filtered);
+}
+
+// Attach filter tabs listener once
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.filter-tabs .filter-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.filter-tabs .filter-btn').forEach(b => {
+                b.classList.remove('active');
+                b.style.background = '#f0f0f0';
+                b.style.color = '#555';
+            });
+            e.currentTarget.classList.add('active');
+            e.currentTarget.style.background = 'var(--primary)';
+            e.currentTarget.style.color = 'white';
+            currentCustomerFilter = e.currentTarget.getAttribute('data-filter');
+            
+            if(window._customersLoaded) {
+                let kw = document.getElementById('customerSearchInput') ? document.getElementById('customerSearchInput').value : '';
+                applyCustomerFilters(kw);
+            }
+        });
+    });
+});
+
 let loadCustomersBtn = document.getElementById('loadCustomersBtn');
 let customersListContainer = document.getElementById('customersListContainer');
-let _customersLoaded = false; // ⭐ V15.1: Lazy flag - لا نحمل إلا عند الطلب
+window._customersLoaded = false;
 
-if (loadCustomersBtn && customersListContainer) {
+if (loadCustomersBtn) {
     loadCustomersBtn.addEventListener('click', () => {
-        if (customersListContainer.style.display === 'none') {
-            customersListContainer.style.display = 'block';
-            loadCustomersBtn.innerHTML = '\u0625\u062e\u0641\u0627\u0621 \u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u0639\u0645\u0644\u0627\u0621 \ud83d\udcc2';
-            loadCustomersBtn.style.background = 'var(--danger)';
-
-            if (!_customersLoaded) {
-                // \u2b50 \u0623\u0648\u0644 \u0636\u063a\u0637\u0629: \u0646\u062c\u0644\u0628 \u0645\u0646 \u0627\u0644\u0633\u064a\u0631\u0641\u0631 \u0645\u062e\u0635\u0648\u0635\u0627\u064b
-                customersListContainer.innerHTML = '<p class="empty-msg">\u23f3 \u062c\u0627\u0631\u064a \u062a\u062d\u0645\u064a\u0644 \u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u0639\u0645\u0644\u0627\u0621...</p>';
-                fetch(`${GOOGLE_SHEETS_URL}?action=getCustomers`)
-                    .then(r => r.json())
-                    .then(data => {
-                        let customers = data.customers || window.customersData || [];
-                        window.customersData = customers;
-                        _customersLoaded = true;
-                        renderCustomers(customers);
-                    })
-                    .catch(() => {
-                        // \u0641\u0627\u0644\u0628\u0627\u0643: \u0625\u0630\u0627 \u0641\u0634\u0644 \u0627\u0644\u0637\u0644\u0628 \u0627\u0633\u062a\u062e\u062f\u0645 \u0627\u0644\u0643\u0627\u0634 \u0627\u0644\u0645\u062d\u0644\u064a
-                        renderCustomers(window.customersData || []);
-                        _customersLoaded = true;
-                    });
-            }
-        } else {
-            customersListContainer.style.display = 'none';
-            loadCustomersBtn.innerHTML = '\u0625\u0638\u0647\u0627\u0631 \u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u0639\u0645\u0644\u0627\u0621 \ud83d\udcc2';
-            loadCustomersBtn.style.background = 'var(--secondary)';
+        let btnIcon = loadCustomersBtn.querySelector('i');
+        if (btnIcon) btnIcon.classList.add('fa-spin');
+        
+        if(customersListContainer) {
+            customersListContainer.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--primary);"><i class="fa-solid fa-spinner fa-spin" style="font-size: 3rem; margin-bottom: 10px;"></i><p>جاري تحميل وتحليل البيانات...</p></div>';
         }
+
+        fetch(`${GOOGLE_SHEETS_URL}?action=getCustomers`)
+            .then(r => r.json())
+            .then(data => {
+                let customers = data.customers || window.customersData || [];
+                window.customersData = customers;
+                window._customersLoaded = true;
+                applyCustomerFilters();
+                if (btnIcon) btnIcon.classList.remove('fa-spin');
+            })
+            .catch(() => {
+                applyCustomerFilters();
+                if (btnIcon) btnIcon.classList.remove('fa-spin');
+            });
     });
 }
 
-let searchCustomerBtn = document.getElementById('searchCustomerBtn');
 let customerSearchInput = document.getElementById('customerSearchInput');
-if (searchCustomerBtn && customerSearchInput) {
-    searchCustomerBtn.addEventListener('click', () => {
-        let keyword = customerSearchInput.value.trim().toLowerCase();
-        if (keyword === "") {
-            renderCustomers(window.customersData || []);
-        } else {
-            let filtered = (window.customersData || []).filter(c =>
-                c.name.toLowerCase().includes(keyword) || c.phone.toString().includes(keyword)
-            );
-            renderCustomers(filtered);
-        }
-    });
-    customerSearchInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') searchCustomerBtn.click();
+if (customerSearchInput) {
+    customerSearchInput.addEventListener('input', (e) => {
+        if(window._customersLoaded) applyCustomerFilters(e.target.value);
     });
 }
 
