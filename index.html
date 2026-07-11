@@ -859,6 +859,25 @@
             </div>
         </div>
 
+        <section id="financials-tab" class="tab-pane">
+            <div class="section-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 10px;">
+                    <h2 style="color: var(--primary); margin: 0;">💰 حسابات المناديب</h2>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: bold; background: var(--bg); padding: 5px 10px; border-radius: 8px;">
+                            <input type="checkbox" id="selectAllFinancialsCheckbox" style="width: 18px; height: 18px;">
+                            تحديد الكل
+                        </label>
+                        <button id="closeSelectedFinancialsBtn" class="btn-primary" style="background: var(--success); display: none;">تقفيل المحدد ✅</button>
+                    </div>
+                </div>
+                
+                <div id="financialsDisplayList" class="data-list-container">
+                    <p class="empty-msg">جاري تحميل الحسابات من السيرفر...</p>
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <!-- القائمة الجانبية (Sidebar) -->
@@ -896,7 +915,7 @@
             <button class="nav-item" data-target="settings-tab">
                 <span class="icon">⚙️</span><span class="label">الإعدادات</span>
             </button>
-            <button id="openFinancialsBtn" class="sidebar-action-btn" style="color: #e67e22;">
+            <button id="openFinancialsBtn" class="nav-item" data-target="financials-tab" style="color: #e67e22;">
                 <span class="icon">💰</span><span class="label">حساب المناديب</span>
             </button>
         </div>
@@ -1034,18 +1053,6 @@
             <div id="driversDisplayList" class="data-list-container" style="max-height: 200px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; background: transparent; border: none; padding: 0;"></div>
         </div>
     </div>
-
-    <div id="financialsModal" class="modal-overlay">
-        <div class="modal-content" style="max-width: 90%; max-height: 90vh; overflow-y: auto;">
-            <h3 style="color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 15px;">📊
-                حسابات المناديب (المالية)</h3>
-            <div id="financialsDisplayList" class="data-list-container" style="min-height: 150px;">
-                <p class="empty-msg">جاري تحميل الحسابات من السيرفر...</p>
-            </div>
-            <button id="closeFinancialsModal" class="btn-cancel mt-10" style="width: 100%;">إغلاق الحسابات</button>
-        </div>
-    </div>
-
     <div id="editCatalogModal" class="modal-overlay">
         <div class="modal-content">
             <h3 style="color: var(--primary); margin-bottom: 15px;">✏️ تعديل المنتج</h3>

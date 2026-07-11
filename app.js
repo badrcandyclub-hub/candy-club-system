@@ -131,7 +131,6 @@ function setupModal(openBtnId, modalId, closeBtnId) {
 setupModal('openZoneModalBtn', 'zoneModal', 'closeZoneModal');
 setupModal('openDriverModalBtn', 'driverModal', 'closeDriverModal');
 setupModal('openSuspendedBtn', 'suspendedModal', 'closeSuspendedModal');
-setupModal('openFinancialsBtn', 'financialsModal', 'closeFinancialsModal');
 
 // ==========================================
 // 3. تحميل الداتا الأساسية من الإكسيل
@@ -456,8 +455,6 @@ function renderFinancials(finList) {
             driverOrders.forEach(o => {
                 ordersHtml += `
                     <div class="financial-order-item" style="background:#fdfdfd; padding:8px; border:1px solid #eee; border-radius:6px; margin-top:5px; display:flex; justify-content:space-between; align-items:center;">
-                        <div>
-                            <span style="font-weight:bold; color:var(--text-dark);">${o.id}</span><br>
                             <span style="font-size:0.75rem; color:#777;">${o.payment} | إجمالي: ${o.total}ج | شحن: ${o.shipping}ج</span><br>
                             <span style="font-size:0.85rem; font-weight:bold; color:var(--danger);">المطلوب تحصيله: ${o.remaining}ج</span>
                         </div>
