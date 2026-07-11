@@ -8,7 +8,7 @@
     <link rel="icon" type="image/png" href="favicon.png?v=6">
     <link rel="apple-touch-icon" href="favicon.png?v=6">
     <link rel="manifest" href="app-manifest.json?v=999">
-    <link rel="stylesheet" href="style.css?v=18.14">
+    <link rel="stylesheet" href="style.css?v=18.15">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap"
         rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -22,6 +22,7 @@
 
     <header class="app-header">
         <div class="logo-container">
+            <button id="menuToggleBtn" class="menu-toggle-btn">☰</button>
             <span class="logo-text">CANDY CLUB</span>
             <span class="logo-sub">نظام الإدارة V15.0</span>
         </div>
@@ -461,6 +462,38 @@
             </div>
         </section>
 
+        <!-- ⭐ شاشة حملات الواتساب (WhatsApp Campaigns) -->
+        <section id="whatsapp-campaign-tab" class="tab-pane">
+            <div class="section-card" style="border-right: 4px solid #25D366;">
+                <h3 class="section-title">💬 حملات الواتساب الذكية</h3>
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px;">
+                    أرسل عروضك للعملاء بأمان. أضف <strong>[الاسم]</strong> في نص الرسالة ليتم استبدالها باسم العميل تلقائياً.
+                </p>
+
+                <!-- إعدادات الحملة -->
+                <div style="background: var(--bg); padding: 15px; border-radius: var(--radius); margin-bottom: 20px; border: 1px solid var(--border);">
+                    <label>نص رسالة العرض <span style="color:red;">*</span></label>
+                    <textarea id="waCampaignText" placeholder="مثال: أهلاً يا [الاسم]! متوفر الآن منتجات جديدة في كاندي كلاب..."></textarea>
+                    
+                    <button id="waLoadCustomersBtn" class="interactive-btn" style="width: 100%; background: #25D366; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 1rem;">
+                        🔄 استدعاء قائمة العملاء المستهدفين
+                    </button>
+                </div>
+
+                <!-- طابور الإرسال -->
+                <div id="waQueueContainer" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h4 style="margin: 0;">🎯 طابور الإرسال (<span id="waQueueCount">0</span> عميل)</h4>
+                        <span id="waCooldownTimer" style="font-size: 0.9rem; color: #e67e22; font-weight: bold; display: none;">⏳ انتظر 10 ثواني...</span>
+                    </div>
+                    
+                    <div id="waCustomerList" class="data-list-container scroll-list" style="max-height: 400px; padding: 5px;">
+                        <!-- العملاء هنا -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section id="settings-tab" class="tab-pane">
 
             <div class="section-card text-center">
@@ -827,31 +860,42 @@
 
     </main>
 
-    <nav class="bottom-nav">
-        <button class="nav-item active" data-target="create-tab">
-            <span class="icon">📝</span><span class="label">إنشاء</span>
-        </button>
-        <button class="nav-item" data-target="catalog-tab">
-            <span class="icon">📦</span><span class="label">الكتالوج</span>
-        </button>
-        <button class="nav-item" data-target="shipping-tab">
-            <span class="icon">🚚</span><span class="label">الشحن</span>
-        </button>
-        <button class="nav-item" data-target="history-tab">
-            <span class="icon">🧾</span><span class="label">السجل</span>
-        </button>
-        <button class="nav-item" data-target="customers-tab">
-            <span class="icon">👥</span><span class="label">العملاء</span>
-        </button>
-        <button class="nav-item" data-target="reports-tab">
-            <span class="icon">📊</span><span class="label">التقارير</span>
-        </button>
-        <button class="nav-item" data-target="expiry-tab">
-            <span class="icon">📦</span><span class="label">الصلاحيات</span>
-        </button>
-        <button class="nav-item" data-target="settings-tab">
-            <span class="icon">⚙️</span><span class="label">الإعدادات</span>
-        </button>
+    <!-- القائمة الجانبية (Sidebar) -->
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+    <nav id="app-sidebar" class="app-sidebar">
+        <div class="sidebar-header">
+            <h3>القائمة الرئيسية</h3>
+            <button id="closeSidebarBtn" class="close-sidebar-btn">✖</button>
+        </div>
+        <div class="sidebar-menu">
+            <button class="nav-item active" data-target="create-tab">
+                <span class="icon">📝</span><span class="label">إنشاء</span>
+            </button>
+            <button class="nav-item" data-target="catalog-tab">
+                <span class="icon">📦</span><span class="label">الكتالوج</span>
+            </button>
+            <button class="nav-item" data-target="shipping-tab">
+                <span class="icon">🚚</span><span class="label">الشحن</span>
+            </button>
+            <button class="nav-item" data-target="history-tab">
+                <span class="icon">🧾</span><span class="label">السجل</span>
+            </button>
+            <button class="nav-item" data-target="customers-tab">
+                <span class="icon">👥</span><span class="label">العملاء</span>
+            </button>
+            <button class="nav-item" data-target="reports-tab">
+                <span class="icon">📊</span><span class="label">التقارير</span>
+            </button>
+            <button class="nav-item" data-target="expiry-tab">
+                <span class="icon">⏳</span><span class="label">الصلاحيات</span>
+            </button>
+            <button class="nav-item" data-target="whatsapp-campaign-tab">
+                <span class="icon">💬</span><span class="label">حملات الواتساب</span>
+            </button>
+            <button class="nav-item" data-target="settings-tab">
+                <span class="icon">⚙️</span><span class="label">الإعدادات</span>
+            </button>
+        </div>
     </nav>
 
     <!-- ⭐ تعديل جذري لجدول الطباعة (عناوين الأعمدة + تاريخ الحجز) -->
@@ -1154,7 +1198,7 @@
     </div>
 
     <!-- ⭐ التأكد من ترتيب تحميل السكربتات -->
-    <script src="app.js?v=18.14"></script>
+    <script src="app.js?v=18.15"></script>
 
 </body>
 
