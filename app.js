@@ -4446,25 +4446,36 @@ function generatePDFReceipt(filteredData, dateVal) {
             <title>محضر استلام بضاعة - ${dateVal}</title>
             <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
             <style>
-                body { font-family: 'Cairo', sans-serif; padding: 40px; color: #333; background: #fff; direction: rtl; }
-                .header { text-align: center; border-bottom: 3px solid #E91E8C; padding-bottom: 20px; margin-bottom: 30px; }
-                .logo { font-size: 40px; font-weight: 900; color: #E91E8C; letter-spacing: 2px; margin-bottom: 5px; }
-                .title { font-size: 24px; font-weight: bold; color: #2c3e50; }
-                .info-section { display: flex; justify-content: space-between; margin-bottom: 30px; font-size: 16px; gap: 20px; }
-                .info-box { background: #f8f9fa; padding: 15px 20px; border-radius: 8px; border: 1px solid #e0e0e0; flex: 1; }
-                .info-label { font-weight: bold; color: #7f8c8d; display: inline-block; width: 120px; }
-                table { width: 100%; border-collapse: collapse; margin-bottom: 40px; font-size: 14px; page-break-inside: auto; }
-                tr { page-break-inside: avoid; page-break-after: auto; }
-                th { background: #E91E8C; color: white; padding: 12px; text-align: right; border: 1px solid #ddd; }
-                td { padding: 10px; border: 1px solid #ddd; vertical-align: middle; }
+                * { box-sizing: border-box; }
+                body { 
+                    font-family: 'Cairo', sans-serif; 
+                    color: #333; 
+                    background: #fff; 
+                    direction: rtl; 
+                    width: 210mm; /* A4 width */
+                    margin: 0 auto; 
+                    padding: 15mm; 
+                    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                }
+                .header { text-align: center; border-bottom: 3px solid #E91E8C; padding-bottom: 20px; margin-bottom: 20px; }
+                .logo { font-size: 36px; font-weight: 900; color: #E91E8C; letter-spacing: 2px; margin-bottom: 5px; }
+                .title { font-size: 22px; font-weight: bold; color: #2c3e50; }
+                .info-section { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 15px; gap: 20px; }
+                .info-box { background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0; flex: 1; }
+                .info-label { font-weight: bold; color: #7f8c8d; display: inline-block; width: 100px; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 13px; }
+                thead { display: table-header-group; }
+                tr { page-break-inside: avoid; }
+                th { background: #E91E8C; color: white; padding: 10px; text-align: right; border: 1px solid #ddd; }
+                td { padding: 8px; border: 1px solid #ddd; vertical-align: middle; }
                 tr:nth-child(even) { background-color: #f9f9f9; }
-                .footer { text-align: center; margin-top: 50px; font-size: 14px; color: #7f8c8d; border-top: 1px solid #eee; padding-top: 20px; page-break-inside: avoid; }
-                .signatures { display: flex; justify-content: space-between; margin-top: 50px; padding: 0 50px; page-break-inside: avoid; }
+                .signatures { display: flex; justify-content: space-between; margin-top: 40px; padding: 0 50px; page-break-inside: avoid; }
                 .sig-box { text-align: center; width: 200px; }
                 .sig-line { width: 100%; border-bottom: 1px dashed #333; margin-top: 40px; }
+                .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #7f8c8d; border-top: 1px solid #eee; padding-top: 15px; page-break-inside: avoid; }
                 @media print {
-                    @page { margin: 20mm; }
-                    body { padding: 0; }
+                    @page { size: A4 portrait; margin: 15mm; }
+                    body { padding: 0; width: 100%; box-shadow: none; margin: 0; }
                 }
             </style>
         </head>
