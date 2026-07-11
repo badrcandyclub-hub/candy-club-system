@@ -18,7 +18,7 @@
 </head>
 
 <body>
-    <div id="offline-bar" style="display:none; background:#d32f2f; color:#fff; text-align:center; padding:8px; font-weight:bold; position:fixed; top:0; left:0; width:100%; z-index:10000;">⚠️ عذراً، انقطع اتصالك بالإنترنت! تم قفل الحفظ مؤقتاً لحماية بياناتك.</div>
+    <div id="offline-bar" style="display:none; background:#d32f2f; color:#fff; text-align:center; padding:8px; font-weight:bold; position:fixed; top:0; left:0; width:100%; z-index:10000;"><i class="fa-solid fa-triangle-exclamation"></i> عذراً، انقطع اتصالك بالإنترنت! تم قفل الحفظ مؤقتاً لحماية بياناتك.</div>
 
     <div id="toast-container" class="toast-container"></div>
 
@@ -40,7 +40,7 @@
             <div class="status-indicator">
                 <span id="sync-status">جاري التحميل...</span>
                 <div class="status-dot"></div>
-                <button id="quickRefreshBtn" class="interactive-btn" style="background:none; border:none; cursor:pointer; font-size:1.1rem; padding:0 5px; margin-right: 5px;" title="تحديث البيانات السريع">🔄</button>
+                <button id="quickRefreshBtn" class="interactive-btn" style="background:none; border:none; cursor:pointer; font-size:1.1rem; padding:0 5px; margin-right: 5px;" title="تحديث البيانات السريع"><i class="fa-solid fa-rotate"></i></button>
             </div>
         </div>
     </header>
@@ -50,20 +50,20 @@
         <!-- ⭐ منبه الحجوزات القريبة -->
         <div id="booking-alert-banner"
             style="display:none; background: var(--warning); color: white; padding: 12px; text-align: center; font-weight: bold; border-radius: 8px; margin-bottom: 15px;">
-            🔔 يوجد أوردرات محجوزة اقترب موعد تسليمها، يرجى مراجعة السجل.
+            <i class="fa-solid fa-bell"></i> يوجد أوردرات محجوزة اقترب موعد تسليمها، يرجى مراجعة السجل.
         </div>
 
         <section id="create-tab" class="tab-pane active">
             <div id="orderFieldsContainer" class="section-card">
-                <h3 class="section-title">📝 إنشاء طلب جديد</h3>
+                <h3 class="section-title"><i class="fa-solid fa-pen-to-square"></i> إنشاء طلب جديد</h3>
 
                 <form id="orderForm" onsubmit="event.preventDefault();">
                     <label>المنصة:</label>
                     <select id="platform" required>
-                        <option value="واتساب ✅">واتساب ✅</option>
-                        <option value="فيسبوك 🔵">فيسبوك 🔵</option>
-                        <option value="إنستجرام 📸">إنستجرام 📸</option>
-                        <option value="تيك توك 🖤">تيك توك 🖤</option>
+                        <option value="واتساب">واتساب</option>
+                        <option value="فيسبوك">فيسبوك</option>
+                        <option value="إنستجرام">إنستجرام</option>
+                        <option value="تيك توك">تيك توك</option>
                     </select>
 
                     <label>اسم العميل:</label>
@@ -73,20 +73,20 @@
                     <div class="input-with-action">
                         <input type="tel" id="customerPhone" placeholder="أدخل الرقم للبحث السريع" required>
                         <span id="phoneCheckStatus" class="check-status-icon interactive-btn"
-                            title="ابحث عن العميل">🔍</span>
+                            title="ابحث عن العميل"><i class="fa-solid fa-magnifying-glass"></i></span>
                     </div>
 
                     <label>رقم بديل (اختياري):</label>
                     <input type="tel" id="phone2" placeholder="اختياري">
 
-                    <div class="divider">🚚 تفاصيل التوصيل</div>
+                    <div class="divider"><i class="fa-solid fa-truck-fast"></i> تفاصيل التوصيل</div>
 
                     <label>نوع التوصيل:</label>
                     <select id="deliveryType" required>
                         <option value="normal">توصيل منزلي</option>
                         <option value="gov_shipping">شحن محافظات</option>
                         <option value="branch">استلام من الفرع</option>
-                        <option value="special_date">حجز لتاريخ معين 📅</option>
+                        <option value="special_date">حجز لتاريخ معين</option>
                     </select>
 
                     <div id="specialDateContainer" class="hidden-field">
@@ -101,14 +101,14 @@
                                 <option value="">-- اختر من القائمة --</option>
                             </select>
                         </div>
-                        <div id="zoneDurationInfo" class="duration-badge hidden-field" style="margin-top: 10px;">⏳ مدة
+                        <div id="zoneDurationInfo" class="duration-badge hidden-field" style="margin-top: 10px;"><i class="fa-solid fa-hourglass-half"></i> مدة
                             التوصيل: <span>--</span></div>
 
                         <label>العنوان بالتفصيل:</label>
                         <textarea id="address" placeholder="اسم الشارع، رقم البيت، علامة مميزة"></textarea>
                     </div>
 
-                    <div class="divider">🛒 تفاصيل المنتجات</div>
+                    <div class="divider"><i class="fa-solid fa-cart-shopping"></i> تفاصيل المنتجات</div>
 
                     <div class="product-header-labels">
                         <span style="flex:3">اسم المنتج</span>
@@ -137,14 +137,14 @@
                         </div>
 
                         <div class="gift-switch-container">
-                            <span class="gift-label">🎁 هذا الأوردر هدية؟</span>
+                            <span class="gift-label"><i class="fa-solid fa-gift"></i> هذا الأوردر هدية؟</span>
                             <label class="switch">
                                 <input type="checkbox" id="isGiftCheckbox">
                                 <span class="slider round"></span>
                             </label>
                         </div>
 
-                        <div class="delivery-prediction" id="deliveryInfo">📅 موعد التسليم: <span>--</span></div>
+                        <div class="delivery-prediction" id="deliveryInfo"><i class="fa-solid fa-calendar-days"></i> موعد التسليم: <span>--</span></div>
                         <div class="final-amount">إجمالي الفاتورة: <span id="finalTotalDisplay">0</span> ج.م</div>
                     </div>
 
@@ -153,11 +153,11 @@
                         <div class="payment-row" style="margin-bottom: 15px;">
                             <select id="paymentMethod" required>
                                 <option value="">-- اختر طريقة الدفع --</option>
-                                <option value="كاش 💵">كاش 💵</option>
-                                <option value="إنستا باي / محفظة 📱">إنستا باي / محفظة 📱</option>
+                                <option value="كاش">كاش</option>
+                                <option value="إنستا باي / محفظة">إنستا باي / محفظة</option>
                             </select>
                             <button type="button" id="confirmPaymentBtn"
-                                class="btn-confirm-action interactive-btn">تأكيد ✔️</button>
+                                class="btn-confirm-action interactive-btn">تأكيد <i class="fa-solid fa-check"></i></button>
                         </div>
 
                         <!-- ⭐ نظام العربون (Deposit) -->
@@ -178,24 +178,24 @@
                     <label style="margin-top:15px;">ملاحظات إضافية:</label>
                     <textarea id="notes" placeholder="أي ملاحظات للمندوب..."></textarea>
 
-                    <div class="divider">👤 المسؤول عن الأوردر</div>
+                    <div class="divider"><i class="fa-solid fa-user-tie"></i> المسؤول عن الأوردر</div>
                     <label>الكاشير / المودريتور:</label>
                     <select id="moderatorSelect" required>
                         <option value="">-- اختر اسمك --</option>
                     </select>
 
                     <div class="main-actions-stack">
-                        <button type="button" id="whatsappReviewBtn" class="btn-whatsapp interactive-btn">📱 مراجعة
+                        <button type="button" id="whatsappReviewBtn" class="btn-whatsapp interactive-btn"><i class="fa-solid fa-mobile-screen"></i> مراجعة
                             التفاصيل مع العميل</button>
                         <div class="action-grid mt-10">
-                            <button type="button" id="suspendBtn" class="btn-outline interactive-btn">⏸️ تعليق
+                            <button type="button" id="suspendBtn" class="btn-outline interactive-btn"><i class="fa-solid fa-pause"></i> تعليق
                                 الطلب</button>
-                            <button type="button" id="saveAndPrintBtn" class="btn-save pulse-btn">💾 حفظ وطباعة
+                            <button type="button" id="saveAndPrintBtn" class="btn-save pulse-btn"><i class="fa-solid fa-floppy-disk"></i> حفظ وطباعة
                                 الفاتورة</button>
                         </div>
                         <button type="button" id="shareOrderBtn" class="interactive-btn"
                             style="background:#25D366; color:white; border:none; padding:12px; font-weight:bold; border-radius:8px; margin-top:10px; width:100%;">نسخ
-                            للجروب 📋</button>
+                            للجروب <i class="fa-solid fa-clipboard"></i></button>
                     </div>
                 </form>
             </div>
@@ -204,7 +204,7 @@
         <section id="catalog-tab" class="tab-pane">
 
             <div class="section-card">
-                <h3 class="section-title">📦 الكتالوج والعروض</h3>
+                <h3 class="section-title"><i class="fa-solid fa-box-open"></i> الكتالوج والعروض</h3>
                 <div style="display:flex; gap:5px; margin-bottom:15px;">
                     <input type="text" id="newCatalogName" placeholder="اسم المنتج" style="flex:2; margin-bottom:0;">
                     <input type="number" id="newCatalogPrice" placeholder="السعر" style="flex:1; margin-bottom:0;">
@@ -212,7 +212,7 @@
                 </div>
                 <!-- بحث فوري في الكتالوج -->
                 <div style="margin-bottom: 10px;">
-                    <input type="text" id="catalogSearchInput" placeholder="🔍 ابحث في الكتالوج للفلترة الفورية..." style="width: 100%; border-radius: 8px; padding: 8px; box-sizing: border-box;">
+                    <input type="text" id="catalogSearchInput" placeholder="ابحث في الكتالوج للفلترة الفورية..." style="width: 100%; border-radius: 8px; padding: 8px; box-sizing: border-box;">
                 </div>
                 <div id="catalogListContainer" class="data-list-container" style="max-height: 250px; overflow-y: auto;">
                     <p class="empty-msg">جاري تحميل الكتالوج...</p>
@@ -231,12 +231,12 @@
                 <!-- زرار الماسح الضوئي الذكي -->
                 <button type="button" id="openScannerBtn" class="btn-whatsapp interactive-btn pulse-btn"
                     style="width: 100%; margin-top: 15px; font-size: 1.1rem; background: linear-gradient(135deg, #17a2b8, #0b7dda); box-shadow: 0 6px 20px rgba(23,162,184,0.3);">
-                    📷 مسح الباركود للكشف عن السعر
+                    <i class="fa-solid fa-camera"></i> مسح الباركود للكشف عن السعر
                 </button>
             </div>
 
             <div class="section-card">
-                <h3 class="section-title">⏳ تسجيل النواقص</h3>
+                <h3 class="section-title"><i class="fa-solid fa-clock-rotate-left"></i> تسجيل النواقص</h3>
                 <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:15px;">
                     <div style="display:flex; flex-wrap:wrap; gap:10px;">
                         <input type="text" id="oosCustomer" placeholder="اسم العميل" style="flex:1; min-width: 130px; margin-bottom:0;">
@@ -255,7 +255,7 @@
 
                 <h4
                     style="color: var(--primary); font-size: 0.95rem; margin-bottom: 10px; border-bottom: 1px dashed #ccc; padding-bottom: 5px;">
-                    📞 عملاء في الانتظار:</h4>
+                    <i class="fa-solid fa-phone-volume"></i> عملاء في الانتظار:</h4>
                 <div id="outOfStockContainer" class="data-list-container" style="max-height: 200px;">
                     <p class="empty-msg">لا يوجد نواقص مسجلة حالياً.</p>
                 </div>
@@ -264,7 +264,7 @@
 
         <section id="history-tab" class="tab-pane">
             <div class="section-card">
-                <h3 class="section-title">🔍 البحث الشامل</h3>
+                <h3 class="section-title"><i class="fa-solid fa-magnifying-glass"></i> البحث الشامل</h3>
                 <div class="search-box mb-15">
                     <input type="text" id="orderSearchInput" placeholder="ابحث برقم الأوردر، الموبايل، أو الاسم">
                     <button id="searchBtn" class="btn-search interactive-btn">بحث</button>
@@ -272,7 +272,7 @@
             </div>
 
             <div class="section-card">
-                <h3 class="section-title">📅 فلترة الأوردرات باليوم</h3>
+                <h3 class="section-title"><i class="fa-solid fa-calendar-day"></i> فلترة الأوردرات باليوم</h3>
                 <div style="display:flex; gap:10px;">
                     <input type="date" id="historyDateFilter" style="flex:1; margin-bottom:0;" dir="ltr">
                     <button id="loadDateBtn" class="btn-search interactive-btn">تحديث السجل</button>
@@ -280,7 +280,7 @@
             </div>
 
             <div class="section-card">
-                <h3 class="section-title">📦 سجل الأوردرات</h3>
+                <h3 class="section-title"><i class="fa-solid fa-box-archive"></i> سجل الأوردرات</h3>
                 <div id="historyListContainer" class="scroll-list mt-15">
                     <p class="empty-msg">جاري مزامنة السجل من قاعدة البيانات...</p>
                 </div>
@@ -289,12 +289,12 @@
 
         <section id="shipping-tab" class="tab-pane">
             <div class="shipping-actions-row mb-15">
-                <button id="openZoneModalBtn" class="btn-outline interactive-btn">المناطق واسعار الشحن ➕</button>
-                <button id="openDriverModalBtn" class="btn-outline interactive-btn">المناديب ➕</button>
+                <button id="openZoneModalBtn" class="btn-outline interactive-btn">المناطق واسعار الشحن <i class="fa-solid fa-plus"></i></button>
+                <button id="openDriverModalBtn" class="btn-outline interactive-btn">المناديب <i class="fa-solid fa-plus"></i></button>
             </div>
 
             <div class="section-card" style="border-right: 4px solid var(--secondary);">
-                <h3 class="section-title">📦 تحميل المناديب (توصيل)</h3>
+                <h3 class="section-title"><i class="fa-solid fa-truck-ramp-box"></i> تحميل المناديب (توصيل)</h3>
                 <label>اختر المندوب للاستلام:</label>
                 <select id="assignDriverSelect">
                     <option value="">-- اختر المندوب --</option>
@@ -304,16 +304,16 @@
                 </div>
                 <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
                     <button type="button" id="assignToDriverBtn" class="btn-save interactive-btn"
-                        style="flex: 1 1 180px; font-size: 1rem;">تسليم للمندوب 🚚</button>
+                        style="flex: 1 1 180px; font-size: 1rem;">تسليم للمندوب <i class="fa-solid fa-truck-fast"></i></button>
                     <button type="button" id="sendWaDriverBtn" class="btn-whatsapp interactive-btn"
-                        style="flex: 1 1 100px; font-size: 0.9rem;">إرسال واتس 📱</button>
+                        style="flex: 1 1 100px; font-size: 0.9rem;">إرسال واتس <i class="fa-brands fa-whatsapp"></i></button>
                 </div>
             </div>
 
             <!-- ⭐ قسم الحجوزات -->
             <div class="section-card" style="border-right: 4px solid var(--primary);">
                 <h3 class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
-                    <span>📅 طلبات الحجوزات القادمة</span>
+                    <span><i class="fa-solid fa-calendar-check"></i> طلبات الحجوزات القادمة</span>
                     <span id="reservationsCountBadge" style="font-size: 0.85rem; background: var(--primary); color: white; padding: 4px 10px; border-radius: 12px; font-weight: bold;">العدد: 0</span>
                 </h3>
                 <div id="reservationsContainer" class="data-list-container mt-10"
@@ -325,7 +325,7 @@
             <!-- ⭐ قسم استلام الفرع المنفصل -->
             <div class="section-card" style="border-right: 4px solid var(--warning);">
                 <h3 class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
-                    <span>🏪 أوردرات استلام الفرع</span>
+                    <span><i class="fa-solid fa-store"></i> أوردرات استلام الفرع</span>
                     <span id="branchCountBadge" style="font-size: 0.85rem; background: var(--warning); color: #000; padding: 4px 10px; border-radius: 12px; font-weight: bold;">العدد: 0</span>
                 </h3>
                 <div id="branchOrdersContainer" class="data-list-container mt-10" style="min-height: 100px;">
@@ -335,7 +335,7 @@
 
             <div class="section-card" style="border-right: 4px solid var(--success);">
                 <h3 class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
-                    <span>✅ تقفيل اليوم (حالة التوصيل)</span>
+                    <span><i class="fa-solid fa-check-double"></i> تقفيل اليوم (حالة التوصيل)</span>
                     <span id="outOrdersCountBadge" style="font-size: 0.85rem; background: var(--success); color: white; padding: 4px 10px; border-radius: 12px; font-weight: bold;">الاوردرات في الخارج حالياً: 0</span>
                 </h3>
                 <label>اختر المندوب لعرض عهدته:</label>
@@ -345,7 +345,7 @@
                         <option value="">-- اختر المندوب --</option>
                     </select>
                     <button type="button" id="loadDriverOrdersBtn" class="btn-search interactive-btn"
-                        style="padding: 0 15px;">عرض العهدة ✔️</button>
+                        style="padding: 0 15px;">عرض العهدة <i class="fa-solid fa-check"></i></button>
                 </div>
 
                 <div id="shippedOrdersContainer" class="data-list-container mt-10" style="min-height: 100px;">
@@ -353,34 +353,34 @@
                 </div>
                 <div class="action-grid mt-10">
                     <button type="button" id="markDeliveredBtn" class="btn-save interactive-btn" style="flex:1;">تم
-                        التوصيل ✅</button>
+                        التوصيل <i class="fa-solid fa-check"></i></button>
                     <button type="button" id="markReturnedBtn" class="interactive-btn"
                         style="flex:1; background-color: var(--danger); color: white; border: none; border-radius: 12px; font-weight: bold; font-family: 'Cairo', sans-serif;">مرتجع
-                        ❌</button>
+                        <i class="fa-solid fa-xmark"></i></button>
                 </div>
             </div>
         </section>
 
         <section id="reports-tab" class="tab-pane">
-            <h3 class="section-title" style="margin-bottom: 15px;">📊 لوحة تحكم الإدارة</h3>
+            <h3 class="section-title" style="margin-bottom: 15px;"><i class="fa-solid fa-chart-pie"></i> لوحة تحكم الإدارة</h3>
 
             <!-- ⭐ V15.1: إحصائيات اليوم -->
             <div class="section-card" style="margin-bottom:12px; border-right:4px solid var(--primary); padding:16px;">
                 <h4
                     style="margin:0 0 10px; font-size:0.85rem; color:var(--text-muted); text-align:center; letter-spacing:1px; text-transform:uppercase;">
-                    📅 إحصائيات اليوم</h4>
+                    <i class="fa-solid fa-calendar-day"></i> إحصائيات اليوم</h4>
                 <div class="stats-row" style="margin-bottom:0; gap:8px;">
                     <div class="stat-item pink" style="padding:12px 8px;">
-                        <span class="label" style="font-size:0.72rem;">🛒 أوردرات اليوم</span>
+                        <span class="label" style="font-size:0.72rem;"><i class="fa-solid fa-cart-shopping"></i> أوردرات اليوم</span>
                         <span class="value" id="todayCount" style="font-size:1.5rem;">0</span>
                     </div>
                     <div class="stat-item blue" style="padding:12px 8px;">
-                        <span class="label" style="font-size:0.72rem;">💰 مبيعات اليوم</span>
+                        <span class="label" style="font-size:0.72rem;"><i class="fa-solid fa-money-bill-wave"></i> مبيعات اليوم</span>
                         <span class="value" id="todaySales" style="font-size:1.5rem;">0</span>
                     </div>
                     <div class="stat-item"
                         style="background:linear-gradient(135deg,#00C853,#2E7D32);color:white;padding:12px 8px;border-radius:18px;text-align:center;box-shadow:var(--shadow);">
-                        <span class="label" style="font-size:0.72rem;">✅ مكتملة اليوم</span>
+                        <span class="label" style="font-size:0.72rem;"><i class="fa-solid fa-check-double"></i> مكتملة اليوم</span>
                         <span class="value" id="completedCount" style="font-size:1.5rem;">0</span>
                     </div>
                 </div>
@@ -391,31 +391,31 @@
                 style="margin-bottom:12px; border-right:4px solid var(--secondary); padding:16px;">
                 <h4
                     style="margin:0 0 10px; font-size:0.85rem; color:var(--text-muted); text-align:center; letter-spacing:1px; text-transform:uppercase;">
-                    📆 إحصائيات الشهر الحالي</h4>
+                    <i class="fa-solid fa-calendar-days"></i> إحصائيات الشهر الحالي</h4>
                 <div class="stats-row" style="margin-bottom:8px; gap:8px;">
                     <div class="stat-item pink" style="padding:12px 8px;">
-                        <span class="label" style="font-size:0.72rem;">🛒 أوردرات الشهر</span>
+                        <span class="label" style="font-size:0.72rem;"><i class="fa-solid fa-cart-shopping"></i> أوردرات الشهر</span>
                         <span class="value" id="monthCount" style="font-size:1.5rem;">0</span>
                     </div>
                     <div class="stat-item blue" style="padding:12px 8px;">
-                        <span class="label" style="font-size:0.72rem;">💰 مبيعات الشهر</span>
+                        <span class="label" style="font-size:0.72rem;"><i class="fa-solid fa-money-bill-wave"></i> مبيعات الشهر</span>
                         <span class="value" id="monthSales" style="font-size:1.5rem;">0</span>
                     </div>
                 </div>
                 <div class="stats-row" style="margin-bottom:0; gap:8px;">
                     <div class="stat-item"
                         style="background:linear-gradient(135deg,#00C853,#2E7D32);color:white;padding:12px 8px;border-radius:18px;text-align:center;box-shadow:var(--shadow);">
-                        <span class="label" style="font-size:0.72rem;">✅ مكتملة الشهر</span>
+                        <span class="label" style="font-size:0.72rem;"><i class="fa-solid fa-check-double"></i> مكتملة الشهر</span>
                         <span class="value" id="completedMonthCount" style="font-size:1.5rem;">0</span>
                     </div>
                     <div class="stat-item"
                         style="background:linear-gradient(135deg,#f39c12,#e67e22);color:white;padding:12px 8px;border-radius:18px;text-align:center;box-shadow:var(--shadow);">
-                        <span class="label" style="font-size:0.72rem;">🛵 عهدة المناديب</span>
+                        <span class="label" style="font-size:0.72rem;"><i class="fa-solid fa-motorcycle"></i> عهدة المناديب</span>
                         <span class="value" id="moneyWithDrivers" style="font-size:1.5rem;">0</span>
                     </div>
                     <div class="stat-item"
                         style="background:linear-gradient(135deg,#ff4d4d,#c0392b);color:white;padding:12px 8px;border-radius:18px;text-align:center;box-shadow:var(--shadow);">
-                        <span class="label" style="font-size:0.72rem;">🚨 مرتجعات الشهر</span>
+                        <span class="label" style="font-size:0.72rem;"><i class="fa-solid fa-triangle-exclamation"></i> مرتجعات الشهر</span>
                         <span class="value" id="returnedCount" style="font-size:1.5rem;">0</span>
                     </div>
                 </div>
@@ -424,7 +424,7 @@
             <!-- ⭐ V15.1: زرار إظهار/إخفاء التقارير التفصيلية -->
             <button type="button" id="loadReportsBtn" class="interactive-btn"
                 style="width:100%;padding:14px;background:linear-gradient(135deg,var(--primary),var(--primary-light));color:white;border:none;border-radius:14px;font-weight:bold;font-size:1rem;font-family:'Cairo',sans-serif;box-shadow:var(--shadow-pink);cursor:pointer;margin-bottom:14px;">
-                📊 إظهار التقارير التفصيلية
+                <i class="fa-solid fa-chart-column"></i> إظهار التقارير التفصيلية
             </button>
 
             <!-- ⭐ V15.1: التقارير التفصيلية - مخفية عند البدء -->
@@ -434,13 +434,13 @@
                 <div class="section-card" style="margin-bottom:12px; padding:16px;">
                     <h4
                         style="margin:0 0 12px; font-size:0.95rem; color:var(--primary); font-family:'Cairo',sans-serif;">
-                        📅 اختر الشهر للتقرير</h4>
+                        <i class="fa-solid fa-calendar-check"></i> اختر الشهر للتقرير</h4>
                     <div style="display:flex; gap:10px; align-items:center;">
                         <select id="reportMonthFilter" style="flex:1; margin-bottom:0;">
                             <option value="">-- اختر الشهر --</option>
                         </select>
                         <button type="button" id="loadReportDataBtn" class="btn-search interactive-btn"
-                            style="white-space:nowrap; padding:11px 18px;">عرض 🔍</button>
+                            style="white-space:nowrap; padding:11px 18px;">عرض <i class="fa-solid fa-magnifying-glass"></i></button>
                     </div>
                     <p id="reportFilterStatus"
                         style="margin:8px 0 0; font-size:0.8rem; color:var(--text-muted); text-align:center;"></p>
@@ -448,7 +448,7 @@
 
                 <!-- أفضل 10 منتجات -->
                 <div class="section-card" style="margin-bottom:12px; border-right:4px solid var(--primary);">
-                    <h3 class="section-title" style="font-size:1.05rem;">🏆 أكثر 10 منتجات مبيعاً</h3>
+                    <h3 class="section-title" style="font-size:1.05rem;"><i class="fa-solid fa-trophy"></i> أكثر 10 منتجات مبيعاً</h3>
                     <div id="topProductsList" style="padding:5px 0;">
                         <p class="empty-msg">اختر الشهر ثم اضغط عرض</p>
                     </div>
@@ -456,7 +456,7 @@
 
                 <!-- أداء المنصات -->
                 <div class="section-card" style="margin-bottom:12px; border-right:4px solid var(--secondary);">
-                    <h3 class="section-title" style="font-size:0.95rem;">📱 أداء المنصات</h3>
+                    <h3 class="section-title" style="font-size:0.95rem;"><i class="fa-solid fa-mobile-screen-button"></i> أداء المنصات</h3>
                     <div id="platformStatsList" style="padding:5px 0;">
                         <p class="empty-msg">اختر الشهر ثم اضغط عرض</p>
                     </div>
@@ -470,19 +470,19 @@
             <div class="section-card" style="border-right: 4px solid #25D366; background: #fdfdfd;">
                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px;">
                     <h2 style="color: #075E54; margin: 0; display: flex; align-items: center; gap: 8px;">
-                        <i class="icon" style="font-size: 1.5rem;">💬</i> حملات الواتساب الاحترافية
+                        <i class="fa-brands fa-whatsapp icon" style="font-size: 1.5rem;"></i> حملات الواتساب الاحترافية
                     </h2>
                     <span style="background: #25D366; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">Pro Mode</span>
                 </div>
 
                 <!-- 1. إعداد الاستهداف -->
                 <div class="wa-setup-box" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px;">
-                    <h3 style="margin-top:0; font-size: 1.1rem; color: var(--primary);">1️⃣ تحديد الفئة المستهدفة</h3>
+                    <h3 style="margin-top:0; font-size: 1.1rem; color: var(--primary);">تحديد الفئة المستهدفة</h3>
                     <select id="waTargetGroup" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; margin-bottom: 15px;">
-                        <option value="all">👥 جميع العملاء المسجلين (قاعدة البيانات كاملة)</option>
-                        <option value="vip">⭐ عملاء VIP (اشتروا 3 مرات فأكثر)</option>
-                        <option value="inactive">💤 عملاء خاملين (لم يشتروا منذ فترة)</option>
-                        <option value="custom">✍️ إدخال أرقام مخصصة (خارجية)</option>
+                        <option value="all">جميع العملاء المسجلين (قاعدة البيانات كاملة)</option>
+                        <option value="vip">عملاء VIP (اشتروا 3 مرات فأكثر)</option>
+                        <option value="inactive">عملاء خاملين (لم يشتروا منذ فترة)</option>
+                        <option value="custom">إدخال أرقام مخصصة (خارجية)</option>
                     </select>
 
                     <div id="waCustomNumbersDiv" style="display: none;">
@@ -493,12 +493,12 @@
 
                 <!-- 2. محتوى الرسالة -->
                 <div class="wa-setup-box" style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px;">
-                    <h3 style="margin-top:0; font-size: 1.1rem; color: var(--primary);">2️⃣ تجهيز الرسالة</h3>
+                    <h3 style="margin-top:0; font-size: 1.1rem; color: var(--primary);">تجهيز الرسالة</h3>
                     <p style="font-size: 0.85rem; color: #7f8c8d; margin-bottom: 15px;">
-                        💡 استخدم <strong>[الاسم]</strong> ليقوم النظام بوضع اسم العميل تلقائياً ليشعره بالاهتمام.
+                        <i class="fa-regular fa-lightbulb"></i> استخدم <strong>[الاسم]</strong> ليقوم النظام بوضع اسم العميل تلقائياً ليشعره بالاهتمام.
                     </p>
                     
-                    <textarea id="waCampaignText" rows="5" placeholder="أهلاً يا [الاسم]! 🎉&#10;عروض كاندي كلاب وصلت! اطلب الآن واحصل على خصم..." style="width: 100%; border: 1px solid #ccc; border-radius: 8px; padding: 12px; font-size: 1rem; resize: vertical;"></textarea>
+                    <textarea id="waCampaignText" rows="5" placeholder="أهلاً يا [الاسم]!&#10;عروض كاندي كلاب وصلت! اطلب الآن واحصل على خصم..." style="width: 100%; border: 1px solid #ccc; border-radius: 8px; padding: 12px; font-size: 1rem; resize: vertical;"></textarea>
 
                     <div style="margin-top: 15px; border-top: 1px dashed #eee; padding-top: 15px;">
                         <label style="display: block; font-weight: bold; margin-bottom: 8px;">إرفاق صورة للحملة (اختياري)</label>
@@ -506,22 +506,22 @@
                         <div id="waImagePreviewContainer" style="display: none; align-items: flex-start; gap: 15px; background: #f9f9f9; padding: 10px; border-radius: 8px;">
                             <img id="waImagePreview" src="" alt="معاينة" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd;">
                             <div style="flex: 1;">
-                                <p style="font-size: 0.8rem; color: #e67e22; margin: 0 0 10px 0;">⚠️ واتساب لا يرسل الصور تلقائياً. اضغط على الزر لنسخ الصورة، ثم قم بلصقها (Paste) في شات العميل مع الرسالة.</p>
-                                <button id="waCopyImageBtn" class="btn-primary" style="background: #3498db; width: auto; font-size: 0.9rem;">📋 نسخ الصورة للحافظة</button>
+                                <p style="font-size: 0.8rem; color: #e67e22; margin: 0 0 10px 0;"><i class="fa-solid fa-triangle-exclamation"></i> واتساب لا يرسل الصور تلقائياً. اضغط على الزر لنسخ الصورة، ثم قم بلصقها (Paste) في شات العميل مع الرسالة.</p>
+                                <button id="waCopyImageBtn" class="btn-primary" style="background: #3498db; width: auto; font-size: 0.9rem;">نسخ الصورة للحافظة <i class="fa-solid fa-clipboard"></i></button>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <button id="waStartCampaignBtn" class="interactive-btn" style="width: 100%; background: #25D366; color: white; border: none; padding: 15px; border-radius: 12px; font-weight: bold; font-size: 1.2rem; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);">
-                    🚀 استدعاء العملاء وبدء الحملة
+                    <i class="fa-solid fa-rocket"></i> استدعاء العملاء وبدء الحملة
                 </button>
 
                 <!-- 3. طابور الإرسال (يظهر بعد بدء الحملة) -->
                 <div id="waQueueContainer" style="display: none; margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: #e8f5e9; padding: 10px 15px; border-radius: 8px; border-right: 4px solid #25D366;">
-                        <h4 style="margin: 0; color: #1b5e20;">🎯 العملاء المستهدفين: <strong id="waQueueCount" style="font-size: 1.2rem;">0</strong></h4>
-                        <span id="waCooldownTimer" style="font-size: 0.9rem; color: #c0392b; font-weight: bold; display: none;">⏳ انتظر... حماية من الحظر</span>
+                        <h4 style="margin: 0; color: #1b5e20;"><i class="fa-solid fa-bullseye"></i> العملاء المستهدفين: <strong id="waQueueCount" style="font-size: 1.2rem;">0</strong></h4>
+                        <span id="waCooldownTimer" style="font-size: 0.9rem; color: #c0392b; font-weight: bold; display: none;"><i class="fa-solid fa-hourglass-half"></i> انتظر... حماية من الحظر</span>
                     </div>
                     
                     <div id="waCustomerList" class="data-list-container scroll-list" style="max-height: 500px; padding: 5px; display: flex; flex-direction: column; gap: 10px; background: transparent; border: none;">
@@ -534,7 +534,7 @@
         <section id="settings-tab" class="tab-pane">
 
             <div class="section-card text-center">
-                <h3 class="section-title">👤 إدارة الكاشيرية (المودريتور)</h3>
+                <h3 class="section-title"><i class="fa-solid fa-user-gear"></i> إدارة الكاشيرية (المودريتور)</h3>
                 <div style="display:flex; gap:10px; margin-bottom:15px;">
                     <input type="text" id="newModeratorName" placeholder="اسم الكاشير الجديد" style="margin-bottom:0;">
                     <button id="addModeratorBtn" class="btn-confirm interactive-btn">إضافة</button>
@@ -545,11 +545,11 @@
             </div>
 
             <div class="section-card text-center">
-                <h3 class="section-title">🛠️ إعدادات السيستم</h3>
+                <h3 class="section-title"><i class="fa-solid fa-gears"></i> إعدادات السيستم</h3>
 
                 <div class="action-grid" style="margin-bottom: 15px;">
                     <button type="button" id="sendWaManagerBtn" class="btn-outline interactive-btn"
-                        style="width: 100%; padding: 12px; font-size: 0.95rem; border-color: var(--primary); color: var(--primary);">📊
+                        style="width: 100%; padding: 12px; font-size: 0.95rem; border-color: var(--primary); color: var(--primary);"><i class="fa-solid fa-copy"></i>
                         نسخ تقرير الإدارة (اليوم والشهر)</button>
                 </div>
 
@@ -557,14 +557,14 @@
                     <!-- ⭐ زرار الإكسيل محمي بباسورد -->
                     <button type="button" id="openGoogleSheetBtn" class="btn-outline interactive-btn"
                         style="display: block; width:100%; text-decoration: none; padding: 15px; background: #e8f5e9; color: #2e7d32; border: 2px solid #c8e6c9; border-radius: 15px; font-weight: bold; font-family: 'Cairo', sans-serif; font-size:1rem; cursor:pointer;">
-                        📊 فتح قاعدة البيانات (الإكسيل)
+                        <i class="fa-solid fa-database"></i> فتح قاعدة البيانات (الإكسيل)
                     </button>
                 </div>
 
                 <hr style="border-top: 1px dashed #eee; margin: 15px 0;">
 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <span style="font-weight: bold; color: var(--primary);">🌙 الوضع الليلي (Dark Mode)</span>
+                    <span style="font-weight: bold; color: var(--primary);"><i class="fa-solid fa-moon"></i> الوضع الليلي (Dark Mode)</span>
                     <label class="switch">
                         <input type="checkbox" id="darkModeToggle">
                         <span class="slider round"></span>
@@ -658,9 +658,9 @@
 
             <div class="section-card">
                 <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px;">
-                    <h3 class="section-title" style="margin-bottom: 0;">📦 إدارة الصلاحيات والعروض</h3>
+                    <h3 class="section-title" style="margin-bottom: 0;"><i class="fa-solid fa-boxes-packing"></i> إدارة الصلاحيات والعروض</h3>
                     <button id="openLedgerBtn" class="interactive-btn"
-                        style="background: linear-gradient(135deg, #8e44ad, #2980b9); color: white; border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold; flex: 1 1 200px; max-width: 100%;">➕
+                        style="background: linear-gradient(135deg, #8e44ad, #2980b9); color: white; border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold; flex: 1 1 200px; max-width: 100%;"><i class="fa-solid fa-plus"></i>
                         تسجيل استلام بضاعة</button>
                 </div>
 
@@ -670,7 +670,7 @@
                     <div class="search-box mb-15" style="display: flex; flex-wrap: nowrap; gap: 10px;">
                         <input type="text" id="expiryGlobalSearchInput"
                             placeholder="بحث عام عن منتج في الصلاحيات والعروض..." style="flex: 1; min-width: 0;">
-                        <button id="searchExpiryBtn" class="btn-search interactive-btn" style="flex-shrink: 0; white-space: nowrap;">بحث 🔍</button>
+                        <button id="searchExpiryBtn" class="btn-search interactive-btn" style="flex-shrink: 0; white-space: nowrap;">بحث <i class="fa-solid fa-magnifying-glass"></i></button>
                     </div>
 
                     <!-- أدوات التصدير الذكية -->
@@ -693,9 +693,9 @@
                                 حسب يوم الإدخال (التسجيل):</label>
                             <div style="display: flex; flex-wrap: wrap; gap: 10px;">
                                 <button id="btnExportDatePDF" class="interactive-btn"
-                                    style="background: #E91E8C; color: white; border: none; padding: 8px 15px; border-radius: 8px; flex-shrink: 0; font-weight: bold;">🖨️ طباعة PDF</button>
+                                    style="background: #E91E8C; color: white; border: none; padding: 8px 15px; border-radius: 8px; flex-shrink: 0; font-weight: bold;"><i class="fa-solid fa-print"></i> طباعة PDF</button>
                                 <button id="btnExportDate" class="interactive-btn"
-                                    style="background: #2980b9; color: white; border: none; padding: 8px 15px; border-radius: 8px; flex-shrink: 0;">📊 إكسيل</button>
+                                    style="background: #2980b9; color: white; border: none; padding: 8px 15px; border-radius: 8px; flex-shrink: 0;"><i class="fa-solid fa-file-excel"></i> إكسيل</button>
                                 <input type="date" id="exportDateInput" dir="ltr"
                                     style="flex: 1; min-width: 150px; padding: 8px; border-radius: 8px; border: 1px solid #ccc; margin: 0;">
                             </div>
@@ -706,11 +706,11 @@
                     <div class="traffic-light-grid"
                         style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
 
-                        <!-- 🎁 العروض -->
+                        <!-- العروض -->
                         <div class="traffic-card traffic-offers" onclick="showExpiryDetails('Offers')"
                             style="cursor: pointer; background: linear-gradient(135deg, #f1c40f, #f39c12); border: none; box-shadow: 0 4px 10px rgba(243, 156, 18, 0.3);">
                             <div class="traffic-header">
-                                <h3 style="color: #ffffff;">🎁 العروض النشطة</h3>
+                                <h3 style="color: #ffffff;"><i class="fa-solid fa-gift"></i> العروض النشطة</h3>
                                 <span class="subtitle" style="color: #fffaf0; font-weight: bold;">المنتجات داخل
                                     العرض</span>
                             </div>
@@ -718,11 +718,11 @@
                                 id="expOffersItems">0</h2>
                         </div>
 
-                        <!-- 🔵 إجمالي الأصناف -->
+                        <!-- إجمالي الأصناف -->
                         <div class="traffic-card traffic-total" onclick="showExpiryDetails('Total')"
                             style="cursor: pointer; background: linear-gradient(135deg, #1e3c72, #2a5298); border: none; box-shadow: 0 4px 10px rgba(30, 60, 114, 0.3);">
                             <div class="traffic-header">
-                                <h3 style="color: #ffffff;">📦 إجمالي الأصناف المسجلة</h3>
+                                <h3 style="color: #ffffff;"><i class="fa-solid fa-boxes-stacked"></i> إجمالي الأصناف المسجلة</h3>
                                 <span class="subtitle" style="color: #d1d8e0; font-weight: bold;">كل البضاعة في
                                     النظام</span>
                             </div>
@@ -730,66 +730,66 @@
                                 id="expTotalItems">0</h2>
                         </div>
 
-                        <!-- ☠️ Expired -->
+                        <!-- Expired -->
                         <div class="traffic-card traffic-darkred" onclick="showExpiryDetails('Expired')"
                             style="cursor: pointer; background: linear-gradient(135deg, #8b0000, #c0392b); border: none; box-shadow: 0 4px 10px rgba(139, 0, 0, 0.3);">
                             <div class="traffic-header">
-                                <h3 style="color: #ffffff;">☠️ انتهت الصلاحية</h3>
+                                <h3 style="color: #ffffff;"><i class="fa-solid fa-skull-crossbones"></i> انتهت الصلاحية</h3>
                                 <span class="subtitle" style="color: #fffaf0; font-weight: bold;">خسارة / إعدام</span>
                             </div>
                             <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #ffffff;"
                                 id="expExpiredItems">0</h2>
                         </div>
 
-                        <!-- 🔴 Very Critical -->
+                        <!-- Very Critical -->
                         <div class="traffic-card traffic-red" onclick="showExpiryDetails('Critical')"
                             style="cursor: pointer;">
                             <div class="traffic-header">
-                                <h3>🔴 حرج جداً</h3>
+                                <h3><i class="fa-solid fa-circle-exclamation"></i> حرج جداً</h3>
                                 <span class="subtitle">أقل من 7 أيام</span>
                             </div>
                             <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #c0392b;"
                                 id="expCriticalItems">0</h2>
                         </div>
 
-                        <!-- 🟠 Quick Alert -->
+                        <!-- Quick Alert -->
                         <div class="traffic-card traffic-orange" onclick="showExpiryDetails('Alert')"
                             style="cursor: pointer;">
                             <div class="traffic-header">
-                                <h3>🟠 تنبيه سريع</h3>
+                                <h3><i class="fa-solid fa-triangle-exclamation"></i> تنبيه سريع</h3>
                                 <span class="subtitle">أقل من 30 يوم</span>
                             </div>
                             <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #d35400;"
                                 id="expAlertItems">0</h2>
                         </div>
 
-                        <!-- 🟡 Attention -->
+                        <!-- Attention -->
                         <div class="traffic-card traffic-yellow" onclick="showExpiryDetails('Attention')"
                             style="cursor: pointer;">
                             <div class="traffic-header">
-                                <h3>🟡 انتباه ومراقبة</h3>
+                                <h3><i class="fa-solid fa-eye"></i> انتباه ومراقبة</h3>
                                 <span class="subtitle">1 إلى 3 شهور</span>
                             </div>
                             <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #f39c12;"
                                 id="expAttentionItems">0</h2>
                         </div>
 
-                        <!-- 🟢 Safe -->
+                        <!-- Safe -->
                         <div class="traffic-card traffic-green" onclick="showExpiryDetails('Safe')"
                             style="cursor: pointer;">
                             <div class="traffic-header">
-                                <h3>🟢 مخزون آمن</h3>
+                                <h3><i class="fa-solid fa-shield-halved"></i> مخزون آمن</h3>
                                 <span class="subtitle">3 إلى 6 شهور</span>
                             </div>
                             <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #27ae60;"
                                 id="expSafeItems">0</h2>
                         </div>
 
-                        <!-- 🔵 Far Date -->
+                        <!-- Far Date -->
                         <div class="traffic-card traffic-blue" onclick="showExpiryDetails('Far')"
                             style="cursor: pointer;">
                             <div class="traffic-header">
-                                <h3>🔵 تاريخ بعيد</h3>
+                                <h3><i class="fa-regular fa-calendar-check"></i> تاريخ بعيد</h3>
                                 <span class="subtitle">6 شهور أو أكثر</span>
                             </div>
                             <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #2980b9;"
@@ -800,7 +800,7 @@
                         <div class="traffic-card traffic-grey" onclick="showExpiryDetails('NoExpiry')"
                             style="cursor: pointer; background: linear-gradient(135deg, #7f8c8d, #95a5a6); border: none; box-shadow: 0 4px 10px rgba(127, 140, 141, 0.3);">
                             <div class="traffic-header">
-                                <h3 style="color: #ffffff;">♾️ بدون صلاحية</h3>
+                                <h3 style="color: #ffffff;"><i class="fa-solid fa-infinity"></i> بدون صلاحية</h3>
                                 <span class="subtitle" style="color: #fffaf0; font-weight: bold;">أدوات / بدون تاريخ</span>
                             </div>
                             <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #ffffff;"
@@ -816,10 +816,10 @@
                             <h3 id="detailsTitle" style="color: var(--primary);">التفاصيل</h3>
                             <div style="display: flex; gap: 10px;">
                                 <button id="exportCurrentListBtn" class="interactive-btn"
-                                    style="background: #27ae60; color: white; border: none; padding: 6px 12px; border-radius: 8px;">📊
+                                    style="background: #27ae60; color: white; border: none; padding: 6px 12px; border-radius: 8px;"><i class="fa-solid fa-file-excel"></i>
                                     تصدير Excel</button>
                                 <button onclick="closeExpiryDetails()" class="interactive-btn"
-                                    style="background: #c0392b; color: white; border: none; padding: 6px 12px; border-radius: 8px;">❌
+                                    style="background: #c0392b; color: white; border: none; padding: 6px 12px; border-radius: 8px;"><i class="fa-solid fa-xmark"></i>
                                     إغلاق</button>
                             </div>
                         </div>
@@ -850,9 +850,9 @@
                 <div
                     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid var(--border); padding-bottom: 10px;">
                     <h2 style="color: var(--primary); margin: 0; display:flex; align-items:center; flex-wrap: wrap; gap:10px;">
-                        📝 إذن استلام وتسجيل بضاعة
+                        <i class="fa-solid fa-file-pen"></i> إذن استلام وتسجيل بضاعة
                         <button type="button" id="startLedgerCameraScannerBtn" class="interactive-btn pulse-btn" style="background: linear-gradient(135deg, #17a2b8, #0b7dda); color: white; border: none; padding: 5px 15px; border-radius: 8px; font-size: 0.9rem; display:flex; align-items:center; gap:5px; margin-top: 5px;">
-                            📸 مسح الباركود بالكاميرا
+                            <i class="fa-solid fa-camera"></i> مسح الباركود بالكاميرا
                         </button>
                     </h2>
                     <span class="close-modal" onclick="closeLedgerModal()"
@@ -881,7 +881,7 @@
 
                 <div class="ledger-add-item-form"
                     style="border: 2px dashed #3498db; padding: 15px; border-radius: 10px; margin-bottom: 20px; background: #f8f9fa;">
-                    <h4 style="margin-bottom: 15px; margin-top: 0; color: #3498db;">➕ إضافة منتج للمحضر</h4>
+                    <h4 style="margin-bottom: 15px; margin-top: 0; color: #3498db;"><i class="fa-solid fa-plus"></i> إضافة منتج للمحضر</h4>
                     <div class="expiry-form-grid"
                         style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
                         <div style="grid-column: span 2;">
@@ -911,11 +911,11 @@
                     </div>
                     <button id="addLedgerItemBtn" class="interactive-btn"
                         style="width: 100%; background: #3498db; color: white; border: none; padding: 12px; border-radius: 10px; font-weight: bold; font-size: 1.1rem; margin-top: 25px;">إضافة
-                        للقائمة 👇</button>
+                        للقائمة <i class="fa-solid fa-arrow-down"></i></button>
                 </div>
 
                 <div class="ledger-cart">
-                    <h4 style="margin-bottom: 10px; margin-top: 0; color: var(--text-color);">📋 سلة المنتجات المضافة
+                    <h4 style="margin-bottom: 10px; margin-top: 0; color: var(--text-color);"><i class="fa-solid fa-clipboard-list"></i> سلة المنتجات المضافة
                         (<span id="ledgerCartCount">0</span>)</h4>
                     <div class="table-responsive"
                         style="max-height: 300px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 15px; background: white;">
@@ -939,7 +939,7 @@
                         </table>
                     </div>
                     <button id="saveLedgerBtn" class="interactive-btn"
-                        style="width: 100%; background: #27ae60; color: white; border: none; padding: 15px; border-radius: 10px; font-size: 1.2rem; font-weight: bold; cursor: pointer;">✅
+                        style="width: 100%; background: #27ae60; color: white; border: none; padding: 15px; border-radius: 10px; font-size: 1.2rem; font-weight: bold; cursor: pointer;"><i class="fa-solid fa-check"></i>
                         تأكيد وتسجيل استلام البضاعة</button>
                 </div>
             </div>
@@ -948,13 +948,13 @@
         <section id="financials-tab" class="tab-pane">
             <div class="section-card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 10px;">
-                    <h2 style="color: var(--primary); margin: 0;">💰 حسابات المناديب</h2>
+                    <h2 style="color: var(--primary); margin: 0;"><i class="fa-solid fa-wallet"></i> حسابات المناديب</h2>
                     <div style="display: flex; gap: 10px; align-items: center;">
                         <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: bold; background: var(--bg); padding: 5px 10px; border-radius: 8px;">
                             <input type="checkbox" id="selectAllFinancialsCheckbox" style="width: 18px; height: 18px;">
                             تحديد الكل
                         </label>
-                        <button id="closeSelectedFinancialsBtn" class="btn-primary" style="background: var(--success); display: none;">تقفيل المحدد ✅</button>
+                        <button id="closeSelectedFinancialsBtn" class="btn-primary" style="background: var(--success); display: none;">تقفيل المحدد <i class="fa-solid fa-check"></i></button>
                     </div>
                 </div>
                 
@@ -971,7 +971,7 @@
     <nav id="app-sidebar" class="app-sidebar">
         <div class="sidebar-header">
             <h3>القائمة الرئيسية</h3>
-            <button id="closeSidebarBtn" class="close-sidebar-btn">✖</button>
+            <button id="closeSidebarBtn" class="close-sidebar-btn"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="sidebar-menu">
             <button class="nav-item active" data-target="create-tab">
@@ -1056,8 +1056,8 @@
             <div
                 style="margin-top: 10px; font-size: 11px; color: #555; border-top: 1px dashed #aaa; padding-top: 10px; text-align: center;">
                 <p><span dir="ltr" style="unicode-bidi: embed; font-weight: bold; font-size: 13px;">01080269555</span>
-                    📞</p>
-                <p>سكان الكود لمتابعة صفحاتنا وعروضنا الحصرية 👇</p>
+                    <i class="fa-solid fa-phone-flip"></i></p>
+                <p>سكان الكود لمتابعة صفحاتنا وعروضنا الحصرية <i class="fa-solid fa-hand-point-down"></i></p>
                 <img src="images/qr-code.png" style="max-width: 140px; margin-top: 5px;" alt="QR Code">
             </div>
         </div>
@@ -1065,7 +1065,7 @@
 
     <div id="suspendedModal" class="modal-overlay">
         <div class="modal-content">
-            <h3>📂 الطلبات المعلقة</h3>
+            <h3><i class="fa-solid fa-folder-open"></i> الطلبات المعلقة</h3>
             <div id="suspendedOrdersList" class="scroll-list"></div>
             <button id="closeSuspendedModal" class="btn-cancel mt-10">إغلاق</button>
         </div>
@@ -1074,8 +1074,8 @@
     <div id="zoneModal" class="modal-overlay">
         <div class="modal-content" style="width: 95vw; max-width: 1400px; max-height: 95vh; display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; padding: 20px;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 15px; margin-bottom: 20px;">
-                <h2 style="color: var(--primary); margin: 0; font-size: 1.8rem;">📍 إدارة المناطق واسعار الشحن</h2>
-                <button id="closeZoneModal" class="btn-cancel" style="padding: 10px 20px; font-size: 1.1rem; border-radius: 8px;">إغلاق ❌</button>
+                <h2 style="color: var(--primary); margin: 0; font-size: 1.8rem;"><i class="fa-solid fa-location-dot"></i> إدارة المناطق واسعار الشحن</h2>
+                <button id="closeZoneModal" class="btn-cancel" style="padding: 10px 20px; font-size: 1.1rem; border-radius: 8px;">إغلاق <i class="fa-solid fa-xmark"></i></button>
             </div>
             
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; background: var(--bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border);">
@@ -1100,19 +1100,19 @@
                     <input type="text" id="newZoneDuration" placeholder="مدة التوصيل" style="margin-bottom: 0; width: 100%; padding: 12px; font-size: 1.05rem;">
                 </div>
                 <div style="display: flex; align-items: flex-end;">
-                    <button id="addZoneBtn" class="btn-confirm" style="width: 100%; padding: 12px; font-size: 1.1rem; border-radius: 8px;">حفظ المنطقة 💾</button>
+                    <button id="addZoneBtn" class="btn-confirm" style="width: 100%; padding: 12px; font-size: 1.1rem; border-radius: 8px;">حفظ المنطقة <i class="fa-solid fa-floppy-disk"></i></button>
                 </div>
             </div>
 
             <div class="zones-lists-container">
                 <details class="zone-details" open>
-                    <summary class="zone-summary"><span style="color: var(--secondary);">⚓ مناطق الإسكندرية</span> <span class="arrow">▼</span></summary>
+                    <summary class="zone-summary"><span style="color: var(--secondary);"><i class="fa-solid fa-anchor"></i> مناطق الإسكندرية</span> <span class="arrow">▼</span></summary>
                     <div style="background: #FAFBFF; padding: 15px; border-radius: 0 0 12px 12px; border: 1px solid var(--border); border-top: none;">
                         <div id="zonesAlexList" class="data-list-container zone-list-grid" style="overflow-y: visible; max-height: none; padding: 0;"></div>
                     </div>
                 </details>
                 <details class="zone-details">
-                    <summary class="zone-summary"><span style="color: var(--warning);">🚚 المحافظات</span> <span class="arrow">▼</span></summary>
+                    <summary class="zone-summary"><span style="color: var(--warning);"><i class="fa-solid fa-truck-fast"></i> المحافظات</span> <span class="arrow">▼</span></summary>
                     <div style="background: #FAFBFF; padding: 15px; border-radius: 0 0 12px 12px; border: 1px solid var(--border); border-top: none;">
                         <div id="zonesGovList" class="data-list-container zone-list-grid" style="overflow-y: visible; max-height: none; padding: 0;"></div>
                     </div>
@@ -1123,7 +1123,7 @@
 
     <div id="driverModal" class="modal-overlay">
         <div class="modal-content" style="max-width: 600px;">
-            <h3 style="color: var(--primary); border-bottom: 2px solid var(--border); padding-bottom: 10px; margin-bottom: 15px;">🛵 إدارة المناديب</h3>
+            <h3 style="color: var(--primary); border-bottom: 2px solid var(--border); padding-bottom: 10px; margin-bottom: 15px;"><i class="fa-solid fa-motorcycle"></i> إدارة المناديب</h3>
             
             <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; background: var(--bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border);">
                 <input type="text" id="newDriverName" placeholder="اسم المندوب" style="margin-bottom: 0; flex: 1 1 150px;">
@@ -1131,17 +1131,17 @@
             </div>
             
             <div class="modal-actions" style="margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 10px;">
-                <button id="addDriverBtn" class="btn-confirm" style="flex: 1 1 200px;">حفظ المندوب 💾</button>
+                <button id="addDriverBtn" class="btn-confirm" style="flex: 1 1 200px;">حفظ المندوب <i class="fa-solid fa-floppy-disk"></i></button>
                 <button id="closeDriverModal" class="btn-cancel" style="flex: 1 1 100px;">إغلاق</button>
             </div>
             
-            <h4 style="color: var(--text-main); font-size: 1rem; margin-bottom: 10px;">🛵 المناديب المسجلين:</h4>
+            <h4 style="color: var(--text-main); font-size: 1rem; margin-bottom: 10px;"><i class="fa-solid fa-motorcycle"></i> المناديب المسجلين:</h4>
             <div id="driversDisplayList" class="data-list-container" style="max-height: 200px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; background: transparent; border: none; padding: 0;"></div>
         </div>
     </div>
     <div id="editCatalogModal" class="modal-overlay">
         <div class="modal-content">
-            <h3 style="color: var(--primary); margin-bottom: 15px;">✏️ تعديل المنتج</h3>
+            <h3 style="color: var(--primary); margin-bottom: 15px;"><i class="fa-solid fa-pencil"></i> تعديل المنتج</h3>
             <input type="hidden" id="editCatOldName">
 
             <label style="text-align: right; display: block; margin-bottom: 5px;">اسم المنتج:</label>
@@ -1165,7 +1165,7 @@
         <div class="modal-content excel-password-modal">
             <div class="password-modal-header">
                 <div class="lock-icon-container">
-                    <span class="lock-icon">🔒</span>
+                    <span class="lock-icon"><i class="fa-solid fa-lock"></i></span>
                 </div>
                 <h3 style="margin: 0; color: var(--text-dark); font-size: 1.2rem;">منطقة محمية</h3>
                 <p style="margin: 5px 0 0; font-size: 0.85rem; color: #888;">يرجى إدخال كلمة المرور للوصول إلى قاعدة
@@ -1177,17 +1177,17 @@
                     <input type="password" id="excelPasswordInput" placeholder="أدخل كلمة المرور" autocomplete="off"
                         class="password-field">
                     <button type="button" id="togglePasswordVisibility" class="toggle-password-btn"
-                        title="إظهار/إخفاء">👁️</button>
+                        title="إظهار/إخفاء"><i class="fa-solid fa-eye"></i></button>
                 </div>
                 <p id="passwordError"
-                    style="color: #e74c3c; font-size: 0.8rem; margin: 5px 0 0; display: none; text-align: center;">❌
+                    style="color: #e74c3c; font-size: 0.8rem; margin: 5px 0 0; display: none; text-align: center;"><i class="fa-solid fa-xmark"></i>
                     كلمة المرور غير صحيحة</p>
             </div>
 
             <div class="modal-actions" style="margin-top: 15px;">
                 <button id="closeExcelPasswordModal" class="btn-cancel">إلغاء</button>
                 <button id="confirmExcelPassword" class="btn-confirm"
-                    style="background: linear-gradient(135deg, #2e7d32, #43a047); color: white;">فتح 🔓</button>
+                    style="background: linear-gradient(135deg, #2e7d32, #43a047); color: white;">فتح <i class="fa-solid fa-lock-open"></i></button>
             </div>
         </div>
     </div>
@@ -1198,9 +1198,9 @@
     <div id="scannerModal" class="modal-overlay" style="z-index: 10000;">
         <div class="modal-content" style="max-width: 500px; padding: 20px; background: var(--card);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="margin: 0; color: var(--primary);">📷 الماسح الضوئي الذكي</h3>
+                <h3 style="margin: 0; color: var(--primary);"><i class="fa-solid fa-camera"></i> الماسح الضوئي الذكي</h3>
                 <button id="closeScannerModalBtn"
-                    style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--danger);">✖</button>
+                    style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--danger);"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
             <!-- حاوية الكاميرا -->
@@ -1212,14 +1212,14 @@
             <div style="display: flex; gap: 10px;">
                 <input type="text" id="manualBarcodeInput" placeholder="أدخل رقم الباركود..."
                     style="margin-bottom: 0; font-family: 'Courier New', monospace; font-weight: bold; letter-spacing: 2px;">
-                <button id="manualSearchBtn" class="btn-search interactive-btn">بحث 🔍</button>
+                <button id="manualSearchBtn" class="btn-search interactive-btn">بحث <i class="fa-solid fa-magnifying-glass"></i></button>
             </div>
 
             <div style="margin-top: 15px; text-align: center;">
                 <input type="file" id="barcodeImageUpload" accept="image/*" style="display: none;">
                 <label for="barcodeImageUpload" class="btn-outline interactive-btn"
                     style="display: block; width: 100%; padding: 10px; cursor: pointer; text-align: center; border-radius: var(--radius); font-weight: bold; border: 2px dashed var(--secondary); color: var(--secondary);">
-                    أو ارفع صورة من المعرض 🖼️
+                    أو ارفع صورة من المعرض <i class="fa-solid fa-image"></i>
                 </label>
             </div>
         </div>
@@ -1234,20 +1234,20 @@
                 اسم المنتج</h2>
             <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
                 <button id="copyProductNameBtn" class="btn-outline interactive-btn"
-                    style="padding: 8px 15px; font-size: 0.9rem; border-radius: 20px;">نسخ الاسم 📋</button>
+                    style="padding: 8px 15px; font-size: 0.9rem; border-radius: 20px;">نسخ الاسم <i class="fa-solid fa-clipboard"></i></button>
                 <button id="addToCartBtn" class="btn-confirm interactive-btn"
                     style="padding: 8px 15px; font-size: 0.9rem; border-radius: 20px; background: var(--primary); color: white; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">إضافة
-                    للفاتورة 🛒</button>
+                    للفاتورة <i class="fa-solid fa-cart-shopping"></i></button>
             </div>
             <div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
                 <div style="background: #e8f5e9; border-radius: 15px; padding: 15px; flex: 1; min-width: 130px; text-align: center;">
-                    <span style="font-size: 1rem; font-weight: bold; color: #2e7d32;">💰 السعر</span><br>
+                    <span style="font-size: 1rem; font-weight: bold; color: #2e7d32;"><i class="fa-solid fa-money-bill-wave"></i> السعر</span><br>
                     <span id="scanResultPrice"
                         style="font-size: 2.5rem; font-weight: 900; color: #2e7d32; text-shadow: 1px 1px 2px rgba(0,0,0,0.1);">000</span>
                     <span style="font-size: 1.2rem; color: #2e7d32; font-weight: bold;">ج.م</span>
                 </div>
                 <div id="scanResultStockContainer" style="background: #e3f2fd; border-radius: 15px; padding: 15px; flex: 1; min-width: 130px; text-align: center;">
-                    <span class="stock-label" style="font-size: 1rem; font-weight: bold; color: #1565c0;">📦 الكمية</span><br>
+                    <span class="stock-label" style="font-size: 1rem; font-weight: bold; color: #1565c0;"><i class="fa-solid fa-box"></i> الكمية</span><br>
                     <span id="scanResultStock"
                         style="font-size: 2.5rem; font-weight: 900; color: #1565c0; text-shadow: 1px 1px 2px rgba(0,0,0,0.1);">0</span>
                     <span style="font-size: 1.2rem; color: #1565c0; font-weight: bold;">قطعة</span>
@@ -1255,7 +1255,7 @@
             </div>
             <div class="action-grid">
                 <button id="scanAnotherBtn" class="btn-whatsapp interactive-btn"
-                    style="flex: 2; font-size: 1.1rem; padding: 12px; background: linear-gradient(135deg, #17a2b8, #0b7dda); box-shadow: 0 6px 20px rgba(23,162,184,0.3);">📸
+                    style="flex: 2; font-size: 1.1rem; padding: 12px; background: linear-gradient(135deg, #17a2b8, #0b7dda); box-shadow: 0 6px 20px rgba(23,162,184,0.3);"><i class="fa-solid fa-camera"></i>
                     مسح منتج آخر</button>
                 <button id="closeScanResultBtn" class="btn-cancel interactive-btn"
                     style="flex: 1; padding: 12px; font-weight: bold;">إغلاق</button>
@@ -1282,14 +1282,14 @@
     <!-- شاشة مراجعة البيانات المستخرجة -->
     <div id="ocrReviewModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; justify-content: center; align-items: center; padding: 15px;">
         <div class="modal-content" style="background: #ffffff; width: 100%; max-width: 600px; border-radius: 15px; padding: 20px; max-height: 90vh; overflow-y: auto; display:flex; flex-direction:column;">
-            <h2 style="color: var(--primary); border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top:0;">🔎 مراجعة الفاتورة المصورة</h2>
-            <p style="color: #e67e22; font-size:0.9rem; font-weight:bold;">⚠️ قم بمراجعة الأرقام والكميات المستخرجة قبل إضافتها للمحضر.</p>
+            <h2 style="color: var(--primary); border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top:0;"><i class="fa-solid fa-magnifying-glass"></i> مراجعة الفاتورة المصورة</h2>
+            <p style="color: #e67e22; font-size:0.9rem; font-weight:bold;"><i class="fa-solid fa-triangle-exclamation"></i> قم بمراجعة الأرقام والكميات المستخرجة قبل إضافتها للمحضر.</p>
             <div id="ocrReviewList" style="flex:1; overflow-y:auto; margin: 15px 0; display:flex; flex-direction:column; gap:10px;">
                 <!-- Review items will be injected here -->
             </div>
             <div style="display: flex; gap: 10px; margin-top: auto;">
-                <button id="confirmOcrBtn" class="btn-confirm interactive-btn" style="flex: 2; padding:12px; font-size:1.1rem;">✅ اعتماد وإضافة للمحضر</button>
-                <button id="cancelOcrBtn" class="btn-cancel interactive-btn" style="flex: 1; padding:12px;">❌ إلغاء</button>
+                <button id="confirmOcrBtn" class="btn-confirm interactive-btn" style="flex: 2; padding:12px; font-size:1.1rem;"><i class="fa-solid fa-check"></i> اعتماد وإضافة للمحضر</button>
+                <button id="cancelOcrBtn" class="btn-cancel interactive-btn" style="flex: 1; padding:12px;"><i class="fa-solid fa-xmark"></i> إلغاء</button>
             </div>
         </div>
     </div>
