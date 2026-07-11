@@ -1,4 +1,4 @@
-﻿// ==========================================
+// ==========================================
 // <i class=\'fa-solid fa-globe\'></i> العقل المدبر - سيستم كاندي كلوب (النسخة V13.6 - الشاملة والمحصنة)
 // ==========================================
 
@@ -4439,6 +4439,34 @@ if (btnExportMonth) {
 }
 
 // Export by Registration Date
+const btnExportMonthPDF = document.getElementById('btnExportMonthPDF');
+if (btnExportMonthPDF) {
+    btnExportMonthPDF.addEventListener('click', () => {
+        const monthVal = document.getElementById('exportMonthInput').value; // YYYY-MM
+        if (!monthVal) {
+            showToast("يرجى تحديد الشهر أولاً", "warning");
+            return;
+        }
+
+        let filtered = expiryData.filter(item => {
+            if (!item.expiryDate) return false;
+            let d = new Date(item.expiryDate);
+            if (!isNaN(d.getTime())) {
+                let localStr = d.toLocaleDateString('en-CA').substring(0, 7);
+                return localStr === monthVal;
+            }
+            return item.expiryDate.startsWith(monthVal);
+        });
+
+        if (filtered.length === 0) {
+            showToast("لا توجد بيانات انتهاء في هذا الشهر", "warning");
+            return;
+        }
+
+        generateExpiryMonthPDF(filtered, monthVal);
+    });
+}
+
 const btnExportDate = document.getElementById('btnExportDate');
 if (btnExportDate) {
     btnExportDate.addEventListener('click', () => {
@@ -4681,6 +4709,107 @@ function showManualSelectionModal(legacyBatch, dateVal) {
     modal.querySelector('#closeManualModalBtn').addEventListener('click', () => {
         document.body.removeChild(overlay);
     });
+}
+
+function generateExpiryMonthPDF(filteredData, monthVal) {
+    let printWindow = window.open('', '_blank', 'height=800,width=800');
+    if (!printWindow) {
+        showToast("يرجى السماح بالنوافذ المنبثقة (Pop-ups) لفتح ملف الطباعة", "error");
+        return;
+    }
+
+    let html = `
+        <html dir="rtl" lang="ar">
+        <head>
+            <title>تقرير انتهاء الصلاحية - شهر ${monthVal}</title>
+            <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+            <style>
+                * { box-sizing: border-box; }
+                body { 
+                    font-family: 'Cairo', sans-serif; 
+                    color: #333; 
+                    background: #fff; 
+                    direction: rtl; 
+                    width: 210mm; /* A4 width */
+                    margin: 0 auto; 
+                    padding: 15mm; 
+                }
+                .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #E91E8C; padding-bottom: 20px; margin-bottom: 30px; }
+                .logo { font-size: 36px; font-weight: 900; color: #E91E8C; letter-spacing: 2px; margin: 0; display: flex; align-items: center; gap: 10px; }
+                .logo span { background: #E91E8C; color: white; padding: 5px 15px; border-radius: 8px; font-size: 24px; }
+                .title-box { text-align: left; }
+                .title { font-size: 22px; font-weight: bold; color: #2c3e50; margin: 0; margin-bottom: 5px; }
+                .subtitle { font-size: 16px; color: #7f8c8d; margin: 0; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 14px; }
+                th, td { border: 1px solid #e0e0e0; padding: 12px; text-align: right; }
+                th { background: #E91E8C; color: white; font-weight: bold; font-size: 15px; }
+                tr:nth-child(even) { background-color: #fafafa; }
+                .footer { text-align: center; margin-top: 40px; font-size: 12px; color: #999; border-top: 1px solid #eee; padding-top: 20px; }
+                @media print {
+                    body { box-shadow: none; padding: 0; margin: 0; width: auto; }
+                    button { display: none; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1 class="logo">Candy <span>Club</span></h1>
+                <div class="title-box">
+                    <h2 class="title">تقرير انتهاء الصلاحية</h2>
+                    <p class="subtitle">منتجات تنتهي في شهر: <strong dir="ltr">${monthVal}</strong></p>
+                    <p class="subtitle" style="font-size: 13px; margin-top: 5px;">تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')} - ${new Date().toLocaleTimeString('ar-EG')}</p>
+                </div>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">م</th>
+                        <th>اسم المنتج</th>
+                        <th>الباركود</th>
+                        <th style="width: 100px;">الكمية</th>
+                        <th style="width: 120px;">تاريخ الانتهاء</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    filteredData.forEach((item, index) => {
+        let name = item.name || 'غير محدد';
+        let barcode = item.barcode || '--';
+        let qty = item.qty || 0;
+        let expiry = item.expiryDate ? String(item.expiryDate).split('T')[0] : '--';
+        
+        html += `
+            <tr>
+                <td>${index + 1}</td>
+                <td style="font-weight: bold; color: #2c3e50;">${name}</td>
+                <td style="font-family: monospace; font-size: 15px; letter-spacing: 1px;">${barcode}</td>
+                <td><span style="background: #f1f2f6; padding: 3px 8px; border-radius: 4px; font-weight: bold;">${qty}</span></td>
+                <td style="color: #e74c3c; font-weight: bold;">${expiry}</td>
+            </tr>
+        `;
+    });
+
+    html += `
+                </tbody>
+            </table>
+            
+            <div class="footer">
+                <p>تم استخراج هذا التقرير من نظام Candy Club</p>
+            </div>
+            
+            <script>
+                window.onload = function() {
+                    window.print();
+                };
+            </script>
+        </body>
+        </html>
+    `;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
 }
 
 function generatePDFReceipt(filteredData, dateVal) {
