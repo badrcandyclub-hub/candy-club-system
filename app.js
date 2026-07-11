@@ -1,5 +1,5 @@
 ﻿// ==========================================
-// <i class="fa-solid fa-globe"></i> العقل المدبر - سيستم كاندي كلوب (النسخة V13.6 - الشاملة والمحصنة)
+// <i class=\'fa-solid fa-globe\'></i> العقل المدبر - سيستم كاندي كلوب (النسخة V13.6 - الشاملة والمحصنة)
 // ==========================================
 
 const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbwi24io7fKY7nizjIutPBpQvZHBx1O28_hu91QVcdF7PLFqTJ48dNJqFPdbqRuGDKI3Uw/exec";
@@ -14,7 +14,7 @@ function playOrderSound() {
     if (playPromise !== undefined) {
         playPromise.catch(e => {
             console.log('Audio play failed (maybe needs user interaction):', e);
-            customAlert("<i class=`"fa-solid fa-bell`" style=`"color:var(--warning)`"></i> يوجد أوردر جديد قيد التجهيز! \n\n(تنبيه: المتصفح منع تشغيل الصوت. يرجى الضغط في أي مكان في الشاشة لتفعيل الصوت للأوردرات القادمة)");
+            customAlert("<i class='fa-solid fa-bell' style='color:var(--warning)'></i> يوجد أوردر جديد قيد التجهيز! \n\n(تنبيه: المتصفح منع تشغيل الصوت. يرجى الضغط في أي مكان في الشاشة لتفعيل الصوت للأوردرات القادمة)");
         });
     }
 }
@@ -24,7 +24,7 @@ function showToast(message, type = 'success') {
     if (!container) return;
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
-    let icon = type === 'error' ? '<i class="fa-solid fa-xmark"></i>' : (type === 'warning' ? '<i class="fa-solid fa-triangle-exclamation"></i>' : '<i class="fa-solid fa-check"></i>');
+    let icon = type === 'error' ? '<i class=\'fa-solid fa-xmark\'></i>' : (type === 'warning' ? '<i class=\'fa-solid fa-triangle-exclamation\'></i>' : '<i class=\'fa-solid fa-check\'></i>');
     toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
     container.appendChild(toast);
     setTimeout(() => { toast.classList.add('fade-out'); setTimeout(() => toast.remove(), 400); }, 3000);
@@ -35,7 +35,7 @@ function setBtnLoading(btn, isLoading, originalText = "") {
     if (isLoading) {
         btn.disabled = true;
         btn.dataset.origText = btn.innerText;
-        btn.innerText = "جاري التحميل <i class="fa-solid fa-hourglass-half"></i>...";
+        btn.innerText = "جاري التحميل <i class=\'fa-solid fa-hourglass-half\'></i>...";
         btn.style.opacity = "0.7";
         btn.style.cursor = "not-allowed";
     } else {
@@ -138,7 +138,7 @@ setupModal('openSuspendedBtn', 'suspendedModal', 'closeSuspendedModal');
 let shippingData = {};
 let catalogData = [];
 let oosData = [];
-// <i class="fa-solid fa-star"></i> Fix: expose on window so ALL functions (printHistoryOrder, shareToWhatsApp) can access it
+// <i class=\'fa-solid fa-star\'></i> Fix: expose on window so ALL functions (printHistoryOrder, shareToWhatsApp) can access it
 window.orderHistoryData = [];
 let orderHistoryData = window.orderHistoryData; // local alias
 let currentFilterDate = new Date().toLocaleDateString('en-CA');
@@ -161,7 +161,7 @@ window.onload = () => {
         });
     }
 
-    // <i class="fa-solid fa-star"></i> زرار التحديث السريع
+    // <i class=\'fa-solid fa-star\'></i> زرار التحديث السريع
     let quickRefreshBtn = document.getElementById('quickRefreshBtn');
     if (quickRefreshBtn) quickRefreshBtn.addEventListener('click', () => {
         showToast("جاري تحديث البيانات...", "warning");
@@ -170,7 +170,7 @@ window.onload = () => {
 
     loadDataFromServer();
     if (typeof updateSuspendedCount === 'function') updateSuspendedCount();
-    // <i class="fa-solid fa-star"></i> V14.2: عداد المعلقات يُقرأ من السيرفر مباشرة بعد loadDataFromServer
+    // <i class=\'fa-solid fa-star\'></i> V14.2: عداد المعلقات يُقرأ من السيرفر مباشرة بعد loadDataFromServer
 };
 
 function loadDataFromServer() {
@@ -182,7 +182,7 @@ function loadDataFromServer() {
         .then(data => {
             if (syncStatus) { syncStatus.innerText = "متصل"; syncStatus.style.color = "#00C853"; }
 
-            // <i class="fa-solid fa-star"></i> Play sound on new order arrival
+            // <i class=\'fa-solid fa-star\'></i> Play sound on new order arrival
             if (window.isFirstLoad === undefined) {
                 window.isFirstLoad = false;
                 window.lastFilterDate = currentFilterDate;
@@ -205,13 +205,13 @@ function loadDataFromServer() {
             }
 
             orderHistoryData = data.history || [];
-            window.orderHistoryData = orderHistoryData; // <i class="fa-solid fa-star"></i> keep window ref in sync
+            window.orderHistoryData = orderHistoryData; // <i class=\'fa-solid fa-star\'></i> keep window ref in sync
             window.pendingOrdersData = data.pendingOrders || [];
             window.suspendedOrdersData = data.suspendedOrders || [];
-            updateSuspendedCount(); // <i class="fa-solid fa-star"></i> V14.2: تحديث العداد من السيرفر بعد كل تحميل
+            updateSuspendedCount(); // <i class=\'fa-solid fa-star\'></i> V14.2: تحديث العداد من السيرفر بعد كل تحميل
             window.financialsData = data.financials || [];
             window.uncollectedOrdersData = data.uncollectedOrders || [];
-            // <i class="fa-solid fa-star"></i> V15.1: تخزين بيانات العملاء فقط بدون عرضها تلقائياً (Lazy)
+            // <i class=\'fa-solid fa-star\'></i> V15.1: تخزين بيانات العملاء فقط بدون عرضها تلقائياً (Lazy)
             window.customersData = data.customers || [];
             window.driversList = data.couriers || [];
 
@@ -219,7 +219,7 @@ function loadDataFromServer() {
 
             catalogData = data.catalog || [];
             
-            // <i class="fa-solid fa-star"></i> دمج منتجات Firebase في الكتالوج إذا لم تكن موجودة من الإكسل وإضافة الباركود
+            // <i class=\'fa-solid fa-star\'></i> دمج منتجات Firebase في الكتالوج إذا لم تكن موجودة من الإكسل وإضافة الباركود
             if (barcodeCatalogData.length > 0) {
                 const fbMap = new Map();
                 barcodeCatalogData.forEach(p => fbMap.set(String(p.name).toLowerCase(), p));
@@ -267,15 +267,15 @@ function loadDataFromServer() {
                     container.innerHTML += `
                         <div class="zone-premium-card ${specialClass}">
                             <div class="zone-info-main">
-                                <strong class="zone-title"><i class="fa-solid fa-location-dot"></i> ${z.name}</strong>
+                                <strong class="zone-title"><i class=\'fa-solid fa-location-dot\'></i> ${z.name}</strong>
                                 <div class="zone-details-row">
-                                    <span class="price-badge premium-badge"><i class="fa-solid fa-money-bill-wave"></i> ${z.price} ج.م</span> 
+                                    <span class="price-badge premium-badge"><i class=\'fa-solid fa-money-bill-wave\'></i> ${z.price} ج.م</span> 
                                     <span class="duration-badge">⏱️ ${z.duration}</span>
                                 </div>
                             </div>
                             <div class="zone-actions">
-                                <button type="button" class="btn-outline interactive-btn" onclick="editZoneUI('${z.name}', '${z.price}', '${z.type}', '${z.duration}')">تعديل <i class="fa-solid fa-pencil"></i></button>
-                                <button type="button" class="btn-danger interactive-btn" onclick="deleteItem('deleteShipping', '${z.name}', '${zoneType}')">حذف <i class="fa-solid fa-xmark"></i></button>
+                                <button type="button" class="btn-outline interactive-btn" onclick="editZoneUI('${z.name}', '${z.price}', '${z.type}', '${z.duration}')">تعديل <i class=\'fa-solid fa-pencil\'></i></button>
+                                <button type="button" class="btn-danger interactive-btn" onclick="deleteItem('deleteShipping', '${z.name}', '${zoneType}')">حذف <i class=\'fa-solid fa-xmark\'></i></button>
                             </div>
                         </div>`;
                 }
@@ -311,12 +311,12 @@ function loadDataFromServer() {
                     displayListHtml += `
                         <div class="data-row" style="display: flex; flex-direction: column; gap: 10px; background: var(--white); padding: 12px; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); text-align: center;">
                             <div>
-                                <strong style="color: var(--primary); font-size: 1.05rem;"><i class="fa-solid fa-motorcycle"></i> ${c.name}</strong><br>
-                                <span class="phone-badge" style="margin-top: 5px; display: inline-block;"><i class="fa-solid fa-mobile-screen"></i> ${c.phone}</span>
+                                <strong style="color: var(--primary); font-size: 1.05rem;"><i class=\'fa-solid fa-motorcycle\'></i> ${c.name}</strong><br>
+                                <span class="phone-badge" style="margin-top: 5px; display: inline-block;"><i class=\'fa-solid fa-mobile-screen\'></i> ${c.phone}</span>
                             </div>
                             <div style="display:flex; justify-content: space-between; gap:5px; width: 100%;">
-                                <button type="button" class="btn-outline interactive-btn" style="flex: 1; padding: 6px; font-size:0.8rem; border-radius: 6px;" onclick="editDriverUI('${c.name}', '${c.phone}')">تعديل <i class="fa-solid fa-pencil"></i></button>
-                                <button type="button" class="interactive-btn" style="flex: 1; padding: 6px; font-size:0.8rem; background:var(--danger); color:white; border:none; border-radius:6px;" onclick="deleteItem('deleteDriver', '${c.name}')">حذف <i class="fa-solid fa-xmark"></i></button>
+                                <button type="button" class="btn-outline interactive-btn" style="flex: 1; padding: 6px; font-size:0.8rem; border-radius: 6px;" onclick="editDriverUI('${c.name}', '${c.phone}')">تعديل <i class=\'fa-solid fa-pencil\'></i></button>
+                                <button type="button" class="interactive-btn" style="flex: 1; padding: 6px; font-size:0.8rem; background:var(--danger); color:white; border:none; border-radius:6px;" onclick="deleteItem('deleteDriver', '${c.name}')">حذف <i class=\'fa-solid fa-xmark\'></i></button>
                             </div>
                         </div>`;
                 });
@@ -327,7 +327,7 @@ function loadDataFromServer() {
                 if (driversDisplayList) driversDisplayList.innerHTML = displayListHtml;
             }
 
-            // <i class="fa-solid fa-star"></i> اقتراحات المنتجات تأتي من Firebase بدلاً من الإكسل
+            // <i class=\'fa-solid fa-star\'></i> اقتراحات المنتجات تأتي من Firebase بدلاً من الإكسل
             updateSmartSuggestionsFromFirebase();
 
             const modSelect = document.getElementById('moderatorSelect');
@@ -342,8 +342,8 @@ function loadDataFromServer() {
                     modSelectHtml += `<option value="${m}">${m}</option>`;
                     modsListHtml += `
                         <div class="data-row" style="align-items:center; padding:5px;">
-                            <span style="flex:1;"><i class="fa-solid fa-user"></i> ${m}</span>
-                            <button type="button" class="interactive-btn" style="padding: 4px 8px; font-size:0.8rem; background:var(--danger); color:white; border:none; border-radius:8px;" onclick="deleteItem('deleteModerator', '${m}')"><i class="fa-solid fa-xmark"></i></button>
+                            <span style="flex:1;"><i class=\'fa-solid fa-user\'></i> ${m}</span>
+                            <button type="button" class="interactive-btn" style="padding: 4px 8px; font-size:0.8rem; background:var(--danger); color:white; border:none; border-radius:8px;" onclick="deleteItem('deleteModerator', '${m}')"><i class=\'fa-solid fa-xmark\'></i></button>
                         </div>`;
                 });
                 
@@ -355,9 +355,9 @@ function loadDataFromServer() {
             }
             if (modSelect && currentMod) modSelect.value = currentMod;
 
-            // <i class="fa-solid fa-star"></i> V15.1: إحصائيات اليوم (today) - تم استبدالها بالمنطق المحلي في updateAdvancedDashboard لحل مشكلة الإكسيل
+            // <i class=\'fa-solid fa-star\'></i> V15.1: إحصائيات اليوم (today) - تم استبدالها بالمنطق المحلي في updateAdvancedDashboard لحل مشكلة الإكسيل
 
-            // <i class="fa-solid fa-star"></i> إذا لم يكن المستخدم قد اختار شهراً معيناً للتقرير، نعرض إحصائيات الشهر الحالي في المربعات
+            // <i class=\'fa-solid fa-star\'></i> إذا لم يكن المستخدم قد اختار شهراً معيناً للتقرير، نعرض إحصائيات الشهر الحالي في المربعات
             let reportMonthFilter = document.getElementById('reportMonthFilter');
             if (!reportMonthFilter || !reportMonthFilter.value) {
                 if (document.getElementById('monthSales')) document.getElementById('monthSales').innerText = data.monthSales || 0;
@@ -366,13 +366,13 @@ function loadDataFromServer() {
                 if (document.getElementById('returnedCount')) document.getElementById('returnedCount').innerText = data.returnedCount || 0;
             }
 
-            // <i class="fa-solid fa-star"></i> ملء فلتر الشهور في التقارير تلقائياً
+            // <i class=\'fa-solid fa-star\'></i> ملء فلتر الشهور في التقارير تلقائياً
             buildMonthFilterOptions();
 
-            // <i class="fa-solid fa-star"></i> المبكر هينت: عشان اللي فاتح التقارير يتحدث داتاه تلقائياً
+            // <i class=\'fa-solid fa-star\'></i> المبكر هينت: عشان اللي فاتح التقارير يتحدث داتاه تلقائياً
             window.latestServerData = data;
 
-            // <i class="fa-solid fa-star"></i> أخفي الأوردرات المشحونة حتى يتم اختيار المندوب
+            // <i class=\'fa-solid fa-star\'></i> أخفي الأوردرات المشحونة حتى يتم اختيار المندوب
             let shippedCont = document.getElementById('shippedOrdersContainer');
             if (shippedCont) shippedCont.innerHTML = '<p class="empty-msg">برجاء اختيار المندوب والضغط على "عرض العهدة"</p>';
 
@@ -451,14 +451,14 @@ function renderFinancials(finList) {
         let ordersHtml = '';
         if (driverOrders.length > 0) {
             ordersHtml = `<div style="margin-top: 10px; border-top: 1px dashed #ccc; padding-top: 10px;">
-                <strong style="font-size:0.85rem; color:var(--primary);"><i class="fa-solid fa-box"></i> أوردرات معلقة (لم يتم تسويتها):</strong>`;
+                <strong style="font-size:0.85rem; color:var(--primary);"><i class=\'fa-solid fa-box\'></i> أوردرات معلقة (لم يتم تسويتها):</strong>`;
             driverOrders.forEach(o => {
                 ordersHtml += `
                     <div class="financial-order-item" style="background:#fdfdfd; padding:8px; border:1px solid #eee; border-radius:6px; margin-top:5px; display:flex; justify-content:space-between; align-items:center;">
                             <span style="font-size:0.75rem; color:#777;">${o.payment} | إجمالي: ${o.total}ج | شحن: ${o.shipping}ج</span><br>
                             <span style="font-size:0.85rem; font-weight:bold; color:var(--danger);">المطلوب تحصيله: ${o.remaining}ج</span>
                         </div>
-                        <button class="btn-settle interactive-btn" onclick="settleDriverOrder('${o.id}', this, '${o.payment}')" style="background:var(--success); color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">تسوية <i class="fa-solid fa-money-bill"></i></button>
+                        <button class="btn-settle interactive-btn" onclick="settleDriverOrder('${o.id}', this, '${o.payment}')" style="background:var(--success); color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">تسوية <i class=\'fa-solid fa-money-bill\'></i></button>
                     </div>
                 `;
             });
@@ -468,7 +468,7 @@ function renderFinancials(finList) {
         container.innerHTML += `
             <div class="${cardClass}" style="background: #fff; padding: 15px; border-radius: 12px; border: 1px solid ${cardBorderColor}; margin-bottom: 12px; box-shadow: ${cardShadow}; opacity: ${cardOpacity}; transition: all 0.3s ease;">
                 <div class="financial-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #f0f0f0; padding-bottom:8px; margin-bottom:10px;">
-                    <span style="font-weight:bold; font-size:1.1rem; color:var(--text-dark);"><i class="fa-solid fa-motorcycle"></i> ${f.name}</span>
+                    <span style="font-weight:bold; font-size:1.1rem; color:var(--text-dark);"><i class=\'fa-solid fa-motorcycle\'></i> ${f.name}</span>
                     <span style="font-size: 0.85rem; background:#f0f0f0; color:var(--text-dark); padding:3px 8px; border-radius:12px; font-weight:bold;">${f.ordersCount || 0} طلب</span>
                 </div>
                 <div class="financial-details" style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:10px;">
@@ -484,7 +484,7 @@ function renderFinancials(finList) {
     });
 }
 
-// <i class="fa-solid fa-star"></i> حماية تصفية الأوردر برسالة واضحة بناءً على نوع الدفع
+// <i class=\'fa-solid fa-star\'></i> حماية تصفية الأوردر برسالة واضحة بناءً على نوع الدفع
 window.settleDriverOrder = function (orderId, btn, payMethod) {
     let msg = `هل أنت متأكد من تسوية الأوردر (${orderId})؟`;
     if (payMethod.includes('كاش')) msg = `هل استلمت النقدية من المندوب الخاصة بالأوردر (${orderId})؟`;
@@ -500,18 +500,18 @@ window.settleDriverOrder = function (orderId, btn, payMethod) {
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
-                showToast("<i class="fa-solid fa-check"></i> تمت المحاسبة وتسوية الأوردر!", "success");
+                showToast("<i class=\'fa-solid fa-check\'></i> تمت المحاسبة وتسوية الأوردر!", "success");
                 loadDataFromServer();
             }).catch(() => {
-                showToast("<i class="fa-solid fa-xmark"></i> حدث خطأ في الاتصال", "error");
-                btn.innerText = "تسوية <i class="fa-solid fa-money-bill"></i>";
+                showToast("<i class=\'fa-solid fa-xmark\'></i> حدث خطأ في الاتصال", "error");
+                btn.innerText = "تسوية <i class=\'fa-solid fa-money-bill\'></i>";
                 btn.disabled = false;
             });
     });
 };
 
 // ==========================================
-// 4. حساب أجازة الجمعة والعربون <i class="fa-solid fa-rocket"></i>
+// 4. حساب أجازة الجمعة والعربون <i class=\'fa-solid fa-rocket\'></i>
 // ==========================================
 function calculateDeliveryDateSkippingFriday(durationText) {
     if (!durationText) return "";
@@ -544,7 +544,7 @@ if (deliveryTypeSelect) {
             if (addressFields) addressFields.classList.add('hidden-field');
             if (specialDateContainer) specialDateContainer.classList.add('hidden-field');
             if (document.getElementById('shippingCost')) document.getElementById('shippingCost').value = 0;
-            let infoSpan = document.querySelector('#deliveryInfo span'); if (infoSpan) infoSpan.innerText = "استلام من الفرع <i class="fa-solid fa-store"></i>";
+            let infoSpan = document.querySelector('#deliveryInfo span'); if (infoSpan) infoSpan.innerText = "استلام من الفرع <i class=\'fa-solid fa-store\'></i>";
         } else if (type === 'gov_shipping') {
             if (addressFields) addressFields.classList.remove('hidden-field');
             if (specialDateContainer) specialDateContainer.classList.add('hidden-field');
@@ -574,7 +574,7 @@ window.updateGovernoratesDropdown = function () {
 
     if (type === 'gov_shipping') {
         if (data.govs && data.govs.length > 0) {
-            let optgroup = document.createElement('optgroup'); optgroup.label = "<i class="fa-solid fa-truck-fast"></i> المحافظات";
+            let optgroup = document.createElement('optgroup'); optgroup.label = "<i class=\'fa-solid fa-truck-fast\'></i> المحافظات";
             data.govs.forEach(z => {
                 optgroup.innerHTML += `<option value="${z.name}">${z.name} (${z.price} ج)</option>`;
             });
@@ -582,7 +582,7 @@ window.updateGovernoratesDropdown = function () {
         }
     } else {
         if (data.alex && data.alex.length > 0) {
-            let optgroup = document.createElement('optgroup'); optgroup.label = "<i class="fa-solid fa-link"></i> مناطق الإسكندرية";
+            let optgroup = document.createElement('optgroup'); optgroup.label = "<i class=\'fa-solid fa-link\'></i> مناطق الإسكندرية";
             data.alex.forEach(z => {
                 optgroup.innerHTML += `<option value="${z.name}">${z.name} (${z.price} ج)</option>`;
             });
@@ -612,9 +612,9 @@ function triggerGovCalc() {
     if (dateDisplay) {
         let type = deliveryTypeSelect ? deliveryTypeSelect.value : 'normal';
         if (type === 'special_date') {
-            dateDisplay.innerText = "حسب التاريخ المختار <i class="fa-regular fa-calendar-days"></i>";
+            dateDisplay.innerText = "حسب التاريخ المختار <i class=\'fa-regular fa-calendar-days\'></i>";
         } else if (info.type === 'next_day') {
-            dateDisplay.innerText = "تاني يوم <i class="fa-solid fa-truck-fast"></i>";
+            dateDisplay.innerText = "تاني يوم <i class=\'fa-solid fa-truck-fast\'></i>";
         } else {
             let exactDate = calculateDeliveryDateSkippingFriday(info.duration);
             dateDisplay.innerText = exactDate ? `المتوقع: ${exactDate}` : `خلال ${info.duration}`;
@@ -632,7 +632,7 @@ if (govSelect) govSelect.addEventListener('change', triggerGovCalc);
 let currentHistoryPage = 1;
 const ITEMS_PER_PAGE = 20;
 let currentOrdersList = [];
-window.searchResultsCache = []; // <i class="fa-solid fa-star"></i> لتخزين البحث دون مسح السجل
+window.searchResultsCache = []; // <i class=\'fa-solid fa-star\'></i> لتخزين البحث دون مسح السجل
 
 function renderHistoryList(orders, isLoadMore = false) {
     let container = document.getElementById('historyListContainer');
@@ -645,11 +645,11 @@ function renderHistoryList(orders, isLoadMore = false) {
 
         if (window.pendingOrdersData && window.pendingOrdersData.length > 0 && document.getElementById('orderSearchInput').value.trim() === "") {
             let pendingDiv = document.createElement('div');
-            pendingDiv.innerHTML = `<h4 style="color: #e74c3c; padding-bottom: 5px; margin-bottom: 15px; font-weight: bold;"><i class="fa-solid fa-circle text-danger"></i> أوردرات لم تُشحن بعد (${window.pendingOrdersData.length})</h4>`;
+            pendingDiv.innerHTML = `<h4 style="color: #e74c3c; padding-bottom: 5px; margin-bottom: 15px; font-weight: bold;"><i class=\'fa-solid fa-circle text-danger\'></i> أوردرات لم تُشحن بعد (${window.pendingOrdersData.length})</h4>`;
 
             window.pendingOrdersData.forEach(pOrder => {
                 let pType = pOrder.orderType || pOrder.type || pOrder.deliveryType || "";
-                let dateHtml = `<span style="color: #e74c3c; font-weight: bold; font-size:0.85rem;"><i class="fa-regular fa-calendar-days"></i> ${pOrder.date}</span>`;
+                let dateHtml = `<span style="color: #e74c3c; font-weight: bold; font-size:0.85rem;"><i class=\'fa-regular fa-calendar-days\'></i> ${pOrder.date}</span>`;
                 if (pType.includes('حجز') || pType === 'special_date') {
                     let resDate = pOrder.reservationDate || pOrder.expectedDate || pOrder.specialDate || pOrder.spDate;
                     if (resDate) {
@@ -657,7 +657,7 @@ function renderHistoryList(orders, isLoadMore = false) {
                             let d = new Date(resDate);
                             if (!isNaN(d.getTime())) resDate = `${d.getFullYear()}-${("0" + (d.getMonth() + 1)).slice(-2)}-${("0" + d.getDate()).slice(-2)}`;
                         }
-                        dateHtml = `<span style="color: #fff; background: #c2185b; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size:0.9rem;"><i class="fa-regular fa-calendar"></i> تسليم: ${resDate}</span>`;
+                        dateHtml = `<span style="color: #fff; background: #c2185b; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size:0.9rem;"><i class=\'fa-regular fa-calendar\'></i> تسليم: ${resDate}</span>`;
                     }
                 }
                 pendingDiv.innerHTML += `
@@ -667,7 +667,7 @@ function renderHistoryList(orders, isLoadMore = false) {
                             ${dateHtml}
                         </div>
                         <div style="font-size: 0.9rem; color: #555;">
-                            <span><i class="fa-solid fa-mobile-screen"></i> ${pOrder.phone} | <span style="color:#000; font-weight:bold;"><i class="fa-solid fa-money-bill-wave"></i> ${pOrder.total} ج.م</span></span>
+                            <span><i class=\'fa-solid fa-mobile-screen\'></i> ${pOrder.phone} | <span style="color:#000; font-weight:bold;"><i class=\'fa-solid fa-money-bill-wave\'></i> ${pOrder.total} ج.م</span></span>
                         </div>
                     </div>
                 `;
@@ -702,11 +702,11 @@ function renderHistoryList(orders, isLoadMore = false) {
         let typeBadge = '';
         let oType = order.orderType || order.type || order.deliveryType || "";
         if (oType.includes('توصيل منزلي') || oType === 'normal') {
-            typeBadge = `<span style="background: #e3f2fd; color: #1565c0; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px;"><i class="fa-solid fa-truck-fast"></i> توصيل منزلي</span>`;
+            typeBadge = `<span style="background: #e3f2fd; color: #1565c0; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px;"><i class=\'fa-solid fa-truck-fast\'></i> توصيل منزلي</span>`;
         } else if (oType.includes('استلام من الفرع') || oType === 'branch') {
-            typeBadge = `<span style="background: #e8f5e9; color: #2e7d32; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px;"><i class="fa-solid fa-store"></i> استلام من الفرع</span>`;
+            typeBadge = `<span style="background: #e8f5e9; color: #2e7d32; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px;"><i class=\'fa-solid fa-store\'></i> استلام من الفرع</span>`;
         } else if (oType.includes('محافظات') || oType === 'gov_shipping') {
-            typeBadge = `<span style="background: #fff3e0; color: #e65100; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px;"><i class="fa-solid fa-box"></i> شحن محافظات</span>`;
+            typeBadge = `<span style="background: #fff3e0; color: #e65100; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px;"><i class=\'fa-solid fa-box\'></i> شحن محافظات</span>`;
         } else if (oType.includes('حجز') || oType === 'special_date') {
             let resDate = order.reservationDate || order.expectedDate || order.bookingDate || order.specialDate || order.spDate || order.date;
             if (resDate && (resDate.toString().includes('GMT') || resDate.toString().includes('توقيت'))) {
@@ -714,14 +714,14 @@ function renderHistoryList(orders, isLoadMore = false) {
                 if (!isNaN(d.getTime())) resDate = `${d.getFullYear()}-${("0" + (d.getMonth() + 1)).slice(-2)}-${("0" + d.getDate()).slice(-2)}`;
             }
             let dateText = resDate ? `تسليم: ${resDate}` : 'حجز مسبق';
-            typeBadge = `<span style="background: #c2185b; color: #fff; padding: 3px 8px; border-radius: 6px; font-size: 0.85rem; margin-right: 5px; font-weight: bold;"><i class="fa-regular fa-calendar"></i> ${dateText}</span>`;
+            typeBadge = `<span style="background: #c2185b; color: #fff; padding: 3px 8px; border-radius: 6px; font-size: 0.85rem; margin-right: 5px; font-weight: bold;"><i class=\'fa-regular fa-calendar\'></i> ${dateText}</span>`;
         }
 
         div.innerHTML = `
             <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 8px; align-items: center;">
                 <strong style="font-size: 1.05rem;">${order.id} | ${order.name} ${typeBadge}</strong>
                 <div style="display:flex; align-items:center; gap:10px;">
-                    <button class="interactive-btn" onclick="shareToWhatsAppGroup('${order.id}')" style="background:none; border:none; font-size:1.3rem; cursor:pointer;" title="مشاركة للجروب"><i class="fa-solid fa-mobile-screen"></i></button>
+                    <button class="interactive-btn" onclick="shareToWhatsAppGroup('${order.id}')" style="background:none; border:none; font-size:1.3rem; cursor:pointer;" title="مشاركة للجروب"><i class=\'fa-solid fa-mobile-screen\'></i></button>
                     <button class="interactive-btn" onclick="printHistoryOrder('${order.id}')" style="background:none; border:none; cursor:pointer;" title="طباعة الفاتورة">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-dark);"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
                     </button>
@@ -730,8 +730,8 @@ function renderHistoryList(orders, isLoadMore = false) {
             </div>
             <div style="display: flex; justify-content: space-between; width: 100%; font-size: 0.9rem; color: #666; background: var(--bg-body); padding: 8px; border-radius: 6px;">
                 <span>⏰ ${order.time || '--'}</span>
-                <span><i class="fa-solid fa-mobile-screen"></i> ${order.phone}${((order.phone2 || order.secondPhone || order.backupPhone || order.altPhone || order.customerPhone2 || order.otherPhone) && String(order.phone2 || order.secondPhone || order.backupPhone || order.altPhone || order.customerPhone2 || order.otherPhone).trim() !== '') ? ' | <i class="fa-solid fa-mobile-screen"></i> ' + String(order.phone2 || order.secondPhone || order.backupPhone || order.altPhone || order.customerPhone2 || order.otherPhone).trim() : ''}</span>
-                <span style="font-weight:bold; color: var(--text-dark);"><i class="fa-solid fa-money-bill-wave"></i> ${order.total} ج.م</span>
+                <span><i class=\'fa-solid fa-mobile-screen\'></i> ${order.phone}${((order.phone2 || order.secondPhone || order.backupPhone || order.altPhone || order.customerPhone2 || order.otherPhone) && String(order.phone2 || order.secondPhone || order.backupPhone || order.altPhone || order.customerPhone2 || order.otherPhone).trim() !== '') ? ' | <i class=\'fa-solid fa-mobile-screen\'></i> ' + String(order.phone2 || order.secondPhone || order.backupPhone || order.altPhone || order.customerPhone2 || order.otherPhone).trim() : ''}</span>
+                <span style="font-weight:bold; color: var(--text-dark);"><i class=\'fa-solid fa-money-bill-wave\'></i> ${order.total} ج.م</span>
             </div>
         `;
         container.appendChild(div);
@@ -756,7 +756,7 @@ function renderHistoryList(orders, isLoadMore = false) {
 }
 
 window.printHistoryOrder = function (orderId) {
-    // <i class="fa-solid fa-star"></i> Fix: String() comparison to prevent type mismatch (string vs number)
+    // <i class=\'fa-solid fa-star\'></i> Fix: String() comparison to prevent type mismatch (string vs number)
     let findFn = o => String(o.id) === String(orderId);
     let order = (window.orderHistoryData || []).find(findFn) ||
         (window.searchResultsCache || []).find(findFn) ||
@@ -765,8 +765,8 @@ window.printHistoryOrder = function (orderId) {
         (window.uncollectedOrdersData || []).find(findFn);
 
     if (!order) {
-        customAlert("<i class=`"fa-solid fa-triangle-exclamation`" style=`"color:var(--danger)`"></i> خطأ: لم يتم العثور على بيانات الطلب للطباعة.");
-        // <i class="fa-solid fa-star"></i> Debug: log all available IDs to help trace mismatch
+        customAlert("<i class='fa-solid fa-triangle-exclamation' style='color:var(--danger)'></i> خطأ: لم يتم العثور على بيانات الطلب للطباعة.");
+        // <i class=\'fa-solid fa-star\'></i> Debug: log all available IDs to help trace mismatch
         console.warn("printHistoryOrder: could not find orderId =", orderId, typeof orderId);
         console.log("Available history IDs:", (window.orderHistoryData || []).map(o => ({ id: o.id, type: typeof o.id })));
         return;
@@ -794,10 +794,10 @@ window.printHistoryOrder = function (orderId) {
     }
 
     if (document.getElementById('receipt-type')) {
-        // <i class="fa-solid fa-star"></i> V15.0: تطبيع النص - إزالة "عادي" من "توصيل منزلي عادي"
+        // <i class=\'fa-solid fa-star\'></i> V15.0: تطبيع النص - إزالة "عادي" من "توصيل منزلي عادي"
         let typeStr = (order.orderType || "أوردر توصيل").replace("توصيل منزلي عادي", "توصيل منزلي");
         let govStr = order.gov ? order.gov + " - " : "";
-        document.getElementById('receipt-type').innerText = isOldGift ? `${govStr}${typeStr} - <i class="fa-solid fa-gift"></i> هدية` : `${govStr}${typeStr}`;
+        document.getElementById('receipt-type').innerText = isOldGift ? `${govStr}${typeStr} - <i class=\'fa-solid fa-gift\'></i> هدية` : `${govStr}${typeStr}`;
     }
     if (document.getElementById('print-date')) document.getElementById('print-date').innerText = order.date || new Date().toLocaleDateString('ar-EG');
     if (document.getElementById('print-time')) document.getElementById('print-time').innerText = order.time || '';
@@ -832,7 +832,7 @@ window.printHistoryOrder = function (orderId) {
         }
     }
 
-    // <i class="fa-solid fa-star"></i> V14.2: إخفاء العنوان للفرع برمجياً - لا يطبع العنوان نهائياً
+    // <i class=\'fa-solid fa-star\'></i> V14.2: إخفاء العنوان للفرع برمجياً - لا يطبع العنوان نهائياً
     let printAddressRow = document.querySelector('.print-address-row');
     if (isBranch) {
         if (printAddressRow) printAddressRow.style.display = 'none';
@@ -869,7 +869,7 @@ window.printHistoryOrder = function (orderId) {
     if (document.getElementById('print-subtotal')) document.getElementById('print-subtotal').innerText = isOldGift ? "***" : (order.subtotal || order.total || 0);
     if (document.getElementById('print-discount')) document.getElementById('print-discount').innerText = isOldGift ? "***" : (order.discount || 0);
 
-    // <i class="fa-solid fa-star"></i> V15.0: إخفاء سطر الشحن لطلبات استلام الفرع نهائياً
+    // <i class=\'fa-solid fa-star\'></i> V15.0: إخفاء سطر الشحن لطلبات استلام الفرع نهائياً
     let printShippingRow = document.querySelector('.print-shipping-row');
     if (isBranch) {
         if (printShippingRow) printShippingRow.style.display = 'none';
@@ -921,7 +921,7 @@ window.printHistoryOrder = function (orderId) {
 };
 
 
-// <i class="fa-solid fa-star"></i> إصلاح مسح الذاكرة في محرك البحث الشامل
+// <i class=\'fa-solid fa-star\'></i> إصلاح مسح الذاكرة في محرك البحث الشامل
 const searchBtn = document.getElementById('searchBtn');
 const orderSearchInput = document.getElementById('orderSearchInput');
 if (searchBtn && orderSearchInput) {
@@ -931,7 +931,7 @@ if (searchBtn && orderSearchInput) {
             renderHistoryList(orderHistoryData);
         } else {
             let container = document.getElementById('historyListContainer');
-            container.innerHTML = '<p class="empty-msg">جاري البحث الشامل في قاعدة البيانات... <i class="fa-solid fa-hourglass-half"></i></p>';
+            container.innerHTML = '<p class="empty-msg">جاري البحث الشامل في قاعدة البيانات... <i class=\'fa-solid fa-hourglass-half\'></i></p>';
 
             fetch(`${GOOGLE_SHEETS_URL}?action=globalSearch&query=${encodeURIComponent(keyword)}`)
                 .then(res => res.json())
@@ -943,7 +943,7 @@ if (searchBtn && orderSearchInput) {
                     }
                 })
                 .catch(() => {
-                    container.innerHTML = '<p class="empty-msg"><i class="fa-solid fa-xmark"></i> حدث خطأ في الاتصال بالإنترنت.</p>';
+                    container.innerHTML = '<p class="empty-msg"><i class=\'fa-solid fa-xmark\'></i> حدث خطأ في الاتصال بالإنترنت.</p>';
                 });
         }
     });
@@ -957,12 +957,12 @@ if (searchBtn && orderSearchInput) {
 const phoneInput = document.getElementById('customerPhone');
 const phoneStatus = document.getElementById('phoneCheckStatus');
 
-// <i class="fa-solid fa-star"></i> إصلاح ذاكرة السمكة
+// <i class=\'fa-solid fa-star\'></i> إصلاح ذاكرة السمكة
 function performPhoneSearch() {
     if (!phoneInput || !phoneStatus) return;
     let phoneVal = phoneInput.value.trim().replace(/\D/g, '');
     if (phoneVal.length >= 9) {
-        phoneStatus.innerText = "<i class="fa-solid fa-hourglass-half"></i>";
+        phoneStatus.innerText = "<i class=\'fa-solid fa-hourglass-half\'></i>";
 
         let foundCustomer = null;
         if (orderHistoryData && orderHistoryData.length > 0) foundCustomer = orderHistoryData.find(o => o.phone.toString().replace(/\D/g, '').includes(phoneVal));
@@ -977,10 +977,10 @@ function performPhoneSearch() {
                 .then(data => {
                     if (data.length > 0) fillCustomerData(data[0]);
                     else phoneStatus.innerText = "🆕";
-                }).catch(() => phoneStatus.innerText = "<i class="fa-solid fa-magnifying-glass"></i>");
+                }).catch(() => phoneStatus.innerText = "<i class=\'fa-solid fa-magnifying-glass\'></i>");
         }
     } else {
-        phoneStatus.innerText = "<i class="fa-solid fa-magnifying-glass"></i>";
+        phoneStatus.innerText = "<i class=\'fa-solid fa-magnifying-glass\'></i>";
     }
 }
 
@@ -989,7 +989,7 @@ function fillCustomerData(cust) {
     if (document.getElementById('address') && cust.address && cust.address !== 'استلام من الفرع') {
         document.getElementById('address').value = cust.address;
     }
-    phoneStatus.innerText = "<i class="fa-solid fa-check"></i>";
+    phoneStatus.innerText = "<i class=\'fa-solid fa-check\'></i>";
     showToast(`أهلاً بعودتك يا ${cust.name}!`, "success");
 }
 
@@ -998,7 +998,7 @@ if (phoneInput) phoneInput.addEventListener('change', performPhoneSearch);
 
 const productsContainer = document.getElementById('productsContainer');
 
-// <i class="fa-solid fa-star"></i> دالة إضافة المنتجات (وإصلاح قفل الخانات عند الاسترجاع)
+// <i class=\'fa-solid fa-star\'></i> دالة إضافة المنتجات (وإصلاح قفل الخانات عند الاسترجاع)
 function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = false) {
     if (!productsContainer) return;
 
@@ -1028,7 +1028,7 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
         <input type="number" class="product-qty-input" placeholder="الكمية" value="${qtyVal}" min="1" required ${rOnly}>
         <div class="product-row-actions">
             <button type="button" class="btn-confirm-pro interactive-btn">✔️</button>
-            <button type="button" class="remove-product-btn interactive-btn"><i class="fa-solid fa-xmark"></i></button>
+            <button type="button" class="remove-product-btn interactive-btn"><i class=\'fa-solid fa-xmark\'></i></button>
         </div>
     `;
 
@@ -1042,7 +1042,7 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
     let confirmBtn = div.querySelector('.btn-confirm-pro');
     let removeBtn = div.querySelector('.remove-product-btn');
 
-    if (isConfirmed) confirmBtn.innerHTML = "<i class="fa-solid fa-pencil"></i>";
+    if (isConfirmed) confirmBtn.innerHTML = "<i class=\'fa-solid fa-pencil\'></i>";
 
     nameInput.addEventListener('input', () => {
         let selected = catalogData.find(p => p.name === nameInput.value);
@@ -1077,7 +1077,7 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
             qtyInput.readOnly = false;
         } else {
             div.classList.add('confirmed');
-            confirmBtn.innerHTML = "<i class="fa-solid fa-pencil"></i>";
+            confirmBtn.innerHTML = "<i class=\'fa-solid fa-pencil\'></i>";
             calculateTotal();
             if (typeof window.playSuccessBeep === 'function') window.playSuccessBeep();
             nameInput.readOnly = true;
@@ -1118,13 +1118,13 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
 }
 
 function updateSmartProductsList() {
-    // <i class="fa-solid fa-star"></i> الاقتراحات تأتي من Firebase أولاً، وإذا لم تتوفر يأخذ من catalogData
+    // <i class=\'fa-solid fa-star\'></i> الاقتراحات تأتي من Firebase أولاً، وإذا لم تتوفر يأخذ من catalogData
     updateSmartSuggestionsFromFirebase();
 }
 if (document.getElementById('addProductBtn')) document.getElementById('addProductBtn').addEventListener('click', () => addProductRow());
 if (productsContainer && productsContainer.children.length === 0) addProductRow();
 
-// <i class="fa-solid fa-star"></i> نظام العربون والـ NaN
+// <i class=\'fa-solid fa-star\'></i> نظام العربون والـ NaN
 function calculateTotal() {
     let total = 0;
     document.querySelectorAll('.product-row.confirmed').forEach(row => {
@@ -1173,7 +1173,7 @@ if (document.getElementById('discount')) document.getElementById('discount').add
 if (document.getElementById('isGiftCheckbox')) document.getElementById('isGiftCheckbox').addEventListener('change', calculateTotal);
 if (document.getElementById('depositAmount')) document.getElementById('depositAmount').addEventListener('input', calculateTotal);
 
-// <i class="fa-solid fa-star"></i> منع اختراق الكيبورد بـ readonly و disabled
+// <i class=\'fa-solid fa-star\'></i> منع اختراق الكيبورد بـ readonly و disabled
 const paymentMethod = document.getElementById('paymentMethod');
 const confirmPaymentBtn = document.getElementById('confirmPaymentBtn');
 let isPaymentConfirmed = false;
@@ -1200,7 +1200,7 @@ if (confirmPaymentBtn) {
             isPaymentConfirmed = false; confirmPaymentBtn.classList.remove('confirmed'); confirmPaymentBtn.innerHTML = "تأكيد ✔️";
             paymentMethod.classList.remove('locked-field'); paymentMethod.disabled = false; toggleGlobalLock(false);
         } else {
-            isPaymentConfirmed = true; confirmPaymentBtn.classList.add('confirmed'); confirmPaymentBtn.innerHTML = "تم التأكيد <i class="fa-solid fa-lock"></i>";
+            isPaymentConfirmed = true; confirmPaymentBtn.classList.add('confirmed'); confirmPaymentBtn.innerHTML = "تم التأكيد <i class=\'fa-solid fa-lock\'></i>";
             paymentMethod.classList.add('locked-field'); paymentMethod.disabled = true; toggleGlobalLock(true);
         }
     });
@@ -1218,7 +1218,7 @@ function updateSuspendedCount() {
 let suspendBtn = document.getElementById('suspendBtn');
 if (suspendBtn) {
     suspendBtn.addEventListener('click', () => {
-        setBtnLoading(suspendBtn, true); // <i class="fa-solid fa-star"></i> منع تكرار الأوردرات
+        setBtnLoading(suspendBtn, true); // <i class=\'fa-solid fa-star\'></i> منع تكرار الأوردرات
         let nameEl = document.getElementById('customerName'); let name = nameEl && nameEl.value ? nameEl.value : "بدون اسم";
         let prods = [];
         document.querySelectorAll('.product-row').forEach(row => {
@@ -1226,7 +1226,7 @@ if (suspendBtn) {
             if (n) prods.push({ name: n, price: p, qty: q, confirmed: c });
         });
 
-        // <i class="fa-solid fa-star"></i> V14.2: Timestamp-based ID لمنع التكرار نهائياً
+        // <i class=\'fa-solid fa-star\'></i> V14.2: Timestamp-based ID لمنع التكرار نهائياً
         let draftId = "CANDY-" + Date.now().toString().slice(-5);
         let draft = {
             id: draftId, date: new Date().toLocaleTimeString('ar-EG'),
@@ -1269,8 +1269,8 @@ if (openSuspendedBtn) {
             div.innerHTML = `
                 <div style="flex:1;"><strong>${d.name}</strong> <br> <small style="color:#777">⏰ ${d.time || d.date}</small></div>
                 <div style="display:flex; gap:5px;">
-                    <button class="btn-search interactive-btn restore-btn" style="padding: 5px 10px; font-size:0.8rem">استرجاع <i class="fa-solid fa-rotate"></i></button>
-                    <button class="interactive-btn delete-btn" style="padding: 5px 10px; font-size:0.8rem; background-color:var(--danger); color:white; border:none; border-radius:8px; cursor:pointer;">حذف <i class="fa-solid fa-xmark"></i></button>
+                    <button class="btn-search interactive-btn restore-btn" style="padding: 5px 10px; font-size:0.8rem">استرجاع <i class=\'fa-solid fa-rotate\'></i></button>
+                    <button class="interactive-btn delete-btn" style="padding: 5px 10px; font-size:0.8rem; background-color:var(--danger); color:white; border:none; border-radius:8px; cursor:pointer;">حذف <i class=\'fa-solid fa-xmark\'></i></button>
                 </div>
             `;
             div.querySelector('.restore-btn').addEventListener('click', () => {
@@ -1279,7 +1279,7 @@ if (openSuspendedBtn) {
             div.querySelector('.delete-btn').addEventListener('click', () => {
                 deleteSuspendedDraft(d.id); div.remove();
                 if (list.children.length === 0) list.innerHTML = '<p class="empty-msg">لا توجد طلبات معلقة</p>';
-                showToast("<i class="fa-solid fa-trash"></i> تم حذف المسودة", "success");
+                showToast("<i class=\'fa-solid fa-trash\'></i> تم حذف المسودة", "success");
             });
             list.appendChild(div);
         });
@@ -1330,7 +1330,7 @@ function restoreDraft(d) {
         if (document.getElementById('discount')) document.getElementById('discount').value = d.discount || "";
     }
     if (deliveryTypeSelect) deliveryTypeSelect.dispatchEvent(new Event('change'));
-    showToast("<i class="fa-solid fa-check"></i> تم استرجاع الفاتورة!", "success");
+    showToast("<i class=\'fa-solid fa-check\'></i> تم استرجاع الفاتورة!", "success");
 }
 
 function resetForm() {
@@ -1345,7 +1345,7 @@ function resetForm() {
     if (paymentMethod) { paymentMethod.classList.remove('locked-field'); paymentMethod.disabled = false; }
     toggleGlobalLock(false);
     if (deliveryTypeSelect) deliveryTypeSelect.dispatchEvent(new Event('change'));
-    if (phoneStatus) phoneStatus.innerText = "<i class="fa-solid fa-magnifying-glass"></i>";
+    if (phoneStatus) phoneStatus.innerText = "<i class=\'fa-solid fa-magnifying-glass\'></i>";
     let hint = document.getElementById('giftHint'); if (hint) hint.remove();
 }
 
@@ -1398,17 +1398,17 @@ if (whatsappReviewBtn) {
 
         let productsTotal = document.getElementById('productsTotal') ? document.getElementById('productsTotal').value || 0 : 0;
 
-        let phoneStr = phone2 ? `${displayPhone}\n<i class="fa-solid fa-mobile-screen"></i> رقم احتياطي: ${phone2}` : displayPhone;
-        let message = `أهلاً بك في كاندي كلوب 🍬\nيرجى مراجعة تفاصيل طلبك:\n\n<i class="fa-solid fa-user"></i> الاسم: ${displayName}\n<i class="fa-solid fa-mobile-screen"></i> الموبايل: ${phoneStr}\n<i class="fa-solid fa-location-dot"></i> العنوان: ${displayAddress}\n\n<i class="fa-solid fa-cart-shopping"></i> تفاصيل الطلب:\n${productsText}\n`;
-        message += `<i class="fa-solid fa-bag-shopping"></i> إجمالي المنتجات: ${productsTotal} ج.م\n`;
+        let phoneStr = phone2 ? `${displayPhone}\n<i class=\'fa-solid fa-mobile-screen\'></i> رقم احتياطي: ${phone2}` : displayPhone;
+        let message = `أهلاً بك في كاندي كلوب 🍬\nيرجى مراجعة تفاصيل طلبك:\n\n<i class=\'fa-solid fa-user\'></i> الاسم: ${displayName}\n<i class=\'fa-solid fa-mobile-screen\'></i> الموبايل: ${phoneStr}\n<i class=\'fa-solid fa-location-dot\'></i> العنوان: ${displayAddress}\n\n<i class=\'fa-solid fa-cart-shopping\'></i> تفاصيل الطلب:\n${productsText}\n`;
+        message += `<i class=\'fa-solid fa-bag-shopping\'></i> إجمالي المنتجات: ${productsTotal} ج.م\n`;
 
         let discountValue = document.getElementById('discount') ? parseFloat(document.getElementById('discount').value) || 0 : 0;
         if (discountValue > 0) {
             message += `🏷️ الخصم: ${discountValue} ج.م\n`;
         }
 
-        message += `<i class="fa-solid fa-truck-fast"></i> الشحن: ${document.getElementById('shippingCost') ? document.getElementById('shippingCost').value || 0 : 0} ج.م\n`;
-        message += `<i class="fa-solid fa-money-bill-wave"></i> الإجمالي المستحق: ${document.getElementById('finalTotalDisplay') ? document.getElementById('finalTotalDisplay').innerText : 0} ج.م\n\n`;
+        message += `<i class=\'fa-solid fa-truck-fast\'></i> الشحن: ${document.getElementById('shippingCost') ? document.getElementById('shippingCost').value || 0 : 0} ج.م\n`;
+        message += `<i class=\'fa-solid fa-money-bill-wave\'></i> الإجمالي المستحق: ${document.getElementById('finalTotalDisplay') ? document.getElementById('finalTotalDisplay').innerText : 0} ج.م\n\n`;
 
         if (hasMissingData) {
             message += `يرجى ملء البيانات الناقصة بالأعلى والرد بكلمة (تمام) لتأكيد الأوردر 🤝`;
@@ -1456,7 +1456,7 @@ if (saveAndPrintBtn) {
             return; 
         }
         if (!isPaymentConfirmed) { 
-            showToast("تأكيد طريقة الدفع <i class="fa-solid fa-lock"></i>", "error"); 
+            showToast("تأكيد طريقة الدفع <i class=\'fa-solid fa-lock\'></i>", "error"); 
             if (typeof window.playErrorBeep === 'function') window.playErrorBeep();
             return; 
         }
@@ -1517,11 +1517,11 @@ if (saveAndPrintBtn) {
         }
 
         let finalNotes = document.getElementById('notes') ? document.getElementById('notes').value : "";
-        if (isGift) finalNotes = "<i class="fa-solid fa-gift"></i> أوردر هدية - " + finalNotes;
+        if (isGift) finalNotes = "<i class=\'fa-solid fa-gift\'></i> أوردر هدية - " + finalNotes;
 
         let finalTotalVal = document.getElementById('finalTotalDisplay') ? document.getElementById('finalTotalDisplay').innerText : 0;
 
-        // <i class="fa-solid fa-star"></i> إضافة بيانات العربون
+        // <i class=\'fa-solid fa-star\'></i> إضافة بيانات العربون
         let dep = document.getElementById('depositAmount') ? (parseFloat(document.getElementById('depositAmount').value) || 0) : 0;
         let rem = document.getElementById('remainingAmountDisplay') ? parseFloat(document.getElementById('remainingAmountDisplay').innerText) : finalTotalVal;
 
@@ -1552,7 +1552,7 @@ if (saveAndPrintBtn) {
             .then(() => {
                 if (typeof window.hideLoading === 'function') window.hideLoading();
                 if (typeof window.playRegisterBeep === 'function') window.playRegisterBeep();
-                showToast("<i class="fa-solid fa-check"></i> تم حفظ الأوردر بنجاح!", "success");
+                showToast("<i class=\'fa-solid fa-check\'></i> تم حفظ الأوردر بنجاح!", "success");
 
                 let isGovShipping = orderTypeLabel === 'gov_shipping' || orderTypeLabel.includes('محافظات') || delType === 'gov_shipping';
                 if (isGovShipping) {
@@ -1562,7 +1562,7 @@ if (saveAndPrintBtn) {
                 }
 
                 let govStr = gov ? gov + " - " : "";
-                if (document.getElementById('receipt-type')) document.getElementById('receipt-type').innerText = isGift ? `${govStr}${orderTypeLabel} - <i class="fa-solid fa-gift"></i> هدية` : `${govStr}${orderTypeLabel}`;
+                if (document.getElementById('receipt-type')) document.getElementById('receipt-type').innerText = isGift ? `${govStr}${orderTypeLabel} - <i class=\'fa-solid fa-gift\'></i> هدية` : `${govStr}${orderTypeLabel}`;
 
                 let printLogo = document.getElementById('receiptLogo') || document.getElementById('print-logo');
                 if (printLogo) {
@@ -1637,7 +1637,7 @@ if (saveAndPrintBtn) {
 
             }).catch(() => {
                 if (typeof window.hideLoading === 'function') window.hideLoading();
-                showToast("<i class="fa-solid fa-xmark"></i> خطأ في الاتصال بالإنترنت", "error");
+                showToast("<i class=\'fa-solid fa-xmark\'></i> خطأ في الاتصال بالإنترنت", "error");
                 setBtnLoading(saveAndPrintBtn, false, "💾 حفظ وطباعة الفاتورة");
             });
     });
@@ -1654,10 +1654,10 @@ window.deleteItem = function (action, name, zoneType = '') {
         formData.append('name', name);
         if (zoneType) formData.append('zoneType', zoneType);
 
-        showToast("<i class="fa-solid fa-hourglass-half"></i> جاري الحذف...", "warning");
+        showToast("<i class=\'fa-solid fa-hourglass-half\'></i> جاري الحذف...", "warning");
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
-                showToast("<i class="fa-solid fa-check"></i> تم الحذف بنجاح!", "success");
+                showToast("<i class=\'fa-solid fa-check\'></i> تم الحذف بنجاح!", "success");
                 loadDataFromServer();
             });
     });
@@ -1718,7 +1718,7 @@ if (addZoneBtnAction) {
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
-                showToast(`<i class="fa-solid fa-check"></i> تم ${isExisting ? 'تعديل' : 'إضافة'} المنطقة!`, "success");
+                showToast(`<i class=\'fa-solid fa-check\'></i> تم ${isExisting ? 'تعديل' : 'إضافة'} المنطقة!`, "success");
                 setBtnLoading(addZoneBtnAction, false, "حفظ المنطقة");
                 document.getElementById('newZoneName').value = ""; document.getElementById('newZonePrice').value = ""; document.getElementById('newZoneDuration').value = "";
                 loadDataFromServer();
@@ -1744,7 +1744,7 @@ if (addDriverBtnAction) {
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
-                showToast(`<i class="fa-solid fa-check"></i> تم ${isExisting ? 'تعديل' : 'إضافة'} المندوب!`, "success");
+                showToast(`<i class=\'fa-solid fa-check\'></i> تم ${isExisting ? 'تعديل' : 'إضافة'} المندوب!`, "success");
                 setBtnLoading(addDriverBtnAction, false, "حفظ المندوب");
                 document.getElementById('newDriverName').value = ""; document.getElementById('newDriverPhone').value = "";
                 loadDataFromServer();
@@ -1766,7 +1766,7 @@ if (addModeratorBtn) {
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
-                showToast("<i class="fa-solid fa-check"></i> تم إضافة الكاشير بنجاح", "success");
+                showToast("<i class=\'fa-solid fa-check\'></i> تم إضافة الكاشير بنجاح", "success");
                 setBtnLoading(addModeratorBtn, false, "إضافة");
                 nameInput.value = "";
                 loadDataFromServer();
@@ -1788,7 +1788,7 @@ function renderShippingRoom(history) {
         const pendingOrders = window.pendingOrdersData.filter(o => o.orderType !== 'استلام من الفرع' && (!o.orderType || !o.orderType.includes('حجز')));
         const resOrders = window.pendingOrdersData.filter(o => o.orderType && o.orderType.includes('حجز'));
 
-        // <i class="fa-solid fa-star"></i> Update Reservations Badge
+        // <i class=\'fa-solid fa-star\'></i> Update Reservations Badge
         const resBadge = document.getElementById('reservationsCountBadge');
         if (resBadge) {
             resBadge.innerText = `العدد: ${resOrders.length}`;
@@ -1820,9 +1820,9 @@ function renderShippingRoom(history) {
                         </div>
                         <div class="soc-name">${o.name}</div>
                         <div class="soc-info-row">
-                            <div class="soc-info-item highlight"><i class="fa-solid fa-mobile-screen"></i> ${o.phone}</div>
-                            <div class="soc-info-item money"><i class="fa-solid fa-money-bill-wave"></i> ${o.total} ج.م</div>
-                            <div class="soc-info-item"><i class="fa-solid fa-location-dot"></i> ${shortAddress}</div>
+                            <div class="soc-info-item highlight"><i class=\'fa-solid fa-mobile-screen\'></i> ${o.phone}</div>
+                            <div class="soc-info-item money"><i class=\'fa-solid fa-money-bill-wave\'></i> ${o.total} ج.م</div>
+                            <div class="soc-info-item"><i class=\'fa-solid fa-location-dot\'></i> ${shortAddress}</div>
                         </div>
                     </div>
                 </label>`;
@@ -1838,24 +1838,24 @@ function renderShippingRoom(history) {
                         <span class="sac-id">#${o.id}</span>
                     </div>
                     <div class="sac-finance-row">
-                        <div class="sac-date"><i class="fa-regular fa-calendar-days"></i> ${o.date || 'حجز'}</div>
-                        <div class="sac-phone"><i class="fa-solid fa-mobile-screen"></i> ${o.phone}</div>
+                        <div class="sac-date"><i class=\'fa-regular fa-calendar-days\'></i> ${o.date || 'حجز'}</div>
+                        <div class="sac-phone"><i class=\'fa-solid fa-mobile-screen\'></i> ${o.phone}</div>
                         <div class="sac-total">الإجمالي: ${o.total}ج</div>
                         <div class="sac-remain">المتبقي: ${o.remaining}ج</div>
                     </div>
                     <div class="sac-actions">
-                        <button class="sac-btn-deliver interactive-btn" onclick="settleBranchOrder('${o.id}', this)">تم التسليم <i class="fa-solid fa-check"></i></button>
-                        <button class="sac-btn-convert interactive-btn" onclick="convertToNormalDelivery('${o.id}', this)">تحويل لعادي <i class="fa-solid fa-truck-fast"></i></button>
+                        <button class="sac-btn-deliver interactive-btn" onclick="settleBranchOrder('${o.id}', this)">تم التسليم <i class=\'fa-solid fa-check\'></i></button>
+                        <button class="sac-btn-convert interactive-btn" onclick="convertToNormalDelivery('${o.id}', this)">تحويل لعادي <i class=\'fa-solid fa-truck-fast\'></i></button>
                     </div>
                 </div>`;
         });
     }
 
-    // <i class="fa-solid fa-star"></i> قسم أوردرات الفرع (المنفصلة تماماً عن المندوبين)
+    // <i class=\'fa-solid fa-star\'></i> قسم أوردرات الفرع (المنفصلة تماماً عن المندوبين)
     if (branchContainer) {
         const branchOrders = window.pendingOrdersData.filter(o => o.orderType === 'استلام من الفرع');
 
-        // <i class="fa-solid fa-star"></i> Update Branch Badge
+        // <i class=\'fa-solid fa-star\'></i> Update Branch Badge
         const branchBadge = document.getElementById('branchCountBadge');
         if (branchBadge) {
             branchBadge.innerText = `جاهز للاستلام: ${branchOrders.length}`;
@@ -1872,18 +1872,18 @@ function renderShippingRoom(history) {
                         <span class="sac-id">#${o.id}</span>
                     </div>
                     <div class="sac-finance-row">
-                        <div class="sac-phone"><i class="fa-solid fa-mobile-screen"></i> ${o.phone}</div>
+                        <div class="sac-phone"><i class=\'fa-solid fa-mobile-screen\'></i> ${o.phone}</div>
                         <div class="sac-total">الإجمالي: ${o.total}ج</div>
                         <div class="sac-remain">المتبقي: ${o.remaining}ج</div>
                     </div>
                     <div class="sac-actions">
-                        <button class="sac-btn-deliver interactive-btn" style="width: 100%;" onclick="settleBranchOrder('${o.id}', this)">تم تسليم الفرع <i class="fa-solid fa-check"></i></button>
+                        <button class="sac-btn-deliver interactive-btn" style="width: 100%;" onclick="settleBranchOrder('${o.id}', this)">تم تسليم الفرع <i class=\'fa-solid fa-check\'></i></button>
                     </div>
                 </div>`;
         });
     }
 
-    // <i class="fa-solid fa-star"></i> Update Out Orders Badge
+    // <i class=\'fa-solid fa-star\'></i> Update Out Orders Badge
     const outOrdersBadge = document.getElementById('outOrdersCountBadge');
     if (outOrdersBadge && window.latestServerData && window.latestServerData.shippedOrders) {
         let outCount = window.latestServerData.shippedOrders.length;
@@ -1892,7 +1892,7 @@ function renderShippingRoom(history) {
     }
 }
 
-// <i class="fa-solid fa-star"></i> دالة تسليم الفرع الفورية
+// <i class=\'fa-solid fa-star\'></i> دالة تسليم الفرع الفورية
 window.settleBranchOrder = function (orderId, btn) {
     let order = window.pendingOrdersData.find(o => o.id === orderId);
     customSinglePrompt('الرجاء إدخال المبلغ المدفوع لاستلام الفرع:', order ? order.remaining : 0, (amountPaidText) => {
@@ -1906,13 +1906,13 @@ window.settleBranchOrder = function (orderId, btn) {
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
-                showToast(`<i class="fa-solid fa-check"></i> تم التسليم وتصفية مبلغ (${amountPaidText} ج.م) بنجاح!`, "success");
+                showToast(`<i class=\'fa-solid fa-check\'></i> تم التسليم وتصفية مبلغ (${amountPaidText} ج.م) بنجاح!`, "success");
                 loadDataFromServer();
-            }).catch(() => setBtnLoading(btn, false, "تم التسليم <i class="fa-solid fa-check"></i>"));
+            }).catch(() => setBtnLoading(btn, false, "تم التسليم <i class=\'fa-solid fa-check\'></i>"));
     });
 };
 
-// <i class="fa-solid fa-star"></i> دالة تحويل الحجز لتوصيل عادي
+// <i class=\'fa-solid fa-star\'></i> دالة تحويل الحجز لتوصيل عادي
 window.convertToNormalDelivery = function (orderId, btn) {
     customConfirm('هل أنت متأكد من تحويل هذا الحجز إلى توصيل فوري عادي؟', () => {
         setBtnLoading(btn, true);
@@ -1924,13 +1924,13 @@ window.convertToNormalDelivery = function (orderId, btn) {
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
-                showToast("<i class="fa-solid fa-check"></i> تم التحويل لتوصيل فوري بنجاح!", "success");
+                showToast("<i class=\'fa-solid fa-check\'></i> تم التحويل لتوصيل فوري بنجاح!", "success");
                 loadDataFromServer();
-            }).catch(() => setBtnLoading(btn, false, "تحويل لتوصيل عادي <i class="fa-solid fa-truck-fast"></i>"));
+            }).catch(() => setBtnLoading(btn, false, "تحويل لتوصيل عادي <i class=\'fa-solid fa-truck-fast\'></i>"));
     });
 };
 
-// <i class="fa-solid fa-star"></i> حماية زرار (تقفيل المندوبين)
+// <i class=\'fa-solid fa-star\'></i> حماية زرار (تقفيل المندوبين)
 const loadDriverOrdersBtn = document.getElementById('loadDriverOrdersBtn');
 const shippedContainer = document.getElementById('shippedOrdersContainer');
 
@@ -1943,9 +1943,9 @@ if (loadDriverOrdersBtn && shippedContainer) {
             return;
         }
 
-        shippedContainer.innerHTML = '<p class="empty-msg"><i class="fa-solid fa-hourglass-half"></i> جاري تحميل عهدة المندوب...</p>';
+        shippedContainer.innerHTML = '<p class="empty-msg"><i class=\'fa-solid fa-hourglass-half\'></i> جاري تحميل عهدة المندوب...</p>';
 
-        // <i class="fa-solid fa-star"></i> Fix: استخدام shippedOrders المرسلة من الإكسيل مباشرة
+        // <i class=\'fa-solid fa-star\'></i> Fix: استخدام shippedOrders المرسلة من الإكسيل مباشرة
         let shippedOrders = [];
         if (window.latestServerData && window.latestServerData.shippedOrders) {
             shippedOrders = window.latestServerData.shippedOrders.filter(o => o.driver === driver);
@@ -1959,7 +1959,7 @@ if (loadDriverOrdersBtn && shippedContainer) {
     });
 }
 
-// <i class="fa-solid fa-star"></i> دالة مساعدة لعرض أوردرات المندوب المشحونة
+// <i class=\'fa-solid fa-star\'></i> دالة مساعدة لعرض أوردرات المندوب المشحونة
 function renderDriverShippedOrders(shippedOrders, container) {
     container.innerHTML = '';
     if (shippedOrders.length === 0) {
@@ -1975,8 +1975,8 @@ function renderDriverShippedOrders(shippedOrders, container) {
                             <span class="soc-name" style="font-size: 0.95rem;">${o.name}</span>
                         </div>
                         <div class="soc-info-row">
-                            <div class="soc-info-item highlight"><i class="fa-solid fa-mobile-screen"></i> ${o.phone}</div>
-                            <div class="soc-info-item remaining"><i class="fa-solid fa-money-bill-wave"></i> عهدة: ${o.remaining} ج.م</div>
+                            <div class="soc-info-item highlight"><i class=\'fa-solid fa-mobile-screen\'></i> ${o.phone}</div>
+                            <div class="soc-info-item remaining"><i class=\'fa-solid fa-money-bill-wave\'></i> عهدة: ${o.remaining} ج.م</div>
                         </div>
                     </div>
                 </label>`;
@@ -2001,7 +2001,7 @@ function processStatusUpdate(btn, checkboxesClass, newStatus, driverName = "") {
             .then(() => {
                 completed++;
                 if (completed === selected.length) {
-                    showToast(`<i class="fa-solid fa-check"></i> تم التحديث لـ "${newStatus}"`, "success");
+                    showToast(`<i class=\'fa-solid fa-check\'></i> تم التحديث لـ "${newStatus}"`, "success");
                     setBtnLoading(btn, false, btn.dataset.origText);
                     loadDataFromServer();
                 }
@@ -2026,7 +2026,7 @@ if (sendWaDriverBtn) sendWaDriverBtn.addEventListener('click', () => {
         let courier = shippingData[driver] || window.financialsData.find(f => f.name === driver); // fallback search
     }
     // We can also just send it to WhatsApp with empty phone and user selects the contact
-    let ordersListText = `أوردرات المندوب: ${driver} <i class="fa-solid fa-motorcycle"></i>\n\n`;
+    let ordersListText = `أوردرات المندوب: ${driver} <i class=\'fa-solid fa-motorcycle\'></i>\n\n`;
     let totalCash = 0;
 
     const selected = Array.from(document.querySelectorAll('.pending-checkbox:checked')).map(cb => cb.value);
@@ -2035,7 +2035,7 @@ if (sendWaDriverBtn) sendWaDriverBtn.addEventListener('click', () => {
     selected.forEach((orderId, idx) => {
         let o = orderHistoryData.find(x => x.id === orderId);
         if (o) {
-            ordersListText += `${idx + 1}. العميل: ${o.name}\n<i class="fa-solid fa-mobile-screen"></i> ${o.phone}\n<i class="fa-solid fa-location-dot"></i> العنوان: ${o.address}\n<i class="fa-solid fa-money-bill-wave"></i> المطلوب: ${o.remaining} ج.م\n<i class="fa-solid fa-cart-shopping"></i> المنتجات: ${o.products.replace(/\n/g, ', ')}\n\n`;
+            ordersListText += `${idx + 1}. العميل: ${o.name}\n<i class=\'fa-solid fa-mobile-screen\'></i> ${o.phone}\n<i class=\'fa-solid fa-location-dot\'></i> العنوان: ${o.address}\n<i class=\'fa-solid fa-money-bill-wave\'></i> المطلوب: ${o.remaining} ج.م\n<i class=\'fa-solid fa-cart-shopping\'></i> المنتجات: ${o.products.replace(/\n/g, ', ')}\n\n`;
             totalCash += parseFloat(o.remaining) || 0;
         }
     });
@@ -2055,7 +2055,7 @@ function updateAdvancedDashboard(history) {
     let productMap = {};
     let platformMap = {};
 
-    // <i class="fa-solid fa-star"></i> Fix: استخدام التاريخ المحلي بدل UTC لتجنب مشكلة الـ timezone
+    // <i class=\'fa-solid fa-star\'></i> Fix: استخدام التاريخ المحلي بدل UTC لتجنب مشكلة الـ timezone
     let now = new Date();
     let todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
     let monthStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
@@ -2065,7 +2065,7 @@ function updateAdvancedDashboard(history) {
     let todayOrdersCount = 0;
     let todaySalesTotal = 0;
 
-    // <i class="fa-solid fa-star"></i> Fix: دمج كل مصادر البيانات للحصول على صورة شاملة (لليوم فقط)
+    // <i class=\'fa-solid fa-star\'></i> Fix: دمج كل مصادر البيانات للحصول على صورة شاملة (لليوم فقط)
     let allKnownOrders = [...allOrders];
     if (window.uncollectedOrdersData && window.uncollectedOrdersData.length > 0) {
         window.uncollectedOrdersData.forEach(uo => {
@@ -2090,7 +2090,7 @@ function updateAdvancedDashboard(history) {
         if (isAccountedFor && oDate === todayStr) completedToday++;
     });
 
-    // <i class="fa-solid fa-star"></i> حساب العهدة الإجمالية من البيانات المالية (من الإكسيل مباشرة)
+    // <i class=\'fa-solid fa-star\'></i> حساب العهدة الإجمالية من البيانات المالية (من الإكسيل مباشرة)
     let moneyWithDrivers = 0;
     if (window.latestServerData && window.latestServerData.financials) {
         window.latestServerData.financials.forEach(f => {
@@ -2101,7 +2101,7 @@ function updateAdvancedDashboard(history) {
     // عرض الإحصائيات الأساسية
     if (document.getElementById('moneyWithDrivers')) document.getElementById('moneyWithDrivers').innerText = moneyWithDrivers;
 
-    // <i class="fa-solid fa-star"></i> تحديث إحصائيات اليوم محلياً بشكل صحيح
+    // <i class=\'fa-solid fa-star\'></i> تحديث إحصائيات اليوم محلياً بشكل صحيح
     if (document.getElementById('todayCount')) document.getElementById('todayCount').innerText = todayOrdersCount;
     if (document.getElementById('todaySales')) document.getElementById('todaySales').innerText = todaySalesTotal;
     if (document.getElementById('completedCount')) document.getElementById('completedCount').innerText = completedToday;
@@ -2114,7 +2114,7 @@ function updateAdvancedDashboard(history) {
     }
 }
 
-// <i class="fa-solid fa-star"></i> V15.1: بناء قائمة الشهور لفلتر التقارير - شهور فيها بيانات فقط
+// <i class=\'fa-solid fa-star\'></i> V15.1: بناء قائمة الشهور لفلتر التقارير - شهور فيها بيانات فقط
 function buildMonthFilterOptions() {
     let sel = document.getElementById('reportMonthFilter');
     if (!sel) return;
@@ -2122,7 +2122,7 @@ function buildMonthFilterOptions() {
     sel.innerHTML = '<option value="">اختر الشهر</option>';
     let arabicMonths = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
 
-    // <i class="fa-solid fa-star"></i> Fix: جمع كل الشهور الفعلية من البيانات المتاحة
+    // <i class=\'fa-solid fa-star\'></i> Fix: جمع كل الشهور الفعلية من البيانات المتاحة
     let availableMonths = new Set();
     let allDataSources = [
         ...(window.orderHistoryData || []),
@@ -2135,7 +2135,7 @@ function buildMonthFilterOptions() {
         if (d && d.length === 7 && d.includes('-')) availableMonths.add(d);
     });
 
-    // <i class="fa-solid fa-star"></i> Fix: إضافة الشهر الحالي دائماً (بدون toISOString)
+    // <i class=\'fa-solid fa-star\'></i> Fix: إضافة الشهر الحالي دائماً (بدون toISOString)
     let now = new Date();
     let currentMonthVal = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
     availableMonths.add(currentMonthVal);
@@ -2156,18 +2156,18 @@ function buildMonthFilterOptions() {
     if (currentVal) sel.value = currentVal;
 }
 
-// <i class="fa-solid fa-star"></i> V15.1: عرض تقرير شهر محدد - يجلب من السيرفر
+// <i class=\'fa-solid fa-star\'></i> V15.1: عرض تقرير شهر محدد - يجلب من السيرفر
 function renderReportForMonth(targetMonth) {
     let statusEl = document.getElementById('reportFilterStatus');
     let topEl = document.getElementById('topProductsList');
     let pltEl = document.getElementById('platformStatsList');
     if (!targetMonth) {
-        if (statusEl) statusEl.textContent = '<i class="fa-solid fa-triangle-exclamation"></i> اختر شهراً أولاً';
+        if (statusEl) statusEl.textContent = '<i class=\'fa-solid fa-triangle-exclamation\'></i> اختر شهراً أولاً';
         return;
     }
-    if (statusEl) statusEl.textContent = '<i class="fa-solid fa-hourglass-half"></i> جاري تحميل بيانات الشهر...';
-    if (topEl) topEl.innerHTML = '<p class="empty-msg"><i class="fa-solid fa-hourglass-half"></i> جاري التحميل...</p>';
-    if (pltEl) pltEl.innerHTML = '<p class="empty-msg"><i class="fa-solid fa-hourglass-half"></i> جاري التحميل...</p>';
+    if (statusEl) statusEl.textContent = '<i class=\'fa-solid fa-hourglass-half\'></i> جاري تحميل بيانات الشهر...';
+    if (topEl) topEl.innerHTML = '<p class="empty-msg"><i class=\'fa-solid fa-hourglass-half\'></i> جاري التحميل...</p>';
+    if (pltEl) pltEl.innerHTML = '<p class="empty-msg"><i class=\'fa-solid fa-hourglass-half\'></i> جاري التحميل...</p>';
 
     let fetchDate = targetMonth + '-01';
     fetch(`${GOOGLE_SHEETS_URL}?date=${fetchDate}`)
@@ -2175,7 +2175,7 @@ function renderReportForMonth(targetMonth) {
         .then(data => {
             let arabicMonths = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
             let [yr, mo] = targetMonth.split('-');
-            if (statusEl) statusEl.textContent = `<i class="fa-solid fa-check"></i> تم تحميل بيانات ${arabicMonths[parseInt(mo) - 1]} ${yr}`;
+            if (statusEl) statusEl.textContent = `<i class=\'fa-solid fa-check\'></i> تم تحميل بيانات ${arabicMonths[parseInt(mo) - 1]} ${yr}`;
 
             // أفضل 10 منتجات
             if (topEl) {
@@ -2199,7 +2199,7 @@ function renderReportForMonth(targetMonth) {
                 }
             }
 
-            // <i class="fa-solid fa-star"></i> تحديث إحصائيات الشهر في أعلى الصفحة بناءً على الشهر المختار
+            // <i class=\'fa-solid fa-star\'></i> تحديث إحصائيات الشهر في أعلى الصفحة بناءً على الشهر المختار
             if (document.getElementById('monthCount')) document.getElementById('monthCount').innerText = data.monthOrderCount || 0;
             if (document.getElementById('monthSales')) document.getElementById('monthSales').innerText = data.monthSales || 0;
             if (document.getElementById('completedMonthCount')) document.getElementById('completedMonthCount').innerText = data.completedMonthCount || 0;
@@ -2209,12 +2209,12 @@ function renderReportForMonth(targetMonth) {
             if (pltEl) {
                 let raw = data.monthPlatforms || {};
                 const ORDER = [
-                    { key: 'واتساب', emoji: '<i class="fa-brands fa-whatsapp"></i>', color: '#25D366' },
-                    { key: 'انستجرام', emoji: '<i class="fa-brands fa-instagram"></i>', color: '#E1306C' },
-                    { key: 'فيسبوك', emoji: '<i class="fa-brands fa-facebook"></i>', color: '#1877F2' },
-                    { key: 'تيك توك', emoji: '<i class="fa-brands fa-tiktok"></i>', color: '#010101' },
+                    { key: 'واتساب', emoji: '<i class=\'fa-brands fa-whatsapp\'></i>', color: '#25D366' },
+                    { key: 'انستجرام', emoji: '<i class=\'fa-brands fa-instagram\'></i>', color: '#E1306C' },
+                    { key: 'فيسبوك', emoji: '<i class=\'fa-brands fa-facebook\'></i>', color: '#1877F2' },
+                    { key: 'تيك توك', emoji: '<i class=\'fa-brands fa-tiktok\'></i>', color: '#010101' },
                 ];
-                // <i class="fa-solid fa-star"></i> حساب الإجمالي باستخدام includes لتغطية الإيموجي في الشيت
+                // <i class=\'fa-solid fa-star\'></i> حساب الإجمالي باستخدام includes لتغطية الإيموجي في الشيت
                 const getCount = (raw, keyword) => {
                     return Object.entries(raw).reduce((sum, [k, v]) => k.includes(keyword) ? sum + v : sum, 0);
                 };
@@ -2241,13 +2241,13 @@ function renderReportForMonth(targetMonth) {
             }
         })
         .catch(() => {
-            if (statusEl) statusEl.textContent = '<i class="fa-solid fa-xmark"></i> حدث خطأ في الاتصال';
-            if (topEl) topEl.innerHTML = '<p class="empty-msg"><i class="fa-solid fa-xmark"></i> تعذر التحميل</p>';
-            if (pltEl) pltEl.innerHTML = '<p class="empty-msg"><i class="fa-solid fa-xmark"></i> تعذر التحميل</p>';
+            if (statusEl) statusEl.textContent = '<i class=\'fa-solid fa-xmark\'></i> حدث خطأ في الاتصال';
+            if (topEl) topEl.innerHTML = '<p class="empty-msg"><i class=\'fa-solid fa-xmark\'></i> تعذر التحميل</p>';
+            if (pltEl) pltEl.innerHTML = '<p class="empty-msg"><i class=\'fa-solid fa-xmark\'></i> تعذر التحميل</p>';
         });
 }
 
-// <i class="fa-solid fa-star"></i> V15.1: ربط زرار التقارير
+// <i class=\'fa-solid fa-star\'></i> V15.1: ربط زرار التقارير
 let loadReportsBtn = document.getElementById('loadReportsBtn');
 if (loadReportsBtn) {
     let reportsVisible = false;
@@ -2256,7 +2256,7 @@ if (loadReportsBtn) {
         if (!sec) return;
         reportsVisible = !reportsVisible;
         sec.style.display = reportsVisible ? 'block' : 'none';
-        loadReportsBtn.textContent = reportsVisible ? '<i class="fa-solid fa-chart-column"></i> إخفاء التقارير التفصيلية' : '<i class="fa-solid fa-chart-column"></i> إظهار التقارير التفصيلية';
+        loadReportsBtn.textContent = reportsVisible ? '<i class=\'fa-solid fa-chart-column\'></i> إخفاء التقارير التفصيلية' : '<i class=\'fa-solid fa-chart-column\'></i> إظهار التقارير التفصيلية';
         if (reportsVisible) buildMonthFilterOptions();
     });
 }
@@ -2275,7 +2275,7 @@ window.shareToWhatsAppGroup = function (orderId) {
     if (typeof orderId === 'object') {
         order = orderId;
     } else {
-        // <i class="fa-solid fa-star"></i> Fix: String() comparison to prevent type mismatch (string vs number)
+        // <i class=\'fa-solid fa-star\'></i> Fix: String() comparison to prevent type mismatch (string vs number)
         let findFn = o => String(o.id) === String(orderId);
         order = (window.orderHistoryData || []).find(findFn) ||
             (window.searchResultsCache || []).find(findFn) ||
@@ -2292,7 +2292,7 @@ window.shareToWhatsAppGroup = function (orderId) {
     }
     console.log("Order Data:", order);
 
-    // <i class="fa-solid fa-star"></i> V14.2: إصلاح شامل لـ Keys القادمة من الإكسيل - fallback لكل حقل
+    // <i class=\'fa-solid fa-star\'></i> V14.2: إصلاح شامل لـ Keys القادمة من الإكسيل - fallback لكل حقل
     let _name = order.name || order.customerName || "";
     let _gov = order.gov || order.governorate || "";
     let _address = order.address || order.customerAddress || order.addr || "";
@@ -2312,7 +2312,7 @@ window.shareToWhatsAppGroup = function (orderId) {
                 let d = new Date(resDate);
                 if (!isNaN(d.getTime())) resDate = `${d.getFullYear()}-${("0" + (d.getMonth() + 1)).slice(-2)}-${("0" + d.getDate()).slice(-2)}`;
             }
-            text += `<i class="fa-regular fa-calendar"></i> *تاريخ التسليم:* ${resDate}\n`;
+            text += `<i class=\'fa-regular fa-calendar\'></i> *تاريخ التسليم:* ${resDate}\n`;
         }
     }
     text += `*تاريخ إنشاء الأوردر:* ${order.date || new Date().toLocaleDateString('ar-EG')} ⏰ ${order.time || new Date().toLocaleTimeString('ar-EG')}\n`;
@@ -2322,21 +2322,21 @@ window.shareToWhatsAppGroup = function (orderId) {
     text += `عدد اوردرات اليوم : ${tCount}\n`;
     text += `عدد اوردرات الشهر : ${mCount}\n`;
 
-    text += `<i class="fa-solid fa-user"></i> *العميل:* ${_name}\n`;
+    text += `<i class=\'fa-solid fa-user\'></i> *العميل:* ${_name}\n`;
     if (!_type.includes('استلام') && !_type.includes('فرع') && (_gov || _address)) {
-        text += `<i class="fa-solid fa-location-dot"></i> *العنوان:* ${_gov ? _gov + " - " : ""}${_address}\n`;
+        text += `<i class=\'fa-solid fa-location-dot\'></i> *العنوان:* ${_gov ? _gov + " - " : ""}${_address}\n`;
     }
-    if (_phone) text += `<i class="fa-solid fa-mobile-screen"></i> *الموبايل:* ${_phone}\n`;
-    if (_phone2 && String(_phone2).trim() !== '') text += `<i class="fa-solid fa-mobile-screen"></i> *رقم احتياطي:* ${String(_phone2).trim()}\n`;
+    if (_phone) text += `<i class=\'fa-solid fa-mobile-screen\'></i> *الموبايل:* ${_phone}\n`;
+    if (_phone2 && String(_phone2).trim() !== '') text += `<i class=\'fa-solid fa-mobile-screen\'></i> *رقم احتياطي:* ${String(_phone2).trim()}\n`;
     text += `💳 *طريقة الدفع:* ${_payment}\n\n`;
-    text += `<i class="fa-solid fa-box"></i> *المنتجات:*\n${_products}\n`;
+    text += `<i class=\'fa-solid fa-box\'></i> *المنتجات:*\n${_products}\n`;
     let _subtotal = order.subtotal || order.productsTotal || (parseFloat(order.total) - parseFloat(_shipping)) || 0;
-    text += `<i class="fa-solid fa-bag-shopping"></i> *إجمالي المنتجات:* ${_subtotal} ج.م\n`;
-    text += `<i class="fa-solid fa-truck-fast"></i> *الشحن:* ${_shipping}\n`;
-    text += `<i class="fa-solid fa-money-bill-wave"></i> *الإجمالي النهائي:* ${_remaining}\n`;
+    text += `<i class=\'fa-solid fa-bag-shopping\'></i> *إجمالي المنتجات:* ${_subtotal} ج.م\n`;
+    text += `<i class=\'fa-solid fa-truck-fast\'></i> *الشحن:* ${_shipping}\n`;
+    text += `<i class=\'fa-solid fa-money-bill-wave\'></i> *الإجمالي النهائي:* ${_remaining}\n`;
 
     navigator.clipboard.writeText(text).then(() => {
-        showToast("تم نسخ بيانات الأوردر للحافظة بنجاح <i class="fa-solid fa-clipboard"></i>", "success");
+        showToast("تم نسخ بيانات الأوردر للحافظة بنجاح <i class=\'fa-solid fa-clipboard\'></i>", "success");
     }).catch(err => {
         showToast("فشل في نسخ البيانات", "error");
     });
@@ -2394,22 +2394,22 @@ if (sendWaManagerBtn) sendWaManagerBtn.addEventListener('click', () => {
 
     let monthSales = document.getElementById('monthSales') ? document.getElementById('monthSales').innerText : 0;
 
-    let report = `<i class="fa-solid fa-chart-column"></i> *تقرير الإدارة - Candy Club Pro*\n\n`;
-    report += `<i class="fa-regular fa-calendar-days"></i> *إحصائيات اليوم:*\n`;
-    report += `<i class="fa-solid fa-cart-shopping"></i> أوردرات اليوم: ${tCount}\n`;
-    report += `<i class="fa-solid fa-money-bill-wave"></i> مبيعات اليوم المتوقعة: ${tSales} ج\n`;
-    report += `<i class="fa-solid fa-check"></i> أوردرات مكتملة (محاسب): ${compCount}\n`;
-    report += `<i class="fa-solid fa-siren-on"></i> مرتجعات: ${retCount}\n\n`;
+    let report = `<i class=\'fa-solid fa-chart-column\'></i> *تقرير الإدارة - Candy Club Pro*\n\n`;
+    report += `<i class=\'fa-regular fa-calendar-days\'></i> *إحصائيات اليوم:*\n`;
+    report += `<i class=\'fa-solid fa-cart-shopping\'></i> أوردرات اليوم: ${tCount}\n`;
+    report += `<i class=\'fa-solid fa-money-bill-wave\'></i> مبيعات اليوم المتوقعة: ${tSales} ج\n`;
+    report += `<i class=\'fa-solid fa-check\'></i> أوردرات مكتملة (محاسب): ${compCount}\n`;
+    report += `<i class=\'fa-solid fa-siren-on\'></i> مرتجعات: ${retCount}\n\n`;
 
-    report += `<i class="fa-regular fa-calendar-days"></i> *إحصائيات الشهر:*\n`;
+    report += `<i class=\'fa-regular fa-calendar-days\'></i> *إحصائيات الشهر:*\n`;
     report += `📈 إجمالي مبيعات الشهر: ${monthSales} ج\n\n`;
 
-    report += `<i class="fa-solid fa-triangle-exclamation"></i> منتجات ناقصة: ${oosCount}\n`;
-    report += `<i class="fa-solid fa-star"></i> المنتج الأكثر مبيعاً: ${topP}\n\n`;
-    report += `تم الإنشاء بواسطة سيستم الإدارة الآلي <i class="fa-solid fa-gear"></i>`;
+    report += `<i class=\'fa-solid fa-triangle-exclamation\'></i> منتجات ناقصة: ${oosCount}\n`;
+    report += `<i class=\'fa-solid fa-star\'></i> المنتج الأكثر مبيعاً: ${topP}\n\n`;
+    report += `تم الإنشاء بواسطة سيستم الإدارة الآلي <i class=\'fa-solid fa-gear\'></i>`;
 
     navigator.clipboard.writeText(report).then(() => {
-        showToast("تم نسخ التقرير للحافظة بنجاح <i class="fa-solid fa-clipboard"></i>", "success");
+        showToast("تم نسخ التقرير للحافظة بنجاح <i class=\'fa-solid fa-clipboard\'></i>", "success");
     }).catch(err => {
         showToast("فشل في نسخ التقرير", "error");
     });
@@ -2514,7 +2514,7 @@ function renderCatalog() {
                     <input type="checkbox" class="offer-toggle" ${isOfferActive ? 'checked' : ''}>
                     <span class="slider round"></span>
                 </label>
-                <button class="btn-outline interactive-btn edit-cat-btn" style="padding:4px; font-size:0.7rem;">تعديل <i class="fa-solid fa-pencil"></i></button>
+                <button class="btn-outline interactive-btn edit-cat-btn" style="padding:4px; font-size:0.7rem;">تعديل <i class=\'fa-solid fa-pencil\'></i></button>
             </div>
         `;
 
@@ -2526,11 +2526,11 @@ function renderCatalog() {
                     if (!val) { e.target.checked = false; return; }
                     currentOffer = val;
                     window.pushCatalogUpdate(p.name, p.price, newState, currentOffer);
-                    showToast("<i class="fa-solid fa-check"></i> تم تفعيل العرض", "success");
+                    showToast("<i class=\'fa-solid fa-check\'></i> تم تفعيل العرض", "success");
                 });
             } else {
                 window.pushCatalogUpdate(p.name, p.price, newState, currentOffer);
-                showToast(newState ? "<i class="fa-solid fa-check"></i> تم تفعيل العرض" : "<i class="fa-solid fa-xmark"></i> تم إيقاف العرض", "success");
+                showToast(newState ? "<i class=\'fa-solid fa-check\'></i> تم تفعيل العرض" : "<i class=\'fa-solid fa-xmark\'></i> تم إيقاف العرض", "success");
             }
         });
 
@@ -2600,7 +2600,7 @@ if (saveEditCatBtn) {
         window.pushCatalogUpdate(name, price, isOfferActive, offerPrice);
 
         setTimeout(() => {
-            showToast("<i class="fa-solid fa-check"></i> تم التعديل بنجاح", "success");
+            showToast("<i class=\'fa-solid fa-check\'></i> تم التعديل بنجاح", "success");
             setBtnLoading(saveEditCatBtn, false, "حفظ التعديلات");
             document.getElementById('editCatalogModal').classList.remove('active');
         }, 1500);
@@ -2616,7 +2616,7 @@ if (addCatalogBtn) {
 
         setBtnLoading(addCatalogBtn, true);
         window.pushCatalogUpdate(n, p, false, 0);
-        showToast("<i class="fa-solid fa-check"></i> تم إضافة المنتج", "success");
+        showToast("<i class=\'fa-solid fa-check\'></i> تم إضافة المنتج", "success");
         setTimeout(() => {
             document.getElementById('newCatalogName').value = '';
             document.getElementById('newCatalogPrice').value = '';
@@ -2647,8 +2647,8 @@ function renderOutOfStock(oosList) {
                 <span style="font-size:0.75rem; color:#888;">الغرض: ${item.reason || '--'}</span>
             </div>
             <div style="display:flex; gap:5px;">
-                <button class="interactive-btn wa-oos-btn" style="background:#25D366; color:white; border:none; padding:5px 10px; border-radius:8px;"><i class="fa-brands fa-whatsapp"></i></button>
-                <button class="interactive-btn del-oos-btn" style="background:var(--danger); color:white; border:none; padding:5px 10px; border-radius:8px;"><i class="fa-solid fa-xmark"></i></button>
+                <button class="interactive-btn wa-oos-btn" style="background:#25D366; color:white; border:none; padding:5px 10px; border-radius:8px;"><i class=\'fa-brands fa-whatsapp\'></i></button>
+                <button class="interactive-btn del-oos-btn" style="background:var(--danger); color:white; border:none; padding:5px 10px; border-radius:8px;"><i class=\'fa-solid fa-xmark\'></i></button>
             </div>
         `;
 
@@ -2695,7 +2695,7 @@ if (addOosBtn) {
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
-                showToast("<i class="fa-solid fa-check"></i> تم تسجيل الناقص", "success");
+                showToast("<i class=\'fa-solid fa-check\'></i> تم تسجيل الناقص", "success");
                 setBtnLoading(addOosBtn, false, "تسجيل");
                 document.getElementById('oosCustomer').value = '';
                 document.getElementById('oosPhone').value = '';
@@ -2745,7 +2745,7 @@ function renderCustomers(customersList) {
     if(dashTotalOrders) dashTotalOrders.innerText = totalOrders;
 
     if (customersList.length === 0) {
-        container.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #999;"><i class="fa-solid fa-box-open" style="font-size: 3rem; margin-bottom: 10px;"></i><p>لا يوجد عملاء مطابقين للبحث.</p></div>';
+        container.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #999;"><i class=\'fa-solid fa-box-open\' style=\'font-size: 3rem; margin-bottom: 10px;\'></i><p>لا يوجد عملاء مطابقين للبحث.</p></div>';
         return;
     }
 
@@ -2755,26 +2755,26 @@ function renderCustomers(customersList) {
         div.className = 'dash-card';
         div.style.cssText = `background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border-top: 4px solid ${isVip ? '#f1c40f' : 'var(--primary)'}; position: relative;`;
         
-        let vipBadge = isVip ? '<span style="position: absolute; top: 10px; left: 10px; background: rgba(241, 196, 15, 0.2); color: #f39c12; padding: 3px 8px; border-radius: 20px; font-size: 0.75rem; font-weight: bold;"><i class="fa-solid fa-star"></i> VIP</span>' : '';
+        let vipBadge = isVip ? '<span style="position: absolute; top: 10px; left: 10px; background: rgba(241, 196, 15, 0.2); color: #f39c12; padding: 3px 8px; border-radius: 20px; font-size: 0.75rem; font-weight: bold;"><i class=\'fa-solid fa-star\'></i> VIP</span>' : '';
 
         div.innerHTML = `
             ${vipBadge}
             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
                 <div style="width: 45px; height: 45px; border-radius: 50%; background: var(--bg); display: flex; justify-content: center; align-items: center; font-size: 1.2rem; color: var(--primary);">
-                    <i class="fa-solid fa-user"></i>
+                    <i class=\'fa-solid fa-user\'></i>
                 </div>
                 <div>
                     <h4 style="margin: 0; font-size: 1.1rem; color: var(--text-dark);">${c.name}</h4>
-                    <span style="font-size: 0.85rem; color: #7f8c8d;"><i class="fa-solid fa-phone" style="font-size: 0.75rem;"></i> ${c.phone}</span>
+                    <span style="font-size: 0.85rem; color: #7f8c8d;"><i class=\'fa-solid fa-phone\' style=\'font-size: 0.75rem;\'></i> ${c.phone}</span>
                 </div>
             </div>
             <div style="font-size: 0.85rem; color: #555; display: flex; flex-direction: column; gap: 6px;">
-                <span><i class="fa-solid fa-location-dot" style="color: #e74c3c;"></i> ${c.gov || 'غير محدد'} - ${c.address || ''}</span>
+                <span><i class=\'fa-solid fa-location-dot\' style=\'color: #e74c3c;\'></i> ${c.gov || 'غير محدد'} - ${c.address || ''}</span>
                 <div style="display: flex; justify-content: space-between; background: #f9f9f9; padding: 8px; border-radius: 8px; margin-top: 5px;">
-                    <span><i class="fa-solid fa-cart-shopping" style="color: #3498db;"></i> طلبات: <strong>${c.count || 0}</strong></span>
-                    <span><i class="fa-solid fa-money-bill-wave" style="color: #27ae60;"></i> مدفوعات: <strong>${c.total || 0}ج</strong></span>
+                    <span><i class=\'fa-solid fa-cart-shopping\' style=\'color: #3498db;\'></i> طلبات: <strong>${c.count || 0}</strong></span>
+                    <span><i class=\'fa-solid fa-money-bill-wave\' style=\'color: #27ae60;\'></i> مدفوعات: <strong>${c.total || 0}ج</strong></span>
                 </div>
-                <span style="font-size: 0.75rem; color: #999; text-align: left; margin-top: 5px;"><i class="fa-regular fa-calendar"></i> آخر طلب: ${c.lastDate ? String(c.lastDate).split('T')[0] : '--'}</span>
+                <span style="font-size: 0.75rem; color: #999; text-align: left; margin-top: 5px;"><i class=\'fa-regular fa-calendar\'></i> آخر طلب: ${c.lastDate ? String(c.lastDate).split('T')[0] : '--'}</span>
             </div>
         `;
         container.appendChild(div);
@@ -2831,7 +2831,7 @@ if (loadCustomersBtn) {
         if (btnIcon) btnIcon.classList.add('fa-spin');
         
         if(customersListContainer) {
-            customersListContainer.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--primary);"><i class="fa-solid fa-spinner fa-spin" style="font-size: 3rem; margin-bottom: 10px;"></i><p>جاري تحميل وتحليل البيانات...</p></div>';
+            customersListContainer.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--primary);"><i class=\'fa-solid fa-spinner fa-spin\' style=\'font-size: 3rem; margin-bottom: 10px;\'></i><p>جاري تحميل وتحليل البيانات...</p></div>';
         }
 
         fetch(`${GOOGLE_SHEETS_URL}?action=getCustomers`)
@@ -2858,7 +2858,7 @@ if (customerSearchInput) {
 }
 
 // ==========================================
-// 13. <i class="fa-solid fa-star"></i> حماية زر الإكسيل بباسورد
+// 13. <i class=\'fa-solid fa-star\'></i> حماية زر الإكسيل بباسورد
 // ==========================================
 const EXCEL_SHEET_URL = "https://docs.google.com/spreadsheets/d/1RL9fNadwDxgGMh45beymGbVzv0uQERHnR_bJrvQ8-AM/edit?gid=0#gid=0";
 const EXCEL_PASSWORD = "2092006";
@@ -2898,7 +2898,7 @@ if (togglePasswordVisibility && excelPasswordInput) {
             togglePasswordVisibility.textContent = '🙈';
         } else {
             excelPasswordInput.type = 'password';
-            togglePasswordVisibility.textContent = '<i class="fa-solid fa-eye"></i>';
+            togglePasswordVisibility.textContent = '<i class=\'fa-solid fa-eye\'></i>';
         }
     });
 }
@@ -2906,7 +2906,7 @@ if (togglePasswordVisibility && excelPasswordInput) {
 function tryExcelPassword() {
     let enteredPassword = excelPasswordInput ? excelPasswordInput.value.trim() : '';
     if (enteredPassword === EXCEL_PASSWORD) {
-        showToast("<i class="fa-solid fa-check"></i> تم التحقق بنجاح، جاري فتح قاعدة البيانات...", "success");
+        showToast("<i class=\'fa-solid fa-check\'></i> تم التحقق بنجاح، جاري فتح قاعدة البيانات...", "success");
         excelPasswordModal.classList.remove('active');
         if (excelPasswordInput) excelPasswordInput.value = '';
         window.open(EXCEL_SHEET_URL, '_blank');
@@ -2935,7 +2935,7 @@ if (excelPasswordInput) {
 }
 
 // ==========================================
-// 14. <i class="fa-solid fa-star"></i> الماسح الضوئي الذكي (Offline Barcode Scanner)
+// 14. <i class=\'fa-solid fa-star\'></i> الماسح الضوئي الذكي (Offline Barcode Scanner)
 // ==========================================
 
 let barcodeCatalogData = [];
@@ -2990,8 +2990,8 @@ function fetchCatalogFromFirebase() {
         console.warn("تعذر قراءة الكاش المحلي:", e);
     }
 
-    // <i class="fa-solid fa-globe"></i> الخطوة 2: جلب البيانات الطازجة من Firebase في الخلفية
-    console.log("<i class="fa-solid fa-hourglass-half"></i> جاري تحميل بيانات المنتجات من Firebase...");
+    // <i class=\'fa-solid fa-globe\'></i> الخطوة 2: جلب البيانات الطازجة من Firebase في الخلفية
+    console.log("<i class=\'fa-solid fa-hourglass-half\'></i> جاري تحميل بيانات المنتجات من Firebase...");
     fetch(FIREBASE_PRODUCTS_URL)
         .then(response => {
             if (!response.ok) throw new Error("فشل الاتصال بـ Firebase: " + response.status);
@@ -3007,10 +3007,10 @@ function fetchCatalogFromFirebase() {
                 console.warn("تعذر حفظ الكاش المحلي:", e);
             }
 
-            console.log("<i class="fa-solid fa-check"></i> تم تحميل بيانات المنتجات من Firebase: ", barcodeCatalogData.length, "منتج");
+            console.log("<i class=\'fa-solid fa-check\'></i> تم تحميل بيانات المنتجات من Firebase: ", barcodeCatalogData.length, "منتج");
             updateSmartSuggestionsFromFirebase();
             
-            // <i class="fa-solid fa-star"></i> Re-enrich Expiry Data in case it loaded before Firebase
+            // <i class=\'fa-solid fa-star\'></i> Re-enrich Expiry Data in case it loaded before Firebase
             if (typeof expiryData !== 'undefined' && expiryData.length > 0) {
                 const fbMap = new Map();
                 barcodeCatalogData.forEach(p => fbMap.set(String(p.name).trim().toLowerCase(), p));
@@ -3030,9 +3030,9 @@ function fetchCatalogFromFirebase() {
             }
         })
         .catch(err => {
-            console.error("<i class="fa-solid fa-xmark"></i> خطأ في تحميل المنتجات من Firebase:", err);
+            console.error("<i class=\'fa-solid fa-xmark\'></i> خطأ في تحميل المنتجات من Firebase:", err);
             if (barcodeCatalogData.length === 0) {
-                showToast("<i class="fa-solid fa-triangle-exclamation"></i> فشل تحميل بيانات المنتجات من السيرفر", "error");
+                showToast("<i class=\'fa-solid fa-triangle-exclamation\'></i> فشل تحميل بيانات المنتجات من السيرفر", "error");
             }
         });
 }
@@ -3179,15 +3179,15 @@ function processBarcodeAction(val) {
                 if (ledgerProdName) ledgerProdName.value = found.name;
                 if (ledgerProdQty) ledgerProdQty.value = found.stock ? Number(found.stock) : 0;
                 if (ledgerProdBarcode) ledgerProdBarcode.value = val;
-                showToast("<i class="fa-solid fa-check"></i> " + found.name + " | الكمية: " + found.stock + " | السعر: " + found.price + " ج.م", "success");
+                showToast("<i class=\'fa-solid fa-check\'></i> " + found.name + " | الكمية: " + found.stock + " | السعر: " + found.price + " ج.م", "success");
             } else {
                 if (ledgerProdName) ledgerProdName.value = '';
                 if (ledgerProdQty) ledgerProdQty.value = '';
                 if (ledgerProdBarcode) ledgerProdBarcode.value = val; 
-                showToast("<i class="fa-solid fa-triangle-exclamation"></i> الباركود (" + val + ") غير مسجل، اكتب الاسم يدوياً", "warning");
+                showToast("<i class=\'fa-solid fa-triangle-exclamation\'></i> الباركود (" + val + ") غير مسجل، اكتب الاسم يدوياً", "warning");
             }
         } else {
-            showToast("<i class="fa-solid fa-triangle-exclamation"></i> لم يتم التعرف على النص أو الكتالوج فارغ", "error");
+            showToast("<i class=\'fa-solid fa-triangle-exclamation\'></i> لم يتم التعرف على النص أو الكتالوج فارغ", "error");
         }
         
         playBeepSound();
@@ -3255,7 +3255,7 @@ function handleBarcodeMatch(barcodeValue) {
         modalContent.classList.add('flash-success');
 
     } else {
-        showToast("المنتج غير مسجل في قاعدة البيانات <i class="fa-solid fa-xmark"></i>", "error");
+        showToast("المنتج غير مسجل في قاعدة البيانات <i class=\'fa-solid fa-xmark\'></i>", "error");
     }
 }
 
@@ -3292,7 +3292,7 @@ if (copyProductNameBtn) {
         let nameToCopy = document.getElementById('scanResultName').textContent;
         navigator.clipboard.writeText(nameToCopy).then(() => {
             let origText = copyProductNameBtn.textContent;
-            copyProductNameBtn.textContent = "تم النسخ <i class="fa-solid fa-check"></i>";
+            copyProductNameBtn.textContent = "تم النسخ <i class=\'fa-solid fa-check\'></i>";
             copyProductNameBtn.style.background = "var(--success-light)";
             copyProductNameBtn.style.color = "var(--success)";
             copyProductNameBtn.style.borderColor = "var(--success)";
@@ -3319,7 +3319,7 @@ function loadExpiryData() {
     const btn = document.getElementById('refreshExpiryBtn');
     if (btn) {
         btn.dataset.origText = btn.innerText;
-        btn.innerText = "جاري التحميل <i class="fa-solid fa-hourglass-half"></i>...";
+        btn.innerText = "جاري التحميل <i class=\'fa-solid fa-hourglass-half\'></i>...";
         btn.style.opacity = "0.7";
         btn.style.pointerEvents = "none";
     }
@@ -3336,7 +3336,7 @@ function loadExpiryData() {
             // Assuming data is an array of objects: { id, name, qty, expiryDate, location, receiver, notes, status }
             expiryData = Array.isArray(data) ? data : (data.expiries || []);
             
-            // <i class="fa-solid fa-star"></i> سحب الباركود للمنتجات القديمة من الفايربيز أو إذا كان العمود غير موجود في الإكسيل
+            // <i class=\'fa-solid fa-star\'></i> سحب الباركود للمنتجات القديمة من الفايربيز أو إذا كان العمود غير موجود في الإكسيل
             if (barcodeCatalogData && barcodeCatalogData.length > 0) {
                 const fbMap = new Map();
                 barcodeCatalogData.forEach(p => fbMap.set(String(p.name).trim().toLowerCase(), p));
@@ -3360,7 +3360,7 @@ function loadExpiryData() {
                 btn.style.opacity = "1";
                 btn.style.pointerEvents = "auto";
             }
-            showToast("<i class="fa-solid fa-xmark"></i> حدث خطأ في تحميل الصلاحيات. يرجى مراجعة إعدادات Google Sheets", "error");
+            showToast("<i class=\'fa-solid fa-xmark\'></i> حدث خطأ في تحميل الصلاحيات. يرجى مراجعة إعدادات Google Sheets", "error");
             // Also call render to clear the "loading" or show empty states
             renderExpiryDashboard();
         });
@@ -3391,7 +3391,7 @@ if (barcodeImageUpload) {
             let uploadLabel = document.querySelector('label[for="barcodeImageUpload"]');
             let originalLabelHtml = uploadLabel ? uploadLabel.innerHTML : '';
             if (uploadLabel) {
-                uploadLabel.innerHTML = 'جاري الفحص... <i class="fa-solid fa-hourglass-half"></i>';
+                uploadLabel.innerHTML = 'جاري الفحص... <i class=\'fa-solid fa-hourglass-half\'></i>';
                 uploadLabel.style.pointerEvents = 'none';
                 uploadLabel.style.opacity = '0.7';
             }
@@ -3476,7 +3476,7 @@ if (addToCartBtn) {
                 }
 
                 if (typeof calculateTotal === 'function') calculateTotal();
-                showToast(`تمت زيادة كمية ${productName} في الفاتورة <i class="fa-solid fa-cart-shopping"></i>`, "success");
+                showToast(`تمت زيادة كمية ${productName} في الفاتورة <i class=\'fa-solid fa-cart-shopping\'></i>`, "success");
 
                 scanResultModal.classList.remove('active');
                 currentScannedProduct = null;
@@ -3497,7 +3497,7 @@ if (addToCartBtn) {
                 // تحديث الإجمالي
                 if (typeof calculateTotal === 'function') calculateTotal();
 
-                showToast(`تمت إضافة ${productName} للفاتورة بنجاح <i class="fa-solid fa-check"></i>`, "success");
+                showToast(`تمت إضافة ${productName} للفاتورة بنجاح <i class=\'fa-solid fa-check\'></i>`, "success");
 
                 // إغلاق النافذة
                 scanResultModal.classList.remove('active');
@@ -3531,7 +3531,7 @@ function loadExpiryData() {
     const btn = document.getElementById('openExpiryBtn');
     if (btn) {
         btn.dataset.origText = btn.innerText;
-        btn.innerText = "جاري التحميل <i class="fa-solid fa-hourglass-half"></i>...";
+        btn.innerText = "جاري التحميل <i class=\'fa-solid fa-hourglass-half\'></i>...";
         btn.style.opacity = "0.7";
         btn.style.pointerEvents = "none";
     }
@@ -3568,7 +3568,7 @@ function loadExpiryData() {
                 btn.style.opacity = "1";
                 btn.style.pointerEvents = "auto";
             }
-            showToast("<i class="fa-solid fa-xmark"></i> حدث خطأ في تحميل الصلاحيات. يرجى مراجعة إعدادات Google Sheets", "error");
+            showToast("<i class=\'fa-solid fa-xmark\'></i> حدث خطأ في تحميل الصلاحيات. يرجى مراجعة إعدادات Google Sheets", "error");
             // Also call render to clear the "loading" or show empty states
             renderExpiryDashboard();
             
@@ -3739,14 +3739,14 @@ if (saveLedgerBtn) {
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
-                showToast("<i class="fa-solid fa-check"></i> تم حفظ البضاعة بنجاح", "success");
+                showToast("<i class=\'fa-solid fa-check\'></i> تم حفظ البضاعة بنجاح", "success");
                 setBtnLoading(saveLedgerBtn, false);
                 ledgerCart = [];
                 renderLedgerCart();
                 closeLedgerModal();
                 loadExpiryData(); // Refresh the dashboard
             }).catch(() => {
-                showToast("<i class="fa-solid fa-xmark"></i> حدث خطأ في الاتصال", "error");
+                showToast("<i class=\'fa-solid fa-xmark\'></i> حدث خطأ في الاتصال", "error");
                 setBtnLoading(saveLedgerBtn, false);
             });
     });
@@ -3846,38 +3846,38 @@ window.showExpiryDetails = function (category, resetPage = true) {
 
             if (category === 'Total') {
                 matches = true;
-                title = "<i class="fa-solid fa-box"></i> إجمالي الأصناف المسجلة";
+                title = "<i class=\'fa-solid fa-box\'></i> إجمالي الأصناف المسجلة";
             } else if (category === 'Offers' && item.status === 'في عرض') {
                 matches = true;
-                title = "<i class="fa-solid fa-gift"></i> العروض النشطة";
+                title = "<i class=\'fa-solid fa-gift\'></i> العروض النشطة";
             } else if (category === 'Search') {
                 const searchTerm = document.getElementById('expiryGlobalSearchInput').value.toLowerCase().trim();
                 if ((item.name && item.name.toLowerCase().includes(searchTerm)) || 
                     (item.barcode && String(item.barcode).toLowerCase().includes(searchTerm))) {
                     matches = true;
-                    title = `<i class="fa-solid fa-magnifying-glass"></i> نتائج البحث عن: "${searchTerm}"`;
+                    title = `<i class=\'fa-solid fa-magnifying-glass\'></i> نتائج البحث عن: "${searchTerm}"`;
                 }
             } else if (category === 'Expired' && daysRemaining !== 'NoExpiry' && daysRemaining < 0) {
                 matches = true;
-                title = "<i class="fa-solid fa-skull"></i> انتهت الصلاحية";
+                title = "<i class=\'fa-solid fa-skull\'></i> انتهت الصلاحية";
             } else if (category === 'NoExpiry' && daysRemaining === 'NoExpiry') {
                 matches = true;
-                title = "<i class="fa-solid fa-infinity"></i> بدون تاريخ صلاحية";
+                title = "<i class=\'fa-solid fa-infinity\'></i> بدون تاريخ صلاحية";
             } else if (category === 'Critical' && daysRemaining !== 'NoExpiry' && daysRemaining >= 0 && daysRemaining < 7) {
                 matches = true;
-                title = "<i class="fa-solid fa-circle text-danger"></i> حرج جداً (أقل من 7 أيام)";
+                title = "<i class=\'fa-solid fa-circle text-danger\'></i> حرج جداً (أقل من 7 أيام)";
             } else if (category === 'Alert' && daysRemaining >= 7 && daysRemaining < 30) {
                 matches = true;
-                title = "<i class="fa-solid fa-circle text-warning"></i> تنبيه سريع (أقل من 30 يوم)";
+                title = "<i class=\'fa-solid fa-circle text-warning\'></i> تنبيه سريع (أقل من 30 يوم)";
             } else if (category === 'Attention' && daysRemaining >= 30 && daysRemaining <= 90) {
                 matches = true;
-                title = "<i class="fa-solid fa-circle text-warning"></i> انتباه ومراقبة (1 إلى 3 شهور)";
+                title = "<i class=\'fa-solid fa-circle text-warning\'></i> انتباه ومراقبة (1 إلى 3 شهور)";
             } else if (category === 'Safe' && daysRemaining > 90 && daysRemaining <= 180) {
                 matches = true;
-                title = "<i class="fa-solid fa-circle text-success"></i> مخزون آمن (3 إلى 6 شهور)";
+                title = "<i class=\'fa-solid fa-circle text-success\'></i> مخزون آمن (3 إلى 6 شهور)";
             } else if (category === 'Far' && daysRemaining > 180) {
                 matches = true;
-                title = "<i class="fa-brands fa-facebook"></i> تاريخ بعيد (أكثر من 6 شهور)";
+                title = "<i class=\'fa-brands fa-facebook\'></i> تاريخ بعيد (أكثر من 6 شهور)";
             }
 
             if (matches) {
@@ -3923,10 +3923,10 @@ window.showExpiryDetails = function (category, resetPage = true) {
             let daysText = "";
             if (item.daysRemaining === 'NoExpiry') {
                 daysColor = "#7f8c8d";
-                daysText = "بدون تاريخ صلاحية <i class="fa-solid fa-infinity"></i>";
+                daysText = "بدون تاريخ صلاحية <i class=\'fa-solid fa-infinity\'></i>";
             } else if (item.daysRemaining < 0) {
                 daysColor = "#c0392b";
-                daysText = `منتهي منذ ${Math.abs(item.daysRemaining)} يوم <i class="fa-solid fa-skull"></i>`;
+                daysText = `منتهي منذ ${Math.abs(item.daysRemaining)} يوم <i class=\'fa-solid fa-skull\'></i>`;
             } else if (item.daysRemaining < 7) {
                 daysColor = "#e74c3c";
                 daysText = `باقي ${item.daysRemaining} يوم`;
@@ -3980,7 +3980,7 @@ window.showExpiryDetails = function (category, resetPage = true) {
             }
             itemDiv.innerHTML = `
                 <h4 style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
-                    <span style="flex: 1;"><i class="fa-solid fa-box"></i> ${item.name}</span>
+                    <span style="flex: 1;"><i class=\'fa-solid fa-box\'></i> ${item.name}</span>
                     <span style="font-size: 0.8rem; color: #7f8c8d; font-weight: normal; background: #eee; padding: 3px 8px; border-radius: 12px; white-space: nowrap;">${item.barcode ? 'الباركود: ' + item.barcode : 'لا يوجد باركود'}</span>
                 </h4>
                 <div class="expiry-item-details">
@@ -3988,12 +3988,12 @@ window.showExpiryDetails = function (category, resetPage = true) {
                     <span style="color: ${daysColor}; font-weight: bold;">${daysText}</span>
                 </div>
                 <div style="font-size: 0.8rem; color: #7f8c8d; margin-bottom: 8px;">
-                    <i class="fa-regular fa-calendar-days"></i> انتهاء: ${formattedDate} | 🏢 مكان: ${item.location || '-'}
+                    <i class=\'fa-regular fa-calendar-days\'></i> انتهاء: ${formattedDate} | 🏢 مكان: ${item.location || '-'}
                 </div>
                 ${pricesHtml}
                 <div class="expiry-item-actions">
                     <button class="btn-activate-offer interactive-btn" style="background: ${offerBtnColor};" onclick="${item.status === 'في عرض' ? `changeExpiryStatus('${item.id}', '${offerBtnAction}')` : `promptNewOffer('${item.id}')`}">${offerBtnText}</button>
-                    <button class="btn-close-item interactive-btn" onclick="changeExpiryStatus('${item.id}', 'Deleted')">تم البيع <i class="fa-solid fa-xmark"></i>️</button>
+                    <button class="btn-close-item interactive-btn" onclick="changeExpiryStatus('${item.id}', 'Deleted')">تم البيع <i class=\'fa-solid fa-xmark\'></i>️</button>
                 </div>
             `;
             fragment.appendChild(itemDiv);
@@ -4082,8 +4082,8 @@ window.customSinglePrompt = function (title, defaultValue, onConfirm) {
         <h3 style="color: var(--primary); margin-top: 0; font-family: 'Cairo', sans-serif;">${title}</h3>
         <input type="text" id="promptInput" value="${defaultValue || ''}" style="width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 8px; border: 1px solid var(--border); background: var(--white); color: var(--text-main); font-size: 1.1rem; text-align: center;">
         <div style="display: flex; gap: 10px; justify-content: center;">
-            <button id="btnPromptYes" class="interactive-btn" style="background: var(--success); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1; font-family: 'Cairo', sans-serif;">حفظ <i class="fa-solid fa-check"></i></button>
-            <button id="btnPromptNo" class="interactive-btn" style="background: var(--danger); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1; font-family: 'Cairo', sans-serif;">إلغاء <i class="fa-solid fa-xmark"></i></button>
+            <button id="btnPromptYes" class="interactive-btn" style="background: var(--success); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1; font-family: 'Cairo', sans-serif;">حفظ <i class=\'fa-solid fa-check\'></i></button>
+            <button id="btnPromptNo" class="interactive-btn" style="background: var(--danger); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1; font-family: 'Cairo', sans-serif;">إلغاء <i class=\'fa-solid fa-xmark\'></i></button>
         </div>
     `;
     overlay.appendChild(modal);
@@ -4115,8 +4115,8 @@ window.customConfirm = function (message, onConfirm) {
         <h3 style="color: var(--primary); margin-top: 0;">تأكيد الإجراء</h3>
         <p style="font-size: 1.1rem; color: #333; margin-bottom: 25px;">${message}</p>
         <div style="display: flex; gap: 10px; justify-content: center;">
-            <button id="btnConfirmYes" class="interactive-btn" style="background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1;">نعم <i class="fa-solid fa-check"></i></button>
-            <button id="btnConfirmNo" class="interactive-btn" style="background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1;">إلغاء <i class="fa-solid fa-xmark"></i></button>
+            <button id="btnConfirmYes" class="interactive-btn" style="background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1;">نعم <i class=\'fa-solid fa-check\'></i></button>
+            <button id="btnConfirmNo" class="interactive-btn" style="background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1;">إلغاء <i class=\'fa-solid fa-xmark\'></i></button>
         </div>
     `;
     overlay.appendChild(modal);
@@ -4141,8 +4141,8 @@ window.customPrompt = function (title, onConfirm) {
         <input type="number" id="promptOrig" placeholder="السعر الأساسي" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ccc;">
         <input type="number" id="promptOffer" placeholder="سعر العرض" style="width: 100%; padding: 10px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ccc;">
         <div style="display: flex; gap: 10px; justify-content: center;">
-            <button id="btnPromptYes" class="interactive-btn" style="background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1;">حفظ <i class="fa-solid fa-check"></i></button>
-            <button id="btnPromptNo" class="interactive-btn" style="background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1;">إلغاء <i class="fa-solid fa-xmark"></i></button>
+            <button id="btnPromptYes" class="interactive-btn" style="background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1;">حفظ <i class=\'fa-solid fa-check\'></i></button>
+            <button id="btnPromptNo" class="interactive-btn" style="background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1;">إلغاء <i class=\'fa-solid fa-xmark\'></i></button>
         </div>
     `;
     overlay.appendChild(modal);
@@ -4183,7 +4183,7 @@ window.saveExpiryOffer = function (id, status, origVal, offerVal) {
 
     fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
         .then(() => {
-            showToast("<i class="fa-solid fa-check"></i> تم تحديث العرض والأسعار بنجاح", "success");
+            showToast("<i class=\'fa-solid fa-check\'></i> تم تحديث العرض والأسعار بنجاح", "success");
             let item = expiryData.find(i => i.id == id);
             if (item) {
                 item.status = status;
@@ -4202,7 +4202,7 @@ window.saveExpiryOffer = function (id, status, origVal, offerVal) {
                 document.getElementById('expiryDetailsSection').style.display = 'none';
             }
         }).catch(() => {
-            showToast("<i class="fa-solid fa-xmark"></i> خطأ في الاتصال بالإنترنت", "error");
+            showToast("<i class=\'fa-solid fa-xmark\'></i> خطأ في الاتصال بالإنترنت", "error");
         });
 };
 
@@ -4211,7 +4211,7 @@ window.changeExpiryStatus = function (id, newStatus) {
     let msg = "";
     if (newStatus === 'في عرض') msg = "هل تريد تفعيل العرض وجعل السطر فسفوري؟ 🔥";
     else if (newStatus === 'مش في عرض') msg = "هل تريد إيقاف العرض وإعادته للحالة الطبيعية؟";
-    else if (newStatus === 'Deleted') msg = "تحذير: سيتم مسح المنتج بالكامل من النظام ولن يظهر مرة أخرى. هل أنت متأكد من إتمام البيع؟ <i class="fa-solid fa-xmark"></i>️";
+    else if (newStatus === 'Deleted') msg = "تحذير: سيتم مسح المنتج بالكامل من النظام ولن يظهر مرة أخرى. هل أنت متأكد من إتمام البيع؟ <i class=\'fa-solid fa-xmark\'></i>️";
 
     customConfirm(msg, () => {
         showToast("جاري التحديث...", "warning");
@@ -4223,7 +4223,7 @@ window.changeExpiryStatus = function (id, newStatus) {
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
-                showToast("<i class="fa-solid fa-check"></i> تم تحديث الحالة بنجاح", "success");
+                showToast("<i class=\'fa-solid fa-check\'></i> تم تحديث الحالة بنجاح", "success");
                 let item = expiryData.find(i => i.id == id);
                 if (item) {
                     item.status = newStatus;
@@ -4234,7 +4234,7 @@ window.changeExpiryStatus = function (id, newStatus) {
                     closeExpiryDetails();
                 }
             }).catch(() => {
-                showToast("<i class="fa-solid fa-xmark"></i> خطأ في الاتصال بالإنترنت", "error");
+                showToast("<i class=\'fa-solid fa-xmark\'></i> خطأ في الاتصال بالإنترنت", "error");
             });
     });
 };
@@ -4392,11 +4392,11 @@ async function generateExcel(dataToExport, reportTitle) {
         link.click();
         document.body.removeChild(link);
 
-        showToast("<i class="fa-solid fa-check"></i> تم تصدير التقرير الاحترافي بنجاح", "success");
+        showToast("<i class=\'fa-solid fa-check\'></i> تم تصدير التقرير الاحترافي بنجاح", "success");
 
     } catch (error) {
         console.error(error);
-        showToast("<i class="fa-solid fa-xmark"></i> حدث خطأ أثناء التصدير", "error");
+        showToast("<i class=\'fa-solid fa-xmark\'></i> حدث خطأ أثناء التصدير", "error");
     }
 }
 
@@ -4547,7 +4547,7 @@ function showBatchSelectionModal(batches, legacyBatch, dateVal) {
     if (legacyBatch.length > 0) {
         html += `
             <button class="interactive-btn batch-select-btn" data-batch="legacy" style="background: var(--bg-light); color: var(--text-main); border: 1px solid var(--border); padding: 15px; border-radius: 8px; text-align: right; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s;">
-                <span><i class="fa-solid fa-box"></i> استلامات مجمعة (قديمة) - طباعة الكل</span>
+                <span><i class=\'fa-solid fa-box\'></i> استلامات مجمعة (قديمة) - طباعة الكل</span>
                 <span style="background: var(--primary); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">${legacyBatch.length} أصناف</span>
             </button>
             <button class="interactive-btn batch-select-btn" data-batch="manual" style="background: var(--bg-light); color: #e67e22; border: 1px dashed #e67e22; padding: 15px; border-radius: 8px; text-align: right; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; margin-top: -5px;">
@@ -4558,7 +4558,7 @@ function showBatchSelectionModal(batches, legacyBatch, dateVal) {
 
     html += `
             <button class="interactive-btn batch-select-btn" data-batch="all" style="background: #27ae60; color: white; border: none; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 10px; cursor: pointer;">
-                طباعة كل استلامات اليوم معاً <i class="fa-solid fa-print"></i>
+                طباعة كل استلامات اليوم معاً <i class=\'fa-solid fa-print\'></i>
             </button>
             <button id="closeBatchModalBtn" style="background: transparent; color: var(--text-muted); border: none; padding: 10px; border-radius: 8px; text-align: center; cursor: pointer; text-decoration: underline; margin-top: 5px;">إلغاء</button>
         </div>
@@ -4640,7 +4640,7 @@ function showManualSelectionModal(legacyBatch, dateVal) {
         </div>
         <div style="display: flex; gap: 10px; margin-top: 15px;">
             <button id="printManualSelectedBtn" style="flex: 2; background: #E91E8C; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem;">
-                <i class="fa-solid fa-print"></i> طباعة المحدد فقط (<span id="selectedCountSpan">0</span>)
+                <i class=\'fa-solid fa-print\'></i> طباعة المحدد فقط (<span id="selectedCountSpan">0</span>)
             </button>
             <button id="closeManualModalBtn" style="flex: 1; background: var(--bg-light); color: var(--text-main); border: 1px solid var(--border); padding: 12px; border-radius: 8px; cursor: pointer;">إلغاء</button>
         </div>
@@ -5025,10 +5025,10 @@ if(waStartCampaignBtn) {
             
             div.innerHTML = `
                 <div>
-                    <strong style="color: var(--primary);"><i class="fa-solid fa-user"></i> ${c.name}</strong><br>
-                    <span style="font-size:0.8rem; color:#7f8c8d;"><i class="fa-solid fa-phone"></i> ${c.phone} ${c.visits !== undefined ? `| <i class="fa-solid fa-bag-shopping"></i> زيارات: ${c.visits}` : ''}</span>
+                    <strong style="color: var(--primary);"><i class=\'fa-solid fa-user\'></i> ${c.name}</strong><br>
+                    <span style="font-size:0.8rem; color:#7f8c8d;"><i class=\'fa-solid fa-phone\'></i> ${c.phone} ${c.visits !== undefined ? `| <i class=\'fa-solid fa-bag-shopping\'></i> زيارات: ${c.visits}` : ''}</span>
                 </div>
-                <button class="wa-send-btn interactive-btn" id="wa-btn-${index}" onclick="sendWaCampaign(${index}, '${c.name}', '${c.phone}')" style="background: #25D366; color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">إرسال <i class="fa-solid fa-rocket"></i></button>
+                <button class="wa-send-btn interactive-btn" id="wa-btn-${index}" onclick="sendWaCampaign(${index}, '${c.name}', '${c.phone}')" style="background: #25D366; color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">إرسال <i class=\'fa-solid fa-rocket\'></i></button>
             `;
             list.appendChild(div);
         });
@@ -5066,7 +5066,7 @@ window.sendWaCampaign = function(index, name, phone) {
     
     let btn = document.getElementById(`wa-btn-${index}`);
     if(btn) {
-        btn.innerText = "تم الإرسال <i class="fa-solid fa-check"></i>";
+        btn.innerText = "تم الإرسال <i class=\'fa-solid fa-check\'></i>";
         btn.style.background = "#bdc3c7";
         btn.style.color = "#2c3e50";
         btn.disabled = true;
@@ -5084,20 +5084,20 @@ function startWaCooldown(seconds) {
     timerSpan.style.display = "inline";
     
     document.querySelectorAll(".wa-send-btn").forEach(b => {
-        if(!b.innerText.includes("<i class="fa-solid fa-check"></i>")) b.disabled = true;
+        if(!b.innerText.includes("<i class=\'fa-solid fa-check\'></i>")) b.disabled = true;
     });
     
     if(waCooldownInterval) clearInterval(waCooldownInterval);
     
     waCooldownInterval = setInterval(() => {
         waCooldownTime--;
-        timerSpan.innerText = `<i class="fa-solid fa-hourglass-half"></i> انتظر ${waCooldownTime} ثانية لحماية حسابك...`;
+        timerSpan.innerText = `<i class=\'fa-solid fa-hourglass-half\'></i> انتظر ${waCooldownTime} ثانية لحماية حسابك...`;
         
         if(waCooldownTime <= 0) {
             clearInterval(waCooldownInterval);
             timerSpan.style.display = "none";
             document.querySelectorAll(".wa-send-btn").forEach(b => {
-                if(!b.innerText.includes("<i class="fa-solid fa-check"></i>")) b.disabled = false;
+                if(!b.innerText.includes("<i class=\'fa-solid fa-check\'></i>")) b.disabled = false;
             });
         }
     }, 1000);
@@ -5142,7 +5142,7 @@ function renderFinancials(finList) {
         let ordersHtml = '';
         if (driverOrders.length > 0) {
             ordersHtml = `<div style="margin-top: 10px; border-top: 1px dashed #ccc; padding-top: 10px;">
-                <strong style="font-size:0.85rem; color:var(--primary);"><i class="fa-solid fa-box"></i> أوردرات معلقة (لم يتم تسويتها):</strong>`;
+                <strong style="font-size:0.85rem; color:var(--primary);"><i class=\'fa-solid fa-box\'></i> أوردرات معلقة (لم يتم تسويتها):</strong>`;
             driverOrders.forEach(o => {
                 ordersHtml += `
                     <div class="financial-order-item" style="background:#fdfdfd; padding:8px; border:1px solid #eee; border-radius:6px; margin-top:5px; display:flex; justify-content:space-between; align-items:center;">
@@ -5154,7 +5154,7 @@ function renderFinancials(finList) {
                                 <span style="font-size:0.85rem; font-weight:bold; color:var(--danger);">المطلوب تحصيله: ${o.remaining}ج</span>
                             </div>
                         </div>
-                        <button class="btn-settle interactive-btn" onclick="settleDriverOrder('${o.id}', this, '${o.payment}')" style="background:var(--success); color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">تسوية <i class="fa-solid fa-money-bill"></i></button>
+                        <button class="btn-settle interactive-btn" onclick="settleDriverOrder('${o.id}', this, '${o.payment}')" style="background:var(--success); color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">تسوية <i class=\'fa-solid fa-money-bill\'></i></button>
                     </div>
                 `;
             });
@@ -5164,7 +5164,7 @@ function renderFinancials(finList) {
         container.innerHTML += `
             <div class="${cardClass}" style="background: #fff; padding: 15px; border-radius: 12px; border: 1px solid ${cardBorderColor}; margin-bottom: 12px; box-shadow: ${cardShadow}; opacity: ${cardOpacity}; transition: all 0.3s ease;">
                 <div class="financial-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #f0f0f0; padding-bottom:8px; margin-bottom:10px;">
-                    <span style="font-weight:bold; font-size:1.1rem; color:var(--text-dark);"><i class="fa-solid fa-motorcycle"></i> ${f.name}</span>
+                    <span style="font-weight:bold; font-size:1.1rem; color:var(--text-dark);"><i class=\'fa-solid fa-motorcycle\'></i> ${f.name}</span>
                     <span style="font-size: 0.85rem; background:#f0f0f0; color:var(--text-dark); padding:3px 8px; border-radius:12px; font-weight:bold;">${f.ordersCount || 0} طلب</span>
                 </div>
                 <div class="financial-details" style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:10px;">
