@@ -2403,7 +2403,7 @@ body.dark-mode .btn-settle {
         visibility: visible;
     }
     
-    .print-only { position: absolute; left: 0; top: 0; width: 72mm !important; max-width: 72mm !important; margin: 0 !important; padding: 0 !important; box-sizing: border-box; }
+    .print-only { position: relative !important; width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 0 4mm !important; box-sizing: border-box !important; }
     
     /* ط·ع¾ط·آµط·ط›ط¸ظ¹ط·آ± ط·آ§ط¸â€‍ط¸ظ¾ط·آ§ط·ع¾ط¸ث†ط·آ±ط·آ© ط¸ث†ط·آ¥ط¸â€‍ط·ط›ط·آ§ط·طŒ ط·آ§ط¸â€‍ط¸â€،ط¸ث†ط·آ§ط¸â€¦ط·آ´ ط·آ§ط¸â€‍ط¸â€¦ط·آ²ط·آ© ط·آ§ط¸â€‍ط·ع¾ط¸ظ¹ ط·ع¾ط·آ³ط·آ¨ط·آ¨ ط·آµط¸ظ¾ط·آ­ط·آ© ط¸ظ¾ط·آ§ط·آ±ط·ط›ط·آ© ط·آ¥ط·آ¶ط·آ§ط¸ظ¾ط¸ظ¹ط·آ© ط¸â€‍ط¸ث†ط·آ±ط¸â€ڑ ط·آ§ط¸â€‍ط¸â‚¬ PVC */
     @page {
@@ -2629,6 +2629,8 @@ body.dark-mode .btn-settle {
         width: 100% !important;
         border-collapse: collapse !important;
         display: table !important;
+        table-layout: fixed !important;
+        word-wrap: break-word !important;
     }
     
     .receipt-table th,
