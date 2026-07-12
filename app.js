@@ -1562,7 +1562,7 @@ if (saveAndPrintBtn) {
                 }
 
                 let govStr = gov ? gov + " - " : "";
-                if (document.getElementById('receipt-type')) document.getElementById('receipt-type').innerText = isGift ? `${govStr}${orderTypeLabel} - <i class=\'fa-solid fa-gift\'></i> هدية` : `${govStr}${orderTypeLabel}`;
+                if (document.getElementById('receipt-type')) document.getElementById('receipt-type').innerHTML = isGift ? `${govStr}${orderTypeLabel} - <i class=\'fa-solid fa-gift\'></i> هدية` : `${govStr}${orderTypeLabel}`;
 
                 let printLogo = document.getElementById('receiptLogo') || document.getElementById('print-logo');
                 if (printLogo) {
@@ -1908,7 +1908,7 @@ window.settleBranchOrder = function (orderId, btn) {
             .then(() => {
                 showToast(`<i class=\'fa-solid fa-check\'></i> تم التسليم وتصفية مبلغ (${amountPaidText} ج.م) بنجاح!`, "success");
                 loadDataFromServer();
-            }).catch(() => setBtnLoading(btn, false, "تم التسليم <i class=\'fa-solid fa-check\'></i>"));
+            }).catch(() => setBtnLoading(btn, false, "تم التسليم ✅"));
     });
 };
 
@@ -1926,7 +1926,7 @@ window.convertToNormalDelivery = function (orderId, btn) {
             .then(() => {
                 showToast("<i class=\'fa-solid fa-check\'></i> تم التحويل لتوصيل فوري بنجاح!", "success");
                 loadDataFromServer();
-            }).catch(() => setBtnLoading(btn, false, "تحويل لتوصيل عادي <i class=\'fa-solid fa-truck-fast\'></i>"));
+            }).catch(() => setBtnLoading(btn, false, "تحويل لتوصيل عادي 🚚"));
     });
 };
 
@@ -2162,10 +2162,10 @@ function renderReportForMonth(targetMonth) {
     let topEl = document.getElementById('topProductsList');
     let pltEl = document.getElementById('platformStatsList');
     if (!targetMonth) {
-        if (statusEl) statusEl.textContent = '<i class=\'fa-solid fa-triangle-exclamation\'></i> اختر شهراً أولاً';
+        if (statusEl) statusEl.innerHTML = '<i class=\'fa-solid fa-triangle-exclamation\'></i> اختر شهراً أولاً';
         return;
     }
-    if (statusEl) statusEl.textContent = '<i class=\'fa-solid fa-hourglass-half\'></i> جاري تحميل بيانات الشهر...';
+    if (statusEl) statusEl.innerHTML = '<i class=\'fa-solid fa-hourglass-half\'></i> جاري تحميل بيانات الشهر...';
     if (topEl) topEl.innerHTML = '<p class="empty-msg"><i class=\'fa-solid fa-hourglass-half\'></i> جاري التحميل...</p>';
     if (pltEl) pltEl.innerHTML = '<p class="empty-msg"><i class=\'fa-solid fa-hourglass-half\'></i> جاري التحميل...</p>';
 
@@ -2175,7 +2175,7 @@ function renderReportForMonth(targetMonth) {
         .then(data => {
             let arabicMonths = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
             let [yr, mo] = targetMonth.split('-');
-            if (statusEl) statusEl.textContent = `<i class=\'fa-solid fa-check\'></i> تم تحميل بيانات ${arabicMonths[parseInt(mo) - 1]} ${yr}`;
+            if (statusEl) statusEl.innerHTML = `<i class=\'fa-solid fa-check\'></i> تم تحميل بيانات ${arabicMonths[parseInt(mo) - 1]} ${yr}`;
 
             // أفضل 10 منتجات
             if (topEl) {
@@ -2241,7 +2241,7 @@ function renderReportForMonth(targetMonth) {
             }
         })
         .catch(() => {
-            if (statusEl) statusEl.textContent = '<i class=\'fa-solid fa-xmark\'></i> حدث خطأ في الاتصال';
+            if (statusEl) statusEl.innerHTML = '<i class=\'fa-solid fa-xmark\'></i> حدث خطأ في الاتصال';
             if (topEl) topEl.innerHTML = '<p class="empty-msg"><i class=\'fa-solid fa-xmark\'></i> تعذر التحميل</p>';
             if (pltEl) pltEl.innerHTML = '<p class="empty-msg"><i class=\'fa-solid fa-xmark\'></i> تعذر التحميل</p>';
         });
@@ -2256,7 +2256,7 @@ if (loadReportsBtn) {
         if (!sec) return;
         reportsVisible = !reportsVisible;
         sec.style.display = reportsVisible ? 'block' : 'none';
-        loadReportsBtn.textContent = reportsVisible ? '<i class=\'fa-solid fa-chart-column\'></i> إخفاء التقارير التفصيلية' : '<i class=\'fa-solid fa-chart-column\'></i> إظهار التقارير التفصيلية';
+        loadReportsBtn.innerHTML = reportsVisible ? '<i class=\'fa-solid fa-chart-column\'></i> إخفاء التقارير التفصيلية' : '<i class=\'fa-solid fa-chart-column\'></i> إظهار التقارير التفصيلية';
         if (reportsVisible) buildMonthFilterOptions();
     });
 }
@@ -2898,7 +2898,7 @@ if (togglePasswordVisibility && excelPasswordInput) {
             togglePasswordVisibility.textContent = '🙈';
         } else {
             excelPasswordInput.type = 'password';
-            togglePasswordVisibility.textContent = '<i class=\'fa-solid fa-eye\'></i>';
+            togglePasswordVisibility.innerHTML = '<i class=\'fa-solid fa-eye\'></i>';
         }
     });
 }
@@ -3292,7 +3292,7 @@ if (copyProductNameBtn) {
         let nameToCopy = document.getElementById('scanResultName').textContent;
         navigator.clipboard.writeText(nameToCopy).then(() => {
             let origText = copyProductNameBtn.textContent;
-            copyProductNameBtn.textContent = "تم النسخ <i class=\'fa-solid fa-check\'></i>";
+            copyProductNameBtn.innerHTML = "تم النسخ <i class=\'fa-solid fa-check\'></i>";
             copyProductNameBtn.style.background = "var(--success-light)";
             copyProductNameBtn.style.color = "var(--success)";
             copyProductNameBtn.style.borderColor = "var(--success)";
@@ -3319,7 +3319,7 @@ function loadExpiryData() {
     const btn = document.getElementById('refreshExpiryBtn');
     if (btn) {
         btn.dataset.origText = btn.innerText;
-        btn.innerText = "جاري التحميل <i class=\'fa-solid fa-hourglass-half\'></i>...";
+        btn.innerHTML = "جاري التحميل <i class=\'fa-solid fa-hourglass-half\'></i>...";
         btn.style.opacity = "0.7";
         btn.style.pointerEvents = "none";
     }
@@ -3531,7 +3531,7 @@ function loadExpiryData() {
     const btn = document.getElementById('openExpiryBtn');
     if (btn) {
         btn.dataset.origText = btn.innerText;
-        btn.innerText = "جاري التحميل <i class=\'fa-solid fa-hourglass-half\'></i>...";
+        btn.innerHTML = "جاري التحميل <i class=\'fa-solid fa-hourglass-half\'></i>...";
         btn.style.opacity = "0.7";
         btn.style.pointerEvents = "none";
     }
@@ -5367,7 +5367,7 @@ window.sendWaCampaign = function(index, name, phone) {
     
     let btn = document.getElementById(`wa-btn-${index}`);
     if(btn) {
-        btn.innerText = "تم الإرسال <i class=\'fa-solid fa-check\'></i>";
+        btn.innerHTML = "تم الإرسال <i class=\'fa-solid fa-check\'></i>";
         btn.style.background = "#bdc3c7";
         btn.style.color = "#2c3e50";
         btn.disabled = true;
@@ -5385,20 +5385,20 @@ function startWaCooldown(seconds) {
     timerSpan.style.display = "inline";
     
     document.querySelectorAll(".wa-send-btn").forEach(b => {
-        if(!b.innerText.includes("<i class=\'fa-solid fa-check\'></i>")) b.disabled = true;
+        if(!b.innerHTML.includes("fa-check")) b.disabled = true;
     });
     
     if(waCooldownInterval) clearInterval(waCooldownInterval);
     
     waCooldownInterval = setInterval(() => {
         waCooldownTime--;
-        timerSpan.innerText = `<i class=\'fa-solid fa-hourglass-half\'></i> انتظر ${waCooldownTime} ثانية لحماية حسابك...`;
+        timerSpan.innerHTML = `<i class=\'fa-solid fa-hourglass-half\'></i> انتظر ${waCooldownTime} ثانية لحماية حسابك...`;
         
         if(waCooldownTime <= 0) {
             clearInterval(waCooldownInterval);
             timerSpan.style.display = "none";
             document.querySelectorAll(".wa-send-btn").forEach(b => {
-                if(!b.innerText.includes("<i class=\'fa-solid fa-check\'></i>")) b.disabled = false;
+                if(!b.innerHTML.includes("fa-check")) b.disabled = false;
             });
         }
     }, 1000);
