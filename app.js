@@ -1398,17 +1398,17 @@ if (whatsappReviewBtn) {
 
         let productsTotal = document.getElementById('productsTotal') ? document.getElementById('productsTotal').value || 0 : 0;
 
-        let phoneStr = phone2 ? `${displayPhone}\n<i class=\'fa-solid fa-mobile-screen\'></i> رقم احتياطي: ${phone2}` : displayPhone;
-        let message = `أهلاً بك في كاندي كلوب 🍬\nيرجى مراجعة تفاصيل طلبك:\n\n<i class=\'fa-solid fa-user\'></i> الاسم: ${displayName}\n<i class=\'fa-solid fa-mobile-screen\'></i> الموبايل: ${phoneStr}\n<i class=\'fa-solid fa-location-dot\'></i> العنوان: ${displayAddress}\n\n<i class=\'fa-solid fa-cart-shopping\'></i> تفاصيل الطلب:\n${productsText}\n`;
-        message += `<i class=\'fa-solid fa-bag-shopping\'></i> إجمالي المنتجات: ${productsTotal} ج.م\n`;
+        let phoneStr = phone2 ? `${displayPhone}\n📱 رقم احتياطي: ${phone2}` : displayPhone;
+        let message = `أهلاً بك في كاندي كلوب 🍬\nيرجى مراجعة تفاصيل طلبك:\n\n👤 الاسم: ${displayName}\n📱 الموبايل: ${phoneStr}\n📍 العنوان: ${displayAddress}\n\n🛒 تفاصيل الطلب:\n${productsText}\n`;
+        message += `🛍️ إجمالي المنتجات: ${productsTotal} ج.م\n`;
 
         let discountValue = document.getElementById('discount') ? parseFloat(document.getElementById('discount').value) || 0 : 0;
         if (discountValue > 0) {
             message += `🏷️ الخصم: ${discountValue} ج.م\n`;
         }
 
-        message += `<i class=\'fa-solid fa-truck-fast\'></i> الشحن: ${document.getElementById('shippingCost') ? document.getElementById('shippingCost').value || 0 : 0} ج.م\n`;
-        message += `<i class=\'fa-solid fa-money-bill-wave\'></i> الإجمالي المستحق: ${document.getElementById('finalTotalDisplay') ? document.getElementById('finalTotalDisplay').innerText : 0} ج.م\n\n`;
+        message += `🚚 الشحن: ${document.getElementById('shippingCost') ? document.getElementById('shippingCost').value || 0 : 0} ج.م\n`;
+        message += `💰 الإجمالي المستحق: ${document.getElementById('finalTotalDisplay') ? document.getElementById('finalTotalDisplay').innerText : 0} ج.م\n\n`;
 
         if (hasMissingData) {
             message += `يرجى ملء البيانات الناقصة بالأعلى والرد بكلمة (تمام) لتأكيد الأوردر 🤝`;
@@ -2026,7 +2026,7 @@ if (sendWaDriverBtn) sendWaDriverBtn.addEventListener('click', () => {
         let courier = shippingData[driver] || window.financialsData.find(f => f.name === driver); // fallback search
     }
     // We can also just send it to WhatsApp with empty phone and user selects the contact
-    let ordersListText = `أوردرات المندوب: ${driver} <i class=\'fa-solid fa-motorcycle\'></i>\n\n`;
+    let ordersListText = `أوردرات المندوب: ${driver} 🏍️\n\n`;
     let totalCash = 0;
 
     const selected = Array.from(document.querySelectorAll('.pending-checkbox:checked')).map(cb => cb.value);
@@ -2035,7 +2035,7 @@ if (sendWaDriverBtn) sendWaDriverBtn.addEventListener('click', () => {
     selected.forEach((orderId, idx) => {
         let o = orderHistoryData.find(x => x.id === orderId);
         if (o) {
-            ordersListText += `${idx + 1}. العميل: ${o.name}\n<i class=\'fa-solid fa-mobile-screen\'></i> ${o.phone}\n<i class=\'fa-solid fa-location-dot\'></i> العنوان: ${o.address}\n<i class=\'fa-solid fa-money-bill-wave\'></i> المطلوب: ${o.remaining} ج.م\n<i class=\'fa-solid fa-cart-shopping\'></i> المنتجات: ${o.products.replace(/\n/g, ', ')}\n\n`;
+            ordersListText += `${idx + 1}. العميل: ${o.name}\n📱 ${o.phone}\n📍 العنوان: ${o.address}\n💰 المطلوب: ${o.remaining} ج.م\n🛒 المنتجات: ${o.products.replace(/\n/g, ', ')}\n\n`;
             totalCash += parseFloat(o.remaining) || 0;
         }
     });
@@ -2312,7 +2312,7 @@ window.shareToWhatsAppGroup = function (orderId) {
                 let d = new Date(resDate);
                 if (!isNaN(d.getTime())) resDate = `${d.getFullYear()}-${("0" + (d.getMonth() + 1)).slice(-2)}-${("0" + d.getDate()).slice(-2)}`;
             }
-            text += `<i class=\'fa-regular fa-calendar\'></i> *تاريخ التسليم:* ${resDate}\n`;
+            text += `📅 *تاريخ التسليم:* ${resDate}\n`;
         }
     }
     text += `*تاريخ إنشاء الأوردر:* ${order.date || new Date().toLocaleDateString('ar-EG')} ⏰ ${order.time || new Date().toLocaleTimeString('ar-EG')}\n`;
@@ -2322,21 +2322,21 @@ window.shareToWhatsAppGroup = function (orderId) {
     text += `عدد اوردرات اليوم : ${tCount}\n`;
     text += `عدد اوردرات الشهر : ${mCount}\n`;
 
-    text += `<i class=\'fa-solid fa-user\'></i> *العميل:* ${_name}\n`;
+    text += `👤 *العميل:* ${_name}\n`;
     if (!_type.includes('استلام') && !_type.includes('فرع') && (_gov || _address)) {
-        text += `<i class=\'fa-solid fa-location-dot\'></i> *العنوان:* ${_gov ? _gov + " - " : ""}${_address}\n`;
+        text += `📍 *العنوان:* ${_gov ? _gov + " - " : ""}${_address}\n`;
     }
-    if (_phone) text += `<i class=\'fa-solid fa-mobile-screen\'></i> *الموبايل:* ${_phone}\n`;
-    if (_phone2 && String(_phone2).trim() !== '') text += `<i class=\'fa-solid fa-mobile-screen\'></i> *رقم احتياطي:* ${String(_phone2).trim()}\n`;
+    if (_phone) text += `📱 *الموبايل:* ${_phone}\n`;
+    if (_phone2 && String(_phone2).trim() !== '') text += `📱 *رقم احتياطي:* ${String(_phone2).trim()}\n`;
     text += `💳 *طريقة الدفع:* ${_payment}\n\n`;
-    text += `<i class=\'fa-solid fa-box\'></i> *المنتجات:*\n${_products}\n`;
+    text += `📦 *المنتجات:*\n${_products}\n`;
     let _subtotal = order.subtotal || order.productsTotal || (parseFloat(order.total) - parseFloat(_shipping)) || 0;
-    text += `<i class=\'fa-solid fa-bag-shopping\'></i> *إجمالي المنتجات:* ${_subtotal} ج.م\n`;
-    text += `<i class=\'fa-solid fa-truck-fast\'></i> *الشحن:* ${_shipping}\n`;
-    text += `<i class=\'fa-solid fa-money-bill-wave\'></i> *الإجمالي النهائي:* ${_remaining}\n`;
+    text += `🛍️ *إجمالي المنتجات:* ${_subtotal} ج.م\n`;
+    text += `🚚 *الشحن:* ${_shipping}\n`;
+    text += `💰 *الإجمالي النهائي:* ${_remaining}\n`;
 
     navigator.clipboard.writeText(text).then(() => {
-        showToast("تم نسخ بيانات الأوردر للحافظة بنجاح <i class=\'fa-solid fa-clipboard\'></i>", "success");
+        showToast("تم نسخ بيانات الأوردر للحافظة بنجاح 📋", "success");
     }).catch(err => {
         showToast("فشل في نسخ البيانات", "error");
     });
@@ -2394,22 +2394,22 @@ if (sendWaManagerBtn) sendWaManagerBtn.addEventListener('click', () => {
 
     let monthSales = document.getElementById('monthSales') ? document.getElementById('monthSales').innerText : 0;
 
-    let report = `<i class=\'fa-solid fa-chart-column\'></i> *تقرير الإدارة - Candy Club Pro*\n\n`;
-    report += `<i class=\'fa-regular fa-calendar-days\'></i> *إحصائيات اليوم:*\n`;
-    report += `<i class=\'fa-solid fa-cart-shopping\'></i> أوردرات اليوم: ${tCount}\n`;
-    report += `<i class=\'fa-solid fa-money-bill-wave\'></i> مبيعات اليوم المتوقعة: ${tSales} ج\n`;
-    report += `<i class=\'fa-solid fa-check\'></i> أوردرات مكتملة (محاسب): ${compCount}\n`;
-    report += `<i class=\'fa-solid fa-siren-on\'></i> مرتجعات: ${retCount}\n\n`;
+    let report = `📊 *تقرير الإدارة - Candy Club Pro*\n\n`;
+    report += `📅 *إحصائيات اليوم:*\n`;
+    report += `🛒 أوردرات اليوم: ${tCount}\n`;
+    report += `💰 مبيعات اليوم المتوقعة: ${tSales} ج\n`;
+    report += `✅ أوردرات مكتملة (محاسب): ${compCount}\n`;
+    report += `🚨 مرتجعات: ${retCount}\n\n`;
 
-    report += `<i class=\'fa-regular fa-calendar-days\'></i> *إحصائيات الشهر:*\n`;
+    report += `📅 *إحصائيات الشهر:*\n`;
     report += `📈 إجمالي مبيعات الشهر: ${monthSales} ج\n\n`;
 
-    report += `<i class=\'fa-solid fa-triangle-exclamation\'></i> منتجات ناقصة: ${oosCount}\n`;
-    report += `<i class=\'fa-solid fa-star\'></i> المنتج الأكثر مبيعاً: ${topP}\n\n`;
-    report += `تم الإنشاء بواسطة سيستم الإدارة الآلي <i class=\'fa-solid fa-gear\'></i>`;
+    report += `⚠️ منتجات ناقصة: ${oosCount}\n`;
+    report += `⭐ المنتج الأكثر مبيعاً: ${topP}\n\n`;
+    report += `تم الإنشاء بواسطة سيستم الإدارة الآلي ⚙️`;
 
     navigator.clipboard.writeText(report).then(() => {
-        showToast("تم نسخ التقرير للحافظة بنجاح <i class=\'fa-solid fa-clipboard\'></i>", "success");
+        showToast("تم نسخ التقرير للحافظة بنجاح 📋", "success");
     }).catch(err => {
         showToast("فشل في نسخ التقرير", "error");
     });
