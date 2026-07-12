@@ -12,6 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap"
         rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -1023,29 +1024,51 @@
 
     <!-- نافذة كروت الأسعار -->
     <div class="modal-overlay" id="priceTagsModal">
-        <div class="modal" style="max-width: 600px; width: 95%;">
+        <div class="modal" style="max-width: 1000px; width: 95%; display: flex; flex-direction: column; height: 90vh;">
             <button class="modal-close" onclick="closePriceTagsModal()">✖</button>
-            <h3 style="margin-bottom: 15px; color: var(--primary);"><i class="fa-solid fa-tags"></i> طباعة كروت الأسعار</h3>
-            <div style="display:flex; gap: 10px; margin-bottom: 15px; align-items: center;">
-                <label for="priceTagSize" style="font-weight: bold;">مقاس الكارت:</label>
-                <select id="priceTagSize" class="input-field" style="width: auto; margin-bottom: 0;">
-                    <option value="small">صغير (حوالي 12 في الورقة)</option>
-                    <option value="medium" selected>متوسط (حوالي 9 في الورقة)</option>
-                    <option value="large">كبير (حوالي 4 في الورقة)</option>
-                </select>
-                <button class="interactive-btn" onclick="selectAllTags()" style="background: var(--bg); color: var(--text); border: 1px solid #ccc; padding: 5px 10px; border-radius: 6px;">تحديد الكل</button>
-                <button class="interactive-btn" onclick="deselectAllTags()" style="background: var(--bg); color: var(--text); border: 1px solid #ccc; padding: 5px 10px; border-radius: 6px;">إلغاء التحديد</button>
-            </div>
+            <h3 style="margin-bottom: 15px; color: var(--primary); flex-shrink: 0;"><i class="fa-solid fa-tags"></i> طباعة كروت الأسعار</h3>
             
-            <div style="margin-bottom: 10px;">
-                <input type="text" id="priceTagsSearch" placeholder="بحث في المنتجات..." class="input-field" oninput="filterPriceTagsList()">
-            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 20px; flex: 1; overflow: hidden;">
+                <!-- الجانب الأيمن: القائمة والبحث -->
+                <div style="flex: 1; min-width: 300px; display: flex; flex-direction: column;">
+                    <div style="display:flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; align-items: center;">
+                        <label for="priceTagSize" style="font-weight: bold; margin-bottom: 0;">مقاس الكارت:</label>
+                        <select id="priceTagSize" class="input-field" style="width: auto; margin-bottom: 0;">
+                            <option value="small">صغير (حوالي 12 في الورقة)</option>
+                            <option value="medium" selected>متوسط (حوالي 9 في الورقة)</option>
+                            <option value="large">كبير (حوالي 4 في الورقة)</option>
+                        </select>
+                        <button class="interactive-btn" onclick="selectAllTags()" style="background: var(--bg); color: var(--text); border: 1px solid #ccc; padding: 5px 10px; border-radius: 6px;">تحديد الكل</button>
+                        <button class="interactive-btn" onclick="deselectAllTags()" style="background: var(--bg); color: var(--text); border: 1px solid #ccc; padding: 5px 10px; border-radius: 6px;">إلغاء التحديد</button>
+                    </div>
+                    
+                    <div style="margin-bottom: 10px;">
+                        <input type="text" id="priceTagsSearch" placeholder="بحث في المنتجات..." class="input-field" oninput="filterPriceTagsList()">
+                    </div>
 
-            <div id="priceTagsListContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; padding: 10px; margin-bottom: 15px; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
-                <!-- Product checkboxes will be populated here -->
-            </div>
+                    <div id="priceTagsListContainer" style="flex: 1; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; padding: 10px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; background: #fafafa;">
+                        <!-- Product checkboxes will be populated here -->
+                    </div>
 
-            <button class="btn-search interactive-btn" onclick="printSelectedPriceTags()" style="width: 100%;">🖨️ طباعة الكروت المحددة</button>
+                    <!-- أزرار الصفحات (Pagination) -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 15px;">
+                        <button class="btn-outline interactive-btn" onclick="prevPriceTagsPage()"><i class="fa-solid fa-chevron-right"></i> السابق</button>
+                        <span id="priceTagsPageInfo" style="font-weight: bold;">صفحة 1</span>
+                        <button class="btn-outline interactive-btn" onclick="nextPriceTagsPage()">التالي <i class="fa-solid fa-chevron-left"></i></button>
+                    </div>
+
+                    <button class="btn-search interactive-btn" onclick="printSelectedPriceTags()" style="width: 100%; font-size: 1.1rem; padding: 12px; margin-top: auto;">🖨️ طباعة الكروت المحددة</button>
+                </div>
+
+                <!-- الجانب الأيسر: المعاينة الحية -->
+                <div style="flex: 1; min-width: 300px; display: flex; flex-direction: column; background: var(--bg); border-radius: 12px; padding: 20px; align-items: center; justify-content: center; border: 2px dashed #ddd;">
+                    <h4 style="margin-bottom: 20px; color: var(--text-light);"><i class="fa-solid fa-eye"></i> معاينة حية للكارت</h4>
+                    <div id="livePriceTagPreview" style="width: 100%; display: flex; justify-content: center; align-items: center; transform: scale(1.2); transform-origin: top center;">
+                        <!-- سيتم عرض كارت المعاينة هنا -->
+                        <p style="color: #999;">اختر منتجاً لرؤية المعاينة</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

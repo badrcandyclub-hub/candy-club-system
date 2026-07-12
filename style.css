@@ -1,4 +1,4 @@
-﻿/* =========================================
+/* =========================================
    ظ‹ع؛ع†آ¬ CANDY CLUB أ¢â‚¬â€‌ Premium UI System
    Full Width | RTL | V13 Enhanced
    ========================================= */
@@ -3467,14 +3467,13 @@ body.dark-mode .app-sidebar {
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    /* The striped border effect */
     padding: 10px;
     background-image: repeating-linear-gradient(
         45deg,
-        #ff69b4,
-        #ff69b4 10px,
-        #fff 10px,
-        #fff 20px
+        #ff3385,
+        #ff3385 15px,
+        #fff 15px,
+        #fff 30px
     );
 }
 
@@ -3484,7 +3483,7 @@ body.dark-mode .app-sidebar {
     flex: 1;
     display: flex;
     flex-direction: column;
-    border: 2px solid #e0e0e0;
+    border: 2px dashed #ff3385;
     overflow: hidden;
     position: relative;
 }
@@ -3493,41 +3492,39 @@ body.dark-mode .app-sidebar {
 .candy-deco {
     position: absolute;
     font-size: 1.5rem;
-    opacity: 0.8;
+    opacity: 0.9;
+    z-index: 10;
 }
-.candy-deco.top-left { top: 5px; left: 5px; transform: rotate(-15deg); }
-.candy-deco.bottom-right { bottom: 5px; right: 5px; transform: rotate(15deg); }
+.candy-deco.top-left { top: 10px; left: 10px; transform: rotate(-15deg); }
+.candy-deco.top-right { top: 10px; right: 10px; transform: rotate(15deg); }
+.candy-deco.bottom-left { bottom: 10px; left: 10px; transform: rotate(15deg); }
+.candy-deco.bottom-right { bottom: 10px; right: 10px; transform: rotate(-15deg); }
 
 .price-tag-header {
     text-align: center;
-    padding: 10px 5px;
-    border-bottom: 3px solid #9b59b6;
+    padding-top: 10px;
     position: relative;
+    z-index: 5;
+    margin-top: -5px; /* Pull logo slightly up */
 }
 
 .price-tag-logo {
-    height: 40px;
+    height: 60px;
     object-fit: contain;
-}
-
-/* The purple divider with dots */
-.price-tag-divider {
-    background: #9b59b6;
-    height: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
-    color: #fff;
-    font-size: 0.5rem;
+    background: #fff;
+    border-radius: 50%;
+    padding: 2px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 .price-tag-body {
-    padding: 15px;
+    padding: 10px 20px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 5px;
     flex: 1;
     justify-content: center;
+    z-index: 5;
 }
 
 .tag-row {
@@ -3536,65 +3533,93 @@ body.dark-mode .app-sidebar {
     gap: 10px;
     font-size: 1.2rem;
     font-weight: 900;
-    color: #2c3e50;
     direction: rtl;
 }
 
-.tag-label {
-    color: #6a1b9a;
+.name-row .tag-label {
+    color: #4a148c;
+}
+.name-row .tag-value {
+    color: #4a148c;
+}
+
+.price-row .tag-label {
+    color: #4a148c;
+}
+.price-row .tag-value {
+    color: #e91e63;
 }
 
 .tag-value {
-    color: #e91e63;
     flex: 1;
-    text-align: left;
+    text-align: right;
+}
+
+.price-tag-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 5px 0;
+}
+
+.candy-hr {
+    flex: 1;
+    border: none;
+    border-top: 3px solid #9c27b0;
+    margin: 0;
+}
+
+.candy-icon {
+    font-size: 1.5rem;
+    color: #9c27b0;
+}
+
+.tag-barcode-container {
+    text-align: center;
+    margin-top: 5px;
+}
+
+.barcode-svg {
+    max-width: 100%;
+    height: auto;
 }
 
 /* Offer specific styling */
 .price-tag-card.is-offer {
     background-image: repeating-linear-gradient(
         45deg,
-        #e74c3c,
-        #e74c3c 10px,
-        #f1c40f 10px,
-        #f1c40f 20px
+        #ff9800,
+        #ff9800 15px,
+        #fff 15px,
+        #fff 30px
     );
 }
-.price-tag-card.is-offer .price-tag-divider {
-    background: #e74c3c;
-}
-.price-tag-card.is-offer .tag-label {
-    color: #c0392b;
+
+.price-tag-card.is-offer .price-tag-inner {
+    border: 2px dashed #ff9800;
 }
 
 .old-price {
     text-decoration: line-through;
     color: #7f8c8d;
-    font-size: 0.9rem;
-    margin-right: 10px;
+    font-size: 0.8em;
+    margin-left: 8px;
 }
 
 /* Sizes */
-.price-tag-card.size-small {
-    width: 6.5cm;
-    height: 4.5cm;
-}
+.price-tag-card.size-small { width: 6.5cm; height: 4.5cm; }
 .price-tag-card.size-small .tag-row { font-size: 1rem; }
-.price-tag-card.size-small .price-tag-logo { height: 30px; }
+.price-tag-card.size-small .price-tag-logo { height: 40px; }
+.price-tag-card.size-small .candy-deco { font-size: 1rem; }
 
-.price-tag-card.size-medium {
-    width: 9.5cm;
-    height: 6.5cm;
-}
+.price-tag-card.size-medium { width: 9.5cm; height: 6.5cm; }
 .price-tag-card.size-medium .tag-row { font-size: 1.3rem; }
-.price-tag-card.size-medium .price-tag-logo { height: 45px; }
+.price-tag-card.size-medium .price-tag-logo { height: 50px; }
 
-.price-tag-card.size-large {
-    width: 13.5cm;
-    height: 9.5cm;
-}
+.price-tag-card.size-large { width: 13.5cm; height: 9cm; }
 .price-tag-card.size-large .tag-row { font-size: 1.8rem; }
-.price-tag-card.size-large .price-tag-logo { height: 60px; }
+.price-tag-card.size-large .price-tag-logo { height: 70px; }
 
 
 /* Print media queries */

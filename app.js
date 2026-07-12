@@ -5597,130 +5597,257 @@ if (openPriceTagsBtn) {
     });
 }
 
+let currentPriceTagsPage = 1;
+const priceTagsPerPage = 30;
+let filteredPriceTags = [];
+let selectedPriceTagsMap = new Map();
+
 function openPriceTagsModal() {
     if (!catalogData || catalogData.length === 0) {
         showToast("الكتالوج فارغ، برجاء إضافة منتجات أولاً", "warning");
         return;
     }
     
-    // Sort catalog alphabetically
-    const sortedCatalog = [...catalogData].sort((a, b) => a.name.localeCompare(b.name));
+    filteredPriceTags = [...catalogData].sort((a, b) => a.name.localeCompare(b.name));
+    currentPriceTagsPage = 1;
+    selectedPriceTagsMap.clear();
     
-    priceTagsListContainer.innerHTML = sortedCatalog.map(p => `
-        <div class="price-tag-checkbox-item" style="display:flex; align-items:center; gap:8px; background:var(--bg); padding:8px; border-radius:6px; cursor:pointer;" onclick="this.querySelector('input').click()">
-            <input type="checkbox" class="price-tag-cb" value="${p.name}" data-price="${p.price}" data-is-offer="${p.isOffer || false}" data-offer-price="${p.offerPrice || 0}" onclick="event.stopPropagation()">
-            <div style="flex:1;">
-                <div style="font-weight:bold; font-size:0.9rem;">${p.name}</div>
-                <div style="font-size:0.8rem; color: ${p.isOffer ? 'var(--danger)' : 'var(--text-dark)'}">
-                    ${p.isOffer ? `<span style="text-decoration:line-through; color:#999; margin-left:5px;">${p.price}ج</span> ${p.offerPrice}ج` : `${p.price}ج`}
-                </div>
-            </div>
-        </div>
-    `).join('');
+    const searchInput = document.getElementById('priceTagsSearch');
+    if(searchInput) searchInput.value = '';
     
-    priceTagsSearch.value = '';
-    priceTagsModal.classList.add('active');
+    renderPriceTagsPage();
+    document.getElementById('priceTagsModal').classList.add('active');
+    
+    if (filteredPriceTags.length > 0) {
+        updateLivePriceTagPreview(filteredPriceTags[0]);
+    } else {
+        document.getElementById('livePriceTagPreview').innerHTML = '<p style="color: #999;">لا يوجد منتجات</p>';
+    }
 }
 
 window.closePriceTagsModal = function() {
-    priceTagsModal.classList.remove('active');
+    document.getElementById('priceTagsModal').classList.remove('active');
+};
+
+window.renderPriceTagsPage = function() {
+    const container = document.getElementById('priceTagsListContainer');
+    const pageInfo = document.getElementById('priceTagsPageInfo');
+    if(!container) return;
+    
+    const startIndex = (currentPriceTagsPage - 1) * priceTagsPerPage;
+    const endIndex = startIndex + priceTagsPerPage;
+    const pageItems = filteredPriceTags.slice(startIndex, endIndex);
+    
+    const totalPages = Math.ceil(filteredPriceTags.length / priceTagsPerPage) || 1;
+    if(pageInfo) pageInfo.textContent = `صفحة ${currentPriceTagsPage} من ${totalPages}`;
+    
+    container.innerHTML = pageItems.map(p => {
+        const isChecked = selectedPriceTagsMap.has(p.name) ? 'checked' : '';
+        const safeName = p.name.replace(/"/g, '&quot;').replace(/'/g, '\\\'');
+        
+        return `
+        <div class="price-tag-checkbox-item" style="display:flex; align-items:center; gap:10px; background:#fff; padding:10px; border-radius:8px; border: 1px solid #eee; cursor:pointer; transition: 0.2s;" 
+             onclick="togglePriceTagSelection('${safeName}')"
+             onmouseenter="updateLivePriceTagPreviewByName('${safeName}')">
+            <input type="checkbox" class="price-tag-cb" id="cb_${p.name.replace(/\s+/g, '_')}" ${isChecked} onclick="event.stopPropagation(); togglePriceTagSelection('${safeName}')">
+            <div style="flex:1;">
+                <div style="font-weight:bold; font-size:1rem; color: var(--text);">${p.name}</div>
+                <div style="font-size:0.85rem; color: ${p.isOffer ? 'var(--danger)' : 'var(--text-light)'}">
+                    ${p.isOffer ? `<span style="text-decoration:line-through; color:#999; margin-left:5px;">${p.price}ج</span> <span style="font-weight:bold;">${p.offerPrice}ج</span>` : `<span style="font-weight:bold;">${p.price}ج</span>`}
+                    ${p.barcode ? `<span style="margin-right: 10px; font-size: 0.75rem; color: #888;"><i class="fa-solid fa-barcode"></i> ${p.barcode}</span>` : ''}
+                </div>
+            </div>
+        </div>
+        `;
+    }).join('');
+};
+
+window.updateLivePriceTagPreviewByName = function(name) {
+    const p = filteredPriceTags.find(item => item.name === name);
+    if (p) updateLivePriceTagPreview(p);
+};
+
+window.togglePriceTagSelection = function(name) {
+    const p = filteredPriceTags.find(item => item.name === name);
+    if (!p) return;
+
+    if (selectedPriceTagsMap.has(name)) {
+        selectedPriceTagsMap.delete(name);
+    } else {
+        selectedPriceTagsMap.set(name, p);
+    }
+    
+    const cbId = `cb_${name.replace(/\s+/g, '_')}`;
+    const cb = document.getElementById(cbId);
+    if (cb) {
+        cb.checked = selectedPriceTagsMap.has(name);
+    }
+    
+    updateLivePriceTagPreview(p);
 };
 
 window.filterPriceTagsList = function() {
-    const q = priceTagsSearch.value.toLowerCase();
-    document.querySelectorAll('.price-tag-checkbox-item').forEach(item => {
-        const name = item.querySelector('.price-tag-cb').value.toLowerCase();
-        item.style.display = name.includes(q) ? 'flex' : 'none';
-    });
+    const searchInput = document.getElementById('priceTagsSearch');
+    const q = searchInput ? searchInput.value.toLowerCase() : '';
+    filteredPriceTags = catalogData.filter(p => p.name.toLowerCase().includes(q) || (p.barcode && String(p.barcode).toLowerCase().includes(q)));
+    currentPriceTagsPage = 1;
+    renderPriceTagsPage();
+};
+
+window.nextPriceTagsPage = function() {
+    const totalPages = Math.ceil(filteredPriceTags.length / priceTagsPerPage);
+    if (currentPriceTagsPage < totalPages) {
+        currentPriceTagsPage++;
+        renderPriceTagsPage();
+    }
+};
+
+window.prevPriceTagsPage = function() {
+    if (currentPriceTagsPage > 1) {
+        currentPriceTagsPage--;
+        renderPriceTagsPage();
+    }
 };
 
 window.selectAllTags = function() {
-    document.querySelectorAll('.price-tag-cb').forEach(cb => {
-        if(cb.closest('.price-tag-checkbox-item').style.display !== 'none') {
-            cb.checked = true;
-        }
+    filteredPriceTags.forEach(p => {
+        selectedPriceTagsMap.set(p.name, p);
     });
+    renderPriceTagsPage();
 };
 
 window.deselectAllTags = function() {
-    document.querySelectorAll('.price-tag-cb').forEach(cb => {
-        if(cb.closest('.price-tag-checkbox-item').style.display !== 'none') {
-            cb.checked = false;
-        }
+    filteredPriceTags.forEach(p => {
+        selectedPriceTagsMap.delete(p.name);
     });
+    renderPriceTagsPage();
+};
+
+window.generatePriceTagHTML = function(p, sizeClass) {
+    let priceHtml = '';
+    let cardClass = `price-tag-card size-${sizeClass}`;
+    
+    if (p.isOffer && parseFloat(p.offerPrice) > 0 && parseFloat(p.offerPrice) !== parseFloat(p.price)) {
+        cardClass += ' is-offer';
+        priceHtml = `<span class="old-price">${p.price}</span> ${p.offerPrice}`;
+    } else {
+        priceHtml = p.price;
+    }
+    
+    const barcodeHtml = p.barcode ? `<svg class="barcode-svg" data-barcode="${p.barcode}"></svg>` : '';
+    
+    return `
+        <div class="${cardClass}">
+            <div class="price-tag-inner">
+                <span class="candy-deco top-left">🍭</span>
+                <span class="candy-deco top-right">🍬</span>
+                <span class="candy-deco bottom-left">✨</span>
+                <span class="candy-deco bottom-right">🍭</span>
+                
+                <div class="price-tag-header">
+                    <img src="images/logo-branch.png" class="price-tag-logo" onerror="this.src='images/logo-digital.png'" alt="Candy Club">
+                </div>
+                
+                <div class="price-tag-body">
+                    <div class="tag-row name-row">
+                        <span class="tag-label">اسم الصنف :</span>
+                        <span class="tag-value">${p.name}</span>
+                    </div>
+                    
+                    <div class="price-tag-divider">
+                        <hr class="candy-hr">
+                        <span class="candy-icon">🍬</span>
+                        <hr class="candy-hr">
+                    </div>
+                    
+                    <div class="tag-row price-row">
+                        <span class="tag-label">السعر :</span>
+                        <span class="tag-value">${priceHtml}ج</span>
+                    </div>
+                    
+                    ${barcodeHtml ? `<div class="tag-barcode-container">${barcodeHtml}</div>` : ''}
+                </div>
+            </div>
+        </div>
+    `;
+};
+
+window.updateLivePriceTagPreview = function(p) {
+    const previewContainer = document.getElementById('livePriceTagPreview');
+    if (!p || !previewContainer) return;
+    
+    const sizeSelect = document.getElementById('priceTagSize');
+    const size = sizeSelect ? sizeSelect.value : 'medium';
+    previewContainer.innerHTML = generatePriceTagHTML(p, size);
+    
+    const svg = previewContainer.querySelector('.barcode-svg');
+    if (svg && p.barcode && typeof JsBarcode === 'function') {
+        try {
+            JsBarcode(svg, String(p.barcode), {
+                format: "CODE128",
+                width: 1.5,
+                height: 30,
+                displayValue: true,
+                fontSize: 12,
+                margin: 0
+            });
+        } catch (e) {
+            console.warn("Error rendering barcode in preview", e);
+        }
+    }
 };
 
 window.printSelectedPriceTags = function() {
-    const selected = Array.from(document.querySelectorAll('.price-tag-cb:checked'));
-    if (selected.length === 0) {
+    if (selectedPriceTagsMap.size === 0) {
         showToast("برجاء تحديد منتج واحد على الأقل", "warning");
         return;
     }
     
-    const size = priceTagSizeSelect.value;
+    const sizeSelect = document.getElementById('priceTagSize');
+    const size = sizeSelect ? sizeSelect.value : 'medium';
     const grid = document.getElementById('price-tags-grid');
     grid.innerHTML = '';
     
-    selected.forEach(cb => {
-        const name = cb.value;
-        const price = cb.getAttribute('data-price');
-        const isOffer = cb.getAttribute('data-is-offer') === 'true';
-        const offerPrice = cb.getAttribute('data-offer-price');
-        
-        let priceHtml = '';
-        let cardClass = `price-tag-card size-${size}`;
-        
-        if (isOffer && parseFloat(offerPrice) > 0 && parseFloat(offerPrice) !== parseFloat(price)) {
-            cardClass += ' is-offer';
-            priceHtml = `<span class="old-price">${price}</span> ${offerPrice}`;
-        } else {
-            priceHtml = price;
-        }
-        
-        grid.innerHTML += `
-            <div class="${cardClass}">
-                <div class="price-tag-inner">
-                    <span class="candy-deco top-left">🍬</span>
-                    <span class="candy-deco bottom-right">🍭</span>
-                    <div class="price-tag-header">
-                        <img src="images/logo-branch.png" class="price-tag-logo" onerror="this.src='images/logo-digital.png'" alt="Candy Club">
-                    </div>
-                    <div class="price-tag-divider">
-                        <span>●</span><span>●</span><span>●</span><span>●</span><span>●</span><span>🍬</span><span>●</span><span>●</span><span>●</span><span>●</span><span>●</span>
-                    </div>
-                    <div class="price-tag-body">
-                        <div class="tag-row">
-                            <span class="tag-label">اسم الصنف :</span>
-                            <span class="tag-value">${name}</span>
-                        </div>
-                        <div class="tag-row">
-                            <span class="tag-label">السعر :</span>
-                            <span class="tag-value">${priceHtml}ج</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
+    selectedPriceTagsMap.forEach(p => {
+        grid.innerHTML += generatePriceTagHTML(p, size);
     });
     
-    // Add print mode class
     document.body.classList.add('print-mode-tags');
     
-    // Inject A4 page style dynamically to override receipt 80mm page size
-    const styleEl = document.createElement('style');
-    styleEl.id = 'price-tags-print-style';
-    styleEl.innerHTML = '@page { size: A4; margin: 1cm; }';
-    document.head.appendChild(styleEl);
+    let styleEl = document.getElementById('price-tags-print-style');
+    if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.id = 'price-tags-print-style';
+        document.head.appendChild(styleEl);
+    }
+    styleEl.innerHTML = '@page { size: A4; margin: 0.5cm; }';
     
-    // Slight delay to allow DOM to render
+    if (typeof JsBarcode === 'function') {
+        const svgs = grid.querySelectorAll('.barcode-svg');
+        svgs.forEach(svg => {
+            const code = svg.getAttribute('data-barcode');
+            if (code) {
+                try {
+                    JsBarcode(svg, String(code), {
+                        format: "CODE128",
+                        width: 1.5,
+                        height: 30,
+                        displayValue: true,
+                        fontSize: 12,
+                        margin: 0
+                    });
+                } catch (e) {
+                    console.warn("Error generating barcode for print", e);
+                }
+            }
+        });
+    }
+    
     setTimeout(() => {
         window.print();
-        // Remove class and style after print dialog closes
         setTimeout(() => {
             document.body.classList.remove('print-mode-tags');
-            const addedStyle = document.getElementById('price-tags-print-style');
-            if(addedStyle) addedStyle.remove();
-            closePriceTagsModal();
-        }, 500);
-    }, 200);
+            if (styleEl) styleEl.remove();
+        }, 1000);
+    }, 500);
 };

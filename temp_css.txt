@@ -1,0 +1,187 @@
+﻿   ========================================= */
+.price-tags-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+    padding: 20px;
+    background: #fff;
+}
+
+.price-tag-card {
+    position: relative;
+    background: #fff;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    /* The striped border effect */
+    padding: 10px;
+    background-image: repeating-linear-gradient(
+        45deg,
+        #ff69b4,
+        #ff69b4 10px,
+        #fff 10px,
+        #fff 20px
+    );
+}
+
+.price-tag-inner {
+    background: #fff;
+    border-radius: 10px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border: 2px solid #e0e0e0;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Candy decorations */
+.candy-deco {
+    position: absolute;
+    font-size: 1.5rem;
+    opacity: 0.8;
+}
+.candy-deco.top-left { top: 5px; left: 5px; transform: rotate(-15deg); }
+.candy-deco.bottom-right { bottom: 5px; right: 5px; transform: rotate(15deg); }
+
+.price-tag-header {
+    text-align: center;
+    padding: 10px 5px;
+    border-bottom: 3px solid #9b59b6;
+    position: relative;
+}
+
+.price-tag-logo {
+    height: 40px;
+    object-fit: contain;
+}
+
+/* The purple divider with dots */
+.price-tag-divider {
+    background: #9b59b6;
+    height: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    color: #fff;
+    font-size: 0.5rem;
+}
+
+.price-tag-body {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+    justify-content: center;
+}
+
+.tag-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.2rem;
+    font-weight: 900;
+    color: #2c3e50;
+    direction: rtl;
+}
+
+.tag-label {
+    color: #6a1b9a;
+}
+
+.tag-value {
+    color: #e91e63;
+    flex: 1;
+    text-align: left;
+}
+
+/* Offer specific styling */
+.price-tag-card.is-offer {
+    background-image: repeating-linear-gradient(
+        45deg,
+        #e74c3c,
+        #e74c3c 10px,
+        #f1c40f 10px,
+        #f1c40f 20px
+    );
+}
+.price-tag-card.is-offer .price-tag-divider {
+    background: #e74c3c;
+}
+.price-tag-card.is-offer .tag-label {
+    color: #c0392b;
+}
+
+.old-price {
+    text-decoration: line-through;
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    margin-right: 10px;
+}
+
+/* Sizes */
+.price-tag-card.size-small {
+    width: 6.5cm;
+    height: 4.5cm;
+}
+.price-tag-card.size-small .tag-row { font-size: 1rem; }
+.price-tag-card.size-small .price-tag-logo { height: 30px; }
+
+.price-tag-card.size-medium {
+    width: 9.5cm;
+    height: 6.5cm;
+}
+.price-tag-card.size-medium .tag-row { font-size: 1.3rem; }
+.price-tag-card.size-medium .price-tag-logo { height: 45px; }
+
+.price-tag-card.size-large {
+    width: 13.5cm;
+    height: 9.5cm;
+}
+.price-tag-card.size-large .tag-row { font-size: 1.8rem; }
+.price-tag-card.size-large .price-tag-logo { height: 60px; }
+
+
+/* Print media queries */
+@media print {
+    body.print-mode-tags * {
+        visibility: hidden;
+    }
+    body.print-mode-tags .print-tags-only,
+    body.print-mode-tags .print-tags-only * {
+        visibility: visible;
+    }
+    body.print-mode-tags .print-tags-only {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    
+    body.print-mode-tags .price-tags-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        justify-content: flex-start;
+        padding: 0;
+        background: transparent;
+    }
+    
+    body.print-mode-tags .price-tag-card {
+        page-break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ccc; /* fallback if gradients fail */
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+
+}
+
