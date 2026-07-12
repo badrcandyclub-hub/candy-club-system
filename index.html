@@ -209,6 +209,7 @@
                     <input type="text" id="newCatalogName" placeholder="اسم المنتج" style="flex:2; margin-bottom:0;">
                     <input type="number" id="newCatalogPrice" placeholder="السعر" style="flex:1; margin-bottom:0;">
                     <button id="addCatalogBtn" class="btn-search interactive-btn" style="padding: 0 10px;">إضافة</button>
+                    <button id="openPriceTagsBtn" class="interactive-btn" style="padding: 0 10px; background: var(--secondary); color: white; border: none; border-radius: 8px;" title="طباعة كروت الأسعار">🖨️ طباعة كروت الأسعار</button>
                 </div>
                 <!-- بحث فوري في الكتالوج -->
                 <div style="margin-bottom: 10px;">
@@ -1019,6 +1020,41 @@
             </button>
         </div>
     </nav>
+
+    <!-- نافذة كروت الأسعار -->
+    <div class="modal-overlay" id="priceTagsModal">
+        <div class="modal" style="max-width: 600px; width: 95%;">
+            <button class="modal-close" onclick="closePriceTagsModal()">✖</button>
+            <h3 style="margin-bottom: 15px; color: var(--primary);"><i class="fa-solid fa-tags"></i> طباعة كروت الأسعار</h3>
+            <div style="display:flex; gap: 10px; margin-bottom: 15px; align-items: center;">
+                <label for="priceTagSize" style="font-weight: bold;">مقاس الكارت:</label>
+                <select id="priceTagSize" class="input-field" style="width: auto; margin-bottom: 0;">
+                    <option value="small">صغير (حوالي 12 في الورقة)</option>
+                    <option value="medium" selected>متوسط (حوالي 9 في الورقة)</option>
+                    <option value="large">كبير (حوالي 4 في الورقة)</option>
+                </select>
+                <button class="interactive-btn" onclick="selectAllTags()" style="background: var(--bg); color: var(--text); border: 1px solid #ccc; padding: 5px 10px; border-radius: 6px;">تحديد الكل</button>
+                <button class="interactive-btn" onclick="deselectAllTags()" style="background: var(--bg); color: var(--text); border: 1px solid #ccc; padding: 5px 10px; border-radius: 6px;">إلغاء التحديد</button>
+            </div>
+            
+            <div style="margin-bottom: 10px;">
+                <input type="text" id="priceTagsSearch" placeholder="بحث في المنتجات..." class="input-field" oninput="filterPriceTagsList()">
+            </div>
+
+            <div id="priceTagsListContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; padding: 10px; margin-bottom: 15px; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
+                <!-- Product checkboxes will be populated here -->
+            </div>
+
+            <button class="btn-search interactive-btn" onclick="printSelectedPriceTags()" style="width: 100%;">🖨️ طباعة الكروت المحددة</button>
+        </div>
+    </div>
+
+    <!-- حاوية طباعة كروت الأسعار (تظهر في الطباعة فقط) -->
+    <div id="price-tags-print-template" class="print-tags-only" style="display: none;">
+        <div id="price-tags-grid" class="price-tags-grid">
+            <!-- سيتم توليد الكروت هنا -->
+        </div>
+    </div>
 
     <!-- ⭐ تعديل جذري لجدول الطباعة (عناوين الأعمدة + تاريخ الحجز) -->
     <div id="print-receipt-template" class="print-only">

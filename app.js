@@ -5580,3 +5580,139 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// ==========================================
+// 19. بطاقات الأسعار (Price Tags Logic)
+// ==========================================
+
+const openPriceTagsBtn = document.getElementById('openPriceTagsBtn');
+const priceTagsModal = document.getElementById('priceTagsModal');
+const priceTagsListContainer = document.getElementById('priceTagsListContainer');
+const priceTagsSearch = document.getElementById('priceTagsSearch');
+const priceTagSizeSelect = document.getElementById('priceTagSize');
+
+if (openPriceTagsBtn) {
+    openPriceTagsBtn.addEventListener('click', () => {
+        openPriceTagsModal();
+    });
+}
+
+function openPriceTagsModal() {
+    if (!catalogData || catalogData.length === 0) {
+        showToast("الكتالوج فارغ، برجاء إضافة منتجات أولاً", "warning");
+        return;
+    }
+    
+    // Sort catalog alphabetically
+    const sortedCatalog = [...catalogData].sort((a, b) => a.name.localeCompare(b.name));
+    
+    priceTagsListContainer.innerHTML = sortedCatalog.map(p => `
+        <div class="price-tag-checkbox-item" style="display:flex; align-items:center; gap:8px; background:var(--bg); padding:8px; border-radius:6px; cursor:pointer;" onclick="this.querySelector('input').click()">
+            <input type="checkbox" class="price-tag-cb" value="${p.name}" data-price="${p.price}" data-is-offer="${p.isOffer || false}" data-offer-price="${p.offerPrice || 0}" onclick="event.stopPropagation()">
+            <div style="flex:1;">
+                <div style="font-weight:bold; font-size:0.9rem;">${p.name}</div>
+                <div style="font-size:0.8rem; color: ${p.isOffer ? 'var(--danger)' : 'var(--text-dark)'}">
+                    ${p.isOffer ? `<span style="text-decoration:line-through; color:#999; margin-left:5px;">${p.price}ج</span> ${p.offerPrice}ج` : `${p.price}ج`}
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    priceTagsSearch.value = '';
+    priceTagsModal.classList.add('active');
+}
+
+window.closePriceTagsModal = function() {
+    priceTagsModal.classList.remove('active');
+};
+
+window.filterPriceTagsList = function() {
+    const q = priceTagsSearch.value.toLowerCase();
+    document.querySelectorAll('.price-tag-checkbox-item').forEach(item => {
+        const name = item.querySelector('.price-tag-cb').value.toLowerCase();
+        item.style.display = name.includes(q) ? 'flex' : 'none';
+    });
+};
+
+window.selectAllTags = function() {
+    document.querySelectorAll('.price-tag-cb').forEach(cb => {
+        if(cb.closest('.price-tag-checkbox-item').style.display !== 'none') {
+            cb.checked = true;
+        }
+    });
+};
+
+window.deselectAllTags = function() {
+    document.querySelectorAll('.price-tag-cb').forEach(cb => {
+        if(cb.closest('.price-tag-checkbox-item').style.display !== 'none') {
+            cb.checked = false;
+        }
+    });
+};
+
+window.printSelectedPriceTags = function() {
+    const selected = Array.from(document.querySelectorAll('.price-tag-cb:checked'));
+    if (selected.length === 0) {
+        showToast("برجاء تحديد منتج واحد على الأقل", "warning");
+        return;
+    }
+    
+    const size = priceTagSizeSelect.value;
+    const grid = document.getElementById('price-tags-grid');
+    grid.innerHTML = '';
+    
+    selected.forEach(cb => {
+        const name = cb.value;
+        const price = cb.getAttribute('data-price');
+        const isOffer = cb.getAttribute('data-is-offer') === 'true';
+        const offerPrice = cb.getAttribute('data-offer-price');
+        
+        let priceHtml = '';
+        let cardClass = `price-tag-card size-${size}`;
+        
+        if (isOffer && parseFloat(offerPrice) > 0 && parseFloat(offerPrice) !== parseFloat(price)) {
+            cardClass += ' is-offer';
+            priceHtml = `<span class="old-price">${price}</span> ${offerPrice}`;
+        } else {
+            priceHtml = price;
+        }
+        
+        grid.innerHTML += `
+            <div class="${cardClass}">
+                <div class="price-tag-inner">
+                    <span class="candy-deco top-left">🍬</span>
+                    <span class="candy-deco bottom-right">🍭</span>
+                    <div class="price-tag-header">
+                        <img src="images/logo-branch.png" class="price-tag-logo" onerror="this.src='images/logo-digital.png'" alt="Candy Club">
+                    </div>
+                    <div class="price-tag-divider">
+                        <span>●</span><span>●</span><span>●</span><span>●</span><span>●</span><span>🍬</span><span>●</span><span>●</span><span>●</span><span>●</span><span>●</span>
+                    </div>
+                    <div class="price-tag-body">
+                        <div class="tag-row">
+                            <span class="tag-label">اسم الصنف :</span>
+                            <span class="tag-value">${name}</span>
+                        </div>
+                        <div class="tag-row">
+                            <span class="tag-label">السعر :</span>
+                            <span class="tag-value">${priceHtml}ج</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    // Add print mode class
+    document.body.classList.add('print-mode-tags');
+    
+    // Slight delay to allow DOM to render
+    setTimeout(() => {
+        window.print();
+        // Remove class after print dialog closes
+        setTimeout(() => {
+            document.body.classList.remove('print-mode-tags');
+            closePriceTagsModal();
+        }, 500);
+    }, 200);
+};
