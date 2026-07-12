@@ -5646,15 +5646,16 @@ window.renderPriceTagsPage = function() {
         const safeName = p.name.replace(/"/g, '&quot;').replace(/'/g, '\\\'');
         
         return `
-        <div class="price-tag-checkbox-item" style="display:flex; align-items:center; gap:10px; background:#fff; padding:10px; border-radius:8px; border: 1px solid #eee; cursor:pointer; transition: 0.2s;" 
+        <div class="price-tag-checkbox-item" style="display:flex; align-items:center; gap:15px; background:#fff; padding:12px 15px; border-radius:10px; border: 1px solid #e0e0e0; cursor:pointer; transition: all 0.2s ease-in-out; box-shadow: 0 2px 5px rgba(0,0,0,0.02);" 
              onclick="togglePriceTagSelection('${safeName}')"
-             onmouseenter="updateLivePriceTagPreviewByName('${safeName}')">
-            <input type="checkbox" class="price-tag-cb" id="cb_${p.name.replace(/\s+/g, '_')}" ${isChecked} onclick="event.stopPropagation(); togglePriceTagSelection('${safeName}')">
-            <div style="flex:1;">
-                <div style="font-weight:bold; font-size:1rem; color: var(--text);">${p.name}</div>
-                <div style="font-size:0.85rem; color: ${p.isOffer ? 'var(--danger)' : 'var(--text-light)'}">
-                    ${p.isOffer ? `<span style="text-decoration:line-through; color:#999; margin-left:5px;">${p.price}ج</span> <span style="font-weight:bold;">${p.offerPrice}ج</span>` : `<span style="font-weight:bold;">${p.price}ج</span>`}
-                    ${p.barcode ? `<span style="margin-right: 10px; font-size: 0.75rem; color: #888;"><i class="fa-solid fa-barcode"></i> ${p.barcode}</span>` : ''}
+             onmouseenter="updateLivePriceTagPreviewByName('${safeName}')"
+             onmouseover="this.style.borderColor='var(--primary)'; this.style.backgroundColor='#fdf4f9';"
+             onmouseout="this.style.borderColor='#e0e0e0'; this.style.backgroundColor='#fff';">
+            <input type="checkbox" class="price-tag-cb" id="cb_${p.name.replace(/\s+/g, '_')}" ${isChecked} style="width: 20px; height: 20px; accent-color: var(--primary); cursor: pointer;" onclick="event.stopPropagation(); togglePriceTagSelection('${safeName}')">
+            <div style="flex:1; display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-weight:bold; font-size:1.05rem; color: var(--text);">${p.name}</div>
+                <div style="font-size:0.95rem; background: ${p.isOffer ? 'var(--danger)' : 'var(--secondary)'}; color: white; padding: 4px 10px; border-radius: 20px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    ${p.isOffer ? `<span style="text-decoration:line-through; color:rgba(255,255,255,0.7); margin-left:5px; font-size: 0.8rem;">${p.price}ج</span> <span>${p.offerPrice}ج</span>` : `<span>${p.price}ج</span>`}
                 </div>
             </div>
         </div>
