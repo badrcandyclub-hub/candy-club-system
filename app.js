@@ -5075,7 +5075,7 @@ function generatePDFReceipt(filteredData, dateVal) {
                             <td style="font-weight: bold; text-align: center; color: #27ae60; font-size: 1.1em;">${item.qty || '-'}</td>
                             <td dir="ltr" style="text-align: right;">${formattedExp || '-'}</td>
                             <td>${item.location || '-'}</td>
-                            <td></td>
+                            <td>${item.notes || '-'}</td>
                         </tr>
                         `;
                     }).join('')}
