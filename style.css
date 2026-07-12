@@ -1,12 +1,12 @@
-/* =========================================
-   🍬 CANDY CLUB — Premium UI System
+﻿/* =========================================
+   ًںچ¬ CANDY CLUB â€” Premium UI System
    Full Width | RTL | V13 Enhanced
    ========================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=Tajawal:wght@300;400;500;700&display=swap');
 
 /* =========================================
-   1. المتغيرات والألوان
+   1. ط§ظ„ظ…طھط؛ظٹط±ط§طھ ظˆط§ظ„ط£ظ„ظˆط§ظ†
    ========================================= */
 :root {
     /* Candy Club Signature Colors */
@@ -64,7 +64,7 @@
 }
 
 /* =========================================
-   2. الأساسيات
+   2. ط§ظ„ط£ط³ط§ط³ظٹط§طھ
    ========================================= */
 *, *::before, *::after {
     box-sizing: border-box;
@@ -95,7 +95,7 @@ h1, h2, h3, h4, h5 {
 }
 
 /* =========================================
-   3. الهيدر
+   3. ط§ظ„ظ‡ظٹط¯ط±
    ========================================= */
 .app-header {
     background: var(--white);
@@ -191,7 +191,7 @@ h1, h2, h3, h4, h5 {
 }
 
 /* =========================================
-   4. الحركات والأزرار العامة
+   4. ط§ظ„ط­ط±ظƒط§طھ ظˆط§ظ„ط£ط²ط±ط§ط± ط§ظ„ط¹ط§ظ…ط©
    ========================================= */
 .interactive-btn {
     transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.2s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 0.2s, filter 0.2s;
@@ -228,7 +228,7 @@ h1, h2, h3, h4, h5 {
 .text-center { text-align: center; }
 
 /* =========================================
-   5. المحتوى والكروت
+   5. ط§ظ„ظ…ط­طھظˆظ‰ ظˆط§ظ„ظƒط±ظˆطھ
    ========================================= */
 .app-content {
     padding: 24px 28px;
@@ -314,7 +314,7 @@ h1, h2, h3, h4, h5 {
 .divider::after  { left: 0; }
 
 /* =========================================
-   6. المدخلات (Inputs)
+   6. ط§ظ„ظ…ط¯ط®ظ„ط§طھ (Inputs)
    ========================================= */
 label {
     display: block;
@@ -439,7 +439,7 @@ body.dark-mode input[readonly] {
 .check-status-icon:hover { transform: scale(1.15); }
 
 /* =========================================
-   7. جدول المنتجات
+   7. ط¬ط¯ظˆظ„ ط§ظ„ظ…ظ†طھط¬ط§طھ
    ========================================= */
 .product-header-labels {
     display: flex;
@@ -546,7 +546,7 @@ body.dark-mode input[readonly] {
     background: var(--primary-glow);
     border-color: var(--primary);
 }
-/* شريط العروض داخل الفاتورة */
+/* ط´ط±ظٹط· ط§ظ„ط¹ط±ظˆط¶ ط¯ط§ط®ظ„ ط§ظ„ظپط§طھظˆط±ط© */
 .invoice-offer-bar {
     display: flex;
     justify-content: space-between;
@@ -568,7 +568,7 @@ body.dark-mode .invoice-offer-bar {
 .offer-mini-switch { display: flex; align-items: center; gap: 5px; font-weight: bold; color: var(--primary); }
 
 /* =========================================
-   8. الهدية والحسابات
+   8. ط§ظ„ظ‡ط¯ظٹط© ظˆط§ظ„ط­ط³ط§ط¨ط§طھ
    ========================================= */
 .totals-box {
     background: linear-gradient(135deg, #FAFBFF, #F5F0FF);
@@ -675,7 +675,7 @@ input:checked + .slider:before { transform: translateX(24px); }
 }
 
 /* =========================================
-   9. قسم الدفع والأزرار الرئيسية
+   9. ظ‚ط³ظ… ط§ظ„ط¯ظپط¹ ظˆط§ظ„ط£ط²ط±ط§ط± ط§ظ„ط±ط¦ظٹط³ظٹط©
    ========================================= */
 .payment-section {
     background: #FAFBFF;
@@ -782,7 +782,7 @@ input:checked + .slider:before { transform: translateX(24px); }
 }
 
 /* =========================================
-   10. السجل، البحث، وقوائم البيانات
+   10. ط§ظ„ط³ط¬ظ„طŒ ط§ظ„ط¨ط­ط«طŒ ظˆظ‚ظˆط§ط¦ظ… ط§ظ„ط¨ظٹط§ظ†ط§طھ
    ========================================= */
 .search-box {
     display: flex;
@@ -818,7 +818,7 @@ input:checked + .slider:before { transform: translateX(24px); }
 }
 
 /* =========================================
-   Custom Webkit Scrollbar موحد
+   Custom Webkit Scrollbar ظ…ظˆط­ط¯
    ========================================= */
 ::-webkit-scrollbar { width: 10px; height: 10px; } 
 ::-webkit-scrollbar-track { background: #f1f2f6; border-radius: 8px; }
@@ -835,7 +835,7 @@ input:checked + .slider:before { transform: translateX(24px); }
     font-size: 0.9rem;
 }
 /* =========================================
-   11. التقارير والإحصائيات
+   11. ط§ظ„طھظ‚ط§ط±ظٹط± ظˆط§ظ„ط¥ط­طµط§ط¦ظٹط§طھ
    ========================================= */
 .stats-row {
     display: flex;
@@ -887,7 +887,7 @@ input:checked + .slider:before { transform: translateX(24px); }
 }
 
 /* =========================================
-   12. الشحن والمناديب
+   12. ط§ظ„ط´ط­ظ† ظˆط§ظ„ظ…ظ†ط§ط¯ظٹط¨
    ========================================= */
 .shipping-actions-row {
     display: flex;
@@ -938,7 +938,7 @@ input:checked + .slider:before { transform: translateX(24px); }
 }
 
 /* =========================================
-   13. النوافذ المنبثقة (Modals)
+   13. ط§ظ„ظ†ظˆط§ظپط° ط§ظ„ظ…ظ†ط¨ط«ظ‚ط© (Modals)
    ========================================= */
 .modal-overlay {
     position: fixed;
@@ -1019,7 +1019,7 @@ input:checked + .slider:before { transform: translateX(24px); }
 }
 
 /* =========================================
-   14. الإشعارات (Toasts)
+   14. ط§ظ„ط¥ط´ط¹ط§ط±ط§طھ (Toasts)
    ========================================= */
 .toast-container {
     position: fixed;
@@ -1070,7 +1070,7 @@ input:checked + .slider:before { transform: translateX(24px); }
 .toast.warning { border-right: 4px solid var(--warning); }
 
 /* =========================================
-   15. شريط التنقل السفلي
+   15. ط´ط±ظٹط· ط§ظ„طھظ†ظ‚ظ„ ط§ظ„ط³ظپظ„ظٹ
    ========================================= */
 .bottom-nav {
     position: fixed;
@@ -1153,13 +1153,13 @@ input:checked + .slider:before { transform: translateX(24px); }
 }
 
 /* =========================================
-   16. الطباعة (80mm Thermal) - المعدلة
+   16. ط§ظ„ط·ط¨ط§ط¹ط© (80mm Thermal) - ط§ظ„ظ…ط¹ط¯ظ„ط©
    ========================================= */
 .print-only { display: none; }
 
 @media print {
     @page {
-        margin: 0; /* السطر السحري لمنع المتصفح من طباعة روابط واسم الصفحة */
+        margin: 0; /* ط§ظ„ط³ط·ط± ط§ظ„ط³ط­ط±ظٹ ظ„ظ…ظ†ط¹ ط§ظ„ظ…طھطµظپط­ ظ…ظ† ط·ط¨ط§ط¹ط© ط±ظˆط§ط¨ط· ظˆط§ط³ظ… ط§ظ„طµظپط­ط© */
     }
 
     body {
@@ -1172,7 +1172,7 @@ input:checked + .slider:before { transform: translateX(24px); }
         print-color-adjust: exact;
     }
 
-    /* إخفاء كل ما لا يخص الطباعة بما فيها الإضافات الجديدة */
+    /* ط¥ط®ظپط§ط، ظƒظ„ ظ…ط§ ظ„ط§ ظٹط®طµ ط§ظ„ط·ط¨ط§ط¹ط© ط¨ظ…ط§ ظپظٹظ‡ط§ ط§ظ„ط¥ط¶ط§ظپط§طھ ط§ظ„ط¬ط¯ظٹط¯ط© */
     .app-header,
     .app-content,
     .bottom-nav,
@@ -1189,7 +1189,7 @@ input:checked + .slider:before { transform: translateX(24px); }
         color: #000;
         font-family: 'Cairo', sans-serif;
         font-size: 13px;
-        /* ⭐ V15.0: منع القص حتى تظهر كل المنتجات */
+        /* â­گ V15.0: ظ…ظ†ط¹ ط§ظ„ظ‚طµ ط­طھظ‰ طھط¸ظ‡ط± ظƒظ„ ط§ظ„ظ…ظ†طھط¬ط§طھ */
         overflow: visible !important;
         max-height: none !important;
         height: auto !important;
@@ -1208,14 +1208,14 @@ input:checked + .slider:before { transform: translateX(24px); }
     
     .receipt-info p    { margin: 4px 0; font-weight: bold; font-size: 16px; }
     
-    /* الوضوح القاطع لجميع النصوص */
+    /* ط§ظ„ظˆط¶ظˆط­ ط§ظ„ظ‚ط§ط·ط¹ ظ„ط¬ظ…ظٹط¹ ط§ظ„ظ†طµظˆطµ */
     .print-only, .print-only * {
         color: #000000 !important;
         font-size: 14px !important;
         font-weight: 500 !important;
     }
 
-    /* تحسين إضافي لجدول الطباعة ليكون أوضح للعميل */
+    /* طھط­ط³ظٹظ† ط¥ط¶ط§ظپظٹ ظ„ط¬ط¯ظˆظ„ ط§ظ„ط·ط¨ط§ط¹ط© ظ„ظٹظƒظˆظ† ط£ظˆط¶ط­ ظ„ظ„ط¹ظ…ظٹظ„ */
     .receipt-table {
         width: 100%;
         border-collapse: collapse;
@@ -1307,7 +1307,7 @@ input:checked + .slider:before { transform: translateX(24px); }
     }
 }
 /* =========================================
-   17. الوضع الليلي (Dark Mode)
+   17. ط§ظ„ظˆط¶ط¹ ط§ظ„ظ„ظٹظ„ظٹ (Dark Mode)
    ========================================= */
 body.dark-mode {
     --bg:         #0F1117;
@@ -1427,7 +1427,7 @@ body.dark-mode .delivery-prediction {
 }
 
 /* =========================================
-   12. الشحن والمناديب
+   12. ط§ظ„ط´ط­ظ† ظˆط§ظ„ظ…ظ†ط§ط¯ظٹط¨
    ========================================= */
 .shipping-actions-row {
     display: flex;
@@ -1455,7 +1455,7 @@ body.dark-mode .delivery-prediction {
 }
 
 /* =========================================
-   تنسيق قوائم مناطق الشحن (Accordion)
+   طھظ†ط³ظٹظ‚ ظ‚ظˆط§ط¦ظ… ظ…ظ†ط§ط·ظ‚ ط§ظ„ط´ط­ظ† (Accordion)
    ========================================= */
 .zones-lists-container {
     display: grid;
@@ -1482,10 +1482,10 @@ body.dark-mode .delivery-prediction {
     border: 1px solid var(--border);
     border-radius: 12px;
     user-select: none;
-    list-style: none; /* إخفاء المثلث الافتراضي */
+    list-style: none; /* ط¥ط®ظپط§ط، ط§ظ„ظ…ط«ظ„ط« ط§ظ„ط§ظپطھط±ط§ط¶ظٹ */
 }
 
-/* إخفاء المثلث الافتراضي في Safari/Chrome */
+/* ط¥ط®ظپط§ط، ط§ظ„ظ…ط«ظ„ط« ط§ظ„ط§ظپطھط±ط§ط¶ظٹ ظپظٹ Safari/Chrome */
 .zone-summary::-webkit-details-marker {
     display: none;
 }
@@ -1511,7 +1511,7 @@ body.dark-mode .delivery-prediction {
     gap: 15px;
 }
 
-/* ⭐ Premium Zone Cards CSS */
+/* â­گ Premium Zone Cards CSS */
 .zone-premium-card {
     display: flex;
     justify-content: space-between;
@@ -1650,7 +1650,7 @@ body.dark-mode .zone-summary {
     background: var(--card);
 }
 
-/* 🚚 بطاقة الأوردر في قسم الشحن (REDESIGN)
+/* ًںڑڑ ط¨ط·ط§ظ‚ط© ط§ظ„ط£ظˆط±ط¯ط± ظپظٹ ظ‚ط³ظ… ط§ظ„ط´ط­ظ† (REDESIGN)
    ========================================= */
 .shipping-order-card {
     display: grid;
@@ -1801,7 +1801,7 @@ body.dark-mode .soc-info-row {
     white-space: nowrap;
 }
 
-/* بطاقة الحجوزات والفرع مع أكشن بوتونات */
+/* ط¨ط·ط§ظ‚ط© ط§ظ„ط­ط¬ظˆط²ط§طھ ظˆط§ظ„ظپط±ط¹ ظ…ط¹ ط£ظƒط´ظ† ط¨ظˆطھظˆظ†ط§طھ */
 .shipping-action-card {
     background: var(--white);
     border: 1.5px solid var(--border);
@@ -1892,7 +1892,7 @@ body.dark-mode .sac-finance-row {
 
 .sac-btn-convert:hover { filter: brightness(1.1); }
 
-/* بطاقة تقفيل المندوب */
+/* ط¨ط·ط§ظ‚ط© طھظ‚ظپظٹظ„ ط§ظ„ظ…ظ†ط¯ظˆط¨ */
 .shipped-order-card {
     display: grid;
     grid-template-columns: 28px 1fr;
@@ -1917,7 +1917,7 @@ body.dark-mode .shipped-order-card {
 }
 
 /* =========================================
-   19. الكتالوج والعروض
+   19. ط§ظ„ظƒطھط§ظ„ظˆط¬ ظˆط§ظ„ط¹ط±ظˆط¶
    ========================================= */
 .offer-badge {
     background: linear-gradient(135deg, var(--primary), #FF6BB5);
@@ -1967,14 +1967,14 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
 
 
 /* =========================================
-   21. Desktop Layout — شاشات كبيرة (Full Width) ⭐
+   21. Desktop Layout â€” ط´ط§ط´ط§طھ ظƒط¨ظٹط±ط© (Full Width) â­گ
    ========================================= */
 @media (min-width: 900px) {
 
-    /* تم إلغاء القيود على عرض الشاشة لتصبح Full Width وتلغي الفراغات */
+    /* طھظ… ط¥ظ„ط؛ط§ط، ط§ظ„ظ‚ظٹظˆط¯ ط¹ظ„ظ‰ ط¹ط±ط¶ ط§ظ„ط´ط§ط´ط© ظ„طھطµط¨ط­ Full Width ظˆطھظ„ط؛ظٹ ط§ظ„ظپط±ط§ط؛ط§طھ */
     .app-content {
         padding: 30px 40px;
-        max-width: 100%; /* العرض الكامل */
+        max-width: 100%; /* ط§ظ„ط¹ط±ط¶ ط§ظ„ظƒط§ظ…ظ„ */
         margin: 0;
     }
 
@@ -1982,7 +1982,7 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
         padding: 0 40px;
     }
 
-    /* البار السفلي يظل ثابت أسفل الشاشة زي الموبايل بالظبط ⭐ */
+    /* ط§ظ„ط¨ط§ط± ط§ظ„ط³ظپظ„ظٹ ظٹط¸ظ„ ط«ط§ط¨طھ ط£ط³ظپظ„ ط§ظ„ط´ط§ط´ط© ط²ظٹ ط§ظ„ظ…ظˆط¨ط§ظٹظ„ ط¨ط§ظ„ط¸ط¨ط· â­گ */
     .bottom-nav {
         position: fixed;
         bottom: 0;
@@ -2024,7 +2024,7 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
         max-width: 360px;
     }
 
-    /* تقسيم الكروت في الشاشات الكبيرة عشان تملى المساحة صح */
+    /* طھظ‚ط³ظٹظ… ط§ظ„ظƒط±ظˆطھ ظپظٹ ط§ظ„ط´ط§ط´ط§طھ ط§ظ„ظƒط¨ظٹط±ط© ط¹ط´ط§ظ† طھظ…ظ„ظ‰ ط§ظ„ظ…ط³ط§ط­ط© طµط­ */
     #create-tab.active {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -2032,7 +2032,7 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
         align-items: start;
     }
 
-    /* نخلي الكارت الأول ياخد المساحة كلها لوحده عشان الفورم تفرد */
+    /* ظ†ط®ظ„ظٹ ط§ظ„ظƒط§ط±طھ ط§ظ„ط£ظˆظ„ ظٹط§ط®ط¯ ط§ظ„ظ…ط³ط§ط­ط© ظƒظ„ظ‡ط§ ظ„ظˆط­ط¯ظ‡ ط¹ط´ط§ظ† ط§ظ„ظپظˆط±ظ… طھظپط±ط¯ */
     #create-tab .section-card {
         grid-column: 1 / -1; 
         max-width: 100%;
@@ -2053,7 +2053,7 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
         grid-column: 1 / -1;
     }
 
-    /* ترتيب كروت الكتالوج والنواقص جنب بعض */
+    /* طھط±طھظٹط¨ ظƒط±ظˆطھ ط§ظ„ظƒطھط§ظ„ظˆط¬ ظˆط§ظ„ظ†ظˆط§ظ‚طµ ط¬ظ†ط¨ ط¨ط¹ط¶ */
     #catalog-tab.active {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -2063,7 +2063,7 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
 }
 
 @media (min-width: 1200px) {
-    /* شاشات الكومبيوتر الواسعة جداً */
+    /* ط´ط§ط´ط§طھ ط§ظ„ظƒظˆظ…ط¨ظٹظˆطھط± ط§ظ„ظˆط§ط³ط¹ط© ط¬ط¯ط§ظ‹ */
     .app-content {
         padding: 40px 60px;
     }
@@ -2072,18 +2072,18 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
         grid-template-columns: 2fr 1.5fr; 
     }
 
-    /* كارت إنشاء طلب ياخد مساحة أكبر */
+    /* ظƒط§ط±طھ ط¥ظ†ط´ط§ط، ط·ظ„ط¨ ظٹط§ط®ط¯ ظ…ط³ط§ط­ط© ط£ظƒط¨ط± */
     #create-tab .section-card:first-child {
         grid-column: 1 / -1; 
     }
 }
 
 /* =========================================
-   22. موبايل
+   22. ظ…ظˆط¨ط§ظٹظ„
    ========================================= */
 @media (max-width: 899px) {
-    body { padding-top: 130px; } /* عشان الهيدر لما بيلف ويزيد طوله ميغطيش على المحتوى */
-    .app-content { padding: 10px 10px 100px 10px; } /* مساحة إضافية بالأسفل لتجنب تغطية شريط التنقل */
+    body { padding-top: 130px; } /* ط¹ط´ط§ظ† ط§ظ„ظ‡ظٹط¯ط± ظ„ظ…ط§ ط¨ظٹظ„ظپ ظˆظٹط²ظٹط¯ ط·ظˆظ„ظ‡ ظ…ظٹط؛ط·ظٹط´ ط¹ظ„ظ‰ ط§ظ„ظ…ط­طھظˆظ‰ */
+    .app-content { padding: 10px 10px 100px 10px; } /* ظ…ط³ط§ط­ط© ط¥ط¶ط§ظپظٹط© ط¨ط§ظ„ط£ط³ظپظ„ ظ„طھط¬ظ†ط¨ طھط؛ط·ظٹط© ط´ط±ظٹط· ط§ظ„طھظ†ظ‚ظ„ */
     .app-header { 
         padding: 10px 16px; 
         height: var(--header-height); 
@@ -2102,12 +2102,12 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
     .section-card { padding: 16px 12px; margin-bottom: 15px; border-radius: 12px; }
     .stats-row { flex-wrap: wrap; }
     
-    /* إصلاح زراير الشحن المخفية على الموبايل */
+    /* ط¥طµظ„ط§ط­ ط²ط±ط§ظٹط± ط§ظ„ط´ط­ظ† ط§ظ„ظ…ط®ظپظٹط© ط¹ظ„ظ‰ ط§ظ„ظ…ظˆط¨ط§ظٹظ„ */
     .shipping-actions-row {
         flex-direction: column;
     }
 
-    /* ⭐ تصغير حجم كروت مناطق الشحن على الموبايل لتوفير مساحة */
+    /* â­گ طھطµط؛ظٹط± ط­ط¬ظ… ظƒط±ظˆطھ ظ…ظ†ط§ط·ظ‚ ط§ظ„ط´ط­ظ† ط¹ظ„ظ‰ ط§ظ„ظ…ظˆط¨ط§ظٹظ„ ظ„طھظˆظپظٹط± ظ…ط³ط§ط­ط© */
     .zone-premium-card {
         padding: 10px 12px;
     }
@@ -2128,7 +2128,7 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
         padding-right: 10px;
     }
 
-    /* تصميم شبكي مخصص لخانة المنتجات في الفاتورة على الموبايل */
+    /* طھطµظ…ظٹظ… ط´ط¨ظƒظٹ ظ…ط®طµطµ ظ„ط®ط§ظ†ط© ط§ظ„ظ…ظ†طھط¬ط§طھ ظپظٹ ط§ظ„ظپط§طھظˆط±ط© ط¹ظ„ظ‰ ط§ظ„ظ…ظˆط¨ط§ظٹظ„ */
     .product-row {
         grid-template-columns: 1fr 1fr;
         grid-template-areas:
@@ -2159,7 +2159,7 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
     }
     
     .zones-lists-container {
-        grid-template-columns: 1fr; /* ترتيب قوائم مناطق الشحن فوق بعضها */
+        grid-template-columns: 1fr; /* طھط±طھظٹط¨ ظ‚ظˆط§ط¦ظ… ظ…ظ†ط§ط·ظ‚ ط§ظ„ط´ط­ظ† ظپظˆظ‚ ط¨ط¹ط¶ظ‡ط§ */
         gap: 15px;
     }
     
@@ -2173,7 +2173,7 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
     .nav-item .icon { font-size: 1.3rem; margin-bottom: 2px; }
     .nav-item .label { font-size: 0.7rem; }
     
-    /* تحسين النوافذ المنبثقة (Modals) لتناسب الموبايل */
+    /* طھط­ط³ظٹظ† ط§ظ„ظ†ظˆط§ظپط° ط§ظ„ظ…ظ†ط¨ط«ظ‚ط© (Modals) ظ„طھظ†ط§ط³ط¨ ط§ظ„ظ…ظˆط¨ط§ظٹظ„ */
     .modal-content { 
         padding: 15px 12px; 
         max-height: 95vh; 
@@ -2181,7 +2181,7 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
         width: 95%;
     }
     
-    /* تحسين أزرار الإجراءات في الجداول لتجنب التداخل */
+    /* طھط­ط³ظٹظ† ط£ط²ط±ط§ط± ط§ظ„ط¥ط¬ط±ط§ط،ط§طھ ظپظٹ ط§ظ„ط¬ط¯ط§ظˆظ„ ظ„طھط¬ظ†ط¨ ط§ظ„طھط¯ط§ط®ظ„ */
     td[style*="display: flex"] {
         flex-direction: column !important;
         gap: 8px !important;
@@ -2191,7 +2191,7 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
         padding: 8px !important;
     }
     
-    /* تحسين الجداول لمنع التداخل */
+    /* طھط­ط³ظٹظ† ط§ظ„ط¬ط¯ط§ظˆظ„ ظ„ظ…ظ†ط¹ ط§ظ„طھط¯ط§ط®ظ„ */
     .table-responsive, .data-table, .receipt-table { 
         display: block; 
         width: 100%; 
@@ -2200,20 +2200,20 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
         -webkit-overflow-scrolling: touch;
     }
     
-    /* جعل النماذج عمودية (Grid to Column) */
+    /* ط¬ط¹ظ„ ط§ظ„ظ†ظ…ط§ط°ط¬ ط¹ظ…ظˆط¯ظٹط© (Grid to Column) */
     .expiry-form-grid, .invoice-details-grid {
         grid-template-columns: 1fr !important;
         gap: 10px;
     }
     
-    /* جعل عناصر الإدخال تملأ الشاشة بالكامل في الموبايل */
+    /* ط¬ط¹ظ„ ط¹ظ†ط§طµط± ط§ظ„ط¥ط¯ط®ط§ظ„ طھظ…ظ„ط£ ط§ظ„ط´ط§ط´ط© ط¨ط§ظ„ظƒط§ظ…ظ„ ظپظٹ ط§ظ„ظ…ظˆط¨ط§ظٹظ„ */
     .expiry-form-grid > div {
         grid-column: span 1 !important;
     }
     
-    /* تكبير حقول الإدخال لتسهيل اللمس */
+    /* طھظƒط¨ظٹط± ط­ظ‚ظˆظ„ ط§ظ„ط¥ط¯ط®ط§ظ„ ظ„طھط³ظ‡ظٹظ„ ط§ظ„ظ„ظ…ط³ */
     input, select, textarea {
-        font-size: 16px !important; /* لمنع Zoom في الآيفون/الأندرويد */
+        font-size: 16px !important; /* ظ„ظ…ظ†ط¹ Zoom ظپظٹ ط§ظ„ط¢ظٹظپظˆظ†/ط§ظ„ط£ظ†ط¯ط±ظˆظٹط¯ */
         padding: 12px 10px !important;
     }
     
@@ -2225,19 +2225,19 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
     .toast-container { top: 72px; }
 }
 
-/* شريط العروض النيون بينك الاحترافي */
+/* ط´ط±ظٹط· ط§ظ„ط¹ط±ظˆط¶ ط§ظ„ظ†ظٹظˆظ† ط¨ظٹظ†ظƒ ط§ظ„ط§ط­طھط±ط§ظپظٹ */
 .invoice-offer-bar {
     display: flex;
     align-items: center;
     gap: 10px;
-    background: #fff0f5; /* خلفية وردي خفيف */
+    background: #fff0f5; /* ط®ظ„ظپظٹط© ظˆط±ط¯ظٹ ط®ظپظٹظپ */
     padding: 5px 12px;
     border-radius: 20px;
     font-size: 0.85rem;
-    border: 2px solid #FF1493; /* حدود نيون بينك */
+    border: 2px solid #FF1493; /* ط­ط¯ظˆط¯ ظ†ظٹظˆظ† ط¨ظٹظ†ظƒ */
     color: #FF1493;
     font-weight: bold;
-    animation: flash-border 1.5s infinite; /* حركة فلاش خفيفة للعين */
+    animation: flash-border 1.5s infinite; /* ط­ط±ظƒط© ظپظ„ط§ط´ ط®ظپظٹظپط© ظ„ظ„ط¹ظٹظ† */
 }
 body.dark-mode .invoice-offer-bar {
     background: #301020;
@@ -2248,20 +2248,20 @@ body.dark-mode .invoice-offer-bar {
     100% { border-color: #FF1493; }
 }
 
-/* تصميم كروت السجل الاحترافية */
+/* طھطµظ…ظٹظ… ظƒط±ظˆطھ ط§ظ„ط³ط¬ظ„ ط§ظ„ط§ط­طھط±ط§ظپظٹط© */
 .history-item {
-    background: var(--card); /* تم التصحيح ليقرأ اللون بنجاح */
+    background: var(--card); /* طھظ… ط§ظ„طھطµط­ظٹط­ ظ„ظٹظ‚ط±ط£ ط§ظ„ظ„ظˆظ† ط¨ظ†ط¬ط§ط­ */
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 15px;
-    margin-bottom: 20px; /* هذا الجزء يصنع مسافة بين كل أوردر والذي يليه */
+    margin-bottom: 20px; /* ظ‡ط°ط§ ط§ظ„ط¬ط²ط، ظٹطµظ†ط¹ ظ…ط³ط§ظپط© ط¨ظٹظ† ظƒظ„ ط£ظˆط±ط¯ط± ظˆط§ظ„ط°ظٹ ظٹظ„ظٹظ‡ */
     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     transition: transform 0.2s;
-    border-right: 5px solid var(--primary); /* خط ملون جانبي للتمييز */
+    border-right: 5px solid var(--primary); /* ط®ط· ظ…ظ„ظˆظ† ط¬ط§ظ†ط¨ظٹ ظ„ظ„طھظ…ظٹظٹط² */
 }
 
 /* =========================================
-   23. الحسابات المالية
+   23. ط§ظ„ط­ط³ط§ط¨ط§طھ ط§ظ„ظ…ط§ظ„ظٹط©
    ========================================= */
 .financial-row {
     display: flex;
@@ -2302,7 +2302,7 @@ body.dark-mode .financial-row {
     margin-top: 5px;
 }
 
-/* كارت المندوب المصفر (الحساب صفر - هادئ) */
+/* ظƒط§ط±طھ ط§ظ„ظ…ظ†ط¯ظˆط¨ ط§ظ„ظ…طµظپط± (ط§ظ„ط­ط³ط§ط¨ طµظپط± - ظ‡ط§ط¯ط¦) */
 .driver-card.settled {
     border-color: #e0e0e0 !important;
     box-shadow: none !important;
@@ -2318,10 +2318,10 @@ body.dark-mode .financial-row {
 }
 
 /* =========================================
-   24. التنسيقات الإضافية (V13.6 - أزرار العرض والأوردرات)
+   24. ط§ظ„طھظ†ط³ظٹظ‚ط§طھ ط§ظ„ط¥ط¶ط§ظپظٹط© (V13.6 - ط£ط²ط±ط§ط± ط§ظ„ط¹ط±ط¶ ظˆط§ظ„ط£ظˆط±ط¯ط±ط§طھ)
    ========================================= */
 
-/* --- زرار تفعيل العرض داخل الفاتورة --- */
+/* --- ط²ط±ط§ط± طھظپط¹ظٹظ„ ط§ظ„ط¹ط±ط¶ ط¯ط§ط®ظ„ ط§ظ„ظپط§طھظˆط±ط© --- */
 .btn-offer-toggle {
     background: #f1f2f6;
     color: #7B839A;
@@ -2332,7 +2332,7 @@ body.dark-mode .financial-row {
     padding: 8px 10px;
     transition: 0.3s;
     font-size: 0.85rem;
-    height: 38px; /* عشان يبقى نفس طول خانة السعر */
+    height: 38px; /* ط¹ط´ط§ظ† ظٹط¨ظ‚ظ‰ ظ†ظپط³ ط·ظˆظ„ ط®ط§ظ†ط© ط§ظ„ط³ط¹ط± */
 }
 .btn-offer-toggle.active {
     background: #fff0f5;
@@ -2350,7 +2350,7 @@ body.dark-mode .btn-offer-toggle.active {
     border-color: #FF1493;
 }
 
-/* --- تنسيق الأوردرات جوا المديونية (لتصفية الحساب) --- */
+/* --- طھظ†ط³ظٹظ‚ ط§ظ„ط£ظˆط±ط¯ط±ط§طھ ط¬ظˆط§ ط§ظ„ظ…ط¯ظٹظˆظ†ظٹط© (ظ„طھطµظپظٹط© ط§ظ„ط­ط³ط§ط¨) --- */
 .financial-order-item {
     display: flex;
     justify-content: space-between;
@@ -2388,7 +2388,7 @@ body.dark-mode .btn-settle {
 }
 
 /* =========================================
-   25. إعدادات الطباعة للفاتورة
+   25. ط¥ط¹ط¯ط§ط¯ط§طھ ط§ظ„ط·ط¨ط§ط¹ط© ظ„ظ„ظپط§طھظˆط±ط©
    ========================================= */
 .print-only {
     display: none;
@@ -2412,7 +2412,7 @@ body.dark-mode .btn-settle {
         padding: 0;
     }
     
-    /* تصغير الفاتورة وإلغاء الهوامش المزعجة التي تسبب صفحة فارغة إضافية لورق الـ PVC */
+    /* طھطµط؛ظٹط± ط§ظ„ظپط§طھظˆط±ط© ظˆط¥ظ„ط؛ط§ط، ط§ظ„ظ‡ظˆط§ظ…ط´ ط§ظ„ظ…ط²ط¹ط¬ط© ط§ظ„طھظٹ طھط³ط¨ط¨ طµظپط­ط© ظپط§ط±ط؛ط© ط¥ط¶ط§ظپظٹط© ظ„ظˆط±ظ‚ ط§ظ„ظ€ PVC */
     @page {
         margin: 0;
         size: 80mm auto;
@@ -2437,7 +2437,7 @@ body.dark-mode .btn-settle {
 }
 
 /* =========================================
-   24. أنيميشن التقارير
+   24. ط£ظ†ظٹظ…ظٹط´ظ† ط§ظ„طھظ‚ط§ط±ظٹط±
    ========================================= */
 @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(12px); }
@@ -2454,7 +2454,7 @@ body.dark-mode .btn-settle {
 }
 
 /* =========================================
-   25. إصلاح نهائي للفاتورة الحرارية (print)
+   25. ط¥طµظ„ط§ط­ ظ†ظ‡ط§ط¦ظٹ ظ„ظ„ظپط§طھظˆط±ط© ط§ظ„ط­ط±ط§ط±ظٹط© (print)
    ========================================= */
 @media print {
     .receipt-totals p {
@@ -2485,7 +2485,7 @@ body.dark-mode .btn-settle {
 }
 
 /* =========================================
-   14. ⭐ مودال حماية الإكسيل (Password Modal)
+   14. â­گ ظ…ظˆط¯ط§ظ„ ط­ظ…ط§ظٹط© ط§ظ„ط¥ظƒط³ظٹظ„ (Password Modal)
    ========================================= */
 .excel-password-modal {
     max-width: 400px;
@@ -2550,7 +2550,7 @@ body.dark-mode .btn-settle {
     opacity: 1;
 }
 
-/* تأثير الاهتزاز عند الخطأ */
+/* طھط£ط«ظٹط± ط§ظ„ط§ظ‡طھط²ط§ط² ط¹ظ†ط¯ ط§ظ„ط®ط·ط£ */
 .shake-animation {
     animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
 }
@@ -2563,7 +2563,7 @@ body.dark-mode .btn-settle {
 }
 
 /* =========================================
-   26. التحديثات الإضافية (V15.1) - الطباعة والـ Offer Price
+   26. ط§ظ„طھط­ط¯ظٹط«ط§طھ ط§ظ„ط¥ط¶ط§ظپظٹط© (V15.1) - ط§ظ„ط·ط¨ط§ط¹ط© ظˆط§ظ„ظ€ Offer Price
    ========================================= */
 @media print {
     body {
@@ -2607,7 +2607,7 @@ body.dark-mode .btn-settle {
    Energy Optimization & Readability
    ========================================= */
 @media print {
-    /* 1. توحيد وتنعيم الخطوط (Font Optimization) */
+    /* 1. طھظˆط­ظٹط¯ ظˆطھظ†ط¹ظٹظ… ط§ظ„ط®ط·ظˆط· (Font Optimization) */
     body, .print-only, .print-only *, * {
         font-family: Tahoma, Arial, sans-serif !important;
         -webkit-font-smoothing: auto !important;
@@ -2629,9 +2629,9 @@ body.dark-mode .btn-settle {
         display: none !important;
     }
 
-    /* 2. تكبير اللوجو وتوسيطه (Logo Sizing) - Removed to avoid conflicts with line 1152 */
+    /* 2. طھظƒط¨ظٹط± ط§ظ„ظ„ظˆط¬ظˆ ظˆطھظˆط³ظٹط·ظ‡ (Logo Sizing) - Removed to avoid conflicts with line 1152 */
 
-    /* 3. تخفيف إرهاق الطابعة في حدود الجدول وتكبير الخط (Table Borders) */
+    /* 3. طھط®ظپظٹظپ ط¥ط±ظ‡ط§ظ‚ ط§ظ„ط·ط§ط¨ط¹ط© ظپظٹ ط­ط¯ظˆط¯ ط§ظ„ط¬ط¯ظˆظ„ ظˆطھظƒط¨ظٹط± ط§ظ„ط®ط· (Table Borders) */
     .receipt-table {
         width: 100% !important;
         border-collapse: collapse !important;
@@ -2648,7 +2648,7 @@ body.dark-mode .btn-settle {
         color: #000000 !important;
     }
 
-    /* 4. إزالة الكتل السوداء وتضخيم الإجمالي النهائي (Final Total Section) */
+    /* 4. ط¥ط²ط§ظ„ط© ط§ظ„ظƒطھظ„ ط§ظ„ط³ظˆط¯ط§ط، ظˆطھط¶ط®ظٹظ… ط§ظ„ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ظ†ظ‡ط§ط¦ظٹ (Final Total Section) */
     .receipt-totals h3 {
         background: transparent !important;
         background-color: transparent !important;
@@ -2669,7 +2669,7 @@ body.dark-mode .btn-settle {
         color: #000000 !important;
     }
 
-    /* 5. تكبير البيانات السفلية وتنسيق التباعد (Bottom Details) */
+    /* 5. طھظƒط¨ظٹط± ط§ظ„ط¨ظٹط§ظ†ط§طھ ط§ظ„ط³ظپظ„ظٹط© ظˆطھظ†ط³ظٹظ‚ ط§ظ„طھط¨ط§ط¹ط¯ (Bottom Details) */
     .receipt-totals p, 
     .receipt-footer, 
     .receipt-footer p,
@@ -2685,7 +2685,7 @@ body.dark-mode .btn-settle {
 }
 
 /* =========================================
-   تأثيرات الماسح الضوئي الذكي (Scanner Effects)
+   طھط£ط«ظٹط±ط§طھ ط§ظ„ظ…ط§ط³ط­ ط§ظ„ط¶ظˆط¦ظٹ ط§ظ„ط°ظƒظٹ (Scanner Effects)
    ========================================= */
 @keyframes flashSuccessAnim {
     0%   { background-color: rgba(46, 125, 50, 0.4); }
@@ -2705,7 +2705,7 @@ body.dark-mode .btn-settle {
 }
 
 /* =========================================
-   نظام الإشعارات (Toast Notifications)
+   ظ†ط¸ط§ظ… ط§ظ„ط¥ط´ط¹ط§ط±ط§طھ (Toast Notifications)
    ========================================= */
 .toast-container {
     position: fixed;
@@ -2760,7 +2760,7 @@ body.dark-mode .btn-settle {
     }
 }
 
-/* إصلاح عرض الواجهة العلوية وأزرار التحديث في الهواتف */
+/* ط¥طµظ„ط§ط­ ط¹ط±ط¶ ط§ظ„ظˆط§ط¬ظ‡ط© ط§ظ„ط¹ظ„ظˆظٹط© ظˆط£ط²ط±ط§ط± ط§ظ„طھط­ط¯ظٹط« ظپظٹ ط§ظ„ظ‡ظˆط§طھظپ */
 @media (max-width: 768px) {
     .header-controls, .status-container, .header-actions, .status-indicator {
         display: flex !important;
@@ -2779,7 +2779,7 @@ body.dark-mode .btn-settle {
 }
 
 /* =========================================
-   14. شاشة إدارة الصلاحيات (Expiry Dashboard)
+   14. ط´ط§ط´ط© ط¥ط¯ط§ط±ط© ط§ظ„طµظ„ط§ط­ظٹط§طھ (Expiry Dashboard)
    ========================================= */
 .expiry-dashboard-overlay {
     background: rgba(10, 15, 30, 0.85);
@@ -3402,55 +3402,53 @@ body.dark-mode .app-sidebar {
     }
 }
 
- / *   = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = 
-       2 4 .   P r e m i u m   A n i m a t i o n s   &   T r a n s i t i o n s 
-       = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =   * / 
- @ k e y f r a m e s   f a d e I n U p   { 
-         f r o m   { 
-                 o p a c i t y :   0 ; 
-                 t r a n s f o r m :   t r a n s l a t e Y ( 1 5 p x ) ; 
-         } 
-         t o   { 
-                 o p a c i t y :   1 ; 
-                 t r a n s f o r m :   t r a n s l a t e Y ( 0 ) ; 
-         } 
- } 
- 
- . t a b - p a n e   { 
-         d i s p l a y :   n o n e ; 
- } 
- 
- . t a b - p a n e . a c t i v e   { 
-         d i s p l a y :   b l o c k ; 
-         a n i m a t i o n :   f a d e I n U p   0 . 4 s   c u b i c - b e z i e r ( 0 . 2 5 ,   0 . 8 ,   0 . 2 5 ,   1 )   f o r w a r d s ; 
- } 
- 
- / *   E n h a n c i n g   n a v - i t e m   h o v e r   * / 
- . n a v - i t e m   { 
-         t r a n s i t i o n :   a l l   0 . 3 s   e a s e ; 
- } 
- 
- . n a v - i t e m : h o v e r   { 
-         t r a n s f o r m :   t r a n s l a t e X ( - 5 p x ) ; 
-         b a c k g r o u n d :   v a r ( - - b g ) ; 
- } 
- 
- . n a v - i t e m   i   { 
-         t r a n s i t i o n :   t r a n s f o r m   0 . 3 s   e a s e ; 
- } 
- 
- . n a v - i t e m : h o v e r   i   { 
-         t r a n s f o r m :   s c a l e ( 1 . 1 5 )   r o t a t e ( - 5 d e g ) ; 
-         c o l o r :   v a r ( - - p r i m a r y ) ; 
- } 
- 
- / *   C u s t o m   d a s h b o a r d   c a r d s   h o v e r   * / 
- . d a s h - c a r d   { 
-         t r a n s i t i o n :   t r a n s f o r m   0 . 3 s   e a s e ,   b o x - s h a d o w   0 . 3 s   e a s e ; 
- } 
- . d a s h - c a r d : h o v e r   { 
-         t r a n s f o r m :   t r a n s l a t e Y ( - 5 p x ) ; 
-         b o x - s h a d o w :   0   8 p x   2 5 p x   r g b a ( 0 , 0 , 0 , 0 . 1 ) ; 
- } 
-  
- 
+/* =========================================================================
+   24. Premium Animations & Transitions
+   ========================================================================= */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.tab-pane {
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+    animation: fadeInUp 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+/* Enhancing nav-item hover */
+.nav-item {
+    transition: all 0.3s ease;
+}
+
+.nav-item:hover {
+    transform: translateX(-5px);
+    background: var(--bg);
+}
+
+.nav-item i {
+    transition: transform 0.3s ease;
+}
+
+.nav-item:hover i {
+    transform: scale(1.15) rotate(-5deg);
+    color: var(--primary);
+}
+
+/* Custom dashboard cards hover */
+.dash-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.dash-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
