@@ -226,8 +226,11 @@ function loadDataFromServer() {
 
                 catalogData.forEach(p => {
                     let fb = fbMap.get(String(p.name).toLowerCase());
-                    if (fb && !p.barcode) {
-                        p.barcode = fb.barcode;
+                    if (fb) {
+                        if (!p.barcode) p.barcode = fb.barcode;
+                        p.stock = fb.stock || 0;
+                    } else {
+                        p.stock = 0;
                     }
                 });
 
@@ -239,7 +242,8 @@ function loadDataFromServer() {
                             price: fbProduct.price,
                             isOffer: false,
                             offerPrice: 0,
-                            barcode: fbProduct.barcode
+                            barcode: fbProduct.barcode,
+                            stock: fbProduct.stock || 0
                         });
                     }
                 });
@@ -5598,7 +5602,7 @@ if (openPriceTagsBtn) {
 }
 
 let currentPriceTagsPage = 1;
-const priceTagsPerPage = 30;
+const priceTagsPerPage = 50;
 let filteredPriceTags = [];
 let selectedPriceTagsMap = new Map();
 
@@ -5652,12 +5656,16 @@ window.renderPriceTagsPage = function() {
              onmouseover="this.style.borderColor='var(--primary)'; this.style.backgroundColor='#fdf4f9';"
              onmouseout="this.style.borderColor='#e0e0e0'; this.style.backgroundColor='#fff';">
             <input type="checkbox" class="price-tag-cb" id="cb_${p.name.replace(/\s+/g, '_')}" ${isChecked} style="width: 20px; height: 20px; accent-color: var(--primary); cursor: pointer;" onclick="event.stopPropagation(); togglePriceTagSelection('${safeName}')">
-            <div style="flex:1; display: flex; justify-content: space-between; align-items: center;">
+            <div style="flex:1; display: flex; flex-direction: column; gap: 5px;">
                 <div style="font-weight:bold; font-size:1.05rem; color: var(--text);">${p.name}</div>
-                <div style="font-size:0.95rem; background: ${p.isOffer ? 'var(--danger)' : 'var(--secondary)'}; color: white; padding: 4px 10px; border-radius: 20px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                    ${p.isOffer ? `<span style="text-decoration:line-through; color:rgba(255,255,255,0.7); margin-left:5px; font-size: 0.8rem;">${p.price}ج</span> <span>${p.offerPrice}ج</span>` : `<span>${p.price}ج</span>`}
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <div style="font-size:0.9rem; background: ${p.isOffer ? 'var(--danger)' : 'var(--secondary)'}; color: white; padding: 3px 10px; border-radius: 20px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        ${p.isOffer ? `<span style="text-decoration:line-through; color:rgba(255,255,255,0.7); margin-left:5px; font-size: 0.8rem;">${p.price}ج</span> <span>${p.offerPrice}ج</span>` : `<span>${p.price}ج</span>`}
+                    </div>
+                    ${p.barcode ? `<span style="font-size: 0.8rem; background: #f0f4f8; border: 1px solid #cfd8dc; padding: 2px 8px; border-radius: 6px; color: #546e7a;"><i class="fa-solid fa-barcode"></i> ${p.barcode}</span>` : ''}
                 </div>
             </div>
+            <button class="btn-outline interactive-btn" onclick="event.stopPropagation(); promptPriceTagOffer('${safeName}')" style="padding: 6px 12px; font-size: 0.85rem; border-radius: 6px; white-space: nowrap;"><i class="fa-solid fa-tag"></i> تخصيص عرض</button>
         </div>
         `;
     }).join('');
@@ -5687,10 +5695,45 @@ window.togglePriceTagSelection = function(name) {
     updateLivePriceTagPreview(p);
 };
 
+window.promptPriceTagOffer = function(name) {
+    const p = catalogData.find(item => item.name === name);
+    if (!p) return;
+    
+    let defaultVal = p.isOffer && p.offerPrice > 0 ? p.offerPrice : '';
+    const newOffer = prompt(`تخصيص عرض للمنتج:\n${p.name}\nالسعر الأساسي: ${p.price} ج.م\n\nأدخل سعر العرض الجديد (لإلغاء العرض اترك الحقل فارغاً أو اكتب 0):`, defaultVal);
+    
+    if (newOffer !== null) {
+        const parsed = parseFloat(newOffer);
+        if (!isNaN(parsed) && parsed > 0 && parsed !== parseFloat(p.price)) {
+            p.isOffer = true;
+            p.offerPrice = parsed;
+            showToast("تم تخصيص وتطبيق العرض بنجاح", "success");
+        } else {
+            p.isOffer = false;
+            p.offerPrice = 0;
+            if (newOffer === '' || parsed === 0) showToast("تم إلغاء العرض", "success");
+        }
+        
+        window.pushCatalogUpdate(p.name, p.price, p.isOffer, p.offerPrice);
+        
+        filterPriceTagsList();
+        updateLivePriceTagPreviewByName(name);
+    }
+};
+
 window.filterPriceTagsList = function() {
     const searchInput = document.getElementById('priceTagsSearch');
+    const inStockCheck = document.getElementById('priceTagsInStockFilter');
+    
     const q = searchInput ? searchInput.value.toLowerCase() : '';
-    filteredPriceTags = catalogData.filter(p => p.name.toLowerCase().includes(q) || (p.barcode && String(p.barcode).toLowerCase().includes(q)));
+    const onlyInStock = inStockCheck ? inStockCheck.checked : false;
+    
+    filteredPriceTags = catalogData.filter(p => {
+        const matchesQuery = p.name.toLowerCase().includes(q) || (p.barcode && String(p.barcode).toLowerCase().includes(q));
+        const matchesStock = onlyInStock ? (Number(p.stock) > 0) : true;
+        return matchesQuery && matchesStock;
+    });
+    
     currentPriceTagsPage = 1;
     renderPriceTagsPage();
 };

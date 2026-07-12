@@ -1032,9 +1032,15 @@
                 <!-- الجانب الأيمن: القائمة والبحث -->
                 <div style="flex: 1.2; min-width: 300px; display: flex; flex-direction: column; border-left: 1px solid var(--border); padding-left: 15px;">
                     <div style="display:flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
-                        <div style="position: relative;">
-                            <i class="fa-solid fa-search" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text-light);"></i>
-                            <input type="text" id="priceTagsSearch" placeholder="بحث في المنتجات..." class="input-field" style="padding-right: 35px; margin-bottom: 0;" oninput="filterPriceTagsList()">
+                        <div style="display: flex; gap: 10px; align-items: center; width: 100%;">
+                            <div style="position: relative; flex: 1;">
+                                <i class="fa-solid fa-search" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text-light);"></i>
+                                <input type="text" id="priceTagsSearch" placeholder="بحث بالاسم أو الباركود..." class="input-field" style="padding-right: 35px; margin-bottom: 0; width: 100%; box-sizing: border-box;" oninput="filterPriceTagsList()">
+                            </div>
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; background: var(--bg); padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border); font-weight: bold; font-size: 0.95rem; white-space: nowrap;">
+                                <input type="checkbox" id="priceTagsInStockFilter" onchange="filterPriceTagsList()" style="width: 18px; height: 18px; accent-color: var(--primary); margin: 0;">
+                                <i class="fa-solid fa-box-open" style="color: var(--primary);"></i> متوفر فقط
+                            </label>
                         </div>
                         <div style="display:flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; background: var(--bg); padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
                             <div style="display: flex; align-items: center; gap: 8px;">
@@ -1052,8 +1058,11 @@
                         </div>
                     </div>
 
-                    <div id="priceTagsListContainer" style="flex: 1; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 10px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px; background: #fafafa; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);">
+                    <div id="priceTagsListContainer" style="flex: 1; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 10px; margin-bottom: 5px; display: flex; flex-direction: column; gap: 8px; background: #fafafa; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);">
                         <!-- Product checkboxes will be populated here -->
+                    </div>
+                    <div style="text-align: center; color: #999; font-size: 0.85rem; margin-bottom: 10px;">
+                        <i class="fa-solid fa-angles-down bounce-animation"></i> التمرير لأسفل لرؤية باقي المنتجات
                     </div>
 
                     <!-- أزرار الصفحات (Pagination) -->
@@ -1067,11 +1076,11 @@
                 </div>
 
                 <!-- الجانب الأيسر: المعاينة الحية -->
-                <div style="flex: 1; min-width: 300px; display: flex; flex-direction: column; background: #f0f4f8; border-radius: 12px; padding: 20px; align-items: center; border: 2px dashed #b0bec5; position: relative; overflow: hidden;">
-                    <div style="position: absolute; top: 0; left: 0; right: 0; background: #cfd8dc; padding: 10px; text-align: center; font-weight: bold; color: #455a64; font-size: 1.1rem; border-bottom: 1px solid #b0bec5;">
+                <div style="flex: 1; min-width: 300px; display: flex; flex-direction: column; background: #f0f4f8; border-radius: 12px; padding: 20px; align-items: center; border: 2px dashed #b0bec5; position: relative;">
+                    <div style="position: absolute; top: 0; left: 0; right: 0; background: #cfd8dc; padding: 10px; text-align: center; font-weight: bold; color: #455a64; font-size: 1.1rem; border-bottom: 1px solid #b0bec5; border-radius: 10px 10px 0 0;">
                         <i class="fa-solid fa-eye"></i> معاينة حية للكارت
                     </div>
-                    <div id="livePriceTagPreview" style="flex: 1; width: 100%; display: flex; justify-content: center; align-items: center; margin-top: 40px; overflow: hidden;">
+                    <div id="livePriceTagPreview" style="flex: 1; width: 100%; display: flex; justify-content: center; align-items: center; margin-top: 40px;">
                         <!-- سيتم عرض كارت المعاينة هنا -->
                         <div style="text-align: center; color: #78909c;">
                             <i class="fa-solid fa-hand-pointer" style="font-size: 2.5rem; display: block; margin-bottom: 15px;"></i>
