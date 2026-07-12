@@ -5706,12 +5706,20 @@ window.printSelectedPriceTags = function() {
     // Add print mode class
     document.body.classList.add('print-mode-tags');
     
+    // Inject A4 page style dynamically to override receipt 80mm page size
+    const styleEl = document.createElement('style');
+    styleEl.id = 'price-tags-print-style';
+    styleEl.innerHTML = '@page { size: A4; margin: 1cm; }';
+    document.head.appendChild(styleEl);
+    
     // Slight delay to allow DOM to render
     setTimeout(() => {
         window.print();
-        // Remove class after print dialog closes
+        // Remove class and style after print dialog closes
         setTimeout(() => {
             document.body.classList.remove('print-mode-tags');
+            const addedStyle = document.getElementById('price-tags-print-style');
+            if(addedStyle) addedStyle.remove();
             closePriceTagsModal();
         }, 500);
     }, 200);

@@ -3639,8 +3639,5 @@ body.dark-mode .app-sidebar {
         print-color-adjust: exact !important;
     }
     
-    body.print-mode-tags @page {
-        margin: 1cm;
-        size: A4;
-    }
+
 }
