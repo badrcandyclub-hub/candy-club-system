@@ -2641,7 +2641,8 @@ body.dark-mode .btn-settle {
         font-weight: bold !important;
         color: #000000 !important;
         white-space: normal !important;
-        word-break: break-word !important;
+        word-wrap: break-word !important;
+        word-break: normal !important;
     }
 
     /* 4. ط·آ¥ط·آ²ط·آ§ط¸â€‍ط·آ© ط·آ§ط¸â€‍ط¸ئ’ط·ع¾ط¸â€‍ ط·آ§ط¸â€‍ط·آ³ط¸ث†ط·آ¯ط·آ§ط·طŒ ط¸ث†ط·ع¾ط·آ¶ط·آ®ط¸ظ¹ط¸â€¦ ط·آ§ط¸â€‍ط·آ¥ط·آ¬ط¸â€¦ط·آ§ط¸â€‍ط¸ظ¹ ط·آ§ط¸â€‍ط¸â€ ط¸â€،ط·آ§ط·آ¦ط¸ظ¹ (Final Total Section) */
