@@ -2652,10 +2652,10 @@ body.dark-mode .btn-settle {
         color: #000000 !important;
         border: 3px solid #000000 !important;
         border-top: 3px solid #000000 !important;
-        font-size: 20px !important;
+        font-size: 18px !important;
         font-weight: 900 !important;
-        padding: 10px !important;
-        margin: 5px 0 !important;
+        padding: 5px !important;
+        margin: 3px 0 !important;
         display: flex !important;
         justify-content: flex-start !important;
         align-items: center !important;
