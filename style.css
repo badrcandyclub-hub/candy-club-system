@@ -2631,6 +2631,7 @@ body.dark-mode .btn-settle {
         display: table !important;
         table-layout: fixed !important;
         word-wrap: break-word !important;
+        white-space: normal !important;
     }
     
     .receipt-table th,
@@ -2641,7 +2642,14 @@ body.dark-mode .btn-settle {
         padding: 2px !important;
         font-weight: bold !important;
         color: #000000 !important;
+        white-space: normal !important;
+        word-break: break-word !important;
     }
+    
+    .receipt-table th:nth-child(1), .receipt-table td:nth-child(1) { width: 40% !important; }
+    .receipt-table th:nth-child(2), .receipt-table td:nth-child(2) { width: 20% !important; }
+    .receipt-table th:nth-child(3), .receipt-table td:nth-child(3) { width: 15% !important; }
+    .receipt-table th:nth-child(4), .receipt-table td:nth-child(4) { width: 25% !important; }
 
     /* 4. ط·آ¥ط·آ²ط·آ§ط¸â€‍ط·آ© ط·آ§ط¸â€‍ط¸ئ’ط·ع¾ط¸â€‍ ط·آ§ط¸â€‍ط·آ³ط¸ث†ط·آ¯ط·آ§ط·طŒ ط¸ث†ط·ع¾ط·آ¶ط·آ®ط¸ظ¹ط¸â€¦ ط·آ§ط¸â€‍ط·آ¥ط·آ¬ط¸â€¦ط·آ§ط¸â€‍ط¸ظ¹ ط·آ§ط¸â€‍ط¸â€ ط¸â€،ط·آ§ط·آ¦ط¸ظ¹ (Final Total Section) */
     .receipt-totals h3 {
