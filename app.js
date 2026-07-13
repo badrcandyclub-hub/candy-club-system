@@ -5739,12 +5739,32 @@ window.saveCustomOffer = function() {
     closeCustomOfferModal();
 };
 
+let currentPriceTagsFilter = 'all';
+
+window.setPriceTagsFilter = function(filterVal) {
+    currentPriceTagsFilter = filterVal;
+    
+    // Update pill buttons UI
+    document.querySelectorAll('.filter-pill').forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.background = 'transparent';
+        btn.style.color = 'var(--text)';
+    });
+    
+    const activeBtn = document.getElementById(`filterBtn_${filterVal}`);
+    if (activeBtn) {
+        activeBtn.classList.add('active');
+        activeBtn.style.background = 'var(--primary)';
+        activeBtn.style.color = '#fff';
+    }
+    
+    filterPriceTagsList();
+};
+
 window.filterPriceTagsList = function() {
     const searchInput = document.getElementById('priceTagsSearch');
-    const filterSelect = document.getElementById('priceTagsFilterType');
-    
     const q = searchInput ? searchInput.value.toLowerCase() : '';
-    const filterVal = filterSelect ? filterSelect.value : 'all';
+    const filterVal = currentPriceTagsFilter;
     
     filteredPriceTags = catalogData.filter(p => {
         const matchesQuery = p.name.toLowerCase().includes(q) || (p.barcode && String(p.barcode).toLowerCase().includes(q));
@@ -5807,39 +5827,19 @@ window.generatePriceTagHTML = function(p, sizeClass) {
         priceHtml = p.price;
     }
     
-    const barcodeHtml = p.barcode ? `<svg class="barcode-svg" data-barcode="${p.barcode}"></svg>` : '';
+    const barcodeHtml = p.barcode ? `<div class="tag-barcode-container"><svg class="barcode-svg" data-barcode="${p.barcode}"></svg></div>` : '';
     
     return `
         <div class="${cardClass}">
             <div class="price-tag-inner">
-                <span class="candy-deco top-left">🍭</span>
-                <span class="candy-deco top-right">🍬</span>
-                <span class="candy-deco bottom-left">✨</span>
-                <span class="candy-deco bottom-right">🍭</span>
-                
                 <div class="price-tag-header">
                     <img src="images/logo-branch.png" class="price-tag-logo" onerror="this.src='images/logo-digital.png'" alt="Candy Club">
                 </div>
                 
                 <div class="price-tag-body">
-                    <div class="tag-box top-box">
-                        <div class="tag-row name-row">
-                            <span class="tag-label">اسم الصنف :</span>
-                            <span class="tag-value">${p.name}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="middle-divider-bar">
-                        <span class="candy-icon">🍬</span>
-                    </div>
-                    
-                    <div class="tag-box bottom-box">
-                        <div class="tag-row price-row">
-                            <span class="tag-label">السعر :</span>
-                            <span class="tag-value">${priceHtml}ج</span>
-                        </div>
-                        ${barcodeHtml ? `<div class="tag-barcode-container">${barcodeHtml}</div>` : ''}
-                    </div>
+                    <div class="product-name-display">${p.name}</div>
+                    <div class="product-price-display">${priceHtml} <span style="font-size: 0.5em; font-weight: normal; margin-right: 5px;">ج.م</span></div>
+                    ${barcodeHtml}
                 </div>
             </div>
         </div>
