@@ -3626,6 +3626,10 @@ body.dark-mode .app-sidebar {
 .price-tag-card.size-large .price-tag-logo { height: 70px; }
 
 
+.print-tags-only {
+    display: none;
+}
+
 /* Print media queries */
 @media print {
     body.print-mode-tags * {
@@ -3636,6 +3640,7 @@ body.dark-mode .app-sidebar {
         visibility: visible;
     }
     body.print-mode-tags .print-tags-only {
+        display: block !important;
         position: absolute;
         left: 0;
         top: 0;

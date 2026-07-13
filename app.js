@@ -97,6 +97,10 @@ document.querySelectorAll('.nav-item').forEach(btn => {
                 let dd = String(today.getDate()).padStart(2, '0');
                 regDateInput.value = `${yyyy}-${mm}-${dd}`;
             }
+        } else if (btn.getAttribute('data-target') === 'price-tags-tab') {
+            if (typeof initPriceTagsTab === 'function') {
+                initPriceTagsTab();
+            }
         } else {
             // Memory cleanup: Clear expiryData when leaving the tab to free up memory
             if (typeof expiryData !== 'undefined' && expiryData.length > 0) {
@@ -5589,24 +5593,16 @@ document.addEventListener('DOMContentLoaded', () => {
 // 19. بطاقات الأسعار (Price Tags Logic)
 // ==========================================
 
-const openPriceTagsBtn = document.getElementById('openPriceTagsBtn');
-const priceTagsModal = document.getElementById('priceTagsModal');
 const priceTagsListContainer = document.getElementById('priceTagsListContainer');
 const priceTagsSearch = document.getElementById('priceTagsSearch');
 const priceTagSizeSelect = document.getElementById('priceTagSize');
-
-if (openPriceTagsBtn) {
-    openPriceTagsBtn.addEventListener('click', () => {
-        openPriceTagsModal();
-    });
-}
 
 let currentPriceTagsPage = 1;
 const priceTagsPerPage = 50;
 let filteredPriceTags = [];
 let selectedPriceTagsMap = new Map();
 
-function openPriceTagsModal() {
+window.initPriceTagsTab = function() {
     if (!catalogData || catalogData.length === 0) {
         showToast("الكتالوج فارغ، برجاء إضافة منتجات أولاً", "warning");
         return;
@@ -5620,17 +5616,13 @@ function openPriceTagsModal() {
     if(searchInput) searchInput.value = '';
     
     renderPriceTagsPage();
-    document.getElementById('priceTagsModal').classList.add('active');
     
     if (filteredPriceTags.length > 0) {
         updateLivePriceTagPreview(filteredPriceTags[0]);
     } else {
-        document.getElementById('livePriceTagPreview').innerHTML = '<p style="color: #999;">لا يوجد منتجات</p>';
+        const previewEl = document.getElementById('livePriceTagPreview');
+        if(previewEl) previewEl.innerHTML = '<p style="color: #999;">لا توجد منتجات</p>';
     }
-}
-
-window.closePriceTagsModal = function() {
-    document.getElementById('priceTagsModal').classList.remove('active');
 };
 
 window.renderPriceTagsPage = function() {
