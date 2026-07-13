@@ -5616,12 +5616,14 @@ window.initPriceTagsTab = function() {
     if(searchInput) searchInput.value = '';
     
     renderPriceTagsPage();
-    
-    if (filteredPriceTags.length > 0) {
-        updateLivePriceTagPreview(filteredPriceTags[0]);
-    } else {
-        const previewEl = document.getElementById('livePriceTagPreview');
-        if(previewEl) previewEl.innerHTML = '<p style="color: #999;">لا توجد منتجات</p>';
+    updateLivePriceTagPreview();
+    updateDeselectButtonVisibility();
+};
+
+window.updateDeselectButtonVisibility = function() {
+    const deselectBtn = document.getElementById('deselectAllTagsBtn');
+    if (deselectBtn) {
+        deselectBtn.style.display = selectedPriceTagsMap.size > 0 ? 'inline-block' : 'none';
     }
 };
 
@@ -5643,10 +5645,7 @@ window.renderPriceTagsPage = function() {
         
         return `
         <div class="price-tag-checkbox-item" style="display:flex; align-items:center; gap:15px; background:#fff; padding:12px 15px; border-radius:10px; border: 1px solid #e0e0e0; cursor:pointer; transition: all 0.2s ease-in-out; box-shadow: 0 2px 5px rgba(0,0,0,0.02);" 
-             onclick="togglePriceTagSelection('${safeName}')"
-             onmouseenter="updateLivePriceTagPreviewByName('${safeName}')"
-             onmouseover="this.style.borderColor='var(--primary)'; this.style.backgroundColor='#fdf4f9';"
-             onmouseout="this.style.borderColor='#e0e0e0'; this.style.backgroundColor='#fff';">
+             onclick="togglePriceTagSelection('${safeName}')">
             <input type="checkbox" class="price-tag-cb" id="cb_${p.name.replace(/\s+/g, '_')}" ${isChecked} style="width: 20px; height: 20px; accent-color: var(--primary); cursor: pointer;" onclick="event.stopPropagation(); togglePriceTagSelection('${safeName}')">
             <div style="flex:1; display: flex; flex-direction: column; gap: 5px;">
                 <div style="font-weight:bold; font-size:1.05rem; color: var(--text);">${p.name}</div>
@@ -5663,10 +5662,7 @@ window.renderPriceTagsPage = function() {
     }).join('');
 };
 
-window.updateLivePriceTagPreviewByName = function(name) {
-    const p = filteredPriceTags.find(item => item.name === name);
-    if (p) updateLivePriceTagPreview(p);
-};
+
 
 window.togglePriceTagSelection = function(name) {
     const p = filteredPriceTags.find(item => item.name === name);
@@ -5684,7 +5680,8 @@ window.togglePriceTagSelection = function(name) {
         cb.checked = selectedPriceTagsMap.has(name);
     }
     
-    updateLivePriceTagPreview(p);
+    updateLivePriceTagPreview();
+    updateDeselectButtonVisibility();
 };
 
 window.promptPriceTagOffer = function(name) {
@@ -5715,15 +5712,22 @@ window.promptPriceTagOffer = function(name) {
 
 window.filterPriceTagsList = function() {
     const searchInput = document.getElementById('priceTagsSearch');
-    const inStockCheck = document.getElementById('priceTagsInStockFilter');
+    const filterSelect = document.getElementById('priceTagsFilterType');
     
     const q = searchInput ? searchInput.value.toLowerCase() : '';
-    const onlyInStock = inStockCheck ? inStockCheck.checked : false;
+    const filterVal = filterSelect ? filterSelect.value : 'all';
     
     filteredPriceTags = catalogData.filter(p => {
         const matchesQuery = p.name.toLowerCase().includes(q) || (p.barcode && String(p.barcode).toLowerCase().includes(q));
-        const matchesStock = onlyInStock ? (Number(p.stock) > 0) : true;
-        return matchesQuery && matchesStock;
+        
+        let matchesType = true;
+        if (filterVal === 'instock') {
+            matchesType = (Number(p.stock) > 0);
+        } else if (filterVal === 'offers') {
+            matchesType = p.isOffer === true;
+        }
+        
+        return matchesQuery && matchesType;
     });
     
     currentPriceTagsPage = 1;
@@ -5750,6 +5754,8 @@ window.selectAllTags = function() {
         selectedPriceTagsMap.set(p.name, p);
     });
     renderPriceTagsPage();
+    updateLivePriceTagPreview();
+    updateDeselectButtonVisibility();
 };
 
 window.deselectAllTags = function() {
@@ -5757,6 +5763,8 @@ window.deselectAllTags = function() {
         selectedPriceTagsMap.delete(p.name);
     });
     renderPriceTagsPage();
+    updateLivePriceTagPreview();
+    updateDeselectButtonVisibility();
 };
 
 window.generatePriceTagHTML = function(p, sizeClass) {
@@ -5785,52 +5793,93 @@ window.generatePriceTagHTML = function(p, sizeClass) {
                 </div>
                 
                 <div class="price-tag-body">
-                    <div class="tag-row name-row">
-                        <span class="tag-label">اسم الصنف :</span>
-                        <span class="tag-value">${p.name}</span>
+                    <div class="tag-box top-box">
+                        <div class="tag-row name-row">
+                            <span class="tag-label">اسم الصنف :</span>
+                            <span class="tag-value">${p.name}</span>
+                        </div>
                     </div>
                     
-                    <div class="price-tag-divider">
-                        <hr class="candy-hr">
+                    <div class="middle-divider-bar">
                         <span class="candy-icon">🍬</span>
-                        <hr class="candy-hr">
                     </div>
                     
-                    <div class="tag-row price-row">
-                        <span class="tag-label">السعر :</span>
-                        <span class="tag-value">${priceHtml}ج</span>
+                    <div class="tag-box bottom-box">
+                        <div class="tag-row price-row">
+                            <span class="tag-label">السعر :</span>
+                            <span class="tag-value">${priceHtml}ج</span>
+                        </div>
+                        ${barcodeHtml ? `<div class="tag-barcode-container">${barcodeHtml}</div>` : ''}
                     </div>
-                    
-                    ${barcodeHtml ? `<div class="tag-barcode-container">${barcodeHtml}</div>` : ''}
                 </div>
             </div>
         </div>
     `;
 };
 
-window.updateLivePriceTagPreview = function(p) {
+window.updateLivePriceTagPreview = function() {
     const previewContainer = document.getElementById('livePriceTagPreview');
-    if (!p || !previewContainer) return;
+    if (!previewContainer) return;
     
     const sizeSelect = document.getElementById('priceTagSize');
     const size = sizeSelect ? sizeSelect.value : 'medium';
-    previewContainer.innerHTML = generatePriceTagHTML(p, size);
     
-    const svg = previewContainer.querySelector('.barcode-svg');
-    if (svg && p.barcode && typeof JsBarcode === 'function') {
-        try {
-            JsBarcode(svg, String(p.barcode), {
-                format: "CODE128",
-                width: 1.5,
-                height: 30,
-                displayValue: true,
-                fontSize: 12,
-                margin: 0
-            });
-        } catch (e) {
-            console.warn("Error rendering barcode in preview", e);
-        }
+    let itemsToShow = [];
+    if (selectedPriceTagsMap.size > 0) {
+        itemsToShow = Array.from(selectedPriceTagsMap.values());
+    } else {
+        previewContainer.innerHTML = `
+            <div style="text-align: center; color: #78909c;">
+                <i class="fa-solid fa-hand-pointer" style="font-size: 2.5rem; display: block; margin-bottom: 15px;"></i>
+                <p style="font-size: 1.1rem; font-weight: bold;">اختر منتجات لرؤية المعاينة</p>
+                <p style="font-size: 0.9rem; margin-top: 5px;">سيتم عرض الكروت المحددة فقط هنا.</p>
+            </div>
+        `;
+        return;
     }
+    
+    let maxItems = 1;
+    if (size === 'small') maxItems = 12;
+    else if (size === 'medium') maxItems = 9;
+    else if (size === 'large') maxItems = 4;
+    
+    const isShowingSubset = itemsToShow.length > maxItems;
+    if (isShowingSubset) {
+        itemsToShow = itemsToShow.slice(0, maxItems);
+    }
+    
+    let html = `<div class="price-tags-grid" style="transform: scale(0.65); transform-origin: top center; margin-bottom: -30%; background: transparent; padding: 0;">`;
+    
+    itemsToShow.forEach(p => {
+        html += generatePriceTagHTML(p, size);
+    });
+    
+    html += `</div>`;
+    
+    if (isShowingSubset) {
+        html += `<div style="text-align:center; background:var(--warning); color:#fff; padding:8px 15px; border-radius:20px; font-weight:bold; margin-top:20px; box-shadow:0 4px 10px rgba(0,0,0,0.1);"><i class="fa-solid fa-triangle-exclamation"></i> يتم عرض ${maxItems} كروت كحد أقصى في المعاينة لتجنب بطء المتصفح. سيتم طباعة الجميع!</div>`;
+    }
+    
+    previewContainer.innerHTML = html;
+    
+    const svgs = previewContainer.querySelectorAll('.barcode-svg');
+    svgs.forEach(svg => {
+        const barcode = svg.getAttribute('data-barcode');
+        if (barcode && typeof JsBarcode === 'function') {
+            try {
+                JsBarcode(svg, String(barcode), {
+                    format: "CODE128",
+                    width: 1.5,
+                    height: 30,
+                    displayValue: true,
+                    fontSize: 12,
+                    margin: 0
+                });
+            } catch (e) {
+                console.warn("Error rendering barcode in preview", e);
+            }
+        }
+    });
 };
 
 window.printSelectedPriceTags = function() {

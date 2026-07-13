@@ -3471,13 +3471,13 @@ body.dark-mode .app-sidebar {
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    padding: 10px;
+    padding: 8px; /* Thickness of the striped border */
     background-image: repeating-linear-gradient(
-        45deg,
-        #ff3385,
-        #ff3385 15px,
-        #fff 15px,
-        #fff 30px
+        -45deg,
+        #f06292,
+        #f06292 10px,
+        #fff 10px,
+        #fff 20px
     );
 }
 
@@ -3487,9 +3487,10 @@ body.dark-mode .app-sidebar {
     flex: 1;
     display: flex;
     flex-direction: column;
-    border: 2px dashed #ff3385;
+    border: 3px solid #e91e63; /* Solid pink inner ring */
     overflow: hidden;
     position: relative;
+    padding: 10px; /* Space from ring to dashed boxes */
 }
 
 /* Candy decorations */
@@ -3506,10 +3507,10 @@ body.dark-mode .app-sidebar {
 
 .price-tag-header {
     text-align: center;
-    padding-top: 10px;
     position: relative;
-    z-index: 5;
-    margin-top: -5px; /* Pull logo slightly up */
+    z-index: 15;
+    margin-top: -15px; /* Pull logo slightly up */
+    margin-bottom: 5px;
 }
 
 .price-tag-logo {
@@ -3522,13 +3523,58 @@ body.dark-mode .app-sidebar {
 }
 
 .price-tag-body {
-    padding: 10px 20px;
     display: flex;
     flex-direction: column;
-    gap: 5px;
     flex: 1;
-    justify-content: center;
     z-index: 5;
+}
+
+.tag-box {
+    border: 2px dashed #f48fb1;
+    border-radius: 8px;
+    padding: 5px 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.tag-box.top-box {
+    flex: 1.5;
+    margin-bottom: 5px;
+    position: relative;
+}
+
+.tag-box.bottom-box {
+    flex: 1;
+    margin-top: 5px;
+}
+
+/* Middle purple divider */
+.middle-divider-bar {
+    background-color: #aa00ff;
+    height: 15px;
+    margin: 0 -10px; /* Stretch across padding */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 10;
+}
+
+.middle-divider-bar::before,
+.middle-divider-bar::after {
+    content: '';
+    flex: 1;
+    border-top: 3px dotted #fff;
+    margin: 0 10px;
+}
+
+.middle-divider-bar .candy-icon {
+    font-size: 1.2rem;
+    background: #fff;
+    border-radius: 50%;
+    padding: 2px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.1);
 }
 
 .tag-row {
@@ -3540,43 +3586,17 @@ body.dark-mode .app-sidebar {
     direction: rtl;
 }
 
-.name-row .tag-label {
-    color: #4a148c;
-}
-.name-row .tag-value {
-    color: #4a148c;
-}
-
-.price-row .tag-label {
-    color: #4a148c;
-}
+.name-row .tag-label,
+.name-row .tag-value,
+.price-row .tag-label,
 .price-row .tag-value {
-    color: #e91e63;
+    color: #4a148c; /* Purple text */
+    font-family: 'Cairo', sans-serif;
 }
 
 .tag-value {
     flex: 1;
     text-align: right;
-}
-
-.price-tag-divider {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin: 5px 0;
-}
-
-.candy-hr {
-    flex: 1;
-    border: none;
-    border-top: 3px solid #9c27b0;
-    margin: 0;
-}
-
-.candy-icon {
-    font-size: 1.5rem;
-    color: #9c27b0;
 }
 
 .tag-barcode-container {

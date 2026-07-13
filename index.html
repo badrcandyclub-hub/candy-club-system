@@ -972,10 +972,11 @@
                                     <i class="fa-solid fa-search" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text-light);"></i>
                                     <input type="text" id="priceTagsSearch" placeholder="بحث بالاسم أو الباركود..." class="input-field" style="padding-right: 35px; margin-bottom: 0; width: 100%; box-sizing: border-box;" oninput="filterPriceTagsList()">
                                 </div>
-                                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; background: var(--bg); padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border); font-weight: bold; font-size: 0.95rem; white-space: nowrap;">
-                                    <input type="checkbox" id="priceTagsInStockFilter" onchange="filterPriceTagsList()" style="width: 18px; height: 18px; accent-color: var(--primary); margin: 0;">
-                                    <i class="fa-solid fa-box-open" style="color: var(--primary);"></i> متوفر فقط
-                                </label>
+                                <select id="priceTagsFilterType" class="input-field" style="margin:0; width:auto; font-weight:bold; border-radius:8px; padding: 10px 15px; background: var(--bg); border: 1px solid var(--border);" onchange="filterPriceTagsList()">
+                                    <option value="all">كل المنتجات</option>
+                                    <option value="instock">متوفر فقط</option>
+                                    <option value="offers">في عرض فقط</option>
+                                </select>
                             </div>
                             <div style="display:flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; background: var(--bg); padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
                                 <div style="display: flex; align-items: center; gap: 8px;">
@@ -988,7 +989,7 @@
                                 </div>
                                 <div style="display: flex; gap: 5px;">
                                     <button class="interactive-btn" onclick="selectAllTags()" style="background: var(--card); color: var(--primary); border: 1px solid var(--primary); padding: 6px 12px; border-radius: 6px; font-size: 0.9rem;"><i class="fa-solid fa-check-double"></i> تحديد الكل</button>
-                                    <button class="interactive-btn" onclick="deselectAllTags()" style="background: var(--card); color: var(--danger); border: 1px solid var(--danger); padding: 6px 12px; border-radius: 6px; font-size: 0.9rem;"><i class="fa-solid fa-ban"></i> إلغاء</button>
+                                    <button id="deselectAllTagsBtn" class="interactive-btn" onclick="deselectAllTags()" style="background: var(--card); color: var(--danger); border: 1px solid var(--danger); padding: 6px 12px; border-radius: 6px; font-size: 0.9rem; display: none;"><i class="fa-solid fa-ban"></i> إلغاء</button>
                                 </div>
                             </div>
                         </div>
@@ -1002,9 +1003,9 @@
 
                         <!-- أزرار الصفحات (Pagination) -->
                         <div style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 10px 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                            <button class="btn-outline interactive-btn" onclick="prevPriceTagsPage()"><i class="fa-solid fa-chevron-right"></i> السابق</button>
-                            <span id="priceTagsPageInfo" style="font-weight: bold; color: var(--primary);">صفحة 1</span>
-                            <button class="btn-outline interactive-btn" onclick="nextPriceTagsPage()">التالي <i class="fa-solid fa-chevron-left"></i></button>
+                            <button class="interactive-btn" onclick="prevPriceTagsPage()" style="background: var(--bg); color: var(--primary); border: 1px solid var(--primary); padding: 8px 15px; border-radius: 8px; font-weight: bold;"><i class="fa-solid fa-arrow-right"></i> السابق</button>
+                            <span id="priceTagsPageInfo" style="font-weight: bold; color: var(--primary); font-size: 1.1rem;">صفحة 1</span>
+                            <button class="interactive-btn" onclick="nextPriceTagsPage()" style="background: var(--primary); color: #fff; border: 1px solid var(--primary); padding: 8px 15px; border-radius: 8px; font-weight: bold;">التالي <i class="fa-solid fa-arrow-left"></i></button>
                         </div>
 
                         <button class="interactive-btn" onclick="printSelectedPriceTags()" style="width: 100%; font-size: 1.2rem; padding: 15px; margin-top: auto; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 6px rgba(233, 30, 140, 0.3);"><i class="fa-solid fa-print"></i> طباعة الكروت المحددة</button>
