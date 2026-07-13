@@ -960,10 +960,10 @@
         </div>
 
         <section id="price-tags-tab" class="tab-pane">
-            <div class="section-card" style="display: flex; flex-direction: column; height: 85vh;">
+            <div class="section-card" style="display: flex; flex-direction: column; min-height: calc(100vh - 100px);">
                 <h3 style="margin-bottom: 20px; color: var(--primary); flex-shrink: 0; font-size: 1.5rem; border-bottom: 2px solid var(--border); padding-bottom: 10px;"><i class="fa-solid fa-tags"></i> طباعة كروت الأسعار</h3>
                 
-                <div style="display: flex; flex-wrap: wrap; gap: 25px; flex: 1; overflow: hidden;">
+                <div style="display: flex; flex-wrap: wrap; gap: 25px; flex: 1;">
                     <!-- الجانب الأيمن: القائمة والبحث -->
                     <div style="flex: 1.2; min-width: 300px; display: flex; flex-direction: column; border-left: 1px solid var(--border); padding-left: 15px;">
                         <div style="display:flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
@@ -974,27 +974,59 @@
                                 </div>
                                 <select id="priceTagsFilterType" class="input-field" style="margin:0; width:auto; font-weight:bold; border-radius:8px; padding: 10px 15px; background: var(--bg); border: 1px solid var(--border);" onchange="filterPriceTagsList()">
                                     <option value="all">كل المنتجات</option>
-                                    <option value="instock">متوفر فقط</option>
-                                    <option value="offers">في عرض فقط</option>
-                                </select>
+                                       <!-- الجانب الأيسر: المعاينة الحية -->
+                    <div style="flex: 1; min-width: 300px; display: flex; flex-direction: column; background: #f0f4f8; border-radius: 12px; padding: 20px; align-items: center; border: 2px dashed #b0bec5; position: relative; min-height: 500px;">
+                        <div style="position: absolute; top: 0; left: 0; right: 0; background: #cfd8dc; padding: 10px; text-align: center; font-weight: bold; color: #455a64; font-size: 1.1rem; border-bottom: 1px solid #b0bec5; border-radius: 10px 10px 0 0;">
+                            <i class="fa-solid fa-eye"></i> معاينة حية للكارت
+                        </div>
+                        <div id="livePriceTagPreview" style="flex: 1; width: 100%; display: flex; justify-content: center; align-items: center; margin-top: 50px;">
+                            <!-- سيتم عرض كارت المعاينة هنا -->
+                            <div style="text-align: center; color: #78909c;">
+                                <i class="fa-solid fa-hand-pointer" style="font-size: 2.5rem; display: block; margin-bottom: 15px;"></i>
+                                <p style="font-size: 1.1rem; font-weight: bold;">اختر منتجات لرؤية المعاينة</p>
                             </div>
-                            <div style="display:flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; background: var(--bg); padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <i class="fa-solid fa-ruler-combined" style="color: var(--primary);"></i>
-                                    <select id="priceTagSize" class="input-field" style="width: auto; margin-bottom: 0; padding: 6px 10px; font-weight: bold;">
-                                        <option value="small">صغير (12 كارت)</option>
-                                        <option value="medium" selected>متوسط (9 كروت)</option>
-                                        <option value="large">كبير (4 كروت)</option>
-                                    </select>
-                                </div>
-                                <div style="display: flex; gap: 5px;">
-                                    <button class="interactive-btn" onclick="selectAllTags()" style="background: var(--card); color: var(--primary); border: 1px solid var(--primary); padding: 6px 12px; border-radius: 6px; font-size: 0.9rem;"><i class="fa-solid fa-check-double"></i> تحديد الكل</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- نافذة تخصيص العرض (Custom Offer Modal) -->
+        <div id="customOfferModal" class="modal" style="display: none; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000; direction: rtl;">
+            <div class="modal-content" style="background: #fff; width: 400px; max-width: 90%; border-radius: 15px; padding: 0; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; transform: scale(0.95); animation: popIn 0.3s forwards;">
+                <div style="background: var(--primary); color: #fff; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="margin: 0; font-size: 1.2rem;"><i class="fa-solid fa-tag"></i> تخصيص عرض احترافي</h3>
+                    <button onclick="closeCustomOfferModal()" style="background: none; border: none; color: #fff; font-size: 1.2rem; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div style="padding: 20px;">
+                    <div id="customOfferProductName" style="font-weight: bold; font-size: 1.1rem; margin-bottom: 10px; color: var(--text);">اسم المنتج</div>
+                    <div id="customOfferProductPrice" style="color: #666; margin-bottom: 20px; font-size: 0.95rem;">السعر الأساسي: <span style="font-weight:bold;"></span> ج.م</div>
+                    
+                    <label style="display: block; margin-bottom: 8px; font-weight: bold; color: var(--text);">سعر العرض الجديد (ج.م):</label>
+                    <input type="number" id="customOfferInput" class="input-field" placeholder="أدخل السعر الجديد..." style="width: 100%; box-sizing: border-box; font-size: 1.1rem; font-weight: bold; color: var(--primary);">
+                    
+                    <p style="font-size: 0.85rem; color: #888; margin-top: 10px; margin-bottom: 20px;">
+                        <i class="fa-solid fa-circle-info"></i> لإلغاء العرض تماماً وإرجاع السعر الأصلي، اترك الحقل فارغاً أو اكتب 0.
+                    </p>
+                    
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="saveCustomOffer()" class="interactive-btn" style="flex: 2; background: var(--primary); color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 1rem;"><i class="fa-solid fa-check"></i> حفظ العرض</button>
+                        <button onclick="closeCustomOfferModal()" class="interactive-btn" style="flex: 1; background: #e0e0e0; color: #333; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 1rem;">إلغاء</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <style>
+            @keyframes popIn {
+                to { transform: scale(1); }
+            }
+        </style>background: var(--card); color: var(--primary); border: 1px solid var(--primary); padding: 6px 12px; border-radius: 6px; font-size: 0.9rem;"><i class="fa-solid fa-check-double"></i> تحديد الكل</button>
                                     <button id="deselectAllTagsBtn" class="interactive-btn" onclick="deselectAllTags()" style="background: var(--card); color: var(--danger); border: 1px solid var(--danger); padding: 6px 12px; border-radius: 6px; font-size: 0.9rem; display: none;"><i class="fa-solid fa-ban"></i> إلغاء</button>
                                 </div>
                             </div>
                         </div>
 
-                        <div id="priceTagsListContainer" style="flex: 1; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 10px; margin-bottom: 5px; display: flex; flex-direction: column; gap: 8px; background: #fafafa; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);">
+                        <div id="priceTagsListContainer" style="flex: 1; min-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 10px; margin-bottom: 5px; display: flex; flex-direction: column; gap: 8px; background: #fafafa; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);">
                             <!-- Product checkboxes will be populated here -->
                         </div>
                         <div style="text-align: center; color: #999; font-size: 0.85rem; margin-bottom: 10px;">

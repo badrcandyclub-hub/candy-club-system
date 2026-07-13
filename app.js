@@ -5684,30 +5684,59 @@ window.togglePriceTagSelection = function(name) {
     updateDeselectButtonVisibility();
 };
 
+let currentOfferProductName = null;
+
 window.promptPriceTagOffer = function(name) {
     const p = catalogData.find(item => item.name === name);
     if (!p) return;
     
-    let defaultVal = p.isOffer && p.offerPrice > 0 ? p.offerPrice : '';
-    const newOffer = prompt(`تخصيص عرض للمنتج:\n${p.name}\nالسعر الأساسي: ${p.price} ج.م\n\nأدخل سعر العرض الجديد (لإلغاء العرض اترك الحقل فارغاً أو اكتب 0):`, defaultVal);
+    currentOfferProductName = name;
     
-    if (newOffer !== null) {
-        const parsed = parseFloat(newOffer);
-        if (!isNaN(parsed) && parsed > 0 && parsed !== parseFloat(p.price)) {
-            p.isOffer = true;
-            p.offerPrice = parsed;
-            showToast("تم تخصيص وتطبيق العرض بنجاح", "success");
-        } else {
-            p.isOffer = false;
-            p.offerPrice = 0;
-            if (newOffer === '' || parsed === 0) showToast("تم إلغاء العرض", "success");
-        }
-        
-        window.pushCatalogUpdate(p.name, p.price, p.isOffer, p.offerPrice);
-        
-        filterPriceTagsList();
-        updateLivePriceTagPreviewByName(name);
+    document.getElementById('customOfferProductName').textContent = p.name;
+    document.getElementById('customOfferProductPrice').querySelector('span').textContent = p.price;
+    
+    const input = document.getElementById('customOfferInput');
+    input.value = p.isOffer && p.offerPrice > 0 ? p.offerPrice : '';
+    
+    const modal = document.getElementById('customOfferModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        setTimeout(() => input.focus(), 100);
     }
+};
+
+window.closeCustomOfferModal = function() {
+    const modal = document.getElementById('customOfferModal');
+    if (modal) modal.style.display = 'none';
+    currentOfferProductName = null;
+};
+
+window.saveCustomOffer = function() {
+    if (!currentOfferProductName) return;
+    
+    const p = catalogData.find(item => item.name === currentOfferProductName);
+    if (!p) return;
+    
+    const input = document.getElementById('customOfferInput');
+    const newOffer = input.value.trim();
+    
+    const parsed = parseFloat(newOffer);
+    if (!isNaN(parsed) && parsed > 0 && parsed !== parseFloat(p.price)) {
+        p.isOffer = true;
+        p.offerPrice = parsed;
+        showToast("تم تخصيص وتطبيق العرض بنجاح", "success");
+    } else {
+        p.isOffer = false;
+        p.offerPrice = 0;
+        if (newOffer === '' || parsed === 0) showToast("تم إلغاء العرض", "success");
+    }
+    
+    window.pushCatalogUpdate(p.name, p.price, p.isOffer, p.offerPrice);
+    
+    filterPriceTagsList();
+    updateLivePriceTagPreview();
+    
+    closeCustomOfferModal();
 };
 
 window.filterPriceTagsList = function() {
