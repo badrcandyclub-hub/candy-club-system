@@ -5840,7 +5840,7 @@ window.generatePriceTagHTML = function(p, sizeClass) {
                 <div class="price-tag-header">
                     <img src="images/Logo-print.png" class="price-tag-logo" onerror="this.src='images/logo-digital.png'" alt="Candy Club">
                 </div>
-                ${p.isOffer && parseFloat(p.offerPrice) > 0 && parseFloat(p.offerPrice) !== parseFloat(p.price) ? '<div class="offer-badge">عرض خاص!</div>' : ''}
+                ${p.isOffer && parseFloat(p.offerPrice) > 0 && parseFloat(p.offerPrice) !== parseFloat(p.price) ? '<div class="offer-badge">عرض خاص</div>' : ''}
                 
                 <div class="price-tag-body">
                     <div class="tag-box top-box">
