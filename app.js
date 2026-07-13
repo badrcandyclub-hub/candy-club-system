@@ -5836,14 +5836,13 @@ window.generatePriceTagHTML = function(p, sizeClass) {
                 <span class="candy-deco top-right">🍬</span>
                 <span class="candy-deco bottom-left">✨</span>
                 <span class="candy-deco bottom-right">🍭</span>
-                
-                <div class="price-tag-header">
-                    <img src="images/Logo-print.png" class="price-tag-logo" onerror="this.src='images/logo-digital.png'" alt="Candy Club">
-                </div>
                 ${p.isOffer && parseFloat(p.offerPrice) > 0 && parseFloat(p.offerPrice) !== parseFloat(p.price) ? '<div class="offer-badge">عرض خاص</div>' : ''}
                 
                 <div class="price-tag-body">
                     <div class="tag-box top-box">
+                        <div class="price-tag-header">
+                            <img src="images/Logo-print.png" class="price-tag-logo" onerror="this.src='images/logo-digital.png'" alt="Candy Club">
+                        </div>
                         <div class="tag-row name-row">
                             <span class="tag-label">اسم الصنف :</span>
                             <span class="tag-value">${p.name}</span>
@@ -5889,8 +5888,8 @@ window.updateLivePriceTagPreview = function() {
     }
     
     let maxItems = 1;
-    if (size === 'small') maxItems = 12;
-    else if (size === 'medium') maxItems = 9;
+    if (size === 'small') maxItems = 14;
+    else if (size === 'medium') maxItems = 8;
     else if (size === 'large') maxItems = 4;
     
     const isShowingSubset = itemsToShow.length > maxItems;

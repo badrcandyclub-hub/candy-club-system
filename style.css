@@ -3472,7 +3472,7 @@ body.dark-mode .app-sidebar {
     display: flex;
     flex-direction: column;
     padding: 8px; /* Thickness of the striped border */
-    margin-top: 25px; /* Space for the logo to overlap */
+    margin-top: 0; /* Logo is now inside, no top margin needed */
     background-image: repeating-linear-gradient(
         -45deg,
         #f06292,
@@ -3506,11 +3506,8 @@ body.dark-mode .app-sidebar {
 .candy-deco.bottom-right { bottom: 10px; right: 10px; transform: rotate(-15deg); }
 
 .price-tag-header {
-    position: absolute;
-    top: -45px; /* Pull logo up to overlap the border */
-    left: 50%;
-    transform: translateX(-50%);
     text-align: center;
+    margin-bottom: 8px;
     z-index: 15;
 }
 
@@ -3525,7 +3522,7 @@ body.dark-mode .app-sidebar {
     flex-direction: column;
     flex: 1;
     z-index: 5;
-    margin-top: 15px; /* Give space for the overlapping logo */
+    margin-top: 0; /* Logo is inside, no extra space needed */
 }
 
 .tag-box {
@@ -3610,13 +3607,8 @@ body.dark-mode .app-sidebar {
 
 /* Offer specific styling */
 .price-tag-card.is-offer {
-    background-image: repeating-linear-gradient(
-        -45deg,
-        #ff0000,
-        #ff0000 15px,
-        #ffeb3b 15px,
-        #ffeb3b 30px
-    );
+    background-color: #ff0000;
+    background-image: none; /* No gradients to avoid animation feeling */
 }
 
 .price-tag-card.is-offer .price-tag-inner {
@@ -3661,19 +3653,18 @@ body.dark-mode .app-sidebar {
 }
 
 /* Sizes - using min-height so the card can grow if text is long, keeping the frame perfectly equal on all sides */
-.price-tag-card.size-small { width: 6.5cm; min-height: 4.5cm; height: auto; margin-top: 20px;}
-.price-tag-card.size-small .tag-row { font-size: 1rem; }
-.price-tag-card.size-small .price-tag-header { top: -30px; }
-.price-tag-card.size-small .price-tag-logo { height: 40px; }
-.price-tag-card.size-small .candy-deco { font-size: 1rem; }
+.price-tag-card.size-small { width: 9.5cm; min-height: 3.8cm; height: auto; margin-top: 0;}
+.price-tag-card.size-small .tag-row { font-size: 0.85rem; }
+.price-tag-card.size-small .price-tag-logo { height: 28px; }
+.price-tag-card.size-small .candy-deco { font-size: 0.8rem; }
+.price-tag-card.size-small .offer-badge { font-size: 0.8rem; padding: 3px 8px; top: -5px; right: -5px; }
 
-.price-tag-card.size-medium { width: 9.5cm; min-height: 6.5cm; height: auto; margin-top: 30px; }
+.price-tag-card.size-medium { width: 9.5cm; min-height: 6.5cm; height: auto; margin-top: 0; }
 .price-tag-card.size-medium .tag-row { font-size: 1.3rem; }
 .price-tag-card.size-medium .price-tag-logo { height: 60px; }
 
-.price-tag-card.size-large { width: 13.5cm; min-height: 9cm; height: auto; margin-top: 35px;}
+.price-tag-card.size-large { width: 13.5cm; min-height: 9cm; height: auto; margin-top: 0;}
 .price-tag-card.size-large .tag-row { font-size: 1.8rem; }
-.price-tag-card.size-large .price-tag-header { top: -55px; }
 .price-tag-card.size-large .price-tag-logo { height: 80px; }
 
 
@@ -3708,9 +3699,9 @@ body.dark-mode .app-sidebar {
     body.print-mode-tags .price-tags-grid {
         display: flex;
         flex-wrap: wrap;
-        gap: 30px; /* Big gap for scissors */
+        gap: 20px; /* Gap for scissors */
         justify-content: flex-start;
-        padding: 60px 20px 20px 20px; /* Huge top padding so the overlapping logo doesn't get cut by printer */
+        padding: 10px; 
         background: transparent;
     }
     
