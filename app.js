@@ -5838,8 +5838,9 @@ window.generatePriceTagHTML = function(p, sizeClass) {
                 <span class="candy-deco bottom-right">🍭</span>
                 
                 <div class="price-tag-header">
-                    <img src="images/logo-branch.png" class="price-tag-logo" onerror="this.src='images/logo-digital.png'" alt="Candy Club">
+                    <img src="images/Logo-print.png" class="price-tag-logo" onerror="this.src='images/logo-digital.png'" alt="Candy Club">
                 </div>
+                ${p.isOffer && parseFloat(p.offerPrice) > 0 && parseFloat(p.offerPrice) !== parseFloat(p.price) ? '<div class="offer-badge">عرض خاص!</div>' : ''}
                 
                 <div class="price-tag-body">
                     <div class="tag-box top-box">
@@ -5897,7 +5898,7 @@ window.updateLivePriceTagPreview = function() {
         itemsToShow = itemsToShow.slice(0, maxItems);
     }
     
-    let html = `<div class="price-tags-grid" style="transform: scale(0.65); transform-origin: top center; margin-bottom: -30%; background: transparent; padding: 0;">`;
+    let html = `<div class="price-tags-grid" style="flex-direction: column; align-items: center; justify-content: flex-start; transform: scale(0.65); transform-origin: top center; margin-bottom: -30%; background: transparent; padding: 0; flex-wrap: nowrap;">`;
     
     itemsToShow.forEach(p => {
         html += generatePriceTagHTML(p, size);

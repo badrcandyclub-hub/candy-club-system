@@ -3465,7 +3465,7 @@ body.dark-mode .app-sidebar {
 .price-tag-card {
     position: relative;
     background: #fff;
-    border-radius: 15px;
+    border-radius: 0; /* Changed to 0 for perfectly rectangular shape to cut easily */
     overflow: visible; /* VERY IMPORTANT: allows logo to overlap */
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     box-sizing: border-box;
@@ -3484,7 +3484,7 @@ body.dark-mode .app-sidebar {
 
 .price-tag-inner {
     background: #fff;
-    border-radius: 10px;
+    border-radius: 0; /* Rectangular inner shape */
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -3615,16 +3615,47 @@ body.dark-mode .app-sidebar {
 /* Offer specific styling */
 .price-tag-card.is-offer {
     background-image: repeating-linear-gradient(
-        45deg,
-        #ff9800,
-        #ff9800 15px,
-        #fff 15px,
-        #fff 30px
+        -45deg,
+        #ff0000,
+        #ff0000 15px,
+        #ffeb3b 15px,
+        #ffeb3b 30px
     );
 }
 
 .price-tag-card.is-offer .price-tag-inner {
+    border: 4px solid #ff0000;
+}
+
+.price-tag-card.is-offer .tag-box {
     border: 2px dashed #ff9800;
+}
+
+.price-tag-card.is-offer .middle-divider-bar {
+    background-color: #ff0000;
+}
+
+.price-tag-card.is-offer .price-row .tag-label,
+.price-tag-card.is-offer .price-row .tag-value,
+.price-tag-card.is-offer .name-row .tag-label,
+.price-tag-card.is-offer .name-row .tag-value {
+    color: #b71c1c; /* Dark red text */
+}
+
+.offer-badge {
+    position: absolute;
+    top: -15px;
+    right: -15px;
+    background-color: #ff0000;
+    color: #fff;
+    font-weight: bold;
+    padding: 5px 15px;
+    border-radius: 0;
+    transform: rotate(15deg);
+    z-index: 20;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    font-size: 1.2rem;
+    border: 2px solid #ffeb3b;
 }
 
 .old-price {
@@ -3689,6 +3720,7 @@ body.dark-mode .app-sidebar {
         border: 1px solid #ccc; /* fallback if gradients fail */
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
+        margin: 20px; /* Explicit gap around the card for cutting */
     }
     
 
