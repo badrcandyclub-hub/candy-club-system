@@ -5906,10 +5906,6 @@ window.updateLivePriceTagPreview = function() {
     
     html += `</div>`;
     
-    if (isShowingSubset) {
-        html += `<div style="text-align:center; background:var(--warning); color:#fff; padding:8px 15px; border-radius:20px; font-weight:bold; margin-top:20px; box-shadow:0 4px 10px rgba(0,0,0,0.1);"><i class="fa-solid fa-triangle-exclamation"></i> يتم عرض ${maxItems} كروت كحد أقصى في المعاينة لتجنب بطء المتصفح. سيتم طباعة الجميع!</div>`;
-    }
-    
     previewContainer.innerHTML = html;
     
     const svgs = previewContainer.querySelectorAll('.barcode-svg');

@@ -3512,16 +3512,12 @@ body.dark-mode .app-sidebar {
     transform: translateX(-50%);
     text-align: center;
     z-index: 15;
-    background: #fff;
-    border-radius: 50%;
-    padding: 3px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
 .price-tag-logo {
     height: 60px;
     object-fit: contain;
-    border-radius: 50%;
+    /* Removed border-radius so the raw logo displays normally */
 }
 
 .price-tag-body {
@@ -3665,18 +3661,18 @@ body.dark-mode .app-sidebar {
     margin-left: 8px;
 }
 
-/* Sizes */
-.price-tag-card.size-small { width: 6.5cm; height: 4.5cm; margin-top: 20px;}
+/* Sizes - using min-height so the card can grow if text is long, keeping the frame perfectly equal on all sides */
+.price-tag-card.size-small { width: 6.5cm; min-height: 4.5cm; height: auto; margin-top: 20px;}
 .price-tag-card.size-small .tag-row { font-size: 1rem; }
 .price-tag-card.size-small .price-tag-header { top: -30px; }
 .price-tag-card.size-small .price-tag-logo { height: 40px; }
 .price-tag-card.size-small .candy-deco { font-size: 1rem; }
 
-.price-tag-card.size-medium { width: 9.5cm; height: 6.5cm; }
+.price-tag-card.size-medium { width: 9.5cm; min-height: 6.5cm; height: auto; margin-top: 30px; }
 .price-tag-card.size-medium .tag-row { font-size: 1.3rem; }
 .price-tag-card.size-medium .price-tag-logo { height: 60px; }
 
-.price-tag-card.size-large { width: 13.5cm; height: 9cm; margin-top: 35px;}
+.price-tag-card.size-large { width: 13.5cm; min-height: 9cm; height: auto; margin-top: 35px;}
 .price-tag-card.size-large .tag-row { font-size: 1.8rem; }
 .price-tag-card.size-large .price-tag-header { top: -55px; }
 .price-tag-card.size-large .price-tag-logo { height: 80px; }
@@ -3688,6 +3684,11 @@ body.dark-mode .app-sidebar {
 
 /* Print media queries */
 @media print {
+    @page {
+        /* This prevents the printer from cutting off the cards at the edges of the paper */
+        margin: 15mm; 
+    }
+    
     body.print-mode-tags * {
         visibility: hidden;
     }
@@ -3708,9 +3709,9 @@ body.dark-mode .app-sidebar {
     body.print-mode-tags .price-tags-grid {
         display: flex;
         flex-wrap: wrap;
-        gap: 15px;
+        gap: 30px; /* Big gap for scissors */
         justify-content: flex-start;
-        padding: 0;
+        padding: 10px;
         background: transparent;
     }
     
@@ -3720,7 +3721,7 @@ body.dark-mode .app-sidebar {
         border: 1px solid #ccc; /* fallback if gradients fail */
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
-        margin: 20px; /* Explicit gap around the card for cutting */
+        margin-bottom: 25px; /* Explicit vertical gap around the card for cutting */
     }
     
 
