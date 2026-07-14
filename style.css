@@ -628,6 +628,8 @@ body.dark-mode .invoice-offer-bar {
     font-size: 0.9rem;
 }
 
+
+
 .switch {
     position: relative;
     display: inline-block;
@@ -3668,6 +3670,7 @@ body.dark-mode .app-sidebar {
     display: inline-block;
     vertical-align: top;
     margin-bottom: 20px;
+    overflow: hidden;
 }
 
 .price-tag-wrapper.size-large { width: 13.5cm; height: 9cm; }

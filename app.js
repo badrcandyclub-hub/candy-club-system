@@ -5826,7 +5826,7 @@ window.generatePriceTagHTML = function(p, sizeClass) {
         priceHtml = p.price;
     }
     
-    const barcodeHtml = p.barcode ? `<svg class="barcode-svg" data-barcode="${p.barcode}"></svg>` : '';
+    const barcodeHtml = p.barcode ? `<img class="barcode-svg" data-barcode="${p.barcode}">` : '';
     
     return `
         <div class="price-tag-wrapper size-${sizeClass}">
@@ -6039,7 +6039,7 @@ window.executePdfExport = function() {
             document.body.classList.remove('print-mode-tags');
             showToast("حدث خطأ أثناء تصدير الملف.", "error");
         });
-    }, 800);
+    }, 1500);
 };
 
 window.printSelectedPriceTags = function(overrideSize = null) {
@@ -6082,5 +6082,5 @@ window.printSelectedPriceTags = function(overrideSize = null) {
             document.body.classList.remove('print-mode-tags');
             if (styleEl) styleEl.remove();
         }, 1000);
-    }, 800);
+    }, 1500);
 };
