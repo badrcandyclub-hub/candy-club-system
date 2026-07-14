@@ -5985,126 +5985,65 @@ window.executePdfExport = function() {
 
     // Get the absolute URL for logo
     const logoUrl = new URL('images/Logo-print.png', window.location.href).href;
-    
-    // Get all CSS from the page's stylesheets as text to inline into popup
-    let cssText = '';
-    try {
-        for (const sheet of document.styleSheets) {
-            try {
-                for (const rule of sheet.cssRules) {
-                    cssText += rule.cssText + '\n';
-                }
-            } catch(e) {}
-        }
-    } catch(e) {}
 
-    // Build a self-contained HTML document
-    const fullHtml = `<!DOCTYPE html>
-<html dir="rtl" lang="ar">
-<head>
-<meta charset="UTF-8">
-<style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: #ffffff; font-family: 'Cairo', Arial, sans-serif; padding: 10px; }
-${cssText}
-/* Force all cards visible */
-.print-tags-only { display: block !important; visibility: visible !important; }
-.price-tags-grid { display: flex; flex-wrap: wrap; gap: 20px; justify-content: flex-start; padding: 10px; background: transparent; }
-.price-tag-wrapper { display: inline-block; vertical-align: top; margin-bottom: 20px; overflow: hidden; }
-.price-tag-wrapper.size-large { width: 13.5cm; height: 9cm; }
-.price-tag-wrapper.size-medium { width: 9.5cm; height: 6.3cm; }
-.price-tag-wrapper.size-small { width: 6.5cm; height: 4.3cm; }
-.price-tag-card { width: 13.5cm; height: 9cm; overflow: hidden; margin: 0; transform-origin: top right; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-.price-tag-wrapper.size-large .price-tag-card { transform: scale(1); }
-.price-tag-wrapper.size-medium .price-tag-card { transform: scale(0.703); }
-.price-tag-wrapper.size-small .price-tag-card { transform: scale(0.481); }
-img { max-width: 100%; }
-</style>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>
-</head>
-<body>
-<div class="print-tags-only" style="display:block!important">
-  <div class="price-tags-grid">
-    ${cardsHtml.replace(/src="images\/Logo-print\.png"/g, `src="${logoUrl}"`).replace(/onerror="this\.src='images\/logo-digital\.png'"/g, '')}
-  </div>
-</div>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    if (typeof JsBarcode !== 'undefined') {
-        document.querySelectorAll('[data-barcode]').forEach(function(el) {
-            var code = el.getAttribute('data-barcode');
-            if (code) {
-                try {
-                    JsBarcode(el, String(code), { format: 'CODE128', width: 3, height: 60, displayValue: true, fontSize: 14, margin: 0 });
-                } catch(e) {}
-            }
+    // ===== Build a hidden render container in the SAME document =====
+    // We CANNOT use an iframe because html2pdf (html2canvas) cannot access cross-document elements properly
+    const renderDiv = document.createElement('div');
+    renderDiv.id = 'pdf-render-staging';
+    renderDiv.style.cssText = [
+        'position: fixed',
+        'top: -9999px',
+        'left: -9999px',
+        'width: 794px',   // A4 at 96dpi ≈ 794px
+        'background: #ffffff',
+        'z-index: -99999',
+        'direction: rtl',
+        'font-family: Cairo, Arial, sans-serif',
+        'padding: 10px',
+        'box-sizing: border-box'
+    ].join(';');
+
+    // Build inner grid with cards
+    renderDiv.innerHTML = `
+        <div class="price-tags-grid" style="display:flex;flex-wrap:wrap;gap:15px;justify-content:flex-start;padding:10px;background:transparent;direction:rtl;">
+            ${cardsHtml.replace(/src="images\/Logo-print\.png"/g, `src="${logoUrl}"`).replace(/onerror="this\.src='images\/logo-digital\.png'"/g, `onerror="this.style.display='none'"`)}
+        </div>`;
+
+    document.body.appendChild(renderDiv);
+
+    // Render barcodes inside the staging div
+    renderBarcodes(renderDiv, size);
+
+    // Wait for images + barcodes to settle
+    setTimeout(() => {
+        const targetEl = renderDiv;
+
+        const opt = {
+            margin: [5, 5, 5, 5],
+            filename: 'كروت_الأسعار_CandyClub.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#ffffff',
+                scrollX: 0,
+                scrollY: 0,
+                width: 794,
+                windowWidth: 794
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(targetEl).save().then(() => {
+            document.body.removeChild(renderDiv);
+            showToast('✅ تم تنزيل ملف الـ PDF بنجاح!', 'success');
+        }).catch(err => {
+            console.error('PDF Error:', err);
+            if (document.body.contains(renderDiv)) document.body.removeChild(renderDiv);
+            showToast('حدث خطأ في إنشاء الملف: ' + err.message, 'error');
         });
-    }
-    // Signal ready
-    window._barcodesRendered = true;
-});
-<\/script>
-</body>
-</html>`;
-
-    // Create a hidden iframe to render the HTML
-    const iframe = document.createElement('iframe');
-    iframe.style.cssText = 'position:fixed;top:0;left:0;width:21cm;height:29.7cm;border:none;visibility:hidden;z-index:-9999;';
-    document.body.appendChild(iframe);
-    
-    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-    iframeDoc.open();
-    iframeDoc.write(fullHtml);
-    iframeDoc.close();
-    
-    // Wait for iframe to render barcodes then capture
-    const checkReady = setInterval(() => {
-        try {
-            if (iframeDoc.body && iframeDoc.readyState === 'complete') {
-                clearInterval(checkReady);
-                
-                // Extra wait for fonts and JsBarcode
-                setTimeout(() => {
-                    const targetEl = iframeDoc.querySelector('.print-tags-only');
-                    if (!targetEl) {
-                        showToast("خطأ: لم يتم العثور على محتوى الكروت", "error");
-                        document.body.removeChild(iframe);
-                        return;
-                    }
-                    
-                    const opt = {
-                        margin: 5,
-                        filename: 'كروت_الأسعار_CandyClub.pdf',
-                        image: { type: 'jpeg', quality: 0.98 },
-                        html2canvas: { 
-                            scale: 2, 
-                            useCORS: true, 
-                            backgroundColor: '#ffffff',
-                            scrollX: 0,
-                            scrollY: 0,
-                            windowWidth: iframeDoc.body.scrollWidth,
-                            windowHeight: iframeDoc.body.scrollHeight
-                        },
-                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                    };
-                    
-                    html2pdf().set(opt).from(targetEl).save().then(() => {
-                        document.body.removeChild(iframe);
-                        showToast("✅ تم تنزيل ملف الـ PDF بنجاح!", "success");
-                    }).catch(err => {
-                        console.error("PDF Error:", err);
-                        document.body.removeChild(iframe);
-                        showToast("حدث خطأ: " + err.message, "error");
-                    });
-                }, 1500);
-            }
-        } catch(e) {
-            clearInterval(checkReady);
-            showToast("خطأ في تحميل المحتوى", "error");
-            if (document.body.contains(iframe)) document.body.removeChild(iframe);
-        }
-    }, 200);
+    }, 2000);
 };
 
 window.printSelectedPriceTags = function(overrideSize = null) {
