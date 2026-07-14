@@ -5838,11 +5838,12 @@ window.generatePriceTagHTML = function(p, sizeClass) {
                 <span class="candy-deco bottom-right">🍭</span>
                 ${p.isOffer && parseFloat(p.offerPrice) > 0 && parseFloat(p.offerPrice) !== parseFloat(p.price) ? '<div class="offer-badge">عرض خاص</div>' : ''}
                 
+                <div class="price-tag-header">
+                    <img src="images/Logo-print.png" class="price-tag-logo" onerror="this.src='images/logo-digital.png'" alt="Candy Club">
+                </div>
+                
                 <div class="price-tag-body">
                     <div class="tag-box top-box">
-                        <div class="price-tag-header">
-                            <img src="images/Logo-print.png" class="price-tag-logo" onerror="this.src='images/logo-digital.png'" alt="Candy Club">
-                        </div>
                         <div class="tag-row name-row">
                             <span class="tag-label">اسم الصنف :</span>
                             <span class="tag-value">${p.name}</span>
@@ -5888,7 +5889,7 @@ window.updateLivePriceTagPreview = function() {
     }
     
     let maxItems = 1;
-    if (size === 'small') maxItems = 14;
+    if (size === 'small') maxItems = 15;
     else if (size === 'medium') maxItems = 8;
     else if (size === 'large') maxItems = 4;
     
@@ -5927,18 +5928,47 @@ window.updateLivePriceTagPreview = function() {
     });
 };
 
-window.printSelectedPriceTags = function() {
+window.openPdfExportModal = function() {
+    if (selectedPriceTagsMap.size === 0) {
+        showToast("برجاء تحديد منتج واحد على الأقل", "warning");
+        return;
+    }
+    document.getElementById('pdfSelectedCount').textContent = selectedPriceTagsMap.size;
+    const currentSize = document.getElementById('priceTagSize').value;
+    document.getElementById('pdfSizeSelect').value = currentSize;
+    document.getElementById('pdfExportModal').style.display = 'flex';
+};
+
+window.closePdfExportModal = function() {
+    document.getElementById('pdfExportModal').style.display = 'none';
+};
+
+window.executePdfExport = function() {
+    const size = document.getElementById('pdfSizeSelect').value;
+    closePdfExportModal();
+    window.printSelectedPriceTags(size);
+};
+
+window.printSelectedPriceTags = function(overrideSize = null) {
     if (selectedPriceTagsMap.size === 0) {
         showToast("برجاء تحديد منتج واحد على الأقل", "warning");
         return;
     }
     
+    // Limit to 120 items to prevent browser crash
+    const MAX_PRINT_LIMIT = 120;
+    let itemsToPrint = Array.from(selectedPriceTagsMap.values());
+    if (itemsToPrint.length > MAX_PRINT_LIMIT) {
+        showToast(`سيتم طباعة أول ${MAX_PRINT_LIMIT} كارت فقط للحماية من تهنيج المتصفح. يرجى الطباعة على دفعات.`, "warning");
+        itemsToPrint = itemsToPrint.slice(0, MAX_PRINT_LIMIT);
+    }
+    
     const sizeSelect = document.getElementById('priceTagSize');
-    const size = sizeSelect ? sizeSelect.value : 'medium';
+    const size = overrideSize || (sizeSelect ? sizeSelect.value : 'medium');
     const grid = document.getElementById('price-tags-grid');
     grid.innerHTML = '';
     
-    selectedPriceTagsMap.forEach(p => {
+    itemsToPrint.forEach(p => {
         grid.innerHTML += generatePriceTagHTML(p, size);
     });
     
@@ -5979,5 +6009,5 @@ window.printSelectedPriceTags = function() {
             document.body.classList.remove('print-mode-tags');
             if (styleEl) styleEl.remove();
         }, 1000);
-    }, 500);
+    }, 800);
 };

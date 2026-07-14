@@ -986,13 +986,14 @@
                             <div style="display: flex; align-items: center; gap: 8px; background: var(--bg); padding: 5px 15px; border-radius: 20px; border: 1px solid var(--border);">
                                 <i class="fa-solid fa-ruler-combined" style="color: var(--primary);"></i>
                                 <select id="priceTagSize" class="input-field" style="width: auto; margin-bottom: 0; padding: 5px; border: none; background: transparent; font-weight: bold; outline: none; cursor: pointer;" onchange="updateLivePriceTagPreview()">
-                                    <option value="small">صغير (14)</option>
+                                    <option value="small">صغير (15)</option>
                                     <option value="medium" selected>متوسط (8)</option>
                                     <option value="large">كبير (4)</option>
                                 </select>
                             </div>
                             
-                            <button class="interactive-btn" onclick="printSelectedPriceTags()" style="background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; box-shadow: 0 4px 6px rgba(233, 30, 140, 0.3);"><i class="fa-solid fa-print"></i> طباعة الكروت</button>
+                            <button class="interactive-btn" onclick="openPdfExportModal()" style="background: var(--success); color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; box-shadow: 0 4px 6px rgba(76, 175, 80, 0.3);"><i class="fa-solid fa-file-pdf"></i> تصدير PDF للمطبعة</button>
+                            <button class="interactive-btn" onclick="printSelectedPriceTags()" style="background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; box-shadow: 0 4px 6px rgba(233, 30, 140, 0.3);"><i class="fa-solid fa-print"></i> طباعة مباشرة</button>
                         </div>
                     </div>
 

@@ -3647,25 +3647,32 @@ body.dark-mode .app-sidebar {
 
 .old-price {
     text-decoration: line-through;
+    text-decoration-color: #ff0000;
+    text-decoration-thickness: 2px;
     color: #7f8c8d;
     font-size: 0.8em;
     margin-left: 8px;
 }
 
-/* Sizes - using min-height so the card can grow if text is long, keeping the frame perfectly equal on all sides */
-.price-tag-card.size-small { width: 9.5cm; min-height: 3.8cm; height: auto; margin-top: 0;}
-.price-tag-card.size-small .tag-row { font-size: 0.85rem; }
-.price-tag-card.size-small .price-tag-logo { height: 28px; }
-.price-tag-card.size-small .candy-deco { font-size: 0.8rem; }
-.price-tag-card.size-small .offer-badge { font-size: 0.8rem; padding: 3px 8px; top: -5px; right: -5px; }
-
-.price-tag-card.size-medium { width: 9.5cm; min-height: 6.5cm; height: auto; margin-top: 0; }
-.price-tag-card.size-medium .tag-row { font-size: 1.3rem; }
-.price-tag-card.size-medium .price-tag-logo { height: 60px; }
-
+/* Sizes - Perfect Proportional Scaling for uniform shape */
+/* Base (Large - 4 per page): 13.5cm width. Logo 80px, Font 1.8rem */
 .price-tag-card.size-large { width: 13.5cm; min-height: 9cm; height: auto; margin-top: 0;}
 .price-tag-card.size-large .tag-row { font-size: 1.8rem; }
 .price-tag-card.size-large .price-tag-logo { height: 80px; }
+.price-tag-card.size-large .candy-deco { font-size: 1.5rem; }
+
+/* Medium (8 per page): 9.5cm width (~70% of Large). Logo 56px, Font 1.25rem */
+.price-tag-card.size-medium { width: 9.5cm; min-height: 6.3cm; height: auto; margin-top: 0; }
+.price-tag-card.size-medium .tag-row { font-size: 1.25rem; }
+.price-tag-card.size-medium .price-tag-logo { height: 56px; }
+.price-tag-card.size-medium .candy-deco { font-size: 1.05rem; }
+
+/* Small (15 per page - 3 cols x 5 rows): 6.5cm width (~48% of Large). Logo 38px, Font 0.85rem */
+.price-tag-card.size-small { width: 6.5cm; min-height: 4.3cm; height: auto; margin-top: 0;}
+.price-tag-card.size-small .tag-row { font-size: 0.85rem; }
+.price-tag-card.size-small .price-tag-logo { height: 38px; }
+.price-tag-card.size-small .candy-deco { font-size: 0.72rem; }
+.price-tag-card.size-small .offer-badge { font-size: 0.75rem; padding: 3px 6px; }
 
 
 .print-tags-only {
