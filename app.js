@@ -5907,26 +5907,45 @@ window.updateLivePriceTagPreview = function() {
     html += `</div>`;
     
     previewContainer.innerHTML = html;
+    renderBarcodes(previewContainer, size);
+};
+
+function renderBarcodes(container, size) {
+    if (typeof JsBarcode !== 'function') return;
+    const svgs = container.querySelectorAll('.barcode-svg');
     
-    const svgs = previewContainer.querySelectorAll('.barcode-svg');
+    let bcWidth = 1.5;
+    let bcHeight = 30;
+    let bcFontSize = 12;
+    
+    if (size === 'small') {
+        bcWidth = 1;
+        bcHeight = 18;
+        bcFontSize = 9;
+    } else if (size === 'medium') {
+        bcWidth = 1.2;
+        bcHeight = 24;
+        bcFontSize = 10;
+    }
+    
     svgs.forEach(svg => {
-        const barcode = svg.getAttribute('data-barcode');
-        if (barcode && typeof JsBarcode === 'function') {
+        const code = svg.getAttribute('data-barcode');
+        if (code) {
             try {
-                JsBarcode(svg, String(barcode), {
+                JsBarcode(svg, String(code), {
                     format: "CODE128",
-                    width: 1.5,
-                    height: 30,
+                    width: bcWidth,
+                    height: bcHeight,
                     displayValue: true,
-                    fontSize: 12,
+                    fontSize: bcFontSize,
                     margin: 0
                 });
             } catch (e) {
-                console.warn("Error rendering barcode in preview", e);
+                console.warn("Error rendering barcode", e);
             }
         }
     });
-};
+}
 
 window.openPdfExportModal = function() {
     if (selectedPriceTagsMap.size === 0) {
@@ -5946,7 +5965,54 @@ window.closePdfExportModal = function() {
 window.executePdfExport = function() {
     const size = document.getElementById('pdfSizeSelect').value;
     closePdfExportModal();
-    window.printSelectedPriceTags(size);
+    
+    if (selectedPriceTagsMap.size === 0) {
+        showToast("برجاء تحديد منتج واحد على الأقل", "warning");
+        return;
+    }
+    
+    if (typeof html2pdf === 'undefined') {
+        showToast("جاري تحميل مكتبة PDF، يرجى المحاولة بعد قليل...", "warning");
+        return;
+    }
+    
+    showToast("جاري تجهيز وتنزيل ملف الـ PDF الألوان... يرجى الانتظار ثواني", "success");
+    
+    // Limit to 120 items to prevent memory crash during PDF generation
+    const MAX_PRINT_LIMIT = 120;
+    let itemsToPrint = Array.from(selectedPriceTagsMap.values());
+    if (itemsToPrint.length > MAX_PRINT_LIMIT) {
+        itemsToPrint = itemsToPrint.slice(0, MAX_PRINT_LIMIT);
+    }
+    
+    const grid = document.getElementById('price-tags-grid');
+    grid.innerHTML = '';
+    itemsToPrint.forEach(p => {
+        grid.innerHTML += generatePriceTagHTML(p, size);
+    });
+    
+    document.body.classList.add('print-mode-tags');
+    renderBarcodes(grid, size);
+    
+    setTimeout(() => {
+        const element = document.querySelector('.print-tags-only');
+        const opt = {
+            margin:       10,
+            filename:     'كروت_الأسعار_CandyClub.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        
+        html2pdf().set(opt).from(element).save().then(() => {
+            document.body.classList.remove('print-mode-tags');
+            showToast("تم تنزيل ملف الـ PDF بنجاح!", "success");
+        }).catch(err => {
+            console.error("PDF Error", err);
+            document.body.classList.remove('print-mode-tags');
+            showToast("حدث خطأ أثناء تصدير الملف.", "error");
+        });
+    }, 800);
 };
 
 window.printSelectedPriceTags = function(overrideSize = null) {
@@ -5981,27 +6047,7 @@ window.printSelectedPriceTags = function(overrideSize = null) {
         document.head.appendChild(styleEl);
     }
     styleEl.innerHTML = '@page { size: A4; margin: 0.5cm; }';
-    
-    if (typeof JsBarcode === 'function') {
-        const svgs = grid.querySelectorAll('.barcode-svg');
-        svgs.forEach(svg => {
-            const code = svg.getAttribute('data-barcode');
-            if (code) {
-                try {
-                    JsBarcode(svg, String(code), {
-                        format: "CODE128",
-                        width: 1.5,
-                        height: 30,
-                        displayValue: true,
-                        fontSize: 12,
-                        margin: 0
-                    });
-                } catch (e) {
-                    console.warn("Error generating barcode for print", e);
-                }
-            }
-        });
-    }
+    renderBarcodes(grid, size);
     
     setTimeout(() => {
         window.print();
