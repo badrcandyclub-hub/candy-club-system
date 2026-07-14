@@ -5922,8 +5922,8 @@ function renderBarcodes(container, size) {
     if (typeof JsBarcode !== 'function') return;
     const svgs = container.querySelectorAll('.barcode-svg');
     
-    let bcWidth = 1.4;
-    let bcHeight = 35;
+    let bcWidth = 3;
+    let bcHeight = 60;
     let bcFontSize = 14;
     
     svgs.forEach(svg => {
@@ -6008,7 +6008,7 @@ window.executePdfExport = function() {
             margin:       10,
             filename:     'كروت_الأسعار_CandyClub.pdf',
             image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff', windowWidth: 1024 },
+            html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: 0, scrollX: 0 },
             jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
         
