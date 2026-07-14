@@ -3601,6 +3601,8 @@ body.dark-mode .app-sidebar {
 .tag-value {
     flex: 1;
     text-align: right;
+    word-break: break-word;
+    overflow-wrap: break-word;
 }
 
 .tag-barcode-container {
@@ -3671,6 +3673,7 @@ body.dark-mode .app-sidebar {
     vertical-align: top;
     margin-bottom: 20px;
     overflow: hidden;
+    page-break-inside: avoid;
 }
 
 .price-tag-wrapper.size-large { width: 13.5cm; height: 9cm; }
