@@ -3714,8 +3714,7 @@ body.dark-mode .app-sidebar {
 /* Print media queries */
 @media print {
     @page {
-        /* This prevents the printer from cutting off the cards at the edges of the paper */
-        margin: 15mm; 
+        margin: 5mm; 
     }
     
     body.print-mode-tags * {
@@ -3740,21 +3739,26 @@ body.dark-mode .app-sidebar {
     body.print-mode-tags .price-tags-grid {
         display: flex;
         flex-wrap: wrap;
-        gap: 20px; /* Gap for scissors */
+        gap: 5px; /* Small gap to ensure 2 cards fit side-by-side on A4 */
         justify-content: flex-start;
-        padding: 10px; 
+        padding: 0; 
         background: transparent;
+        margin: 0 auto;
     }
     
-    body.print-mode-tags .price-tag-card {
+    body.print-mode-tags .price-tag-wrapper {
         page-break-inside: avoid;
+        margin-bottom: 10px; /* Space between rows */
+        /* Center the wrapper horizontally slightly to avoid right-hugging */
+    }
+
+    body.print-mode-tags .price-tag-card {
         box-shadow: none;
-        border: 1px solid #ccc; /* fallback if gradients fail */
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
-        margin-bottom: 25px; /* Explicit vertical gap around the card for cutting */
+        margin: 0 !important;
+        /* Removed border: 1px solid #ccc that was pushing the inner sizing and causing cutoff */
     }
-    
 
 }
 
