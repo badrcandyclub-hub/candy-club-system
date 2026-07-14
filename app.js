@@ -5986,21 +5986,43 @@ window.executePdfExport = function() {
     // Get the absolute URL for logo
     const logoUrl = new URL('images/Logo-print.png', window.location.href).href;
 
-    // ===== Build a hidden render container in the SAME document =====
-    // We CANNOT use an iframe because html2pdf (html2canvas) cannot access cross-document elements properly
+    // ===== Build a render container in the SAME document =====
+    // html2canvas cannot capture elements hidden way off-screen (-9999px).
+    // So we make it fixed, visible, and show it as a loading screen.
+    
+    const renderDivWrapper = document.createElement('div');
+    renderDivWrapper.id = 'pdf-render-wrapper';
+    renderDivWrapper.style.cssText = [
+        'position: fixed',
+        'top: 0',
+        'left: 0',
+        'width: 100vw',
+        'height: 100vh',
+        'background: rgba(255, 255, 255, 0.98)',
+        'z-index: 999999',
+        'display: flex',
+        'flex-direction: column',
+        'align-items: center',
+        'padding-top: 50px',
+        'overflow: auto'
+    ].join(';');
+    
+    // Add loading message
+    const loadingMsg = document.createElement('div');
+    loadingMsg.innerHTML = '<h2 style="color: #aa00ff; font-family: Cairo, sans-serif; text-align: center;">جاري إنشاء ملف PDF...<br><small style="color:#666; font-size:0.7em;">يرجى الانتظار ولا تغلق الصفحة</small></h2>';
+    loadingMsg.style.marginBottom = '20px';
+    renderDivWrapper.appendChild(loadingMsg);
+
     const renderDiv = document.createElement('div');
     renderDiv.id = 'pdf-render-staging';
     renderDiv.style.cssText = [
-        'position: fixed',
-        'top: -9999px',
-        'left: -9999px',
         'width: 794px',   // A4 at 96dpi ≈ 794px
         'background: #ffffff',
-        'z-index: -99999',
         'direction: rtl',
         'font-family: Cairo, Arial, sans-serif',
         'padding: 10px',
-        'box-sizing: border-box'
+        'box-sizing: border-box',
+        'position: relative'
     ].join(';');
 
     // Build inner grid with cards
@@ -6009,7 +6031,11 @@ window.executePdfExport = function() {
             ${cardsHtml.replace(/src="images\/Logo-print\.png"/g, `src="${logoUrl}"`).replace(/onerror="this\.src='images\/logo-digital\.png'"/g, `onerror="this.style.display='none'"`)}
         </div>`;
 
-    document.body.appendChild(renderDiv);
+    renderDivWrapper.appendChild(renderDiv);
+    document.body.appendChild(renderDivWrapper);
+
+    // Force window scroll to top
+    window.scrollTo(0, 0);
 
     // Render barcodes inside the staging div
     renderBarcodes(renderDiv, size);
@@ -6030,17 +6056,25 @@ window.executePdfExport = function() {
                 scrollX: 0,
                 scrollY: 0,
                 width: 794,
-                windowWidth: 794
+                windowWidth: document.body.scrollWidth,
+                onclone: function(doc) {
+                   // Ensure it's fully visible in the clone
+                   const clonedWrapper = doc.getElementById('pdf-render-wrapper');
+                   if(clonedWrapper) {
+                       clonedWrapper.style.position = 'absolute';
+                       clonedWrapper.style.height = 'auto';
+                   }
+                }
             },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
         html2pdf().set(opt).from(targetEl).save().then(() => {
-            document.body.removeChild(renderDiv);
+            if (document.body.contains(renderDivWrapper)) document.body.removeChild(renderDivWrapper);
             showToast('✅ تم تنزيل ملف الـ PDF بنجاح!', 'success');
         }).catch(err => {
             console.error('PDF Error:', err);
-            if (document.body.contains(renderDiv)) document.body.removeChild(renderDiv);
+            if (document.body.contains(renderDivWrapper)) document.body.removeChild(renderDivWrapper);
             showToast('حدث خطأ في إنشاء الملف: ' + err.message, 'error');
         });
     }, 2000);
