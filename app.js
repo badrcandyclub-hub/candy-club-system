@@ -5846,7 +5846,7 @@ window.generatePriceTagHTML = function(p, sizeClass) {
                     <div class="tag-box top-box">
                         <div class="tag-row name-row">
                             <span class="tag-label">اسم الصنف :</span>
-                            <span class="tag-value">${p.name}</span>
+                            <span class="tag-value" style="${p.name.length > 40 ? 'font-size: 0.65em; line-height: 1.1;' : (p.name.length > 25 ? 'font-size: 0.8em; line-height: 1.2;' : '')}">${p.name}</span>
                         </div>
                     </div>
                     
