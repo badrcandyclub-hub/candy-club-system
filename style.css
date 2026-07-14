@@ -854,8 +854,6 @@ input:checked + .slider:before { transform: translateX(24px); }
     box-shadow: var(--shadow);
     position: relative;
     overflow: hidden;
-    page-break-inside: avoid;
-    break-inside: avoid;
     transition: var(--transition);
 }
 
@@ -1472,8 +1470,6 @@ body.dark-mode .delivery-prediction {
     background: #FAFBFF;
     border-radius: 12px;
     overflow: hidden;
-    page-break-inside: avoid;
-    break-inside: avoid;
 }
 
 .zone-summary {
@@ -1530,8 +1526,6 @@ body.dark-mode .delivery-prediction {
     transition: transform 0.2s, box-shadow 0.2s;
     position: relative;
     overflow: hidden;
-    page-break-inside: avoid;
-    break-inside: avoid;
 }
 
 .zone-premium-card::before {
@@ -1742,8 +1736,6 @@ body.dark-mode .shipping-order-card:hover {
     font-family: 'Cairo', sans-serif;
     white-space: nowrap;
     overflow: hidden;
-    page-break-inside: avoid;
-    break-inside: avoid;
     text-overflow: ellipsis;
 }
 
@@ -2809,8 +2801,6 @@ body.dark-mode .btn-settle {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    page-break-inside: avoid;
-    break-inside: avoid;
     box-shadow: 0 20px 50px rgba(0,0,0,0.4);
     border: 1px solid rgba(255,255,255,0.1);
     animation: fadeInUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -2912,8 +2902,6 @@ body.dark-mode .btn-settle {
     background: var(--white);
     border-radius: var(--radius-lg);
     overflow: hidden;
-    page-break-inside: avoid;
-    break-inside: avoid;
     box-shadow: var(--shadow);
     border: 1px solid var(--border);
     display: flex;
@@ -3558,15 +3546,11 @@ body.dark-mode .app-sidebar {
     flex: 1.5;
     margin-bottom: 5px;
     position: relative;
-    overflow: hidden;
-    min-height: 0;
 }
 
 .tag-box.bottom-box {
     flex: 1;
-    flex-shrink: 0;
     margin-top: 5px;
-    min-height: 0;
 }
 
 /* Middle purple divider */
@@ -3617,9 +3601,6 @@ body.dark-mode .app-sidebar {
 .tag-value {
     flex: 1;
     text-align: right;
-    word-break: break-word;
-    overflow-wrap: break-word;
-    line-height: 1.3;
 }
 
 .tag-barcode-container {
@@ -3690,8 +3671,6 @@ body.dark-mode .app-sidebar {
     vertical-align: top;
     margin-bottom: 20px;
     overflow: hidden;
-    page-break-inside: avoid;
-    break-inside: avoid;
 }
 
 .price-tag-wrapper.size-large { width: 13.5cm; height: 9cm; }
@@ -3702,9 +3681,7 @@ body.dark-mode .app-sidebar {
 .price-tag-card { 
     width: 13.5cm; 
     height: 9cm; 
-    overflow: hidden;
-    page-break-inside: avoid;
-    break-inside: avoid; 
+    overflow: hidden; 
     margin: 0;
     transform-origin: top right; /* Because the page is RTL */
     -webkit-print-color-adjust: exact !important; 
