@@ -5969,24 +5969,119 @@ window.executePdfExport = function() {
         return;
     }
     
-    // Native print is the ONLY way to guarantee perfect Arabic (RTL) text rendering and sharp barcodes.
-    // html2pdf (html2canvas) fundamentally breaks Arabic shaping (reverses letters).
+    showToast("جاري تجهيز ملف PDF... يرجى الانتظار", "success");
     
-    const msg = "تنبيه هام جداً!\n\nسيتم استخدام نظام الطباعة الخاص بالمتصفح لضمان جودة فائقة ولتجنب مشاكل تقطع الحروف العربية.\n\n1- لحفظ الملف كـ PDF: اختر (Save as PDF) من القائمة.\n2- هام جداً: تأكد من تفعيل خيار (Background graphics) أو (رسومات الخلفية) في الإعدادات لكي تظهر الألوان بشكل سليم.\n\nهل تريد الاستمرار؟";
-    
-    if (confirm(msg)) {
-        // Temporarily change document title to set the default PDF filename
-        const originalTitle = document.title;
-        document.title = 'كروت_الأسعار_CandyClub';
-        
-        // Call the reliable native print function
-        window.printSelectedPriceTags(size);
-        
-        // Restore title after print dialog closes
-        setTimeout(() => {
-            document.title = originalTitle;
-        }, 1000);
+    const MAX_PRINT_LIMIT = 120;
+    let itemsToPrint = Array.from(selectedPriceTagsMap.values());
+    if (itemsToPrint.length > MAX_PRINT_LIMIT) {
+        itemsToPrint = itemsToPrint.slice(0, MAX_PRINT_LIMIT);
     }
+    
+    // Build cards HTML
+    let cardsHtml = '';
+    itemsToPrint.forEach(p => {
+        cardsHtml += generatePriceTagHTML(p, size);
+    });
+
+    const logoUrl = new URL('images/Logo-print.png', window.location.href).href;
+
+    // Build the render container
+    const renderDivWrapper = document.createElement('div');
+    renderDivWrapper.id = 'pdf-render-wrapper';
+    renderDivWrapper.style.cssText = [
+        'position: fixed',
+        'top: 0',
+        'left: 0',
+        'width: 100vw',
+        'height: 100vh',
+        'background: rgba(255, 255, 255, 0.98)',
+        'z-index: 999999',
+        'display: flex',
+        'flex-direction: column',
+        'align-items: center',
+        'padding-top: 50px',
+        'overflow: auto'
+    ].join(';');
+    
+    const loadingMsg = document.createElement('div');
+    loadingMsg.innerHTML = '<h2 style="color: #aa00ff; font-family: Cairo, sans-serif; text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> جاري استخراج ملف PDF مباشرةً...<br><small style="color:#666; font-size:0.7em;">يرجى الانتظار ولا تغلق الصفحة</small></h2>';
+    loadingMsg.style.marginBottom = '20px';
+    renderDivWrapper.appendChild(loadingMsg);
+
+    const renderDiv = document.createElement('div');
+    renderDiv.id = 'pdf-render-staging';
+    renderDiv.style.cssText = [
+        'width: 794px',   // A4 at 96dpi ≈ 794px
+        'background: #ffffff',
+        'direction: rtl',
+        'font-family: Cairo, Arial, sans-serif',
+        'padding: 10px',
+        'box-sizing: border-box',
+        'position: relative'
+    ].join(';');
+
+    renderDiv.innerHTML = `
+        <div class="price-tags-grid" style="display:flex;flex-wrap:wrap;gap:15px;justify-content:flex-start;padding:10px;background:transparent;direction:rtl;">
+            ${cardsHtml.replace(/src="images\/Logo-print\.png"/g, `src="${logoUrl}"`).replace(/onerror="this\.src='images\/logo-digital\.png'"/g, `onerror="this.style.display='none'"`)}
+        </div>`;
+
+    renderDivWrapper.appendChild(renderDiv);
+    document.body.appendChild(renderDivWrapper);
+
+    window.scrollTo(0, 0);
+    renderBarcodes(renderDiv, size);
+
+    // Wait for DOM and barcodes
+    setTimeout(() => {
+        if (typeof domtoimage === 'undefined' || !window.jspdf) {
+            document.body.removeChild(renderDivWrapper);
+            showToast('حدث خطأ: مكتبات إنشاء الـ PDF غير محملة', 'error');
+            return;
+        }
+
+        // Use dom-to-image to get an accurate representation including Arabic text (uses SVG foreignObject)
+        domtoimage.toJpeg(renderDiv, { quality: 0.98, bgcolor: '#ffffff' })
+            .then(function (dataUrl) {
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    
+                    const pdfWidth = pdf.internal.pageSize.getWidth();
+                    const pageHeight = pdf.internal.pageSize.getHeight();
+                    
+                    // Calculate height proportional to the A4 width
+                    const pdfHeight = (renderDiv.offsetHeight * pdfWidth) / renderDiv.offsetWidth;
+                    
+                    let position = 0;
+                    let heightLeft = pdfHeight;
+                    
+                    // Add first page
+                    pdf.addImage(dataUrl, 'JPEG', 0, position, pdfWidth, pdfHeight);
+                    heightLeft -= pageHeight;
+                    
+                    // Add subsequent pages if content is taller than A4
+                    while (heightLeft >= 0) {
+                        position = position - pageHeight;
+                        pdf.addPage();
+                        pdf.addImage(dataUrl, 'JPEG', 0, position, pdfWidth, pdfHeight);
+                        heightLeft -= pageHeight;
+                    }
+
+                    pdf.save('كروت_الأسعار_CandyClub.pdf');
+                    document.body.removeChild(renderDivWrapper);
+                    showToast('✅ تم تنزيل ملف الـ PDF بنجاح!', 'success');
+                } catch(e) {
+                    console.error('jsPDF Error:', e);
+                    document.body.removeChild(renderDivWrapper);
+                    showToast('حدث خطأ أثناء تجميع الـ PDF: ' + e.message, 'error');
+                }
+            })
+            .catch(function (error) {
+                console.error('dom-to-image error:', error);
+                document.body.removeChild(renderDivWrapper);
+                showToast('حدث خطأ في إنشاء الصورة للـ PDF', 'error');
+            });
+    }, 1500);
 };
 
 window.printSelectedPriceTags = function(overrideSize = null) {
