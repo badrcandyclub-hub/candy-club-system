@@ -3825,6 +3825,7 @@ let expiryFilteredData = [];
 let expiryCurrentPage = 1;
 const EXPIRY_ITEMS_PER_PAGE = 50;
 let expiryCurrentCategory = "";
+let selectedExpiryItems = new Set();
 
 function updateExpiryPaginationUI() {
     let totalPages = Math.ceil(expiryFilteredData.length / EXPIRY_ITEMS_PER_PAGE) || 1;
@@ -3986,22 +3987,28 @@ window.showExpiryDetails = function (category, resetPage = true) {
                 itemDiv.style.border = '2px solid #ffeb3b';
                 itemDiv.style.background = '#fffde7';
             }
+            let isChecked = selectedExpiryItems.has(item.id) ? "checked" : "";
             itemDiv.innerHTML = `
-                <h4 style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
-                    <span style="flex: 1;"><i class=\'fa-solid fa-box\'></i> ${item.name}</span>
-                    <span style="font-size: 0.8rem; color: #7f8c8d; font-weight: normal; background: #eee; padding: 3px 8px; border-radius: 12px; white-space: nowrap;">${item.barcode ? 'الباركود: ' + item.barcode : 'لا يوجد باركود'}</span>
-                </h4>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; background: #f8f9fa; padding: 5px 10px; border-radius: 8px;">
+                    <input type="checkbox" class="expiry-item-checkbox" data-id="${item.id}" ${isChecked} onchange="toggleExpirySelection('${item.id}', this.checked)" style="width: 20px; height: 20px; cursor: pointer;">
+                    <h4 style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin: 0; flex: 1;">
+                        <span style="flex: 1;"><i class=\'fa-solid fa-box\'></i> ${item.name}</span>
+                        <span style="font-size: 0.8rem; color: #7f8c8d; font-weight: normal; background: #eee; padding: 3px 8px; border-radius: 12px; white-space: nowrap;">${item.barcode ? 'الباركود: ' + item.barcode : 'لا يوجد باركود'}</span>
+                    </h4>
+                </div>
                 <div class="expiry-item-details">
                     <span>الكمية: ${item.qty}</span>
                     <span style="color: ${daysColor}; font-weight: bold;">${daysText}</span>
                 </div>
                 <div style="font-size: 0.8rem; color: #7f8c8d; margin-bottom: 8px;">
-                    <i class=\'fa-regular fa-calendar-days\'></i> انتهاء: ${formattedDate} | 🏢 مكان: ${item.location || '-'}
+                    <i class=\'fa-regular fa-calendar-days\'></i> انتهاء: ${formattedDate} | 🏢 مكان: ${item.location || '-'} <br>
+                    <i class=\'fa-solid fa-user\'></i> المستلم: ${item.receiver || 'غير محدد'} | 📝 ملاحظات: ${item.notes || '-'}
                 </div>
                 ${pricesHtml}
-                <div class="expiry-item-actions">
-                    <button class="btn-activate-offer interactive-btn" style="background: ${offerBtnColor};" onclick="${item.status === 'في عرض' ? `changeExpiryStatus('${item.id}', '${offerBtnAction}')` : `promptNewOffer('${item.id}')`}">${offerBtnText}</button>
-                    <button class="btn-close-item interactive-btn" onclick="changeExpiryStatus('${item.id}', 'Deleted')">تم البيع <i class=\'fa-solid fa-xmark\'></i>️</button>
+                <div class="expiry-item-actions" style="flex-wrap: wrap; gap: 5px;">
+                    <button class="btn-activate-offer interactive-btn" style="background: ${offerBtnColor}; flex: 1;" onclick="${item.status === 'في عرض' ? `changeExpiryStatus('${item.id}', '${offerBtnAction}')` : `promptNewOffer('${item.id}')`}">${offerBtnText}</button>
+                    <button class="btn-edit-item interactive-btn" style="background: #3498db; color: white; flex: 1;" onclick="openEditExpiryModal('${item.id}')"><i class="fa-solid fa-pen"></i> تعديل</button>
+                    <button class="btn-close-item interactive-btn" style="flex: 1;" onclick="changeExpiryStatus('${item.id}', 'Deleted')">تم البيع <i class=\'fa-solid fa-xmark\'></i>️</button>
                 </div>
             `;
             fragment.appendChild(itemDiv);
@@ -4282,6 +4289,118 @@ function updateCatalogWithOffers() {
         });
     }
 }
+
+// ==========================================
+// Checkbox and Edit Modal Logic (Expiry)
+// ==========================================
+window.toggleExpirySelection = function(id, isChecked) {
+    if (isChecked) {
+        selectedExpiryItems.add(String(id));
+    } else {
+        selectedExpiryItems.delete(String(id));
+    }
+    
+    const printSelectedBtn = document.getElementById('printSelectedExpiryBtn');
+    if (printSelectedBtn) {
+        printSelectedBtn.style.display = selectedExpiryItems.size > 0 ? 'inline-block' : 'none';
+    }
+};
+
+window.openEditExpiryModal = function(id) {
+    let item = expiryData.find(i => String(i.id) === String(id));
+    if (!item) return;
+    
+    document.getElementById('editExpiryId').value = item.id;
+    document.getElementById('editExpiryQty').value = item.qty || '';
+    
+    let d = new Date(item.expiryDate);
+    if (!isNaN(d.getTime())) {
+        document.getElementById('editExpiryDate').value = d.toLocaleDateString('en-CA');
+    } else {
+        document.getElementById('editExpiryDate').value = item.expiryDate || '';
+    }
+    
+    document.getElementById('editExpiryReceiver').value = item.receiver || '';
+    document.getElementById('editExpiryLocation').value = item.location || '';
+    document.getElementById('editExpiryNotes').value = item.notes || '';
+    
+    document.getElementById('editExpiryModal').style.display = 'flex';
+};
+
+window.closeEditExpiryModal = function() {
+    document.getElementById('editExpiryModal').style.display = 'none';
+};
+
+window.saveEditExpiryModal = function() {
+    const id = document.getElementById('editExpiryId').value;
+    const qty = document.getElementById('editExpiryQty').value;
+    const date = document.getElementById('editExpiryDate').value;
+    const receiver = document.getElementById('editExpiryReceiver').value;
+    const location = document.getElementById('editExpiryLocation').value;
+    const notes = document.getElementById('editExpiryNotes').value;
+    
+    if (!qty || !date || !receiver) {
+        showToast("يرجى تعبئة الكمية والتاريخ واسم المستلم", "warning");
+        return;
+    }
+    
+    showToast("جاري حفظ التعديلات...", "warning");
+    
+    let formData = new URLSearchParams();
+    formData.append('action', 'updateExpiryItemData');
+    formData.append('id', id);
+    formData.append('qty', qty);
+    formData.append('expiryDate', date);
+    formData.append('receiver', receiver);
+    formData.append('location', location);
+    formData.append('notes', notes);
+    
+    fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
+        .then(() => {
+            showToast("<i class=\'fa-solid fa-check\'></i> تم تعديل الاستلامة بنجاح", "success");
+            closeEditExpiryModal();
+            
+            let item = expiryData.find(i => String(i.id) === String(id));
+            if (item) {
+                // Update properties
+                item.qty = qty;
+                item.expiryDate = date;
+                item.receiver = receiver;
+                item.location = location;
+                item.notes = notes;
+                
+                // CRITICAL: Update local ID so subsequent edits find the correct row in backend
+                item.id = item.name + "|" + qty + "|" + date;
+                
+                // If it was selected, remove the old id and add the new one
+                if (selectedExpiryItems.has(String(id))) {
+                    selectedExpiryItems.delete(String(id));
+                    selectedExpiryItems.add(String(item.id));
+                }
+            }
+            
+            renderExpiryDashboard();
+            if (document.getElementById('expiryDetailsSection').style.display === 'block') {
+                showExpiryDetails(expiryCurrentCategory, false);
+            }
+        })
+        .catch(() => showToast("خطأ في الاتصال بالإنترنت", "error"));
+};
+
+window.printSelectedExpiry = function() {
+    if (selectedExpiryItems.size === 0) {
+        showToast("لم يتم تحديد أي استلامة", "warning");
+        return;
+    }
+    
+    let selectedData = expiryData.filter(item => selectedExpiryItems.has(String(item.id)));
+    
+    let receivers = [...new Set(selectedData.map(i => i.receiver).filter(r => r && String(r).trim() !== ''))];
+    let mergedReceiverName = receivers.length > 0 ? receivers.join(' / ') : "غير محدد";
+    
+    let reportTitle = `استلامات مجمعة - المستلم: ${mergedReceiverName}`;
+    generateCategoryPDF(selectedData, reportTitle);
+};
 
 // ==========================================
 // 3. Export Logic (تصدير متقدم ExcelJS)
