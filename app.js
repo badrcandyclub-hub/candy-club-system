@@ -5819,7 +5819,7 @@ window.deselectAllTags = function() {
 
 window.generatePriceTagHTML = function(p, sizeClass) {
     let priceHtml = '';
-    let cardClass = `price-tag-card size-${sizeClass}`;
+    let cardClass = `price-tag-card size-large`; // Always render as large internally
     
     if (p.isOffer && parseFloat(p.offerPrice) > 0 && parseFloat(p.offerPrice) !== parseFloat(p.price)) {
         cardClass += ' is-offer';
@@ -5831,13 +5831,14 @@ window.generatePriceTagHTML = function(p, sizeClass) {
     const barcodeHtml = p.barcode ? `<svg class="barcode-svg" data-barcode="${p.barcode}"></svg>` : '';
     
     return `
-        <div class="${cardClass}">
-            <div class="price-tag-inner">
-                <span class="candy-deco top-left">🍭</span>
-                <span class="candy-deco top-right">🍬</span>
-                <span class="candy-deco bottom-left">✨</span>
-                <span class="candy-deco bottom-right">🍭</span>
-                ${p.isOffer && parseFloat(p.offerPrice) > 0 && parseFloat(p.offerPrice) !== parseFloat(p.price) ? '<div class="offer-badge">عرض خاص</div>' : ''}
+        <div class="price-tag-wrapper size-${sizeClass}">
+            <div class="${cardClass}">
+                <div class="price-tag-inner">
+                    <span class="candy-deco top-left">🍭</span>
+                    <span class="candy-deco top-right">🍬</span>
+                    <span class="candy-deco bottom-left">✨</span>
+                    <span class="candy-deco bottom-right">🍭</span>
+                    ${p.isOffer && parseFloat(p.offerPrice) > 0 && parseFloat(p.offerPrice) !== parseFloat(p.price) ? '<div class="offer-badge">عرض خاص</div>' : ''}
                 
                 <div class="price-tag-header">
                     <img src="images/Logo-print.png" class="price-tag-logo" onerror="this.src='images/logo-digital.png'" alt="Candy Club">
@@ -5861,6 +5862,7 @@ window.generatePriceTagHTML = function(p, sizeClass) {
                             <span class="tag-value">${priceHtml}ج</span>
                         </div>
                         ${barcodeHtml ? `<div class="tag-barcode-container">${barcodeHtml}</div>` : ''}
+                    </div>
                     </div>
                 </div>
             </div>
@@ -5886,7 +5888,15 @@ window.updateLivePriceTagPreview = function() {
                 <p style="font-size: 0.9rem; margin-top: 5px;">سيتم عرض الكروت المحددة فقط هنا.</p>
             </div>
         `;
+        const counterDiv = document.getElementById('selectedItemsCounter');
+        if (counterDiv) counterDiv.style.display = 'none';
         return;
+    }
+    
+    const counterDiv = document.getElementById('selectedItemsCounter');
+    if (counterDiv) {
+        counterDiv.style.display = 'flex';
+        document.getElementById('selectedItemsCountVal').textContent = selectedPriceTagsMap.size;
     }
     
     let maxItems = 1;
@@ -5997,19 +6007,48 @@ window.executePdfExport = function() {
     
     setTimeout(() => {
         const element = document.querySelector('.print-tags-only');
+        
+        // FORCE visibility for html2canvas
+        element.style.display = 'block';
+        element.style.position = 'absolute';
+        element.style.top = '0';
+        element.style.left = '0';
+        element.style.zIndex = '-1000';
+        element.style.width = '21cm';
+        element.style.background = '#ffffff';
+        
         const opt = {
             margin:       10,
             filename:     'كروت_الأسعار_CandyClub.pdf',
             image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+            html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff', windowWidth: 1024 },
             jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
         
         html2pdf().set(opt).from(element).save().then(() => {
+            // REVERT visibility
+            element.style.display = '';
+            element.style.position = '';
+            element.style.top = '';
+            element.style.left = '';
+            element.style.zIndex = '';
+            element.style.width = '';
+            element.style.background = '';
+            
             document.body.classList.remove('print-mode-tags');
             showToast("تم تنزيل ملف الـ PDF بنجاح!", "success");
         }).catch(err => {
             console.error("PDF Error", err);
+            
+            // REVERT visibility
+            element.style.display = '';
+            element.style.position = '';
+            element.style.top = '';
+            element.style.left = '';
+            element.style.zIndex = '';
+            element.style.width = '';
+            element.style.background = '';
+            
             document.body.classList.remove('print-mode-tags');
             showToast("حدث خطأ أثناء تصدير الملف.", "error");
         });
