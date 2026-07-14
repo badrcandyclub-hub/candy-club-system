@@ -185,9 +185,9 @@ h1, h2, h3, h4, h5 {
 }
 
 @keyframes pulse-dot {
-    0%   { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(0,200,83,0.5); }
+    0%   { zoom: 1; transform: none; opacity: 1; box-shadow: 0 0 0 0 rgba(0,200,83,0.5); }
     70%  { transform: scale(1.2); box-shadow: 0 0 0 6px rgba(0,200,83,0); }
-    100% { transform: scale(1); opacity: 1; }
+    100% { zoom: 1; transform: none; opacity: 1; }
 }
 
 /* =========================================
@@ -970,7 +970,7 @@ input:checked + .slider:before { transform: translateX(24px); }
 
 @keyframes modalPop {
     from { transform: scale(0.85); opacity: 0; }
-    to   { transform: scale(1); opacity: 1; }
+    to   { zoom: 1; transform: none; opacity: 1; }
 }
 
 .modal-content h3 {
@@ -1933,7 +1933,7 @@ body.dark-mode .shipped-order-card {
 }
 
 @keyframes pop {
-    0%   { transform: scale(1); }
+    0%   { zoom: 1; transform: none; }
     100% { transform: scale(1.07); }
 }
 
@@ -2441,7 +2441,7 @@ body.dark-mode .btn-settle {
 
 @keyframes countUp {
     from { transform: scale(0.8); opacity: 0; }
-    to   { transform: scale(1);   opacity: 1; }
+    to   { zoom: 1; transform: none;   opacity: 1; }
 }
 
 .stat-item .value {
@@ -3136,9 +3136,9 @@ body.dark-mode .expiry-form-grid input {
 }
 
 @keyframes pulse {
-    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); }
+    0% { zoom: 1; transform: none; box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); }
     70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(46, 204, 113, 0); }
-    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
+    100% { zoom: 1; transform: none; box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
 }
 
 #openLedgerBtn.pulse-btn {
@@ -3146,9 +3146,9 @@ body.dark-mode .expiry-form-grid input {
 }
 
 @keyframes pulse-purple {
-    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(142, 68, 173, 0.7); }
+    0% { zoom: 1; transform: none; box-shadow: 0 0 0 0 rgba(142, 68, 173, 0.7); }
     70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(142, 68, 173, 0); }
-    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(142, 68, 173, 0); }
+    100% { zoom: 1; transform: none; box-shadow: 0 0 0 0 rgba(142, 68, 173, 0); }
 }
 
 /* =========================================
@@ -3699,13 +3699,13 @@ body.dark-mode .app-sidebar {
 
 /* We simply scale it down to fit perfectly inside the wrapper! */
 .price-tag-wrapper.size-large .price-tag-card {
-    transform: scale(1);
+    zoom: 1; transform: none;
 }
 .price-tag-wrapper.size-medium .price-tag-card {
-    transform: scale(0.703); /* 9.5 / 13.5 = 0.703 */
+    zoom: 0.703; transform: none; /* 9.5 / 13.5 = 0.703 */
 }
 .price-tag-wrapper.size-small .price-tag-card {
-    transform: scale(0.481); /* 6.5 / 13.5 = 0.481 */
+    zoom: 0.481; transform: none; /* 6.5 / 13.5 = 0.481 */
 }
 
 
