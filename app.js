@@ -5969,115 +5969,36 @@ window.executePdfExport = function() {
         return;
     }
     
-    showToast("جاري تجهيز ملف PDF... يرجى الانتظار", "success");
+    // Native print is the ONLY way to guarantee perfect Arabic (RTL) text rendering and sharp barcodes.
+    // html2pdf (html2canvas) fundamentally breaks Arabic shaping (reverses letters).
     
-    const MAX_PRINT_LIMIT = 120;
-    let itemsToPrint = Array.from(selectedPriceTagsMap.values());
-    if (itemsToPrint.length > MAX_PRINT_LIMIT) {
-        itemsToPrint = itemsToPrint.slice(0, MAX_PRINT_LIMIT);
-    }
-    
-    // Build cards HTML
-    let cardsHtml = '';
-    itemsToPrint.forEach(p => {
-        cardsHtml += generatePriceTagHTML(p, size);
+    Swal.fire({
+        title: 'تنبيه هام للطباعة / PDF',
+        html: `
+            <div style="text-align: right; line-height: 1.6;">
+                <p>سيتم استخدام نظام الطباعة الخاص بالمتصفح لضمان <b>جودة فائقة</b> ولتجنب مشاكل تقطع الحروف العربية.</p>
+                <p>1- لحفظ الملف كـ PDF: اختر <b>Save as PDF</b> أو (حفظ بتنسيق PDF) من القائمة.</p>
+                <p style="color: #d32f2f; font-weight: bold;">2- هام جداً: تأكد من تفعيل خيار "رسومات الخلفية" (Background graphics) في إعدادات الطباعة (More settings) لكي تظهر الألوان بشكل سليم.</p>
+            </div>
+        `,
+        icon: 'info',
+        confirmButtonText: 'فهمت، استمرار',
+        confirmButtonColor: '#aa00ff'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Temporarily change document title to set the default PDF filename
+            const originalTitle = document.title;
+            document.title = 'كروت_الأسعار_CandyClub';
+            
+            // Call the reliable native print function
+            window.printSelectedPriceTags(size);
+            
+            // Restore title after print dialog closes
+            setTimeout(() => {
+                document.title = originalTitle;
+            }, 1000);
+        }
     });
-
-    // Get the absolute URL for logo
-    const logoUrl = new URL('images/Logo-print.png', window.location.href).href;
-
-    // ===== Build a render container in the SAME document =====
-    // html2canvas cannot capture elements hidden way off-screen (-9999px).
-    // So we make it fixed, visible, and show it as a loading screen.
-    
-    const renderDivWrapper = document.createElement('div');
-    renderDivWrapper.id = 'pdf-render-wrapper';
-    renderDivWrapper.style.cssText = [
-        'position: fixed',
-        'top: 0',
-        'left: 0',
-        'width: 100vw',
-        'height: 100vh',
-        'background: rgba(255, 255, 255, 0.98)',
-        'z-index: 999999',
-        'display: flex',
-        'flex-direction: column',
-        'align-items: center',
-        'padding-top: 50px',
-        'overflow: auto'
-    ].join(';');
-    
-    // Add loading message
-    const loadingMsg = document.createElement('div');
-    loadingMsg.innerHTML = '<h2 style="color: #aa00ff; font-family: Cairo, sans-serif; text-align: center;">جاري إنشاء ملف PDF...<br><small style="color:#666; font-size:0.7em;">يرجى الانتظار ولا تغلق الصفحة</small></h2>';
-    loadingMsg.style.marginBottom = '20px';
-    renderDivWrapper.appendChild(loadingMsg);
-
-    const renderDiv = document.createElement('div');
-    renderDiv.id = 'pdf-render-staging';
-    renderDiv.style.cssText = [
-        'width: 794px',   // A4 at 96dpi ≈ 794px
-        'background: #ffffff',
-        'direction: rtl',
-        'font-family: Cairo, Arial, sans-serif',
-        'padding: 10px',
-        'box-sizing: border-box',
-        'position: relative'
-    ].join(';');
-
-    // Build inner grid with cards
-    renderDiv.innerHTML = `
-        <div class="price-tags-grid" style="display:flex;flex-wrap:wrap;gap:15px;justify-content:flex-start;padding:10px;background:transparent;direction:rtl;">
-            ${cardsHtml.replace(/src="images\/Logo-print\.png"/g, `src="${logoUrl}"`).replace(/onerror="this\.src='images\/logo-digital\.png'"/g, `onerror="this.style.display='none'"`)}
-        </div>`;
-
-    renderDivWrapper.appendChild(renderDiv);
-    document.body.appendChild(renderDivWrapper);
-
-    // Force window scroll to top
-    window.scrollTo(0, 0);
-
-    // Render barcodes inside the staging div
-    renderBarcodes(renderDiv, size);
-
-    // Wait for images + barcodes to settle
-    setTimeout(() => {
-        const targetEl = renderDiv;
-
-        const opt = {
-            margin: [5, 5, 5, 5],
-            filename: 'كروت_الأسعار_CandyClub.pdf',
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: {
-                scale: 2,
-                useCORS: true,
-                allowTaint: true,
-                backgroundColor: '#ffffff',
-                scrollX: 0,
-                scrollY: 0,
-                width: 794,
-                windowWidth: document.body.scrollWidth,
-                onclone: function(doc) {
-                   // Ensure it's fully visible in the clone
-                   const clonedWrapper = doc.getElementById('pdf-render-wrapper');
-                   if(clonedWrapper) {
-                       clonedWrapper.style.position = 'absolute';
-                       clonedWrapper.style.height = 'auto';
-                   }
-                }
-            },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-
-        html2pdf().set(opt).from(targetEl).save().then(() => {
-            if (document.body.contains(renderDivWrapper)) document.body.removeChild(renderDivWrapper);
-            showToast('✅ تم تنزيل ملف الـ PDF بنجاح!', 'success');
-        }).catch(err => {
-            console.error('PDF Error:', err);
-            if (document.body.contains(renderDivWrapper)) document.body.removeChild(renderDivWrapper);
-            showToast('حدث خطأ في إنشاء الملف: ' + err.message, 'error');
-        });
-    }, 2000);
 };
 
 window.printSelectedPriceTags = function(overrideSize = null) {
