@@ -5972,33 +5972,21 @@ window.executePdfExport = function() {
     // Native print is the ONLY way to guarantee perfect Arabic (RTL) text rendering and sharp barcodes.
     // html2pdf (html2canvas) fundamentally breaks Arabic shaping (reverses letters).
     
-    Swal.fire({
-        title: 'تنبيه هام للطباعة / PDF',
-        html: `
-            <div style="text-align: right; line-height: 1.6;">
-                <p>سيتم استخدام نظام الطباعة الخاص بالمتصفح لضمان <b>جودة فائقة</b> ولتجنب مشاكل تقطع الحروف العربية.</p>
-                <p>1- لحفظ الملف كـ PDF: اختر <b>Save as PDF</b> أو (حفظ بتنسيق PDF) من القائمة.</p>
-                <p style="color: #d32f2f; font-weight: bold;">2- هام جداً: تأكد من تفعيل خيار "رسومات الخلفية" (Background graphics) في إعدادات الطباعة (More settings) لكي تظهر الألوان بشكل سليم.</p>
-            </div>
-        `,
-        icon: 'info',
-        confirmButtonText: 'فهمت، استمرار',
-        confirmButtonColor: '#aa00ff'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Temporarily change document title to set the default PDF filename
-            const originalTitle = document.title;
-            document.title = 'كروت_الأسعار_CandyClub';
-            
-            // Call the reliable native print function
-            window.printSelectedPriceTags(size);
-            
-            // Restore title after print dialog closes
-            setTimeout(() => {
-                document.title = originalTitle;
-            }, 1000);
-        }
-    });
+    const msg = "تنبيه هام جداً!\n\nسيتم استخدام نظام الطباعة الخاص بالمتصفح لضمان جودة فائقة ولتجنب مشاكل تقطع الحروف العربية.\n\n1- لحفظ الملف كـ PDF: اختر (Save as PDF) من القائمة.\n2- هام جداً: تأكد من تفعيل خيار (Background graphics) أو (رسومات الخلفية) في الإعدادات لكي تظهر الألوان بشكل سليم.\n\nهل تريد الاستمرار؟";
+    
+    if (confirm(msg)) {
+        // Temporarily change document title to set the default PDF filename
+        const originalTitle = document.title;
+        document.title = 'كروت_الأسعار_CandyClub';
+        
+        // Call the reliable native print function
+        window.printSelectedPriceTags(size);
+        
+        // Restore title after print dialog closes
+        setTimeout(() => {
+            document.title = originalTitle;
+        }, 1000);
+    }
 };
 
 window.printSelectedPriceTags = function(overrideSize = null) {
