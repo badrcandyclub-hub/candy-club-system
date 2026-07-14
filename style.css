@@ -2562,6 +2562,9 @@ body.dark-mode .btn-settle {
     body {
         filter: grayscale(100%) contrast(150%);
     }
+    body.print-mode-tags {
+        filter: none !important;
+    }
     
     .print-gov-shipping th:nth-child(2),
     .print-gov-shipping th:nth-child(4),
@@ -3473,7 +3476,7 @@ body.dark-mode .app-sidebar {
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    padding: 8px; /* Thickness of the striped border */
+    padding: 6px; /* Slightly thinner striped border */
     margin-top: 0; /* Logo is now inside, no top margin needed */
     background-image: repeating-linear-gradient(
         -45deg,
@@ -3492,7 +3495,7 @@ body.dark-mode .app-sidebar {
     flex-direction: column;
     border: 3px solid #e91e63; /* Solid pink inner ring */
     position: relative;
-    padding: 10px; /* Space from ring to dashed boxes */
+    padding: 5px 10px; /* Space from ring to dashed boxes */
 }
 
 /* Candy decorations */
@@ -3509,7 +3512,7 @@ body.dark-mode .app-sidebar {
 
 .price-tag-header {
     text-align: center;
-    margin-bottom: 8px;
+    margin-bottom: 2px;
     margin-top: -12px; /* Pull the logo up to the top border slightly */
     z-index: 15;
 }
@@ -3531,7 +3534,7 @@ body.dark-mode .app-sidebar {
 .tag-box {
     border: 2px dashed #f48fb1;
     border-radius: 8px;
-    padding: 5px 15px;
+    padding: 2px 15px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -3681,9 +3684,9 @@ body.dark-mode .app-sidebar {
     -webkit-print-color-adjust: exact !important; 
     print-color-adjust: exact !important;
 }
-.price-tag-card .tag-row { font-size: 1.8rem; }
-.price-tag-card .price-tag-logo { height: 85px; }
-.price-tag-card .candy-deco { font-size: 1.5rem; }
+.price-tag-card .tag-row { font-size: 1.7rem; }
+.price-tag-card .price-tag-logo { height: 75px; }
+.price-tag-card .candy-deco { font-size: 1.4rem; }
 .price-tag-card .offer-badge { font-size: 1.1rem; padding: 5px 10px; }
 
 /* We simply scale it down to fit perfectly inside the wrapper! */

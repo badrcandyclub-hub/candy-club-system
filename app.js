@@ -5922,19 +5922,9 @@ function renderBarcodes(container, size) {
     if (typeof JsBarcode !== 'function') return;
     const svgs = container.querySelectorAll('.barcode-svg');
     
-    let bcWidth = 1.5;
-    let bcHeight = 30;
-    let bcFontSize = 12;
-    
-    if (size === 'small') {
-        bcWidth = 1;
-        bcHeight = 18;
-        bcFontSize = 9;
-    } else if (size === 'medium') {
-        bcWidth = 1.2;
-        bcHeight = 24;
-        bcFontSize = 10;
-    }
+    let bcWidth = 1.4;
+    let bcHeight = 35;
+    let bcFontSize = 14;
     
     svgs.forEach(svg => {
         const code = svg.getAttribute('data-barcode');
@@ -6010,7 +6000,7 @@ window.executePdfExport = function() {
         element.style.position = 'absolute';
         element.style.top = '0';
         element.style.left = '0';
-        element.style.zIndex = '-1000';
+        element.style.zIndex = '9999';
         element.style.width = '21cm';
         element.style.background = '#ffffff';
         
