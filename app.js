@@ -5897,7 +5897,7 @@ window.updateLivePriceTagPreview = function() {
     }
     
     let maxItems = 1;
-    if (size === 'small') maxItems = 15;
+    if (size === 'small') maxItems = 18;
     else if (size === 'medium') maxItems = 8;
     else if (size === 'large') maxItems = 4;
     
@@ -5969,23 +5969,31 @@ window.executePdfExport = function() {
         return;
     }
     
-    showToast("جاري تجهيز ملف PDF... يرجى الانتظار", "success");
+    showToast("جاري تجهيز ملف PDF... قد يستغرق الأمر بعض الوقت حسب عدد المنتجات", "success");
     
-    const MAX_PRINT_LIMIT = 120;
     let itemsToPrint = Array.from(selectedPriceTagsMap.values());
-    if (itemsToPrint.length > MAX_PRINT_LIMIT) {
-        itemsToPrint = itemsToPrint.slice(0, MAX_PRINT_LIMIT);
-    }
     
-    // Build cards HTML
-    let cardsHtml = '';
-    itemsToPrint.forEach(p => {
-        cardsHtml += generatePriceTagHTML(p, size);
-    });
+    if (typeof domtoimage === 'undefined' || !window.jspdf) {
+        showToast('حدث خطأ: مكتبات إنشاء الـ PDF غير محملة', 'error');
+        return;
+    }
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    
+    // Determine how many items fit perfectly on an A4 page based on size
+    let itemsPerPage = 8; // medium
+    if (size === 'small') itemsPerPage = 18;
+    else if (size === 'large') itemsPerPage = 4;
+    
+    // Chunk items into pages
+    let pages = [];
+    for (let i = 0; i < itemsToPrint.length; i += itemsPerPage) {
+        pages.push(itemsToPrint.slice(i, i + itemsPerPage));
+    }
 
     const logoUrl = new URL('images/Logo-print.png', window.location.href).href;
 
-    // Build the render container
+    // Build the render container wrapper
     const renderDivWrapper = document.createElement('div');
     renderDivWrapper.id = 'pdf-render-wrapper';
     renderDivWrapper.style.cssText = [
@@ -6004,14 +6012,16 @@ window.executePdfExport = function() {
     ].join(';');
     
     const loadingMsg = document.createElement('div');
-    loadingMsg.innerHTML = '<h2 style="color: #aa00ff; font-family: Cairo, sans-serif; text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> جاري استخراج ملف PDF مباشرةً...<br><small style="color:#666; font-size:0.7em;">يرجى الانتظار ولا تغلق الصفحة</small></h2>';
+    loadingMsg.innerHTML = `<h2 style="color: #aa00ff; font-family: Cairo, sans-serif; text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> جاري استخراج ملف PDF مباشرةً...<br><small style="color:#666; font-size:0.7em;">يرجى الانتظار ولا تغلق الصفحة (يتم معالجة ${pages.length} صفحات)</small></h2>`;
     loadingMsg.style.marginBottom = '20px';
     renderDivWrapper.appendChild(loadingMsg);
 
+    // This staging div represents exactly ONE A4 page at 96 DPI
     const renderDiv = document.createElement('div');
     renderDiv.id = 'pdf-render-staging';
     renderDiv.style.cssText = [
-        'width: 794px',   // A4 at 96dpi ≈ 794px
+        'width: 794px',   
+        'height: 1123px', // Enforce A4 height so output aspect ratio is perfect
         'background: #ffffff',
         'direction: rtl',
         'font-family: Cairo, Arial, sans-serif',
@@ -6020,68 +6030,71 @@ window.executePdfExport = function() {
         'position: relative'
     ].join(';');
 
-    renderDiv.innerHTML = `
-        <div class="price-tags-grid" style="display:flex;flex-wrap:wrap;gap:15px;justify-content:flex-start;padding:10px;background:transparent;direction:rtl;">
-            ${cardsHtml.replace(/src="images\/Logo-print\.png"/g, `src="${logoUrl}"`).replace(/onerror="this\.src='images\/logo-digital\.png'"/g, `onerror="this.style.display='none'"`)}
-        </div>`;
-
     renderDivWrapper.appendChild(renderDiv);
     document.body.appendChild(renderDivWrapper);
-
     window.scrollTo(0, 0);
-    renderBarcodes(renderDiv, size);
 
-    // Wait for DOM and barcodes
-    setTimeout(() => {
-        if (typeof domtoimage === 'undefined' || !window.jspdf) {
+    let currentPageIdx = 0;
+
+    function renderNextPage() {
+        if (currentPageIdx >= pages.length) {
+            // Done with all pages!
+            pdf.save('كروت_الأسعار_CandyClub.pdf');
             document.body.removeChild(renderDivWrapper);
-            showToast('حدث خطأ: مكتبات إنشاء الـ PDF غير محملة', 'error');
+            showToast('✅ تم تنزيل ملف الـ PDF بنجاح!', 'success');
             return;
         }
 
-        // Use dom-to-image to get an accurate representation including Arabic text (uses SVG foreignObject)
-        domtoimage.toJpeg(renderDiv, { quality: 0.98, bgcolor: '#ffffff' })
-            .then(function (dataUrl) {
-                try {
-                    const { jsPDF } = window.jspdf;
-                    const pdf = new jsPDF('p', 'mm', 'a4');
+        loadingMsg.innerHTML = `<h2 style="color: #aa00ff; font-family: Cairo, sans-serif; text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> جاري استخراج ملف PDF...<br><small style="color:#666; font-size:0.7em;">معالجة صفحة ${currentPageIdx + 1} من ${pages.length}...</small></h2>`;
+
+        let cardsHtml = '';
+        pages[currentPageIdx].forEach(p => {
+            cardsHtml += generatePriceTagHTML(p, size);
+        });
+
+        renderDiv.innerHTML = `
+            <div class="price-tags-grid" style="display:flex;flex-wrap:wrap;gap:15px;justify-content:flex-start;padding:10px;background:transparent;direction:rtl;">
+                ${cardsHtml.replace(/src="images\/Logo-print\.png"/g, `src="${logoUrl}"`).replace(/onerror="this\.src='images\/logo-digital\.png'"/g, `onerror="this.style.display='none'"`)}
+            </div>`;
+
+        renderBarcodes(renderDiv, size);
+
+        // Wait for rendering (DOM + Barcode SVG + Images)
+        setTimeout(() => {
+            domtoimage.toJpeg(renderDiv, { quality: 0.98, bgcolor: '#ffffff' })
+                .then(function (dataUrl) {
+                    if (currentPageIdx > 0) {
+                        pdf.addPage();
+                    }
                     
                     const pdfWidth = pdf.internal.pageSize.getWidth();
-                    const pageHeight = pdf.internal.pageSize.getHeight();
+                    const pdfHeight = pdf.internal.pageSize.getHeight();
                     
-                    // Calculate height proportional to the A4 width
-                    const pdfHeight = (renderDiv.offsetHeight * pdfWidth) / renderDiv.offsetWidth;
+                    // The image aspect ratio matches A4, so we stretch it across the whole page
+                    pdf.addImage(dataUrl, 'JPEG', 0, 0, pdfWidth, pdfHeight);
                     
-                    let position = 0;
-                    let heightLeft = pdfHeight;
-                    
-                    // Add first page
-                    pdf.addImage(dataUrl, 'JPEG', 0, position, pdfWidth, pdfHeight);
-                    heightLeft -= pageHeight;
-                    
-                    // Add subsequent pages if content is taller than A4
-                    while (heightLeft >= 0) {
-                        position = position - pageHeight;
-                        pdf.addPage();
-                        pdf.addImage(dataUrl, 'JPEG', 0, position, pdfWidth, pdfHeight);
-                        heightLeft -= pageHeight;
-                    }
+                    currentPageIdx++;
+                    renderNextPage(); // Recursively do next page
+                })
+                .catch(function (error) {
+                    console.error('dom-to-image error:', error);
+                    document.body.removeChild(renderDivWrapper);
+                    showToast('حدث خطأ في إنشاء الصورة للـ PDF', 'error');
+                });
+        }, 400); // 400ms delay per page is safe for large batches
+    }
 
-                    pdf.save('كروت_الأسعار_CandyClub.pdf');
-                    document.body.removeChild(renderDivWrapper);
-                    showToast('✅ تم تنزيل ملف الـ PDF بنجاح!', 'success');
-                } catch(e) {
-                    console.error('jsPDF Error:', e);
-                    document.body.removeChild(renderDivWrapper);
-                    showToast('حدث خطأ أثناء تجميع الـ PDF: ' + e.message, 'error');
-                }
-            })
-            .catch(function (error) {
-                console.error('dom-to-image error:', error);
-                document.body.removeChild(renderDivWrapper);
-                showToast('حدث خطأ في إنشاء الصورة للـ PDF', 'error');
-            });
-    }, 1500);
+    // Start the loop
+    renderNextPage();
+};
+
+window.toggleBarcodePrint = function() {
+    const isChecked = document.getElementById('hideBarcodeToggle').checked;
+    if (isChecked) {
+        document.body.classList.add('hide-print-barcode');
+    } else {
+        document.body.classList.remove('hide-print-barcode');
+    }
 };
 
 window.printSelectedPriceTags = function(overrideSize = null) {
@@ -6090,13 +6103,7 @@ window.printSelectedPriceTags = function(overrideSize = null) {
         return;
     }
     
-    // Limit to 120 items to prevent browser crash
-    const MAX_PRINT_LIMIT = 120;
     let itemsToPrint = Array.from(selectedPriceTagsMap.values());
-    if (itemsToPrint.length > MAX_PRINT_LIMIT) {
-        showToast(`سيتم طباعة أول ${MAX_PRINT_LIMIT} كارت فقط للحماية من تهنيج المتصفح. يرجى الطباعة على دفعات.`, "warning");
-        itemsToPrint = itemsToPrint.slice(0, MAX_PRINT_LIMIT);
-    }
     
     const sizeSelect = document.getElementById('priceTagSize');
     const size = overrideSize || (sizeSelect ? sizeSelect.value : 'medium');
