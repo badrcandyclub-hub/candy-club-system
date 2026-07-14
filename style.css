@@ -3684,6 +3684,8 @@ body.dark-mode .app-sidebar {
 .price-tag-card { 
     width: 13.5cm; 
     height: 9cm; 
+    display: flex;
+    flex-direction: column;
     overflow: hidden; 
     margin: 0;
     transform-origin: top right; /* Because the page is RTL */
