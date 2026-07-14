@@ -5604,7 +5604,8 @@ let selectedPriceTagsMap = new Map();
 
 window.initPriceTagsTab = function() {
     if (!catalogData || catalogData.length === 0) {
-        showToast("الكتالوج فارغ، برجاء إضافة منتجات أولاً", "warning");
+        showToast("جاري تحميل البيانات من السيرفر، يرجى الانتظار...", "warning");
+        setTimeout(initPriceTagsTab, 2000); // retry after 2 seconds
         return;
     }
     

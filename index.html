@@ -1432,6 +1432,41 @@
             </div>
         </div>
     </div>
+    <!-- نافذة تصدير الـ PDF -->
+    <div id="pdfExportModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; justify-content: center; align-items: center; padding: 15px;">
+        <div class="modal-content" style="background: #ffffff; width: 100%; max-width: 500px; border-radius: 20px; text-align: center; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+            <div style="background: var(--success); color: white; padding: 25px; margin-bottom: 20px;">
+                <i class="fa-solid fa-file-pdf" style="font-size: 3.5rem; margin-bottom: 15px;"></i>
+                <h2 style="margin: 0; font-family: 'Cairo', sans-serif;">تصدير كملف PDF للمطبعة</h2>
+            </div>
+            
+            <div style="padding: 10px 25px 25px 25px;">
+                <h3 style="color: var(--primary); margin-bottom: 5px;">عدد الكروت المحددة للتصدير:</h3>
+                <div id="pdfSelectedCount" style="font-size: 3.5rem; font-weight: 900; color: var(--text); margin-bottom: 25px;">0</div>
+                
+                <label style="display: block; margin-bottom: 10px; font-weight: bold; color: var(--text); text-align: right;">اختر مقاس الكارت المطلوب:</label>
+                <select id="pdfSizeSelect" class="input-field" style="width: 100%; box-sizing: border-box; margin-bottom: 25px; padding: 12px; font-size: 1.1rem; border-radius: 10px;">
+                    <option value="small">صغير (15 كارت بالورقة)</option>
+                    <option value="medium" selected>متوسط (8 كروت بالورقة)</option>
+                    <option value="large">كبير (4 كروت بالورقة)</option>
+                </select>
+                
+                <div style="background: #fff3e0; padding: 15px; border-radius: 10px; margin-bottom: 25px; text-align: right; border-right: 4px solid #ff9800;">
+                    <p style="margin: 0; font-size: 0.95rem; color: #e65100; font-weight: bold;">
+                        <i class="fa-solid fa-circle-info"></i> نصيحة:
+                    </p>
+                    <p style="margin: 5px 0 0 0; font-size: 0.85rem; color: #e65100;">
+                        سيتم تنزيل ملف PDF مجهز بأعلى جودة وملون تماماً. يرجى الانتظار ثواني بعد الضغط على زر الإنشاء.
+                    </p>
+                </div>
+                
+                <div style="display: flex; gap: 15px;">
+                    <button onclick="executePdfExport()" class="interactive-btn" style="flex: 2; background: var(--success); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: bold; font-size: 1.1rem; cursor: pointer;"><i class="fa-solid fa-download"></i> إنشاء الملف الآن</button>
+                    <button onclick="closePdfExportModal()" class="interactive-btn" style="flex: 1; background: #e0e0e0; color: #333; border: none; padding: 15px; border-radius: 12px; font-weight: bold; font-size: 1.1rem; cursor: pointer;">إلغاء</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- ⭐ التأكد من ترتيب تحميل السكربتات -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
