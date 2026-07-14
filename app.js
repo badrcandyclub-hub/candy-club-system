@@ -5809,9 +5809,7 @@ window.selectAllTags = function() {
 };
 
 window.deselectAllTags = function() {
-    filteredPriceTags.forEach(p => {
-        selectedPriceTagsMap.delete(p.name);
-    });
+    selectedPriceTagsMap.clear();
     renderPriceTagsPage();
     updateLivePriceTagPreview();
     updateDeselectButtonVisibility();
@@ -5880,7 +5878,14 @@ window.updateLivePriceTagPreview = function() {
     let itemsToShow = [];
     if (selectedPriceTagsMap.size > 0) {
         itemsToShow = Array.from(selectedPriceTagsMap.values());
-    } else {
+    }
+    
+    const counterDiv = document.getElementById('selectedItemsCounter');
+    if (counterDiv) {
+        document.getElementById('selectedItemsCountVal').textContent = selectedPriceTagsMap.size;
+    }
+    
+    if (selectedPriceTagsMap.size === 0) {
         previewContainer.innerHTML = `
             <div style="text-align: center; color: #78909c;">
                 <i class="fa-solid fa-hand-pointer" style="font-size: 2.5rem; display: block; margin-bottom: 15px;"></i>
@@ -5888,15 +5893,7 @@ window.updateLivePriceTagPreview = function() {
                 <p style="font-size: 0.9rem; margin-top: 5px;">سيتم عرض الكروت المحددة فقط هنا.</p>
             </div>
         `;
-        const counterDiv = document.getElementById('selectedItemsCounter');
-        if (counterDiv) counterDiv.style.display = 'none';
         return;
-    }
-    
-    const counterDiv = document.getElementById('selectedItemsCounter');
-    if (counterDiv) {
-        counterDiv.style.display = 'flex';
-        document.getElementById('selectedItemsCountVal').textContent = selectedPriceTagsMap.size;
     }
     
     let maxItems = 1;

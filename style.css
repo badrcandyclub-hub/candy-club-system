@@ -3288,6 +3288,8 @@ body.dark-mode .app-sidebar {
     right: 0;
 }
 
+
+
 .sidebar-header {
     display: flex;
     justify-content: space-between;
@@ -3610,14 +3612,16 @@ body.dark-mode .app-sidebar {
 .price-tag-card.is-offer {
     background-color: #ff0000;
     background-image: none; /* No gradients to avoid animation feeling */
+    padding: 0; /* Red to the very edges */
 }
 
 .price-tag-card.is-offer .price-tag-inner {
-    border: 4px solid #ff0000;
+    border: none;
+    background: #ff0000;
 }
 
 .price-tag-card.is-offer .tag-box {
-    border: 2px dashed #ff9800;
+    border: 2px dashed #ffffff; /* White dashed boxes on red */
 }
 
 .price-tag-card.is-offer .middle-divider-bar {
@@ -3628,7 +3632,7 @@ body.dark-mode .app-sidebar {
 .price-tag-card.is-offer .price-row .tag-value,
 .price-tag-card.is-offer .name-row .tag-label,
 .price-tag-card.is-offer .name-row .tag-value {
-    color: #b71c1c; /* Dark red text */
+    color: #ffffff; /* White text looks much better on solid red background */
 }
 
 .offer-badge {
@@ -3674,6 +3678,8 @@ body.dark-mode .app-sidebar {
     overflow: hidden; 
     margin: 0;
     transform-origin: top right; /* Because the page is RTL */
+    -webkit-print-color-adjust: exact !important; 
+    print-color-adjust: exact !important;
 }
 .price-tag-card .tag-row { font-size: 1.8rem; }
 .price-tag-card .price-tag-logo { height: 85px; }
@@ -3709,6 +3715,8 @@ body.dark-mode .app-sidebar {
     body.print-mode-tags .print-tags-only,
     body.print-mode-tags .print-tags-only * {
         visibility: visible;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
     }
     body.print-mode-tags .print-tags-only {
         display: block !important;
