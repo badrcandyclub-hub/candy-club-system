@@ -4704,17 +4704,7 @@ if (btnExportDatePDF) {
 
         let batchKeys = Object.keys(batches);
         
-        // If there is only 1 batch and no legacy, or just legacy, print directly
-        if (batchKeys.length === 0) {
-            generatePDFReceipt(legacyBatch, dateVal);
-            return;
-        }
-        if (batchKeys.length === 1 && legacyBatch.length === 0) {
-            generatePDFReceipt(batches[batchKeys[0]], dateVal);
-            return;
-        }
-
-        // Otherwise, show a custom UI to select which batch to print
+        // Always show the custom UI to select which batch to print (even for a single batch)
         showBatchSelectionModal(batches, legacyBatch, dateVal);
     });
 }
@@ -4728,7 +4718,7 @@ function showBatchSelectionModal(batches, legacyBatch, dateVal) {
     
     let html = `
         <h3 style="color: var(--primary); margin-top: 0; font-family: 'Cairo', sans-serif; text-align: center;">طباعة استلامات يوم ${dateVal}</h3>
-        <p style="font-size: 0.95rem; color: var(--text-main); margin-bottom: 20px; text-align: center;">لقد قمت بأكثر من عملية استلام في هذا اليوم، برجاء اختيار المحضر المراد طباعته أو حدد عدة استلامات لدمجها:</p>
+        <p style="font-size: 0.95rem; color: var(--text-main); margin-bottom: 20px; text-align: center;">الاستلامات المسجلة في هذا اليوم. يمكنك تحديد المحضر المراد طباعته أو التعديل عليه:</p>
         <div style="display: flex; flex-direction: column; gap: 10px;">
     `;
 
