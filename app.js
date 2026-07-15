@@ -4810,7 +4810,7 @@ function showBatchSelectionModal(batches, legacyBatch, dateVal) {
         // جلب أسماء المستلمين المحددين للعنوان (اختياري)
         let receivers = [...new Set(allItems.map(i => i.receiver).filter(r => r && String(r).trim() !== ''))];
         let mergedReceiverName = receivers.length > 0 ? receivers.join(' / ') : "غير محدد";
-        let reportTitle = \`استلامات مجمعة - المستلم: \${mergedReceiverName}\`;
+        let reportTitle = `استلامات مجمعة - المستلم: ${mergedReceiverName}`;
         
         // استدعاء دالة الطباعة الخاصة بالاستلامات
         generatePDFReceipt(allItems, dateVal, reportTitle);
