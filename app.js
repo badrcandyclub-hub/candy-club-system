@@ -6284,10 +6284,20 @@ window.executePdfExport = function() {
 
         renderBarcodes(renderDiv, size);
 
-        // Wait for rendering (DOM + Barcode SVG + Images)
-        setTimeout(() => {
-            domtoimage.toJpeg(renderDiv, { quality: 0.98, bgcolor: '#ffffff' })
-                .then(function (dataUrl) {
+        // Wait for images to load
+        const images = Array.from(renderDiv.querySelectorAll('img'));
+        const imagePromises = images.map(img => {
+            if (img.complete) return Promise.resolve();
+            return new Promise(resolve => {
+                img.onload = resolve;
+                img.onerror = resolve;
+            });
+        });
+
+        Promise.all(imagePromises).then(() => {
+            // Wait for rendering (DOM + Barcode SVG)
+            setTimeout(() => {
+                const processDataUrl = function (dataUrl) {
                     if (currentPageIdx > 0) {
                         pdf.addPage();
                     }
@@ -6295,18 +6305,31 @@ window.executePdfExport = function() {
                     const pdfWidth = pdf.internal.pageSize.getWidth();
                     const pdfHeight = pdf.internal.pageSize.getHeight();
                     
-                    // The image aspect ratio matches A4, so we stretch it across the whole page
                     pdf.addImage(dataUrl, 'JPEG', 0, 0, pdfWidth, pdfHeight);
                     
                     currentPageIdx++;
                     renderNextPage(); // Recursively do next page
-                })
-                .catch(function (error) {
-                    console.error('dom-to-image error:', error);
+                };
+
+                const handleError = function (error) {
+                    console.error('PDF image generation error:', error);
                     document.body.removeChild(renderDivWrapper);
-                    showToast('حدث خطأ في إنشاء الصورة للـ PDF', 'error');
-                });
-        }, 400); // 400ms delay per page is safe for large batches
+                    showToast('حدث خطأ في إنشاء الصورة للـ PDF، جرب تقليل عدد المنتجات', 'error');
+                };
+
+                if (window.html2canvas) {
+                    window.html2canvas(renderDiv, { scale: 1.5, useCORS: true, logging: false, backgroundColor: '#ffffff' })
+                        .then(function(canvas) {
+                            processDataUrl(canvas.toDataURL('image/jpeg', 0.85));
+                        })
+                        .catch(handleError);
+                } else {
+                    domtoimage.toJpeg(renderDiv, { quality: 0.85, bgcolor: '#ffffff' })
+                        .then(processDataUrl)
+                        .catch(handleError);
+                }
+            }, 300); // 300ms delay after images loaded
+        });
     }
 
     // Start the loop
