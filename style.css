@@ -3656,18 +3656,18 @@ body.dark-mode .app-sidebar {
     background-color: #ff0000;
     color: #fff;
     font-weight: bold;
-    padding: 12px 25px;
-    border-radius: 0 0 0 20px;
+    padding: 16px 32px;
+    border-radius: 0 0 0 25px;
     z-index: 20;
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-    font-size: 2.5rem;
+    font-size: 3.2rem;
     border: 3px solid #ffeb3b;
     border-top: none;
     border-right: none;
     animation: none !important;
     transform: none !important;
 }
-.price-tag-card .offer-badge { font-size: 2.5rem; padding: 12px 25px; }
+.price-tag-card .offer-badge { font-size: 3.2rem; padding: 16px 32px; }
 
 .old-price {
     text-decoration: line-through;
