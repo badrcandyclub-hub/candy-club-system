@@ -6194,16 +6194,9 @@ window.executePdfExport = function() {
         return;
     }
     
-    showToast("جاري تجهيز ملف PDF... قد يستغرق الأمر بعض الوقت حسب عدد المنتجات", "success");
+    showToast("جاري تجهيز صفحة الطباعة الاحترافية... (بدون أي أخطاء أو استهلاك للذاكرة)", "success");
     
     let itemsToPrint = Array.from(selectedPriceTagsMap.values());
-    
-    if (typeof domtoimage === 'undefined' || !window.jspdf) {
-        showToast('حدث خطأ: مكتبات إنشاء الـ PDF غير محملة', 'error');
-        return;
-    }
-    const { jsPDF } = window.jspdf;
-    let pdf = new jsPDF('p', 'mm', 'a4');
     
     // Determine how many items fit perfectly on an A4 page based on size
     let itemsPerPage = 8; // medium
@@ -6217,143 +6210,101 @@ window.executePdfExport = function() {
     }
 
     const logoUrl = new URL('images/Logo-print.png', window.location.href).href;
-
-    // Build the render container wrapper
-    const renderDivWrapper = document.createElement('div');
-    renderDivWrapper.id = 'pdf-render-wrapper';
-    renderDivWrapper.style.cssText = [
-        'position: fixed',
-        'top: 0',
-        'left: 0',
-        'width: 100vw',
-        'height: 100vh',
-        'background: rgba(255, 255, 255, 0.98)',
-        'z-index: 999999',
-        'display: flex',
-        'flex-direction: column',
-        'align-items: center',
-        'padding-top: 50px',
-        'overflow: auto'
-    ].join(';');
     
-    const loadingMsg = document.createElement('div');
-    loadingMsg.innerHTML = `<h2 style="color: #aa00ff; font-family: Cairo, sans-serif; text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> جاري استخراج ملف PDF مباشرةً...<br><small style="color:#666; font-size:0.7em;">يرجى الانتظار ولا تغلق الصفحة (يتم معالجة ${pages.length} صفحات)</small></h2>`;
-    loadingMsg.style.marginBottom = '20px';
-    renderDivWrapper.appendChild(loadingMsg);
-
-    // This staging div represents exactly ONE A4 page at 96 DPI
+    // Create an invisible div in current window to render everything and generate barcodes
     const renderDiv = document.createElement('div');
-    renderDiv.id = 'pdf-render-staging';
-    renderDiv.style.cssText = [
-        'width: 794px',   
-        'height: 1123px', // Enforce A4 height so output aspect ratio is perfect
-        'background: #ffffff',
-        'direction: rtl',
-        'font-family: Cairo, Arial, sans-serif',
-        'padding: 10px',
-        'box-sizing: border-box',
-        'position: relative'
-    ].join(';');
-
-    renderDivWrapper.appendChild(renderDiv);
-    document.body.appendChild(renderDivWrapper);
-    window.scrollTo(0, 0);
-
-    let currentPageIdx = 0;
-    let chunkPageIdx = 0;
-    let currentChunk = 1;
-    const CHUNK_SIZE = 15; // Save and download every 15 pages
-
-    function renderNextPage() {
-        if (currentPageIdx >= pages.length) {
-            // Done with all pages!
-            if (chunkPageIdx > 0) {
-                let fileName = pages.length > CHUNK_SIZE ? `كروت_الأسعار_جزء_${currentChunk}.pdf` : 'كروت_الأسعار_CandyClub.pdf';
-                pdf.save(fileName);
-            }
-            document.body.removeChild(renderDivWrapper);
-            showToast('✅ تم تنزيل ملف (ملفات) الـ PDF بنجاح!', 'success');
-            return;
-        }
-
-        loadingMsg.innerHTML = `<h2 style="color: #aa00ff; font-family: Cairo, sans-serif; text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> جاري استخراج ملف PDF...<br><small style="color:#666; font-size:0.7em;">معالجة صفحة ${currentPageIdx + 1} من ${pages.length}...</small><br><small style="color:#e91e63; font-size:0.6em;">سيتم تجزئة وتنزيل الملفات تلقائياً لتجنب توقف المتصفح (تنزيل جزء كل ${CHUNK_SIZE} صفحة)</small></h2>`;
-
+    renderDiv.style.display = 'none';
+    
+    let allPagesHtml = '';
+    
+    pages.forEach((pageItems, index) => {
         let cardsHtml = '';
-        pages[currentPageIdx].forEach(p => {
+        pageItems.forEach(p => {
             cardsHtml += generatePriceTagHTML(p, size);
         });
-
-        renderDiv.innerHTML = `
-            <div class="price-tags-grid" style="display:flex;flex-wrap:wrap;gap:15px;justify-content:flex-start;padding:10px;background:transparent;direction:rtl;">
-                ${cardsHtml.replace(/src="images\/Logo-print\.png"/g, `src="${logoUrl}"`).replace(/onerror="this\.src='images\/logo-digital\.png'"/g, `onerror="this.style.display='none'"`)}
-            </div>`;
-
-        renderBarcodes(renderDiv, size);
-
-        // Wait for images to load
-        const images = Array.from(renderDiv.querySelectorAll('img'));
-        const imagePromises = images.map(img => {
-            if (img.complete) return Promise.resolve();
-            return new Promise(resolve => {
-                img.onload = resolve;
-                img.onerror = resolve;
-            });
-        });
-
-        Promise.all(imagePromises).then(() => {
-            // Wait for rendering (DOM + Barcode SVG)
-            setTimeout(() => {
-                const processDataUrl = function (dataUrl) {
-                    if (chunkPageIdx > 0) {
-                        pdf.addPage();
-                    }
-                    
-                    const pdfWidth = pdf.internal.pageSize.getWidth();
-                    const pdfHeight = pdf.internal.pageSize.getHeight();
-                    
-                    pdf.addImage(dataUrl, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-                    
-                    currentPageIdx++;
-                    chunkPageIdx++;
-                    
-                    if (chunkPageIdx >= CHUNK_SIZE && currentPageIdx < pages.length) {
-                        pdf.save(`كروت_الأسعار_جزء_${currentChunk}.pdf`);
-                        pdf = new jsPDF('p', 'mm', 'a4');
-                        currentChunk++;
-                        chunkPageIdx = 0;
-                        
-                        setTimeout(() => {
-                            renderNextPage();
-                        }, 500); // 500ms delay to allow GC and file save
-                        return;
-                    }
-                    
-                    renderNextPage(); // Recursively do next page
-                };
-
-                const handleError = function (error) {
-                    console.error('PDF image generation error:', error);
-                    document.body.removeChild(renderDivWrapper);
-                    showToast('حدث خطأ في إنشاء الصورة للـ PDF، جرب تقليل عدد المنتجات', 'error');
-                };
-
-                if (window.html2canvas) {
-                    window.html2canvas(renderDiv, { scale: 1.5, useCORS: true, logging: false, backgroundColor: '#ffffff' })
-                        .then(function(canvas) {
-                            processDataUrl(canvas.toDataURL('image/jpeg', 0.85));
-                        })
-                        .catch(handleError);
-                } else {
-                    domtoimage.toJpeg(renderDiv, { quality: 0.85, bgcolor: '#ffffff' })
-                        .then(processDataUrl)
-                        .catch(handleError);
-                }
-            }, 300); // 300ms delay after images loaded
-        });
+        
+        cardsHtml = cardsHtml.replace(/src="images\/Logo-print\.png"/g, `src="${logoUrl}"`)
+                             .replace(/onerror="this\.src='images\/logo-digital\.png'"/g, `onerror="this.style.display='none'"`);
+                             
+        allPagesHtml += `
+            <div class="a4-page">
+                <div class="price-tags-grid" style="display:flex;flex-wrap:wrap;gap:15px;justify-content:flex-start;align-content:flex-start;width:100%;height:100%;direction:rtl;">
+                    ${cardsHtml}
+                </div>
+            </div>
+        `;
+    });
+    
+    renderDiv.innerHTML = allPagesHtml;
+    document.body.appendChild(renderDiv);
+    
+    // Render SVGs in the invisible container (synchronous)
+    renderBarcodes(renderDiv, size);
+    
+    // Get the final HTML with fully rendered SVGs
+    const finalHtml = renderDiv.innerHTML;
+    document.body.removeChild(renderDiv);
+    
+    // Open Print Window
+    const printWin = window.open('', '_blank');
+    if (!printWin) {
+        showToast("برجاء السماح بالنوافذ المنبثقة (Pop-ups) للطباعة أعلى المتصفح", "error");
+        return;
     }
-
-    // Start the loop
-    renderNextPage();
+    
+    let hideBarcode = document.getElementById('hideBarcodeToggle') && document.getElementById('hideBarcodeToggle').checked;
+    let styleUrl = new URL('style.css', window.location.href).href;
+    
+    const printDoc = printWin.document;
+    printDoc.write(`
+        <!DOCTYPE html>
+        <html lang="ar" dir="rtl">
+        <head>
+            <meta charset="UTF-8">
+            <title>طباعة كروت الأسعار - Candy Club</title>
+            <link rel="stylesheet" href="${styleUrl}">
+            <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800&family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+            <style>
+                @page { size: A4 portrait; margin: 0; }
+                body { 
+                    margin: 0; padding: 0; 
+                    background: white; 
+                    -webkit-print-color-adjust: exact; 
+                    print-color-adjust: exact; 
+                    direction: rtl; 
+                    font-family: 'Cairo', sans-serif;
+                }
+                .a4-page {
+                    width: 210mm;
+                    height: 297mm;
+                    padding: 10mm;
+                    box-sizing: border-box;
+                    page-break-after: always;
+                    background: white;
+                    position: relative;
+                    overflow: hidden;
+                }
+                .a4-page:last-child {
+                    page-break-after: auto;
+                }
+                ${hideBarcode ? '.qr-section { display: none !important; }' : ''}
+            </style>
+        </head>
+        <body>
+            ${finalHtml}
+            <script>
+                window.onload = function() {
+                    setTimeout(() => {
+                        window.print();
+                    }, 800); // Wait for fonts and logos to load fully
+                };
+            </script>
+        </body>
+        </html>
+    `);
+    
+    printDoc.close();
 };
 
 window.toggleBarcodePrint = function() {
