@@ -3685,7 +3685,7 @@ body.dark-mode .app-sidebar {
 
 .price-tag-wrapper.size-large { width: 13.5cm; height: 9cm; }
 .price-tag-wrapper.size-medium { width: 9.5cm; height: 6.3cm; }
-.price-tag-wrapper.size-small { width: 5.8cm; height: 3.8cm; }
+.price-tag-wrapper.size-small { width: 5.0cm; height: 3.3cm; }
 
 /* The inner card is ALWAYS rendered internally at large dimensions (13.5x9) */
 .price-tag-card { 
@@ -3712,7 +3712,7 @@ body.dark-mode .app-sidebar {
     zoom: 0.703; transform: none; /* 9.5 / 13.5 = 0.703 */
 }
 .price-tag-wrapper.size-small .price-tag-card {
-    zoom: 0.429; transform: none; /* 5.8 / 13.5 = 0.429 */
+    zoom: 0.368; transform: none; /* 5.0 / 13.5 = 0.370 */
 }
 
 
@@ -3748,7 +3748,7 @@ body.dark-mode .app-sidebar {
     body.print-mode-tags .price-tags-grid {
         display: flex;
         flex-wrap: wrap;
-        gap: 2px; /* Very small gap to ensure cards fit tightly on A4 */
+        gap: 15px !important; /* Large white gap to allow cutting with scissors */
         justify-content: flex-start;
         padding: 0; 
         background: transparent;
@@ -3757,7 +3757,7 @@ body.dark-mode .app-sidebar {
     
     body.print-mode-tags .price-tag-wrapper {
         page-break-inside: avoid;
-        margin-bottom: 0 !important; /* Remove space between rows to fit exactly */
+        margin-bottom: 15px !important; /* Space between rows for cutting */
         /* Center the wrapper horizontally slightly to avoid right-hugging */
     }
 
