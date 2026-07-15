@@ -3202,6 +3202,8 @@ body.dark-mode .expiry-form-grid input {
     font-size: 0.95rem;
 }
 
+
+
 .expiry-item-actions {
     display: flex;
     gap: 10px;
@@ -3649,20 +3651,23 @@ body.dark-mode .app-sidebar {
 
 .offer-badge {
     position: absolute;
-    top: -15px;
-    right: -15px;
+    top: 0;
+    right: 0;
     background-color: #ff0000;
     color: #fff;
     font-weight: bold;
-    padding: 5px 15px;
-    border-radius: 0;
+    padding: 12px 25px;
+    border-radius: 0 0 0 20px;
     z-index: 20;
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-    font-size: 1.2rem;
-    border: 2px solid #ffeb3b;
+    font-size: 2.5rem;
+    border: 3px solid #ffeb3b;
+    border-top: none;
+    border-right: none;
     animation: none !important;
     transform: none !important;
 }
+.price-tag-card .offer-badge { font-size: 2.5rem; padding: 12px 25px; }
 
 .old-price {
     text-decoration: line-through;
@@ -3685,7 +3690,7 @@ body.dark-mode .app-sidebar {
 
 .price-tag-wrapper.size-large { width: 13.5cm; height: 9cm; }
 .price-tag-wrapper.size-medium { width: 9.5cm; height: 6.3cm; }
-.price-tag-wrapper.size-small { width: 4.8cm; height: 3.1cm; }
+.price-tag-wrapper.size-small { width: 4.5cm; height: 3.0cm; }
 
 /* The inner card is ALWAYS rendered internally at large dimensions (13.5x9) */
 .price-tag-card { 
@@ -3712,7 +3717,7 @@ body.dark-mode .app-sidebar {
     zoom: 0.703; transform: none; /* 9.5 / 13.5 = 0.703 */
 }
 .price-tag-wrapper.size-small .price-tag-card {
-    zoom: 0.355; transform: none; /* 4.8 / 13.5 = 0.355 */
+    zoom: 0.333; transform: none; /* 4.5 / 13.5 = 0.333 */
 }
 
 
