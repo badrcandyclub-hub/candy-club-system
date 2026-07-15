@@ -4747,6 +4747,9 @@ function showBatchSelectionModal(batches, legacyBatch, dateVal) {
                     </div>
                     <span style="background: var(--primary); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">${items.length} أصناف</span>
                 </button>
+                <button class="interactive-btn batch-edit-btn" data-batch="${bId}" style="background: #3498db; color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; transition: 0.2s;" title="تعديل الاستلامة">
+                    <i class="fa-solid fa-pen"></i>
+                </button>
             </div>
         `;
     });
@@ -4760,6 +4763,9 @@ function showBatchSelectionModal(batches, legacyBatch, dateVal) {
                         <span><i class=\'fa-solid fa-box\'></i> استلامات مجمعة (قديمة)</span>
                     </div>
                     <span style="background: var(--primary); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">${legacyBatch.length} أصناف</span>
+                </button>
+                <button class="interactive-btn batch-edit-btn" data-batch="legacy" style="background: #3498db; color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; transition: 0.2s;" title="تعديل الاستلامة">
+                    <i class="fa-solid fa-pen"></i>
                 </button>
             </div>
             <button class="interactive-btn batch-select-btn" data-batch="manual" style="background: var(--bg-light); color: #e67e22; border: 1px dashed #e67e22; padding: 15px; border-radius: 8px; text-align: right; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; margin-top: -5px;">
@@ -4816,6 +4822,15 @@ function showBatchSelectionModal(batches, legacyBatch, dateVal) {
         generatePDFReceipt(allItems, dateVal, reportTitle);
     });
 
+    // Add event listeners for edit buttons
+    modal.querySelectorAll('.batch-edit-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            let bId = this.getAttribute('data-batch');
+            let itemsToEdit = bId === 'legacy' ? legacyBatch : batches[bId];
+            showBatchEditModal(bId, itemsToEdit, dateVal);
+        });
+    });
+
     // Add slight hover effect to buttons since they have bg-light
     modal.querySelectorAll('.batch-select-btn').forEach(btn => {
         btn.addEventListener('mouseover', function() {
@@ -4849,6 +4864,59 @@ function showBatchSelectionModal(batches, legacyBatch, dateVal) {
     });
 
     document.getElementById('closeBatchModalBtn').onclick = () => document.body.removeChild(overlay);
+}
+
+window.showBatchEditModal = function(bId, items, dateVal) {
+    const overlay = document.createElement('div');
+    overlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10005; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px);";
+    
+    const modal = document.createElement('div');
+    modal.style = "background: var(--bg); padding: 25px; border-radius: 15px; max-width: 600px; width: 95%; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid var(--border); max-height: 80vh; overflow-y: auto; display: flex; flex-direction: column; gap: 15px;";
+    
+    let titleStr = bId === 'legacy' ? 'الاستلامات المجمعة (القديمة)' : `الساعة ${new Date(parseInt(bId)).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}`;
+    
+    let html = `
+        <h3 style="color: var(--primary); margin-top: 0; font-family: 'Cairo', sans-serif; text-align: center;">
+            تعديل استلامة ${dateVal} - ${titleStr}
+        </h3>
+        <p style="font-size: 0.9rem; color: var(--text-main); text-align: center; margin-bottom: 10px;">
+            تنبيه: بعد تعديل الأصناف، يُرجى إغلاق هذه النافذة ثم طباعة الاستلامة للحصول على التحديثات.
+        </p>
+        <div style="display: flex; flex-direction: column; gap: 10px; max-height: 50vh; overflow-y: auto; padding-right: 5px;">
+    `;
+
+    items.forEach(item => {
+        html += `
+            <div style="background: var(--bg-light); border: 1px solid var(--border); border-radius: 8px; padding: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                <div style="display: flex; flex-direction: column; gap: 5px; flex: 1;">
+                    <span style="font-weight: bold; color: var(--text-main);"><i class='fa-solid fa-box'></i> ${item.name}</span>
+                    <span style="font-size: 0.85rem; color: var(--text-muted);">
+                        الكمية: <strong style="color:var(--text-dark);">${item.qty}</strong> | المستلم: ${item.receiver || 'غير محدد'} | تاريخ الصلاحية: ${item.expiryDate || 'بدون'}
+                    </span>
+                </div>
+                <button class="interactive-btn" style="background: #3498db; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;" onclick="openEditExpiryModal('${item.id}')">
+                    <i class="fa-solid fa-pen"></i> تعديل
+                </button>
+            </div>
+        `;
+    });
+
+    if (items.length === 0) {
+        html += `<p style="text-align: center; color: var(--text-muted);">لا توجد أصناف في هذه الاستلامة.</p>`;
+    }
+
+    html += `
+        </div>
+        <button id="closeBatchEditModalBtn" style="background: var(--text-muted); color: white; border: none; padding: 12px; border-radius: 8px; text-align: center; font-weight: bold; cursor: pointer; margin-top: 10px;">
+            إغلاق
+        </button>
+    `;
+
+    modal.innerHTML = html;
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    document.getElementById('closeBatchEditModalBtn').onclick = () => document.body.removeChild(overlay);
 }
 
 function showManualSelectionModal(legacyBatch, dateVal) {
