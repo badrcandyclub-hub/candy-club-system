@@ -371,13 +371,22 @@ function doGet(e) {
   if (action === "getCustomers") {
     var customerSheet = ss.getSheetByName("👥 قاعدة العملاء");
     var custResult = [];
+    // VIP is based on completed deliveries, not on every order that was merely created.
+    // Build the lookup once, then attach the completed-order count to each customer.
+    var vipLookup = {};
+    analyzeVIPs().forEach(function(customer) {
+      vipLookup[customer.phone] = customer;
+    });
     if (customerSheet) {
       var custData = customerSheet.getDataRange().getValues();
       for (var i = 1; i < custData.length; i++) {
         if (custData[i][0]) {
+          var phone = custData[i][1].toString().replace(/'/g, "").trim();
+          var vipData = vipLookup[phone] || { orderCount: 0, totalPaid: 0 };
           custResult.push({
             name: custData[i][0], phone: custData[i][1], gov: custData[i][2],
-            address: custData[i][3], count: custData[i][4], total: custData[i][5], lastDate: custData[i][6]
+            address: custData[i][3], count: custData[i][4], total: custData[i][5], lastDate: custData[i][6],
+            visits: vipData.orderCount, vipTotal: vipData.totalPaid
           });
         }
       }
