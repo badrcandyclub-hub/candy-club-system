@@ -6197,11 +6197,11 @@ window.executePdfExport = function() {
     let itemsToPrint = Array.from(selectedPriceTagsMap.values());
     
     const grid = document.getElementById('price-tags-grid');
-    grid.innerHTML = '';
-    
+    let allHtml = '';
     itemsToPrint.forEach(p => {
-        grid.innerHTML += generatePriceTagHTML(p, size);
+        allHtml += generatePriceTagHTML(p, size);
     });
+    grid.innerHTML = allHtml;
     
     document.body.classList.add('print-mode-tags');
     
@@ -6252,11 +6252,11 @@ window.printSelectedPriceTags = function(overrideSize = null) {
     const sizeSelect = document.getElementById('priceTagSize');
     const size = overrideSize || (sizeSelect ? sizeSelect.value : 'medium');
     const grid = document.getElementById('price-tags-grid');
-    grid.innerHTML = '';
-    
+    let allHtml = '';
     itemsToPrint.forEach(p => {
-        grid.innerHTML += generatePriceTagHTML(p, size);
+        allHtml += generatePriceTagHTML(p, size);
     });
+    grid.innerHTML = allHtml;
     
     document.body.classList.add('print-mode-tags');
     
