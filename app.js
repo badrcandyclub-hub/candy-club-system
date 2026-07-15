@@ -4728,7 +4728,7 @@ function showBatchSelectionModal(batches, legacyBatch, dateVal) {
     
     let html = `
         <h3 style="color: var(--primary); margin-top: 0; font-family: 'Cairo', sans-serif; text-align: center;">طباعة استلامات يوم ${dateVal}</h3>
-        <p style="font-size: 0.95rem; color: var(--text-main); margin-bottom: 20px; text-align: center;">لقد قمت بأكثر من عملية استلام في هذا اليوم، برجاء اختيار المحضر المراد طباعته:</p>
+        <p style="font-size: 0.95rem; color: var(--text-main); margin-bottom: 20px; text-align: center;">لقد قمت بأكثر من عملية استلام في هذا اليوم، برجاء اختيار المحضر المراد طباعته أو حدد عدة استلامات لدمجها:</p>
         <div style="display: flex; flex-direction: column; gap: 10px;">
     `;
 
@@ -4736,20 +4736,32 @@ function showBatchSelectionModal(batches, legacyBatch, dateVal) {
         let items = batches[bId];
         let d = new Date(parseInt(bId));
         let timeStr = isNaN(d.getTime()) ? 'غير معروف' : d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+        let receiver = items[0].receiver || 'غير محدد';
         html += `
-            <button class="interactive-btn batch-select-btn" data-batch="${bId}" style="background: var(--bg-light); color: var(--text-main); border: 1px solid var(--border); padding: 15px; border-radius: 8px; text-align: right; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s;">
-                <span>🕒 استلامة الساعة ${timeStr}</span>
-                <span style="background: var(--primary); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">${items.length} أصناف</span>
-            </button>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <input type="checkbox" class="batch-checkbox" value="${bId}" style="width: 20px; height: 20px; cursor: pointer; flex-shrink: 0;">
+                <button class="interactive-btn batch-select-btn" data-batch="${bId}" style="flex: 1; background: var(--bg-light); color: var(--text-main); border: 1px solid var(--border); padding: 15px; border-radius: 8px; text-align: right; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s;">
+                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                        <span>🕒 استلامة الساعة ${timeStr}</span>
+                        <span style="font-size: 0.85rem; color: var(--primary); font-weight: bold;"><i class='fa-solid fa-user'></i> المستلم: ${receiver}</span>
+                    </div>
+                    <span style="background: var(--primary); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">${items.length} أصناف</span>
+                </button>
+            </div>
         `;
     });
 
     if (legacyBatch.length > 0) {
         html += `
-            <button class="interactive-btn batch-select-btn" data-batch="legacy" style="background: var(--bg-light); color: var(--text-main); border: 1px solid var(--border); padding: 15px; border-radius: 8px; text-align: right; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s;">
-                <span><i class=\'fa-solid fa-box\'></i> استلامات مجمعة (قديمة) - طباعة الكل</span>
-                <span style="background: var(--primary); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">${legacyBatch.length} أصناف</span>
-            </button>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <input type="checkbox" class="batch-checkbox" value="legacy" style="width: 20px; height: 20px; cursor: pointer; flex-shrink: 0;">
+                <button class="interactive-btn batch-select-btn" data-batch="legacy" style="flex: 1; background: var(--bg-light); color: var(--text-main); border: 1px solid var(--border); padding: 15px; border-radius: 8px; text-align: right; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s;">
+                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                        <span><i class=\'fa-solid fa-box\'></i> استلامات مجمعة (قديمة)</span>
+                    </div>
+                    <span style="background: var(--primary); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">${legacyBatch.length} أصناف</span>
+                </button>
+            </div>
             <button class="interactive-btn batch-select-btn" data-batch="manual" style="background: var(--bg-light); color: #e67e22; border: 1px dashed #e67e22; padding: 15px; border-radius: 8px; text-align: right; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; margin-top: -5px;">
                 <span>✂️ تقسيم الاستلامات القديمة يدوياً (تحديد واختيار)</span>
             </button>
@@ -4760,6 +4772,9 @@ function showBatchSelectionModal(batches, legacyBatch, dateVal) {
             <button class="interactive-btn batch-select-btn" data-batch="all" style="background: #27ae60; color: white; border: none; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 10px; cursor: pointer;">
                 طباعة كل استلامات اليوم معاً <i class=\'fa-solid fa-print\'></i>
             </button>
+            <button class="interactive-btn" id="mergeSelectedBatchesBtn" style="background: #9b59b6; color: white; border: none; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; cursor: pointer; display: none;">
+                دمج وطباعة الاستلامات المحددة <i class=\'fa-solid fa-layer-group\'></i>
+            </button>
             <button id="closeBatchModalBtn" style="background: transparent; color: var(--text-muted); border: none; padding: 10px; border-radius: 8px; text-align: center; cursor: pointer; text-decoration: underline; margin-top: 5px;">إلغاء</button>
         </div>
     `;
@@ -4767,6 +4782,39 @@ function showBatchSelectionModal(batches, legacyBatch, dateVal) {
     modal.innerHTML = html;
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
+
+    const mergeBtn = modal.querySelector('#mergeSelectedBatchesBtn');
+    const checkboxes = modal.querySelectorAll('.batch-checkbox');
+
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', () => {
+            let selectedCount = modal.querySelectorAll('.batch-checkbox:checked').length;
+            mergeBtn.style.display = selectedCount > 0 ? 'block' : 'none';
+        });
+    });
+
+    mergeBtn.addEventListener('click', () => {
+        let allItems = [];
+        let selectedCBs = Array.from(modal.querySelectorAll('.batch-checkbox:checked')).map(cb => cb.value);
+        
+        selectedCBs.forEach(val => {
+            if (val === 'legacy') {
+                allItems = allItems.concat(legacyBatch);
+            } else {
+                allItems = allItems.concat(batches[val]);
+            }
+        });
+        
+        document.body.removeChild(overlay);
+        
+        // جلب أسماء المستلمين المحددين للعنوان (اختياري)
+        let receivers = [...new Set(allItems.map(i => i.receiver).filter(r => r && String(r).trim() !== ''))];
+        let mergedReceiverName = receivers.length > 0 ? receivers.join(' / ') : "غير محدد";
+        let reportTitle = \`استلامات مجمعة - المستلم: \${mergedReceiverName}\`;
+        
+        // استدعاء دالة الطباعة الخاصة بالاستلامات
+        generatePDFReceipt(allItems, dateVal, reportTitle);
+    });
 
     // Add slight hover effect to buttons since they have bg-light
     modal.querySelectorAll('.batch-select-btn').forEach(btn => {
