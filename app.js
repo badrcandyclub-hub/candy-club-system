@@ -6070,7 +6070,7 @@ window.generatePriceTagHTML = function(p, sizeClass) {
                 <div class="price-tag-body">
                     <div class="tag-box top-box">
                         <div class="tag-row name-row">
-                            <span class="tag-value" style="${p.name.length > 30 ? 'font-size: 0.65em; line-height: 1.1;' : (p.name.length > 18 ? 'font-size: 0.75em; line-height: 1.2;' : '')}">${p.name}</span>
+                            <span class="tag-value" style="display: block; text-align: center; width: 100%; color: var(--primary); ${p.name.length > 30 ? 'font-size: 0.95em; line-height: 1.2;' : (p.name.length > 18 ? 'font-size: 1.1em; line-height: 1.2;' : 'font-size: 1.3em; font-weight: 900;')}">${p.name}</span>
                         </div>
                     </div>
                     
