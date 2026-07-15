@@ -3748,7 +3748,7 @@ body.dark-mode .app-sidebar {
     body.print-mode-tags .price-tags-grid {
         display: flex;
         flex-wrap: wrap;
-        gap: 5px; /* Small gap to ensure 2 cards fit side-by-side on A4 */
+        gap: 2px; /* Very small gap to ensure cards fit tightly on A4 */
         justify-content: flex-start;
         padding: 0; 
         background: transparent;
@@ -3757,7 +3757,7 @@ body.dark-mode .app-sidebar {
     
     body.print-mode-tags .price-tag-wrapper {
         page-break-inside: avoid;
-        margin-bottom: 10px; /* Space between rows */
+        margin-bottom: 0 !important; /* Remove space between rows to fit exactly */
         /* Center the wrapper horizontally slightly to avoid right-hugging */
     }
 
