@@ -3685,7 +3685,7 @@ body.dark-mode .app-sidebar {
 
 .price-tag-wrapper.size-large { width: 13.5cm; height: 9cm; }
 .price-tag-wrapper.size-medium { width: 9.5cm; height: 6.3cm; }
-.price-tag-wrapper.size-small { width: 5.0cm; height: 3.3cm; }
+.price-tag-wrapper.size-small { width: 4.8cm; height: 3.1cm; }
 
 /* The inner card is ALWAYS rendered internally at large dimensions (13.5x9) */
 .price-tag-card { 
@@ -3712,7 +3712,7 @@ body.dark-mode .app-sidebar {
     zoom: 0.703; transform: none; /* 9.5 / 13.5 = 0.703 */
 }
 .price-tag-wrapper.size-small .price-tag-card {
-    zoom: 0.368; transform: none; /* 5.0 / 13.5 = 0.370 */
+    zoom: 0.355; transform: none; /* 4.8 / 13.5 = 0.355 */
 }
 
 
