@@ -6185,7 +6185,7 @@ window.closePdfExportModal = function() {
     document.getElementById('pdfExportModal').style.display = 'none';
 };
 
-window.executePdfExport = async function() {
+window.executePdfExport = function() {
     const size = document.getElementById('pdfSizeSelect').value;
     closePdfExportModal();
     
@@ -6194,155 +6194,42 @@ window.executePdfExport = async function() {
         return;
     }
     
-    if (typeof domtoimage === 'undefined' || !window.jspdf || typeof JSZip === 'undefined' || typeof saveAs === 'undefined') {
-        showToast('حدث خطأ: مكتبات إنشاء الـ PDF غير محملة', 'error');
-        return;
-    }
-    
-    showToast("جاري تجهيز وتنزيل ملفات الـ PDF مضغوطة (ZIP)...", "success");
-    
     let itemsToPrint = Array.from(selectedPriceTagsMap.values());
     
-    const { jsPDF } = window.jspdf;
+    const grid = document.getElementById('price-tags-grid');
+    grid.innerHTML = '';
     
-    let itemsPerPage = 8; // medium
-    if (size === 'small') itemsPerPage = 18;
-    else if (size === 'large') itemsPerPage = 4;
+    itemsToPrint.forEach(p => {
+        grid.innerHTML += generatePriceTagHTML(p, size);
+    });
     
-    let pages = [];
-    for (let i = 0; i < itemsToPrint.length; i += itemsPerPage) {
-        pages.push(itemsToPrint.slice(i, i + itemsPerPage));
+    document.body.classList.add('print-mode-tags');
+    
+    let hideBarcode = document.getElementById('hideBarcodeToggle') && document.getElementById('hideBarcodeToggle').checked;
+    if (hideBarcode) {
+        document.body.classList.add('hide-print-barcode');
     }
-
-    const logoUrl = new URL('images/Logo-print.png', window.location.href).href;
-
-    const renderDivWrapper = document.createElement('div');
-    renderDivWrapper.id = 'pdf-render-wrapper';
-    renderDivWrapper.style.cssText = [
-        'position: fixed', 'top: 0', 'left: 0', 'width: 100vw', 'height: 100vh',
-        'background: rgba(255, 255, 255, 0.98)', 'z-index: 999999', 'display: flex',
-        'flex-direction: column', 'align-items: center', 'padding-top: 50px', 'overflow: auto'
-    ].join(';');
     
-    const loadingMsg = document.createElement('div');
-    renderDivWrapper.appendChild(loadingMsg);
-
-    const renderDiv = document.createElement('div');
-    renderDiv.id = 'pdf-render-staging';
-    renderDiv.style.cssText = [
-        'width: 794px', 'height: 1123px', 'background: #ffffff', 'direction: rtl',
-        'font-family: Cairo, Arial, sans-serif', 'padding: 10px', 'box-sizing: border-box',
-        'position: relative'
-    ].join(';');
-
-    renderDivWrapper.appendChild(renderDiv);
-    document.body.appendChild(renderDivWrapper);
-    window.scrollTo(0, 0);
-
-    let currentPageIdx = 0;
-    let chunkPageIdx = 0;
-    let currentChunk = 1;
-    const CHUNK_SIZE = 10; // 10 pages per PDF
-    
-    let zip = new JSZip();
-    let pdf = new jsPDF('p', 'mm', 'a4');
-
-    function renderNextPage() {
-        if (currentPageIdx >= pages.length) {
-            // Finish last chunk
-            if (chunkPageIdx > 0) {
-                let blob = pdf.output('blob');
-                let fileName = pages.length > CHUNK_SIZE ? `كروت_الأسعار_جزء_${currentChunk}.pdf` : 'كروت_الأسعار_CandyClub.pdf';
-                zip.file(fileName, blob);
-            }
-            
-            loadingMsg.innerHTML = `<h2 style="color: #aa00ff; font-family: Cairo, sans-serif; text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> جاري ضغط وتنزيل الملفات (ZIP)...</h2>`;
-            
-            // Generate zip and save
-            zip.generateAsync({type:"blob"}).then(function(content) {
-                saveAs(content, "كروت_الأسعار_الكاملة.zip");
-                document.body.removeChild(renderDivWrapper);
-                showToast('✅ تم تنزيل كل الملفات داخل مجلد مضغوط (ZIP) بنجاح!', 'success');
-            });
-            return;
-        }
-
-        loadingMsg.innerHTML = `<h2 style="color: #aa00ff; font-family: Cairo, sans-serif; text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> جاري استخراج وتجميع ملفات الـ PDF...<br><small style="color:#666; font-size:0.7em;">معالجة صفحة ${currentPageIdx + 1} من ${pages.length}...</small><br><small style="color:#e91e63; font-size:0.6em;">سيتم تجميعهم في ملف واحد مضغوط وتنزيله تلقائياً.</small></h2>`;
-
-        let cardsHtml = '';
-        pages[currentPageIdx].forEach(p => {
-            cardsHtml += generatePriceTagHTML(p, size);
-        });
-
-        renderDiv.innerHTML = `
-            <div class="price-tags-grid" style="display:flex;flex-wrap:wrap;gap:15px;justify-content:flex-start;padding:10px;background:transparent;direction:rtl;">
-                ${cardsHtml.replace(/src="images\/Logo-print\.png"/g, `src="${logoUrl}"`).replace(/onerror="this\.src='images\/logo-digital\.png'"/g, `onerror="this.style.display='none'"`)}
-            </div>`;
-
-        renderBarcodes(renderDiv, size);
-
-        const images = Array.from(renderDiv.querySelectorAll('img'));
-        const imagePromises = images.map(img => {
-            if (img.complete) return Promise.resolve();
-            return new Promise(resolve => {
-                img.onload = resolve;
-                img.onerror = resolve;
-            });
-        });
-
-        Promise.all(imagePromises).then(() => {
-            setTimeout(() => {
-                const processDataUrl = function (dataUrl) {
-                    if (chunkPageIdx > 0) {
-                        pdf.addPage();
-                    }
-                    
-                    const pdfWidth = pdf.internal.pageSize.getWidth();
-                    const pdfHeight = pdf.internal.pageSize.getHeight();
-                    
-                    pdf.addImage(dataUrl, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-                    
-                    currentPageIdx++;
-                    chunkPageIdx++;
-                    
-                    if (chunkPageIdx >= CHUNK_SIZE && currentPageIdx < pages.length) {
-                        let blob = pdf.output('blob');
-                        zip.file(`كروت_الأسعار_جزء_${currentChunk}.pdf`, blob);
-                        pdf = new jsPDF('p', 'mm', 'a4');
-                        currentChunk++;
-                        chunkPageIdx = 0;
-                        
-                        setTimeout(() => {
-                            renderNextPage();
-                        }, 300); // allow GC
-                        return;
-                    }
-                    
-                    renderNextPage();
-                };
-
-                const handleError = function (error) {
-                    console.error('PDF image generation error:', error);
-                    document.body.removeChild(renderDivWrapper);
-                    showToast('حدث خطأ في إنشاء الصورة للـ PDF', 'error');
-                };
-
-                if (window.html2canvas) {
-                    window.html2canvas(renderDiv, { scale: 1.5, useCORS: true, logging: false, backgroundColor: '#ffffff' })
-                        .then(function(canvas) {
-                            processDataUrl(canvas.toDataURL('image/jpeg', 0.85));
-                        })
-                        .catch(handleError);
-                } else {
-                    domtoimage.toJpeg(renderDiv, { quality: 0.85, bgcolor: '#ffffff' })
-                        .then(processDataUrl)
-                        .catch(handleError);
-                }
-            }, 300);
-        });
+    let styleEl = document.getElementById('price-tags-print-style');
+    if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.id = 'price-tags-print-style';
+        document.head.appendChild(styleEl);
     }
-
-    renderNextPage();
+    styleEl.innerHTML = '@page { size: A4; margin: 0.5cm; }';
+    
+    showToast("جاري تجهيز صفحة الطباعة... يرجى اختيار 'حفظ بتنسيق PDF' (Save as PDF) من النافذة", "success");
+    
+    renderBarcodes(grid, size);
+    
+    setTimeout(() => {
+        window.print();
+        setTimeout(() => {
+            document.body.classList.remove('print-mode-tags');
+            document.body.classList.remove('hide-print-barcode');
+            if (styleEl) styleEl.remove();
+        }, 1000);
+    }, 1500);
 };
 
 window.toggleBarcodePrint = function() {
