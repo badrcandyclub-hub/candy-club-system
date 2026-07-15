@@ -6203,7 +6203,7 @@ window.executePdfExport = function() {
         return;
     }
     const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF('p', 'mm', 'a4');
+    let pdf = new jsPDF('p', 'mm', 'a4');
     
     // Determine how many items fit perfectly on an A4 page based on size
     let itemsPerPage = 8; // medium
@@ -6260,17 +6260,23 @@ window.executePdfExport = function() {
     window.scrollTo(0, 0);
 
     let currentPageIdx = 0;
+    let chunkPageIdx = 0;
+    let currentChunk = 1;
+    const CHUNK_SIZE = 15; // Save and download every 15 pages
 
     function renderNextPage() {
         if (currentPageIdx >= pages.length) {
             // Done with all pages!
-            pdf.save('كروت_الأسعار_CandyClub.pdf');
+            if (chunkPageIdx > 0) {
+                let fileName = pages.length > CHUNK_SIZE ? `كروت_الأسعار_جزء_${currentChunk}.pdf` : 'كروت_الأسعار_CandyClub.pdf';
+                pdf.save(fileName);
+            }
             document.body.removeChild(renderDivWrapper);
-            showToast('✅ تم تنزيل ملف الـ PDF بنجاح!', 'success');
+            showToast('✅ تم تنزيل ملف (ملفات) الـ PDF بنجاح!', 'success');
             return;
         }
 
-        loadingMsg.innerHTML = `<h2 style="color: #aa00ff; font-family: Cairo, sans-serif; text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> جاري استخراج ملف PDF...<br><small style="color:#666; font-size:0.7em;">معالجة صفحة ${currentPageIdx + 1} من ${pages.length}...</small></h2>`;
+        loadingMsg.innerHTML = `<h2 style="color: #aa00ff; font-family: Cairo, sans-serif; text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> جاري استخراج ملف PDF...<br><small style="color:#666; font-size:0.7em;">معالجة صفحة ${currentPageIdx + 1} من ${pages.length}...</small><br><small style="color:#e91e63; font-size:0.6em;">سيتم تجزئة وتنزيل الملفات تلقائياً لتجنب توقف المتصفح (تنزيل جزء كل ${CHUNK_SIZE} صفحة)</small></h2>`;
 
         let cardsHtml = '';
         pages[currentPageIdx].forEach(p => {
@@ -6298,7 +6304,7 @@ window.executePdfExport = function() {
             // Wait for rendering (DOM + Barcode SVG)
             setTimeout(() => {
                 const processDataUrl = function (dataUrl) {
-                    if (currentPageIdx > 0) {
+                    if (chunkPageIdx > 0) {
                         pdf.addPage();
                     }
                     
@@ -6308,6 +6314,20 @@ window.executePdfExport = function() {
                     pdf.addImage(dataUrl, 'JPEG', 0, 0, pdfWidth, pdfHeight);
                     
                     currentPageIdx++;
+                    chunkPageIdx++;
+                    
+                    if (chunkPageIdx >= CHUNK_SIZE && currentPageIdx < pages.length) {
+                        pdf.save(`كروت_الأسعار_جزء_${currentChunk}.pdf`);
+                        pdf = new jsPDF('p', 'mm', 'a4');
+                        currentChunk++;
+                        chunkPageIdx = 0;
+                        
+                        setTimeout(() => {
+                            renderNextPage();
+                        }, 500); // 500ms delay to allow GC and file save
+                        return;
+                    }
+                    
                     renderNextPage(); // Recursively do next page
                 };
 
