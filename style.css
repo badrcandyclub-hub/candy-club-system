@@ -1131,7 +1131,7 @@ input:checked + .slider:before { transform: translateX(24px); }
     white-space: nowrap;
 }
 
-.nav-item:hover { color: var(--primary); }
+.nav-item:hover { /* Hover handled by specific colors or transform */ }
 
 
 .nav-item.active::before {
@@ -3443,7 +3443,6 @@ body.dark-mode .app-sidebar {
 
 .nav-item:hover i {
     transform: scale(1.15) rotate(-5deg);
-    color: var(--primary);
 }
 
 /* Custom dashboard cards hover */
