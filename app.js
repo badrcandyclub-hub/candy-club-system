@@ -6318,9 +6318,9 @@ window.renderModeratorsDashboard = function() {
     const container = document.getElementById('moderatorsDashboardContainer');
     if (!container) return;
     
-    const allOrders = [...(window.orderHistoryData || []), ...(window.pendingOrdersData || [])];
     const modsData = {};
     
+    // Initialize with all registered moderators so they show 0 even if no sales
     if (window.allModeratorsList) {
         window.allModeratorsList.forEach(m => {
             modsData[m] = { name: m, totalCount: 0, monthCount: 0, totalSales: 0, monthSales: 0 };
@@ -6334,32 +6334,28 @@ window.renderModeratorsDashboard = function() {
     }
     const currentMonthPrefix = monthFilterInput ? monthFilterInput.value : (now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0'));
     
-    allOrders.forEach(o => {
-        const rawMod = o.moderator || o.seller || o['المودريتور'] || o['المودريتور '] || o[' المودريتور'];
-        let mod = rawMod ? String(rawMod).trim() : null;
-        
-        if (!mod || mod === '') {
-            return;
-        } else {
+    // Fetch stats from backend
+    if (window.latestServerData && window.latestServerData.moderatorStats) {
+        const stats = window.latestServerData.moderatorStats;
+        for (const mod in stats) {
+            let displayName = mod;
             const isRegistered = window.allModeratorsList && window.allModeratorsList.includes(mod);
             if (!isRegistered) {
-                mod = mod + " (محذوف)";
+                displayName = mod + " (محذوف)";
             }
+            
+            if (!modsData[displayName]) {
+                modsData[displayName] = { name: displayName, totalCount: 0, monthCount: 0, totalSales: 0, monthSales: 0 };
+            }
+            
+            modsData[displayName].totalSales += stats[mod].totalSales;
+            modsData[displayName].totalCount += stats[mod].totalCount;
+            // The backend already calculates monthSales based on targetMonth, so we just use it
+            modsData[displayName].monthSales += stats[mod].monthSales;
+            modsData[displayName].monthCount += stats[mod].monthOrderCount;
         }
-        
-        if (!modsData[mod]) {
-            modsData[mod] = { name: mod, totalCount: 0, monthCount: 0, totalSales: 0, monthSales: 0 };
-        }
-        
-        const amount = parseFloat(o.total || o.remaining || o.finalTotal || 0) || 0;
-        modsData[mod].totalCount += 1;
-        modsData[mod].totalSales += amount;
-        
-        if (o.date && o.date.startsWith(currentMonthPrefix)) {
-            modsData[mod].monthCount += 1;
-            modsData[mod].monthSales += amount;
-        }
-    });
+    }
+    // Frontend loop removed since backend now calculates accurate monthly and total stats
     
     const modsArray = Object.values(modsData).sort((a, b) => b.monthSales - a.monthSales);
     
