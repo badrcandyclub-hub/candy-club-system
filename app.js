@@ -6371,3 +6371,45 @@ window.renderModeratorsDashboard = function() {
     
     container.innerHTML = html;
 };
+
+// --- Sidebar Accordion Logic ---
+document.addEventListener('DOMContentLoaded', () => {
+    const groupTitles = document.querySelectorAll('.menu-group-title');
+    groupTitles.forEach(title => {
+        title.addEventListener('click', () => {
+            const currentGroup = title.parentElement;
+            const items = currentGroup.querySelector('.menu-group-items');
+            const icon = title.querySelector('.chevron-icon');
+            
+            // Close all other groups
+            document.querySelectorAll('.menu-group-items').forEach(otherItems => {
+                if (otherItems !== items) {
+                    otherItems.style.display = 'none';
+                    const otherIcon = otherItems.parentElement.querySelector('.chevron-icon');
+                    if (otherIcon) otherIcon.style.transform = 'rotate(0deg)';
+                }
+            });
+            
+            // Toggle current group
+            if (items.style.display === 'none') {
+                items.style.display = 'block';
+                if (icon) icon.style.transform = 'rotate(180deg)';
+            } else {
+                items.style.display = 'none';
+                if (icon) icon.style.transform = 'rotate(0deg)';
+            }
+        });
+    });
+    
+    // Set initial icon states
+    document.querySelectorAll('.menu-group-items').forEach(items => {
+        const icon = items.parentElement.querySelector('.chevron-icon');
+        if (icon) {
+            if (items.style.display === 'block') {
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+    });
+});
