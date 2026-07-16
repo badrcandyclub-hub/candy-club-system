@@ -6334,11 +6334,16 @@ window.renderModeratorsDashboard = function() {
     const currentMonthPrefix = monthFilterInput ? monthFilterInput.value : (now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0'));
     
     allOrders.forEach(o => {
-        const rawMod = o.moderator || o.seller;
-        let mod = rawMod ? rawMod.trim() : null;
+        const rawMod = o.moderator || o.seller || o['المودريتور'] || o['المودريتور '] || o[' المودريتور'];
+        let mod = rawMod ? String(rawMod).trim() : null;
         
         if (!mod || mod === '') {
-            mod = window.allModeratorsList && window.allModeratorsList.length > 0 ? window.allModeratorsList[0] : "أوردرات سابقة";
+            mod = "أوردرات سابقة";
+        } else {
+            const isRegistered = window.allModeratorsList && window.allModeratorsList.includes(mod);
+            if (!isRegistered) {
+                mod = mod + " (محذوف)";
+            }
         }
         
         if (!modsData[mod]) {
