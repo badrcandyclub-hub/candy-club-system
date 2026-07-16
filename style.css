@@ -1131,8 +1131,6 @@ input:checked + .slider:before { transform: translateX(24px); }
     white-space: nowrap;
 }
 
-.nav-item:hover {  }
-
 .nav-item.active {
     color: var(--primary);
 }
