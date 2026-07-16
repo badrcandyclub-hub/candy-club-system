@@ -350,6 +350,8 @@ function loadDataFromServer() {
                 let modSelectHtml = '<option value="">اختر اسمك</option>';
                 let modsListHtml = '';
                 
+                window.allModeratorsList = data.moderators;
+                
                 data.moderators.forEach(m => {
                     modSelectHtml += `<option value="${m}">${m}</option>`;
                     modsListHtml += `
@@ -6318,6 +6320,12 @@ window.renderModeratorsDashboard = function() {
     const allOrders = [...(window.orderHistoryData || []), ...(window.pendingOrdersData || [])];
     const modsData = {};
     
+    if (window.allModeratorsList) {
+        window.allModeratorsList.forEach(m => {
+            modsData[m] = { name: m, totalCount: 0, monthCount: 0, totalSales: 0, monthSales: 0 };
+        });
+    }
+    
     const now = new Date();
     const currentMonthPrefix = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
     
@@ -6329,7 +6337,7 @@ window.renderModeratorsDashboard = function() {
             modsData[mod] = { name: mod, totalCount: 0, monthCount: 0, totalSales: 0, monthSales: 0 };
         }
         
-        const amount = parseFloat(o.total) || 0;
+        const amount = parseFloat(o.total || o.remaining || o.finalTotal || 0) || 0;
         modsData[mod].totalCount += 1;
         modsData[mod].totalSales += amount;
         
@@ -6387,6 +6395,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     otherItems.style.display = 'none';
                     const otherIcon = otherItems.parentElement.querySelector('.chevron-icon');
                     if (otherIcon) otherIcon.style.transform = 'rotate(0deg)';
+                    const otherTitle = otherItems.parentElement.querySelector('.menu-group-title');
+                    if (otherTitle) otherTitle.classList.remove('active-group');
                 }
             });
             
@@ -6394,9 +6404,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (items.style.display === 'none') {
                 items.style.display = 'block';
                 if (icon) icon.style.transform = 'rotate(180deg)';
+                title.classList.add('active-group');
             } else {
                 items.style.display = 'none';
                 if (icon) icon.style.transform = 'rotate(0deg)';
+                title.classList.remove('active-group');
             }
         });
     });
@@ -6404,12 +6416,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set initial icon states
     document.querySelectorAll('.menu-group-items').forEach(items => {
         const icon = items.parentElement.querySelector('.chevron-icon');
-        if (icon) {
-            if (items.style.display === 'block') {
-                icon.style.transform = 'rotate(180deg)';
-            } else {
-                icon.style.transform = 'rotate(0deg)';
-            }
+        const title = items.parentElement.querySelector('.menu-group-title');
+        if (items.style.display === 'block') {
+            if (icon) icon.style.transform = 'rotate(180deg)';
+            if (title) title.classList.add('active-group');
+        } else {
+            if (icon) icon.style.transform = 'rotate(0deg)';
+            if (title) title.classList.remove('active-group');
         }
     });
 });

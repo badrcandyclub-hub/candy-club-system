@@ -3391,6 +3391,32 @@ body.dark-mode .app-sidebar {
     cursor: not-allowed;
 }
 
+.menu-group { margin-bottom: 5px; }
+.menu-group-title { font-size: 0.8rem; color: #7f8c8d; font-weight: bold; margin-bottom: 5px; padding-right: 15px; text-transform: uppercase; letter-spacing: 1px; transition: color 0.3s ease; }
+.menu-group-title.active-group { color: var(--primary) !important; }
+.menu-group-title.active-group .chevron-icon { color: var(--primary); }
+
+#closeSidebarBtn {
+    color: white !important;
+    background-color: var(--danger) !important;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 6px rgba(231, 76, 60, 0.3);
+}
+#closeSidebarBtn:hover {
+    background-color: #c0392b !important;
+    transform: scale(1.1) rotate(90deg);
+    box-shadow: 0 6px 12px rgba(231, 76, 60, 0.4);
+}
+#closeSidebarBtn:active {
+    transform: scale(0.9);
+}
+
 /* Desktop Sidebar Tweaks (Removed per user request to keep it a slide-out drawer on all screens) */
 @media (min-width: 900px) {
     /* Preserve main container padding if necessary, but actually we don't need padding if it's off-canvas */
