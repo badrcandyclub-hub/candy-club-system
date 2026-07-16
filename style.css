@@ -1131,7 +1131,7 @@ input:checked + .slider:before { transform: translateX(24px); }
     white-space: nowrap;
 }
 
-.nav-item:hover { color: var(--primary); }
+.nav-item:hover {  }
 
 .nav-item.active {
     color: var(--primary);
@@ -3447,7 +3447,6 @@ body.dark-mode .app-sidebar {
 
 .nav-item:hover i {
     transform: scale(1.15) rotate(-5deg);
-    color: var(--primary);
 }
 
 /* Custom dashboard cards hover */
@@ -3780,3 +3779,5 @@ body.hide-print-barcode .tag-barcode-container {
     display: none !important;
 }
 
+.menu-group { margin-bottom: 5px; }
+.menu-group-title { font-size: 0.8rem; color: #7f8c8d; font-weight: bold; margin-bottom: 5px; padding-right: 15px; text-transform: uppercase; letter-spacing: 1px; }

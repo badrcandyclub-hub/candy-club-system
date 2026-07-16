@@ -101,6 +101,10 @@ document.querySelectorAll('.nav-item').forEach(btn => {
             if (typeof initPriceTagsTab === 'function') {
                 initPriceTagsTab();
             }
+        } else if (btn.getAttribute('data-target') === 'moderators-tab') {
+            if (typeof renderModeratorsDashboard === 'function') {
+                renderModeratorsDashboard();
+            }
         } else {
             // Memory cleanup: Clear expiryData when leaving the tab to free up memory
             if (typeof expiryData !== 'undefined' && expiryData.length > 0) {
@@ -2399,37 +2403,6 @@ if (shareOrderBtn) {
     });
 }
 
-let sendWaManagerBtn = document.getElementById('sendWaManagerBtn');
-if (sendWaManagerBtn) sendWaManagerBtn.addEventListener('click', () => {
-    let tCount = document.getElementById('todayCount') ? document.getElementById('todayCount').innerText : 0;
-    let tSales = document.getElementById('todaySales') ? document.getElementById('todaySales').innerText : 0;
-    let compCount = document.getElementById('completedCount') ? document.getElementById('completedCount').innerText : 0;
-    let retCount = document.getElementById('returnedCount') ? document.getElementById('returnedCount').innerText : 0;
-    let topP = document.getElementById('topProduct') ? document.getElementById('topProduct').innerText : "--";
-    let oosCount = window.oosData ? window.oosData.length : 0;
-
-    let monthSales = document.getElementById('monthSales') ? document.getElementById('monthSales').innerText : 0;
-
-    let report = `📊 *تقرير الإدارة - Candy Club Pro*\n\n`;
-    report += `📅 *إحصائيات اليوم:*\n`;
-    report += `🛒 أوردرات اليوم: ${tCount}\n`;
-    report += `💰 مبيعات اليوم المتوقعة: ${tSales} ج\n`;
-    report += `✅ أوردرات مكتملة (محاسب): ${compCount}\n`;
-    report += `🚨 مرتجعات: ${retCount}\n\n`;
-
-    report += `📅 *إحصائيات الشهر:*\n`;
-    report += `📈 إجمالي مبيعات الشهر: ${monthSales} ج\n\n`;
-
-    report += `⚠️ منتجات ناقصة: ${oosCount}\n`;
-    report += `⭐ المنتج الأكثر مبيعاً: ${topP}\n\n`;
-    report += `تم الإنشاء بواسطة سيستم الإدارة الآلي ⚙️`;
-
-    navigator.clipboard.writeText(report).then(() => {
-        showToast("تم نسخ التقرير للحافظة بنجاح 📋", "success");
-    }).catch(err => {
-        showToast("فشل في نسخ التقرير", "error");
-    });
-});
 
 // ==========================================
 // 12. نظام الكتالوج والنواقص الشامل
@@ -5679,8 +5652,11 @@ function renderFinancials(finList) {
         return;
     }
 
+    let totalAllDue = 0;
+
     driversArray.forEach(f => {
         let netDue = parseFloat(f.netDue) || 0;
+        totalAllDue += netDue;
         let isSettled = netDue === 0;
         let statusColor = netDue > 0 ? "#27ae60" : (netDue < 0 ? "#c0392b" : "#9e9e9e");
         let cardClass = isSettled ? "financial-row driver-card settled" : "financial-row driver-card";
@@ -5728,6 +5704,11 @@ function renderFinancials(finList) {
             </div>
         `;
     });
+
+    let totalEl = document.getElementById('financialsTotalAmount');
+    if (totalEl) {
+        totalEl.innerText = `إجمالي الحساب: ${totalAllDue} ج.م`;
+    }
 }
 
 // --- Mobile Back Button (History API) & Sidebar Animation ---
@@ -6327,4 +6308,66 @@ window.printSelectedPriceTags = function(overrideSize = null) {
             if (styleEl) styleEl.remove();
         }, 1000);
     }, 1500);
+};
+
+// --- Moderators Dashboard Logic ---
+window.renderModeratorsDashboard = function() {
+    const container = document.getElementById('moderatorsDashboardContainer');
+    if (!container) return;
+    
+    const allOrders = [...(window.orderHistoryData || []), ...(window.pendingOrdersData || [])];
+    const modsData = {};
+    
+    const now = new Date();
+    const currentMonthPrefix = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    
+    allOrders.forEach(o => {
+        const mod = o.moderator ? o.moderator.trim() : null;
+        if (!mod || mod === '') return;
+        
+        if (!modsData[mod]) {
+            modsData[mod] = { name: mod, totalCount: 0, monthCount: 0, totalSales: 0, monthSales: 0 };
+        }
+        
+        const amount = parseFloat(o.total) || 0;
+        modsData[mod].totalCount += 1;
+        modsData[mod].totalSales += amount;
+        
+        if (o.date && o.date.startsWith(currentMonthPrefix)) {
+            modsData[mod].monthCount += 1;
+            modsData[mod].monthSales += amount;
+        }
+    });
+    
+    const modsArray = Object.values(modsData).sort((a, b) => b.monthSales - a.monthSales);
+    
+    if (modsArray.length === 0) {
+        container.innerHTML = '<p class="empty-msg">لا توجد بيانات للمودريتور حتى الآن.</p>';
+        return;
+    }
+    
+    let html = '';
+    modsArray.forEach(m => {
+        html += `
+            <div class="report-card" style="background: #fff; padding: 20px; border-radius: 15px; border: 1px solid var(--border); box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; margin-bottom: 15px;">
+                    <h3 style="margin: 0; color: #8e24aa; font-size: 1.3rem;"><i class='fa-solid fa-user-tie'></i> ${m.name}</h3>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div style="background: #fdfdfd; padding: 10px; border-radius: 10px; border: 1px dashed #ccc; text-align: center;">
+                        <div style="font-size: 0.8rem; color: #7f8c8d; font-weight: bold; margin-bottom: 5px;">مبيعات الشهر</div>
+                        <div style="font-size: 1.2rem; font-weight: 900; color: #27ae60;">${m.monthSales} <span style="font-size:0.7rem;">ج.م</span></div>
+                        <div style="font-size: 0.8rem; color: #34495e; margin-top: 3px;">${m.monthCount} أوردر</div>
+                    </div>
+                    <div style="background: #fdfdfd; padding: 10px; border-radius: 10px; border: 1px dashed #ccc; text-align: center;">
+                        <div style="font-size: 0.8rem; color: #7f8c8d; font-weight: bold; margin-bottom: 5px;">إجمالي المبيعات (عام)</div>
+                        <div style="font-size: 1.2rem; font-weight: 900; color: #2980b9;">${m.totalSales} <span style="font-size:0.7rem;">ج.م</span></div>
+                        <div style="font-size: 0.8rem; color: #34495e; margin-top: 3px;">${m.totalCount} أوردر</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
 };
