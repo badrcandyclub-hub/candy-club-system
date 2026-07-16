@@ -1793,8 +1793,8 @@ function renderShippingRoom(history) {
     const resContainer = document.getElementById('reservationsContainer');
 
     if (pendingContainer && resContainer) {
-        const pendingOrders = window.pendingOrdersData.filter(o => o.orderType !== 'استلام من الفرع' && (!o.orderType || !o.orderType.includes('حجز')));
-        const resOrders = window.pendingOrdersData.filter(o => o.orderType && o.orderType.includes('حجز'));
+        const pendingOrders = window.pendingOrdersData.filter(o => o.orderType !== 'استلام من الفرع' && (!o.orderType || !o.orderType.includes('حجز') || o.status === 'قيد التجهيز' || o.status === 'في الشحن'));
+        const resOrders = window.pendingOrdersData.filter(o => o.orderType && o.orderType.includes('حجز') && o.status !== 'قيد التجهيز' && o.status !== 'في الشحن' && o.status !== 'تم التوصيل ومُحاسب');
 
         // <i class=\'fa-solid fa-star\'></i> Update Reservations Badge
         const resBadge = document.getElementById('reservationsCountBadge');
@@ -1861,7 +1861,7 @@ function renderShippingRoom(history) {
 
     // <i class=\'fa-solid fa-star\'></i> قسم أوردرات الفرع (المنفصلة تماماً عن المندوبين)
     if (branchContainer) {
-        const branchOrders = window.pendingOrdersData.filter(o => o.orderType === 'استلام من الفرع');
+        const branchOrders = window.pendingOrdersData.filter(o => o.orderType === 'استلام من الفرع' && o.status !== 'تم التوصيل ومُحاسب');
 
         // <i class=\'fa-solid fa-star\'></i> Update Branch Badge
         const branchBadge = document.getElementById('branchCountBadge');
@@ -1902,7 +1902,7 @@ function renderShippingRoom(history) {
 
 // <i class=\'fa-solid fa-star\'></i> دالة تسليم الفرع الفورية
 window.settleBranchOrder = function (orderId, btn) {
-    let order = window.pendingOrdersData.find(o => o.id === orderId);
+    let order = window.pendingOrdersData.find(o => String(o.id) === String(orderId));
     customSinglePrompt('الرجاء إدخال المبلغ المدفوع لاستلام الفرع:', order ? order.remaining : 0, (amountPaidText) => {
         if (!amountPaidText) return;
 
