@@ -6327,10 +6327,15 @@ window.renderModeratorsDashboard = function() {
     }
     
     const now = new Date();
-    const currentMonthPrefix = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    const monthFilterInput = document.getElementById('moderatorsMonthFilter');
+    if (monthFilterInput && !monthFilterInput.value) {
+        monthFilterInput.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    }
+    const currentMonthPrefix = monthFilterInput ? monthFilterInput.value : (now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0'));
     
     allOrders.forEach(o => {
-        const mod = o.moderator ? o.moderator.trim() : null;
+        const rawMod = o.moderator || o.seller;
+        const mod = rawMod ? rawMod.trim() : null;
         if (!mod || mod === '') return;
         
         if (!modsData[mod]) {
@@ -6365,12 +6370,18 @@ window.renderModeratorsDashboard = function() {
                     <div style="background: #fdfdfd; padding: 10px; border-radius: 10px; border: 1px dashed #ccc; text-align: center;">
                         <div style="font-size: 0.8rem; color: #7f8c8d; font-weight: bold; margin-bottom: 5px;">مبيعات الشهر</div>
                         <div style="font-size: 1.2rem; font-weight: 900; color: #27ae60;">${m.monthSales} <span style="font-size:0.7rem;">ج.م</span></div>
-                        <div style="font-size: 0.8rem; color: #34495e; margin-top: 3px;">${m.monthCount} أوردر</div>
                     </div>
                     <div style="background: #fdfdfd; padding: 10px; border-radius: 10px; border: 1px dashed #ccc; text-align: center;">
-                        <div style="font-size: 0.8rem; color: #7f8c8d; font-weight: bold; margin-bottom: 5px;">إجمالي المبيعات (عام)</div>
+                        <div style="font-size: 0.8rem; color: #7f8c8d; font-weight: bold; margin-bottom: 5px;">أوردرات الشهر</div>
+                        <div style="font-size: 1.2rem; font-weight: 900; color: #e67e22;">${m.monthCount} <span style="font-size:0.7rem;">أوردر</span></div>
+                    </div>
+                    <div style="background: #fdfdfd; padding: 10px; border-radius: 10px; border: 1px dashed #ccc; text-align: center;">
+                        <div style="font-size: 0.8rem; color: #7f8c8d; font-weight: bold; margin-bottom: 5px;">المبيعات في العموم</div>
                         <div style="font-size: 1.2rem; font-weight: 900; color: #2980b9;">${m.totalSales} <span style="font-size:0.7rem;">ج.م</span></div>
-                        <div style="font-size: 0.8rem; color: #34495e; margin-top: 3px;">${m.totalCount} أوردر</div>
+                    </div>
+                    <div style="background: #fdfdfd; padding: 10px; border-radius: 10px; border: 1px dashed #ccc; text-align: center;">
+                        <div style="font-size: 0.8rem; color: #7f8c8d; font-weight: bold; margin-bottom: 5px;">الأوردرات في العموم</div>
+                        <div style="font-size: 1.2rem; font-weight: 900; color: #8e44ad;">${m.totalCount} <span style="font-size:0.7rem;">أوردر</span></div>
                     </div>
                 </div>
             </div>
@@ -6425,4 +6436,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (title) title.classList.remove('active-group');
         }
     });
+    
+    const monthFilterInput = document.getElementById('moderatorsMonthFilter');
+    if (monthFilterInput) {
+        monthFilterInput.addEventListener('change', () => {
+            if (typeof renderModeratorsDashboard === 'function') {
+                renderModeratorsDashboard();
+            }
+        });
+    }
 });

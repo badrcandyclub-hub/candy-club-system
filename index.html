@@ -547,6 +547,13 @@
                     <p class="empty-msg">جاري التحميل...</p>
                 </div>
                 
+                <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px; background: #fdfdfd; border-radius: 10px; border: 1px solid var(--border);">
+                    <h3 style="margin:0; font-size: 1rem; color: #34495e;"><i class="fa-solid fa-chart-pie"></i> إحصائيات الأداء</h3>
+                    <div style="display:flex; align-items: center; gap: 10px;">
+                        <label for="moderatorsMonthFilter" style="margin:0; font-size: 0.9rem; color: #7f8c8d; font-weight: bold;">تصفية بالشهر:</label>
+                        <input type="month" id="moderatorsMonthFilter" style="margin-bottom: 0; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border); font-family: 'Cairo', sans-serif;">
+                    </div>
+                </div>
                 <div id="moderatorsDashboardContainer" class="reports-grid" style="flex: 1; overflow-y: auto; display: grid; gap: 15px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); align-items: start;">
                     <p class="empty-msg">جاري تجميع البيانات...</p>
                 </div>
@@ -1130,7 +1137,7 @@
         <div class="sidebar-menu">
             <div class="menu-group">
                 <h4 class="menu-group-title" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
-                    العمليات والتشغيل
+                    إدارة الأوردرات
                     <i class="fa-solid fa-chevron-down chevron-icon" style="transition: transform 0.3s; font-size: 0.8rem;"></i>
                 </h4>
                 <div class="menu-group-items" style="display: block;">
