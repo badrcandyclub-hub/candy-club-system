@@ -6339,7 +6339,7 @@ window.renderModeratorsDashboard = function() {
         let mod = rawMod ? String(rawMod).trim() : null;
         
         if (!mod || mod === '') {
-            mod = "أوردرات سابقة";
+            return;
         } else {
             const isRegistered = window.allModeratorsList && window.allModeratorsList.includes(mod);
             if (!isRegistered) {
