@@ -3400,21 +3400,21 @@ body.dark-mode .app-sidebar {
     color: white !important;
     background-color: var(--danger) !important;
     border-radius: 50%;
-    width: 35px;
-    height: 35px;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
-    box-shadow: 0 4px 6px rgba(231, 76, 60, 0.3);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 0 10px rgba(231, 76, 60, 0.4);
+    font-size: 0.85rem;
 }
 #closeSidebarBtn:hover {
-    background-color: #c0392b !important;
-    transform: scale(1.1) rotate(90deg);
-    box-shadow: 0 6px 12px rgba(231, 76, 60, 0.4);
+    background-color: #ff4757 !important;
+    box-shadow: 0 0 15px rgba(255, 71, 87, 0.8);
 }
 #closeSidebarBtn:active {
-    transform: scale(0.9);
+    transform: scale(0.95);
 }
 
 /* Desktop Sidebar Tweaks (Removed per user request to keep it a slide-out drawer on all screens) */
@@ -3805,5 +3805,3 @@ body.hide-print-barcode .tag-barcode-container {
     display: none !important;
 }
 
-.menu-group { margin-bottom: 5px; }
-.menu-group-title { font-size: 0.8rem; color: #7f8c8d; font-weight: bold; margin-bottom: 5px; padding-right: 15px; text-transform: uppercase; letter-spacing: 1px; }
