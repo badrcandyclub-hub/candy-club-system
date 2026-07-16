@@ -552,6 +552,7 @@
                     <div style="display:flex; align-items: center; gap: 10px;">
                         <label for="moderatorsMonthFilter" style="margin:0; font-size: 0.9rem; color: #7f8c8d; font-weight: bold;">تصفية بالشهر:</label>
                         <input type="month" id="moderatorsMonthFilter" style="margin-bottom: 0; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border); font-family: 'Cairo', sans-serif;">
+                        <button type="button" class="btn-primary" onclick="refreshModeratorsStats()" style="padding: 6px 15px; border-radius: 8px; font-size: 0.85rem;"><i class="fa-solid fa-arrows-rotate"></i> جلب</button>
                     </div>
                 </div>
                 <div id="moderatorsDashboardContainer" class="reports-grid" style="flex: 1; overflow-y: auto; display: grid; gap: 15px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); align-items: start;">

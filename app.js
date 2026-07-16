@@ -181,11 +181,12 @@ window.onload = () => {
     // <i class=\'fa-solid fa-star\'></i> V14.2: عداد المعلقات يُقرأ من السيرفر مباشرة بعد loadDataFromServer
 };
 
-function loadDataFromServer() {
+function loadDataFromServer(customDate = null) {
     const syncStatus = document.getElementById('sync-status');
     if (syncStatus) { syncStatus.innerText = "جاري التحميل..."; syncStatus.style.color = "#FF8C00"; }
 
-    fetch(`${GOOGLE_SHEETS_URL}?date=${currentFilterDate}`)
+    let fetchDate = customDate || currentFilterDate;
+    fetch(`${GOOGLE_SHEETS_URL}?date=${fetchDate}`)
         .then(res => res.json())
         .then(data => {
             if (syncStatus) { syncStatus.innerText = "متصل"; syncStatus.style.color = "#00C853"; }
@@ -6442,12 +6443,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    const monthFilterInput = document.getElementById('moderatorsMonthFilter');
-    if (monthFilterInput) {
-        monthFilterInput.addEventListener('change', () => {
-            if (typeof renderModeratorsDashboard === 'function') {
-                renderModeratorsDashboard();
-            }
-        });
-    }
+    window.refreshModeratorsStats = function() {
+        const monthFilterInput = document.getElementById('moderatorsMonthFilter');
+        if (!monthFilterInput || !monthFilterInput.value) {
+            showToast("برجاء اختيار الشهر أولاً", "warning");
+            return;
+        }
+        const selectedMonth = monthFilterInput.value;
+        showToast("جاري جلب الإحصائيات...", "warning");
+        loadDataFromServer(selectedMonth + '-01');
+    };
 });
