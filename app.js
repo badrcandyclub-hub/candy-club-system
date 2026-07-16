@@ -6053,6 +6053,12 @@ window.generatePriceTagHTML = function(p, sizeClass) {
     
     const barcodeHtml = p.barcode ? `<img class="barcode-svg" data-barcode="${p.barcode}">` : '';
     
+    let priceTextLen = p.isOffer && parseFloat(p.offerPrice) > 0 && parseFloat(p.offerPrice) !== parseFloat(p.price) 
+        ? String(p.price).length + String(p.offerPrice).length + 4 
+        : String(p.price).length;
+    
+    let dynamicPriceStyle = priceTextLen > 12 ? 'font-size: 1.05em; line-height: 1.2;' : (priceTextLen > 7 ? 'font-size: 1.25em; line-height: 1.2;' : 'font-size: 1.45em; font-weight: 900;');
+
     return `
         <div class="price-tag-wrapper size-${sizeClass}">
             <div class="${cardClass}">
@@ -6079,9 +6085,10 @@ window.generatePriceTagHTML = function(p, sizeClass) {
                     </div>
                     
                     <div class="tag-box bottom-box">
-                        <div class="tag-row price-row">
-                            <span class="tag-label">السعر :</span>
-                            <span class="tag-value">${priceHtml}ج</span>
+                        <div class="tag-row price-row" style="justify-content: center; text-align: center;">
+                            <span class="tag-value" style="display: block; width: 100%; text-align: center; ${dynamicPriceStyle}">
+                                السعر: ${priceHtml}ج
+                            </span>
                         </div>
                         ${barcodeHtml ? `<div class="tag-barcode-container">${barcodeHtml}</div>` : ''}
                     </div>
