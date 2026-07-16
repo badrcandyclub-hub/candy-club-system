@@ -6335,8 +6335,11 @@ window.renderModeratorsDashboard = function() {
     
     allOrders.forEach(o => {
         const rawMod = o.moderator || o.seller;
-        const mod = rawMod ? rawMod.trim() : null;
-        if (!mod || mod === '') return;
+        let mod = rawMod ? rawMod.trim() : null;
+        
+        if (!mod || mod === '') {
+            mod = window.allModeratorsList && window.allModeratorsList.length > 0 ? window.allModeratorsList[0] : "أوردرات سابقة";
+        }
         
         if (!modsData[mod]) {
             modsData[mod] = { name: mod, totalCount: 0, monthCount: 0, totalSales: 0, monthSales: 0 };
