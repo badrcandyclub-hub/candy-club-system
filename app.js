@@ -1915,7 +1915,9 @@ window.settleBranchOrder = function (orderId, btn) {
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
                 showToast(`<i class=\'fa-solid fa-check\'></i> تم التسليم وتصفية مبلغ (${amountPaidText} ج.م) بنجاح!`, "success");
-                loadDataFromServer();
+                if (order) order.status = 'تم التوصيل ومُحاسب';
+                renderShippingRoom();
+                setTimeout(() => loadDataFromServer(), 3000);
             }).catch(() => setBtnLoading(btn, false, "تم التسليم ✅"));
     });
 };
@@ -1933,7 +1935,13 @@ window.convertToNormalDelivery = function (orderId, btn) {
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
                 showToast("<i class=\'fa-solid fa-check\'></i> تم التحويل لتوصيل فوري بنجاح!", "success");
-                loadDataFromServer();
+                let order = window.pendingOrdersData.find(o => String(o.id) === String(orderId));
+                if (order) {
+                    order.status = 'قيد التجهيز';
+                    order.orderType = 'توصيل منزلي عادي';
+                }
+                renderShippingRoom();
+                setTimeout(() => loadDataFromServer(), 3000);
             }).catch(() => setBtnLoading(btn, false, "تحويل لتوصيل عادي 🚚"));
     });
 };

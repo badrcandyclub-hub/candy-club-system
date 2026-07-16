@@ -1134,7 +1134,7 @@ input:checked + .slider:before { transform: translateX(24px); }
 .nav-item:hover { color: var(--primary); }
 
 .nav-item.active {
-    color: var(--primary);
+    /* Kept empty or use another subtle effect if needed, letting inline color persist */
 }
 
 .nav-item.active::before {
@@ -3352,8 +3352,7 @@ body.dark-mode .app-sidebar {
 }
 
 .sidebar-menu .nav-item.active {
-    background: var(--primary-glow);
-    color: var(--primary);
+    background: rgba(0,0,0,0.05); /* Subtle active background instead of pink glow */
 }
 
 .sidebar-menu .nav-item .icon,
