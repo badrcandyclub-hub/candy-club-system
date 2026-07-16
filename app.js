@@ -1,20 +1,20 @@
 // ==========================================
-// <i class=\'fa-solid fa-globe\'></i> العقل المدبر - سيستم كاندي كلوب (النسخة V13.6 - الشاملة والمحصنة)
+// <i class=\'fa-solid fa-globe\'></i> ط§ظ„ط¹ظ‚ظ„ ط§ظ„ظ…ط¯ط¨ط± - ط³ظٹط³طھظ… ظƒط§ظ†ط¯ظٹ ظƒظ„ظˆط¨ (ط§ظ„ظ†ط³ط®ط© V13.6 - ط§ظ„ط´ط§ظ…ظ„ط© ظˆط§ظ„ظ…ط­طµظ†ط©)
 // ==========================================
 
 const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbwi24io7fKY7nizjIutPBpQvZHBx1O28_hu91QVcdF7PLFqTJ48dNJqFPdbqRuGDKI3Uw/exec";
 
 // ==========================================
-// 1. نظام الإشعارات (Toasts) وقفل الأزرار (Loading) والصوتيات
+// 1. ظ†ط¸ط§ظ… ط§ظ„ط¥ط´ط¹ط§ط±ط§طھ (Toasts) ظˆظ‚ظپظ„ ط§ظ„ط£ط²ط±ط§ط± (Loading) ظˆط§ظ„طµظˆطھظٹط§طھ
 // ==========================================
-const orderAudio = new Audio('صوت اوردر.mp3');
+const orderAudio = new Audio('طµظˆطھ ط§ظˆط±ط¯ط±.mp3');
 
 function playOrderSound() {
     let playPromise = orderAudio.play();
     if (playPromise !== undefined) {
         playPromise.catch(e => {
             console.log('Audio play failed (maybe needs user interaction):', e);
-            customAlert("<i class='fa-solid fa-bell' style='color:var(--warning)'></i> يوجد أوردر جديد قيد التجهيز! \n\n(تنبيه: المتصفح منع تشغيل الصوت. يرجى الضغط في أي مكان في الشاشة لتفعيل الصوت للأوردرات القادمة)");
+            customAlert("<i class='fa-solid fa-bell' style='color:var(--warning)'></i> ظٹظˆط¬ط¯ ط£ظˆط±ط¯ط± ط¬ط¯ظٹط¯ ظ‚ظٹط¯ ط§ظ„طھط¬ظ‡ظٹط²! \n\n(طھظ†ط¨ظٹظ‡: ط§ظ„ظ…طھطµظپط­ ظ…ظ†ط¹ طھط´ط؛ظٹظ„ ط§ظ„طµظˆطھ. ظٹط±ط¬ظ‰ ط§ظ„ط¶ط؛ط· ظپظٹ ط£ظٹ ظ…ظƒط§ظ† ظپظٹ ط§ظ„ط´ط§ط´ط© ظ„طھظپط¹ظٹظ„ ط§ظ„طµظˆطھ ظ„ظ„ط£ظˆط±ط¯ط±ط§طھ ط§ظ„ظ‚ط§ط¯ظ…ط©)");
         });
     }
 }
@@ -35,7 +35,7 @@ function setBtnLoading(btn, isLoading, originalText = "") {
     if (isLoading) {
         btn.disabled = true;
         btn.dataset.origText = btn.innerText;
-        btn.innerHTML = "جاري التحميل <i class=\'fa-solid fa-hourglass-half\'></i>...";
+        btn.innerHTML = "ط¬ط§ط±ظٹ ط§ظ„طھط­ظ…ظٹظ„ <i class=\'fa-solid fa-hourglass-half\'></i>...";
         btn.style.opacity = "0.7";
         btn.style.cursor = "not-allowed";
     } else {
@@ -47,7 +47,7 @@ function setBtnLoading(btn, isLoading, originalText = "") {
 }
 
 // ==========================================
-// 2. التبديل بين الشاشات والنوافذ المنبثقة
+// 2. ط§ظ„طھط¨ط¯ظٹظ„ ط¨ظٹظ† ط§ظ„ط´ط§ط´ط§طھ ظˆط§ظ„ظ†ظˆط§ظپط° ط§ظ„ظ…ظ†ط¨ط«ظ‚ط©
 // ==========================================
 document.querySelectorAll('.nav-item').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -74,8 +74,8 @@ document.querySelectorAll('.nav-item').forEach(btn => {
                 overlay.style.cssText = 'display: none; position: fixed; top: 130px; bottom: 80px; left: 0; right: 0; background: rgba(255, 255, 255, 0.95); z-index: 90; flex-direction: column; justify-content: center; align-items: center; border-radius: 15px; backdrop-filter: blur(5px);';
                 overlay.innerHTML = `
                     <div style="border: 6px solid #f3f3f3; border-top: 6px solid #2980b9; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite;"></div>
-                    <h3 style="color: #2c3e50; margin-top: 20px; font-weight: bold;">جاري سحب بيانات الصلاحيات...</h3>
-                    <p style="color: #7f8c8d; font-size: 0.95rem;">يرجى الانتظار، لا تقم بالخروج من الصفحة</p>
+                    <h3 style="color: #2c3e50; margin-top: 20px; font-weight: bold;">ط¬ط§ط±ظٹ ط³ط­ط¨ ط¨ظٹط§ظ†ط§طھ ط§ظ„طµظ„ط§ط­ظٹط§طھ...</h3>
+                    <p style="color: #7f8c8d; font-size: 0.95rem;">ظٹط±ط¬ظ‰ ط§ظ„ط§ظ†طھط¸ط§ط±طŒ ظ„ط§ طھظ‚ظ… ط¨ط§ظ„ط®ط±ظˆط¬ ظ…ظ† ط§ظ„طµظپط­ط©</p>
                     <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
                 `;
                 const expiryTab = document.getElementById('expiry-tab');
@@ -101,11 +101,15 @@ document.querySelectorAll('.nav-item').forEach(btn => {
             if (typeof initPriceTagsTab === 'function') {
                 initPriceTagsTab();
             }
+        } else if (btn.getAttribute('data-target') === 'moderators-tab') {
+            if (typeof renderModeratorsDashboard === 'function') {
+                renderModeratorsDashboard();
+            }
         } else {
             // Memory cleanup: Clear expiryData when leaving the tab to free up memory
             if (typeof expiryData !== 'undefined' && expiryData.length > 0) {
                 // Save active offers before clearing so the catalog doesn't break
-                window.cachedActiveOffers = expiryData.filter(item => item.status === 'في عرض').map(item => item.name);
+                window.cachedActiveOffers = expiryData.filter(item => item.status === 'ظپظٹ ط¹ط±ط¶').map(item => item.name);
                 expiryData = [];
                 
                 const detailsList = document.getElementById('detailsList');
@@ -137,7 +141,7 @@ setupModal('openDriverModalBtn', 'driverModal', 'closeDriverModal');
 setupModal('openSuspendedBtn', 'suspendedModal', 'closeSuspendedModal');
 
 // ==========================================
-// 3. تحميل الداتا الأساسية من الإكسيل
+// 3. طھط­ظ…ظٹظ„ ط§ظ„ط¯ط§طھط§ ط§ظ„ط£ط³ط§ط³ظٹط© ظ…ظ† ط§ظ„ط¥ظƒط³ظٹظ„
 // ==========================================
 let shippingData = {};
 let catalogData = [];
@@ -165,26 +169,26 @@ window.onload = () => {
         });
     }
 
-    // <i class=\'fa-solid fa-star\'></i> زرار التحديث السريع
+    // <i class=\'fa-solid fa-star\'></i> ط²ط±ط§ط± ط§ظ„طھط­ط¯ظٹط« ط§ظ„ط³ط±ظٹط¹
     let quickRefreshBtn = document.getElementById('quickRefreshBtn');
     if (quickRefreshBtn) quickRefreshBtn.addEventListener('click', () => {
-        showToast("جاري تحديث البيانات...", "warning");
+        showToast("ط¬ط§ط±ظٹ طھط­ط¯ظٹط« ط§ظ„ط¨ظٹط§ظ†ط§طھ...", "warning");
         loadDataFromServer();
     });
 
     loadDataFromServer();
     if (typeof updateSuspendedCount === 'function') updateSuspendedCount();
-    // <i class=\'fa-solid fa-star\'></i> V14.2: عداد المعلقات يُقرأ من السيرفر مباشرة بعد loadDataFromServer
+    // <i class=\'fa-solid fa-star\'></i> V14.2: ط¹ط¯ط§ط¯ ط§ظ„ظ…ط¹ظ„ظ‚ط§طھ ظٹظڈظ‚ط±ط£ ظ…ظ† ط§ظ„ط³ظٹط±ظپط± ظ…ط¨ط§ط´ط±ط© ط¨ط¹ط¯ loadDataFromServer
 };
 
 function loadDataFromServer() {
     const syncStatus = document.getElementById('sync-status');
-    if (syncStatus) { syncStatus.innerText = "جاري التحميل..."; syncStatus.style.color = "#FF8C00"; }
+    if (syncStatus) { syncStatus.innerText = "ط¬ط§ط±ظٹ ط§ظ„طھط­ظ…ظٹظ„..."; syncStatus.style.color = "#FF8C00"; }
 
     fetch(`${GOOGLE_SHEETS_URL}?date=${currentFilterDate}`)
         .then(res => res.json())
         .then(data => {
-            if (syncStatus) { syncStatus.innerText = "متصل"; syncStatus.style.color = "#00C853"; }
+            if (syncStatus) { syncStatus.innerText = "ظ…طھطµظ„"; syncStatus.style.color = "#00C853"; }
 
             // <i class=\'fa-solid fa-star\'></i> Play sound on new order arrival
             if (window.isFirstLoad === undefined) {
@@ -195,10 +199,10 @@ function loadDataFromServer() {
                     let oldHistoryIds = (window.orderHistoryData || []).map(o => o.id);
                     let newHistory = data.history || [];
                     
-                    // تشغيل الصوت فقط إذا نزل الأوردر في السجل وكانت حالته "قيد التجهيز"
+                    // طھط´ط؛ظٹظ„ ط§ظ„طµظˆطھ ظپظ‚ط· ط¥ط°ط§ ظ†ط²ظ„ ط§ظ„ط£ظˆط±ط¯ط± ظپظٹ ط§ظ„ط³ط¬ظ„ ظˆظƒط§ظ†طھ ط­ط§ظ„طھظ‡ "ظ‚ظٹط¯ ط§ظ„طھط¬ظ‡ظٹط²"
                     let hasNewProcessing = newHistory.some(o => 
                         !oldHistoryIds.includes(o.id) && 
-                        o.status && o.status.includes("تجهيز")
+                        o.status && o.status.includes("طھط¬ظ‡ظٹط²")
                     );
 
                     if (hasNewProcessing) {
@@ -212,10 +216,10 @@ function loadDataFromServer() {
             window.orderHistoryData = orderHistoryData; // <i class=\'fa-solid fa-star\'></i> keep window ref in sync
             window.pendingOrdersData = data.pendingOrders || [];
             window.suspendedOrdersData = data.suspendedOrders || [];
-            updateSuspendedCount(); // <i class=\'fa-solid fa-star\'></i> V14.2: تحديث العداد من السيرفر بعد كل تحميل
+            updateSuspendedCount(); // <i class=\'fa-solid fa-star\'></i> V14.2: طھط­ط¯ظٹط« ط§ظ„ط¹ط¯ط§ط¯ ظ…ظ† ط§ظ„ط³ظٹط±ظپط± ط¨ط¹ط¯ ظƒظ„ طھط­ظ…ظٹظ„
             window.financialsData = data.financials || [];
             window.uncollectedOrdersData = data.uncollectedOrders || [];
-            // <i class=\'fa-solid fa-star\'></i> V15.1: تخزين بيانات العملاء فقط بدون عرضها تلقائياً (Lazy)
+            // <i class=\'fa-solid fa-star\'></i> V15.1: طھط®ط²ظٹظ† ط¨ظٹط§ظ†ط§طھ ط§ظ„ط¹ظ…ظ„ط§ط، ظپظ‚ط· ط¨ط¯ظˆظ† ط¹ط±ط¶ظ‡ط§ طھظ„ظ‚ط§ط¦ظٹط§ظ‹ (Lazy)
             window.customersData = data.customers || [];
             window.driversList = data.couriers || [];
 
@@ -223,7 +227,7 @@ function loadDataFromServer() {
 
             catalogData = data.catalog || [];
             
-            // <i class=\'fa-solid fa-star\'></i> دمج منتجات Firebase في الكتالوج إذا لم تكن موجودة من الإكسل وإضافة الباركود
+            // <i class=\'fa-solid fa-star\'></i> ط¯ظ…ط¬ ظ…ظ†طھط¬ط§طھ Firebase ظپظٹ ط§ظ„ظƒطھط§ظ„ظˆط¬ ط¥ط°ط§ ظ„ظ… طھظƒظ† ظ…ظˆط¬ظˆط¯ط© ظ…ظ† ط§ظ„ط¥ظƒط³ظ„ ظˆط¥ط¶ط§ظپط© ط§ظ„ط¨ط§ط±ظƒظˆط¯
             if (barcodeCatalogData.length > 0) {
                 const fbMap = new Map();
                 barcodeCatalogData.forEach(p => fbMap.set(String(p.name).toLowerCase(), p));
@@ -265,7 +269,7 @@ function loadDataFromServer() {
 
             if (zonesAlexList) zonesAlexList.innerHTML = '';
             if (zonesGovList) zonesGovList.innerHTML = '';
-            if (govSelect) govSelect.innerHTML = '<option value="">اختر من القائمة</option>';
+            if (govSelect) govSelect.innerHTML = '<option value="">ط§ط®طھط± ظ…ظ† ط§ظ„ظ‚ط§ط¦ظ…ط©</option>';
             shippingData = {};
 
             const renderZoneItem = (z, zoneType, container) => {
@@ -277,13 +281,13 @@ function loadDataFromServer() {
                             <div class="zone-info-main">
                                 <strong class="zone-title"><i class=\'fa-solid fa-location-dot\'></i> ${z.name}</strong>
                                 <div class="zone-details-row">
-                                    <span class="price-badge premium-badge"><i class=\'fa-solid fa-money-bill-wave\'></i> ${z.price} ج.م</span> 
-                                    <span class="duration-badge">⏱️ ${z.duration}</span>
+                                    <span class="price-badge premium-badge"><i class=\'fa-solid fa-money-bill-wave\'></i> ${z.price} ط¬.ظ…</span> 
+                                    <span class="duration-badge">âڈ±ï¸ڈ ${z.duration}</span>
                                 </div>
                             </div>
                             <div class="zone-actions">
-                                <button type="button" class="btn-outline interactive-btn" onclick="editZoneUI('${z.name}', '${z.price}', '${z.type}', '${z.duration}')">تعديل <i class=\'fa-solid fa-pencil\'></i></button>
-                                <button type="button" class="btn-danger interactive-btn" onclick="deleteItem('deleteShipping', '${z.name}', '${zoneType}')">حذف <i class=\'fa-solid fa-xmark\'></i></button>
+                                <button type="button" class="btn-outline interactive-btn" onclick="editZoneUI('${z.name}', '${z.price}', '${z.type}', '${z.duration}')">طھط¹ط¯ظٹظ„ <i class=\'fa-solid fa-pencil\'></i></button>
+                                <button type="button" class="btn-danger interactive-btn" onclick="deleteItem('deleteShipping', '${z.name}', '${zoneType}')">ط­ط°ظپ <i class=\'fa-solid fa-xmark\'></i></button>
                             </div>
                         </div>`;
                 }
@@ -306,12 +310,12 @@ function loadDataFromServer() {
             const closeDriverSelect = document.getElementById('closeDriverSelect');
 
             if (driversDisplayList) driversDisplayList.innerHTML = '';
-            if (driverSelect) driverSelect.innerHTML = '<option value="">اختر المندوب</option>';
-            if (assignDriverSelect) assignDriverSelect.innerHTML = '<option value="">اختر المندوب</option>';
-            if (closeDriverSelect) closeDriverSelect.innerHTML = '<option value="">اختر المندوب</option>';
+            if (driverSelect) driverSelect.innerHTML = '<option value="">ط§ط®طھط± ط§ظ„ظ…ظ†ط¯ظˆط¨</option>';
+            if (assignDriverSelect) assignDriverSelect.innerHTML = '<option value="">ط§ط®طھط± ط§ظ„ظ…ظ†ط¯ظˆط¨</option>';
+            if (closeDriverSelect) closeDriverSelect.innerHTML = '<option value="">ط§ط®طھط± ط§ظ„ظ…ظ†ط¯ظˆط¨</option>';
 
             if (data.couriers && data.couriers.length > 0) {
-                let driverSelectHtml = '<option value="">اختر المندوب</option>';
+                let driverSelectHtml = '<option value="">ط§ط®طھط± ط§ظ„ظ…ظ†ط¯ظˆط¨</option>';
                 let displayListHtml = '';
                 
                 data.couriers.forEach(c => {
@@ -323,8 +327,8 @@ function loadDataFromServer() {
                                 <span class="phone-badge" style="margin-top: 5px; display: inline-block;"><i class=\'fa-solid fa-mobile-screen\'></i> ${c.phone}</span>
                             </div>
                             <div style="display:flex; justify-content: space-between; gap:5px; width: 100%;">
-                                <button type="button" class="btn-outline interactive-btn" style="flex: 1; padding: 6px; font-size:0.8rem; border-radius: 6px;" onclick="editDriverUI('${c.name}', '${c.phone}')">تعديل <i class=\'fa-solid fa-pencil\'></i></button>
-                                <button type="button" class="interactive-btn" style="flex: 1; padding: 6px; font-size:0.8rem; background:var(--danger); color:white; border:none; border-radius:6px;" onclick="deleteItem('deleteDriver', '${c.name}')">حذف <i class=\'fa-solid fa-xmark\'></i></button>
+                                <button type="button" class="btn-outline interactive-btn" style="flex: 1; padding: 6px; font-size:0.8rem; border-radius: 6px;" onclick="editDriverUI('${c.name}', '${c.phone}')">طھط¹ط¯ظٹظ„ <i class=\'fa-solid fa-pencil\'></i></button>
+                                <button type="button" class="interactive-btn" style="flex: 1; padding: 6px; font-size:0.8rem; background:var(--danger); color:white; border:none; border-radius:6px;" onclick="deleteItem('deleteDriver', '${c.name}')">ط­ط°ظپ <i class=\'fa-solid fa-xmark\'></i></button>
                             </div>
                         </div>`;
                 });
@@ -335,7 +339,7 @@ function loadDataFromServer() {
                 if (driversDisplayList) driversDisplayList.innerHTML = displayListHtml;
             }
 
-            // <i class=\'fa-solid fa-star\'></i> اقتراحات المنتجات تأتي من Firebase بدلاً من الإكسل
+            // <i class=\'fa-solid fa-star\'></i> ط§ظ‚طھط±ط§ط­ط§طھ ط§ظ„ظ…ظ†طھط¬ط§طھ طھط£طھظٹ ظ…ظ† Firebase ط¨ط¯ظ„ط§ظ‹ ظ…ظ† ط§ظ„ط¥ظƒط³ظ„
             updateSmartSuggestionsFromFirebase();
 
             const modSelect = document.getElementById('moderatorSelect');
@@ -343,7 +347,7 @@ function loadDataFromServer() {
             const modsList = document.getElementById('moderatorsList');
             
             if (data.moderators && data.moderators.length > 0) {
-                let modSelectHtml = '<option value="">اختر اسمك</option>';
+                let modSelectHtml = '<option value="">ط§ط®طھط± ط§ط³ظ…ظƒ</option>';
                 let modsListHtml = '';
                 
                 data.moderators.forEach(m => {
@@ -358,14 +362,14 @@ function loadDataFromServer() {
                 if (modSelect) modSelect.innerHTML = modSelectHtml;
                 if (modsList) modsList.innerHTML = modsListHtml;
             } else {
-                if (modSelect) modSelect.innerHTML = '<option value="">اختر اسمك</option>';
-                if (modsList) modsList.innerHTML = '<p class="empty-msg">لا يوجد كاشيرية مسجلين</p>';
+                if (modSelect) modSelect.innerHTML = '<option value="">ط§ط®طھط± ط§ط³ظ…ظƒ</option>';
+                if (modsList) modsList.innerHTML = '<p class="empty-msg">ظ„ط§ ظٹظˆط¬ط¯ ظƒط§ط´ظٹط±ظٹط© ظ…ط³ط¬ظ„ظٹظ†</p>';
             }
             if (modSelect && currentMod) modSelect.value = currentMod;
 
-            // <i class=\'fa-solid fa-star\'></i> V15.1: إحصائيات اليوم (today) - تم استبدالها بالمنطق المحلي في updateAdvancedDashboard لحل مشكلة الإكسيل
+            // <i class=\'fa-solid fa-star\'></i> V15.1: ط¥ط­طµط§ط¦ظٹط§طھ ط§ظ„ظٹظˆظ… (today) - طھظ… ط§ط³طھط¨ط¯ط§ظ„ظ‡ط§ ط¨ط§ظ„ظ…ظ†ط·ظ‚ ط§ظ„ظ…ط­ظ„ظٹ ظپظٹ updateAdvancedDashboard ظ„ط­ظ„ ظ…ط´ظƒظ„ط© ط§ظ„ط¥ظƒط³ظٹظ„
 
-            // <i class=\'fa-solid fa-star\'></i> إذا لم يكن المستخدم قد اختار شهراً معيناً للتقرير، نعرض إحصائيات الشهر الحالي في المربعات
+            // <i class=\'fa-solid fa-star\'></i> ط¥ط°ط§ ظ„ظ… ظٹظƒظ† ط§ظ„ظ…ط³طھط®ط¯ظ… ظ‚ط¯ ط§ط®طھط§ط± ط´ظ‡ط±ط§ظ‹ ظ…ط¹ظٹظ†ط§ظ‹ ظ„ظ„طھظ‚ط±ظٹط±طŒ ظ†ط¹ط±ط¶ ط¥ط­طµط§ط¦ظٹط§طھ ط§ظ„ط´ظ‡ط± ط§ظ„ط­ط§ظ„ظٹ ظپظٹ ط§ظ„ظ…ط±ط¨ط¹ط§طھ
             let reportMonthFilter = document.getElementById('reportMonthFilter');
             if (!reportMonthFilter || !reportMonthFilter.value) {
                 if (document.getElementById('monthSales')) document.getElementById('monthSales').innerText = data.monthSales || 0;
@@ -374,15 +378,15 @@ function loadDataFromServer() {
                 if (document.getElementById('returnedCount')) document.getElementById('returnedCount').innerText = data.returnedCount || 0;
             }
 
-            // <i class=\'fa-solid fa-star\'></i> ملء فلتر الشهور في التقارير تلقائياً
+            // <i class=\'fa-solid fa-star\'></i> ظ…ظ„ط، ظپظ„طھط± ط§ظ„ط´ظ‡ظˆط± ظپظٹ ط§ظ„طھظ‚ط§ط±ظٹط± طھظ„ظ‚ط§ط¦ظٹط§ظ‹
             buildMonthFilterOptions();
 
-            // <i class=\'fa-solid fa-star\'></i> المبكر هينت: عشان اللي فاتح التقارير يتحدث داتاه تلقائياً
+            // <i class=\'fa-solid fa-star\'></i> ط§ظ„ظ…ط¨ظƒط± ظ‡ظٹظ†طھ: ط¹ط´ط§ظ† ط§ظ„ظ„ظٹ ظپط§طھط­ ط§ظ„طھظ‚ط§ط±ظٹط± ظٹطھط­ط¯ط« ط¯ط§طھط§ظ‡ طھظ„ظ‚ط§ط¦ظٹط§ظ‹
             window.latestServerData = data;
 
-            // <i class=\'fa-solid fa-star\'></i> أخفي الأوردرات المشحونة حتى يتم اختيار المندوب
+            // <i class=\'fa-solid fa-star\'></i> ط£ط®ظپظٹ ط§ظ„ط£ظˆط±ط¯ط±ط§طھ ط§ظ„ظ…ط´ط­ظˆظ†ط© ط­طھظ‰ ظٹطھظ… ط§ط®طھظٹط§ط± ط§ظ„ظ…ظ†ط¯ظˆط¨
             let shippedCont = document.getElementById('shippedOrdersContainer');
-            if (shippedCont) shippedCont.innerHTML = '<p class="empty-msg">برجاء اختيار المندوب والضغط على "عرض العهدة"</p>';
+            if (shippedCont) shippedCont.innerHTML = '<p class="empty-msg">ط¨ط±ط¬ط§ط، ط§ط®طھظٹط§ط± ط§ظ„ظ…ظ†ط¯ظˆط¨ ظˆط§ظ„ط¶ط؛ط· ط¹ظ„ظ‰ "ط¹ط±ط¶ ط§ظ„ط¹ظ‡ط¯ط©"</p>';
 
             renderHistoryList(orderHistoryData);
             renderShippingRoom(orderHistoryData);
@@ -390,7 +394,7 @@ function loadDataFromServer() {
             checkBookingAlerts();
 
         }).catch(err => {
-            if (syncStatus) { syncStatus.innerText = "خطأ اتصال"; syncStatus.style.color = "red"; }
+            if (syncStatus) { syncStatus.innerText = "ط®ط·ط£ ط§طھطµط§ظ„"; syncStatus.style.color = "red"; }
         });
 }
 
@@ -402,7 +406,7 @@ function checkBookingAlerts() {
     today.setHours(0, 0, 0, 0);
 
     let hasAlert = window.pendingOrdersData.some(o => {
-        if (!o.orderType || !o.orderType.includes('حجز')) return false;
+        if (!o.orderType || !o.orderType.includes('ط­ط¬ط²')) return false;
         
         let resDateStr = o.reservationDate || o.expectedDate || o.specialDate || o.spDate;
         if (!resDateStr) return false;
@@ -429,7 +433,7 @@ function renderFinancials(finList) {
     let allDrivers = window.driversList || [];
     let driversMap = {};
     allDrivers.forEach(d => {
-        driversMap[d.name] = { name: d.name, ordersCount: 0, cashCollected: 0, shippingFees: 0, netDue: 0, statusText: "لا توجد مديونية" };
+        driversMap[d.name] = { name: d.name, ordersCount: 0, cashCollected: 0, shippingFees: 0, netDue: 0, statusText: "ظ„ط§ طھظˆط¬ط¯ ظ…ط¯ظٹظˆظ†ظٹط©" };
     });
 
     finList.forEach(f => {
@@ -442,7 +446,7 @@ function renderFinancials(finList) {
 
     let driversArray = Object.values(driversMap);
     if (driversArray.length === 0) {
-        container.innerHTML = '<p class="empty-msg">لا توجد مناديب مسجلة.</p>';
+        container.innerHTML = '<p class="empty-msg">ظ„ط§ طھظˆط¬ط¯ ظ…ظ†ط§ط¯ظٹط¨ ظ…ط³ط¬ظ„ط©.</p>';
         return;
     }
 
@@ -459,14 +463,14 @@ function renderFinancials(finList) {
         let ordersHtml = '';
         if (driverOrders.length > 0) {
             ordersHtml = `<div style="margin-top: 10px; border-top: 1px dashed #ccc; padding-top: 10px;">
-                <strong style="font-size:0.85rem; color:var(--primary);"><i class=\'fa-solid fa-box\'></i> أوردرات معلقة (لم يتم تسويتها):</strong>`;
+                <strong style="font-size:0.85rem; color:var(--primary);"><i class=\'fa-solid fa-box\'></i> ط£ظˆط±ط¯ط±ط§طھ ظ…ط¹ظ„ظ‚ط© (ظ„ظ… ظٹطھظ… طھط³ظˆظٹطھظ‡ط§):</strong>`;
             driverOrders.forEach(o => {
                 ordersHtml += `
                     <div class="financial-order-item" style="background:#fdfdfd; padding:8px; border:1px solid #eee; border-radius:6px; margin-top:5px; display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-size:0.75rem; color:#777;">${o.payment} | إجمالي: ${o.total}ج | شحن: ${o.shipping}ج</span><br>
-                            <span style="font-size:0.85rem; font-weight:bold; color:var(--danger);">المطلوب تحصيله: ${o.remaining}ج</span>
+                            <span style="font-size:0.75rem; color:#777;">${o.payment} | ط¥ط¬ظ…ط§ظ„ظٹ: ${o.total}ط¬ | ط´ط­ظ†: ${o.shipping}ط¬</span><br>
+                            <span style="font-size:0.85rem; font-weight:bold; color:var(--danger);">ط§ظ„ظ…ط·ظ„ظˆط¨ طھط­طµظٹظ„ظ‡: ${o.remaining}ط¬</span>
                         </div>
-                        <button class="btn-settle interactive-btn" onclick="settleDriverOrder('${o.id}', this, '${o.payment}')" style="background:var(--success); color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">تسوية <i class=\'fa-solid fa-money-bill\'></i></button>
+                        <button class="btn-settle interactive-btn" onclick="settleDriverOrder('${o.id}', this, '${o.payment}')" style="background:var(--success); color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">طھط³ظˆظٹط© <i class=\'fa-solid fa-money-bill\'></i></button>
                     </div>
                 `;
             });
@@ -477,14 +481,14 @@ function renderFinancials(finList) {
             <div class="${cardClass}" style="background: #fff; padding: 15px; border-radius: 12px; border: 1px solid ${cardBorderColor}; margin-bottom: 12px; box-shadow: ${cardShadow}; opacity: ${cardOpacity}; transition: all 0.3s ease;">
                 <div class="financial-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #f0f0f0; padding-bottom:8px; margin-bottom:10px;">
                     <span style="font-weight:bold; font-size:1.1rem; color:var(--text-dark);"><i class=\'fa-solid fa-motorcycle\'></i> ${f.name}</span>
-                    <span style="font-size: 0.85rem; background:#f0f0f0; color:var(--text-dark); padding:3px 8px; border-radius:12px; font-weight:bold;">${f.ordersCount || 0} طلب</span>
+                    <span style="font-size: 0.85rem; background:#f0f0f0; color:var(--text-dark); padding:3px 8px; border-radius:12px; font-weight:bold;">${f.ordersCount || 0} ط·ظ„ط¨</span>
                 </div>
                 <div class="financial-details" style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:10px;">
-                    <span style="background:#e8f4f8; padding:5px 10px; border-radius:6px; color:#555;">الكاش: <strong style="color:#2980b9;">${f.cashCollected || 0}</strong> ج</span>
-                    <span style="background:#f9ebea; padding:5px 10px; border-radius:6px; color:#555;">الشحن: <strong style="color:#c0392b;">${f.shippingFees || 0}</strong> ج</span>
+                    <span style="background:#e8f4f8; padding:5px 10px; border-radius:6px; color:#555;">ط§ظ„ظƒط§ط´: <strong style="color:#2980b9;">${f.cashCollected || 0}</strong> ط¬</span>
+                    <span style="background:#f9ebea; padding:5px 10px; border-radius:6px; color:#555;">ط§ظ„ط´ط­ظ†: <strong style="color:#c0392b;">${f.shippingFees || 0}</strong> ط¬</span>
                 </div>
                 <div class="financial-status" style="background: ${statusColor}15; color: ${statusColor}; padding: 8px; border-radius: 6px; text-align:center; font-weight:bold; border: 1px dashed ${statusColor};">
-                    ${f.statusText || "لا توجد مديونية"} ${netDue !== 0 ? `( ${Math.abs(netDue)} ج.م )` : ''}
+                    ${f.statusText || "ظ„ط§ طھظˆط¬ط¯ ظ…ط¯ظٹظˆظ†ظٹط©"} ${netDue !== 0 ? `( ${Math.abs(netDue)} ط¬.ظ… )` : ''}
                 </div>
                 ${ordersHtml}
             </div>
@@ -492,14 +496,14 @@ function renderFinancials(finList) {
     });
 }
 
-// <i class=\'fa-solid fa-star\'></i> حماية تصفية الأوردر برسالة واضحة بناءً على نوع الدفع
+// <i class=\'fa-solid fa-star\'></i> ط­ظ…ط§ظٹط© طھطµظپظٹط© ط§ظ„ط£ظˆط±ط¯ط± ط¨ط±ط³ط§ظ„ط© ظˆط§ط¶ط­ط© ط¨ظ†ط§ط،ظ‹ ط¹ظ„ظ‰ ظ†ظˆط¹ ط§ظ„ط¯ظپط¹
 window.settleDriverOrder = function (orderId, btn, payMethod) {
-    let msg = `هل أنت متأكد من تسوية الأوردر (${orderId})؟`;
-    if (payMethod.includes('كاش')) msg = `هل استلمت النقدية من المندوب الخاصة بالأوردر (${orderId})؟`;
-    else msg = `هل قمت بصرف حق الشحن للمندوب عن الأوردر (${orderId}) المدفوع إلكترونياً؟`;
+    let msg = `ظ‡ظ„ ط£ظ†طھ ظ…طھط£ظƒط¯ ظ…ظ† طھط³ظˆظٹط© ط§ظ„ط£ظˆط±ط¯ط± (${orderId})طں`;
+    if (payMethod.includes('ظƒط§ط´')) msg = `ظ‡ظ„ ط§ط³طھظ„ظ…طھ ط§ظ„ظ†ظ‚ط¯ظٹط© ظ…ظ† ط§ظ„ظ…ظ†ط¯ظˆط¨ ط§ظ„ط®ط§طµط© ط¨ط§ظ„ط£ظˆط±ط¯ط± (${orderId})طں`;
+    else msg = `ظ‡ظ„ ظ‚ظ…طھ ط¨طµط±ظپ ط­ظ‚ ط§ظ„ط´ط­ظ† ظ„ظ„ظ…ظ†ط¯ظˆط¨ ط¹ظ† ط§ظ„ط£ظˆط±ط¯ط± (${orderId}) ط§ظ„ظ…ط¯ظپظˆط¹ ط¥ظ„ظƒطھط±ظˆظ†ظٹط§ظ‹طں`;
 
     customConfirm(msg, () => {
-        btn.innerText = "جاري...";
+        btn.innerText = "ط¬ط§ط±ظٹ...";
         btn.disabled = true;
 
         let formData = new URLSearchParams();
@@ -508,18 +512,18 @@ window.settleDriverOrder = function (orderId, btn, payMethod) {
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
-                showToast("<i class=\'fa-solid fa-check\'></i> تمت المحاسبة وتسوية الأوردر!", "success");
+                showToast("<i class=\'fa-solid fa-check\'></i> طھظ…طھ ط§ظ„ظ…ط­ط§ط³ط¨ط© ظˆطھط³ظˆظٹط© ط§ظ„ط£ظˆط±ط¯ط±!", "success");
                 loadDataFromServer();
             }).catch(() => {
-                showToast("<i class=\'fa-solid fa-xmark\'></i> حدث خطأ في الاتصال", "error");
-                btn.innerHTML = "تسوية <i class=\'fa-solid fa-money-bill\'></i>";
+                showToast("<i class=\'fa-solid fa-xmark\'></i> ط­ط¯ط« ط®ط·ط£ ظپظٹ ط§ظ„ط§طھطµط§ظ„", "error");
+                btn.innerHTML = "طھط³ظˆظٹط© <i class=\'fa-solid fa-money-bill\'></i>";
                 btn.disabled = false;
             });
     });
 };
 
 // ==========================================
-// 4. حساب أجازة الجمعة والعربون <i class=\'fa-solid fa-rocket\'></i>
+// 4. ط­ط³ط§ط¨ ط£ط¬ط§ط²ط© ط§ظ„ط¬ظ…ط¹ط© ظˆط§ظ„ط¹ط±ط¨ظˆظ† <i class=\'fa-solid fa-rocket\'></i>
 // ==========================================
 function calculateDeliveryDateSkippingFriday(durationText) {
     if (!durationText) return "";
@@ -552,7 +556,7 @@ if (deliveryTypeSelect) {
             if (addressFields) addressFields.classList.add('hidden-field');
             if (specialDateContainer) specialDateContainer.classList.add('hidden-field');
             if (document.getElementById('shippingCost')) document.getElementById('shippingCost').value = 0;
-            let infoSpan = document.querySelector('#deliveryInfo span'); if (infoSpan) infoSpan.innerHTML = "استلام من الفرع <i class=\'fa-solid fa-store\'></i>";
+            let infoSpan = document.querySelector('#deliveryInfo span'); if (infoSpan) infoSpan.innerHTML = "ط§ط³طھظ„ط§ظ… ظ…ظ† ط§ظ„ظپط±ط¹ <i class=\'fa-solid fa-store\'></i>";
         } else if (type === 'gov_shipping') {
             if (addressFields) addressFields.classList.remove('hidden-field');
             if (specialDateContainer) specialDateContainer.classList.add('hidden-field');
@@ -578,21 +582,21 @@ window.updateGovernoratesDropdown = function () {
     let type = document.getElementById('deliveryType') ? document.getElementById('deliveryType').value : 'normal';
 
     let currentVal = govSelect.value;
-    govSelect.innerHTML = '<option value="">اختر من القائمة</option>';
+    govSelect.innerHTML = '<option value="">ط§ط®طھط± ظ…ظ† ط§ظ„ظ‚ط§ط¦ظ…ط©</option>';
 
     if (type === 'gov_shipping') {
         if (data.govs && data.govs.length > 0) {
-            let optgroup = document.createElement('optgroup'); optgroup.label = "<i class=\'fa-solid fa-truck-fast\'></i> المحافظات";
+            let optgroup = document.createElement('optgroup'); optgroup.label = "<i class=\'fa-solid fa-truck-fast\'></i> ط§ظ„ظ…ط­ط§ظپط¸ط§طھ";
             data.govs.forEach(z => {
-                optgroup.innerHTML += `<option value="${z.name}">${z.name} (${z.price} ج)</option>`;
+                optgroup.innerHTML += `<option value="${z.name}">${z.name} (${z.price} ط¬)</option>`;
             });
             govSelect.appendChild(optgroup);
         }
     } else {
         if (data.alex && data.alex.length > 0) {
-            let optgroup = document.createElement('optgroup'); optgroup.label = "<i class=\'fa-solid fa-link\'></i> مناطق الإسكندرية";
+            let optgroup = document.createElement('optgroup'); optgroup.label = "<i class=\'fa-solid fa-link\'></i> ظ…ظ†ط§ط·ظ‚ ط§ظ„ط¥ط³ظƒظ†ط¯ط±ظٹط©";
             data.alex.forEach(z => {
-                optgroup.innerHTML += `<option value="${z.name}">${z.name} (${z.price} ج)</option>`;
+                optgroup.innerHTML += `<option value="${z.name}">${z.name} (${z.price} ط¬)</option>`;
             });
             govSelect.appendChild(optgroup);
         }
@@ -620,12 +624,12 @@ function triggerGovCalc() {
     if (dateDisplay) {
         let type = deliveryTypeSelect ? deliveryTypeSelect.value : 'normal';
         if (type === 'special_date') {
-            dateDisplay.innerHTML = "حسب التاريخ المختار <i class=\'fa-regular fa-calendar-days\'></i>";
+            dateDisplay.innerHTML = "ط­ط³ط¨ ط§ظ„طھط§ط±ظٹط® ط§ظ„ظ…ط®طھط§ط± <i class=\'fa-regular fa-calendar-days\'></i>";
         } else if (info.type === 'next_day') {
-            dateDisplay.innerHTML = "تاني يوم <i class=\'fa-solid fa-truck-fast\'></i>";
+            dateDisplay.innerHTML = "طھط§ظ†ظٹ ظٹظˆظ… <i class=\'fa-solid fa-truck-fast\'></i>";
         } else {
             let exactDate = calculateDeliveryDateSkippingFriday(info.duration);
-            dateDisplay.innerText = exactDate ? `المتوقع: ${exactDate}` : `خلال ${info.duration}`;
+            dateDisplay.innerText = exactDate ? `ط§ظ„ظ…طھظˆظ‚ط¹: ${exactDate}` : `ط®ظ„ط§ظ„ ${info.duration}`;
         }
     }
     calculateTotal();
@@ -635,12 +639,12 @@ if (govSelect) govSelect.addEventListener('change', triggerGovCalc);
 
 
 // ==========================================
-// 5. سجل الأوردرات (العرض الذكي والطباعة)
+// 5. ط³ط¬ظ„ ط§ظ„ط£ظˆط±ط¯ط±ط§طھ (ط§ظ„ط¹ط±ط¶ ط§ظ„ط°ظƒظٹ ظˆط§ظ„ط·ط¨ط§ط¹ط©)
 // ==========================================
 let currentHistoryPage = 1;
 const ITEMS_PER_PAGE = 20;
 let currentOrdersList = [];
-window.searchResultsCache = []; // <i class=\'fa-solid fa-star\'></i> لتخزين البحث دون مسح السجل
+window.searchResultsCache = []; // <i class=\'fa-solid fa-star\'></i> ظ„طھط®ط²ظٹظ† ط§ظ„ط¨ط­ط« ط¯ظˆظ† ظ…ط³ط­ ط§ظ„ط³ط¬ظ„
 
 function renderHistoryList(orders, isLoadMore = false) {
     let container = document.getElementById('historyListContainer');
@@ -653,19 +657,19 @@ function renderHistoryList(orders, isLoadMore = false) {
 
         if (window.pendingOrdersData && window.pendingOrdersData.length > 0 && document.getElementById('orderSearchInput').value.trim() === "") {
             let pendingDiv = document.createElement('div');
-            pendingDiv.innerHTML = `<h4 style="color: #e74c3c; padding-bottom: 5px; margin-bottom: 15px; font-weight: bold;"><i class=\'fa-solid fa-circle text-danger\'></i> أوردرات لم تُشحن بعد (${window.pendingOrdersData.length})</h4>`;
+            pendingDiv.innerHTML = `<h4 style="color: #e74c3c; padding-bottom: 5px; margin-bottom: 15px; font-weight: bold;"><i class=\'fa-solid fa-circle text-danger\'></i> ط£ظˆط±ط¯ط±ط§طھ ظ„ظ… طھظڈط´ط­ظ† ط¨ط¹ط¯ (${window.pendingOrdersData.length})</h4>`;
 
             window.pendingOrdersData.forEach(pOrder => {
                 let pType = pOrder.orderType || pOrder.type || pOrder.deliveryType || "";
                 let dateHtml = `<span style="color: #e74c3c; font-weight: bold; font-size:0.85rem;"><i class=\'fa-regular fa-calendar-days\'></i> ${pOrder.date}</span>`;
-                if (pType.includes('حجز') || pType === 'special_date') {
+                if (pType.includes('ط­ط¬ط²') || pType === 'special_date') {
                     let resDate = pOrder.reservationDate || pOrder.expectedDate || pOrder.specialDate || pOrder.spDate;
                     if (resDate) {
-                        if (resDate.toString().includes('GMT') || resDate.toString().includes('توقيت')) {
+                        if (resDate.toString().includes('GMT') || resDate.toString().includes('طھظˆظ‚ظٹطھ')) {
                             let d = new Date(resDate);
                             if (!isNaN(d.getTime())) resDate = `${d.getFullYear()}-${("0" + (d.getMonth() + 1)).slice(-2)}-${("0" + d.getDate()).slice(-2)}`;
                         }
-                        dateHtml = `<span style="color: #fff; background: #c2185b; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size:0.9rem;"><i class=\'fa-regular fa-calendar\'></i> تسليم: ${resDate}</span>`;
+                        dateHtml = `<span style="color: #fff; background: #c2185b; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size:0.9rem;"><i class=\'fa-regular fa-calendar\'></i> طھط³ظ„ظٹظ…: ${resDate}</span>`;
                     }
                 }
                 pendingDiv.innerHTML += `
@@ -675,7 +679,7 @@ function renderHistoryList(orders, isLoadMore = false) {
                             ${dateHtml}
                         </div>
                         <div style="font-size: 0.9rem; color: #555;">
-                            <span><i class=\'fa-solid fa-mobile-screen\'></i> ${pOrder.phone} | <span style="color:#000; font-weight:bold;"><i class=\'fa-solid fa-money-bill-wave\'></i> ${pOrder.total} ج.م</span></span>
+                            <span><i class=\'fa-solid fa-mobile-screen\'></i> ${pOrder.phone} | <span style="color:#000; font-weight:bold;"><i class=\'fa-solid fa-money-bill-wave\'></i> ${pOrder.total} ط¬.ظ…</span></span>
                         </div>
                     </div>
                 `;
@@ -689,7 +693,7 @@ function renderHistoryList(orders, isLoadMore = false) {
         }
 
         if (currentOrdersList.length === 0) {
-            container.innerHTML += `<p class="empty-msg">لا توجد أوردرات في هذا التاريخ.</p>`;
+            container.innerHTML += `<p class="empty-msg">ظ„ط§ طھظˆط¬ط¯ ط£ظˆط±ط¯ط±ط§طھ ظپظٹ ظ‡ط°ط§ ط§ظ„طھط§ط±ظٹط®.</p>`;
             return;
         }
     }
@@ -702,26 +706,26 @@ function renderHistoryList(orders, isLoadMore = false) {
         let div = document.createElement('div');
         div.className = 'history-item';
 
-        let statusColor = order.status === "تم التوصيل" ? "var(--success)" : "var(--primary)";
-        if (order.status === "مرتجع") statusColor = "var(--danger)";
+        let statusColor = order.status === "طھظ… ط§ظ„طھظˆطµظٹظ„" ? "var(--success)" : "var(--primary)";
+        if (order.status === "ظ…ط±طھط¬ط¹") statusColor = "var(--danger)";
 
         div.style.borderRightColor = statusColor;
 
         let typeBadge = '';
         let oType = order.orderType || order.type || order.deliveryType || "";
-        if (oType.includes('توصيل منزلي') || oType === 'normal') {
-            typeBadge = `<span style="background: #e3f2fd; color: #1565c0; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px;"><i class=\'fa-solid fa-truck-fast\'></i> توصيل منزلي</span>`;
-        } else if (oType.includes('استلام من الفرع') || oType === 'branch') {
-            typeBadge = `<span style="background: #e8f5e9; color: #2e7d32; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px;"><i class=\'fa-solid fa-store\'></i> استلام من الفرع</span>`;
-        } else if (oType.includes('محافظات') || oType === 'gov_shipping') {
-            typeBadge = `<span style="background: #fff3e0; color: #e65100; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px;"><i class=\'fa-solid fa-box\'></i> شحن محافظات</span>`;
-        } else if (oType.includes('حجز') || oType === 'special_date') {
+        if (oType.includes('طھظˆطµظٹظ„ ظ…ظ†ط²ظ„ظٹ') || oType === 'normal') {
+            typeBadge = `<span style="background: #e3f2fd; color: #1565c0; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px;"><i class=\'fa-solid fa-truck-fast\'></i> طھظˆطµظٹظ„ ظ…ظ†ط²ظ„ظٹ</span>`;
+        } else if (oType.includes('ط§ط³طھظ„ط§ظ… ظ…ظ† ط§ظ„ظپط±ط¹') || oType === 'branch') {
+            typeBadge = `<span style="background: #e8f5e9; color: #2e7d32; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px;"><i class=\'fa-solid fa-store\'></i> ط§ط³طھظ„ط§ظ… ظ…ظ† ط§ظ„ظپط±ط¹</span>`;
+        } else if (oType.includes('ظ…ط­ط§ظپط¸ط§طھ') || oType === 'gov_shipping') {
+            typeBadge = `<span style="background: #fff3e0; color: #e65100; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px;"><i class=\'fa-solid fa-box\'></i> ط´ط­ظ† ظ…ط­ط§ظپط¸ط§طھ</span>`;
+        } else if (oType.includes('ط­ط¬ط²') || oType === 'special_date') {
             let resDate = order.reservationDate || order.expectedDate || order.bookingDate || order.specialDate || order.spDate || order.date;
-            if (resDate && (resDate.toString().includes('GMT') || resDate.toString().includes('توقيت'))) {
+            if (resDate && (resDate.toString().includes('GMT') || resDate.toString().includes('طھظˆظ‚ظٹطھ'))) {
                 let d = new Date(resDate);
                 if (!isNaN(d.getTime())) resDate = `${d.getFullYear()}-${("0" + (d.getMonth() + 1)).slice(-2)}-${("0" + d.getDate()).slice(-2)}`;
             }
-            let dateText = resDate ? `تسليم: ${resDate}` : 'حجز مسبق';
+            let dateText = resDate ? `طھط³ظ„ظٹظ…: ${resDate}` : 'ط­ط¬ط² ظ…ط³ط¨ظ‚';
             typeBadge = `<span style="background: #c2185b; color: #fff; padding: 3px 8px; border-radius: 6px; font-size: 0.85rem; margin-right: 5px; font-weight: bold;"><i class=\'fa-regular fa-calendar\'></i> ${dateText}</span>`;
         }
 
@@ -729,17 +733,17 @@ function renderHistoryList(orders, isLoadMore = false) {
             <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 8px; align-items: center;">
                 <strong style="font-size: 1.05rem;">${order.id} | ${order.name} ${typeBadge}</strong>
                 <div style="display:flex; align-items:center; gap:10px;">
-                    <button class="interactive-btn" onclick="shareToWhatsAppGroup('${order.id}')" style="background:none; border:none; font-size:1.3rem; cursor:pointer;" title="مشاركة للجروب"><i class=\'fa-solid fa-mobile-screen\'></i></button>
-                    <button class="interactive-btn" onclick="printHistoryOrder('${order.id}')" style="background:none; border:none; cursor:pointer;" title="طباعة الفاتورة">
+                    <button class="interactive-btn" onclick="shareToWhatsAppGroup('${order.id}')" style="background:none; border:none; font-size:1.3rem; cursor:pointer;" title="ظ…ط´ط§ط±ظƒط© ظ„ظ„ط¬ط±ظˆط¨"><i class=\'fa-solid fa-mobile-screen\'></i></button>
+                    <button class="interactive-btn" onclick="printHistoryOrder('${order.id}')" style="background:none; border:none; cursor:pointer;" title="ط·ط¨ط§ط¹ط© ط§ظ„ظپط§طھظˆط±ط©">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-dark);"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
                     </button>
                     <span style="background: ${statusColor}15; color: ${statusColor}; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.85rem;">${order.status}</span>
                 </div>
             </div>
             <div style="display: flex; justify-content: space-between; width: 100%; font-size: 0.9rem; color: #666; background: var(--bg-body); padding: 8px; border-radius: 6px;">
-                <span>⏰ ${order.time || '--'}</span>
+                <span>âڈ° ${order.time || '--'}</span>
                 <span><i class=\'fa-solid fa-mobile-screen\'></i> ${order.phone}${((order.phone2 || order.secondPhone || order.backupPhone || order.altPhone || order.customerPhone2 || order.otherPhone) && String(order.phone2 || order.secondPhone || order.backupPhone || order.altPhone || order.customerPhone2 || order.otherPhone).trim() !== '') ? ' | <i class=\'fa-solid fa-mobile-screen\'></i> ' + String(order.phone2 || order.secondPhone || order.backupPhone || order.altPhone || order.customerPhone2 || order.otherPhone).trim() : ''}</span>
-                <span style="font-weight:bold; color: var(--text-dark);"><i class=\'fa-solid fa-money-bill-wave\'></i> ${order.total} ج.م</span>
+                <span style="font-weight:bold; color: var(--text-dark);"><i class=\'fa-solid fa-money-bill-wave\'></i> ${order.total} ط¬.ظ…</span>
             </div>
         `;
         container.appendChild(div);
@@ -751,7 +755,7 @@ function renderHistoryList(orders, isLoadMore = false) {
     if (endIndex < currentOrdersList.length) {
         let btn = document.createElement('button');
         btn.id = 'loadMoreHistoryBtn';
-        btn.innerText = '⬇️ عرض المزيد';
+        btn.innerText = 'â¬‡ï¸ڈ ط¹ط±ط¶ ط§ظ„ظ…ط²ظٹط¯';
         btn.style.cssText = 'width: 100%; padding: 12px; margin-top: 15px; background: var(--bg-body); border: 2px solid var(--border); border-radius: 8px; cursor: pointer; font-weight: bold; color: var(--text-dark); transition: 0.3s;';
         btn.onmouseover = () => btn.style.borderColor = 'var(--primary)';
         btn.onmouseout = () => btn.style.borderColor = 'var(--border)';
@@ -773,7 +777,7 @@ window.printHistoryOrder = function (orderId) {
         (window.uncollectedOrdersData || []).find(findFn);
 
     if (!order) {
-        customAlert("<i class='fa-solid fa-triangle-exclamation' style='color:var(--danger)'></i> خطأ: لم يتم العثور على بيانات الطلب للطباعة.");
+        customAlert("<i class='fa-solid fa-triangle-exclamation' style='color:var(--danger)'></i> ط®ط·ط£: ظ„ظ… ظٹطھظ… ط§ظ„ط¹ط«ظˆط± ط¹ظ„ظ‰ ط¨ظٹط§ظ†ط§طھ ط§ظ„ط·ظ„ط¨ ظ„ظ„ط·ط¨ط§ط¹ط©.");
         // <i class=\'fa-solid fa-star\'></i> Debug: log all available IDs to help trace mismatch
         console.warn("printHistoryOrder: could not find orderId =", orderId, typeof orderId);
         console.log("Available history IDs:", (window.orderHistoryData || []).map(o => ({ id: o.id, type: typeof o.id })));
@@ -781,16 +785,16 @@ window.printHistoryOrder = function (orderId) {
     }
     console.log("Order Data:", order);
 
-    let isOldGift = order.notes && order.notes.includes("هدية");
+    let isOldGift = order.notes && order.notes.includes("ظ‡ط¯ظٹط©");
     let oTypeStr = String(order.orderType || "").toLowerCase();
     let dTypeStr = String(order.deliveryType || "").toLowerCase();
-    let isBranch = oTypeStr.includes('استلام') || oTypeStr.includes('فرع') || oTypeStr === 'branch' || dTypeStr.includes('استلام') || dTypeStr.includes('فرع') || dTypeStr === 'branch';
+    let isBranch = oTypeStr.includes('ط§ط³طھظ„ط§ظ…') || oTypeStr.includes('ظپط±ط¹') || oTypeStr === 'branch' || dTypeStr.includes('ط§ط³طھظ„ط§ظ…') || dTypeStr.includes('ظپط±ط¹') || dTypeStr === 'branch';
 
     let printLogo = document.getElementById('print-logo');
     if (printLogo) {
         let pay = order.payment || "";
-        let isGovShipping = oTypeStr === 'gov_shipping' || oTypeStr.includes('محافظات') || dTypeStr === 'gov_shipping';
-        let isDigitalPay = isGovShipping || pay.includes('إنستا') || pay.includes('انستاباي') || pay.includes('انستا باي') || pay.includes('محفظة') || pay.includes('فودافون') || pay.includes('تحويل');
+        let isGovShipping = oTypeStr === 'gov_shipping' || oTypeStr.includes('ظ…ط­ط§ظپط¸ط§طھ') || dTypeStr === 'gov_shipping';
+        let isDigitalPay = isGovShipping || pay.includes('ط¥ظ†ط³طھط§') || pay.includes('ط§ظ†ط³طھط§ط¨ط§ظٹ') || pay.includes('ط§ظ†ط³طھط§ ط¨ط§ظٹ') || pay.includes('ظ…ط­ظپط¸ط©') || pay.includes('ظپظˆط¯ط§ظپظˆظ†') || pay.includes('طھط­ظˆظٹظ„');
         if (isBranch) {
             printLogo.src = 'images/logo-branch.png';
         } else if (isDigitalPay) {
@@ -802,20 +806,20 @@ window.printHistoryOrder = function (orderId) {
     }
 
     if (document.getElementById('receipt-type')) {
-        // <i class=\'fa-solid fa-star\'></i> V15.0: تطبيع النص - إزالة "عادي" من "توصيل منزلي عادي"
-        let typeStr = (order.orderType || "أوردر توصيل").replace("توصيل منزلي عادي", "توصيل منزلي");
+        // <i class=\'fa-solid fa-star\'></i> V15.0: طھط·ط¨ظٹط¹ ط§ظ„ظ†طµ - ط¥ط²ط§ظ„ط© "ط¹ط§ط¯ظٹ" ظ…ظ† "طھظˆطµظٹظ„ ظ…ظ†ط²ظ„ظٹ ط¹ط§ط¯ظٹ"
+        let typeStr = (order.orderType || "ط£ظˆط±ط¯ط± طھظˆطµظٹظ„").replace("طھظˆطµظٹظ„ ظ…ظ†ط²ظ„ظٹ ط¹ط§ط¯ظٹ", "طھظˆطµظٹظ„ ظ…ظ†ط²ظ„ظٹ");
         let govStr = order.gov ? order.gov + " - " : "";
-        document.getElementById('receipt-type').innerHTML = isOldGift ? `${govStr}${typeStr} - <i class=\'fa-solid fa-gift\'></i> هدية` : `${govStr}${typeStr}`;
+        document.getElementById('receipt-type').innerHTML = isOldGift ? `${govStr}${typeStr} - <i class=\'fa-solid fa-gift\'></i> ظ‡ط¯ظٹط©` : `${govStr}${typeStr}`;
     }
     if (document.getElementById('print-date')) document.getElementById('print-date').innerText = order.date || new Date().toLocaleDateString('ar-EG');
     if (document.getElementById('print-time')) document.getElementById('print-time').innerText = order.time || '';
 
     let printBookingRow = document.querySelector('.print-booking-row');
-    if (oTypeStr.includes('حجز') || oTypeStr === 'special_date') {
+    if (oTypeStr.includes('ط­ط¬ط²') || oTypeStr === 'special_date') {
         let rDate = order.reservationDate || order.expectedDate || order.specialDate || order.spDate;
         if (rDate) {
             if (printBookingRow) printBookingRow.style.display = 'block';
-            if (rDate.toString().includes('GMT') || rDate.toString().includes('توقيت')) {
+            if (rDate.toString().includes('GMT') || rDate.toString().includes('طھظˆظ‚ظٹطھ')) {
                 let d = new Date(rDate);
                 if (!isNaN(d.getTime())) rDate = `${d.getFullYear()}-${("0" + (d.getMonth() + 1)).slice(-2)}-${("0" + d.getDate()).slice(-2)}`;
             }
@@ -840,7 +844,7 @@ window.printHistoryOrder = function (orderId) {
         }
     }
 
-    // <i class=\'fa-solid fa-star\'></i> V14.2: إخفاء العنوان للفرع برمجياً - لا يطبع العنوان نهائياً
+    // <i class=\'fa-solid fa-star\'></i> V14.2: ط¥ط®ظپط§ط، ط§ظ„ط¹ظ†ظˆط§ظ† ظ„ظ„ظپط±ط¹ ط¨ط±ظ…ط¬ظٹط§ظ‹ - ظ„ط§ ظٹط·ط¨ط¹ ط§ظ„ط¹ظ†ظˆط§ظ† ظ†ظ‡ط§ط¦ظٹط§ظ‹
     let printAddressRow = document.querySelector('.print-address-row');
     if (isBranch) {
         if (printAddressRow) printAddressRow.style.display = 'none';
@@ -855,7 +859,7 @@ window.printHistoryOrder = function (orderId) {
         let lines = order.products.split('\n');
         lines.forEach(line => {
             if (line.trim() !== "") {
-                let match = line.match(/(.*) - الكمية: (\d+) \(([\d.]+)ج\)/);
+                let match = line.match(/(.*) - ط§ظ„ظƒظ…ظٹط©: (\d+) \(([\d.]+)ط¬\)/);
                 if (match) {
                     let name = match[1].trim();
                     let qty = match[2];
@@ -870,14 +874,14 @@ window.printHistoryOrder = function (orderId) {
             }
         });
     } else {
-        printItemsHtml = `<tr><td colspan="4">لا توجد تفاصيل</td></tr>`;
+        printItemsHtml = `<tr><td colspan="4">ظ„ط§ طھظˆط¬ط¯ طھظپط§طµظٹظ„</td></tr>`;
     }
     if (document.getElementById('print-items-body')) document.getElementById('print-items-body').innerHTML = printItemsHtml;
 
     if (document.getElementById('print-subtotal')) document.getElementById('print-subtotal').innerText = isOldGift ? "***" : (order.subtotal || order.total || 0);
     if (document.getElementById('print-discount')) document.getElementById('print-discount').innerText = isOldGift ? "***" : (order.discount || 0);
 
-    // <i class=\'fa-solid fa-star\'></i> V15.0: إخفاء سطر الشحن لطلبات استلام الفرع نهائياً
+    // <i class=\'fa-solid fa-star\'></i> V15.0: ط¥ط®ظپط§ط، ط³ط·ط± ط§ظ„ط´ط­ظ† ظ„ط·ظ„ط¨ط§طھ ط§ط³طھظ„ط§ظ… ط§ظ„ظپط±ط¹ ظ†ظ‡ط§ط¦ظٹط§ظ‹
     let printShippingRow = document.querySelector('.print-shipping-row');
     if (isBranch) {
         if (printShippingRow) printShippingRow.style.display = 'none';
@@ -887,22 +891,22 @@ window.printHistoryOrder = function (orderId) {
     }
 
     if (parseFloat(order.deposit) > 0 && !isOldGift) {
-        let depositHtml = `<p class="print-deposit-row">تم دفع عربون: <b><span id="print-deposit">${order.deposit}</span></b></p>`;
+        let depositHtml = `<p class="print-deposit-row">طھظ… ط¯ظپط¹ ط¹ط±ط¨ظˆظ†: <b><span id="print-deposit">${order.deposit}</span></b></p>`;
         document.getElementById('print-deposit-container').innerHTML = depositHtml;
         document.getElementById('print-final').innerText = order.remaining !== undefined ? order.remaining : order.total;
-        if (document.getElementById('print-final-label')) document.getElementById('print-final-label').innerText = "المتبقي للدفع";
+        if (document.getElementById('print-final-label')) document.getElementById('print-final-label').innerText = "ط§ظ„ظ…طھط¨ظ‚ظٹ ظ„ظ„ط¯ظپط¹";
     } else {
         document.getElementById('print-deposit-container').innerHTML = '';
         document.getElementById('print-final').innerText = isOldGift ? "***" : order.total;
-        if (document.getElementById('print-final-label')) document.getElementById('print-final-label').innerText = "الإجمالي النهائي";
+        if (document.getElementById('print-final-label')) document.getElementById('print-final-label').innerText = "ط§ظ„ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ظ†ظ‡ط§ط¦ظٹ";
     }
 
     if (document.getElementById('print-payment')) document.getElementById('print-payment').innerText = order.payment || "";
 
     let sellerP = document.getElementById('print-seller-name');
-    if (sellerP) sellerP.innerText = `الكاشير: ${order.seller || 'غير محدد'}`;
+    if (sellerP) sellerP.innerText = `ط§ظ„ظƒط§ط´ظٹط±: ${order.seller || 'ط؛ظٹط± ظ…ط­ط¯ط¯'}`;
 
-    let isGovShipping = oTypeStr === 'gov_shipping' || oTypeStr.includes('محافظات') || dTypeStr === 'gov_shipping' || oTypeStr.includes('شحن');
+    let isGovShipping = oTypeStr === 'gov_shipping' || oTypeStr.includes('ظ…ط­ط§ظپط¸ط§طھ') || dTypeStr === 'gov_shipping' || oTypeStr.includes('ط´ط­ظ†');
     if (isGovShipping) {
         document.body.classList.add('print-gov-shipping', 'shipping-mode');
     } else {
@@ -929,7 +933,7 @@ window.printHistoryOrder = function (orderId) {
 };
 
 
-// <i class=\'fa-solid fa-star\'></i> إصلاح مسح الذاكرة في محرك البحث الشامل
+// <i class=\'fa-solid fa-star\'></i> ط¥طµظ„ط§ط­ ظ…ط³ط­ ط§ظ„ط°ط§ظƒط±ط© ظپظٹ ظ…ط­ط±ظƒ ط§ظ„ط¨ط­ط« ط§ظ„ط´ط§ظ…ظ„
 const searchBtn = document.getElementById('searchBtn');
 const orderSearchInput = document.getElementById('orderSearchInput');
 if (searchBtn && orderSearchInput) {
@@ -939,19 +943,19 @@ if (searchBtn && orderSearchInput) {
             renderHistoryList(orderHistoryData);
         } else {
             let container = document.getElementById('historyListContainer');
-            container.innerHTML = '<p class="empty-msg">جاري البحث الشامل في قاعدة البيانات... <i class=\'fa-solid fa-hourglass-half\'></i></p>';
+            container.innerHTML = '<p class="empty-msg">ط¬ط§ط±ظٹ ط§ظ„ط¨ط­ط« ط§ظ„ط´ط§ظ…ظ„ ظپظٹ ظ‚ط§ط¹ط¯ط© ط§ظ„ط¨ظٹط§ظ†ط§طھ... <i class=\'fa-solid fa-hourglass-half\'></i></p>';
 
             fetch(`${GOOGLE_SHEETS_URL}?action=globalSearch&query=${encodeURIComponent(keyword)}`)
                 .then(res => res.json())
                 .then(data => {
-                    if (data.length === 0) container.innerHTML = '<p class="empty-msg">لم يتم العثور على أوردرات مطابقة.</p>';
+                    if (data.length === 0) container.innerHTML = '<p class="empty-msg">ظ„ظ… ظٹطھظ… ط§ظ„ط¹ط«ظˆط± ط¹ظ„ظ‰ ط£ظˆط±ط¯ط±ط§طھ ظ…ط·ط§ط¨ظ‚ط©.</p>';
                     else {
                         window.searchResultsCache = data;
                         renderHistoryList(data);
                     }
                 })
                 .catch(() => {
-                    container.innerHTML = '<p class="empty-msg"><i class=\'fa-solid fa-xmark\'></i> حدث خطأ في الاتصال بالإنترنت.</p>';
+                    container.innerHTML = '<p class="empty-msg"><i class=\'fa-solid fa-xmark\'></i> ط­ط¯ط« ط®ط·ط£ ظپظٹ ط§ظ„ط§طھطµط§ظ„ ط¨ط§ظ„ط¥ظ†طھط±ظ†طھ.</p>';
                 });
         }
     });
@@ -960,12 +964,12 @@ if (searchBtn && orderSearchInput) {
     });
 }
 // ==========================================
-// 6. بحث الهاتف والمنتجات 
+// 6. ط¨ط­ط« ط§ظ„ظ‡ط§طھظپ ظˆط§ظ„ظ…ظ†طھط¬ط§طھ 
 // ==========================================
 const phoneInput = document.getElementById('customerPhone');
 const phoneStatus = document.getElementById('phoneCheckStatus');
 
-// <i class=\'fa-solid fa-star\'></i> إصلاح ذاكرة السمكة
+// <i class=\'fa-solid fa-star\'></i> ط¥طµظ„ط§ط­ ط°ط§ظƒط±ط© ط§ظ„ط³ظ…ظƒط©
 function performPhoneSearch() {
     if (!phoneInput || !phoneStatus) return;
     let phoneVal = phoneInput.value.trim().replace(/\D/g, '');
@@ -979,12 +983,12 @@ function performPhoneSearch() {
         if (foundCustomer) {
             fillCustomerData(foundCustomer);
         } else {
-            // البحث الشامل الصامت في قاعدة العملاء
+            // ط§ظ„ط¨ط­ط« ط§ظ„ط´ط§ظ…ظ„ ط§ظ„طµط§ظ…طھ ظپظٹ ظ‚ط§ط¹ط¯ط© ط§ظ„ط¹ظ…ظ„ط§ط،
             fetch(`${GOOGLE_SHEETS_URL}?action=globalSearch&query=${phoneVal}`)
                 .then(res => res.json())
                 .then(data => {
                     if (data.length > 0) fillCustomerData(data[0]);
-                    else phoneStatus.innerText = "🆕";
+                    else phoneStatus.innerText = "ًں†•";
                 }).catch(() => phoneStatus.innerHTML = "<i class=\'fa-solid fa-magnifying-glass\'></i>");
         }
     } else {
@@ -994,11 +998,11 @@ function performPhoneSearch() {
 
 function fillCustomerData(cust) {
     if (document.getElementById('customerName')) document.getElementById('customerName').value = cust.name;
-    if (document.getElementById('address') && cust.address && cust.address !== 'استلام من الفرع') {
+    if (document.getElementById('address') && cust.address && cust.address !== 'ط§ط³طھظ„ط§ظ… ظ…ظ† ط§ظ„ظپط±ط¹') {
         document.getElementById('address').value = cust.address;
     }
     phoneStatus.innerHTML = "<i class=\'fa-solid fa-check\'></i>";
-    showToast(`أهلاً بعودتك يا ${cust.name}!`, "success");
+    showToast(`ط£ظ‡ظ„ط§ظ‹ ط¨ط¹ظˆط¯طھظƒ ظٹط§ ${cust.name}!`, "success");
 }
 
 if (phoneStatus) phoneStatus.addEventListener('click', performPhoneSearch);
@@ -1006,7 +1010,7 @@ if (phoneInput) phoneInput.addEventListener('change', performPhoneSearch);
 
 const productsContainer = document.getElementById('productsContainer');
 
-// <i class=\'fa-solid fa-star\'></i> دالة إضافة المنتجات (وإصلاح قفل الخانات عند الاسترجاع)
+// <i class=\'fa-solid fa-star\'></i> ط¯ط§ظ„ط© ط¥ط¶ط§ظپط© ط§ظ„ظ…ظ†طھط¬ط§طھ (ظˆط¥طµظ„ط§ط­ ظ‚ظپظ„ ط§ظ„ط®ط§ظ†ط§طھ ط¹ظ†ط¯ ط§ظ„ط§ط³طھط±ط¬ط§ط¹)
 function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = false) {
     if (!productsContainer) return;
 
@@ -1030,12 +1034,12 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
     let rOnly = isConfirmed ? 'readonly' : '';
 
     div.innerHTML = `
-        <input type="text" list="smartProductsList" class="product-name-input" placeholder="اسم المنتج..." value="${nameVal}" required ${rOnly}>
-        <input type="number" class="product-price-input" placeholder="السعر" value="${priceVal}" required ${rOnly}>
-        <input type="number" class="product-offer-input" placeholder="سعر العرض" ${rOnly}>
-        <input type="number" class="product-qty-input" placeholder="الكمية" value="${qtyVal}" min="1" required ${rOnly}>
+        <input type="text" list="smartProductsList" class="product-name-input" placeholder="ط§ط³ظ… ط§ظ„ظ…ظ†طھط¬..." value="${nameVal}" required ${rOnly}>
+        <input type="number" class="product-price-input" placeholder="ط§ظ„ط³ط¹ط±" value="${priceVal}" required ${rOnly}>
+        <input type="number" class="product-offer-input" placeholder="ط³ط¹ط± ط§ظ„ط¹ط±ط¶" ${rOnly}>
+        <input type="number" class="product-qty-input" placeholder="ط§ظ„ظƒظ…ظٹط©" value="${qtyVal}" min="1" required ${rOnly}>
         <div class="product-row-actions">
-            <button type="button" class="btn-confirm-pro interactive-btn">✔️</button>
+            <button type="button" class="btn-confirm-pro interactive-btn">âœ”ï¸ڈ</button>
             <button type="button" class="remove-product-btn interactive-btn"><i class=\'fa-solid fa-xmark\'></i></button>
         </div>
     `;
@@ -1078,7 +1082,7 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
 
         if (div.classList.contains('confirmed')) {
             div.classList.remove('confirmed');
-            confirmBtn.innerHTML = "✔️";
+            confirmBtn.innerHTML = "âœ”ï¸ڈ";
             nameInput.readOnly = false;
             priceInput.readOnly = false;
             offerInput.readOnly = false;
@@ -1103,13 +1107,13 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
                 let offerP = parseFloat(cProd.offerPrice) || 0;
 
                 if (currentOffer > 0 && currentOffer !== offerP) {
-                    customConfirm("تم تعديل سعر العرض لـ " + currentOffer + " هل تريد حفظه كسعر عرض دائم للمنتج وتفعيله في الكتالوج؟", () => {
+                    customConfirm("طھظ… طھط¹ط¯ظٹظ„ ط³ط¹ط± ط§ظ„ط¹ط±ط¶ ظ„ظ€ " + currentOffer + " ظ‡ظ„ طھط±ظٹط¯ ط­ظپط¸ظ‡ ظƒط³ط¹ط± ط¹ط±ط¶ ط¯ط§ط¦ظ… ظ„ظ„ظ…ظ†طھط¬ ظˆطھظپط¹ظٹظ„ظ‡ ظپظٹ ط§ظ„ظƒطھط§ظ„ظˆط¬طں", () => {
                         window.pushCatalogUpdate(cProd.name, baseP, true, currentOffer);
                         cProd.offerPrice = currentOffer;
                         cProd.isOffer = true;
                     });
                 } else if (currentOffer === 0 && currentPrice !== baseP) {
-                    customConfirm("تم تعديل السعر الأساسي لـ " + currentPrice + " هل تريد حفظه كسعر أساسي دائم في الكتالوج؟", () => {
+                    customConfirm("طھظ… طھط¹ط¯ظٹظ„ ط§ظ„ط³ط¹ط± ط§ظ„ط£ط³ط§ط³ظٹ ظ„ظ€ " + currentPrice + " ظ‡ظ„ طھط±ظٹط¯ ط­ظپط¸ظ‡ ظƒط³ط¹ط± ط£ط³ط§ط³ظٹ ط¯ط§ط¦ظ… ظپظٹ ط§ظ„ظƒطھط§ظ„ظˆط¬طں", () => {
                         window.pushCatalogUpdate(cProd.name, currentPrice, false, offerP);
                         cProd.price = currentPrice;
                         cProd.isOffer = false;
@@ -1126,13 +1130,13 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
 }
 
 function updateSmartProductsList() {
-    // <i class=\'fa-solid fa-star\'></i> الاقتراحات تأتي من Firebase أولاً، وإذا لم تتوفر يأخذ من catalogData
+    // <i class=\'fa-solid fa-star\'></i> ط§ظ„ط§ظ‚طھط±ط§ط­ط§طھ طھط£طھظٹ ظ…ظ† Firebase ط£ظˆظ„ط§ظ‹طŒ ظˆط¥ط°ط§ ظ„ظ… طھطھظˆظپط± ظٹط£ط®ط° ظ…ظ† catalogData
     updateSmartSuggestionsFromFirebase();
 }
 if (document.getElementById('addProductBtn')) document.getElementById('addProductBtn').addEventListener('click', () => addProductRow());
 if (productsContainer && productsContainer.children.length === 0) addProductRow();
 
-// <i class=\'fa-solid fa-star\'></i> نظام العربون والـ NaN
+// <i class=\'fa-solid fa-star\'></i> ظ†ط¸ط§ظ… ط§ظ„ط¹ط±ط¨ظˆظ† ظˆط§ظ„ظ€ NaN
 function calculateTotal() {
     let total = 0;
     document.querySelectorAll('.product-row.confirmed').forEach(row => {
@@ -1140,7 +1144,7 @@ function calculateTotal() {
         let offer = parseFloat(row.querySelector('.product-offer-input').value) || 0;
         let finalPrice = offer > 0 ? offer : price;
         let qty = parseFloat(row.querySelector('.product-qty-input').value) || 1;
-        total += (finalPrice * qty); // محصنة ضد الـ NaN
+        total += (finalPrice * qty); // ظ…ط­طµظ†ط© ط¶ط¯ ط§ظ„ظ€ NaN
     });
 
     if (document.getElementById('productsTotal')) document.getElementById('productsTotal').value = total;
@@ -1152,7 +1156,7 @@ function calculateTotal() {
 
     if (finalDisplay) finalDisplay.innerText = finalAmount;
 
-    // حساب العربون
+    // ط­ط³ط§ط¨ ط§ظ„ط¹ط±ط¨ظˆظ†
     let depositInput = document.getElementById('depositAmount');
     let remainingDisplay = document.getElementById('remainingAmountDisplay');
     if (depositInput && remainingDisplay) {
@@ -1169,7 +1173,7 @@ function calculateTotal() {
             hint = document.createElement('div');
             hint.id = 'giftHint';
             hint.style.cssText = "color:var(--primary); font-size:0.8rem; font-weight:bold; text-align:center; margin-top:5px;";
-            hint.innerText = "* أوردر هدية: سيتم حفظ السعر بالإكسيل وإخفاؤه في الفاتورة المطبوعة *";
+            hint.innerText = "* ط£ظˆط±ط¯ط± ظ‡ط¯ظٹط©: ط³ظٹطھظ… ط­ظپط¸ ط§ظ„ط³ط¹ط± ط¨ط§ظ„ط¥ظƒط³ظٹظ„ ظˆط¥ط®ظپط§ط¤ظ‡ ظپظٹ ط§ظ„ظپط§طھظˆط±ط© ط§ظ„ظ…ط·ط¨ظˆط¹ط© *";
             finalDisplay.parentNode.appendChild(hint);
         }
     } else {
@@ -1181,7 +1185,7 @@ if (document.getElementById('discount')) document.getElementById('discount').add
 if (document.getElementById('isGiftCheckbox')) document.getElementById('isGiftCheckbox').addEventListener('change', calculateTotal);
 if (document.getElementById('depositAmount')) document.getElementById('depositAmount').addEventListener('input', calculateTotal);
 
-// <i class=\'fa-solid fa-star\'></i> منع اختراق الكيبورد بـ readonly و disabled
+// <i class=\'fa-solid fa-star\'></i> ظ…ظ†ط¹ ط§ط®طھط±ط§ظ‚ ط§ظ„ظƒظٹط¨ظˆط±ط¯ ط¨ظ€ readonly ظˆ disabled
 const paymentMethod = document.getElementById('paymentMethod');
 const confirmPaymentBtn = document.getElementById('confirmPaymentBtn');
 let isPaymentConfirmed = false;
@@ -1203,19 +1207,19 @@ function toggleGlobalLock(shouldLock) {
 }
 if (confirmPaymentBtn) {
     confirmPaymentBtn.addEventListener('click', () => {
-        if (!paymentMethod || !paymentMethod.value) { showToast("اختر طريقة الدفع أولاً!", "error"); return; }
+        if (!paymentMethod || !paymentMethod.value) { showToast("ط§ط®طھط± ط·ط±ظٹظ‚ط© ط§ظ„ط¯ظپط¹ ط£ظˆظ„ط§ظ‹!", "error"); return; }
         if (isPaymentConfirmed) {
-            isPaymentConfirmed = false; confirmPaymentBtn.classList.remove('confirmed'); confirmPaymentBtn.innerHTML = "تأكيد ✔️";
+            isPaymentConfirmed = false; confirmPaymentBtn.classList.remove('confirmed'); confirmPaymentBtn.innerHTML = "طھط£ظƒظٹط¯ âœ”ï¸ڈ";
             paymentMethod.classList.remove('locked-field'); paymentMethod.disabled = false; toggleGlobalLock(false);
         } else {
-            isPaymentConfirmed = true; confirmPaymentBtn.classList.add('confirmed'); confirmPaymentBtn.innerHTML = "تم التأكيد <i class=\'fa-solid fa-lock\'></i>";
+            isPaymentConfirmed = true; confirmPaymentBtn.classList.add('confirmed'); confirmPaymentBtn.innerHTML = "طھظ… ط§ظ„طھط£ظƒظٹط¯ <i class=\'fa-solid fa-lock\'></i>";
             paymentMethod.classList.add('locked-field'); paymentMethod.disabled = true; toggleGlobalLock(true);
         }
     });
 }
 
 // ==========================================
-// 7. المعلقات 
+// 7. ط§ظ„ظ…ط¹ظ„ظ‚ط§طھ 
 // ==========================================
 
 function updateSuspendedCount() {
@@ -1226,15 +1230,15 @@ function updateSuspendedCount() {
 let suspendBtn = document.getElementById('suspendBtn');
 if (suspendBtn) {
     suspendBtn.addEventListener('click', () => {
-        setBtnLoading(suspendBtn, true); // <i class=\'fa-solid fa-star\'></i> منع تكرار الأوردرات
-        let nameEl = document.getElementById('customerName'); let name = nameEl && nameEl.value ? nameEl.value : "بدون اسم";
+        setBtnLoading(suspendBtn, true); // <i class=\'fa-solid fa-star\'></i> ظ…ظ†ط¹ طھظƒط±ط§ط± ط§ظ„ط£ظˆط±ط¯ط±ط§طھ
+        let nameEl = document.getElementById('customerName'); let name = nameEl && nameEl.value ? nameEl.value : "ط¨ط¯ظˆظ† ط§ط³ظ…";
         let prods = [];
         document.querySelectorAll('.product-row').forEach(row => {
             let n = row.querySelector('.product-name-input').value, p = row.querySelector('.product-price-input').value, q = row.querySelector('.product-qty-input').value, c = row.classList.contains('confirmed');
             if (n) prods.push({ name: n, price: p, qty: q, confirmed: c });
         });
 
-        // <i class=\'fa-solid fa-star\'></i> V14.2: Timestamp-based ID لمنع التكرار نهائياً
+        // <i class=\'fa-solid fa-star\'></i> V14.2: Timestamp-based ID ظ„ظ…ظ†ط¹ ط§ظ„طھظƒط±ط§ط± ظ†ظ‡ط§ط¦ظٹط§ظ‹
         let draftId = "CANDY-" + Date.now().toString().slice(-5);
         let draft = {
             id: draftId, date: new Date().toLocaleTimeString('ar-EG'),
@@ -1257,10 +1261,10 @@ if (suspendBtn) {
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
-                showToast("⏸️ تم تعليق الفاتورة بنجاح!", "warning");
+                showToast("âڈ¸ï¸ڈ طھظ… طھط¹ظ„ظٹظ‚ ط§ظ„ظپط§طھظˆط±ط© ط¨ظ†ط¬ط§ط­!", "warning");
                 resetForm(); updateSuspendedCount();
-                setBtnLoading(suspendBtn, false, "⏸️ تعليق الطلب");
-            }).catch(() => { setBtnLoading(suspendBtn, false, "⏸️ تعليق الطلب"); });
+                setBtnLoading(suspendBtn, false, "âڈ¸ï¸ڈ طھط¹ظ„ظٹظ‚ ط§ظ„ط·ظ„ط¨");
+            }).catch(() => { setBtnLoading(suspendBtn, false, "âڈ¸ï¸ڈ طھط¹ظ„ظٹظ‚ ط§ظ„ط·ظ„ط¨"); });
     });
 }
 
@@ -1270,15 +1274,15 @@ if (openSuspendedBtn) {
         let drafts = window.suspendedOrdersData || [];
         let list = document.getElementById('suspendedOrdersList'); if (!list) return;
         list.innerHTML = '';
-        if (drafts.length === 0) { list.innerHTML = '<p class="empty-msg">لا توجد طلبات معلقة</p>'; return; }
+        if (drafts.length === 0) { list.innerHTML = '<p class="empty-msg">ظ„ط§ طھظˆط¬ط¯ ط·ظ„ط¨ط§طھ ظ…ط¹ظ„ظ‚ط©</p>'; return; }
 
         drafts.forEach(d => {
             let div = document.createElement('div'); div.className = 'data-row'; div.style.alignItems = 'center';
             div.innerHTML = `
-                <div style="flex:1;"><strong>${d.name}</strong> <br> <small style="color:#777">⏰ ${d.time || d.date}</small></div>
+                <div style="flex:1;"><strong>${d.name}</strong> <br> <small style="color:#777">âڈ° ${d.time || d.date}</small></div>
                 <div style="display:flex; gap:5px;">
-                    <button class="btn-search interactive-btn restore-btn" style="padding: 5px 10px; font-size:0.8rem">استرجاع <i class=\'fa-solid fa-rotate\'></i></button>
-                    <button class="interactive-btn delete-btn" style="padding: 5px 10px; font-size:0.8rem; background-color:var(--danger); color:white; border:none; border-radius:8px; cursor:pointer;">حذف <i class=\'fa-solid fa-xmark\'></i></button>
+                    <button class="btn-search interactive-btn restore-btn" style="padding: 5px 10px; font-size:0.8rem">ط§ط³طھط±ط¬ط§ط¹ <i class=\'fa-solid fa-rotate\'></i></button>
+                    <button class="interactive-btn delete-btn" style="padding: 5px 10px; font-size:0.8rem; background-color:var(--danger); color:white; border:none; border-radius:8px; cursor:pointer;">ط­ط°ظپ <i class=\'fa-solid fa-xmark\'></i></button>
                 </div>
             `;
             div.querySelector('.restore-btn').addEventListener('click', () => {
@@ -1286,8 +1290,8 @@ if (openSuspendedBtn) {
             });
             div.querySelector('.delete-btn').addEventListener('click', () => {
                 deleteSuspendedDraft(d.id); div.remove();
-                if (list.children.length === 0) list.innerHTML = '<p class="empty-msg">لا توجد طلبات معلقة</p>';
-                showToast("<i class=\'fa-solid fa-trash\'></i> تم حذف المسودة", "success");
+                if (list.children.length === 0) list.innerHTML = '<p class="empty-msg">ظ„ط§ طھظˆط¬ط¯ ط·ظ„ط¨ط§طھ ظ…ط¹ظ„ظ‚ط©</p>';
+                showToast("<i class=\'fa-solid fa-trash\'></i> طھظ… ط­ط°ظپ ط§ظ„ظ…ط³ظˆط¯ط©", "success");
             });
             list.appendChild(div);
         });
@@ -1327,7 +1331,7 @@ function restoreDraft(d) {
             let lines = d.products.split('\n');
             let hasProds = false;
             lines.forEach(line => {
-                let match = line.match(/(.*) - الكمية: (\d+)/);
+                let match = line.match(/(.*) - ط§ظ„ظƒظ…ظٹط©: (\d+)/);
                 if (match) {
                     addProductRow(match[1].trim(), "", match[2], true);
                     hasProds = true;
@@ -1338,7 +1342,7 @@ function restoreDraft(d) {
         if (document.getElementById('discount')) document.getElementById('discount').value = d.discount || "";
     }
     if (deliveryTypeSelect) deliveryTypeSelect.dispatchEvent(new Event('change'));
-    showToast("<i class=\'fa-solid fa-check\'></i> تم استرجاع الفاتورة!", "success");
+    showToast("<i class=\'fa-solid fa-check\'></i> طھظ… ط§ط³طھط±ط¬ط§ط¹ ط§ظ„ظپط§طھظˆط±ط©!", "success");
 }
 
 function resetForm() {
@@ -1349,7 +1353,7 @@ function resetForm() {
 
     if (productsContainer) { productsContainer.innerHTML = ''; addProductRow(); }
     isPaymentConfirmed = false;
-    if (confirmPaymentBtn) { confirmPaymentBtn.classList.remove('confirmed'); confirmPaymentBtn.innerHTML = "تأكيد ✔️"; }
+    if (confirmPaymentBtn) { confirmPaymentBtn.classList.remove('confirmed'); confirmPaymentBtn.innerHTML = "طھط£ظƒظٹط¯ âœ”ï¸ڈ"; }
     if (paymentMethod) { paymentMethod.classList.remove('locked-field'); paymentMethod.disabled = false; }
     toggleGlobalLock(false);
     if (deliveryTypeSelect) deliveryTypeSelect.dispatchEvent(new Event('change'));
@@ -1358,7 +1362,7 @@ function resetForm() {
 }
 
 // ==========================================
-// 8. إرسال الواتساب
+// 8. ط¥ط±ط³ط§ظ„ ط§ظ„ظˆط§طھط³ط§ط¨
 // ==========================================
 let whatsappReviewBtn = document.getElementById('whatsappReviewBtn');
 if (whatsappReviewBtn) {
@@ -1372,7 +1376,7 @@ if (whatsappReviewBtn) {
 
         let displayPhone = phone;
         if (!displayPhone) {
-            displayPhone = "(مطلوب)";
+            displayPhone = "(ظ…ط·ظ„ظˆط¨)";
             hasMissingData = true;
         } else if (displayPhone.startsWith('0')) {
             displayPhone = '+2' + displayPhone;
@@ -1380,13 +1384,13 @@ if (whatsappReviewBtn) {
 
         let displayName = name;
         if (!displayName) {
-            displayName = "(مطلوب)";
+            displayName = "(ظ…ط·ظ„ظˆط¨)";
             hasMissingData = true;
         }
 
         let displayAddress = address;
         if (!displayAddress) {
-            displayAddress = "(مطلوب لتحديد تكلفة الشحن)";
+            displayAddress = "(ظ…ط·ظ„ظˆط¨ ظ„طھط­ط¯ظٹط¯ طھظƒظ„ظپط© ط§ظ„ط´ط­ظ†)";
             hasMissingData = true;
         }
 
@@ -1400,28 +1404,28 @@ if (whatsappReviewBtn) {
             let offer = parseFloat(row.querySelector('.product-offer-input').value) || 0;
             let finalPrice = offer > 0 ? offer : price;
             let q = parseFloat(row.querySelector('.product-qty-input').value) || 1;
-            productsText += `- ${n} (السعر: ${finalPrice}ج) - الكمية: ${q} - الإجمالي: ${finalPrice * q} ج.م\n`;
+            productsText += `- ${n} (ط§ظ„ط³ط¹ط±: ${finalPrice}ط¬) - ط§ظ„ظƒظ…ظٹط©: ${q} - ط§ظ„ط¥ط¬ظ…ط§ظ„ظٹ: ${finalPrice * q} ط¬.ظ…\n`;
         });
-        if (productsText === "") productsText = "لم يتم تأكيد أي منتجات.\n";
+        if (productsText === "") productsText = "ظ„ظ… ظٹطھظ… طھط£ظƒظٹط¯ ط£ظٹ ظ…ظ†طھط¬ط§طھ.\n";
 
         let productsTotal = document.getElementById('productsTotal') ? document.getElementById('productsTotal').value || 0 : 0;
 
-        let phoneStr = phone2 ? `${displayPhone}\n📱 رقم احتياطي: ${phone2}` : displayPhone;
-        let message = `أهلاً بك في كاندي كلوب 🍬\nيرجى مراجعة تفاصيل طلبك:\n\n👤 الاسم: ${displayName}\n📱 الموبايل: ${phoneStr}\n📍 العنوان: ${displayAddress}\n\n🛒 تفاصيل الطلب:\n${productsText}\n`;
-        message += `🛍️ إجمالي المنتجات: ${productsTotal} ج.م\n`;
+        let phoneStr = phone2 ? `${displayPhone}\nًں“± ط±ظ‚ظ… ط§ط­طھظٹط§ط·ظٹ: ${phone2}` : displayPhone;
+        let message = `ط£ظ‡ظ„ط§ظ‹ ط¨ظƒ ظپظٹ ظƒط§ظ†ط¯ظٹ ظƒظ„ظˆط¨ ًںچ¬\nظٹط±ط¬ظ‰ ظ…ط±ط§ط¬ط¹ط© طھظپط§طµظٹظ„ ط·ظ„ط¨ظƒ:\n\nًں‘¤ ط§ظ„ط§ط³ظ…: ${displayName}\nًں“± ط§ظ„ظ…ظˆط¨ط§ظٹظ„: ${phoneStr}\nًں“چ ط§ظ„ط¹ظ†ظˆط§ظ†: ${displayAddress}\n\nًں›’ طھظپط§طµظٹظ„ ط§ظ„ط·ظ„ط¨:\n${productsText}\n`;
+        message += `ًں›چï¸ڈ ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ظ…ظ†طھط¬ط§طھ: ${productsTotal} ط¬.ظ…\n`;
 
         let discountValue = document.getElementById('discount') ? parseFloat(document.getElementById('discount').value) || 0 : 0;
         if (discountValue > 0) {
-            message += `🏷️ الخصم: ${discountValue} ج.م\n`;
+            message += `ًںڈ·ï¸ڈ ط§ظ„ط®طµظ…: ${discountValue} ط¬.ظ…\n`;
         }
 
-        message += `🚚 الشحن: ${document.getElementById('shippingCost') ? document.getElementById('shippingCost').value || 0 : 0} ج.م\n`;
-        message += `💰 الإجمالي المستحق: ${document.getElementById('finalTotalDisplay') ? document.getElementById('finalTotalDisplay').innerText : 0} ج.م\n\n`;
+        message += `ًںڑڑ ط§ظ„ط´ط­ظ†: ${document.getElementById('shippingCost') ? document.getElementById('shippingCost').value || 0 : 0} ط¬.ظ…\n`;
+        message += `ًں’° ط§ظ„ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ظ…ط³طھط­ظ‚: ${document.getElementById('finalTotalDisplay') ? document.getElementById('finalTotalDisplay').innerText : 0} ط¬.ظ…\n\n`;
 
         if (hasMissingData) {
-            message += `يرجى ملء البيانات الناقصة بالأعلى والرد بكلمة (تمام) لتأكيد الأوردر 🤝`;
+            message += `ظٹط±ط¬ظ‰ ظ…ظ„ط، ط§ظ„ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ†ط§ظ‚طµط© ط¨ط§ظ„ط£ط¹ظ„ظ‰ ظˆط§ظ„ط±ط¯ ط¨ظƒظ„ظ…ط© (طھظ…ط§ظ…) ظ„طھط£ظƒظٹط¯ ط§ظ„ط£ظˆط±ط¯ط± ًں¤‌`;
         } else {
-            message += `يرجى الرد بكلمة (تمام) لتأكيد الأوردر 🤝`;
+            message += `ظٹط±ط¬ظ‰ ط§ظ„ط±ط¯ ط¨ظƒظ„ظ…ط© (طھظ…ط§ظ…) ظ„طھط£ظƒظٹط¯ ط§ظ„ط£ظˆط±ط¯ط± ًں¤‌`;
         }
 
         let waPhone = phone.replace(/\D/g, '');
@@ -1431,12 +1435,12 @@ if (whatsappReviewBtn) {
 }
 
 // ==========================================
-// 9. الحفظ والطباعة 
+// 9. ط§ظ„ط­ظپط¸ ظˆط§ظ„ط·ط¨ط§ط¹ط© 
 // ==========================================
 let saveAndPrintBtn = document.getElementById('saveAndPrintBtn');
 if (saveAndPrintBtn) {
     saveAndPrintBtn.addEventListener('click', () => {
-        if (document.querySelectorAll('.product-row:not(.confirmed)').length > 0) { showToast("قم بتأكيد (✔️) المنتجات أولاً!", "error"); return; }
+        if (document.querySelectorAll('.product-row:not(.confirmed)').length > 0) { showToast("ظ‚ظ… ط¨طھط£ظƒظٹط¯ (âœ”ï¸ڈ) ط§ظ„ظ…ظ†طھط¬ط§طھ ط£ظˆظ„ط§ظ‹!", "error"); return; }
 
         let isGift = document.getElementById('isGiftCheckbox') ? document.getElementById('isGiftCheckbox').checked : false;
 
@@ -1450,7 +1454,7 @@ if (saveAndPrintBtn) {
             let finalPrice = oVal > 0 ? oVal : p;
             let rowTotal = finalPrice * q;
 
-            productsListText += `${n} - الكمية: ${q} (${rowTotal}ج)\n`;
+            productsListText += `${n} - ط§ظ„ظƒظ…ظٹط©: ${q} (${rowTotal}ط¬)\n`;
 
             let nDisplay = n;
             let printP = isGift ? "***" : finalPrice;
@@ -1459,12 +1463,12 @@ if (saveAndPrintBtn) {
         });
 
         if (productsListText === "") { 
-            showToast("لا يمكن حفظ أوردر بدون منتجات!", "error"); 
+            showToast("ظ„ط§ ظٹظ…ظƒظ† ط­ظپط¸ ط£ظˆط±ط¯ط± ط¨ط¯ظˆظ† ظ…ظ†طھط¬ط§طھ!", "error"); 
             if (typeof window.playErrorBeep === 'function') window.playErrorBeep();
             return; 
         }
         if (!isPaymentConfirmed) { 
-            showToast("تأكيد طريقة الدفع <i class=\'fa-solid fa-lock\'></i>", "error"); 
+            showToast("طھط£ظƒظٹط¯ ط·ط±ظٹظ‚ط© ط§ظ„ط¯ظپط¹ <i class=\'fa-solid fa-lock\'></i>", "error"); 
             if (typeof window.playErrorBeep === 'function') window.playErrorBeep();
             return; 
         }
@@ -1480,7 +1484,7 @@ if (saveAndPrintBtn) {
         if (!selectedModerator) { 
             let mel = document.getElementById('moderatorSelect');
             if(mel){ mel.classList.add('input-error-flash'); mel.addEventListener('change', ()=>mel.classList.remove('input-error-flash'), {once:true}); }
-            showToast("يرجى اختيار اسم المسؤول عن الأوردر!", "error"); 
+            showToast("ظٹط±ط¬ظ‰ ط§ط®طھظٹط§ط± ط§ط³ظ… ط§ظ„ظ…ط³ط¤ظˆظ„ ط¹ظ† ط§ظ„ط£ظˆط±ط¯ط±!", "error"); 
             if (typeof window.playErrorBeep === 'function') window.playErrorBeep();
             return; 
         }
@@ -1488,28 +1492,28 @@ if (saveAndPrintBtn) {
         if (!phone || phone.length < 9) { 
             let pel = document.getElementById('customerPhone');
             if(pel){ pel.classList.add('input-error-flash'); pel.addEventListener('input', ()=>pel.classList.remove('input-error-flash'), {once:true}); }
-            showToast("رقم الموبايل غير صحيح!", "error"); 
+            showToast("ط±ظ‚ظ… ط§ظ„ظ…ظˆط¨ط§ظٹظ„ ط؛ظٹط± طµط­ظٹط­!", "error"); 
             if (typeof window.playErrorBeep === 'function') window.playErrorBeep();
             return; 
         }
         if (!name) { 
             let nel = document.getElementById('customerName');
             if(nel){ nel.classList.add('input-error-flash'); nel.addEventListener('input', ()=>nel.classList.remove('input-error-flash'), {once:true}); }
-            showToast("اكتب اسم العميل!", "error"); 
+            showToast("ط§ظƒطھط¨ ط§ط³ظ… ط§ظ„ط¹ظ…ظٹظ„!", "error"); 
             if (typeof window.playErrorBeep === 'function') window.playErrorBeep();
             return; 
         }
         if (delType === 'normal' && !gov) { 
             let gel = document.getElementById('governorate');
             if(gel){ gel.classList.add('input-error-flash'); gel.addEventListener('change', ()=>gel.classList.remove('input-error-flash'), {once:true}); }
-            showToast("اختر المحافظة!", "error"); 
+            showToast("ط§ط®طھط± ط§ظ„ظ…ط­ط§ظپط¸ط©!", "error"); 
             if (typeof window.playErrorBeep === 'function') window.playErrorBeep();
             return; 
         }
         if (delType !== 'branch' && addressVal === "") { 
             let ael = document.getElementById('address');
             if(ael){ ael.classList.add('input-error-flash'); ael.addEventListener('input', ()=>ael.classList.remove('input-error-flash'), {once:true}); }
-            showToast("برجاء كتابة العنوان بالتفصيل أولاً!", "error"); 
+            showToast("ط¨ط±ط¬ط§ط، ظƒطھط§ط¨ط© ط§ظ„ط¹ظ†ظˆط§ظ† ط¨ط§ظ„طھظپطµظٹظ„ ط£ظˆظ„ط§ظ‹!", "error"); 
             if (typeof window.playErrorBeep === 'function') window.playErrorBeep();
             return; 
         }
@@ -1525,15 +1529,15 @@ if (saveAndPrintBtn) {
         }
 
         let finalNotes = document.getElementById('notes') ? document.getElementById('notes').value : "";
-        if (isGift) finalNotes = "<i class=\'fa-solid fa-gift\'></i> أوردر هدية - " + finalNotes;
+        if (isGift) finalNotes = "<i class=\'fa-solid fa-gift\'></i> ط£ظˆط±ط¯ط± ظ‡ط¯ظٹط© - " + finalNotes;
 
         let finalTotalVal = document.getElementById('finalTotalDisplay') ? document.getElementById('finalTotalDisplay').innerText : 0;
 
-        // <i class=\'fa-solid fa-star\'></i> إضافة بيانات العربون
+        // <i class=\'fa-solid fa-star\'></i> ط¥ط¶ط§ظپط© ط¨ظٹط§ظ†ط§طھ ط§ظ„ط¹ط±ط¨ظˆظ†
         let dep = document.getElementById('depositAmount') ? (parseFloat(document.getElementById('depositAmount').value) || 0) : 0;
         let rem = document.getElementById('remainingAmountDisplay') ? parseFloat(document.getElementById('remainingAmountDisplay').innerText) : finalTotalVal;
 
-        let orderTypeLabel = deliveryTypeSelect ? deliveryTypeSelect.options[deliveryTypeSelect.selectedIndex].text : "توصيل";
+        let orderTypeLabel = deliveryTypeSelect ? deliveryTypeSelect.options[deliveryTypeSelect.selectedIndex].text : "طھظˆطµظٹظ„";
 
         let formData = new URLSearchParams();
         formData.append('action', 'addOrder');
@@ -1560,9 +1564,9 @@ if (saveAndPrintBtn) {
             .then(() => {
                 if (typeof window.hideLoading === 'function') window.hideLoading();
                 if (typeof window.playRegisterBeep === 'function') window.playRegisterBeep();
-                showToast("<i class=\'fa-solid fa-check\'></i> تم حفظ الأوردر بنجاح!", "success");
+                showToast("<i class=\'fa-solid fa-check\'></i> طھظ… ط­ظپط¸ ط§ظ„ط£ظˆط±ط¯ط± ط¨ظ†ط¬ط§ط­!", "success");
 
-                let isGovShipping = orderTypeLabel === 'gov_shipping' || orderTypeLabel.includes('محافظات') || delType === 'gov_shipping';
+                let isGovShipping = orderTypeLabel === 'gov_shipping' || orderTypeLabel.includes('ظ…ط­ط§ظپط¸ط§طھ') || delType === 'gov_shipping';
                 if (isGovShipping) {
                     document.body.classList.add('print-gov-shipping');
                 } else {
@@ -1570,14 +1574,14 @@ if (saveAndPrintBtn) {
                 }
 
                 let govStr = gov ? gov + " - " : "";
-                if (document.getElementById('receipt-type')) document.getElementById('receipt-type').innerHTML = isGift ? `${govStr}${orderTypeLabel} - <i class=\'fa-solid fa-gift\'></i> هدية` : `${govStr}${orderTypeLabel}`;
+                if (document.getElementById('receipt-type')) document.getElementById('receipt-type').innerHTML = isGift ? `${govStr}${orderTypeLabel} - <i class=\'fa-solid fa-gift\'></i> ظ‡ط¯ظٹط©` : `${govStr}${orderTypeLabel}`;
 
                 let printLogo = document.getElementById('receiptLogo') || document.getElementById('print-logo');
                 if (printLogo) {
                     let payVal = paymentMethod ? paymentMethod.value : "";
-                    if (orderTypeLabel.includes("استلام من الفرع")) {
+                    if (orderTypeLabel.includes("ط§ط³طھظ„ط§ظ… ظ…ظ† ط§ظ„ظپط±ط¹")) {
                         printLogo.src = "images/logo-branch.png";
-                    } else if (isGovShipping || (parseFloat(rem) === 0 && (payVal.includes("إنستا") || payVal.includes("انستاباي") || payVal.includes("محفظة") || payVal.includes("فودافون")))) {
+                    } else if (isGovShipping || (parseFloat(rem) === 0 && (payVal.includes("ط¥ظ†ط³طھط§") || payVal.includes("ط§ظ†ط³طھط§ط¨ط§ظٹ") || payVal.includes("ظ…ط­ظپط¸ط©") || payVal.includes("ظپظˆط¯ط§ظپظˆظ†")))) {
                         printLogo.src = "images/logo-digital.png";
                     } else {
                         printLogo.src = "images/logo-cash.png";
@@ -1588,7 +1592,7 @@ if (saveAndPrintBtn) {
                 if (document.getElementById('print-date')) document.getElementById('print-date').innerText = new Date().toLocaleDateString('ar-EG');
                 if (document.getElementById('print-time')) document.getElementById('print-time').innerText = new Date().toLocaleTimeString('ar-EG');
 
-                if (bookingDatePrint && (orderTypeLabel.includes('حجز') || orderTypeLabel === 'special_date')) {
+                if (bookingDatePrint && (orderTypeLabel.includes('ط­ط¬ط²') || orderTypeLabel === 'special_date')) {
                     document.querySelector('.print-booking-row').style.display = 'block';
                     document.getElementById('print-booking-date').innerText = bookingDatePrint;
                 } else {
@@ -1617,20 +1621,20 @@ if (saveAndPrintBtn) {
                 if (document.getElementById('print-shipping')) document.getElementById('print-shipping').innerText = isGift ? "***" : (document.getElementById('shippingCost') ? document.getElementById('shippingCost').value : 0);
 
                 if (dep > 0 && !isGift) {
-                    let depositHtml = `<p class="print-deposit-row">تم دفع عربون: <b><span id="print-deposit">${dep}</span></b></p>`;
+                    let depositHtml = `<p class="print-deposit-row">طھظ… ط¯ظپط¹ ط¹ط±ط¨ظˆظ†: <b><span id="print-deposit">${dep}</span></b></p>`;
                     document.getElementById('print-deposit-container').innerHTML = depositHtml;
                     document.getElementById('print-final').innerText = rem;
-                    if (document.getElementById('print-final-label')) document.getElementById('print-final-label').innerText = "المتبقي للدفع";
+                    if (document.getElementById('print-final-label')) document.getElementById('print-final-label').innerText = "ط§ظ„ظ…طھط¨ظ‚ظٹ ظ„ظ„ط¯ظپط¹";
                 } else {
                     document.getElementById('print-deposit-container').innerHTML = '';
                     document.getElementById('print-final').innerText = isGift ? "***" : finalTotalVal;
-                    if (document.getElementById('print-final-label')) document.getElementById('print-final-label').innerText = "الإجمالي النهائي";
+                    if (document.getElementById('print-final-label')) document.getElementById('print-final-label').innerText = "ط§ظ„ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ظ†ظ‡ط§ط¦ظٹ";
                 }
 
                 if (document.getElementById('print-payment')) document.getElementById('print-payment').innerText = paymentMethod ? paymentMethod.value : "";
 
                 let sellerP = document.getElementById('print-seller-name');
-                if (sellerP) sellerP.innerText = `الكاشير: ${selectedModerator}`;
+                if (sellerP) sellerP.innerText = `ط§ظ„ظƒط§ط´ظٹط±: ${selectedModerator}`;
 
                 let qrImg = document.querySelector('img[alt="QR Code"]');
                 if (qrImg) qrImg.src = 'images/qr-code.png';
@@ -1639,33 +1643,33 @@ if (saveAndPrintBtn) {
                     window.print();
                     document.body.classList.remove('print-gov-shipping');
                     resetForm();
-                    setBtnLoading(saveAndPrintBtn, false, "💾 حفظ وطباعة الفاتورة");
+                    setBtnLoading(saveAndPrintBtn, false, "ًں’¾ ط­ظپط¸ ظˆط·ط¨ط§ط¹ط© ط§ظ„ظپط§طھظˆط±ط©");
                     loadDataFromServer();
                 }, 1000);
 
             }).catch(() => {
                 if (typeof window.hideLoading === 'function') window.hideLoading();
-                showToast("<i class=\'fa-solid fa-xmark\'></i> خطأ في الاتصال بالإنترنت", "error");
-                setBtnLoading(saveAndPrintBtn, false, "💾 حفظ وطباعة الفاتورة");
+                showToast("<i class=\'fa-solid fa-xmark\'></i> ط®ط·ط£ ظپظٹ ط§ظ„ط§طھطµط§ظ„ ط¨ط§ظ„ط¥ظ†طھط±ظ†طھ", "error");
+                setBtnLoading(saveAndPrintBtn, false, "ًں’¾ ط­ظپط¸ ظˆط·ط¨ط§ط¹ط© ط§ظ„ظپط§طھظˆط±ط©");
             });
     });
 }
 
 // ==========================================
-// 10. الإضافة، التعديل، والحذف 
+// 10. ط§ظ„ط¥ط¶ط§ظپط©طŒ ط§ظ„طھط¹ط¯ظٹظ„طŒ ظˆط§ظ„ط­ط°ظپ 
 // ==========================================
 
 window.deleteItem = function (action, name, zoneType = '') {
-    customConfirm(`هل أنت متأكد من حذف (${name}) نهائياً؟`, () => {
+    customConfirm(`ظ‡ظ„ ط£ظ†طھ ظ…طھط£ظƒط¯ ظ…ظ† ط­ط°ظپ (${name}) ظ†ظ‡ط§ط¦ظٹط§ظ‹طں`, () => {
         let formData = new URLSearchParams();
         formData.append('action', action);
         formData.append('name', name);
         if (zoneType) formData.append('zoneType', zoneType);
 
-        showToast("<i class=\'fa-solid fa-hourglass-half\'></i> جاري الحذف...", "warning");
+        showToast("<i class=\'fa-solid fa-hourglass-half\'></i> ط¬ط§ط±ظٹ ط§ظ„ط­ط°ظپ...", "warning");
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
-                showToast("<i class=\'fa-solid fa-check\'></i> تم الحذف بنجاح!", "success");
+                showToast("<i class=\'fa-solid fa-check\'></i> طھظ… ط§ظ„ط­ط°ظپ ط¨ظ†ط¬ط§ط­!", "success");
                 loadDataFromServer();
             });
     });
@@ -1676,13 +1680,13 @@ window.editZoneUI = function (name, price, type, duration) {
     if (document.getElementById('newZonePrice')) document.getElementById('newZonePrice').value = price;
     if (document.getElementById('newZoneType')) document.getElementById('newZoneType').value = type;
     if (document.getElementById('newZoneDuration')) document.getElementById('newZoneDuration').value = duration;
-    showToast("قم بتعديل البيانات واضغط حفظ", "success");
+    showToast("ظ‚ظ… ط¨طھط¹ط¯ظٹظ„ ط§ظ„ط¨ظٹط§ظ†ط§طھ ظˆط§ط¶ط؛ط· ط­ظپط¸", "success");
 };
 
 window.editDriverUI = function (name, phone) {
     if (document.getElementById('newDriverName')) document.getElementById('newDriverName').value = name;
     if (document.getElementById('newDriverPhone')) document.getElementById('newDriverPhone').value = phone;
-    showToast("قم بتعديل البيانات واضغط حفظ", "success");
+    showToast("ظ‚ظ… ط¨طھط¹ط¯ظٹظ„ ط§ظ„ط¨ظٹط§ظ†ط§طھ ظˆط§ط¶ط؛ط· ط­ظپط¸", "success");
 };
 
 let newZoneTypeEl = document.getElementById('newZoneType');
@@ -1690,10 +1694,10 @@ let newZoneDurationEl = document.getElementById('newZoneDuration');
 if (newZoneTypeEl && newZoneDurationEl) {
     newZoneTypeEl.addEventListener('change', () => {
         if (newZoneTypeEl.value === 'next_day') {
-            newZoneDurationEl.value = 'تاني يوم';
+            newZoneDurationEl.value = 'طھط§ظ†ظٹ ظٹظˆظ…';
             newZoneDurationEl.setAttribute('readonly', true);
         } else if (newZoneTypeEl.value === 'gov') {
-            newZoneDurationEl.value = 'من 3 لـ 4 أيام';
+            newZoneDurationEl.value = 'ظ…ظ† 3 ظ„ظ€ 4 ط£ظٹط§ظ…';
             newZoneDurationEl.setAttribute('readonly', true);
         } else {
             newZoneDurationEl.value = '';
@@ -1708,11 +1712,11 @@ if (addZoneBtnAction) {
         let price = document.getElementById('newZonePrice') ? document.getElementById('newZonePrice').value : "";
         let type = document.getElementById('newZoneType') ? document.getElementById('newZoneType').value : "";
         let duration = document.getElementById('newZoneDuration') ? document.getElementById('newZoneDuration').value : "";
-        if (!name || !price) { showToast("البيانات ناقصة!", "error"); return; }
+        if (!name || !price) { showToast("ط§ظ„ط¨ظٹط§ظ†ط§طھ ظ†ط§ظ‚طµط©!", "error"); return; }
 
         let isExisting = shippingData[name] !== undefined;
         if (isExisting && shippingData[name].price == price) {
-            showToast("المنطقة دي مسجلة مسبقاً", "warning"); return;
+            showToast("ط§ظ„ظ…ظ†ط·ظ‚ط© ط¯ظٹ ظ…ط³ط¬ظ„ط© ظ…ط³ط¨ظ‚ط§ظ‹", "warning"); return;
         }
 
         setBtnLoading(addZoneBtnAction, true);
@@ -1726,11 +1730,11 @@ if (addZoneBtnAction) {
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
-                showToast(`<i class=\'fa-solid fa-check\'></i> تم ${isExisting ? 'تعديل' : 'إضافة'} المنطقة!`, "success");
-                setBtnLoading(addZoneBtnAction, false, "حفظ المنطقة");
+                showToast(`<i class=\'fa-solid fa-check\'></i> طھظ… ${isExisting ? 'طھط¹ط¯ظٹظ„' : 'ط¥ط¶ط§ظپط©'} ط§ظ„ظ…ظ†ط·ظ‚ط©!`, "success");
+                setBtnLoading(addZoneBtnAction, false, "ط­ظپط¸ ط§ظ„ظ…ظ†ط·ظ‚ط©");
                 document.getElementById('newZoneName').value = ""; document.getElementById('newZonePrice').value = ""; document.getElementById('newZoneDuration').value = "";
                 loadDataFromServer();
-            }).catch(() => { setBtnLoading(addZoneBtnAction, false, "حفظ المنطقة"); });
+            }).catch(() => { setBtnLoading(addZoneBtnAction, false, "ط­ظپط¸ ط§ظ„ظ…ظ†ط·ظ‚ط©"); });
     });
 }
 
@@ -1739,7 +1743,7 @@ if (addDriverBtnAction) {
     addDriverBtnAction.addEventListener('click', () => {
         let name = document.getElementById('newDriverName') ? document.getElementById('newDriverName').value.trim() : "";
         let phone = document.getElementById('newDriverPhone') ? document.getElementById('newDriverPhone').value : "";
-        if (!name || !phone) { showToast("البيانات ناقصة!", "error"); return; }
+        if (!name || !phone) { showToast("ط§ظ„ط¨ظٹط§ظ†ط§طھ ظ†ط§ظ‚طµط©!", "error"); return; }
 
         let driverSelectEl = document.getElementById('driverNameSelect') || document.getElementById('assignDriverSelect');
         let isExisting = driverSelectEl ? Array.from(driverSelectEl.options).some(o => o.value === name) : false;
@@ -1752,11 +1756,11 @@ if (addDriverBtnAction) {
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
-                showToast(`<i class=\'fa-solid fa-check\'></i> تم ${isExisting ? 'تعديل' : 'إضافة'} المندوب!`, "success");
-                setBtnLoading(addDriverBtnAction, false, "حفظ المندوب");
+                showToast(`<i class=\'fa-solid fa-check\'></i> طھظ… ${isExisting ? 'طھط¹ط¯ظٹظ„' : 'ط¥ط¶ط§ظپط©'} ط§ظ„ظ…ظ†ط¯ظˆط¨!`, "success");
+                setBtnLoading(addDriverBtnAction, false, "ط­ظپط¸ ط§ظ„ظ…ظ†ط¯ظˆط¨");
                 document.getElementById('newDriverName').value = ""; document.getElementById('newDriverPhone').value = "";
                 loadDataFromServer();
-            }).catch(() => { setBtnLoading(addDriverBtnAction, false, "حفظ المندوب"); });
+            }).catch(() => { setBtnLoading(addDriverBtnAction, false, "ط­ظپط¸ ط§ظ„ظ…ظ†ط¯ظˆط¨"); });
     });
 }
 
@@ -1765,7 +1769,7 @@ if (addModeratorBtn) {
     addModeratorBtn.addEventListener('click', () => {
         let nameInput = document.getElementById('newModeratorName');
         let name = nameInput ? nameInput.value.trim() : "";
-        if (!name) { showToast("اكتب اسم الكاشير أولاً", "error"); return; }
+        if (!name) { showToast("ط§ظƒطھط¨ ط§ط³ظ… ط§ظ„ظƒط§ط´ظٹط± ط£ظˆظ„ط§ظ‹", "error"); return; }
 
         setBtnLoading(addModeratorBtn, true);
         let formData = new URLSearchParams();
@@ -1774,18 +1778,18 @@ if (addModeratorBtn) {
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
-                showToast("<i class=\'fa-solid fa-check\'></i> تم إضافة الكاشير بنجاح", "success");
-                setBtnLoading(addModeratorBtn, false, "إضافة");
+                showToast("<i class=\'fa-solid fa-check\'></i> طھظ… ط¥ط¶ط§ظپط© ط§ظ„ظƒط§ط´ظٹط± ط¨ظ†ط¬ط§ط­", "success");
+                setBtnLoading(addModeratorBtn, false, "ط¥ط¶ط§ظپط©");
                 nameInput.value = "";
                 loadDataFromServer();
-            }).catch(() => { setBtnLoading(addModeratorBtn, false, "إضافة"); });
+            }).catch(() => { setBtnLoading(addModeratorBtn, false, "ط¥ط¶ط§ظپط©"); });
     });
 }
 
 
 
 // ==========================================
-// 11. غرفة عمليات الشحن والداشبورد
+// 11. ط؛ط±ظپط© ط¹ظ…ظ„ظٹط§طھ ط§ظ„ط´ط­ظ† ظˆط§ظ„ط¯ط§ط´ط¨ظˆط±ط¯
 // ==========================================
 function renderShippingRoom(history) {
     const pendingContainer = document.getElementById('pendingOrdersContainer');
@@ -1793,30 +1797,30 @@ function renderShippingRoom(history) {
     const resContainer = document.getElementById('reservationsContainer');
 
     if (pendingContainer && resContainer) {
-        const pendingOrders = window.pendingOrdersData.filter(o => o.orderType !== 'استلام من الفرع' && (!o.orderType || !o.orderType.includes('حجز') || o.status === 'قيد التجهيز' || o.status === 'في الشحن'));
-        const resOrders = window.pendingOrdersData.filter(o => o.orderType && o.orderType.includes('حجز') && o.status !== 'قيد التجهيز' && o.status !== 'في الشحن' && o.status !== 'تم التوصيل ومُحاسب');
+        const pendingOrders = window.pendingOrdersData.filter(o => o.orderType !== 'ط§ط³طھظ„ط§ظ… ظ…ظ† ط§ظ„ظپط±ط¹' && (!o.orderType || !o.orderType.includes('ط­ط¬ط²') || o.status === 'ظ‚ظٹط¯ ط§ظ„طھط¬ظ‡ظٹط²' || o.status === 'ظپظٹ ط§ظ„ط´ط­ظ†'));
+        const resOrders = window.pendingOrdersData.filter(o => o.orderType && o.orderType.includes('ط­ط¬ط²') && o.status !== 'ظ‚ظٹط¯ ط§ظ„طھط¬ظ‡ظٹط²' && o.status !== 'ظپظٹ ط§ظ„ط´ط­ظ†' && o.status !== 'طھظ… ط§ظ„طھظˆطµظٹظ„ ظˆظ…ظڈط­ط§ط³ط¨');
 
         // <i class=\'fa-solid fa-star\'></i> Update Reservations Badge
         const resBadge = document.getElementById('reservationsCountBadge');
         if (resBadge) {
-            resBadge.innerText = `العدد: ${resOrders.length}`;
+            resBadge.innerText = `ط§ظ„ط¹ط¯ط¯: ${resOrders.length}`;
             resBadge.style.display = 'inline-block';
         }
 
         pendingContainer.innerHTML = '';
-        if (pendingOrders.length === 0) pendingContainer.innerHTML = '<p class="empty-msg">لا يوجد أوردرات شحن قيد التجهيز.</p>';
+        if (pendingOrders.length === 0) pendingContainer.innerHTML = '<p class="empty-msg">ظ„ط§ ظٹظˆط¬ط¯ ط£ظˆط±ط¯ط±ط§طھ ط´ط­ظ† ظ‚ظٹط¯ ط§ظ„طھط¬ظ‡ظٹط².</p>';
         else pendingOrders.forEach(o => {
             let badgeClass = "normal";
-            let typeText = o.orderType || "توصيل منزلي";
-            if(typeText.includes("محافظات") || typeText === "gov_shipping") { badgeClass = "gov"; typeText = "محافظات"; }
+            let typeText = o.orderType || "طھظˆطµظٹظ„ ظ…ظ†ط²ظ„ظٹ";
+            if(typeText.includes("ظ…ط­ط§ظپط¸ط§طھ") || typeText === "gov_shipping") { badgeClass = "gov"; typeText = "ظ…ط­ط§ظپط¸ط§طھ"; }
             
-            // محاولة جلب اسم المنطقة فقط بدلاً من العنوان الكامل
+            // ظ…ط­ط§ظˆظ„ط© ط¬ظ„ط¨ ط§ط³ظ… ط§ظ„ظ…ظ†ط·ظ‚ط© ظپظ‚ط· ط¨ط¯ظ„ط§ظ‹ ظ…ظ† ط§ظ„ط¹ظ†ظˆط§ظ† ط§ظ„ظƒط§ظ…ظ„
             let shortAddress = o.gov || o.zone || o.governorate || "";
             if (!shortAddress && o.address) {
-                // نأخذ الجزء الأول قبل أي فاصلة أو شرطة أو سطر جديد
-                shortAddress = o.address.split(/[-،,\n]/)[0].trim();
+                // ظ†ط£ط®ط° ط§ظ„ط¬ط²ط، ط§ظ„ط£ظˆظ„ ظ‚ط¨ظ„ ط£ظٹ ظپط§طµظ„ط© ط£ظˆ ط´ط±ط·ط© ط£ظˆ ط³ط·ط± ط¬ط¯ظٹط¯
+                shortAddress = o.address.split(/[-طŒ,\n]/)[0].trim();
             }
-            if (!shortAddress) shortAddress = "بدون عنوان";
+            if (!shortAddress) shortAddress = "ط¨ط¯ظˆظ† ط¹ظ†ظˆط§ظ†";
 
             pendingContainer.innerHTML += `
                 <label class="shipping-order-card">
@@ -1829,7 +1833,7 @@ function renderShippingRoom(history) {
                         <div class="soc-name">${o.name}</div>
                         <div class="soc-info-row">
                             <div class="soc-info-item highlight"><i class=\'fa-solid fa-mobile-screen\'></i> ${o.phone}</div>
-                            <div class="soc-info-item money"><i class=\'fa-solid fa-money-bill-wave\'></i> ${o.total} ج.م</div>
+                            <div class="soc-info-item money"><i class=\'fa-solid fa-money-bill-wave\'></i> ${o.total} ط¬.ظ…</div>
                             <div class="soc-info-item"><i class=\'fa-solid fa-location-dot\'></i> ${shortAddress}</div>
                         </div>
                     </div>
@@ -1837,7 +1841,7 @@ function renderShippingRoom(history) {
         });
 
         resContainer.innerHTML = '';
-        if (resOrders.length === 0) resContainer.innerHTML = '<p class="empty-msg">لا يوجد حجوزات قادمة.</p>';
+        if (resOrders.length === 0) resContainer.innerHTML = '<p class="empty-msg">ظ„ط§ ظٹظˆط¬ط¯ ط­ط¬ظˆط²ط§طھ ظ‚ط§ط¯ظ…ط©.</p>';
         else resOrders.forEach(o => {
             resContainer.innerHTML += `
                 <div class="shipping-action-card" style="border-right: 4px solid var(--primary);">
@@ -1846,32 +1850,32 @@ function renderShippingRoom(history) {
                         <span class="sac-id">#${o.id}</span>
                     </div>
                     <div class="sac-finance-row">
-                        <div class="sac-date"><i class=\'fa-regular fa-calendar-days\'></i> ${o.date || 'حجز'}</div>
+                        <div class="sac-date"><i class=\'fa-regular fa-calendar-days\'></i> ${o.date || 'ط­ط¬ط²'}</div>
                         <div class="sac-phone"><i class=\'fa-solid fa-mobile-screen\'></i> ${o.phone}</div>
-                        <div class="sac-total">الإجمالي: ${o.total}ج</div>
-                        <div class="sac-remain">المتبقي: ${o.remaining}ج</div>
+                        <div class="sac-total">ط§ظ„ط¥ط¬ظ…ط§ظ„ظٹ: ${o.total}ط¬</div>
+                        <div class="sac-remain">ط§ظ„ظ…طھط¨ظ‚ظٹ: ${o.remaining}ط¬</div>
                     </div>
                     <div class="sac-actions">
-                        <button class="sac-btn-deliver interactive-btn" onclick="settleBranchOrder('${o.id}', this)">تم التسليم <i class=\'fa-solid fa-check\'></i></button>
-                        <button class="sac-btn-convert interactive-btn" onclick="convertToNormalDelivery('${o.id}', this)">تحويل لعادي <i class=\'fa-solid fa-truck-fast\'></i></button>
+                        <button class="sac-btn-deliver interactive-btn" onclick="settleBranchOrder('${o.id}', this)">طھظ… ط§ظ„طھط³ظ„ظٹظ… <i class=\'fa-solid fa-check\'></i></button>
+                        <button class="sac-btn-convert interactive-btn" onclick="convertToNormalDelivery('${o.id}', this)">طھط­ظˆظٹظ„ ظ„ط¹ط§ط¯ظٹ <i class=\'fa-solid fa-truck-fast\'></i></button>
                     </div>
                 </div>`;
         });
     }
 
-    // <i class=\'fa-solid fa-star\'></i> قسم أوردرات الفرع (المنفصلة تماماً عن المندوبين)
+    // <i class=\'fa-solid fa-star\'></i> ظ‚ط³ظ… ط£ظˆط±ط¯ط±ط§طھ ط§ظ„ظپط±ط¹ (ط§ظ„ظ…ظ†ظپطµظ„ط© طھظ…ط§ظ…ط§ظ‹ ط¹ظ† ط§ظ„ظ…ظ†ط¯ظˆط¨ظٹظ†)
     if (branchContainer) {
-        const branchOrders = window.pendingOrdersData.filter(o => o.orderType === 'استلام من الفرع' && o.status !== 'تم التوصيل ومُحاسب');
+        const branchOrders = window.pendingOrdersData.filter(o => o.orderType === 'ط§ط³طھظ„ط§ظ… ظ…ظ† ط§ظ„ظپط±ط¹' && o.status !== 'طھظ… ط§ظ„طھظˆطµظٹظ„ ظˆظ…ظڈط­ط§ط³ط¨');
 
         // <i class=\'fa-solid fa-star\'></i> Update Branch Badge
         const branchBadge = document.getElementById('branchCountBadge');
         if (branchBadge) {
-            branchBadge.innerText = `جاهز للاستلام: ${branchOrders.length}`;
+            branchBadge.innerText = `ط¬ط§ظ‡ط² ظ„ظ„ط§ط³طھظ„ط§ظ…: ${branchOrders.length}`;
             branchBadge.style.display = 'inline-block';
         }
 
         branchContainer.innerHTML = '';
-        if (branchOrders.length === 0) branchContainer.innerHTML = '<p class="empty-msg">لا يوجد أوردرات استلام فرع حالياً.</p>';
+        if (branchOrders.length === 0) branchContainer.innerHTML = '<p class="empty-msg">ظ„ط§ ظٹظˆط¬ط¯ ط£ظˆط±ط¯ط±ط§طھ ط§ط³طھظ„ط§ظ… ظپط±ط¹ ط­ط§ظ„ظٹط§ظ‹.</p>';
         else branchOrders.forEach(o => {
             branchContainer.innerHTML += `
                 <div class="shipping-action-card" style="border-right: 4px solid var(--warning);">
@@ -1881,11 +1885,11 @@ function renderShippingRoom(history) {
                     </div>
                     <div class="sac-finance-row">
                         <div class="sac-phone"><i class=\'fa-solid fa-mobile-screen\'></i> ${o.phone}</div>
-                        <div class="sac-total">الإجمالي: ${o.total}ج</div>
-                        <div class="sac-remain">المتبقي: ${o.remaining}ج</div>
+                        <div class="sac-total">ط§ظ„ط¥ط¬ظ…ط§ظ„ظٹ: ${o.total}ط¬</div>
+                        <div class="sac-remain">ط§ظ„ظ…طھط¨ظ‚ظٹ: ${o.remaining}ط¬</div>
                     </div>
                     <div class="sac-actions">
-                        <button class="sac-btn-deliver interactive-btn" style="width: 100%;" onclick="settleBranchOrder('${o.id}', this)">تم تسليم الفرع <i class=\'fa-solid fa-check\'></i></button>
+                        <button class="sac-btn-deliver interactive-btn" style="width: 100%;" onclick="settleBranchOrder('${o.id}', this)">طھظ… طھط³ظ„ظٹظ… ط§ظ„ظپط±ط¹ <i class=\'fa-solid fa-check\'></i></button>
                     </div>
                 </div>`;
         });
@@ -1895,58 +1899,58 @@ function renderShippingRoom(history) {
     const outOrdersBadge = document.getElementById('outOrdersCountBadge');
     if (outOrdersBadge && window.latestServerData && window.latestServerData.shippedOrders) {
         let outCount = window.latestServerData.shippedOrders.length;
-        outOrdersBadge.innerText = `الاوردرات في الخارج حالياً: ${outCount}`;
+        outOrdersBadge.innerText = `ط§ظ„ط§ظˆط±ط¯ط±ط§طھ ظپظٹ ط§ظ„ط®ط§ط±ط¬ ط­ط§ظ„ظٹط§ظ‹: ${outCount}`;
         outOrdersBadge.style.display = 'inline-block';
     }
 }
 
-// <i class=\'fa-solid fa-star\'></i> دالة تسليم الفرع الفورية
+// <i class=\'fa-solid fa-star\'></i> ط¯ط§ظ„ط© طھط³ظ„ظٹظ… ط§ظ„ظپط±ط¹ ط§ظ„ظپظˆط±ظٹط©
 window.settleBranchOrder = function (orderId, btn) {
     let order = window.pendingOrdersData.find(o => String(o.id) === String(orderId));
-    customSinglePrompt('الرجاء إدخال المبلغ المدفوع لاستلام الفرع:', order ? order.remaining : 0, (amountPaidText) => {
+    customSinglePrompt('ط§ظ„ط±ط¬ط§ط، ط¥ط¯ط®ط§ظ„ ط§ظ„ظ…ط¨ظ„ط؛ ط§ظ„ظ…ط¯ظپظˆط¹ ظ„ط§ط³طھظ„ط§ظ… ط§ظ„ظپط±ط¹:', order ? order.remaining : 0, (amountPaidText) => {
         if (!amountPaidText) return;
 
         setBtnLoading(btn, true);
         let formData = new URLSearchParams();
         formData.append('action', 'updateOrderStatus');
         formData.append('orderId', orderId);
-        formData.append('status', 'تم التوصيل ومُحاسب');
+        formData.append('status', 'طھظ… ط§ظ„طھظˆطµظٹظ„ ظˆظ…ظڈط­ط§ط³ط¨');
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
-                showToast(`<i class=\'fa-solid fa-check\'></i> تم التسليم وتصفية مبلغ (${amountPaidText} ج.م) بنجاح!`, "success");
-                if (order) order.status = 'تم التوصيل ومُحاسب';
+                showToast(`<i class=\'fa-solid fa-check\'></i> طھظ… ط§ظ„طھط³ظ„ظٹظ… ظˆطھطµظپظٹط© ظ…ط¨ظ„ط؛ (${amountPaidText} ط¬.ظ…) ط¨ظ†ط¬ط§ط­!`, "success");
+                if (order) order.status = 'طھظ… ط§ظ„طھظˆطµظٹظ„ ظˆظ…ظڈط­ط§ط³ط¨';
                 renderShippingRoom();
                 setTimeout(() => loadDataFromServer(), 3000);
-            }).catch(() => setBtnLoading(btn, false, "تم التسليم ✅"));
+            }).catch(() => setBtnLoading(btn, false, "طھظ… ط§ظ„طھط³ظ„ظٹظ… âœ…"));
     });
 };
 
-// <i class=\'fa-solid fa-star\'></i> دالة تحويل الحجز لتوصيل عادي
+// <i class=\'fa-solid fa-star\'></i> ط¯ط§ظ„ط© طھط­ظˆظٹظ„ ط§ظ„ط­ط¬ط² ظ„طھظˆطµظٹظ„ ط¹ط§ط¯ظٹ
 window.convertToNormalDelivery = function (orderId, btn) {
-    customConfirm('هل أنت متأكد من تحويل هذا الحجز إلى توصيل فوري عادي؟', () => {
+    customConfirm('ظ‡ظ„ ط£ظ†طھ ظ…طھط£ظƒط¯ ظ…ظ† طھط­ظˆظٹظ„ ظ‡ط°ط§ ط§ظ„ط­ط¬ط² ط¥ظ„ظ‰ طھظˆطµظٹظ„ ظپظˆط±ظٹ ط¹ط§ط¯ظٹطں', () => {
         setBtnLoading(btn, true);
         let formData = new URLSearchParams();
         formData.append('action', 'updateOrderStatus');
         formData.append('orderId', orderId);
-        formData.append('status', 'قيد التجهيز');
-        formData.append('orderType', 'توصيل منزلي عادي');
+        formData.append('status', 'ظ‚ظٹط¯ ط§ظ„طھط¬ظ‡ظٹط²');
+        formData.append('orderType', 'طھظˆطµظٹظ„ ظ…ظ†ط²ظ„ظٹ ط¹ط§ط¯ظٹ');
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
-                showToast("<i class=\'fa-solid fa-check\'></i> تم التحويل لتوصيل فوري بنجاح!", "success");
+                showToast("<i class=\'fa-solid fa-check\'></i> طھظ… ط§ظ„طھط­ظˆظٹظ„ ظ„طھظˆطµظٹظ„ ظپظˆط±ظٹ ط¨ظ†ط¬ط§ط­!", "success");
                 let order = window.pendingOrdersData.find(o => String(o.id) === String(orderId));
                 if (order) {
-                    order.status = 'قيد التجهيز';
-                    order.orderType = 'توصيل منزلي عادي';
+                    order.status = 'ظ‚ظٹط¯ ط§ظ„طھط¬ظ‡ظٹط²';
+                    order.orderType = 'طھظˆطµظٹظ„ ظ…ظ†ط²ظ„ظٹ ط¹ط§ط¯ظٹ';
                 }
                 renderShippingRoom();
                 setTimeout(() => loadDataFromServer(), 3000);
-            }).catch(() => setBtnLoading(btn, false, "تحويل لتوصيل عادي 🚚"));
+            }).catch(() => setBtnLoading(btn, false, "طھط­ظˆظٹظ„ ظ„طھظˆطµظٹظ„ ط¹ط§ط¯ظٹ ًںڑڑ"));
     });
 };
 
-// <i class=\'fa-solid fa-star\'></i> حماية زرار (تقفيل المندوبين)
+// <i class=\'fa-solid fa-star\'></i> ط­ظ…ط§ظٹط© ط²ط±ط§ط± (طھظ‚ظپظٹظ„ ط§ظ„ظ…ظ†ط¯ظˆط¨ظٹظ†)
 const loadDriverOrdersBtn = document.getElementById('loadDriverOrdersBtn');
 const shippedContainer = document.getElementById('shippedOrdersContainer');
 
@@ -1954,32 +1958,32 @@ if (loadDriverOrdersBtn && shippedContainer) {
     loadDriverOrdersBtn.addEventListener('click', () => {
         const driver = document.getElementById('closeDriverSelect').value;
         if (!driver) {
-            showToast("الرجاء اختيار المندوب أولاً!", "error");
-            shippedContainer.innerHTML = '<p class="empty-msg">برجاء اختيار المندوب والضغط على "عرض العهدة"</p>';
+            showToast("ط§ظ„ط±ط¬ط§ط، ط§ط®طھظٹط§ط± ط§ظ„ظ…ظ†ط¯ظˆط¨ ط£ظˆظ„ط§ظ‹!", "error");
+            shippedContainer.innerHTML = '<p class="empty-msg">ط¨ط±ط¬ط§ط، ط§ط®طھظٹط§ط± ط§ظ„ظ…ظ†ط¯ظˆط¨ ظˆط§ظ„ط¶ط؛ط· ط¹ظ„ظ‰ "ط¹ط±ط¶ ط§ظ„ط¹ظ‡ط¯ط©"</p>';
             return;
         }
 
-        shippedContainer.innerHTML = '<p class="empty-msg"><i class=\'fa-solid fa-hourglass-half\'></i> جاري تحميل عهدة المندوب...</p>';
+        shippedContainer.innerHTML = '<p class="empty-msg"><i class=\'fa-solid fa-hourglass-half\'></i> ط¬ط§ط±ظٹ طھط­ظ…ظٹظ„ ط¹ظ‡ط¯ط© ط§ظ„ظ…ظ†ط¯ظˆط¨...</p>';
 
-        // <i class=\'fa-solid fa-star\'></i> Fix: استخدام shippedOrders المرسلة من الإكسيل مباشرة
+        // <i class=\'fa-solid fa-star\'></i> Fix: ط§ط³طھط®ط¯ط§ظ… shippedOrders ط§ظ„ظ…ط±ط³ظ„ط© ظ…ظ† ط§ظ„ط¥ظƒط³ظٹظ„ ظ…ط¨ط§ط´ط±ط©
         let shippedOrders = [];
         if (window.latestServerData && window.latestServerData.shippedOrders) {
             shippedOrders = window.latestServerData.shippedOrders.filter(o => o.driver === driver);
         }
 
         if (shippedOrders.length === 0) {
-            shippedContainer.innerHTML = '<p class="empty-msg">لا توجد أوردرات في الشحن لهذا المندوب حالياً.</p>';
+            shippedContainer.innerHTML = '<p class="empty-msg">ظ„ط§ طھظˆط¬ط¯ ط£ظˆط±ط¯ط±ط§طھ ظپظٹ ط§ظ„ط´ط­ظ† ظ„ظ‡ط°ط§ ط§ظ„ظ…ظ†ط¯ظˆط¨ ط­ط§ظ„ظٹط§ظ‹.</p>';
         } else {
             renderDriverShippedOrders(shippedOrders, shippedContainer);
         }
     });
 }
 
-// <i class=\'fa-solid fa-star\'></i> دالة مساعدة لعرض أوردرات المندوب المشحونة
+// <i class=\'fa-solid fa-star\'></i> ط¯ط§ظ„ط© ظ…ط³ط§ط¹ط¯ط© ظ„ط¹ط±ط¶ ط£ظˆط±ط¯ط±ط§طھ ط§ظ„ظ…ظ†ط¯ظˆط¨ ط§ظ„ظ…ط´ط­ظˆظ†ط©
 function renderDriverShippedOrders(shippedOrders, container) {
     container.innerHTML = '';
     if (shippedOrders.length === 0) {
-        container.innerHTML = '<p class="empty-msg">لا توجد أوردرات في الشحن لهذا المندوب.</p>';
+        container.innerHTML = '<p class="empty-msg">ظ„ط§ طھظˆط¬ط¯ ط£ظˆط±ط¯ط±ط§طھ ظپظٹ ط§ظ„ط´ط­ظ† ظ„ظ‡ط°ط§ ط§ظ„ظ…ظ†ط¯ظˆط¨.</p>';
     } else {
         shippedOrders.forEach(o => {
             container.innerHTML += `
@@ -1992,7 +1996,7 @@ function renderDriverShippedOrders(shippedOrders, container) {
                         </div>
                         <div class="soc-info-row">
                             <div class="soc-info-item highlight"><i class=\'fa-solid fa-mobile-screen\'></i> ${o.phone}</div>
-                            <div class="soc-info-item remaining"><i class=\'fa-solid fa-money-bill-wave\'></i> عهدة: ${o.remaining} ج.م</div>
+                            <div class="soc-info-item remaining"><i class=\'fa-solid fa-money-bill-wave\'></i> ط¹ظ‡ط¯ط©: ${o.remaining} ط¬.ظ…</div>
                         </div>
                     </div>
                 </label>`;
@@ -2002,7 +2006,7 @@ function renderDriverShippedOrders(shippedOrders, container) {
 
 function processStatusUpdate(btn, checkboxesClass, newStatus, driverName = "") {
     const selected = Array.from(document.querySelectorAll(`.${checkboxesClass}:checked`)).map(cb => cb.value);
-    if (selected.length === 0) { showToast("حدد أوردر واحد على الأقل!", "warning"); return; }
+    if (selected.length === 0) { showToast("ط­ط¯ط¯ ط£ظˆط±ط¯ط± ظˆط§ط­ط¯ ط¹ظ„ظ‰ ط§ظ„ط£ظ‚ظ„!", "warning"); return; }
 
     setBtnLoading(btn, true);
     let completed = 0;
@@ -2017,7 +2021,7 @@ function processStatusUpdate(btn, checkboxesClass, newStatus, driverName = "") {
             .then(() => {
                 completed++;
                 if (completed === selected.length) {
-                    showToast(`<i class=\'fa-solid fa-check\'></i> تم التحديث لـ "${newStatus}"`, "success");
+                    showToast(`<i class=\'fa-solid fa-check\'></i> طھظ… ط§ظ„طھط­ط¯ظٹط« ظ„ظ€ "${newStatus}"`, "success");
                     setBtnLoading(btn, false, btn.dataset.origText);
                     loadDataFromServer();
                 }
@@ -2028,42 +2032,42 @@ function processStatusUpdate(btn, checkboxesClass, newStatus, driverName = "") {
 let assignBtn = document.getElementById('assignToDriverBtn');
 if (assignBtn) assignBtn.addEventListener('click', () => {
     let driver = document.getElementById('assignDriverSelect').value;
-    if (!driver) { showToast("اختر المندوب أولاً!", "error"); return; }
-    processStatusUpdate(assignBtn, 'pending-checkbox', 'في الشحن', driver);
+    if (!driver) { showToast("ط§ط®طھط± ط§ظ„ظ…ظ†ط¯ظˆط¨ ط£ظˆظ„ط§ظ‹!", "error"); return; }
+    processStatusUpdate(assignBtn, 'pending-checkbox', 'ظپظٹ ط§ظ„ط´ط­ظ†', driver);
 });
 
 let sendWaDriverBtn = document.getElementById('sendWaDriverBtn');
 if (sendWaDriverBtn) sendWaDriverBtn.addEventListener('click', () => {
     let driver = document.getElementById('assignDriverSelect').value;
-    if (!driver) { showToast("اختر المندوب أولاً!", "error"); return; }
+    if (!driver) { showToast("ط§ط®طھط± ط§ظ„ظ…ظ†ط¯ظˆط¨ ط£ظˆظ„ط§ظ‹!", "error"); return; }
 
     let courierPhone = "";
     if (shippingData && window.financialsData) {
         let courier = shippingData[driver] || window.financialsData.find(f => f.name === driver); // fallback search
     }
     // We can also just send it to WhatsApp with empty phone and user selects the contact
-    let ordersListText = `أوردرات المندوب: ${driver} 🏍️\n\n`;
+    let ordersListText = `ط£ظˆط±ط¯ط±ط§طھ ط§ظ„ظ…ظ†ط¯ظˆط¨: ${driver} ًںڈچï¸ڈ\n\n`;
     let totalCash = 0;
 
     const selected = Array.from(document.querySelectorAll('.pending-checkbox:checked')).map(cb => cb.value);
-    if (selected.length === 0) { showToast("حدد أوردر واحد على الأقل!", "warning"); return; }
+    if (selected.length === 0) { showToast("ط­ط¯ط¯ ط£ظˆط±ط¯ط± ظˆط§ط­ط¯ ط¹ظ„ظ‰ ط§ظ„ط£ظ‚ظ„!", "warning"); return; }
 
     selected.forEach((orderId, idx) => {
         let o = orderHistoryData.find(x => x.id === orderId);
         if (o) {
-            ordersListText += `${idx + 1}. العميل: ${o.name}\n📱 ${o.phone}\n📍 العنوان: ${o.address}\n💰 المطلوب: ${o.remaining} ج.م\n🛒 المنتجات: ${o.products.replace(/\n/g, ', ')}\n\n`;
+            ordersListText += `${idx + 1}. ط§ظ„ط¹ظ…ظٹظ„: ${o.name}\nًں“± ${o.phone}\nًں“چ ط§ظ„ط¹ظ†ظˆط§ظ†: ${o.address}\nًں’° ط§ظ„ظ…ط·ظ„ظˆط¨: ${o.remaining} ط¬.ظ…\nًں›’ ط§ظ„ظ…ظ†طھط¬ط§طھ: ${o.products.replace(/\n/g, ', ')}\n\n`;
             totalCash += parseFloat(o.remaining) || 0;
         }
     });
-    ordersListText += `🔥 الإجمالي المطلوب تحصيله: ${totalCash} ج.م\n`;
+    ordersListText += `ًں”¥ ط§ظ„ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ظ…ط·ظ„ظˆط¨ طھط­طµظٹظ„ظ‡: ${totalCash} ط¬.ظ…\n`;
     window.open(`https://wa.me/?text=${encodeURIComponent(ordersListText)}`, '_blank');
 });
 
 let markDelivBtn = document.getElementById('markDeliveredBtn');
-if (markDelivBtn) markDelivBtn.addEventListener('click', () => processStatusUpdate(markDelivBtn, 'shipped-checkbox', 'تم التوصيل'));
+if (markDelivBtn) markDelivBtn.addEventListener('click', () => processStatusUpdate(markDelivBtn, 'shipped-checkbox', 'طھظ… ط§ظ„طھظˆطµظٹظ„'));
 
 let markRetBtn = document.getElementById('markReturnedBtn');
-if (markRetBtn) markRetBtn.addEventListener('click', () => processStatusUpdate(markRetBtn, 'shipped-checkbox', 'مرتجع'));
+if (markRetBtn) markRetBtn.addEventListener('click', () => processStatusUpdate(markRetBtn, 'shipped-checkbox', 'ظ…ط±طھط¬ط¹'));
 
 function updateAdvancedDashboard(history) {
     let completedToday = 0;
@@ -2071,7 +2075,7 @@ function updateAdvancedDashboard(history) {
     let productMap = {};
     let platformMap = {};
 
-    // <i class=\'fa-solid fa-star\'></i> Fix: استخدام التاريخ المحلي بدل UTC لتجنب مشكلة الـ timezone
+    // <i class=\'fa-solid fa-star\'></i> Fix: ط§ط³طھط®ط¯ط§ظ… ط§ظ„طھط§ط±ظٹط® ط§ظ„ظ…ط­ظ„ظٹ ط¨ط¯ظ„ UTC ظ„طھط¬ظ†ط¨ ظ…ط´ظƒظ„ط© ط§ظ„ظ€ timezone
     let now = new Date();
     let todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
     let monthStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
@@ -2081,7 +2085,7 @@ function updateAdvancedDashboard(history) {
     let todayOrdersCount = 0;
     let todaySalesTotal = 0;
 
-    // <i class=\'fa-solid fa-star\'></i> Fix: دمج كل مصادر البيانات للحصول على صورة شاملة (لليوم فقط)
+    // <i class=\'fa-solid fa-star\'></i> Fix: ط¯ظ…ط¬ ظƒظ„ ظ…طµط§ط¯ط± ط§ظ„ط¨ظٹط§ظ†ط§طھ ظ„ظ„ط­طµظˆظ„ ط¹ظ„ظ‰ طµظˆط±ط© ط´ط§ظ…ظ„ط© (ظ„ظ„ظٹظˆظ… ظپظ‚ط·)
     let allKnownOrders = [...allOrders];
     if (window.uncollectedOrdersData && window.uncollectedOrdersData.length > 0) {
         window.uncollectedOrdersData.forEach(uo => {
@@ -2093,12 +2097,12 @@ function updateAdvancedDashboard(history) {
 
     allKnownOrders.forEach(o => {
         let oDate = (o.date || "").slice(0, 10);
-        let isAccountedFor = o.status && o.status.includes("تم التوصيل ومُحاسب");
+        let isAccountedFor = o.status && o.status.includes("طھظ… ط§ظ„طھظˆطµظٹظ„ ظˆظ…ظڈط­ط§ط³ط¨");
 
-        // حسابات اليوم: عدد الأوردرات يحسب الكل، المبيعات تستثني المرتجع
+        // ط­ط³ط§ط¨ط§طھ ط§ظ„ظٹظˆظ…: ط¹ط¯ط¯ ط§ظ„ط£ظˆط±ط¯ط±ط§طھ ظٹط­ط³ط¨ ط§ظ„ظƒظ„طŒ ط§ظ„ظ…ط¨ظٹط¹ط§طھ طھط³طھط«ظ†ظٹ ط§ظ„ظ…ط±طھط¬ط¹
         if (oDate === todayStr) {
             todayOrdersCount++;
-            if (o.status !== "مرتجع") {
+            if (o.status !== "ظ…ط±طھط¬ط¹") {
                 todaySalesTotal += parseFloat(o.total || o.remaining || 0) || 0;
             }
         }
@@ -2106,7 +2110,7 @@ function updateAdvancedDashboard(history) {
         if (isAccountedFor && oDate === todayStr) completedToday++;
     });
 
-    // <i class=\'fa-solid fa-star\'></i> حساب العهدة الإجمالية من البيانات المالية (من الإكسيل مباشرة)
+    // <i class=\'fa-solid fa-star\'></i> ط­ط³ط§ط¨ ط§ظ„ط¹ظ‡ط¯ط© ط§ظ„ط¥ط¬ظ…ط§ظ„ظٹط© ظ…ظ† ط§ظ„ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ط§ظ„ظٹط© (ظ…ظ† ط§ظ„ط¥ظƒط³ظٹظ„ ظ…ط¨ط§ط´ط±ط©)
     let moneyWithDrivers = 0;
     if (window.latestServerData && window.latestServerData.financials) {
         window.latestServerData.financials.forEach(f => {
@@ -2114,15 +2118,15 @@ function updateAdvancedDashboard(history) {
         });
     }
 
-    // عرض الإحصائيات الأساسية
+    // ط¹ط±ط¶ ط§ظ„ط¥ط­طµط§ط¦ظٹط§طھ ط§ظ„ط£ط³ط§ط³ظٹط©
     if (document.getElementById('moneyWithDrivers')) document.getElementById('moneyWithDrivers').innerText = moneyWithDrivers;
 
-    // <i class=\'fa-solid fa-star\'></i> تحديث إحصائيات اليوم محلياً بشكل صحيح
+    // <i class=\'fa-solid fa-star\'></i> طھط­ط¯ظٹط« ط¥ط­طµط§ط¦ظٹط§طھ ط§ظ„ظٹظˆظ… ظ…ط­ظ„ظٹط§ظ‹ ط¨ط´ظƒظ„ طµط­ظٹط­
     if (document.getElementById('todayCount')) document.getElementById('todayCount').innerText = todayOrdersCount;
     if (document.getElementById('todaySales')) document.getElementById('todaySales').innerText = todaySalesTotal;
     if (document.getElementById('completedCount')) document.getElementById('completedCount').innerText = completedToday;
 
-    // بالس على زر المالية
+    // ط¨ط§ظ„ط³ ط¹ظ„ظ‰ ط²ط± ط§ظ„ظ…ط§ظ„ظٹط©
     let openFinancialsBtn = document.getElementById('openFinancialsBtn');
     if (openFinancialsBtn) {
         if (moneyWithDrivers > 0) openFinancialsBtn.classList.add('pulse-btn');
@@ -2130,15 +2134,15 @@ function updateAdvancedDashboard(history) {
     }
 }
 
-// <i class=\'fa-solid fa-star\'></i> V15.1: بناء قائمة الشهور لفلتر التقارير - شهور فيها بيانات فقط
+// <i class=\'fa-solid fa-star\'></i> V15.1: ط¨ظ†ط§ط، ظ‚ط§ط¦ظ…ط© ط§ظ„ط´ظ‡ظˆط± ظ„ظپظ„طھط± ط§ظ„طھظ‚ط§ط±ظٹط± - ط´ظ‡ظˆط± ظپظٹظ‡ط§ ط¨ظٹط§ظ†ط§طھ ظپظ‚ط·
 function buildMonthFilterOptions() {
     let sel = document.getElementById('reportMonthFilter');
     if (!sel) return;
     let currentVal = sel.value;
-    sel.innerHTML = '<option value="">اختر الشهر</option>';
-    let arabicMonths = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+    sel.innerHTML = '<option value="">ط§ط®طھط± ط§ظ„ط´ظ‡ط±</option>';
+    let arabicMonths = ['ظٹظ†ط§ظٹط±', 'ظپط¨ط±ط§ظٹط±', 'ظ…ط§ط±ط³', 'ط£ط¨ط±ظٹظ„', 'ظ…ط§ظٹظˆ', 'ظٹظˆظ†ظٹظˆ', 'ظٹظˆظ„ظٹظˆ', 'ط£ط؛ط³ط·ط³', 'ط³ط¨طھظ…ط¨ط±', 'ط£ظƒطھظˆط¨ط±', 'ظ†ظˆظپظ…ط¨ط±', 'ط¯ظٹط³ظ…ط¨ط±'];
 
-    // <i class=\'fa-solid fa-star\'></i> Fix: جمع كل الشهور الفعلية من البيانات المتاحة
+    // <i class=\'fa-solid fa-star\'></i> Fix: ط¬ظ…ط¹ ظƒظ„ ط§ظ„ط´ظ‡ظˆط± ط§ظ„ظپط¹ظ„ظٹط© ظ…ظ† ط§ظ„ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…طھط§ط­ط©
     let availableMonths = new Set();
     let allDataSources = [
         ...(window.orderHistoryData || []),
@@ -2151,12 +2155,12 @@ function buildMonthFilterOptions() {
         if (d && d.length === 7 && d.includes('-')) availableMonths.add(d);
     });
 
-    // <i class=\'fa-solid fa-star\'></i> Fix: إضافة الشهر الحالي دائماً (بدون toISOString)
+    // <i class=\'fa-solid fa-star\'></i> Fix: ط¥ط¶ط§ظپط© ط§ظ„ط´ظ‡ط± ط§ظ„ط­ط§ظ„ظٹ ط¯ط§ط¦ظ…ط§ظ‹ (ط¨ط¯ظˆظ† toISOString)
     let now = new Date();
     let currentMonthVal = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
     availableMonths.add(currentMonthVal);
 
-    // ترتيب الشهور من الأحدث للأقدم
+    // طھط±طھظٹط¨ ط§ظ„ط´ظ‡ظˆط± ظ…ظ† ط§ظ„ط£ط­ط¯ط« ظ„ظ„ط£ظ‚ط¯ظ…
     let sortedMonths = Array.from(availableMonths).sort().reverse();
 
     sortedMonths.forEach(monthVal => {
@@ -2166,47 +2170,47 @@ function buildMonthFilterOptions() {
         let label = arabicMonths[moIdx] + ' ' + yr;
         let opt = document.createElement('option');
         opt.value = monthVal;
-        opt.textContent = monthVal === currentMonthVal ? label + ' (الحالي)' : label;
+        opt.textContent = monthVal === currentMonthVal ? label + ' (ط§ظ„ط­ط§ظ„ظٹ)' : label;
         sel.appendChild(opt);
     });
     if (currentVal) sel.value = currentVal;
 }
 
-// <i class=\'fa-solid fa-star\'></i> V15.1: عرض تقرير شهر محدد - يجلب من السيرفر
+// <i class=\'fa-solid fa-star\'></i> V15.1: ط¹ط±ط¶ طھظ‚ط±ظٹط± ط´ظ‡ط± ظ…ط­ط¯ط¯ - ظٹط¬ظ„ط¨ ظ…ظ† ط§ظ„ط³ظٹط±ظپط±
 function renderReportForMonth(targetMonth) {
     let statusEl = document.getElementById('reportFilterStatus');
     let topEl = document.getElementById('topProductsList');
     let pltEl = document.getElementById('platformStatsList');
     if (!targetMonth) {
-        if (statusEl) statusEl.innerHTML = '<i class=\'fa-solid fa-triangle-exclamation\'></i> اختر شهراً أولاً';
+        if (statusEl) statusEl.innerHTML = '<i class=\'fa-solid fa-triangle-exclamation\'></i> ط§ط®طھط± ط´ظ‡ط±ط§ظ‹ ط£ظˆظ„ط§ظ‹';
         return;
     }
-    if (statusEl) statusEl.innerHTML = '<i class=\'fa-solid fa-hourglass-half\'></i> جاري تحميل بيانات الشهر...';
-    if (topEl) topEl.innerHTML = '<p class="empty-msg"><i class=\'fa-solid fa-hourglass-half\'></i> جاري التحميل...</p>';
-    if (pltEl) pltEl.innerHTML = '<p class="empty-msg"><i class=\'fa-solid fa-hourglass-half\'></i> جاري التحميل...</p>';
+    if (statusEl) statusEl.innerHTML = '<i class=\'fa-solid fa-hourglass-half\'></i> ط¬ط§ط±ظٹ طھط­ظ…ظٹظ„ ط¨ظٹط§ظ†ط§طھ ط§ظ„ط´ظ‡ط±...';
+    if (topEl) topEl.innerHTML = '<p class="empty-msg"><i class=\'fa-solid fa-hourglass-half\'></i> ط¬ط§ط±ظٹ ط§ظ„طھط­ظ…ظٹظ„...</p>';
+    if (pltEl) pltEl.innerHTML = '<p class="empty-msg"><i class=\'fa-solid fa-hourglass-half\'></i> ط¬ط§ط±ظٹ ط§ظ„طھط­ظ…ظٹظ„...</p>';
 
     let fetchDate = targetMonth + '-01';
     fetch(`${GOOGLE_SHEETS_URL}?date=${fetchDate}`)
         .then(r => r.json())
         .then(data => {
-            let arabicMonths = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+            let arabicMonths = ['ظٹظ†ط§ظٹط±', 'ظپط¨ط±ط§ظٹط±', 'ظ…ط§ط±ط³', 'ط£ط¨ط±ظٹظ„', 'ظ…ط§ظٹظˆ', 'ظٹظˆظ†ظٹظˆ', 'ظٹظˆظ„ظٹظˆ', 'ط£ط؛ط³ط·ط³', 'ط³ط¨طھظ…ط¨ط±', 'ط£ظƒطھظˆط¨ط±', 'ظ†ظˆظپظ…ط¨ط±', 'ط¯ظٹط³ظ…ط¨ط±'];
             let [yr, mo] = targetMonth.split('-');
-            if (statusEl) statusEl.innerHTML = `<i class=\'fa-solid fa-check\'></i> تم تحميل بيانات ${arabicMonths[parseInt(mo) - 1]} ${yr}`;
+            if (statusEl) statusEl.innerHTML = `<i class=\'fa-solid fa-check\'></i> طھظ… طھط­ظ…ظٹظ„ ط¨ظٹط§ظ†ط§طھ ${arabicMonths[parseInt(mo) - 1]} ${yr}`;
 
-            // أفضل 10 منتجات
+            // ط£ظپط¶ظ„ 10 ظ…ظ†طھط¬ط§طھ
             if (topEl) {
                 let products = data.monthTopProducts || [];
                 if (products.length === 0) {
-                    topEl.innerHTML = '<p class="empty-msg">لا توجد بيانات مبيعات في هذا الشهر.</p>';
+                    topEl.innerHTML = '<p class="empty-msg">ظ„ط§ طھظˆط¬ط¯ ط¨ظٹط§ظ†ط§طھ ظ…ط¨ظٹط¹ط§طھ ظپظٹ ظ‡ط°ط§ ط§ظ„ط´ظ‡ط±.</p>';
                 } else {
                     let maxVal = Math.max(...products.map(p => p.qty || 0)) || 1;
                     topEl.innerHTML = products.map((p, idx) => {
                         let pct = Math.round(((p.qty || 0) / maxVal) * 100);
-                        let medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx + 1}.`;
+                        let medal = idx === 0 ? 'ًں¥‡' : idx === 1 ? 'ًں¥ˆ' : idx === 2 ? 'ًں¥‰' : `${idx + 1}.`;
                         return `<div style="margin-bottom:12px;">
                             <div style="display:flex;justify-content:space-between;font-size:0.88rem;font-weight:bold;margin-bottom:4px;">
                                 <span>${medal} ${p.name}</span>
-                                <span style="color:var(--primary);background:var(--primary-glow);padding:2px 8px;border-radius:8px;">${p.qty} قطعة</span>
+                                <span style="color:var(--primary);background:var(--primary-glow);padding:2px 8px;border-radius:8px;">${p.qty} ظ‚ط·ط¹ط©</span>
                             </div>
                             <div style="background:var(--bg);border-radius:8px;height:10px;overflow:hidden;">
                                 <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--primary),var(--primary-light));border-radius:8px;transition:width 0.8s ease;"></div>
@@ -2215,28 +2219,28 @@ function renderReportForMonth(targetMonth) {
                 }
             }
 
-            // <i class=\'fa-solid fa-star\'></i> تحديث إحصائيات الشهر في أعلى الصفحة بناءً على الشهر المختار
+            // <i class=\'fa-solid fa-star\'></i> طھط­ط¯ظٹط« ط¥ط­طµط§ط¦ظٹط§طھ ط§ظ„ط´ظ‡ط± ظپظٹ ط£ط¹ظ„ظ‰ ط§ظ„طµظپط­ط© ط¨ظ†ط§ط،ظ‹ ط¹ظ„ظ‰ ط§ظ„ط´ظ‡ط± ط§ظ„ظ…ط®طھط§ط±
             if (document.getElementById('monthCount')) document.getElementById('monthCount').innerText = data.monthOrderCount || 0;
             if (document.getElementById('monthSales')) document.getElementById('monthSales').innerText = data.monthSales || 0;
             if (document.getElementById('completedMonthCount')) document.getElementById('completedMonthCount').innerText = data.completedMonthCount || 0;
             if (document.getElementById('returnedCount')) document.getElementById('returnedCount').innerText = data.returnedCount || 0;
 
-            // أداء المنصات - بالترتيب المحدد
+            // ط£ط¯ط§ط، ط§ظ„ظ…ظ†طµط§طھ - ط¨ط§ظ„طھط±طھظٹط¨ ط§ظ„ظ…ط­ط¯ط¯
             if (pltEl) {
                 let raw = data.monthPlatforms || {};
                 const ORDER = [
-                    { key: 'واتساب', emoji: '<i class=\'fa-brands fa-whatsapp\'></i>', color: '#25D366' },
-                    { key: 'انستجرام', emoji: '<i class=\'fa-brands fa-instagram\'></i>', color: '#E1306C' },
-                    { key: 'فيسبوك', emoji: '<i class=\'fa-brands fa-facebook\'></i>', color: '#1877F2' },
-                    { key: 'تيك توك', emoji: '<i class=\'fa-brands fa-tiktok\'></i>', color: '#010101' },
+                    { key: 'ظˆط§طھط³ط§ط¨', emoji: '<i class=\'fa-brands fa-whatsapp\'></i>', color: '#25D366' },
+                    { key: 'ط§ظ†ط³طھط¬ط±ط§ظ…', emoji: '<i class=\'fa-brands fa-instagram\'></i>', color: '#E1306C' },
+                    { key: 'ظپظٹط³ط¨ظˆظƒ', emoji: '<i class=\'fa-brands fa-facebook\'></i>', color: '#1877F2' },
+                    { key: 'طھظٹظƒ طھظˆظƒ', emoji: '<i class=\'fa-brands fa-tiktok\'></i>', color: '#010101' },
                 ];
-                // <i class=\'fa-solid fa-star\'></i> حساب الإجمالي باستخدام includes لتغطية الإيموجي في الشيت
+                // <i class=\'fa-solid fa-star\'></i> ط­ط³ط§ط¨ ط§ظ„ط¥ط¬ظ…ط§ظ„ظٹ ط¨ط§ط³طھط®ط¯ط§ظ… includes ظ„طھط؛ط·ظٹط© ط§ظ„ط¥ظٹظ…ظˆط¬ظٹ ظپظٹ ط§ظ„ط´ظٹطھ
                 const getCount = (raw, keyword) => {
                     return Object.entries(raw).reduce((sum, [k, v]) => k.includes(keyword) ? sum + v : sum, 0);
                 };
                 let total = ORDER.reduce((s, p) => s + getCount(raw, p.key), 0);
                 if (total === 0) {
-                    pltEl.innerHTML = '<p class="empty-msg">لا توجد بيانات منصات في هذا الشهر.</p>';
+                    pltEl.innerHTML = '<p class="empty-msg">ظ„ط§ طھظˆط¬ط¯ ط¨ظٹط§ظ†ط§طھ ظ…ظ†طµط§طھ ظپظٹ ظ‡ط°ط§ ط§ظ„ط´ظ‡ط±.</p>';
                 } else {
                     pltEl.innerHTML = ORDER.map(plt => {
                         let cnt = getCount(raw, plt.key);
@@ -2245,7 +2249,7 @@ function renderReportForMonth(targetMonth) {
                             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
                                 <span style="font-weight:bold;font-size:0.95rem;">${plt.emoji} ${plt.key}</span>
                                 <div style="display:flex;align-items:center;gap:8px;">
-                                    <span style="font-size:0.95rem;font-weight:900;color:${plt.color};">${cnt} طلب</span>
+                                    <span style="font-size:0.95rem;font-weight:900;color:${plt.color};">${cnt} ط·ظ„ط¨</span>
                                     <span style="font-size:0.75rem;background:#f0f0f0;color:#555;padding:2px 7px;border-radius:10px;">${pct}%</span>
                                 </div>
                             </div>
@@ -2257,13 +2261,13 @@ function renderReportForMonth(targetMonth) {
             }
         })
         .catch(() => {
-            if (statusEl) statusEl.innerHTML = '<i class=\'fa-solid fa-xmark\'></i> حدث خطأ في الاتصال';
-            if (topEl) topEl.innerHTML = '<p class="empty-msg"><i class=\'fa-solid fa-xmark\'></i> تعذر التحميل</p>';
-            if (pltEl) pltEl.innerHTML = '<p class="empty-msg"><i class=\'fa-solid fa-xmark\'></i> تعذر التحميل</p>';
+            if (statusEl) statusEl.innerHTML = '<i class=\'fa-solid fa-xmark\'></i> ط­ط¯ط« ط®ط·ط£ ظپظٹ ط§ظ„ط§طھطµط§ظ„';
+            if (topEl) topEl.innerHTML = '<p class="empty-msg"><i class=\'fa-solid fa-xmark\'></i> طھط¹ط°ط± ط§ظ„طھط­ظ…ظٹظ„</p>';
+            if (pltEl) pltEl.innerHTML = '<p class="empty-msg"><i class=\'fa-solid fa-xmark\'></i> طھط¹ط°ط± ط§ظ„طھط­ظ…ظٹظ„</p>';
         });
 }
 
-// <i class=\'fa-solid fa-star\'></i> V15.1: ربط زرار التقارير
+// <i class=\'fa-solid fa-star\'></i> V15.1: ط±ط¨ط· ط²ط±ط§ط± ط§ظ„طھظ‚ط§ط±ظٹط±
 let loadReportsBtn = document.getElementById('loadReportsBtn');
 if (loadReportsBtn) {
     let reportsVisible = false;
@@ -2272,7 +2276,7 @@ if (loadReportsBtn) {
         if (!sec) return;
         reportsVisible = !reportsVisible;
         sec.style.display = reportsVisible ? 'block' : 'none';
-        loadReportsBtn.innerHTML = reportsVisible ? '<i class=\'fa-solid fa-chart-column\'></i> إخفاء التقارير التفصيلية' : '<i class=\'fa-solid fa-chart-column\'></i> إظهار التقارير التفصيلية';
+        loadReportsBtn.innerHTML = reportsVisible ? '<i class=\'fa-solid fa-chart-column\'></i> ط¥ط®ظپط§ط، ط§ظ„طھظ‚ط§ط±ظٹط± ط§ظ„طھظپطµظٹظ„ظٹط©' : '<i class=\'fa-solid fa-chart-column\'></i> ط¥ط¸ظ‡ط§ط± ط§ظ„طھظ‚ط§ط±ظٹط± ط§ظ„طھظپطµظٹظ„ظٹط©';
         if (reportsVisible) buildMonthFilterOptions();
     });
 }
@@ -2281,7 +2285,7 @@ let loadReportDataBtn = document.getElementById('loadReportDataBtn');
 if (loadReportDataBtn) {
     loadReportDataBtn.addEventListener('click', () => {
         let sel = document.getElementById('reportMonthFilter');
-        if (!sel || !sel.value) { showToast('اختر شهراً أولاً', 'warning'); return; }
+        if (!sel || !sel.value) { showToast('ط§ط®طھط± ط´ظ‡ط±ط§ظ‹ ط£ظˆظ„ط§ظ‹', 'warning'); return; }
         renderReportForMonth(sel.value);
     });
 }
@@ -2301,14 +2305,14 @@ window.shareToWhatsAppGroup = function (orderId) {
     }
 
     if (!order) {
-        showToast("لم يتم العثور على الأوردر", "error");
+        showToast("ظ„ظ… ظٹطھظ… ط§ظ„ط¹ط«ظˆط± ط¹ظ„ظ‰ ط§ظ„ط£ظˆط±ط¯ط±", "error");
         console.warn("shareToWhatsAppGroup: could not find orderId =", orderId, typeof orderId);
         console.log("Available IDs in history:", (window.orderHistoryData || []).map(o => ({ id: o.id, type: typeof o.id })));
         return;
     }
     console.log("Order Data:", order);
 
-    // <i class=\'fa-solid fa-star\'></i> V14.2: إصلاح شامل لـ Keys القادمة من الإكسيل - fallback لكل حقل
+    // <i class=\'fa-solid fa-star\'></i> V14.2: ط¥طµظ„ط§ط­ ط´ط§ظ…ظ„ ظ„ظ€ Keys ط§ظ„ظ‚ط§ط¯ظ…ط© ظ…ظ† ط§ظ„ط¥ظƒط³ظٹظ„ - fallback ظ„ظƒظ„ ط­ظ‚ظ„
     let _name = order.name || order.customerName || "";
     let _gov = order.gov || order.governorate || "";
     let _address = order.address || order.customerAddress || order.addr || "";
@@ -2318,43 +2322,43 @@ window.shareToWhatsAppGroup = function (orderId) {
     let _products = order.products || order.items || order.productDetails || "";
     let _shipping = parseFloat(order.shipping || order.shippingCost || order.shippingFee || 0);
     let _remaining = order.remaining !== undefined ? order.remaining : (order.total || order.finalTotal || 0);
-    let _type = order.orderType || order.type || order.deliveryType || "توصيل";
+    let _type = order.orderType || order.type || order.deliveryType || "طھظˆطµظٹظ„";
 
-    let text = `*نوع الطلب:* ${_type}\n`;
-    if (_type.includes('حجز') || _type === 'special_date') {
+    let text = `*ظ†ظˆط¹ ط§ظ„ط·ظ„ط¨:* ${_type}\n`;
+    if (_type.includes('ط­ط¬ط²') || _type === 'special_date') {
         let resDate = order.reservationDate || order.expectedDate || order.bookingDate || order.specialDate || order.spDate;
         if (resDate) {
-            if (resDate.toString().includes('GMT') || resDate.toString().includes('توقيت')) {
+            if (resDate.toString().includes('GMT') || resDate.toString().includes('طھظˆظ‚ظٹطھ')) {
                 let d = new Date(resDate);
                 if (!isNaN(d.getTime())) resDate = `${d.getFullYear()}-${("0" + (d.getMonth() + 1)).slice(-2)}-${("0" + d.getDate()).slice(-2)}`;
             }
-            text += `📅 *تاريخ التسليم:* ${resDate}\n`;
+            text += `ًں“… *طھط§ط±ظٹط® ط§ظ„طھط³ظ„ظٹظ…:* ${resDate}\n`;
         }
     }
-    text += `*تاريخ إنشاء الأوردر:* ${order.date || new Date().toLocaleDateString('ar-EG')} ⏰ ${order.time || new Date().toLocaleTimeString('ar-EG')}\n`;
+    text += `*طھط§ط±ظٹط® ط¥ظ†ط´ط§ط، ط§ظ„ط£ظˆط±ط¯ط±:* ${order.date || new Date().toLocaleDateString('ar-EG')} âڈ° ${order.time || new Date().toLocaleTimeString('ar-EG')}\n`;
     
     let tCount = document.getElementById('todayCount') ? document.getElementById('todayCount').innerText : "0";
     let mCount = document.getElementById('monthCount') ? document.getElementById('monthCount').innerText : "0";
-    text += `عدد اوردرات اليوم : ${tCount}\n`;
-    text += `عدد اوردرات الشهر : ${mCount}\n`;
+    text += `ط¹ط¯ط¯ ط§ظˆط±ط¯ط±ط§طھ ط§ظ„ظٹظˆظ… : ${tCount}\n`;
+    text += `ط¹ط¯ط¯ ط§ظˆط±ط¯ط±ط§طھ ط§ظ„ط´ظ‡ط± : ${mCount}\n`;
 
-    text += `👤 *العميل:* ${_name}\n`;
-    if (!_type.includes('استلام') && !_type.includes('فرع') && (_gov || _address)) {
-        text += `📍 *العنوان:* ${_gov ? _gov + " - " : ""}${_address}\n`;
+    text += `ًں‘¤ *ط§ظ„ط¹ظ…ظٹظ„:* ${_name}\n`;
+    if (!_type.includes('ط§ط³طھظ„ط§ظ…') && !_type.includes('ظپط±ط¹') && (_gov || _address)) {
+        text += `ًں“چ *ط§ظ„ط¹ظ†ظˆط§ظ†:* ${_gov ? _gov + " - " : ""}${_address}\n`;
     }
-    if (_phone) text += `📱 *الموبايل:* ${_phone}\n`;
-    if (_phone2 && String(_phone2).trim() !== '') text += `📱 *رقم احتياطي:* ${String(_phone2).trim()}\n`;
-    text += `💳 *طريقة الدفع:* ${_payment}\n\n`;
-    text += `📦 *المنتجات:*\n${_products}\n`;
+    if (_phone) text += `ًں“± *ط§ظ„ظ…ظˆط¨ط§ظٹظ„:* ${_phone}\n`;
+    if (_phone2 && String(_phone2).trim() !== '') text += `ًں“± *ط±ظ‚ظ… ط§ط­طھظٹط§ط·ظٹ:* ${String(_phone2).trim()}\n`;
+    text += `ًں’³ *ط·ط±ظٹظ‚ط© ط§ظ„ط¯ظپط¹:* ${_payment}\n\n`;
+    text += `ًں“¦ *ط§ظ„ظ…ظ†طھط¬ط§طھ:*\n${_products}\n`;
     let _subtotal = order.subtotal || order.productsTotal || (parseFloat(order.total) - parseFloat(_shipping)) || 0;
-    text += `🛍️ *إجمالي المنتجات:* ${_subtotal} ج.م\n`;
-    text += `🚚 *الشحن:* ${_shipping}\n`;
-    text += `💰 *الإجمالي النهائي:* ${_remaining}\n`;
+    text += `ًں›چï¸ڈ *ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ظ…ظ†طھط¬ط§طھ:* ${_subtotal} ط¬.ظ…\n`;
+    text += `ًںڑڑ *ط§ظ„ط´ط­ظ†:* ${_shipping}\n`;
+    text += `ًں’° *ط§ظ„ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ظ†ظ‡ط§ط¦ظٹ:* ${_remaining}\n`;
 
     navigator.clipboard.writeText(text).then(() => {
-        showToast("تم نسخ بيانات الأوردر للحافظة بنجاح 📋", "success");
+        showToast("طھظ… ظ†ط³ط® ط¨ظٹط§ظ†ط§طھ ط§ظ„ط£ظˆط±ط¯ط± ظ„ظ„ط­ط§ظپط¸ط© ط¨ظ†ط¬ط§ط­ ًں“‹", "success");
     }).catch(err => {
-        showToast("فشل في نسخ البيانات", "error");
+        showToast("ظپط´ظ„ ظپظٹ ظ†ط³ط® ط§ظ„ط¨ظٹط§ظ†ط§طھ", "error");
     });
 };
 
@@ -2362,7 +2366,7 @@ let shareOrderBtn = document.getElementById('shareOrderBtn');
 if (shareOrderBtn) {
     shareOrderBtn.addEventListener('click', () => {
         let name = document.getElementById('customerName') ? document.getElementById('customerName').value.trim() : "";
-        if (!name) { showToast("برجاء إدخال بيانات الأوردر أولاً", "error"); return; }
+        if (!name) { showToast("ط¨ط±ط¬ط§ط، ط¥ط¯ط®ط§ظ„ ط¨ظٹط§ظ†ط§طھ ط§ظ„ط£ظˆط±ط¯ط± ط£ظˆظ„ط§ظ‹", "error"); return; }
 
         let gov = document.getElementById('governorate') ? document.getElementById('governorate').value : "";
         let addressVal = document.getElementById('address') ? document.getElementById('address').value : "";
@@ -2374,12 +2378,12 @@ if (shareOrderBtn) {
             let offer = parseFloat(row.querySelector('.product-offer-input').value) || 0;
             let finalPrice = offer > 0 ? offer : price;
             let q = parseFloat(row.querySelector('.product-qty-input').value) || 1;
-            productsListText += `${n} - الكمية: ${q} (${finalPrice * q}ج)\n`;
+            productsListText += `${n} - ط§ظ„ظƒظ…ظٹط©: ${q} (${finalPrice * q}ط¬)\n`;
         });
         let shipping = document.getElementById('shippingCost') ? document.getElementById('shippingCost').value : 0;
         let rem = document.getElementById('remainingAmountDisplay') ? document.getElementById('remainingAmountDisplay').innerText : (document.getElementById('finalTotalDisplay') ? document.getElementById('finalTotalDisplay').innerText : 0);
         let deliveryTypeSelect = document.getElementById('deliveryType');
-        let orderTypeLabel = deliveryTypeSelect ? deliveryTypeSelect.options[deliveryTypeSelect.selectedIndex].text : "توصيل";
+        let orderTypeLabel = deliveryTypeSelect ? deliveryTypeSelect.options[deliveryTypeSelect.selectedIndex].text : "طھظˆطµظٹظ„";
 
         let currentOrderObj = {
             orderType: orderTypeLabel,
@@ -2399,44 +2403,13 @@ if (shareOrderBtn) {
     });
 }
 
-let sendWaManagerBtn = document.getElementById('sendWaManagerBtn');
-if (sendWaManagerBtn) sendWaManagerBtn.addEventListener('click', () => {
-    let tCount = document.getElementById('todayCount') ? document.getElementById('todayCount').innerText : 0;
-    let tSales = document.getElementById('todaySales') ? document.getElementById('todaySales').innerText : 0;
-    let compCount = document.getElementById('completedCount') ? document.getElementById('completedCount').innerText : 0;
-    let retCount = document.getElementById('returnedCount') ? document.getElementById('returnedCount').innerText : 0;
-    let topP = document.getElementById('topProduct') ? document.getElementById('topProduct').innerText : "--";
-    let oosCount = window.oosData ? window.oosData.length : 0;
-
-    let monthSales = document.getElementById('monthSales') ? document.getElementById('monthSales').innerText : 0;
-
-    let report = `📊 *تقرير الإدارة - Candy Club Pro*\n\n`;
-    report += `📅 *إحصائيات اليوم:*\n`;
-    report += `🛒 أوردرات اليوم: ${tCount}\n`;
-    report += `💰 مبيعات اليوم المتوقعة: ${tSales} ج\n`;
-    report += `✅ أوردرات مكتملة (محاسب): ${compCount}\n`;
-    report += `🚨 مرتجعات: ${retCount}\n\n`;
-
-    report += `📅 *إحصائيات الشهر:*\n`;
-    report += `📈 إجمالي مبيعات الشهر: ${monthSales} ج\n\n`;
-
-    report += `⚠️ منتجات ناقصة: ${oosCount}\n`;
-    report += `⭐ المنتج الأكثر مبيعاً: ${topP}\n\n`;
-    report += `تم الإنشاء بواسطة سيستم الإدارة الآلي ⚙️`;
-
-    navigator.clipboard.writeText(report).then(() => {
-        showToast("تم نسخ التقرير للحافظة بنجاح 📋", "success");
-    }).catch(err => {
-        showToast("فشل في نسخ التقرير", "error");
-    });
-});
 
 // ==========================================
-// 12. نظام الكتالوج والنواقص الشامل
+// 12. ظ†ط¸ط§ظ… ط§ظ„ظƒطھط§ظ„ظˆط¬ ظˆط§ظ„ظ†ظˆط§ظ‚طµ ط§ظ„ط´ط§ظ…ظ„
 // ==========================================
 
 window.pushCatalogUpdate = function (name, price, isOffer, offerPrice) {
-    // تحديث البيانات محلياً فوراً لمنع اختفاء التعديل
+    // طھط­ط¯ظٹط« ط§ظ„ط¨ظٹط§ظ†ط§طھ ظ…ط­ظ„ظٹط§ظ‹ ظپظˆط±ط§ظ‹ ظ„ظ…ظ†ط¹ ط§ط®طھظپط§ط، ط§ظ„طھط¹ط¯ظٹظ„
     let existing = catalogData.find(p => p.name === name);
     if (existing) {
         existing.isOffer = isOffer;
@@ -2446,7 +2419,7 @@ window.pushCatalogUpdate = function (name, price, isOffer, offerPrice) {
         catalogData.push({ name, price, isOffer, offerPrice });
     }
     
-    // إعادة الرسم فوراً ليرى المستخدم النتيجة بدون انتظار
+    // ط¥ط¹ط§ط¯ط© ط§ظ„ط±ط³ظ… ظپظˆط±ط§ظ‹ ظ„ظٹط±ظ‰ ط§ظ„ظ…ط³طھط®ط¯ظ… ط§ظ„ظ†طھظٹط¬ط© ط¨ط¯ظˆظ† ط§ظ†طھط¸ط§ط±
     renderCatalog();
 
     let formData = new URLSearchParams();
@@ -2458,7 +2431,7 @@ window.pushCatalogUpdate = function (name, price, isOffer, offerPrice) {
     fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData });
 };
 
-// متغيرات نظام تقسيم صفحات الكتالوج (Pagination)
+// ظ…طھط؛ظٹط±ط§طھ ظ†ط¸ط§ظ… طھظ‚ط³ظٹظ… طµظپط­ط§طھ ط§ظ„ظƒطھط§ظ„ظˆط¬ (Pagination)
 let catalogCurrentPage = 1;
 const CATALOG_ITEMS_PER_PAGE = 50;
 let catalogSearchQuery = "";
@@ -2472,16 +2445,16 @@ function updateCatalogPaginationUI() {
     
     if (prevBtn) prevBtn.disabled = catalogCurrentPage <= 1;
     if (nextBtn) nextBtn.disabled = catalogCurrentPage >= totalPages;
-    if (pageInfo) pageInfo.innerText = `صفحة ${catalogCurrentPage} من ${totalPages}`;
+    if (pageInfo) pageInfo.innerText = `طµظپط­ط© ${catalogCurrentPage} ظ…ظ† ${totalPages}`;
 }
 
-// دالة العرض الأساسية للكتالوج (مجهزة بالصفحات والبحث)
+// ط¯ط§ظ„ط© ط§ظ„ط¹ط±ط¶ ط§ظ„ط£ط³ط§ط³ظٹط© ظ„ظ„ظƒطھط§ظ„ظˆط¬ (ظ…ط¬ظ‡ط²ط© ط¨ط§ظ„طµظپط­ط§طھ ظˆط§ظ„ط¨ط­ط«)
 function renderCatalog() {
     let container = document.getElementById('catalogListContainer');
     if (!container) return;
     container.innerHTML = '';
 
-    // فلترة بناءً على البحث
+    // ظپظ„طھط±ط© ط¨ظ†ط§ط،ظ‹ ط¹ظ„ظ‰ ط§ظ„ط¨ط­ط«
     currentFilteredCatalog = catalogData || [];
     if (catalogSearchQuery.trim() !== "") {
         let q = catalogSearchQuery.trim().toLowerCase();
@@ -2492,12 +2465,12 @@ function renderCatalog() {
     }
 
     if (currentFilteredCatalog.length === 0) {
-        container.innerHTML = '<p class="empty-msg">لا يوجد منتجات لعرضها.</p>';
+        container.innerHTML = '<p class="empty-msg">ظ„ط§ ظٹظˆط¬ط¯ ظ…ظ†طھط¬ط§طھ ظ„ط¹ط±ط¶ظ‡ط§.</p>';
         updateCatalogPaginationUI();
         return;
     }
 
-    // حساب المنتجات التي ستظهر في الصفحة الحالية (Sliding Window: 3 Pages Max)
+    // ط­ط³ط§ط¨ ط§ظ„ظ…ظ†طھط¬ط§طھ ط§ظ„طھظٹ ط³طھط¸ظ‡ط± ظپظٹ ط§ظ„طµظپط­ط© ط§ظ„ط­ط§ظ„ظٹط© (Sliding Window: 3 Pages Max)
     let totalPages = Math.ceil(currentFilteredCatalog.length / CATALOG_ITEMS_PER_PAGE) || 1;
     if (catalogCurrentPage > totalPages) catalogCurrentPage = totalPages;
     if (catalogCurrentPage < 1) catalogCurrentPage = 1;
@@ -2505,7 +2478,7 @@ function renderCatalog() {
     let startPage = Math.max(1, catalogCurrentPage - 1);
     let endPage = Math.min(totalPages, catalogCurrentPage + 1);
     
-    // الحفاظ على 3 صفحات دائماً إذا أمكن (لتحسين تجربة المستخدم وتقليل إعادة التحميل)
+    // ط§ظ„ط­ظپط§ط¸ ط¹ظ„ظ‰ 3 طµظپط­ط§طھ ط¯ط§ط¦ظ…ط§ظ‹ ط¥ط°ط§ ط£ظ…ظƒظ† (ظ„طھط­ط³ظٹظ† طھط¬ط±ط¨ط© ط§ظ„ظ…ط³طھط®ط¯ظ… ظˆطھظ‚ظ„ظٹظ„ ط¥ط¹ط§ط¯ط© ط§ظ„طھط­ظ…ظٹظ„)
     if (catalogCurrentPage === 1 && totalPages >= 3) { endPage = 3; }
     if (catalogCurrentPage === totalPages && totalPages >= 3) { startPage = totalPages - 2; }
 
@@ -2522,15 +2495,15 @@ function renderCatalog() {
         div.innerHTML = `
             <div class="catalog-info">
                 <strong>${p.name}</strong>
-                <span class="catalog-price">أساسي: ${p.price} ج.م</span>
-                ${isOfferActive ? `<span class="catalog-offer-price">سعر العرض: ${p.offerPrice} ج.م</span>` : ''}
+                <span class="catalog-price">ط£ط³ط§ط³ظٹ: ${p.price} ط¬.ظ…</span>
+                ${isOfferActive ? `<span class="catalog-offer-price">ط³ط¹ط± ط§ظ„ط¹ط±ط¶: ${p.offerPrice} ط¬.ظ…</span>` : ''}
             </div>
             <div style="display:flex; flex-direction:column; gap:8px; align-items:center;">
-                <label class="switch" title="تفعيل/إيقاف العرض">
+                <label class="switch" title="طھظپط¹ظٹظ„/ط¥ظٹظ‚ط§ظپ ط§ظ„ط¹ط±ط¶">
                     <input type="checkbox" class="offer-toggle" ${isOfferActive ? 'checked' : ''}>
                     <span class="slider round"></span>
                 </label>
-                <button class="btn-outline interactive-btn edit-cat-btn" style="padding:4px; font-size:0.7rem;">تعديل <i class=\'fa-solid fa-pencil\'></i></button>
+                <button class="btn-outline interactive-btn edit-cat-btn" style="padding:4px; font-size:0.7rem;">طھط¹ط¯ظٹظ„ <i class=\'fa-solid fa-pencil\'></i></button>
             </div>
         `;
 
@@ -2538,15 +2511,15 @@ function renderCatalog() {
             let newState = e.target.checked;
             let currentOffer = p.offerPrice || p.price;
             if (newState && !p.offerPrice) {
-                customSinglePrompt(`أدخل سعر العرض لـ ${p.name}:`, p.price, (val) => {
+                customSinglePrompt(`ط£ط¯ط®ظ„ ط³ط¹ط± ط§ظ„ط¹ط±ط¶ ظ„ظ€ ${p.name}:`, p.price, (val) => {
                     if (!val) { e.target.checked = false; return; }
                     currentOffer = val;
                     window.pushCatalogUpdate(p.name, p.price, newState, currentOffer);
-                    showToast("<i class=\'fa-solid fa-check\'></i> تم تفعيل العرض", "success");
+                    showToast("<i class=\'fa-solid fa-check\'></i> طھظ… طھظپط¹ظٹظ„ ط§ظ„ط¹ط±ط¶", "success");
                 });
             } else {
                 window.pushCatalogUpdate(p.name, p.price, newState, currentOffer);
-                showToast(newState ? "<i class=\'fa-solid fa-check\'></i> تم تفعيل العرض" : "<i class=\'fa-solid fa-xmark\'></i> تم إيقاف العرض", "success");
+                showToast(newState ? "<i class=\'fa-solid fa-check\'></i> طھظ… طھظپط¹ظٹظ„ ط§ظ„ط¹ط±ط¶" : "<i class=\'fa-solid fa-xmark\'></i> طھظ… ط¥ظٹظ‚ط§ظپ ط§ظ„ط¹ط±ط¶", "success");
             }
         });
 
@@ -2566,13 +2539,13 @@ function renderCatalog() {
     updateCatalogPaginationUI();
 }
 
-// أحداث شريط البحث والتنقل
+// ط£ط­ط¯ط§ط« ط´ط±ظٹط· ط§ظ„ط¨ط­ط« ظˆط§ظ„طھظ†ظ‚ظ„
 document.addEventListener('DOMContentLoaded', () => {
     let sInput = document.getElementById('catalogSearchInput');
     if (sInput) {
         sInput.addEventListener('input', (e) => {
             catalogSearchQuery = e.target.value;
-            catalogCurrentPage = 1; // الرجوع لأول صفحة عند البحث
+            catalogCurrentPage = 1; // ط§ظ„ط±ط¬ظˆط¹ ظ„ط£ظˆظ„ طµظپط­ط© ط¹ظ†ط¯ ط§ظ„ط¨ط­ط«
             renderCatalog();
         });
     }
@@ -2616,8 +2589,8 @@ if (saveEditCatBtn) {
         window.pushCatalogUpdate(name, price, isOfferActive, offerPrice);
 
         setTimeout(() => {
-            showToast("<i class=\'fa-solid fa-check\'></i> تم التعديل بنجاح", "success");
-            setBtnLoading(saveEditCatBtn, false, "حفظ التعديلات");
+            showToast("<i class=\'fa-solid fa-check\'></i> طھظ… ط§ظ„طھط¹ط¯ظٹظ„ ط¨ظ†ط¬ط§ط­", "success");
+            setBtnLoading(saveEditCatBtn, false, "ط­ظپط¸ ط§ظ„طھط¹ط¯ظٹظ„ط§طھ");
             document.getElementById('editCatalogModal').classList.remove('active');
         }, 1500);
     });
@@ -2628,15 +2601,15 @@ if (addCatalogBtn) {
     addCatalogBtn.addEventListener('click', () => {
         let n = document.getElementById('newCatalogName').value;
         let p = document.getElementById('newCatalogPrice').value;
-        if (!n || !p) { showToast("أدخل اسم المنتج والسعر", "error"); return; }
+        if (!n || !p) { showToast("ط£ط¯ط®ظ„ ط§ط³ظ… ط§ظ„ظ…ظ†طھط¬ ظˆط§ظ„ط³ط¹ط±", "error"); return; }
 
         setBtnLoading(addCatalogBtn, true);
         window.pushCatalogUpdate(n, p, false, 0);
-        showToast("<i class=\'fa-solid fa-check\'></i> تم إضافة المنتج", "success");
+        showToast("<i class=\'fa-solid fa-check\'></i> طھظ… ط¥ط¶ط§ظپط© ط§ظ„ظ…ظ†طھط¬", "success");
         setTimeout(() => {
             document.getElementById('newCatalogName').value = '';
             document.getElementById('newCatalogPrice').value = '';
-            setBtnLoading(addCatalogBtn, false, "إضافة");
+            setBtnLoading(addCatalogBtn, false, "ط¥ط¶ط§ظپط©");
             loadDataFromServer();
         }, 1500);
     });
@@ -2648,7 +2621,7 @@ function renderOutOfStock(oosList) {
     container.innerHTML = '';
 
     if (oosList.length === 0) {
-        container.innerHTML = '<p class="empty-msg">لا يوجد نواقص مسجلة حالياً.</p>';
+        container.innerHTML = '<p class="empty-msg">ظ„ط§ ظٹظˆط¬ط¯ ظ†ظˆط§ظ‚طµ ظ…ط³ط¬ظ„ط© ط­ط§ظ„ظٹط§ظ‹.</p>';
         return;
     }
 
@@ -2660,7 +2633,7 @@ function renderOutOfStock(oosList) {
             <div style="flex:1;">
                 <strong>${item.customer}</strong> <br>
                 <small style="color:var(--primary); font-weight:bold;">${item.product}</small><br>
-                <span style="font-size:0.75rem; color:#888;">الغرض: ${item.reason || '--'}</span>
+                <span style="font-size:0.75rem; color:#888;">ط§ظ„ط؛ط±ط¶: ${item.reason || '--'}</span>
             </div>
             <div style="display:flex; gap:5px;">
                 <button class="interactive-btn wa-oos-btn" style="background:#25D366; color:white; border:none; padding:5px 10px; border-radius:8px;"><i class=\'fa-brands fa-whatsapp\'></i></button>
@@ -2671,19 +2644,19 @@ function renderOutOfStock(oosList) {
         div.querySelector('.wa-oos-btn').addEventListener('click', () => {
             let phone = item.phone.toString().replace(/'/g, '').trim();
             if (phone.startsWith('0')) phone = '+2' + phone;
-            let msg = `أهلاً بك يا ${item.customer} 👋\nالمنتج اللي سألتنا عليه (${item.product}) متوفر دلوقتي وتقدر تطلبه! 🍬`;
+            let msg = `ط£ظ‡ظ„ط§ظ‹ ط¨ظƒ ظٹط§ ${item.customer} ًں‘‹\nط§ظ„ظ…ظ†طھط¬ ط§ظ„ظ„ظٹ ط³ط£ظ„طھظ†ط§ ط¹ظ„ظٹظ‡ (${item.product}) ظ…طھظˆظپط± ط¯ظ„ظˆظ‚طھظٹ ظˆطھظ‚ط¯ط± طھط·ظ„ط¨ظ‡! ًںچ¬`;
             window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
         });
 
         div.querySelector('.del-oos-btn').addEventListener('click', () => {
-            customConfirm("مسح العميل من قائمة النواقص؟", () => {
+            customConfirm("ظ…ط³ط­ ط§ظ„ط¹ظ…ظٹظ„ ظ…ظ† ظ‚ط§ط¦ظ…ط© ط§ظ„ظ†ظˆط§ظ‚طµطں", () => {
                 let formData = new URLSearchParams();
                 formData.append('action', 'deleteOutOfStock');
                 formData.append('phone', item.phone);
                 formData.append('product', item.product);
                 fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData });
                 div.remove();
-                showToast("تم الحذف بنجاح", "success");
+                showToast("طھظ… ط§ظ„ط­ط°ظپ ط¨ظ†ط¬ط§ط­", "success");
             });
         });
 
@@ -2699,7 +2672,7 @@ if (addOosBtn) {
         let pr = document.getElementById('oosProduct').value;
         let r = document.getElementById('oosReason') ? document.getElementById('oosReason').value : "";
 
-        if (!c || !ph || !pr) { showToast("أكمل بيانات العميل والمنتج الناقص", "error"); return; }
+        if (!c || !ph || !pr) { showToast("ط£ظƒظ…ظ„ ط¨ظٹط§ظ†ط§طھ ط§ظ„ط¹ظ…ظٹظ„ ظˆط§ظ„ظ…ظ†طھط¬ ط§ظ„ظ†ط§ظ‚طµ", "error"); return; }
 
         setBtnLoading(addOosBtn, true);
         let formData = new URLSearchParams();
@@ -2711,13 +2684,13 @@ if (addOosBtn) {
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
-                showToast("<i class=\'fa-solid fa-check\'></i> تم تسجيل الناقص", "success");
-                setBtnLoading(addOosBtn, false, "تسجيل");
+                showToast("<i class=\'fa-solid fa-check\'></i> طھظ… طھط³ط¬ظٹظ„ ط§ظ„ظ†ط§ظ‚طµ", "success");
+                setBtnLoading(addOosBtn, false, "طھط³ط¬ظٹظ„");
                 document.getElementById('oosCustomer').value = '';
                 document.getElementById('oosPhone').value = '';
                 document.getElementById('oosProduct').value = '';
                 loadDataFromServer();
-            }).catch(() => setBtnLoading(addOosBtn, false, "تسجيل"));
+            }).catch(() => setBtnLoading(addOosBtn, false, "طھط³ط¬ظٹظ„"));
     });
 }
 
@@ -2761,7 +2734,7 @@ function renderCustomers(customersList) {
     if(dashTotalOrders) dashTotalOrders.innerText = totalOrders;
 
     if (customersList.length === 0) {
-        container.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #999;"><i class=\'fa-solid fa-box-open\' style=\'font-size: 3rem; margin-bottom: 10px;\'></i><p>لا يوجد عملاء مطابقين للبحث.</p></div>';
+        container.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #999;"><i class=\'fa-solid fa-box-open\' style=\'font-size: 3rem; margin-bottom: 10px;\'></i><p>ظ„ط§ ظٹظˆط¬ط¯ ط¹ظ…ظ„ط§ط، ظ…ط·ط§ط¨ظ‚ظٹظ† ظ„ظ„ط¨ط­ط«.</p></div>';
         return;
     }
 
@@ -2785,12 +2758,12 @@ function renderCustomers(customersList) {
                 </div>
             </div>
             <div style="font-size: 0.85rem; color: #555; display: flex; flex-direction: column; gap: 6px;">
-                <span><i class=\'fa-solid fa-location-dot\' style=\'color: #e74c3c;\'></i> ${c.gov || 'غير محدد'} - ${c.address || ''}</span>
+                <span><i class=\'fa-solid fa-location-dot\' style=\'color: #e74c3c;\'></i> ${c.gov || 'ط؛ظٹط± ظ…ط­ط¯ط¯'} - ${c.address || ''}</span>
                 <div style="display: flex; justify-content: space-between; background: #f9f9f9; padding: 8px; border-radius: 8px; margin-top: 5px;">
-                    <span><i class=\'fa-solid fa-cart-shopping\' style=\'color: #3498db;\'></i> طلبات: <strong>${c.count || 0}</strong></span>
-                    <span><i class=\'fa-solid fa-money-bill-wave\' style=\'color: #27ae60;\'></i> مدفوعات: <strong>${c.total || 0}ج</strong></span>
+                    <span><i class=\'fa-solid fa-cart-shopping\' style=\'color: #3498db;\'></i> ط·ظ„ط¨ط§طھ: <strong>${c.count || 0}</strong></span>
+                    <span><i class=\'fa-solid fa-money-bill-wave\' style=\'color: #27ae60;\'></i> ظ…ط¯ظپظˆط¹ط§طھ: <strong>${c.total || 0}ط¬</strong></span>
                 </div>
-                <span style="font-size: 0.75rem; color: #999; text-align: left; margin-top: 5px;"><i class=\'fa-regular fa-calendar\'></i> آخر طلب: ${c.lastDate ? String(c.lastDate).split('T')[0] : '--'}</span>
+                <span style="font-size: 0.75rem; color: #999; text-align: left; margin-top: 5px;"><i class=\'fa-regular fa-calendar\'></i> ط¢ط®ط± ط·ظ„ط¨: ${c.lastDate ? String(c.lastDate).split('T')[0] : '--'}</span>
             </div>
         `;
         container.appendChild(div);
@@ -2847,7 +2820,7 @@ if (loadCustomersBtn) {
         if (btnIcon) btnIcon.classList.add('fa-spin');
         
         if(customersListContainer) {
-            customersListContainer.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--primary);"><i class=\'fa-solid fa-spinner fa-spin\' style=\'font-size: 3rem; margin-bottom: 10px;\'></i><p>جاري تحميل وتحليل البيانات...</p></div>';
+            customersListContainer.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--primary);"><i class=\'fa-solid fa-spinner fa-spin\' style=\'font-size: 3rem; margin-bottom: 10px;\'></i><p>ط¬ط§ط±ظٹ طھط­ظ…ظٹظ„ ظˆطھط­ظ„ظٹظ„ ط§ظ„ط¨ظٹط§ظ†ط§طھ...</p></div>';
         }
 
         fetch(`${GOOGLE_SHEETS_URL}?action=getCustomers`)
@@ -2874,7 +2847,7 @@ if (customerSearchInput) {
 }
 
 // ==========================================
-// 13. <i class=\'fa-solid fa-star\'></i> حماية زر الإكسيل بباسورد
+// 13. <i class=\'fa-solid fa-star\'></i> ط­ظ…ط§ظٹط© ط²ط± ط§ظ„ط¥ظƒط³ظٹظ„ ط¨ط¨ط§ط³ظˆط±ط¯
 // ==========================================
 const EXCEL_SHEET_URL = "https://docs.google.com/spreadsheets/d/1RL9fNadwDxgGMh45beymGbVzv0uQERHnR_bJrvQ8-AM/edit?gid=0#gid=0";
 const EXCEL_PASSWORD = "2092006";
@@ -2911,7 +2884,7 @@ if (togglePasswordVisibility && excelPasswordInput) {
     togglePasswordVisibility.addEventListener('click', () => {
         if (excelPasswordInput.type === 'password') {
             excelPasswordInput.type = 'text';
-            togglePasswordVisibility.textContent = '🙈';
+            togglePasswordVisibility.textContent = 'ًں™ˆ';
         } else {
             excelPasswordInput.type = 'password';
             togglePasswordVisibility.innerHTML = '<i class=\'fa-solid fa-eye\'></i>';
@@ -2922,7 +2895,7 @@ if (togglePasswordVisibility && excelPasswordInput) {
 function tryExcelPassword() {
     let enteredPassword = excelPasswordInput ? excelPasswordInput.value.trim() : '';
     if (enteredPassword === EXCEL_PASSWORD) {
-        showToast("<i class=\'fa-solid fa-check\'></i> تم التحقق بنجاح، جاري فتح قاعدة البيانات...", "success");
+        showToast("<i class=\'fa-solid fa-check\'></i> طھظ… ط§ظ„طھط­ظ‚ظ‚ ط¨ظ†ط¬ط§ط­طŒ ط¬ط§ط±ظٹ ظپطھط­ ظ‚ط§ط¹ط¯ط© ط§ظ„ط¨ظٹط§ظ†ط§طھ...", "success");
         excelPasswordModal.classList.remove('active');
         if (excelPasswordInput) excelPasswordInput.value = '';
         window.open(EXCEL_SHEET_URL, '_blank');
@@ -2951,17 +2924,17 @@ if (excelPasswordInput) {
 }
 
 // ==========================================
-// 14. <i class=\'fa-solid fa-star\'></i> الماسح الضوئي الذكي (Offline Barcode Scanner)
+// 14. <i class=\'fa-solid fa-star\'></i> ط§ظ„ظ…ط§ط³ط­ ط§ظ„ط¶ظˆط¦ظٹ ط§ظ„ط°ظƒظٹ (Offline Barcode Scanner)
 // ==========================================
 
 let barcodeCatalogData = [];
 let html5QrcodeScanner = null;
 
-// 1. جلب بيانات المنتجات من Firebase Realtime Database مع Cache ذكي
+// 1. ط¬ظ„ط¨ ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ظ†طھط¬ط§طھ ظ…ظ† Firebase Realtime Database ظ…ط¹ Cache ط°ظƒظٹ
 const FIREBASE_PRODUCTS_URL = 'https://candyclubsync-default-rtdb.firebaseio.com/products.json';
 const FIREBASE_CACHE_KEY = 'candy_firebase_products_cache';
 
-// تحويل بيانات Firebase الخام إلى مصفوفة منتجات
+// طھط­ظˆظٹظ„ ط¨ظٹط§ظ†ط§طھ Firebase ط§ظ„ط®ط§ظ… ط¥ظ„ظ‰ ظ…طµظپظˆظپط© ظ…ظ†طھط¬ط§طھ
 function parseFirebaseProducts(data) {
     const result = [];
     if (data) {
@@ -2980,12 +2953,12 @@ function parseFirebaseProducts(data) {
     return result;
 }
 
-// تحديث اقتراحات المنتجات الذكية من Firebase
+// طھط­ط¯ظٹط« ط§ظ‚طھط±ط§ط­ط§طھ ط§ظ„ظ…ظ†طھط¬ط§طھ ط§ظ„ط°ظƒظٹط© ظ…ظ† Firebase
 function updateSmartSuggestionsFromFirebase() {
     const smartProductsList = document.getElementById('smartProductsList');
     if (!smartProductsList) return;
     smartProductsList.innerHTML = '';
-    // نعرض أول 200 منتج فقط في الـ datalist لمنع التعليق
+    // ظ†ط¹ط±ط¶ ط£ظˆظ„ 200 ظ…ظ†طھط¬ ظپظ‚ط· ظپظٹ ط§ظ„ظ€ datalist ظ„ظ…ظ†ط¹ ط§ظ„طھط¹ظ„ظٹظ‚
     const maxSuggestions = 200;
     const items = barcodeCatalogData.slice(0, maxSuggestions);
     items.forEach(p => {
@@ -2994,36 +2967,36 @@ function updateSmartSuggestionsFromFirebase() {
 }
 
 function fetchCatalogFromFirebase() {
-    // ⚡ الخطوة 1: قراءة الكاش أولاً (فوري بدون انتظار)
+    // âڑ، ط§ظ„ط®ط·ظˆط© 1: ظ‚ط±ط§ط،ط© ط§ظ„ظƒط§ط´ ط£ظˆظ„ط§ظ‹ (ظپظˆط±ظٹ ط¨ط¯ظˆظ† ط§ظ†طھط¸ط§ط±)
     try {
         const cached = localStorage.getItem(FIREBASE_CACHE_KEY);
         if (cached) {
             barcodeCatalogData = JSON.parse(cached);
-            console.log("⚡ تم تحميل الكاش المحلي: ", barcodeCatalogData.length, "منتج");
+            console.log("âڑ، طھظ… طھط­ظ…ظٹظ„ ط§ظ„ظƒط§ط´ ط§ظ„ظ…ط­ظ„ظٹ: ", barcodeCatalogData.length, "ظ…ظ†طھط¬");
             updateSmartSuggestionsFromFirebase();
         }
     } catch (e) {
-        console.warn("تعذر قراءة الكاش المحلي:", e);
+        console.warn("طھط¹ط°ط± ظ‚ط±ط§ط،ط© ط§ظ„ظƒط§ط´ ط§ظ„ظ…ط­ظ„ظٹ:", e);
     }
 
-    // <i class=\'fa-solid fa-globe\'></i> الخطوة 2: جلب البيانات الطازجة من Firebase في الخلفية
-    console.log("<i class=\'fa-solid fa-hourglass-half\'></i> جاري تحميل بيانات المنتجات من Firebase...");
+    // <i class=\'fa-solid fa-globe\'></i> ط§ظ„ط®ط·ظˆط© 2: ط¬ظ„ط¨ ط§ظ„ط¨ظٹط§ظ†ط§طھ ط§ظ„ط·ط§ط²ط¬ط© ظ…ظ† Firebase ظپظٹ ط§ظ„ط®ظ„ظپظٹط©
+    console.log("<i class=\'fa-solid fa-hourglass-half\'></i> ط¬ط§ط±ظٹ طھط­ظ…ظٹظ„ ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ظ†طھط¬ط§طھ ظ…ظ† Firebase...");
     fetch(FIREBASE_PRODUCTS_URL)
         .then(response => {
-            if (!response.ok) throw new Error("فشل الاتصال بـ Firebase: " + response.status);
+            if (!response.ok) throw new Error("ظپط´ظ„ ط§ظ„ط§طھطµط§ظ„ ط¨ظ€ Firebase: " + response.status);
             return response.json();
         })
         .then(data => {
             barcodeCatalogData = parseFirebaseProducts(data);
             
-            // حفظ في الكاش المحلي
+            // ط­ظپط¸ ظپظٹ ط§ظ„ظƒط§ط´ ط§ظ„ظ…ط­ظ„ظٹ
             try {
                 localStorage.setItem(FIREBASE_CACHE_KEY, JSON.stringify(barcodeCatalogData));
             } catch (e) {
-                console.warn("تعذر حفظ الكاش المحلي:", e);
+                console.warn("طھط¹ط°ط± ط­ظپط¸ ط§ظ„ظƒط§ط´ ط§ظ„ظ…ط­ظ„ظٹ:", e);
             }
 
-            console.log("<i class=\'fa-solid fa-check\'></i> تم تحميل بيانات المنتجات من Firebase: ", barcodeCatalogData.length, "منتج");
+            console.log("<i class=\'fa-solid fa-check\'></i> طھظ… طھط­ظ…ظٹظ„ ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ظ†طھط¬ط§طھ ظ…ظ† Firebase: ", barcodeCatalogData.length, "ظ…ظ†طھط¬");
             updateSmartSuggestionsFromFirebase();
             
             // <i class=\'fa-solid fa-star\'></i> Re-enrich Expiry Data in case it loaded before Firebase
@@ -3046,17 +3019,17 @@ function fetchCatalogFromFirebase() {
             }
         })
         .catch(err => {
-            console.error("<i class=\'fa-solid fa-xmark\'></i> خطأ في تحميل المنتجات من Firebase:", err);
+            console.error("<i class=\'fa-solid fa-xmark\'></i> ط®ط·ط£ ظپظٹ طھط­ظ…ظٹظ„ ط§ظ„ظ…ظ†طھط¬ط§طھ ظ…ظ† Firebase:", err);
             if (barcodeCatalogData.length === 0) {
-                showToast("<i class=\'fa-solid fa-triangle-exclamation\'></i> فشل تحميل بيانات المنتجات من السيرفر", "error");
+                showToast("<i class=\'fa-solid fa-triangle-exclamation\'></i> ظپط´ظ„ طھط­ظ…ظٹظ„ ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ظ†طھط¬ط§طھ ظ…ظ† ط§ظ„ط³ظٹط±ظپط±", "error");
             }
         });
 }
 
-// تشغيل الدالة فور تحميل الصفحة
+// طھط´ط؛ظٹظ„ ط§ظ„ط¯ط§ظ„ط© ظپظˆط± طھط­ظ…ظٹظ„ ط§ظ„طµظپط­ط©
 window.addEventListener('load', fetchCatalogFromFirebase);
 
-// 2. إصدار صوت Beep قصير عند نجاح المسح
+// 2. ط¥طµط¯ط§ط± طµظˆطھ Beep ظ‚طµظٹط± ط¹ظ†ط¯ ظ†ط¬ط§ط­ ط§ظ„ظ…ط³ط­
 function playBeepSound() {
     try {
         if (typeof window.playSuccessBeep === 'function') {
@@ -3070,7 +3043,7 @@ function playBeepSound() {
             gainNode.connect(audioCtx.destination);
 
             oscillator.type = 'sine';
-            oscillator.frequency.value = 2750; // تردد الكاشير الحقيقي
+            oscillator.frequency.value = 2750; // طھط±ط¯ط¯ ط§ظ„ظƒط§ط´ظٹط± ط§ظ„ط­ظ‚ظٹظ‚ظٹ
             
             // Flat volume (sustain) then abrupt stop
             gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
@@ -3081,11 +3054,11 @@ function playBeepSound() {
             oscillator.stop(audioCtx.currentTime + 0.08);
         }
     } catch (e) {
-        console.warn("Web Audio API غير مدعوم في هذا المتصفح");
+        console.warn("Web Audio API ط؛ظٹط± ظ…ط¯ط¹ظˆظ… ظپظٹ ظ‡ط°ط§ ط§ظ„ظ…طھطµظپط­");
     }
 }
 
-// 3. فتح وإغلاق النوافذ
+// 3. ظپطھط­ ظˆط¥ط؛ظ„ط§ظ‚ ط§ظ„ظ†ظˆط§ظپط°
 let openScannerBtn = document.getElementById('openScannerBtn');
 let scannerModal = document.getElementById('scannerModal');
 let closeScannerModalBtn = document.getElementById('closeScannerModalBtn');
@@ -3126,7 +3099,7 @@ if (scanAnotherBtn) {
     });
 }
 
-// 4. منطق الماسح الضوئي
+// 4. ظ…ظ†ط·ظ‚ ط§ظ„ظ…ط§ط³ط­ ط§ظ„ط¶ظˆط¦ظٹ
 const getSupportedFormats = () => {
     if (typeof Html5QrcodeSupportedFormats !== 'undefined') {
         return [
@@ -3156,12 +3129,12 @@ function startBarcodeScanner() {
 
         html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
             .catch(err => {
-                console.error("تعذر تشغيل الكاميرا:", err);
-                showToast("تعذر تشغيل الكاميرا، يمكنك استخدام البحث اليدوي أو رفع صورة.", "warning");
+                console.error("طھط¹ط°ط± طھط´ط؛ظٹظ„ ط§ظ„ظƒط§ظ…ظٹط±ط§:", err);
+                showToast("طھط¹ط°ط± طھط´ط؛ظٹظ„ ط§ظ„ظƒط§ظ…ظٹط±ط§طŒ ظٹظ…ظƒظ†ظƒ ط§ط³طھط®ط¯ط§ظ… ط§ظ„ط¨ط­ط« ط§ظ„ظٹط¯ظˆظٹ ط£ظˆ ط±ظپط¹ طµظˆط±ط©.", "warning");
             });
     } catch (e) {
-        console.error("خطأ فادح في تشغيل الماسح الضوئي:", e);
-        showToast("تعذر تشغيل الكاميرا، يمكنك استخدام البحث اليدوي أو رفع صورة.", "warning");
+        console.error("ط®ط·ط£ ظپط§ط¯ط­ ظپظٹ طھط´ط؛ظٹظ„ ط§ظ„ظ…ط§ط³ط­ ط§ظ„ط¶ظˆط¦ظٹ:", e);
+        showToast("طھط¹ط°ط± طھط´ط؛ظٹظ„ ط§ظ„ظƒط§ظ…ظٹط±ط§طŒ ظٹظ…ظƒظ†ظƒ ط§ط³طھط®ط¯ط§ظ… ط§ظ„ط¨ط­ط« ط§ظ„ظٹط¯ظˆظٹ ط£ظˆ ط±ظپط¹ طµظˆط±ط©.", "warning");
     }
 }
 
@@ -3172,13 +3145,13 @@ function stopBarcodeScanner() {
                 html5QrcodeScanner.clear();
                 html5QrcodeScanner = null;
             }).catch(err => {
-                console.error("فشل في إيقاف الكاميرا", err);
+                console.error("ظپط´ظ„ ظپظٹ ط¥ظٹظ‚ط§ظپ ط§ظ„ظƒط§ظ…ظٹط±ط§", err);
                 try { html5QrcodeScanner.clear(); } catch (e) { }
                 html5QrcodeScanner = null;
             });
         }
     } catch (e) {
-        console.error("خطأ أثناء محاولة إيقاف الماسح:", e);
+        console.error("ط®ط·ط£ ط£ط«ظ†ط§ط، ظ…ط­ط§ظˆظ„ط© ط¥ظٹظ‚ط§ظپ ط§ظ„ظ…ط§ط³ط­:", e);
         html5QrcodeScanner = null;
     }
 }
@@ -3195,15 +3168,15 @@ function processBarcodeAction(val) {
                 if (ledgerProdName) ledgerProdName.value = found.name;
                 if (ledgerProdQty) ledgerProdQty.value = found.stock ? Number(found.stock) : 0;
                 if (ledgerProdBarcode) ledgerProdBarcode.value = val;
-                showToast("<i class=\'fa-solid fa-check\'></i> " + found.name + " | الكمية: " + found.stock + " | السعر: " + found.price + " ج.م", "success");
+                showToast("<i class=\'fa-solid fa-check\'></i> " + found.name + " | ط§ظ„ظƒظ…ظٹط©: " + found.stock + " | ط§ظ„ط³ط¹ط±: " + found.price + " ط¬.ظ…", "success");
             } else {
                 if (ledgerProdName) ledgerProdName.value = '';
                 if (ledgerProdQty) ledgerProdQty.value = '';
                 if (ledgerProdBarcode) ledgerProdBarcode.value = val; 
-                showToast("<i class=\'fa-solid fa-triangle-exclamation\'></i> الباركود (" + val + ") غير مسجل، اكتب الاسم يدوياً", "warning");
+                showToast("<i class=\'fa-solid fa-triangle-exclamation\'></i> ط§ظ„ط¨ط§ط±ظƒظˆط¯ (" + val + ") ط؛ظٹط± ظ…ط³ط¬ظ„طŒ ط§ظƒطھط¨ ط§ظ„ط§ط³ظ… ظٹط¯ظˆظٹط§ظ‹", "warning");
             }
         } else {
-            showToast("<i class=\'fa-solid fa-triangle-exclamation\'></i> لم يتم التعرف على النص أو الكتالوج فارغ", "error");
+            showToast("<i class=\'fa-solid fa-triangle-exclamation\'></i> ظ„ظ… ظٹطھظ… ط§ظ„طھط¹ط±ظپ ط¹ظ„ظ‰ ط§ظ„ظ†طµ ط£ظˆ ط§ظ„ظƒطھط§ظ„ظˆط¬ ظپط§ط±ط؛", "error");
         }
         
         playBeepSound();
@@ -3224,10 +3197,10 @@ function onScanSuccess(decodedText, decodedResult) {
 }
 
 function onScanFailure(error) {
-    // تتكرر مع كل فريم لا يجد فيه باركود
+    // طھطھظƒط±ط± ظ…ط¹ ظƒظ„ ظپط±ظٹظ… ظ„ط§ ظٹط¬ط¯ ظپظٹظ‡ ط¨ط§ط±ظƒظˆط¯
 }
 
-// 5. البحث والتطابق
+// 5. ط§ظ„ط¨ط­ط« ظˆط§ظ„طھط·ط§ط¨ظ‚
 let currentScannedProduct = null;
 
 function handleBarcodeMatch(barcodeValue) {
@@ -3238,13 +3211,13 @@ function handleBarcodeMatch(barcodeValue) {
         playBeepSound();
 
         document.getElementById('scanResultName').textContent = matchedProduct.name;
-        // عرض السعر بالإنجليزية القياسية
+        // ط¹ط±ط¶ ط§ظ„ط³ط¹ط± ط¨ط§ظ„ط¥ظ†ط¬ظ„ظٹط²ظٹط© ط§ظ„ظ‚ظٹط§ط³ظٹط©
         document.getElementById('scanResultPrice').textContent = Number(matchedProduct.price);
-        // عرض الكمية المتاحة (Stock)
+        // ط¹ط±ط¶ ط§ظ„ظƒظ…ظٹط© ط§ظ„ظ…طھط§ط­ط© (Stock)
         const stockEl = document.getElementById('scanResultStock');
         if (stockEl) {
             stockEl.textContent = Number(matchedProduct.stock);
-            // تلوين الكمية حسب المخزون
+            // طھظ„ظˆظٹظ† ط§ظ„ظƒظ…ظٹط© ط­ط³ط¨ ط§ظ„ظ…ط®ط²ظˆظ†
             const stockContainer = document.getElementById('scanResultStockContainer');
             if (stockContainer) {
                 if (matchedProduct.stock <= 0) {
@@ -3271,11 +3244,11 @@ function handleBarcodeMatch(barcodeValue) {
         modalContent.classList.add('flash-success');
 
     } else {
-        showToast("المنتج غير مسجل في قاعدة البيانات <i class=\'fa-solid fa-xmark\'></i>", "error");
+        showToast("ط§ظ„ظ…ظ†طھط¬ ط؛ظٹط± ظ…ط³ط¬ظ„ ظپظٹ ظ‚ط§ط¹ط¯ط© ط§ظ„ط¨ظٹط§ظ†ط§طھ <i class=\'fa-solid fa-xmark\'></i>", "error");
     }
 }
 
-// 6. الإدخال اليدوي
+// 6. ط§ظ„ط¥ط¯ط®ط§ظ„ ط§ظ„ظٹط¯ظˆظٹ
 let manualSearchBtn = document.getElementById('manualSearchBtn');
 let manualBarcodeInput = document.getElementById('manualBarcodeInput');
 
@@ -3283,16 +3256,16 @@ if (manualSearchBtn && manualBarcodeInput) {
     manualSearchBtn.addEventListener('click', () => {
         let val = manualBarcodeInput.value.trim();
         if (!val) {
-            showToast("يرجى إدخال رقم الباركود", "warning");
+            showToast("ظٹط±ط¬ظ‰ ط¥ط¯ط®ط§ظ„ ط±ظ‚ظ… ط§ظ„ط¨ط§ط±ظƒظˆط¯", "warning");
             return;
         }
 
-        // إغلاق النافذة وتنفيذ البحث فوراً بدون انتظار الكاميرا
+        // ط¥ط؛ظ„ط§ظ‚ ط§ظ„ظ†ط§ظپط°ط© ظˆطھظ†ظپظٹط° ط§ظ„ط¨ط­ط« ظپظˆط±ط§ظ‹ ط¨ط¯ظˆظ† ط§ظ†طھط¸ط§ط± ط§ظ„ظƒط§ظ…ظٹط±ط§
         scannerModal.classList.remove('active');
         processBarcodeAction(val);
         manualBarcodeInput.value = '';
 
-        // محاولة إيقاف الكاميرا في الخلفية
+        // ظ…ط­ط§ظˆظ„ط© ط¥ظٹظ‚ط§ظپ ط§ظ„ظƒط§ظ…ظٹط±ط§ ظپظٹ ط§ظ„ط®ظ„ظپظٹط©
         stopBarcodeScanner();
     });
 
@@ -3301,14 +3274,14 @@ if (manualSearchBtn && manualBarcodeInput) {
     });
 }
 
-// 7. تحسينات إضافية (نسخ الاسم ورفع صورة)
+// 7. طھط­ط³ظٹظ†ط§طھ ط¥ط¶ط§ظپظٹط© (ظ†ط³ط® ط§ظ„ط§ط³ظ… ظˆط±ظپط¹ طµظˆط±ط©)
 let copyProductNameBtn = document.getElementById('copyProductNameBtn');
 if (copyProductNameBtn) {
     copyProductNameBtn.addEventListener('click', () => {
         let nameToCopy = document.getElementById('scanResultName').textContent;
         navigator.clipboard.writeText(nameToCopy).then(() => {
             let origText = copyProductNameBtn.textContent;
-            copyProductNameBtn.innerHTML = "تم النسخ <i class=\'fa-solid fa-check\'></i>";
+            copyProductNameBtn.innerHTML = "طھظ… ط§ظ„ظ†ط³ط® <i class=\'fa-solid fa-check\'></i>";
             copyProductNameBtn.style.background = "var(--success-light)";
             copyProductNameBtn.style.color = "var(--success)";
             copyProductNameBtn.style.borderColor = "var(--success)";
@@ -3320,7 +3293,7 @@ if (copyProductNameBtn) {
                 copyProductNameBtn.style.borderColor = "";
             }, 2000);
         }).catch(err => {
-            showToast("فشل نسخ الاسم", "error");
+            showToast("ظپط´ظ„ ظ†ط³ط® ط§ظ„ط§ط³ظ…", "error");
         });
     });
 }
@@ -3335,7 +3308,7 @@ function loadExpiryData() {
     const btn = document.getElementById('refreshExpiryBtn');
     if (btn) {
         btn.dataset.origText = btn.innerText;
-        btn.innerHTML = "جاري التحميل <i class=\'fa-solid fa-hourglass-half\'></i>...";
+        btn.innerHTML = "ط¬ط§ط±ظٹ ط§ظ„طھط­ظ…ظٹظ„ <i class=\'fa-solid fa-hourglass-half\'></i>...";
         btn.style.opacity = "0.7";
         btn.style.pointerEvents = "none";
     }
@@ -3352,7 +3325,7 @@ function loadExpiryData() {
             // Assuming data is an array of objects: { id, name, qty, expiryDate, location, receiver, notes, status }
             expiryData = Array.isArray(data) ? data : (data.expiries || []);
             
-            // <i class=\'fa-solid fa-star\'></i> سحب الباركود للمنتجات القديمة من الفايربيز أو إذا كان العمود غير موجود في الإكسيل
+            // <i class=\'fa-solid fa-star\'></i> ط³ط­ط¨ ط§ظ„ط¨ط§ط±ظƒظˆط¯ ظ„ظ„ظ…ظ†طھط¬ط§طھ ط§ظ„ظ‚ط¯ظٹظ…ط© ظ…ظ† ط§ظ„ظپط§ظٹط±ط¨ظٹط² ط£ظˆ ط¥ط°ط§ ظƒط§ظ† ط§ظ„ط¹ظ…ظˆط¯ ط؛ظٹط± ظ…ظˆط¬ظˆط¯ ظپظٹ ط§ظ„ط¥ظƒط³ظٹظ„
             if (barcodeCatalogData && barcodeCatalogData.length > 0) {
                 const fbMap = new Map();
                 barcodeCatalogData.forEach(p => fbMap.set(String(p.name).trim().toLowerCase(), p));
@@ -3376,7 +3349,7 @@ function loadExpiryData() {
                 btn.style.opacity = "1";
                 btn.style.pointerEvents = "auto";
             }
-            showToast("<i class=\'fa-solid fa-xmark\'></i> حدث خطأ في تحميل الصلاحيات. يرجى مراجعة إعدادات Google Sheets", "error");
+            showToast("<i class=\'fa-solid fa-xmark\'></i> ط­ط¯ط« ط®ط·ط£ ظپظٹ طھط­ظ…ظٹظ„ ط§ظ„طµظ„ط§ط­ظٹط§طھ. ظٹط±ط¬ظ‰ ظ…ط±ط§ط¬ط¹ط© ط¥ط¹ط¯ط§ط¯ط§طھ Google Sheets", "error");
             // Also call render to clear the "loading" or show empty states
             renderExpiryDashboard();
         });
@@ -3396,37 +3369,37 @@ if (barcodeImageUpload) {
                 try {
                     tempScanner = new Html5Qrcode("reader", configObj);
                 } catch (err) {
-                    console.error("فشل تهيئة الماسح للصور:", err);
-                    showToast("فشل تهيئة الماسح الضوئي، حاول مرة أخرى", "error");
+                    console.error("ظپط´ظ„ طھظ‡ظٹط¦ط© ط§ظ„ظ…ط§ط³ط­ ظ„ظ„طµظˆط±:", err);
+                    showToast("ظپط´ظ„ طھظ‡ظٹط¦ط© ط§ظ„ظ…ط§ط³ط­ ط§ظ„ط¶ظˆط¦ظٹطŒ ط­ط§ظˆظ„ ظ…ط±ط© ط£ط®ط±ظ‰", "error");
                     e.target.value = '';
                     return;
                 }
             }
 
-            // تغيير واجهة الزر لإعطاء تأكيد مرئي ومنع تكرار الضغط
+            // طھط؛ظٹظٹط± ظˆط§ط¬ظ‡ط© ط§ظ„ط²ط± ظ„ط¥ط¹ط·ط§ط، طھط£ظƒظٹط¯ ظ…ط±ط¦ظٹ ظˆظ…ظ†ط¹ طھظƒط±ط§ط± ط§ظ„ط¶ط؛ط·
             let uploadLabel = document.querySelector('label[for="barcodeImageUpload"]');
             let originalLabelHtml = uploadLabel ? uploadLabel.innerHTML : '';
             if (uploadLabel) {
-                uploadLabel.innerHTML = 'جاري الفحص... <i class=\'fa-solid fa-hourglass-half\'></i>';
+                uploadLabel.innerHTML = 'ط¬ط§ط±ظٹ ط§ظ„ظپط­طµ... <i class=\'fa-solid fa-hourglass-half\'></i>';
                 uploadLabel.style.pointerEvents = 'none';
                 uploadLabel.style.opacity = '0.7';
             }
 
-            // إضافة Toast لإعلام المستخدم
-            showToast("جاري فحص الصورة...", "success");
+            // ط¥ط¶ط§ظپط© Toast ظ„ط¥ط¹ظ„ط§ظ… ط§ظ„ظ…ط³طھط®ط¯ظ…
+            showToast("ط¬ط§ط±ظٹ ظپط­طµ ط§ظ„طµظˆط±ط©...", "success");
 
-            // استخدام setTimeout للسماح للمتصفح بتحديث الواجهة قبل بدء المعالجة الثقيلة
+            // ط§ط³طھط®ط¯ط§ظ… setTimeout ظ„ظ„ط³ظ…ط§ط­ ظ„ظ„ظ…طھطµظپط­ ط¨طھط­ط¯ظٹط« ط§ظ„ظˆط§ط¬ظ‡ط© ظ‚ط¨ظ„ ط¨ط¯ط، ط§ظ„ظ…ط¹ط§ظ„ط¬ط© ط§ظ„ط«ظ‚ظٹظ„ط©
             setTimeout(() => {
                 let emergencyTimeout = setTimeout(() => {
-                    // إجبار الواجهة على العودة لطبيعتها
+                    // ط¥ط¬ط¨ط§ط± ط§ظ„ظˆط§ط¬ظ‡ط© ط¹ظ„ظ‰ ط§ظ„ط¹ظˆط¯ط© ظ„ط·ط¨ظٹط¹طھظ‡ط§
                     if (uploadLabel) {
                         uploadLabel.innerHTML = originalLabelHtml;
                         uploadLabel.style.pointerEvents = 'auto';
                         uploadLabel.style.opacity = '1';
                     }
-                    e.target.value = ''; // تفريغ حقل الملف
-                    showToast('الصورة معقدة أو الإضاءة قوية، يرجى المحاولة بصورة أوضح', 'error');
-                    // محاولة تنظيف الماسح
+                    e.target.value = ''; // طھظپط±ظٹط؛ ط­ظ‚ظ„ ط§ظ„ظ…ظ„ظپ
+                    showToast('ط§ظ„طµظˆط±ط© ظ…ط¹ظ‚ط¯ط© ط£ظˆ ط§ظ„ط¥ط¶ط§ط،ط© ظ‚ظˆظٹط©طŒ ظٹط±ط¬ظ‰ ط§ظ„ظ…ط­ط§ظˆظ„ط© ط¨طµظˆط±ط© ط£ظˆط¶ط­', 'error');
+                    // ظ…ط­ط§ظˆظ„ط© طھظ†ط¸ظٹظپ ط§ظ„ظ…ط§ط³ط­
                     try { tempScanner.clear(); } catch (err) { }
                 }, 5000);
 
@@ -3436,21 +3409,21 @@ if (barcodeImageUpload) {
                         scannerModal.classList.remove('active');
                         handleBarcodeMatch(decodedText);
 
-                        // إعادة ضبط كل شيء
+                        // ط¥ط¹ط§ط¯ط© ط¶ط¨ط· ظƒظ„ ط´ظٹط،
                         e.target.value = '';
                         if (uploadLabel) {
                             uploadLabel.innerHTML = originalLabelHtml;
                             uploadLabel.style.pointerEvents = 'auto';
                             uploadLabel.style.opacity = '1';
                         }
-                        stopBarcodeScanner(); // إيقاف الكاميرا لو كانت تعمل
+                        stopBarcodeScanner(); // ط¥ظٹظ‚ط§ظپ ط§ظ„ظƒط§ظ…ظٹط±ط§ ظ„ظˆ ظƒط§ظ†طھ طھط¹ظ…ظ„
                     })
                     .catch(err => {
                         clearTimeout(emergencyTimeout);
-                        console.error("فشل المسح من الصورة:", err);
-                        showToast("لم يتم العثور على باركود واضح في هذه الصورة، حاول مرة أخرى", "warning");
+                        console.error("ظپط´ظ„ ط§ظ„ظ…ط³ط­ ظ…ظ† ط§ظ„طµظˆط±ط©:", err);
+                        showToast("ظ„ظ… ظٹطھظ… ط§ظ„ط¹ط«ظˆط± ط¹ظ„ظ‰ ط¨ط§ط±ظƒظˆط¯ ظˆط§ط¶ط­ ظپظٹ ظ‡ط°ظ‡ ط§ظ„طµظˆط±ط©طŒ ط­ط§ظˆظ„ ظ…ط±ط© ط£ط®ط±ظ‰", "warning");
 
-                        // إعادة ضبط الواجهة لتفادي التعليق (Unblock UI)
+                        // ط¥ط¹ط§ط¯ط© ط¶ط¨ط· ط§ظ„ظˆط§ط¬ظ‡ط© ظ„طھظپط§ط¯ظٹ ط§ظ„طھط¹ظ„ظٹظ‚ (Unblock UI)
                         e.target.value = '';
                         if (uploadLabel) {
                             uploadLabel.innerHTML = originalLabelHtml;
@@ -3470,7 +3443,7 @@ if (addToCartBtn) {
             let productName = currentScannedProduct.name;
             let productPrice = Number(currentScannedProduct.price);
 
-            // 1. البحث عن المنتج في الفاتورة لزيادة الكمية بدلاً من التكرار
+            // 1. ط§ظ„ط¨ط­ط« ط¹ظ† ط§ظ„ظ…ظ†طھط¬ ظپظٹ ط§ظ„ظپط§طھظˆط±ط© ظ„ط²ظٹط§ط¯ط© ط§ظ„ظƒظ…ظٹط© ط¨ط¯ظ„ط§ظ‹ ظ…ظ† ط§ظ„طھظƒط±ط§ط±
             let existingRows = Array.from(document.querySelectorAll('.product-row'));
             let foundRow = null;
 
@@ -3483,56 +3456,56 @@ if (addToCartBtn) {
             }
 
             if (foundRow) {
-                // زيادة الكمية للصف الحالي
+                // ط²ظٹط§ط¯ط© ط§ظ„ظƒظ…ظٹط© ظ„ظ„طµظپ ط§ظ„ط­ط§ظ„ظٹ
                 let qtyInput = foundRow.querySelector('.product-qty-input');
                 if (qtyInput) {
                     qtyInput.value = parseInt(qtyInput.value || 1) + 1;
-                    // إطلاق حدث الإدخال لتحديث الإجمالي
+                    // ط¥ط·ظ„ط§ظ‚ ط­ط¯ط« ط§ظ„ط¥ط¯ط®ط§ظ„ ظ„طھط­ط¯ظٹط« ط§ظ„ط¥ط¬ظ…ط§ظ„ظٹ
                     qtyInput.dispatchEvent(new Event('input'));
                 }
 
                 if (typeof calculateTotal === 'function') calculateTotal();
-                showToast(`تمت زيادة كمية ${productName} في الفاتورة <i class=\'fa-solid fa-cart-shopping\'></i>`, "success");
+                showToast(`طھظ…طھ ط²ظٹط§ط¯ط© ظƒظ…ظٹط© ${productName} ظپظٹ ط§ظ„ظپط§طھظˆط±ط© <i class=\'fa-solid fa-cart-shopping\'></i>`, "success");
 
                 scanResultModal.classList.remove('active');
                 currentScannedProduct = null;
-                return; // إنهاء الدالة فوراً
+                return; // ط¥ظ†ظ‡ط§ط، ط§ظ„ط¯ط§ظ„ط© ظپظˆط±ط§ظ‹
             }
 
-            // 2. إضافة كصف جديد إذا لم يكن موجوداً
-            // إزالة الصفوف الفارغة لتجنب الفوضى
+            // 2. ط¥ط¶ط§ظپط© ظƒطµظپ ط¬ط¯ظٹط¯ ط¥ط°ط§ ظ„ظ… ظٹظƒظ† ظ…ظˆط¬ظˆط¯ط§ظ‹
+            // ط¥ط²ط§ظ„ط© ط§ظ„طµظپظˆظپ ط§ظ„ظپط§ط±ط؛ط© ظ„طھط¬ظ†ط¨ ط§ظ„ظپظˆط¶ظ‰
             let emptyRows = Array.from(document.querySelectorAll('.product-row:not(.confirmed)')).filter(r => r.querySelector('.product-name-input').value === "");
             if (emptyRows.length > 0) {
                 emptyRows[0].parentElement.remove();
             }
 
-            // استخدام دالة إضافة المنتجات الحالية في النظام
+            // ط§ط³طھط®ط¯ط§ظ… ط¯ط§ظ„ط© ط¥ط¶ط§ظپط© ط§ظ„ظ…ظ†طھط¬ط§طھ ط§ظ„ط­ط§ظ„ظٹط© ظپظٹ ط§ظ„ظ†ط¸ط§ظ…
             if (typeof addProductRow === 'function') {
                 addProductRow(productName, productPrice, "1", true);
 
-                // تحديث الإجمالي
+                // طھط­ط¯ظٹط« ط§ظ„ط¥ط¬ظ…ط§ظ„ظٹ
                 if (typeof calculateTotal === 'function') calculateTotal();
 
-                showToast(`تمت إضافة ${productName} للفاتورة بنجاح <i class=\'fa-solid fa-check\'></i>`, "success");
+                showToast(`طھظ…طھ ط¥ط¶ط§ظپط© ${productName} ظ„ظ„ظپط§طھظˆط±ط© ط¨ظ†ط¬ط§ط­ <i class=\'fa-solid fa-check\'></i>`, "success");
 
-                // إغلاق النافذة
+                // ط¥ط؛ظ„ط§ظ‚ ط§ظ„ظ†ط§ظپط°ط©
                 scanResultModal.classList.remove('active');
 
-                // التأكد من وجود صف فارغ للإدخال اليدوي
+                // ط§ظ„طھط£ظƒط¯ ظ…ظ† ظˆط¬ظˆط¯ طµظپ ظپط§ط±ط؛ ظ„ظ„ط¥ط¯ط®ط§ظ„ ط§ظ„ظٹط¯ظˆظٹ
                 if (document.querySelectorAll('.product-row:not(.confirmed)').length === 0) {
                     addProductRow();
                 }
 
                 currentScannedProduct = null;
             } else {
-                showToast("تعذر إضافة المنتج، دالة الفاتورة غير متوفرة", "error");
+                showToast("طھط¹ط°ط± ط¥ط¶ط§ظپط© ط§ظ„ظ…ظ†طھط¬طŒ ط¯ط§ظ„ط© ط§ظ„ظپط§طھظˆط±ط© ط؛ظٹط± ظ…طھظˆظپط±ط©", "error");
             }
         }
     });
 }
 
 // ==========================================
-// 15. نظام الصلاحيات والعروض (Expiry Dashboard)
+// 15. ظ†ط¸ط§ظ… ط§ظ„طµظ„ط§ط­ظٹط§طھ ظˆط§ظ„ط¹ط±ظˆط¶ (Expiry Dashboard)
 // ==========================================
 
 let expiryData = [];
@@ -3547,7 +3520,7 @@ function loadExpiryData() {
     const btn = document.getElementById('openExpiryBtn');
     if (btn) {
         btn.dataset.origText = btn.innerText;
-        btn.innerHTML = "جاري التحميل <i class=\'fa-solid fa-hourglass-half\'></i>...";
+        btn.innerHTML = "ط¬ط§ط±ظٹ ط§ظ„طھط­ظ…ظٹظ„ <i class=\'fa-solid fa-hourglass-half\'></i>...";
         btn.style.opacity = "0.7";
         btn.style.pointerEvents = "none";
     }
@@ -3584,7 +3557,7 @@ function loadExpiryData() {
                 btn.style.opacity = "1";
                 btn.style.pointerEvents = "auto";
             }
-            showToast("<i class=\'fa-solid fa-xmark\'></i> حدث خطأ في تحميل الصلاحيات. يرجى مراجعة إعدادات Google Sheets", "error");
+            showToast("<i class=\'fa-solid fa-xmark\'></i> ط­ط¯ط« ط®ط·ط£ ظپظٹ طھط­ظ…ظٹظ„ ط§ظ„طµظ„ط§ط­ظٹط§طھ. ظٹط±ط¬ظ‰ ظ…ط±ط§ط¬ط¹ط© ط¥ط¹ط¯ط§ط¯ط§طھ Google Sheets", "error");
             // Also call render to clear the "loading" or show empty states
             renderExpiryDashboard();
             
@@ -3599,7 +3572,7 @@ let currentExportData = [];
 let currentExportCategory = '';
 
 // ==========================================
-// 1. Ledger Modal Logic (محضر الاستلام)
+// 1. Ledger Modal Logic (ظ…ط­ط¶ط± ط§ظ„ط§ط³طھظ„ط§ظ…)
 // ==========================================
 const openLedgerBtn = document.getElementById('openLedgerBtn');
 const ledgerModal = document.getElementById('ledgerModal');
@@ -3645,7 +3618,7 @@ if (addLedgerItemBtn) {
         const barcode = document.getElementById('ledgerProdBarcode') ? document.getElementById('ledgerProdBarcode').value : '';
 
         if (!name || !qty || !date) {
-            showToast("يرجى إكمال البيانات الأساسية (الاسم، الكمية، التاريخ)", "warning");
+            showToast("ظٹط±ط¬ظ‰ ط¥ظƒظ…ط§ظ„ ط§ظ„ط¨ظٹط§ظ†ط§طھ ط§ظ„ط£ط³ط§ط³ظٹط© (ط§ظ„ط§ط³ظ…طŒ ط§ظ„ظƒظ…ظٹط©طŒ ط§ظ„طھط§ط±ظٹط®)", "warning");
             return;
         }
 
@@ -3655,7 +3628,7 @@ if (addLedgerItemBtn) {
             qty: qty,
             expiryDate: date,
             location: location,
-            status: 'مش في عرض',
+            status: 'ظ…ط´ ظپظٹ ط¹ط±ط¶',
             notes: notes,
             barcode: barcode
         };
@@ -3680,7 +3653,7 @@ function renderLedgerCart() {
     countSpan.innerText = ledgerCart.length;
 
     if (ledgerCart.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: #7f8c8d;">لا توجد منتجات مضافة حتى الآن.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: #7f8c8d;">ظ„ط§ طھظˆط¬ط¯ ظ…ظ†طھط¬ط§طھ ظ…ط¶ط§ظپط© ط­طھظ‰ ط§ظ„ط¢ظ†.</td></tr>';
         return;
     }
 
@@ -3693,8 +3666,8 @@ function renderLedgerCart() {
                 <td style="padding: 8px;" dir="ltr">${item.expiryDate}</td>
                 <td style="padding: 8px;">${item.location || '-'}</td>
                 <td style="padding: 8px; text-align: center; display: flex; gap: 5px; justify-content: center;">
-                    <button class="interactive-btn" style="background: #f39c12; color: white; border: none; padding: 5px 10px; border-radius: 5px;" onclick="editLedgerItem(${index})">تعديل</button>
-                    <button class="interactive-btn" style="background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 5px;" onclick="removeLedgerItem(${index})">حذف</button>
+                    <button class="interactive-btn" style="background: #f39c12; color: white; border: none; padding: 5px 10px; border-radius: 5px;" onclick="editLedgerItem(${index})">طھط¹ط¯ظٹظ„</button>
+                    <button class="interactive-btn" style="background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 5px;" onclick="removeLedgerItem(${index})">ط­ط°ظپ</button>
                 </td>
             </tr>
         `;
@@ -3724,7 +3697,7 @@ const saveLedgerBtn = document.getElementById('saveLedgerBtn');
 if (saveLedgerBtn) {
     saveLedgerBtn.addEventListener('click', () => {
         if (ledgerCart.length === 0) {
-            showToast("السلة فارغة، يرجى إضافة منتجات أولاً.", "warning");
+            showToast("ط§ظ„ط³ظ„ط© ظپط§ط±ط؛ط©طŒ ظٹط±ط¬ظ‰ ط¥ط¶ط§ظپط© ظ…ظ†طھط¬ط§طھ ط£ظˆظ„ط§ظ‹.", "warning");
             return;
         }
 
@@ -3733,7 +3706,7 @@ if (saveLedgerBtn) {
         const receiverName = document.getElementById('ledgerReceiverName').value;
 
         if (!regDate || !regName || !receiverName) {
-            showToast("يرجى إدخال تاريخ التسجيل واسم المسجل واسم المستلم في أعلى المحضر.", "warning");
+            showToast("ظٹط±ط¬ظ‰ ط¥ط¯ط®ط§ظ„ طھط§ط±ظٹط® ط§ظ„طھط³ط¬ظٹظ„ ظˆط§ط³ظ… ط§ظ„ظ…ط³ط¬ظ„ ظˆط§ط³ظ… ط§ظ„ظ…ط³طھظ„ظ… ظپظٹ ط£ط¹ظ„ظ‰ ط§ظ„ظ…ط­ط¶ط±.", "warning");
             return;
         }
 
@@ -3747,7 +3720,7 @@ if (saveLedgerBtn) {
             batchId: currentBatchId
         }));
 
-        setBtnLoading(saveLedgerBtn, true, "جاري الحفظ...");
+        setBtnLoading(saveLedgerBtn, true, "ط¬ط§ط±ظٹ ط§ظ„ط­ظپط¸...");
 
         let formData = new URLSearchParams();
         formData.append('action', 'addExpiriesBatch');
@@ -3755,25 +3728,25 @@ if (saveLedgerBtn) {
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
-                showToast("<i class=\'fa-solid fa-check\'></i> تم حفظ البضاعة بنجاح", "success");
+                showToast("<i class=\'fa-solid fa-check\'></i> طھظ… ط­ظپط¸ ط§ظ„ط¨ط¶ط§ط¹ط© ط¨ظ†ط¬ط§ط­", "success");
                 setBtnLoading(saveLedgerBtn, false);
                 ledgerCart = [];
                 renderLedgerCart();
                 closeLedgerModal();
                 loadExpiryData(); // Refresh the dashboard
             }).catch(() => {
-                showToast("<i class=\'fa-solid fa-xmark\'></i> حدث خطأ في الاتصال", "error");
+                showToast("<i class=\'fa-solid fa-xmark\'></i> ط­ط¯ط« ط®ط·ط£ ظپظٹ ط§ظ„ط§طھطµط§ظ„", "error");
                 setBtnLoading(saveLedgerBtn, false);
             });
     });
 }
 
 // ==========================================
-// 2. Dashboard Logic (إدارة الصلاحيات)
+// 2. Dashboard Logic (ط¥ط¯ط§ط±ط© ط§ظ„طµظ„ط§ط­ظٹط§طھ)
 // ==========================================
 
 function getDaysRemaining(expiryDateStr) {
-    if (!expiryDateStr || expiryDateStr.toString().includes('بدون')) return 'NoExpiry';
+    if (!expiryDateStr || expiryDateStr.toString().includes('ط¨ط¯ظˆظ†')) return 'NoExpiry';
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const expDate = new Date(expiryDateStr);
@@ -3797,7 +3770,7 @@ function renderExpiryDashboard() {
 
     activeItems.forEach(item => {
         countTotal++;
-        if (item.status === 'في عرض') countOffers++;
+        if (item.status === 'ظپظٹ ط¹ط±ط¶') countOffers++;
         const daysRemaining = getDaysRemaining(item.expiryDate);
 
         if (daysRemaining === 'NoExpiry') {
@@ -3828,7 +3801,7 @@ function renderExpiryDashboard() {
     if (document.getElementById('expFarItems')) document.getElementById('expFarItems').innerText = countFar;
 }
 
-// متغيرات نظام تقسيم صفحات الصلاحيات
+// ظ…طھط؛ظٹط±ط§طھ ظ†ط¸ط§ظ… طھظ‚ط³ظٹظ… طµظپط­ط§طھ ط§ظ„طµظ„ط§ط­ظٹط§طھ
 let expiryFilteredData = [];
 let expiryCurrentPage = 1;
 const EXPIRY_ITEMS_PER_PAGE = 50;
@@ -3843,7 +3816,7 @@ function updateExpiryPaginationUI() {
     
     if (prevBtn) prevBtn.disabled = expiryCurrentPage <= 1;
     if (nextBtn) nextBtn.disabled = expiryCurrentPage >= totalPages;
-    if (pageInfo) pageInfo.innerText = `صفحة ${expiryCurrentPage} من ${totalPages}`;
+    if (pageInfo) pageInfo.innerText = `طµظپط­ط© ${expiryCurrentPage} ظ…ظ† ${totalPages}`;
 }
 
 window.showExpiryDetails = function (category, resetPage = true) {
@@ -3854,7 +3827,7 @@ window.showExpiryDetails = function (category, resetPage = true) {
     let title = "";
     let activeItems = expiryData.filter(item => item.status !== 'Deleted');
     
-    // إذا كان البحث جديد أو فئة جديدة نقوم بالفلترة من جديد
+    // ط¥ط°ط§ ظƒط§ظ† ط§ظ„ط¨ط­ط« ط¬ط¯ظٹط¯ ط£ظˆ ظپط¦ط© ط¬ط¯ظٹط¯ط© ظ†ظ‚ظˆظ… ط¨ط§ظ„ظپظ„طھط±ط© ظ…ظ† ط¬ط¯ظٹط¯
     if (resetPage) {
         let tempFiltered = [];
         activeItems.forEach(item => {
@@ -3863,38 +3836,38 @@ window.showExpiryDetails = function (category, resetPage = true) {
 
             if (category === 'Total') {
                 matches = true;
-                title = "<i class=\'fa-solid fa-box\'></i> إجمالي الأصناف المسجلة";
-            } else if (category === 'Offers' && item.status === 'في عرض') {
+                title = "<i class=\'fa-solid fa-box\'></i> ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ط£طµظ†ط§ظپ ط§ظ„ظ…ط³ط¬ظ„ط©";
+            } else if (category === 'Offers' && item.status === 'ظپظٹ ط¹ط±ط¶') {
                 matches = true;
-                title = "<i class=\'fa-solid fa-gift\'></i> العروض النشطة";
+                title = "<i class=\'fa-solid fa-gift\'></i> ط§ظ„ط¹ط±ظˆط¶ ط§ظ„ظ†ط´ط·ط©";
             } else if (category === 'Search') {
                 const searchTerm = document.getElementById('expiryGlobalSearchInput').value.toLowerCase().trim();
                 if ((item.name && item.name.toLowerCase().includes(searchTerm)) || 
                     (item.barcode && String(item.barcode).toLowerCase().includes(searchTerm))) {
                     matches = true;
-                    title = `<i class=\'fa-solid fa-magnifying-glass\'></i> نتائج البحث عن: "${searchTerm}"`;
+                    title = `<i class=\'fa-solid fa-magnifying-glass\'></i> ظ†طھط§ط¦ط¬ ط§ظ„ط¨ط­ط« ط¹ظ†: "${searchTerm}"`;
                 }
             } else if (category === 'Expired' && daysRemaining !== 'NoExpiry' && daysRemaining < 0) {
                 matches = true;
-                title = "<i class=\'fa-solid fa-skull\'></i> انتهت الصلاحية";
+                title = "<i class=\'fa-solid fa-skull\'></i> ط§ظ†طھظ‡طھ ط§ظ„طµظ„ط§ط­ظٹط©";
             } else if (category === 'NoExpiry' && daysRemaining === 'NoExpiry') {
                 matches = true;
-                title = "<i class=\'fa-solid fa-infinity\'></i> بدون تاريخ صلاحية";
+                title = "<i class=\'fa-solid fa-infinity\'></i> ط¨ط¯ظˆظ† طھط§ط±ظٹط® طµظ„ط§ط­ظٹط©";
             } else if (category === 'Critical' && daysRemaining !== 'NoExpiry' && daysRemaining >= 0 && daysRemaining < 7) {
                 matches = true;
-                title = "<i class=\'fa-solid fa-circle text-danger\'></i> حرج جداً (أقل من 7 أيام)";
+                title = "<i class=\'fa-solid fa-circle text-danger\'></i> ط­ط±ط¬ ط¬ط¯ط§ظ‹ (ط£ظ‚ظ„ ظ…ظ† 7 ط£ظٹط§ظ…)";
             } else if (category === 'Alert' && daysRemaining >= 7 && daysRemaining < 30) {
                 matches = true;
-                title = "<i class=\'fa-solid fa-circle text-warning\'></i> تنبيه سريع (أقل من 30 يوم)";
+                title = "<i class=\'fa-solid fa-circle text-warning\'></i> طھظ†ط¨ظٹظ‡ ط³ط±ظٹط¹ (ط£ظ‚ظ„ ظ…ظ† 30 ظٹظˆظ…)";
             } else if (category === 'Attention' && daysRemaining >= 30 && daysRemaining <= 90) {
                 matches = true;
-                title = "<i class=\'fa-solid fa-circle text-warning\'></i> انتباه ومراقبة (1 إلى 3 شهور)";
+                title = "<i class=\'fa-solid fa-circle text-warning\'></i> ط§ظ†طھط¨ط§ظ‡ ظˆظ…ط±ط§ظ‚ط¨ط© (1 ط¥ظ„ظ‰ 3 ط´ظ‡ظˆط±)";
             } else if (category === 'Safe' && daysRemaining > 90 && daysRemaining <= 180) {
                 matches = true;
-                title = "<i class=\'fa-solid fa-circle text-success\'></i> مخزون آمن (3 إلى 6 شهور)";
+                title = "<i class=\'fa-solid fa-circle text-success\'></i> ظ…ط®ط²ظˆظ† ط¢ظ…ظ† (3 ط¥ظ„ظ‰ 6 ط´ظ‡ظˆط±)";
             } else if (category === 'Far' && daysRemaining > 180) {
                 matches = true;
-                title = "<i class=\'fa-brands fa-facebook\'></i> تاريخ بعيد (أكثر من 6 شهور)";
+                title = "<i class=\'fa-brands fa-facebook\'></i> طھط§ط±ظٹط® ط¨ط¹ظٹط¯ (ط£ظƒط«ط± ظ…ظ† 6 ط´ظ‡ظˆط±)";
             }
 
             if (matches) {
@@ -3913,7 +3886,7 @@ window.showExpiryDetails = function (category, resetPage = true) {
     const detailsList = document.getElementById('detailsList');
 
     if (expiryFilteredData.length === 0) {
-        detailsList.innerHTML = '<p class="empty-msg">لا توجد أصناف في هذه الفئة.</p>';
+        detailsList.innerHTML = '<p class="empty-msg">ظ„ط§ طھظˆط¬ط¯ ط£طµظ†ط§ظپ ظپظٹ ظ‡ط°ظ‡ ط§ظ„ظپط¦ط©.</p>';
         updateExpiryPaginationUI();
     } else {
         detailsList.innerHTML = '';
@@ -3940,58 +3913,58 @@ window.showExpiryDetails = function (category, resetPage = true) {
             let daysText = "";
             if (item.daysRemaining === 'NoExpiry') {
                 daysColor = "#7f8c8d";
-                daysText = "بدون تاريخ صلاحية <i class=\'fa-solid fa-infinity\'></i>";
+                daysText = "ط¨ط¯ظˆظ† طھط§ط±ظٹط® طµظ„ط§ط­ظٹط© <i class=\'fa-solid fa-infinity\'></i>";
             } else if (item.daysRemaining < 0) {
                 daysColor = "#c0392b";
-                daysText = `منتهي منذ ${Math.abs(item.daysRemaining)} يوم <i class=\'fa-solid fa-skull\'></i>`;
+                daysText = `ظ…ظ†طھظ‡ظٹ ظ…ظ†ط° ${Math.abs(item.daysRemaining)} ظٹظˆظ… <i class=\'fa-solid fa-skull\'></i>`;
             } else if (item.daysRemaining < 7) {
                 daysColor = "#e74c3c";
-                daysText = `باقي ${item.daysRemaining} يوم`;
+                daysText = `ط¨ط§ظ‚ظٹ ${item.daysRemaining} ظٹظˆظ…`;
             } else if (item.daysRemaining < 30) {
                 daysColor = "#e67e22";
-                daysText = `باقي ${item.daysRemaining} يوم`;
+                daysText = `ط¨ط§ظ‚ظٹ ${item.daysRemaining} ظٹظˆظ…`;
             } else if (item.daysRemaining <= 90) {
                 daysColor = "#f39c12";
-                daysText = `باقي ${item.daysRemaining} يوم`;
+                daysText = `ط¨ط§ظ‚ظٹ ${item.daysRemaining} ظٹظˆظ…`;
             } else {
                 daysColor = "#27ae60";
-                daysText = `باقي ${item.daysRemaining} يوم`;
+                daysText = `ط¨ط§ظ‚ظٹ ${item.daysRemaining} ظٹظˆظ…`;
             }
 
             let rowClass = "expiry-item-row";
             let activeOfferStyle = "";
-            if (item.status === 'في عرض') {
+            if (item.status === 'ظپظٹ ط¹ط±ط¶') {
                 rowClass += " active-offer";
                 activeOfferStyle = 'style="border: 2px solid #ffeb3b; background: #fffde7;"';
             }
 
-            const offerBtnText = item.status === 'في عرض' ? "إلغاء العرض ⏸" : "إضافة للعروض 🔥";
-            const offerBtnColor = item.status === 'في عرض' ? "#e0e0e0" : "#fff3e0";
-            const offerBtnAction = item.status === 'في عرض' ? "مش في عرض" : "في عرض";
+            const offerBtnText = item.status === 'ظپظٹ ط¹ط±ط¶' ? "ط¥ظ„ط؛ط§ط، ط§ظ„ط¹ط±ط¶ âڈ¸" : "ط¥ط¶ط§ظپط© ظ„ظ„ط¹ط±ظˆط¶ ًں”¥";
+            const offerBtnColor = item.status === 'ظپظٹ ط¹ط±ط¶' ? "#e0e0e0" : "#fff3e0";
+            const offerBtnAction = item.status === 'ظپظٹ ط¹ط±ط¶' ? "ظ…ط´ ظپظٹ ط¹ط±ط¶" : "ظپظٹ ط¹ط±ط¶";
 
             let formattedDate = new Date(item.expiryDate);
             formattedDate = isNaN(formattedDate.getTime()) ? item.expiryDate : formattedDate.toLocaleDateString('ar-EG');
 
             let pricesHtml = "";
-            if (item.status === 'في عرض') {
+            if (item.status === 'ظپظٹ ط¹ط±ط¶') {
                 pricesHtml = `
                     <div style="background: #fdf2e9; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px dashed #e67e22; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                         <div style="flex: 1; min-width: 120px;">
-                            <label style="font-size: 0.8rem; color: #d35400; font-weight: bold;">السعر الأصلي:</label>
+                            <label style="font-size: 0.8rem; color: #d35400; font-weight: bold;">ط§ظ„ط³ط¹ط± ط§ظ„ط£طµظ„ظٹ:</label>
                             <input type="number" id="origPrice_${item.id}" value="${item.originalPrice || ''}" style="margin-bottom: 0; padding: 5px; height: 35px; border: 1px solid #e67e22;">
                         </div>
                         <div style="flex: 1; min-width: 120px;">
-                            <label style="font-size: 0.8rem; color: #d35400; font-weight: bold;">سعر العرض:</label>
+                            <label style="font-size: 0.8rem; color: #d35400; font-weight: bold;">ط³ط¹ط± ط§ظ„ط¹ط±ط¶:</label>
                             <input type="number" id="offerPrice_${item.id}" value="${item.offerPrice || ''}" style="margin-bottom: 0; padding: 5px; height: 35px; border: 1px solid #e67e22; background: #fff;">
                         </div>
-                        <button class="btn-save interactive-btn" onclick="saveExpiryOffer('${item.id}', 'في عرض')" style="padding: 5px 15px; height: 35px; align-self: flex-end;">حفظ 💾</button>
+                        <button class="btn-save interactive-btn" onclick="saveExpiryOffer('${item.id}', 'ظپظٹ ط¹ط±ط¶')" style="padding: 5px 15px; height: 35px; align-self: flex-end;">ط­ظپط¸ ًں’¾</button>
                     </div>
                 `;
             }
 
             let itemDiv = document.createElement('div');
             itemDiv.className = rowClass;
-            if (item.status === 'في عرض') {
+            if (item.status === 'ظپظٹ ط¹ط±ط¶') {
                 itemDiv.style.border = '2px solid #ffeb3b';
                 itemDiv.style.background = '#fffde7';
             }
@@ -4001,22 +3974,22 @@ window.showExpiryDetails = function (category, resetPage = true) {
                     <input type="checkbox" class="expiry-item-checkbox" data-id="${item.id}" ${isChecked} onchange="toggleExpirySelection('${item.id}', this.checked)" style="width: 20px; height: 20px; cursor: pointer;">
                     <h4 style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin: 0; flex: 1;">
                         <span style="flex: 1;"><i class=\'fa-solid fa-box\'></i> ${item.name}</span>
-                        <span style="font-size: 0.8rem; color: #7f8c8d; font-weight: normal; background: #eee; padding: 3px 8px; border-radius: 12px; white-space: nowrap;">${item.barcode ? 'الباركود: ' + item.barcode : 'لا يوجد باركود'}</span>
+                        <span style="font-size: 0.8rem; color: #7f8c8d; font-weight: normal; background: #eee; padding: 3px 8px; border-radius: 12px; white-space: nowrap;">${item.barcode ? 'ط§ظ„ط¨ط§ط±ظƒظˆط¯: ' + item.barcode : 'ظ„ط§ ظٹظˆط¬ط¯ ط¨ط§ط±ظƒظˆط¯'}</span>
                     </h4>
                 </div>
                 <div class="expiry-item-details">
-                    <span>الكمية: ${item.qty}</span>
+                    <span>ط§ظ„ظƒظ…ظٹط©: ${item.qty}</span>
                     <span style="color: ${daysColor}; font-weight: bold;">${daysText}</span>
                 </div>
                 <div style="font-size: 0.8rem; color: #7f8c8d; margin-bottom: 8px;">
-                    <i class=\'fa-regular fa-calendar-days\'></i> انتهاء: ${formattedDate} | 🏢 مكان: ${item.location || '-'} <br>
-                    <i class=\'fa-solid fa-user\'></i> المستلم: ${item.receiver || 'غير محدد'} | 📝 ملاحظات: ${item.notes || '-'}
+                    <i class=\'fa-regular fa-calendar-days\'></i> ط§ظ†طھظ‡ط§ط،: ${formattedDate} | ًںڈ¢ ظ…ظƒط§ظ†: ${item.location || '-'} <br>
+                    <i class=\'fa-solid fa-user\'></i> ط§ظ„ظ…ط³طھظ„ظ…: ${item.receiver || 'ط؛ظٹط± ظ…ط­ط¯ط¯'} | ًں“‌ ظ…ظ„ط§ط­ط¸ط§طھ: ${item.notes || '-'}
                 </div>
                 ${pricesHtml}
                 <div class="expiry-item-actions" style="flex-wrap: wrap; gap: 5px;">
-                    <button class="btn-activate-offer interactive-btn" style="background: ${offerBtnColor}; flex: 1;" onclick="${item.status === 'في عرض' ? `changeExpiryStatus('${item.id}', '${offerBtnAction}')` : `promptNewOffer('${item.id}')`}">${offerBtnText}</button>
-                    <button class="btn-edit-item interactive-btn" style="background: #3498db; color: white; flex: 1;" onclick="openEditExpiryModal('${item.id}')"><i class="fa-solid fa-pen"></i> تعديل</button>
-                    <button class="btn-close-item interactive-btn" style="flex: 1;" onclick="changeExpiryStatus('${item.id}', 'Deleted')">تم البيع <i class=\'fa-solid fa-xmark\'></i>️</button>
+                    <button class="btn-activate-offer interactive-btn" style="background: ${offerBtnColor}; flex: 1;" onclick="${item.status === 'ظپظٹ ط¹ط±ط¶' ? `changeExpiryStatus('${item.id}', '${offerBtnAction}')` : `promptNewOffer('${item.id}')`}">${offerBtnText}</button>
+                    <button class="btn-edit-item interactive-btn" style="background: #3498db; color: white; flex: 1;" onclick="openEditExpiryModal('${item.id}')"><i class="fa-solid fa-pen"></i> طھط¹ط¯ظٹظ„</button>
+                    <button class="btn-close-item interactive-btn" style="flex: 1;" onclick="changeExpiryStatus('${item.id}', 'Deleted')">طھظ… ط§ظ„ط¨ظٹط¹ <i class=\'fa-solid fa-xmark\'></i>ï¸ڈ</button>
                 </div>
             `;
             fragment.appendChild(itemDiv);
@@ -4035,7 +4008,7 @@ window.showExpiryDetails = function (category, resetPage = true) {
     }
 };
 
-// إعداد أحداث أزرار صفحات الصلاحيات
+// ط¥ط¹ط¯ط§ط¯ ط£ط­ط¯ط§ط« ط£ط²ط±ط§ط± طµظپط­ط§طھ ط§ظ„طµظ„ط§ط­ظٹط§طھ
 document.addEventListener('DOMContentLoaded', () => {
     let pBtn = document.getElementById('expiryPrevPage');
     if (pBtn) {
@@ -4070,7 +4043,7 @@ if (searchExpiryBtn && expiryGlobalSearchInput) {
         if (expiryGlobalSearchInput.value.trim() !== '') {
             showExpiryDetails('Search');
         } else {
-            showToast('الرجاء إدخال كلمة للبحث', 'warning');
+            showToast('ط§ظ„ط±ط¬ط§ط، ط¥ط¯ط®ط§ظ„ ظƒظ„ظ…ط© ظ„ظ„ط¨ط­ط«', 'warning');
         }
     });
     expiryGlobalSearchInput.addEventListener('keypress', (e) => {
@@ -4084,9 +4057,9 @@ window.customAlert = function (message) {
     const modal = document.createElement('div');
     modal.style = "background: var(--bg); padding: 25px; border-radius: 15px; text-align: center; max-width: 400px; width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid var(--border);";
     modal.innerHTML = `
-        <h3 style="color: var(--primary); margin-top: 0; font-family: 'Cairo', sans-serif;">تنبيه</h3>
+        <h3 style="color: var(--primary); margin-top: 0; font-family: 'Cairo', sans-serif;">طھظ†ط¨ظٹظ‡</h3>
         <p style="font-size: 1.1rem; color: var(--text-main); margin-bottom: 25px; font-family: 'Cairo', sans-serif; white-space: pre-line;">${message}</p>
-        <button id="btnAlertOk" class="interactive-btn" style="background: var(--primary); color: white; border: none; padding: 10px 30px; border-radius: 8px; font-weight: bold; font-family: 'Cairo', sans-serif;">موافق</button>
+        <button id="btnAlertOk" class="interactive-btn" style="background: var(--primary); color: white; border: none; padding: 10px 30px; border-radius: 8px; font-weight: bold; font-family: 'Cairo', sans-serif;">ظ…ظˆط§ظپظ‚</button>
     `;
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
@@ -4105,8 +4078,8 @@ window.customSinglePrompt = function (title, defaultValue, onConfirm) {
         <h3 style="color: var(--primary); margin-top: 0; font-family: 'Cairo', sans-serif;">${title}</h3>
         <input type="text" id="promptInput" value="${defaultValue || ''}" style="width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 8px; border: 1px solid var(--border); background: var(--white); color: var(--text-main); font-size: 1.1rem; text-align: center;">
         <div style="display: flex; gap: 10px; justify-content: center;">
-            <button id="btnPromptYes" class="interactive-btn" style="background: var(--success); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1; font-family: 'Cairo', sans-serif;">حفظ <i class=\'fa-solid fa-check\'></i></button>
-            <button id="btnPromptNo" class="interactive-btn" style="background: var(--danger); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1; font-family: 'Cairo', sans-serif;">إلغاء <i class=\'fa-solid fa-xmark\'></i></button>
+            <button id="btnPromptYes" class="interactive-btn" style="background: var(--success); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1; font-family: 'Cairo', sans-serif;">ط­ظپط¸ <i class=\'fa-solid fa-check\'></i></button>
+            <button id="btnPromptNo" class="interactive-btn" style="background: var(--danger); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1; font-family: 'Cairo', sans-serif;">ط¥ظ„ط؛ط§ط، <i class=\'fa-solid fa-xmark\'></i></button>
         </div>
     `;
     overlay.appendChild(modal);
@@ -4135,11 +4108,11 @@ window.customConfirm = function (message, onConfirm) {
     const modal = document.createElement('div');
     modal.style = "background: white; padding: 25px; border-radius: 15px; text-align: center; max-width: 400px; width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.2);";
     modal.innerHTML = `
-        <h3 style="color: var(--primary); margin-top: 0;">تأكيد الإجراء</h3>
+        <h3 style="color: var(--primary); margin-top: 0;">طھط£ظƒظٹط¯ ط§ظ„ط¥ط¬ط±ط§ط،</h3>
         <p style="font-size: 1.1rem; color: #333; margin-bottom: 25px;">${message}</p>
         <div style="display: flex; gap: 10px; justify-content: center;">
-            <button id="btnConfirmYes" class="interactive-btn" style="background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1;">نعم <i class=\'fa-solid fa-check\'></i></button>
-            <button id="btnConfirmNo" class="interactive-btn" style="background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1;">إلغاء <i class=\'fa-solid fa-xmark\'></i></button>
+            <button id="btnConfirmYes" class="interactive-btn" style="background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1;">ظ†ط¹ظ… <i class=\'fa-solid fa-check\'></i></button>
+            <button id="btnConfirmNo" class="interactive-btn" style="background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1;">ط¥ظ„ط؛ط§ط، <i class=\'fa-solid fa-xmark\'></i></button>
         </div>
     `;
     overlay.appendChild(modal);
@@ -4161,11 +4134,11 @@ window.customPrompt = function (title, onConfirm) {
     modal.style = "background: white; padding: 25px; border-radius: 15px; text-align: center; max-width: 400px; width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.2);";
     modal.innerHTML = `
         <h3 style="color: var(--primary); margin-top: 0;">${title}</h3>
-        <input type="number" id="promptOrig" placeholder="السعر الأساسي" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ccc;">
-        <input type="number" id="promptOffer" placeholder="سعر العرض" style="width: 100%; padding: 10px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ccc;">
+        <input type="number" id="promptOrig" placeholder="ط§ظ„ط³ط¹ط± ط§ظ„ط£ط³ط§ط³ظٹ" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ccc;">
+        <input type="number" id="promptOffer" placeholder="ط³ط¹ط± ط§ظ„ط¹ط±ط¶" style="width: 100%; padding: 10px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ccc;">
         <div style="display: flex; gap: 10px; justify-content: center;">
-            <button id="btnPromptYes" class="interactive-btn" style="background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1;">حفظ <i class=\'fa-solid fa-check\'></i></button>
-            <button id="btnPromptNo" class="interactive-btn" style="background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1;">إلغاء <i class=\'fa-solid fa-xmark\'></i></button>
+            <button id="btnPromptYes" class="interactive-btn" style="background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1;">ط­ظپط¸ <i class=\'fa-solid fa-check\'></i></button>
+            <button id="btnPromptNo" class="interactive-btn" style="background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1;">ط¥ظ„ط؛ط§ط، <i class=\'fa-solid fa-xmark\'></i></button>
         </div>
     `;
     overlay.appendChild(modal);
@@ -4183,12 +4156,12 @@ window.customPrompt = function (title, onConfirm) {
 };
 
 window.promptNewOffer = function (id) {
-    customPrompt("تفعيل عرض جديد", (orig, offer) => {
+    customPrompt("طھظپط¹ظٹظ„ ط¹ط±ط¶ ط¬ط¯ظٹط¯", (orig, offer) => {
         if (orig === "" || offer === "") {
-            showToast("يرجى إدخال السعرين", "warning");
+            showToast("ظٹط±ط¬ظ‰ ط¥ط¯ط®ط§ظ„ ط§ظ„ط³ط¹ط±ظٹظ†", "warning");
             return;
         }
-        saveExpiryOffer(id, 'في عرض', orig, offer);
+        saveExpiryOffer(id, 'ظپظٹ ط¹ط±ط¶', orig, offer);
     });
 };
 
@@ -4196,7 +4169,7 @@ window.saveExpiryOffer = function (id, status, origVal, offerVal) {
     let orig = origVal !== undefined ? origVal : (document.getElementById('origPrice_' + id) ? document.getElementById('origPrice_' + id).value : "");
     let offer = offerVal !== undefined ? offerVal : (document.getElementById('offerPrice_' + id) ? document.getElementById('offerPrice_' + id).value : "");
 
-    showToast("جاري التحديث...", "warning");
+    showToast("ط¬ط§ط±ظٹ ط§ظ„طھط­ط¯ظٹط«...", "warning");
     let formData = new URLSearchParams();
     formData.append('action', 'updateExpiryStatus');
     formData.append('id', id);
@@ -4206,7 +4179,7 @@ window.saveExpiryOffer = function (id, status, origVal, offerVal) {
 
     fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
         .then(() => {
-            showToast("<i class=\'fa-solid fa-check\'></i> تم تحديث العرض والأسعار بنجاح", "success");
+            showToast("<i class=\'fa-solid fa-check\'></i> طھظ… طھط­ط¯ظٹط« ط§ظ„ط¹ط±ط¶ ظˆط§ظ„ط£ط³ط¹ط§ط± ط¨ظ†ط¬ط§ط­", "success");
             let item = expiryData.find(i => i.id == id);
             if (item) {
                 item.status = status;
@@ -4216,28 +4189,28 @@ window.saveExpiryOffer = function (id, status, origVal, offerVal) {
             renderExpiryDashboard();
             updateCatalogWithOffers();
             // Re-render the current view
-            if (document.getElementById('detailsTitle').innerText.includes('البحث')) {
+            if (document.getElementById('detailsTitle').innerText.includes('ط§ظ„ط¨ط­ط«')) {
                 showExpiryDetails('Search');
-            } else if (document.getElementById('detailsTitle').innerText.includes('العروض')) {
+            } else if (document.getElementById('detailsTitle').innerText.includes('ط§ظ„ط¹ط±ظˆط¶')) {
                 showExpiryDetails('Offers');
             } else {
                 // If in another category, just close and user can reopen or re-render
                 document.getElementById('expiryDetailsSection').style.display = 'none';
             }
         }).catch(() => {
-            showToast("<i class=\'fa-solid fa-xmark\'></i> خطأ في الاتصال بالإنترنت", "error");
+            showToast("<i class=\'fa-solid fa-xmark\'></i> ط®ط·ط£ ظپظٹ ط§ظ„ط§طھطµط§ظ„ ط¨ط§ظ„ط¥ظ†طھط±ظ†طھ", "error");
         });
 };
 
-// 3. Status Control (دورة حياة العرض)
+// 3. Status Control (ط¯ظˆط±ط© ط­ظٹط§ط© ط§ظ„ط¹ط±ط¶)
 window.changeExpiryStatus = function (id, newStatus) {
     let msg = "";
-    if (newStatus === 'في عرض') msg = "هل تريد تفعيل العرض وجعل السطر فسفوري؟ 🔥";
-    else if (newStatus === 'مش في عرض') msg = "هل تريد إيقاف العرض وإعادته للحالة الطبيعية؟";
-    else if (newStatus === 'Deleted') msg = "تحذير: سيتم مسح المنتج بالكامل من النظام ولن يظهر مرة أخرى. هل أنت متأكد من إتمام البيع؟ <i class=\'fa-solid fa-xmark\'></i>️";
+    if (newStatus === 'ظپظٹ ط¹ط±ط¶') msg = "ظ‡ظ„ طھط±ظٹط¯ طھظپط¹ظٹظ„ ط§ظ„ط¹ط±ط¶ ظˆط¬ط¹ظ„ ط§ظ„ط³ط·ط± ظپط³ظپظˆط±ظٹطں ًں”¥";
+    else if (newStatus === 'ظ…ط´ ظپظٹ ط¹ط±ط¶') msg = "ظ‡ظ„ طھط±ظٹط¯ ط¥ظٹظ‚ط§ظپ ط§ظ„ط¹ط±ط¶ ظˆط¥ط¹ط§ط¯طھظ‡ ظ„ظ„ط­ط§ظ„ط© ط§ظ„ط·ط¨ظٹط¹ظٹط©طں";
+    else if (newStatus === 'Deleted') msg = "طھط­ط°ظٹط±: ط³ظٹطھظ… ظ…ط³ط­ ط§ظ„ظ…ظ†طھط¬ ط¨ط§ظ„ظƒط§ظ…ظ„ ظ…ظ† ط§ظ„ظ†ط¸ط§ظ… ظˆظ„ظ† ظٹط¸ظ‡ط± ظ…ط±ط© ط£ط®ط±ظ‰. ظ‡ظ„ ط£ظ†طھ ظ…طھط£ظƒط¯ ظ…ظ† ط¥طھظ…ط§ظ… ط§ظ„ط¨ظٹط¹طں <i class=\'fa-solid fa-xmark\'></i>ï¸ڈ";
 
     customConfirm(msg, () => {
-        showToast("جاري التحديث...", "warning");
+        showToast("ط¬ط§ط±ظٹ ط§ظ„طھط­ط¯ظٹط«...", "warning");
 
         let formData = new URLSearchParams();
         formData.append('action', 'updateExpiryStatus');
@@ -4246,7 +4219,7 @@ window.changeExpiryStatus = function (id, newStatus) {
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
-                showToast("<i class=\'fa-solid fa-check\'></i> تم تحديث الحالة بنجاح", "success");
+                showToast("<i class=\'fa-solid fa-check\'></i> طھظ… طھط­ط¯ظٹط« ط§ظ„ط­ط§ظ„ط© ط¨ظ†ط¬ط§ط­", "success");
                 let item = expiryData.find(i => i.id == id);
                 if (item) {
                     item.status = newStatus;
@@ -4257,7 +4230,7 @@ window.changeExpiryStatus = function (id, newStatus) {
                     closeExpiryDetails();
                 }
             }).catch(() => {
-                showToast("<i class=\'fa-solid fa-xmark\'></i> خطأ في الاتصال بالإنترنت", "error");
+                showToast("<i class=\'fa-solid fa-xmark\'></i> ط®ط·ط£ ظپظٹ ط§ظ„ط§طھطµط§ظ„ ط¨ط§ظ„ط¥ظ†طھط±ظ†طھ", "error");
             });
     });
 };
@@ -4267,7 +4240,7 @@ function updateCatalogWithOffers() {
     
     let activeOffers = [];
     if (expiryData && expiryData.length > 0) {
-        activeOffers = expiryData.filter(item => item.status === 'في عرض').map(item => item.name);
+        activeOffers = expiryData.filter(item => item.status === 'ظپظٹ ط¹ط±ط¶').map(item => item.name);
         window.cachedActiveOffers = activeOffers;
     } else {
         activeOffers = window.cachedActiveOffers || [];
@@ -4279,16 +4252,16 @@ function updateCatalogWithOffers() {
         rows.forEach(row => {
             const nameEl = row.querySelector('strong');
             if (nameEl) {
-                const productName = nameEl.innerText.replace('🔥', '').replace('عرض خاص', '').trim();
+                const productName = nameEl.innerText.replace('ًں”¥', '').replace('ط¹ط±ط¶ ط®ط§طµ', '').trim();
                 const hasOffer = activeOffers.some(offerName => productName.includes(offerName) || offerName.includes(productName));
 
                 if (hasOffer) {
-                    if (!nameEl.innerHTML.includes('🔥')) {
-                        nameEl.innerHTML += ' <span style="background: #ffeb3b; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; color: #d35400;">عرض خاص 🔥</span>';
+                    if (!nameEl.innerHTML.includes('ًں”¥')) {
+                        nameEl.innerHTML += ' <span style="background: #ffeb3b; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; color: #d35400;">ط¹ط±ط¶ ط®ط§طµ ًں”¥</span>';
                         row.style.border = "2px solid #ffeb3b";
                     }
                 } else {
-                    if (nameEl.innerHTML.includes('عرض خاص')) {
+                    if (nameEl.innerHTML.includes('ط¹ط±ط¶ ط®ط§طµ')) {
                         nameEl.innerHTML = productName;
                         row.style.border = "none";
                     }
@@ -4348,11 +4321,11 @@ window.saveEditExpiryModal = function() {
     const notes = document.getElementById('editExpiryNotes').value;
     
     if (!qty || !date || !receiver) {
-        showToast("يرجى تعبئة الكمية والتاريخ واسم المستلم", "warning");
+        showToast("ظٹط±ط¬ظ‰ طھط¹ط¨ط¦ط© ط§ظ„ظƒظ…ظٹط© ظˆط§ظ„طھط§ط±ظٹط® ظˆط§ط³ظ… ط§ظ„ظ…ط³طھظ„ظ…", "warning");
         return;
     }
     
-    showToast("جاري حفظ التعديلات...", "warning");
+    showToast("ط¬ط§ط±ظٹ ط­ظپط¸ ط§ظ„طھط¹ط¯ظٹظ„ط§طھ...", "warning");
     
     let formData = new URLSearchParams();
     formData.append('action', 'updateExpiryItemData');
@@ -4365,7 +4338,7 @@ window.saveEditExpiryModal = function() {
     
     fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
         .then(() => {
-            showToast("<i class=\'fa-solid fa-check\'></i> تم تعديل الاستلامة بنجاح", "success");
+            showToast("<i class=\'fa-solid fa-check\'></i> طھظ… طھط¹ط¯ظٹظ„ ط§ظ„ط§ط³طھظ„ط§ظ…ط© ط¨ظ†ط¬ط§ط­", "success");
             closeEditExpiryModal();
             
             let item = expiryData.find(i => String(i.id) === String(id));
@@ -4392,37 +4365,37 @@ window.saveEditExpiryModal = function() {
                 showExpiryDetails(expiryCurrentCategory, false);
             }
         })
-        .catch(() => showToast("خطأ في الاتصال بالإنترنت", "error"));
+        .catch(() => showToast("ط®ط·ط£ ظپظٹ ط§ظ„ط§طھطµط§ظ„ ط¨ط§ظ„ط¥ظ†طھط±ظ†طھ", "error"));
 };
 
 window.printSelectedExpiry = function() {
     if (selectedExpiryItems.size === 0) {
-        showToast("لم يتم تحديد أي استلامة", "warning");
+        showToast("ظ„ظ… ظٹطھظ… طھط­ط¯ظٹط¯ ط£ظٹ ط§ط³طھظ„ط§ظ…ط©", "warning");
         return;
     }
     
     let selectedData = expiryData.filter(item => selectedExpiryItems.has(String(item.id)));
     
     let receivers = [...new Set(selectedData.map(i => i.receiver).filter(r => r && String(r).trim() !== ''))];
-    let mergedReceiverName = receivers.length > 0 ? receivers.join(' / ') : "غير محدد";
+    let mergedReceiverName = receivers.length > 0 ? receivers.join(' / ') : "ط؛ظٹط± ظ…ط­ط¯ط¯";
     
-    let reportTitle = `استلامات مجمعة - المستلم: ${mergedReceiverName}`;
+    let reportTitle = `ط§ط³طھظ„ط§ظ…ط§طھ ظ…ط¬ظ…ط¹ط© - ط§ظ„ظ…ط³طھظ„ظ…: ${mergedReceiverName}`;
     generateCategoryPDF(selectedData, reportTitle);
 };
 
 // ==========================================
-// 3. Export Logic (تصدير متقدم ExcelJS)
+// 3. Export Logic (طھطµط¯ظٹط± ظ…طھظ‚ط¯ظ… ExcelJS)
 // ==========================================
 
 async function generateExcel(dataToExport, reportTitle) {
     if (!dataToExport || dataToExport.length === 0) {
-        showToast("لا توجد بيانات للتصدير في هذه القائمة", "warning");
+        showToast("ظ„ط§ طھظˆط¬ط¯ ط¨ظٹط§ظ†ط§طھ ظ„ظ„طھطµط¯ظٹط± ظپظٹ ظ‡ط°ظ‡ ط§ظ„ظ‚ط§ط¦ظ…ط©", "warning");
         return;
     }
 
     try {
         if (typeof ExcelJS === 'undefined') {
-            showToast("جاري تجهيز محرك التصدير الذكي...", "warning");
+            showToast("ط¬ط§ط±ظٹ طھط¬ظ‡ظٹط² ظ…ط­ط±ظƒ ط§ظ„طھطµط¯ظٹط± ط§ظ„ط°ظƒظٹ...", "warning");
             await new Promise((resolve, reject) => {
                 const script = document.createElement('script');
                 script.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js';
@@ -4436,21 +4409,21 @@ async function generateExcel(dataToExport, reportTitle) {
         workbook.creator = 'Candy Club System';
         workbook.created = new Date();
 
-        const sheet1 = workbook.addWorksheet('البيانات التفصيلية', { views: [{ rightToLeft: true }] });
+        const sheet1 = workbook.addWorksheet('ط§ظ„ط¨ظٹط§ظ†ط§طھ ط§ظ„طھظپطµظٹظ„ظٹط©', { views: [{ rightToLeft: true }] });
 
         sheet1.columns = [
-            { header: 'اسم المنتج', key: 'name', width: 35 },
-            { header: 'الكمية', key: 'qty', width: 12 },
-            { header: 'تاريخ الانتهاء', key: 'date', width: 18 },
-            { header: 'الأيام المتبقية', key: 'days', width: 15 },
-            { header: 'المكان / المورد', key: 'loc', width: 22 },
-            { header: 'اسم المسجل', key: 'regname', width: 22 },
-            { header: 'تاريخ التسجيل', key: 'reg', width: 18 },
-            { header: 'المستلم', key: 'rec', width: 18 },
-            { header: 'ملاحظات', key: 'notes', width: 30 },
-            { header: 'السعر الأساسي', key: 'origPrice', width: 15 },
-            { header: 'سعر العرض', key: 'offerPrice', width: 15 },
-            { header: 'الحالة', key: 'status', width: 18 }
+            { header: 'ط§ط³ظ… ط§ظ„ظ…ظ†طھط¬', key: 'name', width: 35 },
+            { header: 'ط§ظ„ظƒظ…ظٹط©', key: 'qty', width: 12 },
+            { header: 'طھط§ط±ظٹط® ط§ظ„ط§ظ†طھظ‡ط§ط،', key: 'date', width: 18 },
+            { header: 'ط§ظ„ط£ظٹط§ظ… ط§ظ„ظ…طھط¨ظ‚ظٹط©', key: 'days', width: 15 },
+            { header: 'ط§ظ„ظ…ظƒط§ظ† / ط§ظ„ظ…ظˆط±ط¯', key: 'loc', width: 22 },
+            { header: 'ط§ط³ظ… ط§ظ„ظ…ط³ط¬ظ„', key: 'regname', width: 22 },
+            { header: 'طھط§ط±ظٹط® ط§ظ„طھط³ط¬ظٹظ„', key: 'reg', width: 18 },
+            { header: 'ط§ظ„ظ…ط³طھظ„ظ…', key: 'rec', width: 18 },
+            { header: 'ظ…ظ„ط§ط­ط¸ط§طھ', key: 'notes', width: 30 },
+            { header: 'ط§ظ„ط³ط¹ط± ط§ظ„ط£ط³ط§ط³ظٹ', key: 'origPrice', width: 15 },
+            { header: 'ط³ط¹ط± ط§ظ„ط¹ط±ط¶', key: 'offerPrice', width: 15 },
+            { header: 'ط§ظ„ط­ط§ظ„ط©', key: 'status', width: 18 }
         ];
 
         sheet1.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
@@ -4469,7 +4442,7 @@ async function generateExcel(dataToExport, reportTitle) {
 
         sortedData.forEach(row => {
             let daysRemaining = getDaysRemaining(row.expiryDate);
-            let daysFormatted = daysRemaining === 'NoExpiry' ? 'بدون' : (isNaN(daysRemaining) ? '-' : daysRemaining);
+            let daysFormatted = daysRemaining === 'NoExpiry' ? 'ط¨ط¯ظˆظ†' : (isNaN(daysRemaining) ? '-' : daysRemaining);
 
             let formattedRegDate = row.regDate ? new Date(row.regDate).toLocaleDateString('en-CA') : '';
             let formattedExpDate = row.expiryDate ? new Date(row.expiryDate).toLocaleDateString('en-CA') : '';
@@ -4522,17 +4495,17 @@ async function generateExcel(dataToExport, reportTitle) {
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
         let cleanTitle = reportTitle.replace(/<[^>]*>?/gm, '').trim();
-        let safeTitle = cleanTitle.replace(/[^a-zA-Z0-9أ-ي]/g, '_');
-        link.download = `تقرير_${safeTitle}_${new Date().toLocaleDateString('en-CA')}.xlsx`;
+        let safeTitle = cleanTitle.replace(/[^a-zA-Z0-9ط£-ظٹ]/g, '_');
+        link.download = `طھظ‚ط±ظٹط±_${safeTitle}_${new Date().toLocaleDateString('en-CA')}.xlsx`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
 
-        showToast("<i class=\'fa-solid fa-check\'></i> تم تصدير التقرير الاحترافي بنجاح", "success");
+        showToast("<i class=\'fa-solid fa-check\'></i> طھظ… طھطµط¯ظٹط± ط§ظ„طھظ‚ط±ظٹط± ط§ظ„ط§ط­طھط±ط§ظپظٹ ط¨ظ†ط¬ط§ط­", "success");
 
     } catch (error) {
         console.error(error);
-        showToast("<i class=\'fa-solid fa-xmark\'></i> حدث خطأ أثناء التصدير", "error");
+        showToast("<i class=\'fa-solid fa-xmark\'></i> ط­ط¯ط« ط®ط·ط£ ط£ط«ظ†ط§ط، ط§ظ„طھطµط¯ظٹط±", "error");
     }
 }
 
@@ -4573,7 +4546,7 @@ if (expirySortSelect) {
 const exportCurrentListBtn = document.getElementById('exportCurrentListBtn');
 if (exportCurrentListBtn) {
     exportCurrentListBtn.addEventListener('click', () => {
-        setBtnLoading(exportCurrentListBtn, true, "تصدير...");
+        setBtnLoading(exportCurrentListBtn, true, "طھطµط¯ظٹط±...");
         generateExcel(currentExportData, currentExportCategory).then(() => {
             setBtnLoading(exportCurrentListBtn, false);
         });
@@ -4584,7 +4557,7 @@ const exportCurrentListPDFBtn = document.getElementById('exportCurrentListPDFBtn
 if (exportCurrentListPDFBtn) {
     exportCurrentListPDFBtn.addEventListener('click', () => {
         if (!currentExportData || currentExportData.length === 0) {
-            showToast("لا توجد بيانات للطباعة", "warning");
+            showToast("ظ„ط§ طھظˆط¬ط¯ ط¨ظٹط§ظ†ط§طھ ظ„ظ„ط·ط¨ط§ط¹ط©", "warning");
             return;
         }
         generateCategoryPDF(currentExportData, currentExportCategory);
@@ -4597,7 +4570,7 @@ if (btnExportMonth) {
     btnExportMonth.addEventListener('click', () => {
         const monthVal = document.getElementById('exportMonthInput').value; // YYYY-MM
         if (!monthVal) {
-            showToast("يرجى تحديد الشهر أولاً", "warning");
+            showToast("ظٹط±ط¬ظ‰ طھط­ط¯ظٹط¯ ط§ظ„ط´ظ‡ط± ط£ظˆظ„ط§ظ‹", "warning");
             return;
         }
 
@@ -4615,8 +4588,8 @@ if (btnExportMonth) {
             return dA.getTime() - dB.getTime();
         });
 
-        setBtnLoading(btnExportMonth, true, "تصدير...");
-        generateExcel(filtered, 'شهر_' + monthVal).then(() => {
+        setBtnLoading(btnExportMonth, true, "طھطµط¯ظٹط±...");
+        generateExcel(filtered, 'ط´ظ‡ط±_' + monthVal).then(() => {
             setBtnLoading(btnExportMonth, false);
         });
     });
@@ -4628,7 +4601,7 @@ if (btnExportMonthPDF) {
     btnExportMonthPDF.addEventListener('click', () => {
         const monthVal = document.getElementById('exportMonthInput').value; // YYYY-MM
         if (!monthVal) {
-            showToast("يرجى تحديد الشهر أولاً", "warning");
+            showToast("ظٹط±ط¬ظ‰ طھط­ط¯ظٹط¯ ط§ظ„ط´ظ‡ط± ط£ظˆظ„ط§ظ‹", "warning");
             return;
         }
 
@@ -4647,7 +4620,7 @@ if (btnExportMonthPDF) {
         });
 
         if (filtered.length === 0) {
-            showToast("لا توجد بيانات انتهاء في هذا الشهر", "warning");
+            showToast("ظ„ط§ طھظˆط¬ط¯ ط¨ظٹط§ظ†ط§طھ ط§ظ†طھظ‡ط§ط، ظپظٹ ظ‡ط°ط§ ط§ظ„ط´ظ‡ط±", "warning");
             return;
         }
 
@@ -4660,7 +4633,7 @@ if (btnExportDate) {
     btnExportDate.addEventListener('click', () => {
         const dateVal = document.getElementById('exportDateInput').value; // YYYY-MM-DD
         if (!dateVal) {
-            showToast("يرجى تحديد يوم التسجيل أولاً", "warning");
+            showToast("ظٹط±ط¬ظ‰ طھط­ط¯ظٹط¯ ظٹظˆظ… ط§ظ„طھط³ط¬ظٹظ„ ط£ظˆظ„ط§ظ‹", "warning");
             return;
         }
 
@@ -4675,8 +4648,8 @@ if (btnExportDate) {
             return item.regDate.includes(dateVal);
         });
 
-        setBtnLoading(btnExportDate, true, "تصدير...");
-        generateExcel(filtered, 'إدخالات_يوم_' + dateVal).then(() => {
+        setBtnLoading(btnExportDate, true, "طھطµط¯ظٹط±...");
+        generateExcel(filtered, 'ط¥ط¯ط®ط§ظ„ط§طھ_ظٹظˆظ…_' + dateVal).then(() => {
             setBtnLoading(btnExportDate, false);
         });
     });
@@ -4687,7 +4660,7 @@ if (btnExportDatePDF) {
     btnExportDatePDF.addEventListener('click', () => {
         const dateVal = document.getElementById('exportDateInput').value; // YYYY-MM-DD
         if (!dateVal) {
-            showToast("يرجى تحديد يوم التسجيل أولاً", "warning");
+            showToast("ظٹط±ط¬ظ‰ طھط­ط¯ظٹط¯ ظٹظˆظ… ط§ظ„طھط³ط¬ظٹظ„ ط£ظˆظ„ط§ظ‹", "warning");
             return;
         }
 
@@ -4702,7 +4675,7 @@ if (btnExportDatePDF) {
         });
 
         if (filtered.length === 0) {
-            showToast("لا توجد بيانات مسجلة في هذا اليوم", "warning");
+            showToast("ظ„ط§ طھظˆط¬ط¯ ط¨ظٹط§ظ†ط§طھ ظ…ط³ط¬ظ„ط© ظپظٹ ظ‡ط°ط§ ط§ظ„ظٹظˆظ…", "warning");
             return;
         }
 
@@ -4733,27 +4706,27 @@ function showBatchSelectionModal(batches, legacyBatch, dateVal) {
     modal.style = "background: var(--bg); padding: 25px; border-radius: 15px; max-width: 500px; width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid var(--border); max-height: 80vh; overflow-y: auto;";
     
     let html = `
-        <h3 style="color: var(--primary); margin-top: 0; font-family: 'Cairo', sans-serif; text-align: center;">طباعة استلامات يوم ${dateVal}</h3>
-        <p style="font-size: 0.95rem; color: var(--text-main); margin-bottom: 20px; text-align: center;">الاستلامات المسجلة في هذا اليوم. يمكنك تحديد المحضر المراد طباعته أو التعديل عليه:</p>
+        <h3 style="color: var(--primary); margin-top: 0; font-family: 'Cairo', sans-serif; text-align: center;">ط·ط¨ط§ط¹ط© ط§ط³طھظ„ط§ظ…ط§طھ ظٹظˆظ… ${dateVal}</h3>
+        <p style="font-size: 0.95rem; color: var(--text-main); margin-bottom: 20px; text-align: center;">ط§ظ„ط§ط³طھظ„ط§ظ…ط§طھ ط§ظ„ظ…ط³ط¬ظ„ط© ظپظٹ ظ‡ط°ط§ ط§ظ„ظٹظˆظ…. ظٹظ…ظƒظ†ظƒ طھط­ط¯ظٹط¯ ط§ظ„ظ…ط­ط¶ط± ط§ظ„ظ…ط±ط§ط¯ ط·ط¨ط§ط¹طھظ‡ ط£ظˆ ط§ظ„طھط¹ط¯ظٹظ„ ط¹ظ„ظٹظ‡:</p>
         <div style="display: flex; flex-direction: column; gap: 10px;">
     `;
 
     Object.keys(batches).forEach((bId, idx) => {
         let items = batches[bId];
         let d = new Date(parseInt(bId));
-        let timeStr = isNaN(d.getTime()) ? 'غير معروف' : d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-        let receiver = items[0].receiver || 'غير محدد';
+        let timeStr = isNaN(d.getTime()) ? 'ط؛ظٹط± ظ…ط¹ط±ظˆظپ' : d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+        let receiver = items[0].receiver || 'ط؛ظٹط± ظ…ط­ط¯ط¯';
         html += `
             <div style="display: flex; align-items: center; gap: 10px;">
                 <input type="checkbox" class="batch-checkbox" value="${bId}" style="width: 20px; height: 20px; cursor: pointer; flex-shrink: 0;">
                 <button class="interactive-btn batch-select-btn" data-batch="${bId}" style="flex: 1; background: var(--bg-light); color: var(--text-main); border: 1px solid var(--border); padding: 15px; border-radius: 8px; text-align: right; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s;">
                     <div style="display: flex; flex-direction: column; gap: 5px;">
-                        <span>🕒 استلامة الساعة ${timeStr}</span>
-                        <span style="font-size: 0.85rem; color: var(--primary); font-weight: bold;"><i class='fa-solid fa-user'></i> المستلم: ${receiver}</span>
+                        <span>ًں•’ ط§ط³طھظ„ط§ظ…ط© ط§ظ„ط³ط§ط¹ط© ${timeStr}</span>
+                        <span style="font-size: 0.85rem; color: var(--primary); font-weight: bold;"><i class='fa-solid fa-user'></i> ط§ظ„ظ…ط³طھظ„ظ…: ${receiver}</span>
                     </div>
-                    <span style="background: var(--primary); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">${items.length} أصناف</span>
+                    <span style="background: var(--primary); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">${items.length} ط£طµظ†ط§ظپ</span>
                 </button>
-                <button class="interactive-btn batch-edit-btn" data-batch="${bId}" style="background: #3498db; color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; transition: 0.2s;" title="تعديل الاستلامة">
+                <button class="interactive-btn batch-edit-btn" data-batch="${bId}" style="background: #3498db; color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; transition: 0.2s;" title="طھط¹ط¯ظٹظ„ ط§ظ„ط§ط³طھظ„ط§ظ…ط©">
                     <i class="fa-solid fa-pen"></i>
                 </button>
             </div>
@@ -4766,28 +4739,28 @@ function showBatchSelectionModal(batches, legacyBatch, dateVal) {
                 <input type="checkbox" class="batch-checkbox" value="legacy" style="width: 20px; height: 20px; cursor: pointer; flex-shrink: 0;">
                 <button class="interactive-btn batch-select-btn" data-batch="legacy" style="flex: 1; background: var(--bg-light); color: var(--text-main); border: 1px solid var(--border); padding: 15px; border-radius: 8px; text-align: right; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s;">
                     <div style="display: flex; flex-direction: column; gap: 5px;">
-                        <span><i class=\'fa-solid fa-box\'></i> استلامات مجمعة (قديمة)</span>
+                        <span><i class=\'fa-solid fa-box\'></i> ط§ط³طھظ„ط§ظ…ط§طھ ظ…ط¬ظ…ط¹ط© (ظ‚ط¯ظٹظ…ط©)</span>
                     </div>
-                    <span style="background: var(--primary); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">${legacyBatch.length} أصناف</span>
+                    <span style="background: var(--primary); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">${legacyBatch.length} ط£طµظ†ط§ظپ</span>
                 </button>
-                <button class="interactive-btn batch-edit-btn" data-batch="legacy" style="background: #3498db; color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; transition: 0.2s;" title="تعديل الاستلامة">
+                <button class="interactive-btn batch-edit-btn" data-batch="legacy" style="background: #3498db; color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; transition: 0.2s;" title="طھط¹ط¯ظٹظ„ ط§ظ„ط§ط³طھظ„ط§ظ…ط©">
                     <i class="fa-solid fa-pen"></i>
                 </button>
             </div>
             <button class="interactive-btn batch-select-btn" data-batch="manual" style="background: var(--bg-light); color: #e67e22; border: 1px dashed #e67e22; padding: 15px; border-radius: 8px; text-align: right; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; margin-top: -5px;">
-                <span>✂️ تقسيم الاستلامات القديمة يدوياً (تحديد واختيار)</span>
+                <span>âœ‚ï¸ڈ طھظ‚ط³ظٹظ… ط§ظ„ط§ط³طھظ„ط§ظ…ط§طھ ط§ظ„ظ‚ط¯ظٹظ…ط© ظٹط¯ظˆظٹط§ظ‹ (طھط­ط¯ظٹط¯ ظˆط§ط®طھظٹط§ط±)</span>
             </button>
         `;
     }
 
     html += `
             <button class="interactive-btn batch-select-btn" data-batch="all" style="background: #27ae60; color: white; border: none; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 10px; cursor: pointer;">
-                طباعة كل استلامات اليوم معاً <i class=\'fa-solid fa-print\'></i>
+                ط·ط¨ط§ط¹ط© ظƒظ„ ط§ط³طھظ„ط§ظ…ط§طھ ط§ظ„ظٹظˆظ… ظ…ط¹ط§ظ‹ <i class=\'fa-solid fa-print\'></i>
             </button>
             <button class="interactive-btn" id="mergeSelectedBatchesBtn" style="background: #9b59b6; color: white; border: none; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; cursor: pointer; display: none;">
-                دمج وطباعة الاستلامات المحددة <i class=\'fa-solid fa-layer-group\'></i>
+                ط¯ظ…ط¬ ظˆط·ط¨ط§ط¹ط© ط§ظ„ط§ط³طھظ„ط§ظ…ط§طھ ط§ظ„ظ…ط­ط¯ط¯ط© <i class=\'fa-solid fa-layer-group\'></i>
             </button>
-            <button id="closeBatchModalBtn" style="background: transparent; color: var(--text-muted); border: none; padding: 10px; border-radius: 8px; text-align: center; cursor: pointer; text-decoration: underline; margin-top: 5px;">إلغاء</button>
+            <button id="closeBatchModalBtn" style="background: transparent; color: var(--text-muted); border: none; padding: 10px; border-radius: 8px; text-align: center; cursor: pointer; text-decoration: underline; margin-top: 5px;">ط¥ظ„ط؛ط§ط،</button>
         </div>
     `;
 
@@ -4819,12 +4792,12 @@ function showBatchSelectionModal(batches, legacyBatch, dateVal) {
         
         document.body.removeChild(overlay);
         
-        // جلب أسماء المستلمين المحددين للعنوان (اختياري)
+        // ط¬ظ„ط¨ ط£ط³ظ…ط§ط، ط§ظ„ظ…ط³طھظ„ظ…ظٹظ† ط§ظ„ظ…ط­ط¯ط¯ظٹظ† ظ„ظ„ط¹ظ†ظˆط§ظ† (ط§ط®طھظٹط§ط±ظٹ)
         let receivers = [...new Set(allItems.map(i => i.receiver).filter(r => r && String(r).trim() !== ''))];
-        let mergedReceiverName = receivers.length > 0 ? receivers.join(' / ') : "غير محدد";
-        let reportTitle = `استلامات مجمعة - المستلم: ${mergedReceiverName}`;
+        let mergedReceiverName = receivers.length > 0 ? receivers.join(' / ') : "ط؛ظٹط± ظ…ط­ط¯ط¯";
+        let reportTitle = `ط§ط³طھظ„ط§ظ…ط§طھ ظ…ط¬ظ…ط¹ط© - ط§ظ„ظ…ط³طھظ„ظ…: ${mergedReceiverName}`;
         
-        // استدعاء دالة الطباعة الخاصة بالاستلامات
+        // ط§ط³طھط¯ط¹ط§ط، ط¯ط§ظ„ط© ط§ظ„ط·ط¨ط§ط¹ط© ط§ظ„ط®ط§طµط© ط¨ط§ظ„ط§ط³طھظ„ط§ظ…ط§طھ
         generatePDFReceipt(allItems, dateVal, reportTitle);
     });
 
@@ -4879,14 +4852,14 @@ window.showBatchEditModal = function(bId, items, dateVal) {
     const modal = document.createElement('div');
     modal.style = "background: var(--bg); padding: 25px; border-radius: 15px; max-width: 600px; width: 95%; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid var(--border); max-height: 80vh; overflow-y: auto; display: flex; flex-direction: column; gap: 15px;";
     
-    let titleStr = bId === 'legacy' ? 'الاستلامات المجمعة (القديمة)' : `الساعة ${new Date(parseInt(bId)).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}`;
+    let titleStr = bId === 'legacy' ? 'ط§ظ„ط§ط³طھظ„ط§ظ…ط§طھ ط§ظ„ظ…ط¬ظ…ط¹ط© (ط§ظ„ظ‚ط¯ظٹظ…ط©)' : `ط§ظ„ط³ط§ط¹ط© ${new Date(parseInt(bId)).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}`;
     
     let html = `
         <h3 style="color: var(--primary); margin-top: 0; font-family: 'Cairo', sans-serif; text-align: center;">
-            تعديل استلامة ${dateVal} - ${titleStr}
+            طھط¹ط¯ظٹظ„ ط§ط³طھظ„ط§ظ…ط© ${dateVal} - ${titleStr}
         </h3>
         <p style="font-size: 0.9rem; color: var(--text-main); text-align: center; margin-bottom: 10px;">
-            تنبيه: بعد تعديل الأصناف، يُرجى إغلاق هذه النافذة ثم طباعة الاستلامة للحصول على التحديثات.
+            طھظ†ط¨ظٹظ‡: ط¨ط¹ط¯ طھط¹ط¯ظٹظ„ ط§ظ„ط£طµظ†ط§ظپطŒ ظٹظڈط±ط¬ظ‰ ط¥ط؛ظ„ط§ظ‚ ظ‡ط°ظ‡ ط§ظ„ظ†ط§ظپط°ط© ط«ظ… ط·ط¨ط§ط¹ط© ط§ظ„ط§ط³طھظ„ط§ظ…ط© ظ„ظ„ط­طµظˆظ„ ط¹ظ„ظ‰ ط§ظ„طھط­ط¯ظٹط«ط§طھ.
         </p>
         <div style="display: flex; flex-direction: column; gap: 10px; max-height: 50vh; overflow-y: auto; padding-right: 5px;">
     `;
@@ -4897,24 +4870,24 @@ window.showBatchEditModal = function(bId, items, dateVal) {
                 <div style="display: flex; flex-direction: column; gap: 5px; flex: 1;">
                     <span style="font-weight: bold; color: var(--text-main);"><i class='fa-solid fa-box'></i> ${item.name}</span>
                     <span style="font-size: 0.85rem; color: var(--text-muted);">
-                        الكمية: <strong style="color:var(--text-dark);">${item.qty}</strong> | المستلم: ${item.receiver || 'غير محدد'} | تاريخ الصلاحية: ${item.expiryDate || 'بدون'}
+                        ط§ظ„ظƒظ…ظٹط©: <strong style="color:var(--text-dark);">${item.qty}</strong> | ط§ظ„ظ…ط³طھظ„ظ…: ${item.receiver || 'ط؛ظٹط± ظ…ط­ط¯ط¯'} | طھط§ط±ظٹط® ط§ظ„طµظ„ط§ط­ظٹط©: ${item.expiryDate || 'ط¨ط¯ظˆظ†'}
                     </span>
                 </div>
                 <button class="interactive-btn" style="background: #3498db; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;" onclick="openEditExpiryModal('${item.id}')">
-                    <i class="fa-solid fa-pen"></i> تعديل
+                    <i class="fa-solid fa-pen"></i> طھط¹ط¯ظٹظ„
                 </button>
             </div>
         `;
     });
 
     if (items.length === 0) {
-        html += `<p style="text-align: center; color: var(--text-muted);">لا توجد أصناف في هذه الاستلامة.</p>`;
+        html += `<p style="text-align: center; color: var(--text-muted);">ظ„ط§ طھظˆط¬ط¯ ط£طµظ†ط§ظپ ظپظٹ ظ‡ط°ظ‡ ط§ظ„ط§ط³طھظ„ط§ظ…ط©.</p>`;
     }
 
     html += `
         </div>
         <button id="closeBatchEditModalBtn" style="background: var(--text-muted); color: white; border: none; padding: 12px; border-radius: 8px; text-align: center; font-weight: bold; cursor: pointer; margin-top: 10px;">
-            إغلاق
+            ط¥ط؛ظ„ط§ظ‚
         </button>
     `;
 
@@ -4933,14 +4906,14 @@ function showManualSelectionModal(legacyBatch, dateVal) {
     modal.style = "background: var(--bg); padding: 25px; border-radius: 15px; max-width: 600px; width: 95%; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid var(--border); max-height: 90vh; display: flex; flex-direction: column;";
     
     let html = `
-        <h3 style="color: var(--primary); margin-top: 0; font-family: 'Cairo', sans-serif; text-align: center;">تقسيم الاستلامات يدوياً ✂️</h3>
-        <p style="font-size: 0.9rem; color: var(--text-main); margin-bottom: 15px; text-align: center;">حدد الأصناف التي تريد طباعتها معاً في استلامة واحدة:</p>
+        <h3 style="color: var(--primary); margin-top: 0; font-family: 'Cairo', sans-serif; text-align: center;">طھظ‚ط³ظٹظ… ط§ظ„ط§ط³طھظ„ط§ظ…ط§طھ ظٹط¯ظˆظٹط§ظ‹ âœ‚ï¸ڈ</h3>
+        <p style="font-size: 0.9rem; color: var(--text-main); margin-bottom: 15px; text-align: center;">ط­ط¯ط¯ ط§ظ„ط£طµظ†ط§ظپ ط§ظ„طھظٹ طھط±ظٹط¯ ط·ط¨ط§ط¹طھظ‡ط§ ظ…ط¹ط§ظ‹ ظپظٹ ط§ط³طھظ„ط§ظ…ط© ظˆط§ط­ط¯ط©:</p>
         
         <div style="display: flex; justify-content: space-between; margin-bottom: 10px; padding: 0 10px;">
             <label style="cursor: pointer; font-weight: bold; color: var(--primary);">
-                <input type="checkbox" id="selectAllManualBtn"> تحديد الكل
+                <input type="checkbox" id="selectAllManualBtn"> طھط­ط¯ظٹط¯ ط§ظ„ظƒظ„
             </label>
-            <span style="font-size: 0.85rem; color: var(--text-muted);">إجمالي الأصناف: ${legacyBatch.length}</span>
+            <span style="font-size: 0.85rem; color: var(--text-muted);">ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ط£طµظ†ط§ظپ: ${legacyBatch.length}</span>
         </div>
 
         <div style="flex: 1; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 8px; background: var(--bg-light);">
@@ -4951,8 +4924,8 @@ function showManualSelectionModal(legacyBatch, dateVal) {
             <label style="display: flex; align-items: center; gap: 10px; padding: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; transition: 0.2s;">
                 <input type="checkbox" class="manual-item-checkbox" value="${index}" style="width: 18px; height: 18px; accent-color: var(--primary);">
                 <div style="flex: 1;">
-                    <div style="font-weight: bold; color: var(--text-main);">${item.name || 'بدون اسم'}</div>
-                    <div style="font-size: 0.8rem; color: var(--text-muted);">العدد: <strong style="color: #27ae60;">${item.qty}</strong> | المسجل: ${item.registrarName || '-'} | المستلم: ${item.receiver || '-'}</div>
+                    <div style="font-weight: bold; color: var(--text-main);">${item.name || 'ط¨ط¯ظˆظ† ط§ط³ظ…'}</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">ط§ظ„ط¹ط¯ط¯: <strong style="color: #27ae60;">${item.qty}</strong> | ط§ظ„ظ…ط³ط¬ظ„: ${item.registrarName || '-'} | ط§ظ„ظ…ط³طھظ„ظ…: ${item.receiver || '-'}</div>
                 </div>
             </label>
         `;
@@ -4962,9 +4935,9 @@ function showManualSelectionModal(legacyBatch, dateVal) {
         </div>
         <div style="display: flex; gap: 10px; margin-top: 15px;">
             <button id="printManualSelectedBtn" style="flex: 2; background: #E91E8C; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem;">
-                <i class=\'fa-solid fa-print\'></i> طباعة المحدد فقط (<span id="selectedCountSpan">0</span>)
+                <i class=\'fa-solid fa-print\'></i> ط·ط¨ط§ط¹ط© ط§ظ„ظ…ط­ط¯ط¯ ظپظ‚ط· (<span id="selectedCountSpan">0</span>)
             </button>
-            <button id="closeManualModalBtn" style="flex: 1; background: var(--bg-light); color: var(--text-main); border: 1px solid var(--border); padding: 12px; border-radius: 8px; cursor: pointer;">إلغاء</button>
+            <button id="closeManualModalBtn" style="flex: 1; background: var(--bg-light); color: var(--text-main); border: 1px solid var(--border); padding: 12px; border-radius: 8px; cursor: pointer;">ط¥ظ„ط؛ط§ط،</button>
         </div>
     `;
 
@@ -4992,7 +4965,7 @@ function showManualSelectionModal(legacyBatch, dateVal) {
     modal.querySelector('#printManualSelectedBtn').addEventListener('click', () => {
         let selectedIndices = Array.from(modal.querySelectorAll('.manual-item-checkbox:checked')).map(cb => parseInt(cb.value));
         if (selectedIndices.length === 0) {
-            showToast("يرجى تحديد صنف واحد على الأقل للطباعة", "warning");
+            showToast("ظٹط±ط¬ظ‰ طھط­ط¯ظٹط¯ طµظ†ظپ ظˆط§ط­ط¯ ط¹ظ„ظ‰ ط§ظ„ط£ظ‚ظ„ ظ„ظ„ط·ط¨ط§ط¹ط©", "warning");
             return;
         }
         let selectedItems = selectedIndices.map(idx => legacyBatch[idx]);
@@ -5008,7 +4981,7 @@ function showManualSelectionModal(legacyBatch, dateVal) {
 function generateCategoryPDF(filteredData, categoryName) {
     let printWindow = window.open('', '_blank', 'height=800,width=800');
     if (!printWindow) {
-        showToast("يرجى السماح بالنوافذ المنبثقة (Pop-ups) لفتح ملف الطباعة", "error");
+        showToast("ظٹط±ط¬ظ‰ ط§ظ„ط³ظ…ط§ط­ ط¨ط§ظ„ظ†ظˆط§ظپط° ط§ظ„ظ…ظ†ط¨ط«ظ‚ط© (Pop-ups) ظ„ظپطھط­ ظ…ظ„ظپ ط§ظ„ط·ط¨ط§ط¹ط©", "error");
         return;
     }
 
@@ -5019,7 +4992,7 @@ function generateCategoryPDF(filteredData, categoryName) {
     let html = `
         <html dir="rtl" lang="ar">
         <head>
-            <title>تقرير حالة الصلاحيات - ${cleanCategoryName}</title>
+            <title>طھظ‚ط±ظٹط± ط­ط§ظ„ط© ط§ظ„طµظ„ط§ط­ظٹط§طھ - ${cleanCategoryName}</title>
             <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
             <style>
                 * { box-sizing: border-box; }
@@ -5058,27 +5031,27 @@ function generateCategoryPDF(filteredData, categoryName) {
                     <h1 class="logo-text">Candy <span>Club</span></h1>
                 </div>
                 <div class="title-box">
-                    <h2 class="title">تقرير حالة الصلاحيات</h2>
-                    <p class="subtitle">حالة المنتجات: <strong style="color: #e74c3c;">${categoryName}</strong></p>
-                    <p class="subtitle" style="font-size: 13px; margin-top: 5px;">تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')} - ${new Date().toLocaleTimeString('ar-EG')}</p>
+                    <h2 class="title">طھظ‚ط±ظٹط± ط­ط§ظ„ط© ط§ظ„طµظ„ط§ط­ظٹط§طھ</h2>
+                    <p class="subtitle">ط­ط§ظ„ط© ط§ظ„ظ…ظ†طھط¬ط§طھ: <strong style="color: #e74c3c;">${categoryName}</strong></p>
+                    <p class="subtitle" style="font-size: 13px; margin-top: 5px;">طھط§ط±ظٹط® ط§ظ„ط·ط¨ط§ط¹ط©: ${new Date().toLocaleDateString('ar-EG')} - ${new Date().toLocaleTimeString('ar-EG')}</p>
                 </div>
             </div>
             
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 50px;">م</th>
-                        <th>اسم المنتج</th>
-                        <th>الباركود</th>
-                        <th style="width: 100px;">الكمية</th>
-                        <th style="width: 120px;">تاريخ الانتهاء</th>
+                        <th style="width: 50px;">ظ…</th>
+                        <th>ط§ط³ظ… ط§ظ„ظ…ظ†طھط¬</th>
+                        <th>ط§ظ„ط¨ط§ط±ظƒظˆط¯</th>
+                        <th style="width: 100px;">ط§ظ„ظƒظ…ظٹط©</th>
+                        <th style="width: 120px;">طھط§ط±ظٹط® ط§ظ„ط§ظ†طھظ‡ط§ط،</th>
                     </tr>
                 </thead>
                 <tbody>
     `;
 
     filteredData.forEach((item, index) => {
-        let name = item.name || 'غير محدد';
+        let name = item.name || 'ط؛ظٹط± ظ…ط­ط¯ط¯';
         let barcode = item.barcode || '--';
         let qty = item.qty || 0;
         let expiry = item.expiryDate ? String(item.expiryDate).split('T')[0] : '--';
@@ -5099,7 +5072,7 @@ function generateCategoryPDF(filteredData, categoryName) {
             </table>
             
             <div class="footer">
-                <p>تم استخراج هذا التقرير من نظام Candy Club</p>
+                <p>طھظ… ط§ط³طھط®ط±ط§ط¬ ظ‡ط°ط§ ط§ظ„طھظ‚ط±ظٹط± ظ…ظ† ظ†ط¸ط§ظ… Candy Club</p>
             </div>
             
             <script>
@@ -5118,7 +5091,7 @@ function generateCategoryPDF(filteredData, categoryName) {
 function generateExpiryMonthPDF(filteredData, monthVal) {
     let printWindow = window.open('', '_blank', 'height=800,width=800');
     if (!printWindow) {
-        showToast("يرجى السماح بالنوافذ المنبثقة (Pop-ups) لفتح ملف الطباعة", "error");
+        showToast("ظٹط±ط¬ظ‰ ط§ظ„ط³ظ…ط§ط­ ط¨ط§ظ„ظ†ظˆط§ظپط° ط§ظ„ظ…ظ†ط¨ط«ظ‚ط© (Pop-ups) ظ„ظپطھط­ ظ…ظ„ظپ ط§ظ„ط·ط¨ط§ط¹ط©", "error");
         return;
     }
 
@@ -5128,7 +5101,7 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
     let html = `
         <html dir="rtl" lang="ar">
         <head>
-            <title>تقرير انتهاء الصلاحية - شهر ${monthVal}</title>
+            <title>طھظ‚ط±ظٹط± ط§ظ†طھظ‡ط§ط، ط§ظ„طµظ„ط§ط­ظٹط© - ط´ظ‡ط± ${monthVal}</title>
             <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
             <style>
                 * { box-sizing: border-box; }
@@ -5167,27 +5140,27 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
                     <h1 class="logo-text">Candy <span>Club</span></h1>
                 </div>
                 <div class="title-box">
-                    <h2 class="title">تقرير انتهاء الصلاحية</h2>
-                    <p class="subtitle">منتجات تنتهي في شهر: <strong dir="ltr">${monthVal}</strong></p>
-                    <p class="subtitle" style="font-size: 13px; margin-top: 5px;">تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')} - ${new Date().toLocaleTimeString('ar-EG')}</p>
+                    <h2 class="title">طھظ‚ط±ظٹط± ط§ظ†طھظ‡ط§ط، ط§ظ„طµظ„ط§ط­ظٹط©</h2>
+                    <p class="subtitle">ظ…ظ†طھط¬ط§طھ طھظ†طھظ‡ظٹ ظپظٹ ط´ظ‡ط±: <strong dir="ltr">${monthVal}</strong></p>
+                    <p class="subtitle" style="font-size: 13px; margin-top: 5px;">طھط§ط±ظٹط® ط§ظ„ط·ط¨ط§ط¹ط©: ${new Date().toLocaleDateString('ar-EG')} - ${new Date().toLocaleTimeString('ar-EG')}</p>
                 </div>
             </div>
             
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 50px;">م</th>
-                        <th>اسم المنتج</th>
-                        <th>الباركود</th>
-                        <th style="width: 100px;">الكمية</th>
-                        <th style="width: 120px;">تاريخ الانتهاء</th>
+                        <th style="width: 50px;">ظ…</th>
+                        <th>ط§ط³ظ… ط§ظ„ظ…ظ†طھط¬</th>
+                        <th>ط§ظ„ط¨ط§ط±ظƒظˆط¯</th>
+                        <th style="width: 100px;">ط§ظ„ظƒظ…ظٹط©</th>
+                        <th style="width: 120px;">طھط§ط±ظٹط® ط§ظ„ط§ظ†طھظ‡ط§ط،</th>
                     </tr>
                 </thead>
                 <tbody>
     `;
 
     filteredData.forEach((item, index) => {
-        let name = item.name || 'غير محدد';
+        let name = item.name || 'ط؛ظٹط± ظ…ط­ط¯ط¯';
         let barcode = item.barcode || '--';
         let qty = item.qty || 0;
         let expiry = item.expiryDate ? String(item.expiryDate).split('T')[0] : '--';
@@ -5208,7 +5181,7 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
             </table>
             
             <div class="footer">
-                <p>تم استخراج هذا التقرير من نظام Candy Club</p>
+                <p>طھظ… ط§ط³طھط®ط±ط§ط¬ ظ‡ط°ط§ ط§ظ„طھظ‚ط±ظٹط± ظ…ظ† ظ†ط¸ط§ظ… Candy Club</p>
             </div>
             
             <script>
@@ -5231,7 +5204,7 @@ function generatePDFReceipt(filteredData, dateVal) {
 
     let printWindow = window.open('', '_blank', 'height=800,width=800');
     if (!printWindow) {
-        showToast("يرجى السماح بالنوافذ المنبثقة (Pop-ups) لفتح ملف الطباعة", "error");
+        showToast("ظٹط±ط¬ظ‰ ط§ظ„ط³ظ…ط§ط­ ط¨ط§ظ„ظ†ظˆط§ظپط° ط§ظ„ظ…ظ†ط¨ط«ظ‚ط© (Pop-ups) ظ„ظپطھط­ ظ…ظ„ظپ ط§ظ„ط·ط¨ط§ط¹ط©", "error");
         return;
     }
 
@@ -5241,7 +5214,7 @@ function generatePDFReceipt(filteredData, dateVal) {
     let html = `
         <html dir="rtl" lang="ar">
         <head>
-            <title>بيان استلام بضاعة - ${dateVal}</title>
+            <title>ط¨ظٹط§ظ† ط§ط³طھظ„ط§ظ… ط¨ط¶ط§ط¹ط© - ${dateVal}</title>
             <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
             <style>
                 * { box-sizing: border-box; }
@@ -5286,30 +5259,30 @@ function generatePDFReceipt(filteredData, dateVal) {
                     <img src="${logoUrl}" alt="Logo" class="logo-img">
                     <h1 class="logo-text">Candy <span>Club</span></h1>
                 </div>
-                <div class="title">بيان استلام بضاعة</div>
+                <div class="title">ط¨ظٹط§ظ† ط§ط³طھظ„ط§ظ… ط¨ط¶ط§ط¹ط©</div>
             </div>
             
             <div class="info-section">
                 <div class="info-box">
-                    <div><span class="info-label">تاريخ التسجيل:</span> <span style="font-weight:bold; color:#E91E8C;">${dateVal}</span></div>
-                    <div style="margin-top: 10px;"><span class="info-label">اسم المسجل:</span> <strong>${registrar}</strong></div>
+                    <div><span class="info-label">طھط§ط±ظٹط® ط§ظ„طھط³ط¬ظٹظ„:</span> <span style="font-weight:bold; color:#E91E8C;">${dateVal}</span></div>
+                    <div style="margin-top: 10px;"><span class="info-label">ط§ط³ظ… ط§ظ„ظ…ط³ط¬ظ„:</span> <strong>${registrar}</strong></div>
                 </div>
                 <div class="info-box">
-                    <div><span class="info-label">اسم المستلم:</span> <span style="font-weight:bold; font-size:1.1em;">${receiver}</span></div>
-                    <div style="margin-top: 10px;"><span class="info-label">إجمالي الأصناف:</span> <strong>${filteredData.length}</strong></div>
+                    <div><span class="info-label">ط§ط³ظ… ط§ظ„ظ…ط³طھظ„ظ…:</span> <span style="font-weight:bold; font-size:1.1em;">${receiver}</span></div>
+                    <div style="margin-top: 10px;"><span class="info-label">ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ط£طµظ†ط§ظپ:</span> <strong>${filteredData.length}</strong></div>
                 </div>
             </div>
 
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 5%;">م</th>
-                        <th style="width: 30%;">اسم المنتج</th>
-                        <th style="width: 15%;">الباركود</th>
-                        <th style="width: 10%;">العدد</th>
-                        <th style="width: 15%;">تاريخ الانتهاء</th>
-                        <th style="width: 15%;">المكان</th>
-                        <th style="width: 10%;">ملاحظات</th>
+                        <th style="width: 5%;">ظ…</th>
+                        <th style="width: 30%;">ط§ط³ظ… ط§ظ„ظ…ظ†طھط¬</th>
+                        <th style="width: 15%;">ط§ظ„ط¨ط§ط±ظƒظˆط¯</th>
+                        <th style="width: 10%;">ط§ظ„ط¹ط¯ط¯</th>
+                        <th style="width: 15%;">طھط§ط±ظٹط® ط§ظ„ط§ظ†طھظ‡ط§ط،</th>
+                        <th style="width: 15%;">ط§ظ„ظ…ظƒط§ظ†</th>
+                        <th style="width: 10%;">ظ…ظ„ط§ط­ط¸ط§طھ</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -5333,17 +5306,17 @@ function generatePDFReceipt(filteredData, dateVal) {
 
             <div class="signatures">
                 <div class="sig-box">
-                    <div style="font-weight: bold; color: #333;">توقيع المُسلم (المسجل)</div>
+                    <div style="font-weight: bold; color: #333;">طھظˆظ‚ظٹط¹ ط§ظ„ظ…ظڈط³ظ„ظ… (ط§ظ„ظ…ط³ط¬ظ„)</div>
                     <div class="sig-line"></div>
                 </div>
                 <div class="sig-box">
-                    <div style="font-weight: bold; color: #333;">توقيع المُستلم</div>
+                    <div style="font-weight: bold; color: #333;">طھظˆظ‚ظٹط¹ ط§ظ„ظ…ظڈط³طھظ„ظ…</div>
                     <div class="sig-line"></div>
                 </div>
             </div>
 
             <div class="footer">
-                تم استخراج هذا الإيصال آلياً من نظام Candy Club - ${new Date().toLocaleString('ar-EG')}
+                طھظ… ط§ط³طھط®ط±ط§ط¬ ظ‡ط°ط§ ط§ظ„ط¥ظٹطµط§ظ„ ط¢ظ„ظٹط§ظ‹ ظ…ظ† ظ†ط¸ط§ظ… Candy Club - ${new Date().toLocaleString('ar-EG')}
             </div>
             
             <script>
@@ -5406,7 +5379,7 @@ window.addEventListener('offline', () => {
     let bar = document.getElementById('offline-bar');
     if (bar) bar.style.display = 'block';
     let saveBtns = document.querySelectorAll('#saveOrderBtn, #saveAndPrintBtn, .interactive-btn');
-    saveBtns.forEach(btn => { if(btn.innerText && btn.innerText.includes('حفظ')) btn.disabled = true; });
+    saveBtns.forEach(btn => { if(btn.innerText && btn.innerText.includes('ط­ظپط¸')) btn.disabled = true; });
 });
 
 window.addEventListener('online', () => {
@@ -5520,10 +5493,10 @@ if(waCopyImageBtn) {
             canvas.toBlob(async (blob) => {
                 const item = new ClipboardItem({ "image/png": blob });
                 await navigator.clipboard.write([item]);
-                alert("تم نسخ الصورة بنجاح! يمكنك الآن لصقها (Paste) في شات الواتساب.");
+                alert("طھظ… ظ†ط³ط® ط§ظ„طµظˆط±ط© ط¨ظ†ط¬ط§ط­! ظٹظ…ظƒظ†ظƒ ط§ظ„ط¢ظ† ظ„طµظ‚ظ‡ط§ (Paste) ظپظٹ ط´ط§طھ ط§ظ„ظˆط§طھط³ط§ط¨.");
             }, "image/png");
         } catch (err) {
-            alert("حدث خطأ أثناء نسخ الصورة. قد لا يدعم متصفحك هذه الخاصية.");
+            alert("ط­ط¯ط« ط®ط·ط£ ط£ط«ظ†ط§ط، ظ†ط³ط® ط§ظ„طµظˆط±ط©. ظ‚ط¯ ظ„ط§ ظٹط¯ط¹ظ… ظ…طھطµظپط­ظƒ ظ‡ط°ظ‡ ط§ظ„ط®ط§طµظٹط©.");
         }
     });
 }
@@ -5541,10 +5514,10 @@ if(waStartCampaignBtn) {
         if (targetType === "custom") {
             const text = document.getElementById("waCustomNumbers").value;
             const numbers = text.split(/[\n,]+/).map(n => n.trim()).filter(n => n);
-            validCustomers = numbers.map(n => ({ name: "عميل", phone: n }));
+            validCustomers = numbers.map(n => ({ name: "ط¹ظ…ظٹظ„", phone: n }));
         } else {
             if(!window.customersData || window.customersData.length === 0) {
-                alert("لا يوجد عملاء مسجلين حالياً.");
+                alert("ظ„ط§ ظٹظˆط¬ط¯ ط¹ظ…ظ„ط§ط، ظ…ط³ط¬ظ„ظٹظ† ط­ط§ظ„ظٹط§ظ‹.");
                 return;
             }
             let baseCustomers = window.customersData.filter(c => c.phone && c.phone.length >= 10);
@@ -5559,7 +5532,7 @@ if(waStartCampaignBtn) {
         }
         
         if(validCustomers.length === 0) {
-            alert("لا يوجد عملاء في هذه الفئة المستهدفة.");
+            alert("ظ„ط§ ظٹظˆط¬ط¯ ط¹ظ…ظ„ط§ط، ظپظٹ ظ‡ط°ظ‡ ط§ظ„ظپط¦ط© ط§ظ„ظ…ط³طھظ‡ط¯ظپط©.");
             return;
         }
         
@@ -5576,9 +5549,9 @@ if(waStartCampaignBtn) {
             div.innerHTML = `
                 <div>
                     <strong style="color: var(--primary);"><i class=\'fa-solid fa-user\'></i> ${c.name}</strong><br>
-                    <span style="font-size:0.8rem; color:#7f8c8d;"><i class=\'fa-solid fa-phone\'></i> ${c.phone} ${c.visits !== undefined ? `| <i class=\'fa-solid fa-bag-shopping\'></i> زيارات: ${c.visits}` : ''}</span>
+                    <span style="font-size:0.8rem; color:#7f8c8d;"><i class=\'fa-solid fa-phone\'></i> ${c.phone} ${c.visits !== undefined ? `| <i class=\'fa-solid fa-bag-shopping\'></i> ط²ظٹط§ط±ط§طھ: ${c.visits}` : ''}</span>
                 </div>
-                <button class="wa-send-btn interactive-btn" id="wa-btn-${index}" onclick="sendWaCampaign(${index}, '${c.name}', '${c.phone}')" style="background: #25D366; color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">إرسال <i class=\'fa-solid fa-rocket\'></i></button>
+                <button class="wa-send-btn interactive-btn" id="wa-btn-${index}" onclick="sendWaCampaign(${index}, '${c.name}', '${c.phone}')" style="background: #25D366; color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">ط¥ط±ط³ط§ظ„ <i class=\'fa-solid fa-rocket\'></i></button>
             `;
             list.appendChild(div);
         });
@@ -5589,7 +5562,7 @@ if(waStartCampaignBtn) {
 
 window.sendWaCampaign = function(index, name, phone) {
     if(waCooldownTime > 0) {
-        alert("برجاء الانتظار حتى ينتهي العداد لحماية رقمك من الحظر.");
+        alert("ط¨ط±ط¬ط§ط، ط§ظ„ط§ظ†طھط¸ط§ط± ط­طھظ‰ ظٹظ†طھظ‡ظٹ ط§ظ„ط¹ط¯ط§ط¯ ظ„ط­ظ…ط§ظٹط© ط±ظ‚ظ…ظƒ ظ…ظ† ط§ظ„ط­ط¸ط±.");
         return;
     }
     
@@ -5598,16 +5571,16 @@ window.sendWaCampaign = function(index, name, phone) {
     
     let text = textElem.value;
     if(!text.trim()) {
-        alert("برجاء كتابة نص رسالة العرض أولاً.");
+        alert("ط¨ط±ط¬ط§ط، ظƒطھط§ط¨ط© ظ†طµ ط±ط³ط§ظ„ط© ط§ظ„ط¹ط±ط¶ ط£ظˆظ„ط§ظ‹.");
         textElem.focus();
         return;
     }
     
-    text = text.replace(/\[الاسم\]/g, name);
+    text = text.replace(/\[ط§ظ„ط§ط³ظ…\]/g, name);
     
     let cleanPhone = sanitizePhone(phone);
     if(!cleanPhone) {
-        alert("رقم الهاتف غير صالح.");
+        alert("ط±ظ‚ظ… ط§ظ„ظ‡ط§طھظپ ط؛ظٹط± طµط§ظ„ط­.");
         return;
     }
     
@@ -5616,7 +5589,7 @@ window.sendWaCampaign = function(index, name, phone) {
     
     let btn = document.getElementById(`wa-btn-${index}`);
     if(btn) {
-        btn.innerHTML = "تم الإرسال <i class=\'fa-solid fa-check\'></i>";
+        btn.innerHTML = "طھظ… ط§ظ„ط¥ط±ط³ط§ظ„ <i class=\'fa-solid fa-check\'></i>";
         btn.style.background = "#bdc3c7";
         btn.style.color = "#2c3e50";
         btn.disabled = true;
@@ -5641,7 +5614,7 @@ function startWaCooldown(seconds) {
     
     waCooldownInterval = setInterval(() => {
         waCooldownTime--;
-        timerSpan.innerHTML = `<i class=\'fa-solid fa-hourglass-half\'></i> انتظر ${waCooldownTime} ثانية لحماية حسابك...`;
+        timerSpan.innerHTML = `<i class=\'fa-solid fa-hourglass-half\'></i> ط§ظ†طھط¸ط± ${waCooldownTime} ط«ط§ظ†ظٹط© ظ„ط­ظ…ط§ظٹط© ط­ط³ط§ط¨ظƒ...`;
         
         if(waCooldownTime <= 0) {
             clearInterval(waCooldownInterval);
@@ -5662,7 +5635,7 @@ function renderFinancials(finList) {
     let allDrivers = window.driversList || [];
     let driversMap = {};
     allDrivers.forEach(d => {
-        driversMap[d.name] = { name: d.name, ordersCount: 0, cashCollected: 0, shippingFees: 0, netDue: 0, statusText: "لا توجد مديونية" };
+        driversMap[d.name] = { name: d.name, ordersCount: 0, cashCollected: 0, shippingFees: 0, netDue: 0, statusText: "ظ„ط§ طھظˆط¬ط¯ ظ…ط¯ظٹظˆظ†ظٹط©" };
     });
 
     finList.forEach(f => {
@@ -5675,12 +5648,15 @@ function renderFinancials(finList) {
 
     let driversArray = Object.values(driversMap);
     if (driversArray.length === 0) {
-        container.innerHTML = '<p class="empty-msg">لا توجد مناديب مسجلة.</p>';
+        container.innerHTML = '<p class="empty-msg">ظ„ط§ طھظˆط¬ط¯ ظ…ظ†ط§ط¯ظٹط¨ ظ…ط³ط¬ظ„ط©.</p>';
         return;
     }
 
+    let totalAllDue = 0;
+
     driversArray.forEach(f => {
         let netDue = parseFloat(f.netDue) || 0;
+        totalAllDue += netDue;
         let isSettled = netDue === 0;
         let statusColor = netDue > 0 ? "#27ae60" : (netDue < 0 ? "#c0392b" : "#9e9e9e");
         let cardClass = isSettled ? "financial-row driver-card settled" : "financial-row driver-card";
@@ -5692,7 +5668,7 @@ function renderFinancials(finList) {
         let ordersHtml = '';
         if (driverOrders.length > 0) {
             ordersHtml = `<div style="margin-top: 10px; border-top: 1px dashed #ccc; padding-top: 10px;">
-                <strong style="font-size:0.85rem; color:var(--primary);"><i class=\'fa-solid fa-box\'></i> أوردرات معلقة (لم يتم تسويتها):</strong>`;
+                <strong style="font-size:0.85rem; color:var(--primary);"><i class=\'fa-solid fa-box\'></i> ط£ظˆط±ط¯ط±ط§طھ ظ…ط¹ظ„ظ‚ط© (ظ„ظ… ظٹطھظ… طھط³ظˆظٹطھظ‡ط§):</strong>`;
             driverOrders.forEach(o => {
                 ordersHtml += `
                     <div class="financial-order-item" style="background:#fdfdfd; padding:8px; border:1px solid #eee; border-radius:6px; margin-top:5px; display:flex; justify-content:space-between; align-items:center;">
@@ -5700,11 +5676,11 @@ function renderFinancials(finList) {
                             <input type="checkbox" class="financial-order-checkbox" data-order-id="${o.id}" data-payment="${o.payment}" style="width: 18px; height: 18px; cursor: pointer;">
                             <div>
                                 <span style="font-weight:bold; color:var(--text-dark);">${o.id}</span><br>
-                                <span style="font-size:0.75rem; color:#777;">${o.payment} | إجمالي: ${o.total}ج | شحن: ${o.shipping}ج</span><br>
-                                <span style="font-size:0.85rem; font-weight:bold; color:var(--danger);">المطلوب تحصيله: ${o.remaining}ج</span>
+                                <span style="font-size:0.75rem; color:#777;">${o.payment} | ط¥ط¬ظ…ط§ظ„ظٹ: ${o.total}ط¬ | ط´ط­ظ†: ${o.shipping}ط¬</span><br>
+                                <span style="font-size:0.85rem; font-weight:bold; color:var(--danger);">ط§ظ„ظ…ط·ظ„ظˆط¨ طھط­طµظٹظ„ظ‡: ${o.remaining}ط¬</span>
                             </div>
                         </div>
-                        <button class="btn-settle interactive-btn" onclick="settleDriverOrder('${o.id}', this, '${o.payment}')" style="background:var(--success); color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">تسوية <i class=\'fa-solid fa-money-bill\'></i></button>
+                        <button class="btn-settle interactive-btn" onclick="settleDriverOrder('${o.id}', this, '${o.payment}')" style="background:var(--success); color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">طھط³ظˆظٹط© <i class=\'fa-solid fa-money-bill\'></i></button>
                     </div>
                 `;
             });
@@ -5715,19 +5691,24 @@ function renderFinancials(finList) {
             <div class="${cardClass}" style="background: #fff; padding: 15px; border-radius: 12px; border: 1px solid ${cardBorderColor}; margin-bottom: 12px; box-shadow: ${cardShadow}; opacity: ${cardOpacity}; transition: all 0.3s ease;">
                 <div class="financial-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #f0f0f0; padding-bottom:8px; margin-bottom:10px;">
                     <span style="font-weight:bold; font-size:1.1rem; color:var(--text-dark);"><i class=\'fa-solid fa-motorcycle\'></i> ${f.name}</span>
-                    <span style="font-size: 0.85rem; background:#f0f0f0; color:var(--text-dark); padding:3px 8px; border-radius:12px; font-weight:bold;">${f.ordersCount || 0} طلب</span>
+                    <span style="font-size: 0.85rem; background:#f0f0f0; color:var(--text-dark); padding:3px 8px; border-radius:12px; font-weight:bold;">${f.ordersCount || 0} ط·ظ„ط¨</span>
                 </div>
                 <div class="financial-details" style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:10px;">
-                    <span style="background:#e8f4f8; padding:5px 10px; border-radius:6px; color:#555;">الكاش: <strong style="color:#2980b9;">${f.cashCollected || 0}</strong> ج</span>
-                    <span style="background:#f9ebea; padding:5px 10px; border-radius:6px; color:#555;">الشحن: <strong style="color:#c0392b;">${f.shippingFees || 0}</strong> ج</span>
+                    <span style="background:#e8f4f8; padding:5px 10px; border-radius:6px; color:#555;">ط§ظ„ظƒط§ط´: <strong style="color:#2980b9;">${f.cashCollected || 0}</strong> ط¬</span>
+                    <span style="background:#f9ebea; padding:5px 10px; border-radius:6px; color:#555;">ط§ظ„ط´ط­ظ†: <strong style="color:#c0392b;">${f.shippingFees || 0}</strong> ط¬</span>
                 </div>
                 <div class="financial-status" style="background: ${statusColor}15; color: ${statusColor}; padding: 8px; border-radius: 6px; text-align:center; font-weight:bold; border: 1px dashed ${statusColor};">
-                    ${f.statusText} (${netDue} ج)
+                    ${f.statusText} (${netDue} ط¬)
                 </div>
                 ${ordersHtml}
             </div>
         `;
     });
+
+    let totalEl = document.getElementById('financialsTotalAmount');
+    if (totalEl) {
+        totalEl.innerText = `ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ط­ط³ط§ط¨: ${totalAllDue} ط¬.ظ…`;
+    }
 }
 
 // --- Mobile Back Button (History API) & Sidebar Animation ---
@@ -5816,7 +5797,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const checkedBoxes = document.querySelectorAll('.financial-order-checkbox:checked');
             if(checkedBoxes.length === 0) return;
             
-            customConfirm(`هل أنت متأكد من تسوية عدد ${checkedBoxes.length} أوردر محدد؟`, () => {
+            customConfirm(`ظ‡ظ„ ط£ظ†طھ ظ…طھط£ظƒط¯ ظ…ظ† طھط³ظˆظٹط© ط¹ط¯ط¯ ${checkedBoxes.length} ط£ظˆط±ط¯ط± ظ…ط­ط¯ط¯طں`, () => {
                 closeSelectedBtn.disabled = true;
                 const originalText = closeSelectedBtn.innerHTML;
 
@@ -5826,8 +5807,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         const orderId = cb.getAttribute('data-order-id');
                         const btn = cb.closest('.financial-order-item') ? cb.closest('.financial-order-item').querySelector('.btn-settle') : null;
                         
-                        closeSelectedBtn.innerText = `جاري التقفيل... (${i+1}/${checkedBoxes.length})`;
-                        if(btn) { btn.innerText = "جاري..."; btn.disabled = true; }
+                        closeSelectedBtn.innerText = `ط¬ط§ط±ظٹ ط§ظ„طھظ‚ظپظٹظ„... (${i+1}/${checkedBoxes.length})`;
+                        if(btn) { btn.innerText = "ط¬ط§ط±ظٹ..."; btn.disabled = true; }
 
                         let formData = new URLSearchParams();
                         formData.append('action', 'settleOrder');
@@ -5838,11 +5819,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             await new Promise(r => setTimeout(r, 500));
                             await fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData });
                             if(btn) {
-                                btn.innerText = "تم";
+                                btn.innerText = "طھظ…";
                                 btn.style.background = "var(--success)";
                             }
                         } catch(e) {
-                            if(btn) { btn.innerText = "خطأ"; btn.disabled = false; }
+                            if(btn) { btn.innerText = "ط®ط·ط£"; btn.disabled = false; }
                         }
                     }
                     
@@ -5851,7 +5832,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if(selectAllCheckbox) selectAllCheckbox.checked = false;
                     updateCloseBtnVisibility();
                     
-                    showToast(`<i class=\'fa-solid fa-check\'></i> تم تقفيل كل المحدد بنجاح!`, "success");
+                    showToast(`<i class=\'fa-solid fa-check\'></i> طھظ… طھظ‚ظپظٹظ„ ظƒظ„ ط§ظ„ظ…ط­ط¯ط¯ ط¨ظ†ط¬ط§ط­!`, "success");
                     loadDataFromServer();
                 })();
             });
@@ -5860,7 +5841,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// 19. بطاقات الأسعار (Price Tags Logic)
+// 19. ط¨ط·ط§ظ‚ط§طھ ط§ظ„ط£ط³ط¹ط§ط± (Price Tags Logic)
 // ==========================================
 
 const priceTagsListContainer = document.getElementById('priceTagsListContainer');
@@ -5874,7 +5855,7 @@ let selectedPriceTagsMap = new Map();
 
 window.initPriceTagsTab = function() {
     if (!catalogData || catalogData.length === 0) {
-        showToast("جاري تحميل البيانات من السيرفر، يرجى الانتظار...", "warning");
+        showToast("ط¬ط§ط±ظٹ طھط­ظ…ظٹظ„ ط§ظ„ط¨ظٹط§ظ†ط§طھ ظ…ظ† ط§ظ„ط³ظٹط±ظپط±طŒ ظٹط±ط¬ظ‰ ط§ظ„ط§ظ†طھط¸ط§ط±...", "warning");
         setTimeout(initPriceTagsTab, 2000); // retry after 2 seconds
         return;
     }
@@ -5908,7 +5889,7 @@ window.renderPriceTagsPage = function() {
     const pageItems = filteredPriceTags.slice(startIndex, endIndex);
     
     const totalPages = Math.ceil(filteredPriceTags.length / priceTagsPerPage) || 1;
-    if(pageInfo) pageInfo.textContent = `صفحة ${currentPriceTagsPage} من ${totalPages}`;
+    if(pageInfo) pageInfo.textContent = `طµظپط­ط© ${currentPriceTagsPage} ظ…ظ† ${totalPages}`;
     
     container.innerHTML = pageItems.map(p => {
         const isChecked = selectedPriceTagsMap.has(p.name) ? 'checked' : '';
@@ -5922,12 +5903,12 @@ window.renderPriceTagsPage = function() {
                 <div style="font-weight:bold; font-size:1.05rem; color: var(--text);">${p.name}</div>
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                     <div style="font-size:0.9rem; background: ${p.isOffer ? 'var(--danger)' : 'var(--secondary)'}; color: white; padding: 3px 10px; border-radius: 20px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                        ${p.isOffer ? `<span style="text-decoration:line-through; color:rgba(255,255,255,0.7); margin-left:5px; font-size: 0.8rem;">${p.price}ج</span> <span>${p.offerPrice}ج</span>` : `<span>${p.price}ج</span>`}
+                        ${p.isOffer ? `<span style="text-decoration:line-through; color:rgba(255,255,255,0.7); margin-left:5px; font-size: 0.8rem;">${p.price}ط¬</span> <span>${p.offerPrice}ط¬</span>` : `<span>${p.price}ط¬</span>`}
                     </div>
                     ${p.barcode ? `<span style="font-size: 0.8rem; background: #f0f4f8; border: 1px solid #cfd8dc; padding: 2px 8px; border-radius: 6px; color: #546e7a;"><i class="fa-solid fa-barcode"></i> ${p.barcode}</span>` : ''}
                 </div>
             </div>
-            <button class="btn-outline interactive-btn" onclick="event.stopPropagation(); promptPriceTagOffer('${safeName}')" style="padding: 6px 12px; font-size: 0.85rem; border-radius: 6px; white-space: nowrap;"><i class="fa-solid fa-tag"></i> تخصيص عرض</button>
+            <button class="btn-outline interactive-btn" onclick="event.stopPropagation(); promptPriceTagOffer('${safeName}')" style="padding: 6px 12px; font-size: 0.85rem; border-radius: 6px; white-space: nowrap;"><i class="fa-solid fa-tag"></i> طھط®طµظٹطµ ط¹ط±ط¶</button>
         </div>
         `;
     }).join('');
@@ -5995,11 +5976,11 @@ window.saveCustomOffer = function() {
     if (!isNaN(parsed) && parsed > 0 && parsed !== parseFloat(p.price)) {
         p.isOffer = true;
         p.offerPrice = parsed;
-        showToast("تم تخصيص وتطبيق العرض بنجاح", "success");
+        showToast("طھظ… طھط®طµظٹطµ ظˆطھط·ط¨ظٹظ‚ ط§ظ„ط¹ط±ط¶ ط¨ظ†ط¬ط§ط­", "success");
     } else {
         p.isOffer = false;
         p.offerPrice = 0;
-        if (newOffer === '' || parsed === 0) showToast("تم إلغاء العرض", "success");
+        if (newOffer === '' || parsed === 0) showToast("طھظ… ط¥ظ„ط؛ط§ط، ط§ظ„ط¹ط±ط¶", "success");
     }
     
     window.pushCatalogUpdate(p.name, p.price, p.isOffer, p.offerPrice);
@@ -6108,11 +6089,11 @@ window.generatePriceTagHTML = function(p, sizeClass) {
         <div class="price-tag-wrapper size-${sizeClass}">
             <div class="${cardClass}">
                 <div class="price-tag-inner">
-                    <span class="candy-deco top-left">🍭</span>
-                    <span class="candy-deco top-right">🍬</span>
-                    <span class="candy-deco bottom-left">✨</span>
-                    <span class="candy-deco bottom-right">🍭</span>
-                    ${p.isOffer && parseFloat(p.offerPrice) > 0 && parseFloat(p.offerPrice) !== parseFloat(p.price) ? '<div class="offer-badge">عرض خاص</div>' : ''}
+                    <span class="candy-deco top-left">ًںچ­</span>
+                    <span class="candy-deco top-right">ًںچ¬</span>
+                    <span class="candy-deco bottom-left">âœ¨</span>
+                    <span class="candy-deco bottom-right">ًںچ­</span>
+                    ${p.isOffer && parseFloat(p.offerPrice) > 0 && parseFloat(p.offerPrice) !== parseFloat(p.price) ? '<div class="offer-badge">ط¹ط±ط¶ ط®ط§طµ</div>' : ''}
                 
                 <div class="price-tag-header">
                     <img src="images/Logo-print.png" class="price-tag-logo" onerror="this.src='images/logo-digital.png'" alt="Candy Club">
@@ -6126,13 +6107,13 @@ window.generatePriceTagHTML = function(p, sizeClass) {
                     </div>
                     
                     <div class="middle-divider-bar">
-                        <span class="candy-icon">🍬</span>
+                        <span class="candy-icon">ًںچ¬</span>
                     </div>
                     
                     <div class="tag-box bottom-box">
                         <div class="tag-row price-row" style="justify-content: center; text-align: center;">
                             <span class="tag-value" style="display: block; width: 100%; text-align: center; ${dynamicPriceStyle}">
-                                السعر: ${priceHtml}ج
+                                ط§ظ„ط³ط¹ط±: ${priceHtml}ط¬
                             </span>
                         </div>
                         ${barcodeHtml ? `<div class="tag-barcode-container">${barcodeHtml}</div>` : ''}
@@ -6165,8 +6146,8 @@ window.updateLivePriceTagPreview = function() {
         previewContainer.innerHTML = `
             <div style="text-align: center; color: #78909c;">
                 <i class="fa-solid fa-hand-pointer" style="font-size: 2.5rem; display: block; margin-bottom: 15px;"></i>
-                <p style="font-size: 1.1rem; font-weight: bold;">اختر منتجات لرؤية المعاينة</p>
-                <p style="font-size: 0.9rem; margin-top: 5px;">سيتم عرض الكروت المحددة فقط هنا.</p>
+                <p style="font-size: 1.1rem; font-weight: bold;">ط§ط®طھط± ظ…ظ†طھط¬ط§طھ ظ„ط±ط¤ظٹط© ط§ظ„ظ…ط¹ط§ظٹظ†ط©</p>
+                <p style="font-size: 0.9rem; margin-top: 5px;">ط³ظٹطھظ… ط¹ط±ط¶ ط§ظ„ظƒط±ظˆطھ ط§ظ„ظ…ط­ط¯ط¯ط© ظپظ‚ط· ظ‡ظ†ط§.</p>
             </div>
         `;
         return;
@@ -6223,7 +6204,7 @@ function renderBarcodes(container, size) {
 
 window.openPdfExportModal = function() {
     if (selectedPriceTagsMap.size === 0) {
-        showToast("برجاء تحديد منتج واحد على الأقل", "warning");
+        showToast("ط¨ط±ط¬ط§ط، طھط­ط¯ظٹط¯ ظ…ظ†طھط¬ ظˆط§ط­ط¯ ط¹ظ„ظ‰ ط§ظ„ط£ظ‚ظ„", "warning");
         return;
     }
     document.getElementById('pdfSelectedCount').textContent = selectedPriceTagsMap.size;
@@ -6241,7 +6222,7 @@ window.executePdfExport = function() {
     closePdfExportModal();
     
     if (selectedPriceTagsMap.size === 0) {
-        showToast("برجاء تحديد منتج واحد على الأقل", "warning");
+        showToast("ط¨ط±ط¬ط§ط، طھط­ط¯ظٹط¯ ظ…ظ†طھط¬ ظˆط§ط­ط¯ ط¹ظ„ظ‰ ط§ظ„ط£ظ‚ظ„", "warning");
         return;
     }
     
@@ -6269,7 +6250,7 @@ window.executePdfExport = function() {
     }
     styleEl.innerHTML = '@page { size: A4; margin: 0.5cm; }';
     
-    showToast("جاري تجهيز صفحة الطباعة... يرجى اختيار 'حفظ بتنسيق PDF' (Save as PDF) من النافذة", "success");
+    showToast("ط¬ط§ط±ظٹ طھط¬ظ‡ظٹط² طµظپط­ط© ط§ظ„ط·ط¨ط§ط¹ط©... ظٹط±ط¬ظ‰ ط§ط®طھظٹط§ط± 'ط­ظپط¸ ط¨طھظ†ط³ظٹظ‚ PDF' (Save as PDF) ظ…ظ† ط§ظ„ظ†ط§ظپط°ط©", "success");
     
     renderBarcodes(grid, size);
     
@@ -6294,7 +6275,7 @@ window.toggleBarcodePrint = function() {
 
 window.printSelectedPriceTags = function(overrideSize = null) {
     if (selectedPriceTagsMap.size === 0) {
-        showToast("برجاء تحديد منتج واحد على الأقل", "warning");
+        showToast("ط¨ط±ط¬ط§ط، طھط­ط¯ظٹط¯ ظ…ظ†طھط¬ ظˆط§ط­ط¯ ط¹ظ„ظ‰ ط§ظ„ط£ظ‚ظ„", "warning");
         return;
     }
     
@@ -6327,4 +6308,66 @@ window.printSelectedPriceTags = function(overrideSize = null) {
             if (styleEl) styleEl.remove();
         }, 1000);
     }, 1500);
+};
+
+// --- Moderators Dashboard Logic ---
+window.renderModeratorsDashboard = function() {
+    const container = document.getElementById('moderatorsDashboardContainer');
+    if (!container) return;
+    
+    const allOrders = [...(window.orderHistoryData || []), ...(window.pendingOrdersData || [])];
+    const modsData = {};
+    
+    const now = new Date();
+    const currentMonthPrefix = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    
+    allOrders.forEach(o => {
+        const mod = o.moderator ? o.moderator.trim() : null;
+        if (!mod || mod === '') return;
+        
+        if (!modsData[mod]) {
+            modsData[mod] = { name: mod, totalCount: 0, monthCount: 0, totalSales: 0, monthSales: 0 };
+        }
+        
+        const amount = parseFloat(o.total) || 0;
+        modsData[mod].totalCount += 1;
+        modsData[mod].totalSales += amount;
+        
+        if (o.date && o.date.startsWith(currentMonthPrefix)) {
+            modsData[mod].monthCount += 1;
+            modsData[mod].monthSales += amount;
+        }
+    });
+    
+    const modsArray = Object.values(modsData).sort((a, b) => b.monthSales - a.monthSales);
+    
+    if (modsArray.length === 0) {
+        container.innerHTML = '<p class="empty-msg">لا توجد بيانات للمودريتور حتى الآن.</p>';
+        return;
+    }
+    
+    let html = '';
+    modsArray.forEach(m => {
+        html += `
+            <div class="report-card" style="background: #fff; padding: 20px; border-radius: 15px; border: 1px solid var(--border); box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; margin-bottom: 15px;">
+                    <h3 style="margin: 0; color: #8e24aa; font-size: 1.3rem;"><i class='fa-solid fa-user-tie'></i> ${m.name}</h3>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div style="background: #fdfdfd; padding: 10px; border-radius: 10px; border: 1px dashed #ccc; text-align: center;">
+                        <div style="font-size: 0.8rem; color: #7f8c8d; font-weight: bold; margin-bottom: 5px;">مبيعات الشهر</div>
+                        <div style="font-size: 1.2rem; font-weight: 900; color: #27ae60;">${m.monthSales} <span style="font-size:0.7rem;">ج.م</span></div>
+                        <div style="font-size: 0.8rem; color: #34495e; margin-top: 3px;">${m.monthCount} أوردر</div>
+                    </div>
+                    <div style="background: #fdfdfd; padding: 10px; border-radius: 10px; border: 1px dashed #ccc; text-align: center;">
+                        <div style="font-size: 0.8rem; color: #7f8c8d; font-weight: bold; margin-bottom: 5px;">إجمالي المبيعات (عام)</div>
+                        <div style="font-size: 1.2rem; font-weight: 900; color: #2980b9;">${m.totalSales} <span style="font-size:0.7rem;">ج.م</span></div>
+                        <div style="font-size: 0.8rem; color: #34495e; margin-top: 3px;">${m.totalCount} أوردر</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
 };

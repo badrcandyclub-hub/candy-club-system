@@ -3775,3 +3775,6 @@ body.hide-print-barcode .tag-barcode-container {
     display: none !important;
 }
 
+
+.menu-group { margin-bottom: 5px; }
+.menu-group-title { font-size: 0.75rem; color: #95a5a6; margin: 15px 15px 5px; text-transform: uppercase; font-weight: bold; font-family: 'Cairo', sans-serif; }
