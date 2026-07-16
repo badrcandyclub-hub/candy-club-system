@@ -394,6 +394,7 @@ function loadDataFromServer() {
             renderShippingRoom(orderHistoryData);
             updateAdvancedDashboard(orderHistoryData);
             checkBookingAlerts();
+            if (typeof renderModeratorsDashboard === 'function') renderModeratorsDashboard();
 
         }).catch(err => {
             if (syncStatus) { syncStatus.innerText = "خطأ اتصال"; syncStatus.style.color = "red"; }
