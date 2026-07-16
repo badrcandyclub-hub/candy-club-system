@@ -5816,45 +5816,45 @@ document.addEventListener('DOMContentLoaded', () => {
             const checkedBoxes = document.querySelectorAll('.financial-order-checkbox:checked');
             if(checkedBoxes.length === 0) return;
             
-            if(!confirm(`هل أنت متأكد من تسوية عدد ${checkedBoxes.length} أوردر محدد؟`)) return;
+            customConfirm(`هل أنت متأكد من تسوية عدد ${checkedBoxes.length} أوردر محدد؟`, () => {
+                closeSelectedBtn.disabled = true;
+                const originalText = closeSelectedBtn.innerHTML;
 
-            closeSelectedBtn.disabled = true;
-            const originalText = closeSelectedBtn.innerHTML;
+                (async function processSequential() {
+                    for(let i=0; i<checkedBoxes.length; i++) {
+                        const cb = checkedBoxes[i];
+                        const orderId = cb.getAttribute('data-order-id');
+                        const btn = cb.closest('.financial-order-item') ? cb.closest('.financial-order-item').querySelector('.btn-settle') : null;
+                        
+                        closeSelectedBtn.innerText = `جاري التقفيل... (${i+1}/${checkedBoxes.length})`;
+                        if(btn) { btn.innerText = "جاري..."; btn.disabled = true; }
 
-            (async function processSequential() {
-                for(let i=0; i<checkedBoxes.length; i++) {
-                    const cb = checkedBoxes[i];
-                    const orderId = cb.getAttribute('data-order-id');
-                    const btn = cb.closest('.financial-order-item') ? cb.closest('.financial-order-item').querySelector('.btn-settle') : null;
-                    
-                    closeSelectedBtn.innerText = `جاري التقفيل... (${i+1}/${checkedBoxes.length})`;
-                    if(btn) { btn.innerText = "جاري..."; btn.disabled = true; }
+                        let formData = new URLSearchParams();
+                        formData.append('action', 'settleOrder');
+                        formData.append('orderId', orderId);
 
-                    let formData = new URLSearchParams();
-                    formData.append('action', 'settleOrder');
-                    formData.append('orderId', orderId);
-
-                    try {
-                        // Wait for 500ms to allow Google Scripts to process gracefully
-                        await new Promise(r => setTimeout(r, 500));
-                        await fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData });
-                        if(btn) {
-                            btn.innerText = "تم";
-                            btn.style.background = "var(--success)";
+                        try {
+                            // Wait for 500ms to allow Google Scripts to process gracefully
+                            await new Promise(r => setTimeout(r, 500));
+                            await fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData });
+                            if(btn) {
+                                btn.innerText = "تم";
+                                btn.style.background = "var(--success)";
+                            }
+                        } catch(e) {
+                            if(btn) { btn.innerText = "خطأ"; btn.disabled = false; }
                         }
-                    } catch(e) {
-                        if(btn) { btn.innerText = "خطأ"; btn.disabled = false; }
                     }
-                }
-                
-                closeSelectedBtn.innerHTML = originalText;
-                closeSelectedBtn.disabled = false;
-                if(selectAllCheckbox) selectAllCheckbox.checked = false;
-                updateCloseBtnVisibility();
-                
-                showToast(`<i class=\'fa-solid fa-check\'></i> تم تقفيل كل المحدد بنجاح!`, "success");
-                loadDataFromServer();
-            })();
+                    
+                    closeSelectedBtn.innerHTML = originalText;
+                    closeSelectedBtn.disabled = false;
+                    if(selectAllCheckbox) selectAllCheckbox.checked = false;
+                    updateCloseBtnVisibility();
+                    
+                    showToast(`<i class=\'fa-solid fa-check\'></i> تم تقفيل كل المحدد بنجاح!`, "success");
+                    loadDataFromServer();
+                })();
+            });
         });
     }
 });
