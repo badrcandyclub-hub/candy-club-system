@@ -1133,9 +1133,6 @@ input:checked + .slider:before { transform: translateX(24px); }
 
 .nav-item:hover { color: var(--primary); }
 
-.nav-item.active {
-    /* Kept empty or use another subtle effect if needed, letting inline color persist */
-}
 
 .nav-item.active::before {
     content: '';
