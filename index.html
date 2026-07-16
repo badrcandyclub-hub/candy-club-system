@@ -1089,9 +1089,11 @@
         </section>
 
         <section id="financials-tab" class="tab-pane">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 10px;">
+            <div class="section-card" style="width: 100%; box-sizing: border-box;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 10px; gap: 10px;">
                     <h2 style="color: var(--primary); margin: 0;"><i class="fa-solid fa-wallet"></i> حسابات المناديب</h2>
-                    <div style="display: flex; gap: 10px; align-items: center;">
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <input type="text" id="financialsSearchInput" placeholder="بحث باسم المندوب..." class="sac-input" style="padding: 8px 15px; border-radius: 8px; border: 1px solid var(--border); font-family: 'Cairo', sans-serif;">
                         <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: bold; background: var(--bg); padding: 5px 10px; border-radius: 8px;">
                             <input type="checkbox" id="selectAllFinancialsCheckbox" style="width: 18px; height: 18px;">
                             تحديد الكل
@@ -1100,7 +1102,7 @@
                     </div>
                 </div>
                 
-                <div id="financialsDisplayList" class="data-list-container">
+                <div id="financialsDisplayList" class="data-list-container" style="width: 100%;">
                     <p class="empty-msg">جاري تحميل الحسابات من السيرفر...</p>
                 </div>
             </div>
@@ -1116,37 +1118,37 @@
             <button id="closeSidebarBtn" class="close-sidebar-btn"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="sidebar-menu">
-            <button class="nav-item active" data-target="create-tab">
+            <button class="nav-item active" data-target="create-tab" style="color: #E91E8C;">
                 <span class="icon"><i class="fa-solid fa-pen-to-square"></i></span><span class="label">إنشاء</span>
             </button>
-            <button class="nav-item" data-target="catalog-tab">
+            <button class="nav-item" data-target="catalog-tab" style="color: #9b59b6;">
                 <span class="icon"><i class="fa-solid fa-box-open"></i></span><span class="label">الكتالوج</span>
             </button>
-            <button class="nav-item" data-target="shipping-tab">
+            <button class="nav-item" data-target="shipping-tab" style="color: #e74c3c;">
                 <span class="icon"><i class="fa-solid fa-truck-fast"></i></span><span class="label">الشحن</span>
             </button>
-            <button class="nav-item" data-target="history-tab">
+            <button class="nav-item" data-target="history-tab" style="color: #7f8c8d;">
                 <span class="icon"><i class="fa-solid fa-clock-rotate-left"></i></span><span class="label">السجل</span>
             </button>
-            <button class="nav-item" data-target="customers-tab">
+            <button class="nav-item" data-target="customers-tab" style="color: #3498db;">
                 <span class="icon"><i class="fa-solid fa-users"></i></span><span class="label">العملاء</span>
             </button>
-            <button class="nav-item" data-target="reports-tab">
+            <button class="nav-item" data-target="reports-tab" style="color: #8e44ad;">
                 <span class="icon"><i class="fa-solid fa-chart-line"></i></span><span class="label">التقارير</span>
             </button>
-            <button class="nav-item" data-target="expiry-tab">
+            <button class="nav-item" data-target="expiry-tab" style="color: #d35400;">
                 <span class="icon"><i class="fa-solid fa-hourglass-half"></i></span><span class="label">الصلاحيات</span>
             </button>
-            <button class="nav-item" data-target="whatsapp-campaign-tab">
+            <button class="nav-item" data-target="whatsapp-campaign-tab" style="color: #2ecc71;">
                 <span class="icon"><i class="fa-brands fa-whatsapp"></i></span><span class="label">حملات الواتساب</span>
             </button>
-            <button id="openPriceTagsBtn" class="nav-item" data-target="price-tags-tab">
+            <button id="openPriceTagsBtn" class="nav-item" data-target="price-tags-tab" style="color: #1abc9c;">
                 <span class="icon"><i class="fa-solid fa-tags"></i></span><span class="label">كروت الأسعار</span>
             </button>
-            <button id="openFinancialsBtn" class="nav-item" data-target="financials-tab" style="color: #e67e22;">
+            <button id="openFinancialsBtn" class="nav-item" data-target="financials-tab" style="color: #f1c40f;">
                 <span class="icon"><i class="fa-solid fa-wallet"></i></span><span class="label">حساب المناديب</span>
             </button>
-            <button class="nav-item" data-target="settings-tab">
+            <button class="nav-item" data-target="settings-tab" style="color: #95a5a6;">
                 <span class="icon"><i class="fa-solid fa-gear"></i></span><span class="label">الإعدادات</span>
             </button>
         </div>

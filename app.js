@@ -4601,6 +4601,10 @@ if (btnExportMonth) {
                 return localStr === monthVal;
             }
             return item.expiryDate.startsWith(monthVal);
+        }).sort((a, b) => {
+            let dA = new Date(a.expiryDate);
+            let dB = new Date(b.expiryDate);
+            return dA.getTime() - dB.getTime();
         });
 
         setBtnLoading(btnExportMonth, true, "تصدير...");
@@ -4628,6 +4632,10 @@ if (btnExportMonthPDF) {
                 return localStr === monthVal;
             }
             return item.expiryDate.startsWith(monthVal);
+        }).sort((a, b) => {
+            let dA = new Date(a.expiryDate);
+            let dB = new Date(b.expiryDate);
+            return dA.getTime() - dB.getTime();
         });
 
         if (filtered.length === 0) {
@@ -5802,14 +5810,43 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if(!confirm(`هل أنت متأكد من تسوية عدد ${checkedBoxes.length} أوردر محدد؟`)) return;
 
-            checkedBoxes.forEach(cb => {
-                const orderId = cb.getAttribute('data-order-id');
-                const paymentMethod = cb.getAttribute('data-payment');
-                settleDriverOrder(orderId, cb.closest('.financial-order-item').querySelector('.btn-settle'), paymentMethod);
-            });
-            
-            if(selectAllCheckbox) selectAllCheckbox.checked = false;
-            updateCloseBtnVisibility();
+            closeSelectedBtn.disabled = true;
+            const originalText = closeSelectedBtn.innerHTML;
+
+            (async function processSequential() {
+                for(let i=0; i<checkedBoxes.length; i++) {
+                    const cb = checkedBoxes[i];
+                    const orderId = cb.getAttribute('data-order-id');
+                    const btn = cb.closest('.financial-order-item') ? cb.closest('.financial-order-item').querySelector('.btn-settle') : null;
+                    
+                    closeSelectedBtn.innerText = `جاري التقفيل... (${i+1}/${checkedBoxes.length})`;
+                    if(btn) { btn.innerText = "جاري..."; btn.disabled = true; }
+
+                    let formData = new URLSearchParams();
+                    formData.append('action', 'settleOrder');
+                    formData.append('orderId', orderId);
+
+                    try {
+                        // Wait for 500ms to allow Google Scripts to process gracefully
+                        await new Promise(r => setTimeout(r, 500));
+                        await fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData });
+                        if(btn) {
+                            btn.innerText = "تم";
+                            btn.style.background = "var(--success)";
+                        }
+                    } catch(e) {
+                        if(btn) { btn.innerText = "خطأ"; btn.disabled = false; }
+                    }
+                }
+                
+                closeSelectedBtn.innerHTML = originalText;
+                closeSelectedBtn.disabled = false;
+                if(selectAllCheckbox) selectAllCheckbox.checked = false;
+                updateCloseBtnVisibility();
+                
+                showToast(`<i class=\'fa-solid fa-check\'></i> تم تقفيل كل المحدد بنجاح!`, "success");
+                loadDataFromServer();
+            })();
         });
     }
 });
