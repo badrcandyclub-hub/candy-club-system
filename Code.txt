@@ -8,6 +8,7 @@ function onOpen() {
   ui.createMenu('🍬 إدارة كاندي كلوب')
       .addItem('🔄 بناء وتحديث النظام الشامل', 'setupCandyClubUX')
       .addItem('⚡ تحديث باركود المنتجات القديمة (مؤقت)', 'backfillBarcodes')
+      .addItem('🔢 إعادة ترقيم كل الأوردرات السابقة (تسلسلي)', 'renumberAllOrders')
       .addToUi();
 }
 
