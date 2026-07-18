@@ -45,8 +45,10 @@ function showToast(message, type = 'success') {
 function setBtnLoading(btn, isLoading, originalText = "") {
     if (!btn) return;
     if (isLoading) {
+        if (!btn.disabled) {
+            btn.dataset.origHtml = btn.innerHTML;
+        }
         btn.disabled = true;
-        btn.dataset.origHtml = btn.innerHTML;
         btn.innerHTML = "<i class='fa-solid fa-spinner fa-spin' style='margin-left:8px;'></i> جاري التحميل...";
         btn.style.opacity = "0.7";
         btn.style.cursor = "not-allowed";
@@ -6716,26 +6718,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
             setBtnLoading(savePrintInvBtn, true);
 
-            fetch(googleAppUrl, {
+            fetch(GOOGLE_SHEETS_URL, {
                 method: 'POST',
+                mode: 'no-cors',
                 body: formData
-            }).then(r => r.text()).then(res => {
+            }).then(() => {
                 setBtnLoading(savePrintInvBtn, false);
-                if(res.includes("success")) {
-                    showToast("تم حفظ الإذن بنجاح!", "success");
-                    
-                    // Print Thermal
-                    printInventoryReceipt(logId, type, from, to, invItems, notes);
-                    
-                    // Clear form
-                    invItems = [];
-                    renderInvItems();
-                    document.getElementById('invFrom').value = '';
-                    document.getElementById('invTo').value = '';
-                    document.getElementById('invNotes').value = '';
-                } else {
-                    showToast("حدث خطأ أثناء حفظ الإذن", "error");
-                }
+                showToast("تم حفظ الإذن بنجاح!", "success");
+                
+                // Print Thermal
+                printInventoryReceipt(logId, type, from, to, invItems, notes);
+                
+                // Clear form
+                invItems = [];
+                renderInvItems();
+                document.getElementById('invFrom').value = '';
+                document.getElementById('invTo').value = '';
+                document.getElementById('invNotes').value = '';
             }).catch(err => {
                 setBtnLoading(savePrintInvBtn, false);
                 showToast("خطأ في الاتصال بالسيرفر", "error");
