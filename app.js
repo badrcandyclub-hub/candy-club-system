@@ -270,8 +270,8 @@ function loadDataFromServer(customDate = null) {
                                 </div>
                             </div>
                             <div class="zone-actions">
-                                <button type="button" class="btn-outline interactive-btn" onclick="editZoneUI('${z.name}', '${z.price}', '${z.type}', '${z.duration}')">تعديل <i class=\'fa-solid fa-pencil\'></i></button>
-                                <button type="button" class="btn-danger interactive-btn" onclick="deleteItem('deleteShipping', '${z.name}', '${zoneType}')">حذف <i class=\'fa-solid fa-xmark\'></i></button>
+                                <button type="button" class="btn-outline interactive-btn" onclick="editZoneUI('${z.name}', '${z.price}', '${z.type}', '${z.duration}')"><span class="btn-text-mobile-hide">تعديل</span> <i class=\'fa-solid fa-pencil\'></i></button>
+                                <button type="button" class="btn-danger interactive-btn" onclick="deleteItem('deleteShipping', '${z.name}', '${zoneType}')"><span class="btn-text-mobile-hide">حذف</span> <i class=\'fa-solid fa-xmark\'></i></button>
                             </div>
                         </div>`;
                 }

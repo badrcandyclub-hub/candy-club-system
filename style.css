@@ -2120,12 +2120,24 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
         padding: 3px 6px;
     }
     .zone-actions button {
-        padding: 4px 8px;
-        font-size: 0.75rem;
+        padding: 0;
+        width: 32px;
+        height: 32px;
+        font-size: 0.9rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 8px;
+    }
+    .btn-text-mobile-hide {
+        display: none;
     }
     .zone-actions {
-        gap: 5px;
-        padding-right: 10px;
+        gap: 8px;
+        padding-right: 5px;
+    }
+    .zone-actions i {
+        margin: 0;
     }
 
     /* ط·ع¾ط·آµط¸â€¦ط¸ظ¹ط¸â€¦ ط·آ´ط·آ¨ط¸ئ’ط¸ظ¹ ط¸â€¦ط·آ®ط·آµط·آµ ط¸â€‍ط·آ®ط·آ§ط¸â€ ط·آ© ط·آ§ط¸â€‍ط¸â€¦ط¸â€ ط·ع¾ط·آ¬ط·آ§ط·ع¾ ط¸ظ¾ط¸ظ¹ ط·آ§ط¸â€‍ط¸ظ¾ط·آ§ط·ع¾ط¸ث†ط·آ±ط·آ© ط·آ¹ط¸â€‍ط¸â€° ط·آ§ط¸â€‍ط¸â€¦ط¸ث†ط·آ¨ط·آ§ط¸ظ¹ط¸â€‍ */
