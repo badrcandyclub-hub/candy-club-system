@@ -676,23 +676,23 @@
         <section id="inventory-transfers-tab" class="tab-pane">
             <h2 class="section-title"><i class="fa-solid fa-exchange-alt"></i> حركة المخازن والأذونات</h2>
             
-            <div class="glass-card" style="margin-bottom: 20px;">
+            <div id="invFormContainer" class="glass-card" style="margin-bottom: 20px; transition: all 0.3s ease; border-top: 5px solid #e67e22;">
                 <h3 style="color: var(--primary); margin-bottom: 15px; font-size: 1.2rem;"><i class="fa-solid fa-file-invoice"></i> إنشاء إذن جديد</h3>
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
                     <div>
-                        <label style="display:block; margin-bottom:5px; font-weight:bold; color:var(--text-main);">نوع الإذن:</label>
-                        <select id="invType" class="input-field" style="margin-bottom:0;">
+                        <label style="display:block; margin-bottom:5px; font-weight:bold; color:var(--text-main);"><i class="fa-solid fa-list-check" style="color:var(--primary);"></i> نوع الإذن:</label>
+                        <select id="invType" class="input-field" style="margin-bottom:0;" onchange="updateInvTypeStyle()">
                             <option value="إذن صرف / تحويل">إذن صرف / إرسال بضاعة</option>
                             <option value="إذن استلام / توريد">إذن استلام بضاعة</option>
                         </select>
                     </div>
                     <div>
-                        <label style="display:block; margin-bottom:5px; font-weight:bold; color:var(--text-main);">من (الراسل):</label>
+                        <label style="display:block; margin-bottom:5px; font-weight:bold; color:var(--text-main);"><i class="fa-solid fa-truck-arrow-right" style="color:var(--primary);"></i> من (الراسل):</label>
                         <input type="text" id="invFrom" class="input-field" placeholder="مثال: المخزن الرئيسي" style="margin-bottom:0;">
                     </div>
                     <div>
-                        <label style="display:block; margin-bottom:5px; font-weight:bold; color:var(--text-main);">إلى (المستلم):</label>
+                        <label style="display:block; margin-bottom:5px; font-weight:bold; color:var(--text-main);"><i class="fa-solid fa-building-circle-check" style="color:var(--primary);"></i> إلى (المستلم):</label>
                         <input type="text" id="invTo" class="input-field" placeholder="مثال: فرع سموحة" style="margin-bottom:0;">
                     </div>
                 </div>
@@ -701,16 +701,21 @@
                     <h4 style="margin-top: 0; margin-bottom: 15px; color: var(--primary);"><i class="fa-solid fa-plus"></i> إضافة منتج للإذن</h4>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
                         <div style="grid-column: span 2;">
-                            <label style="display:block; margin-bottom:5px; font-weight:bold; color:var(--text-main);">الباركود:</label>
-                            <input type="text" id="invProdBarcode" class="input-field" placeholder="سكان الباركود لاستدعاء اسم المنتج..." style="margin-bottom:0; font-family: monospace; letter-spacing: 1px;" autocomplete="off" onkeypress="if(event.key === 'Enter') { document.getElementById('searchInvBarcodeBtn').click(); event.preventDefault(); }">
-                            <button type="button" id="searchInvBarcodeBtn" style="display: none;"></button>
+                            <label style="display:block; margin-bottom:5px; font-weight:bold; color:var(--text-main);"><i class="fa-solid fa-barcode" style="color:var(--primary);"></i> الباركود:</label>
+                            <div style="display: flex; gap: 5px;">
+                                <input type="text" id="invProdBarcode" class="input-field" placeholder="سكان الباركود..." style="margin-bottom:0; flex: 1; font-family: monospace; letter-spacing: 1px;" autocomplete="off" onkeypress="if(event.key === 'Enter') { document.getElementById('searchInvBarcodeBtn').click(); event.preventDefault(); }">
+                                <button type="button" id="startInvCameraScannerBtn" class="interactive-btn pulse-btn" style="background: linear-gradient(135deg, #17a2b8, #0b7dda); color: white; border: none; padding: 0 15px; border-radius: 8px;" title="مسح بالكاميرا">
+                                    <i class="fa-solid fa-camera"></i>
+                                </button>
+                                <button type="button" id="searchInvBarcodeBtn" style="display: none;"></button>
+                            </div>
                         </div>
                         <div style="grid-column: span 2;">
-                            <label style="display:block; margin-bottom:5px; font-weight:bold; color:var(--text-main);">اسم المنتج <span style="color:red;">*</span>:</label>
+                            <label style="display:block; margin-bottom:5px; font-weight:bold; color:var(--text-main);"><i class="fa-solid fa-box" style="color:var(--primary);"></i> اسم المنتج:</label>
                             <input type="text" id="invProdName" class="input-field" placeholder="اسم المنتج..." style="margin-bottom:0;">
                         </div>
                         <div>
-                            <label style="display:block; margin-bottom:5px; font-weight:bold; color:var(--text-main);">الكمية <span style="color:red;">*</span>:</label>
+                            <label style="display:block; margin-bottom:5px; font-weight:bold; color:var(--text-main);"><i class="fa-solid fa-cubes" style="color:var(--primary);"></i> الكمية:</label>
                             <input type="number" id="invProdQty" class="input-field" placeholder="1" min="1" style="margin-bottom:0;">
                         </div>
                         <div style="display: flex; align-items: flex-end;">
@@ -1711,7 +1716,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <script src="app.js?v=22.1"></script>
+    <script src="app.js?v=24.6"></script>
 </body>
 
 </html>

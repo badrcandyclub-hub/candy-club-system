@@ -1,4 +1,4 @@
-// ==========================================
+﻿// ==========================================
 // <i class=\'fa-solid fa-globe\'></i> العقل المدبر - سيستم كاندي كلوب (النسخة V13.6 - الشاملة والمحصنة)
 // ==========================================
 
@@ -18,6 +18,18 @@ function playOrderSound() {
         });
     }
 }
+
+window.updateInvTypeStyle = function() {
+    let type = document.getElementById('invType').value;
+    let container = document.getElementById('invFormContainer');
+    if (type.includes('صرف')) {
+        container.style.borderTop = '5px solid #e67e22'; // Orange
+        container.style.background = 'linear-gradient(to bottom, rgba(230, 126, 34, 0.05), transparent)';
+    } else {
+        container.style.borderTop = '5px solid #2ecc71'; // Green
+        container.style.background = 'linear-gradient(to bottom, rgba(46, 204, 113, 0.05), transparent)';
+    }
+};
 
 function showToast(message, type = 'success') {
     const container = document.getElementById('toast-container');
@@ -3154,7 +3166,29 @@ function stopBarcodeScanner() {
 }
 
 function processBarcodeAction(val) {
-    if (currentScannerMode === 'ledger') {
+    if (currentScannerMode === 'inventory') {
+        const invProdName = document.getElementById('invProdName');
+        const invProdQty = document.getElementById('invProdQty');
+        const invProdBarcode = document.getElementById('invProdBarcode');
+        
+        if (val && barcodeCatalogData) {
+            const found = barcodeCatalogData.find(p => String(p.barcode).trim() === val);
+            if (found) {
+                if (invProdName) invProdName.value = found.name;
+                if (invProdBarcode) invProdBarcode.value = val;
+                showToast("<i class='fa-solid fa-check'></i> تم سحب المنتج", "success");
+            } else {
+                if (invProdName) invProdName.value = 'غير مسجل';
+                if (invProdBarcode) invProdBarcode.value = val;
+                showToast("<i class='fa-solid fa-triangle-exclamation'></i> الباركود (" + val + ") غير مسجل", "warning");
+            }
+        } else {
+            showToast("<i class='fa-solid fa-triangle-exclamation'></i> لم يتم التعرف على النص أو الكتالوج فارغ", "error");
+        }
+        
+        playBeepSound();
+        if (invProdQty) invProdQty.focus();
+    } else if (currentScannerMode === 'ledger') {
         const ledgerProdName = document.getElementById('ledgerProdName');
         const ledgerProdQty = document.getElementById('ledgerProdQty');
         const ledgerProdBarcode = document.getElementById('ledgerProdBarcode');
@@ -3165,15 +3199,15 @@ function processBarcodeAction(val) {
                 if (ledgerProdName) ledgerProdName.value = found.name;
                 if (ledgerProdQty) ledgerProdQty.value = found.stock ? Number(found.stock) : 0;
                 if (ledgerProdBarcode) ledgerProdBarcode.value = val;
-                showToast("<i class=\'fa-solid fa-check\'></i> " + found.name + " | الكمية: " + found.stock + " | السعر: " + found.price + " ج.م", "success");
+                showToast("<i class='fa-solid fa-check'></i> " + found.name + " | الكمية: " + found.stock + " | السعر: " + found.price + " ج.م", "success");
             } else {
                 if (ledgerProdName) ledgerProdName.value = '';
                 if (ledgerProdQty) ledgerProdQty.value = '';
                 if (ledgerProdBarcode) ledgerProdBarcode.value = val; 
-                showToast("<i class=\'fa-solid fa-triangle-exclamation\'></i> الباركود (" + val + ") غير مسجل، اكتب الاسم يدوياً", "warning");
+                showToast("<i class='fa-solid fa-triangle-exclamation'></i> الباركود (" + val + ") غير مسجل، اكتب الاسم يدوياً", "warning");
             }
         } else {
-            showToast("<i class=\'fa-solid fa-triangle-exclamation\'></i> لم يتم التعرف على النص أو الكتالوج فارغ", "error");
+            showToast("<i class='fa-solid fa-triangle-exclamation'></i> لم يتم التعرف على النص أو الكتالوج فارغ", "error");
         }
         
         playBeepSound();
@@ -3589,6 +3623,20 @@ if (openLedgerBtn) {
 window.closeLedgerModal = function () {
     ledgerModal.style.display = 'none';
 };
+
+const startInvCameraScannerBtn = document.getElementById('startInvCameraScannerBtn');
+if (startInvCameraScannerBtn) {
+    startInvCameraScannerBtn.addEventListener('click', () => {
+        if (typeof currentScannerMode !== 'undefined') {
+            currentScannerMode = 'inventory';
+        }
+        const scannerModal = document.getElementById('scannerModal');
+        if (scannerModal) {
+            scannerModal.classList.add('active');
+            startBarcodeScanner();
+        }
+    });
+}
 
 const startLedgerCameraScannerBtn = document.getElementById('startLedgerCameraScannerBtn');
 if (startLedgerCameraScannerBtn) {
@@ -6590,6 +6638,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addInvItemBtn.addEventListener('click', () => {
             let name = invProdName.value.trim();
             let qty = parseInt(invProdQty.value);
+            let barcode = invProdBarcode.value.trim();
             if (!name) {
                 showToast("برجاء إدخال اسم المنتج", "warning");
                 return;
@@ -6602,8 +6651,9 @@ document.addEventListener('DOMContentLoaded', () => {
             let existing = invItems.find(i => i.name === name);
             if (existing) {
                 existing.qty += qty;
+                if (barcode && !existing.barcode) existing.barcode = barcode;
             } else {
-                invItems.push({ name: name, qty: qty });
+                invItems.push({ name: name, qty: qty, barcode: barcode });
             }
             
             invProdName.value = '';
@@ -6648,7 +6698,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let idStr = String(currentCount).padStart(6, '0');
             let logId = `TRX-${idStr}`;
 
-            let itemsStr = invItems.map(i => `${i.name} (${i.qty})`).join(" | ");
+            let itemsStr = invItems.map(i => `${i.name} (${i.qty})${i.barcode ? ' [باركود: ' + i.barcode + ']' : ''}`).join(" | ");
 
             let formData = new URLSearchParams();
             formData.append("action", "addInventoryLog");
