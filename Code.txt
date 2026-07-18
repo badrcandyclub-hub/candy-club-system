@@ -1152,13 +1152,12 @@ function doPost(e) {
       var invSheet = ss.getSheetByName("📦 أذونات المخازن");
       if (!invSheet) {
           invSheet = ss.insertSheet("📦 أذونات المخازن");
-          var invHeaders = ["رقم الإذن", "نوع الإذن", "من", "إلى", "اسم المسجل", "التاريخ والوقت", "الأصناف والكميات والباركود", "ملاحظات"];
+          var invHeaders = ["رقم الإذن", "من", "إلى", "اسم المسجل", "التاريخ والوقت", "الأصناف والكميات والباركود", "ملاحظات"];
           invSheet.getRange(1, 1, 1, invHeaders.length).setValues([invHeaders])
               .setBackground("#e67e22").setFontColor("white").setFontFamily("Cairo").setFontSize(14).setFontWeight("bold")
               .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
       }
       var logId = e.parameter.logId;
-      var type = e.parameter.type;
       var from = e.parameter.from;
       var to = e.parameter.to;
       var regName = e.parameter.regName;
@@ -1166,7 +1165,7 @@ function doPost(e) {
       var items = e.parameter.items; // JSON string or plain text
       var notes = e.parameter.notes;
 
-      invSheet.appendRow([logId, type, from, to, regName, timestamp, items, notes]);
+      invSheet.appendRow([logId, from, to, regName, timestamp, items, notes]);
       return ContentService.createTextOutput("success");
     }
 

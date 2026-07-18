@@ -19,22 +19,7 @@ function playOrderSound() {
     }
 }
 
-window.updateInvTypeStyle = function() {
-    let typeSelect = document.getElementById('invType');
-    let type = typeSelect.value;
-    let container = document.getElementById('invFormContainer');
-    if (type.includes('صرف')) {
-        container.style.borderTop = 'none';
-        container.style.background = 'linear-gradient(to bottom, rgba(230, 126, 34, 0.08), transparent)';
-        typeSelect.style.border = '2px solid #e67e22';
-        typeSelect.style.color = '#d35400';
-    } else {
-        container.style.borderTop = 'none';
-        container.style.background = 'linear-gradient(to bottom, rgba(46, 204, 113, 0.08), transparent)';
-        typeSelect.style.border = '2px solid #2ecc71';
-        typeSelect.style.color = '#27ae60';
-    }
-};
+
 
 function showToast(message, type = 'success') {
     const container = document.getElementById('toast-container');
@@ -6709,7 +6694,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (savePrintInvBtn) {
         savePrintInvBtn.addEventListener('click', () => {
-            let type = document.getElementById('invType').value;
             let from = document.getElementById('invFrom').value.trim();
             let to = document.getElementById('invTo').value.trim();
             let notes = document.getElementById('invNotes').value.trim();
@@ -6740,7 +6724,6 @@ document.addEventListener('DOMContentLoaded', () => {
             let formData = new URLSearchParams();
             formData.append("action", "addInventoryLog");
             formData.append("logId", logId);
-            formData.append("type", type);
             formData.append("from", from);
             formData.append("to", to);
             formData.append("regName", senderName ? senderName : regName);
@@ -6759,7 +6742,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast("تم حفظ الإذن بنجاح!", "success");
                 
                 // Print Thermal
-                printInventoryReceipt(logId, type, from, to, invItems, notes, senderName, regName);
+                printInventoryReceipt(logId, from, to, invItems, notes, senderName, regName);
                 
                 // Clear form
                 invItems = [];
@@ -6774,7 +6757,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function printInventoryReceipt(logId, type, from, to, items, notes, senderName, regName) {
+    function printInventoryReceipt(logId, from, to, items, notes, senderName, regName) {
         let printWindow = window.open('', '_blank', 'height=600,width=400');
         if (!printWindow) {
             showToast("يرجى تفعيل النوافذ المنبثقة (Pop-ups) للطباعة", "error");
@@ -6851,7 +6834,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <body>
                 <div class="header">
                     <h2>Candy Club</h2>
-                    <h3>${type}</h3>
+                    <h3>إذن حركة بضاعة</h3>
                     <p>رقم الإذن: <b style="font-size:14px;">${logId}</b></p>
                     <p>التاريخ: ${dateStr}</p>
                 </div>
