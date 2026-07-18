@@ -998,7 +998,7 @@ if (phoneInput) phoneInput.addEventListener('change', performPhoneSearch);
 const productsContainer = document.getElementById('productsContainer');
 
 // <i class=\'fa-solid fa-star\'></i> دالة إضافة المنتجات (وإصلاح قفل الخانات عند الاسترجاع)
-function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = false) {
+function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = false, offerVal = "") {
     if (!productsContainer) return;
 
     if (!document.getElementById('smartProductsList')) {
@@ -1023,7 +1023,7 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
     div.innerHTML = `
         <input type="text" list="smartProductsList" class="product-name-input" placeholder="اسم المنتج..." value="${nameVal}" required ${rOnly}>
         <input type="number" class="product-price-input" placeholder="السعر" value="${priceVal}" required ${rOnly}>
-        <input type="number" class="product-offer-input" placeholder="سعر العرض" ${rOnly}>
+        <input type="number" class="product-offer-input" placeholder="سعر العرض" value="${offerVal}" ${rOnly}>
         <input type="number" class="product-qty-input" placeholder="الكمية" value="${qtyVal}" min="1" required ${rOnly}>
         <div class="product-row-actions">
             <button type="button" class="btn-confirm-pro interactive-btn">✔️</button>
@@ -1217,15 +1217,19 @@ function updateSuspendedCount() {
 let suspendBtn = document.getElementById('suspendBtn');
 if (suspendBtn) {
     suspendBtn.addEventListener('click', () => {
-        setBtnLoading(suspendBtn, true); // <i class=\'fa-solid fa-star\'></i> منع تكرار الأوردرات
+        setBtnLoading(suspendBtn, true); // <i class='fa-solid fa-star'></i> منع تكرار الأوردرات
         let nameEl = document.getElementById('customerName'); let name = nameEl && nameEl.value ? nameEl.value : "بدون اسم";
         let prods = [];
         document.querySelectorAll('.product-row').forEach(row => {
-            let n = row.querySelector('.product-name-input').value, p = row.querySelector('.product-price-input').value, q = row.querySelector('.product-qty-input').value, c = row.classList.contains('confirmed');
-            if (n) prods.push({ name: n, price: p, qty: q, confirmed: c });
+            let n = row.querySelector('.product-name-input').value, 
+                p = row.querySelector('.product-price-input').value, 
+                o = row.querySelector('.product-offer-input').value, 
+                q = row.querySelector('.product-qty-input').value, 
+                c = row.classList.contains('confirmed');
+            if (n) prods.push({ name: n, price: p, offer: o, qty: q, confirmed: c });
         });
 
-        // <i class=\'fa-solid fa-star\'></i> V14.2: Timestamp-based ID لمنع التكرار نهائياً
+        // <i class='fa-solid fa-star'></i> V14.2: Timestamp-based ID لمنع التكرار نهائياً
         let draftId = "DRAFT-" + Date.now().toString().slice(-5);
         let draft = {
             id: draftId, date: new Date().toLocaleTimeString('ar-EG'),
@@ -1261,12 +1265,12 @@ if (openSuspendedBtn) {
         let drafts = window.suspendedOrdersData || [];
         let list = document.getElementById('suspendedOrdersList'); if (!list) return;
         list.innerHTML = '';
-        if (drafts.length === 0) { list.innerHTML = '<p class="empty-msg">لا توجد طلبات معلقة</p>'; return; }
+        if (drafts.length === 0) { list.innerHTML = '<p class="empty-msg">لا توجد طلبات معلقة <i class="fa-regular fa-folder-open" style="color:var(--primary); margin-right:5px;"></i></p>'; return; }
 
         drafts.forEach(d => {
             let div = document.createElement('div'); div.className = 'data-row'; div.style.alignItems = 'center';
             div.innerHTML = `
-                <div style="flex:1;"><strong>${d.name}</strong> <br> <small style="color:#777">⏰ ${d.time || d.date}</small></div>
+                <div style="flex:1;"><strong>${d.name}</strong> <br> <small style="color:#777"><i class="fa-regular fa-clock"></i> ${d.time || d.date}</small></div>
                 <div style="display:flex; gap:5px;">
                     <button class="btn-search interactive-btn restore-btn" style="padding: 5px 10px; font-size:0.8rem">استرجاع <i class=\'fa-solid fa-rotate\'></i></button>
                     <button class="interactive-btn delete-btn" style="padding: 5px 10px; font-size:0.8rem; background-color:var(--danger); color:white; border:none; border-radius:8px; cursor:pointer;">حذف <i class=\'fa-solid fa-xmark\'></i></button>
@@ -1277,7 +1281,7 @@ if (openSuspendedBtn) {
             });
             div.querySelector('.delete-btn').addEventListener('click', () => {
                 deleteSuspendedDraft(d.id); div.remove();
-                if (list.children.length === 0) list.innerHTML = '<p class="empty-msg">لا توجد طلبات معلقة</p>';
+                if (list.children.length === 0) list.innerHTML = '<p class="empty-msg">لا توجد طلبات معلقة <i class="fa-regular fa-folder-open" style="color:var(--primary); margin-right:5px;"></i></p>';
                 showToast("<i class=\'fa-solid fa-trash\'></i> تم حذف المسودة", "success");
             });
             list.appendChild(div);
@@ -1309,7 +1313,7 @@ function restoreDraft(d) {
     if (d.prods) { // If restored from local format
         if (productsContainer) {
             productsContainer.innerHTML = '';
-            if (d.prods.length > 0) d.prods.forEach(p => addProductRow(p.name, p.price, p.qty, p.confirmed));
+            if (d.prods.length > 0) d.prods.forEach(p => addProductRow(p.name, p.price, p.qty, p.confirmed, p.offer || ""));
             else addProductRow();
         }
     } else if (d.products) { // If restored from Google Sheets
