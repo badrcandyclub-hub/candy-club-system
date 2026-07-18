@@ -424,12 +424,14 @@ body.dark-mode input[readonly] {
 
 .input-with-action input {
     margin-bottom: 0;
-    padding-left: 48px;
+    padding-right: 48px;
+    padding-left: 16px;
 }
 
 .check-status-icon {
     position: absolute;
-    left: 14px;
+    right: 14px;
+    left: auto;
     font-size: 1.1rem;
     cursor: pointer;
     transition: var(--transition);
