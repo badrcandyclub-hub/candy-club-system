@@ -1412,14 +1412,32 @@ function cleanUpDates() {
   for (var i = 0; i < data.length; i++) {
     var cellValue = data[i][0] ? data[i][0].toString() : "";
     if (cellValue.includes("||")) {
-      data[i][0] = cellValue.split("||")[0].trim();
+      var parts = cellValue.split("||");
+      var pureDate = parts[0].trim();
+      var batchStr = parts[1] ? parts[1].trim() : "";
+      
+      if (batchStr.length >= 12 && !isNaN(Number(batchStr))) {
+        // تحويل الرقم الغريب (Timestamp) إلى وقت حقيقي
+        var d = new Date(Number(batchStr));
+        var hours = d.getHours();
+        var minutes = d.getMinutes();
+        var ampm = hours >= 12 ? 'م' : 'ص';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // 0 becomes 12
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        
+        var timeStr = hours + ':' + minutes + ' ' + ampm;
+        data[i][0] = pureDate + " " + timeStr;
+      } else {
+        data[i][0] = pureDate;
+      }
       fixedCount++;
     }
   }
   
   if (fixedCount > 0) {
     dataRange.setValues(data);
-    ui.alert("✅ تم تنظيف " + fixedCount + " تاريخ بنجاح وإزالة الأرقام الغريبة!");
+    ui.alert("✅ تم تحويل " + fixedCount + " رقم غريب إلى وقت استلام حقيقي بنجاح!");
   } else {
     ui.alert("جميع التواريخ نظيفة ولا توجد أرقام غريبة.");
   }
