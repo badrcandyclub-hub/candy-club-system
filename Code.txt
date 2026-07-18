@@ -1331,32 +1331,49 @@ function renumberAllOrders() {
   SpreadsheetApp.getUi().alert("✅ تم إعادة ترقيم جميع الطلبات بنجاح!");
 }
 
-// دالة مخصصة لمسح الصفوف الفارغة بالكامل في الشيت المفتوح حالياً لرفع البيانات لأعلى
+// دالة مخصصة لسد الفراغات ورفع البيانات لأعلى بأمان تام (باستخدام النقل بدلاً من الحذف)
 function cleanUpEmptyRows() {
   var ui = SpreadsheetApp.getUi();
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  var lastRow = sheet.getMaxRows();
   var maxDataRow = sheet.getLastRow();
+  var maxCols = sheet.getMaxColumns();
   
-  if (lastRow < 2) {
+  if (maxDataRow < 2) {
     ui.alert("لا توجد بيانات لتنظيفها.");
     return;
   }
   
-  // نقرأ العمود الأول فقط لمعرفة إذا كان الصف فارغاً من البيانات الأساسية
-  var data = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
-  var deletedCount = 0;
+  // نقرأ العمود الأول فقط لمعرفة أماكن الفراغات
+  var data = sheet.getRange(2, 1, maxDataRow - 1, 1).getValues();
+  var targetRow = 2;
+  var blocksMoved = 0;
   
-  // المسح يتم من الأسفل للأعلى لتفادي مشاكل تغيير أرقام الصفوف أثناء المسح
-  for (var i = data.length - 1; i >= 0; i--) {
+  var i = 0;
+  while (i < data.length) {
     var firstCell = data[i][0] ? data[i][0].toString().trim() : "";
     
-    // إذا كان العمود الأول (اسم المنتج/العميل) فارغاً، نحذف الصف بالكامل
-    if (firstCell === "") {
-      sheet.deleteRow(i + 2);
-      deletedCount++;
+    if (firstCell !== "") {
+      // تحديد عدد الصفوف المتتالية التي تحتوي على بيانات
+      var startRow = i + 2;
+      var count = 1;
+      while (i + count < data.length && (data[i + count][0] ? data[i + count][0].toString().trim() : "") !== "") {
+        count++;
+      }
+      
+      // نقل هذه الكتلة لأعلى إذا كان هناك فراغ قبلها
+      if (startRow > targetRow) {
+        var sourceRange = sheet.getRange(startRow, 1, count, maxCols);
+        var targetCell = sheet.getRange(targetRow, 1);
+        sourceRange.moveTo(targetCell);
+        blocksMoved++;
+      }
+      
+      targetRow += count;
+      i += count;
+    } else {
+      i++;
     }
   }
   
-  ui.alert("✅ تم حذف " + deletedCount + " صف فارغ بناءً على العمود الأول، وتم رفع البيانات المحفوظة لأعلى بنجاح!");
+  ui.alert("✅ تم سد جميع الفراغات ورفع المنتجات لأعلى بنجاح وبأمان تام!");
 }
