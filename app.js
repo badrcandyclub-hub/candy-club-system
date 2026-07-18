@@ -573,7 +573,10 @@ window.updateGovernoratesDropdown = function () {
 
     if (type === 'gov_shipping') {
         if (data.govs && data.govs.length > 0) {
-            let optgroup = document.createElement('optgroup'); optgroup.label = "🚚 المحافظات";
+            let optgroup = document.createElement('optgroup'); 
+            optgroup.label = "\uf48b المحافظات";
+            optgroup.style.fontFamily = "'Font Awesome 6 Free', 'Cairo', sans-serif";
+            optgroup.style.fontWeight = "900";
             data.govs.forEach(z => {
                 optgroup.innerHTML += `<option value="${z.name}">${z.name} (${z.price} ج)</option>`;
             });
@@ -581,7 +584,10 @@ window.updateGovernoratesDropdown = function () {
         }
     } else {
         if (data.alex && data.alex.length > 0) {
-            let optgroup = document.createElement('optgroup'); optgroup.label = "📍 مناطق الإسكندرية";
+            let optgroup = document.createElement('optgroup'); 
+            optgroup.label = "\uf0c1 مناطق الإسكندرية";
+            optgroup.style.fontFamily = "'Font Awesome 6 Free', 'Cairo', sans-serif";
+            optgroup.style.fontWeight = "900";
             data.alex.forEach(z => {
                 optgroup.innerHTML += `<option value="${z.name}">${z.name} (${z.price} ج)</option>`;
             });
