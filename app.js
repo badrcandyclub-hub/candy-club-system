@@ -6669,6 +6669,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    window.deleteInvItem = function(idx) {
+        invItems.splice(idx, 1);
+        renderInvItems();
+    };
+    window.editInvItem = function(idx) {
+        let newQty = prompt("أدخل الكمية الجديدة لـ " + invItems[idx].name + ":", invItems[idx].qty);
+        if (newQty !== null && newQty.trim() !== "" && !isNaN(parseInt(newQty)) && parseInt(newQty) > 0) {
+            invItems[idx].qty = parseInt(newQty);
+            renderInvItems();
+        }
+    };
+
     function renderInvItems() {
         if (!invItemsList) return;
         invItemsList.innerHTML = '';
@@ -6677,6 +6689,10 @@ document.addEventListener('DOMContentLoaded', () => {
             tr.innerHTML = `
                 <td style="text-align: right; font-weight: bold; color: var(--text-main);">${item.name}</td>
                 <td style="text-align: center; font-weight: bold;">${item.qty}</td>
+                <td style="text-align: center;">
+                    <button class="btn btn-primary" style="padding: 5px 10px; font-size: 0.9rem;" onclick="window.editInvItem(${index})"><i class="fa-solid fa-pen"></i></button>
+                    <button class="btn btn-danger" style="padding: 5px 10px; font-size: 0.9rem;" onclick="window.deleteInvItem(${index})"><i class="fa-solid fa-trash"></i></button>
+                </td>
             `;
             invItemsList.appendChild(tr);
         });
@@ -6698,9 +6714,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Generate Sequential ID
+            let senderName = document.getElementById('invSenderName') ? document.getElementById('invSenderName').value.trim() : "";
+            let regName = localStorage.getItem('cashierName') || "المدير";
+
+            // Generate Sequential ID without incrementing yet
+            if (localStorage.getItem('resetInv3') !== 'done') {
+                localStorage.setItem('invCounter', '0');
+                localStorage.setItem('resetInv3', 'done');
+            }
             let currentCount = parseInt(localStorage.getItem('invCounter') || "0") + 1;
-            localStorage.setItem('invCounter', currentCount);
             let idStr = String(currentCount).padStart(6, '0');
             let logId = `TRX-${idStr}`;
 
@@ -6712,7 +6734,7 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append("type", type);
             formData.append("from", from);
             formData.append("to", to);
-            formData.append("regName", localStorage.getItem('cashierName') || "المدير");
+            formData.append("regName", regName);
             formData.append("items", itemsStr);
             formData.append("notes", notes);
 
@@ -6723,11 +6745,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 mode: 'no-cors',
                 body: formData
             }).then(() => {
+                localStorage.setItem('invCounter', currentCount);
                 setBtnLoading(savePrintInvBtn, false);
                 showToast("تم حفظ الإذن بنجاح!", "success");
                 
                 // Print Thermal
-                printInventoryReceipt(logId, type, from, to, invItems, notes);
+                printInventoryReceipt(logId, type, from, to, invItems, notes, senderName, regName);
                 
                 // Clear form
                 invItems = [];
@@ -6742,7 +6765,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function printInventoryReceipt(logId, type, from, to, items, notes) {
+    function printInventoryReceipt(logId, type, from, to, items, notes, senderName, regName) {
         let printWindow = window.open('', '_blank', 'height=600,width=400');
         if (!printWindow) {
             showToast("يرجى تفعيل النوافذ المنبثقة (Pop-ups) للطباعة", "error");
@@ -6753,14 +6776,17 @@ document.addEventListener('DOMContentLoaded', () => {
         items.forEach(i => {
             itemsHtml += `
                 <tr>
-                    <td style="text-align: right; padding: 5px; border-bottom: 1px dashed #000;">${i.name}</td>
-                    <td style="text-align: center; padding: 5px; border-bottom: 1px dashed #000; font-weight: bold;">${i.qty}</td>
+                    <td style="text-align: right; padding: 8px 5px; border-bottom: 1px dashed #ccc;">
+                        <div style="font-weight: bold; font-size: 14px;">${i.name}</div>
+                        ${i.barcode ? `<div style="font-size: 11px; color: #555; margin-top: 3px;">باركود: ${i.barcode}</div>` : ''}
+                    </td>
+                    <td style="text-align: center; padding: 8px 5px; border-bottom: 1px dashed #ccc; font-weight: bold; font-size: 15px;">${i.qty}</td>
                 </tr>
             `;
         });
 
         let dateStr = new Date().toLocaleString('ar-EG');
-        let cashierName = localStorage.getItem('cashierName') || "المدير";
+        let senderDisplay = senderName ? senderName : regName;
 
         let html = `
             <html dir="rtl" lang="ar">
@@ -6773,25 +6799,25 @@ document.addEventListener('DOMContentLoaded', () => {
                         color: #000;
                         width: 80mm;
                         margin: 0 auto;
-                        padding: 10px;
+                        padding: 15px;
                         font-size: 13px;
-                        line-height: 1.4;
+                        line-height: 1.5;
                     }
                     .header {
                         text-align: center;
                         margin-bottom: 15px;
-                        border-bottom: 2px dashed #000;
-                        padding-bottom: 10px;
                     }
-                    .header h2 { margin: 0 0 5px 0; font-size: 18px; font-weight: bold; }
-                    .header p { margin: 2px 0; font-size: 13px; }
+                    .header h2 { margin: 0 0 5px 0; font-size: 20px; font-weight: bold; }
+                    .header h3 { margin: 0 0 8px 0; font-size: 16px; font-weight: bold; }
+                    .header p { margin: 2px 0; font-size: 12px; }
+                    .divider { border-top: 2px dashed #000; margin: 10px 0; }
                     .info-box {
                         margin-bottom: 15px;
                         border: 1px solid #000;
-                        padding: 8px;
+                        padding: 10px;
                         border-radius: 5px;
                     }
-                    .info-box p { margin: 3px 0; font-weight: bold; }
+                    .info-box p { margin: 4px 0; font-weight: bold; font-size: 13px; }
                     table {
                         width: 100%;
                         border-collapse: collapse;
@@ -6800,14 +6826,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     th {
                         text-align: right;
                         padding: 5px;
+                        border-top: 2px solid #000;
                         border-bottom: 2px solid #000;
                         font-weight: bold;
+                        font-size: 14px;
                     }
                     .footer {
                         text-align: center;
-                        border-top: 2px dashed #000;
-                        padding-top: 10px;
-                        font-size: 12px;
+                        margin-top: 15px;
+                        font-size: 11px;
                         font-weight: bold;
                     }
                 </style>
@@ -6815,15 +6842,17 @@ document.addEventListener('DOMContentLoaded', () => {
             <body>
                 <div class="header">
                     <h2>Candy Club</h2>
-                    <h2>${type}</h2>
-                    <p>رقم الإذن: <b style="font-size:15px;">${logId}</b></p>
+                    <h3>${type}</h3>
+                    <p>رقم الإذن: <b style="font-size:14px;">${logId}</b></p>
                     <p>التاريخ: ${dateStr}</p>
                 </div>
+
+                <div class="divider"></div>
 
                 <div class="info-box">
                     <p>من: ${from}</p>
                     <p>إلى: ${to}</p>
-                    <p>المسؤول: ${cashierName}</p>
+                    <p>المسؤول / الراسل: ${senderDisplay}</p>
                 </div>
 
                 <table>
@@ -6838,11 +6867,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     </tbody>
                 </table>
 
-                ${notes ? `<div style="margin-bottom: 15px;"><p><b>ملاحظات:</b> ${notes}</p></div>` : ''}
+                ${notes ? `<div style="margin-bottom: 15px; font-size: 13px;"><p><b>ملاحظات:</b> ${notes}</p></div>` : ''}
+
+                <div class="divider"></div>
 
                 <div class="footer">
                     <p>مسجل إلكترونياً بـ Candy Club System</p>
-                    <p>توقيع المستلم: ........................</p>
+                    <p style="margin-top: 15px; font-size: 13px;">توقيع المستلم: ........................</p>
                 </div>
 
                 <script>
