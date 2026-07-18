@@ -1338,23 +1338,25 @@ function cleanUpEmptyRows() {
   var lastRow = sheet.getMaxRows();
   var maxDataRow = sheet.getLastRow();
   
-  if (maxDataRow < 2) {
+  if (lastRow < 2) {
     ui.alert("لا توجد بيانات لتنظيفها.");
     return;
   }
   
-  // لضمان السرعة، نقوم بقراءة البيانات الموجودة
-  var data = sheet.getRange(2, 1, maxDataRow - 1, sheet.getMaxColumns()).getValues();
+  // نقرأ العمود الأول فقط لمعرفة إذا كان الصف فارغاً من البيانات الأساسية
+  var data = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
   var deletedCount = 0;
   
   // المسح يتم من الأسفل للأعلى لتفادي مشاكل تغيير أرقام الصفوف أثناء المسح
   for (var i = data.length - 1; i >= 0; i--) {
-    var isEmpty = data[i].every(function(cell) { return cell === ""; });
-    if (isEmpty) {
+    var firstCell = data[i][0] ? data[i][0].toString().trim() : "";
+    
+    // إذا كان العمود الأول (اسم المنتج/العميل) فارغاً، نحذف الصف بالكامل
+    if (firstCell === "") {
       sheet.deleteRow(i + 2);
       deletedCount++;
     }
   }
   
-  ui.alert("✅ تم حذف " + deletedCount + " صف فارغ ورفع البيانات بنجاح في الشيت (" + sheet.getName() + ")!");
+  ui.alert("✅ تم حذف " + deletedCount + " صف فارغ بناءً على العمود الأول، وتم رفع البيانات المحفوظة لأعلى بنجاح!");
 }
