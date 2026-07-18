@@ -398,6 +398,27 @@ function doGet(e) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var action = e.parameter.action;
 
+  // ⭐ جلب بيانات المخازن والأذونات
+  if (action === "getInventoryLogs") {
+      var invSheet = ss.getSheetByName("📦 أذونات المخازن");
+      var invLogs = [];
+      if (invSheet) {
+          var data = invSheet.getDataRange().getValues();
+          for (var i = 1; i < data.length; i++) {
+              invLogs.push({
+                  logId: data[i][0],
+                  from: data[i][1],
+                  to: data[i][2],
+                  regName: data[i][3],
+                  timestamp: data[i][4],
+                  items: data[i][5],
+                  notes: data[i][6]
+              });
+          }
+      }
+      return ContentService.createTextOutput(JSON.stringify(invLogs)).setMimeType(ContentService.MimeType.JSON);
+  }
+
   // ⭐ البحث الشامل
   if (action === "globalSearch") {
       var keyword = (e.parameter.query || "").toLowerCase().trim();

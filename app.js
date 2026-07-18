@@ -6885,3 +6885,204 @@ document.addEventListener('DOMContentLoaded', () => {
         printWindow.document.close();
     }
 });
+// --- Inventory Archive & Dashboard Logic ---
+window.switchInvTab = function(tab) {
+    if (tab === 'create') {
+        document.getElementById('invCreateSection').style.display = 'block';
+        document.getElementById('invArchiveSection').style.display = 'none';
+        document.getElementById('invCreateTabBtn').style.background = 'var(--primary)';
+        document.getElementById('invCreateTabBtn').style.color = 'white';
+        document.getElementById('invArchiveTabBtn').style.background = '#e0e0e0';
+        document.getElementById('invArchiveTabBtn').style.color = '#333';
+    } else {
+        document.getElementById('invCreateSection').style.display = 'none';
+        document.getElementById('invArchiveSection').style.display = 'block';
+        document.getElementById('invArchiveTabBtn').style.background = 'var(--primary)';
+        document.getElementById('invArchiveTabBtn').style.color = 'white';
+        document.getElementById('invCreateTabBtn').style.background = '#e0e0e0';
+        document.getElementById('invCreateTabBtn').style.color = '#333';
+        if (!window.invLogsData) {
+            fetchInventoryLogs();
+        }
+    }
+};
+
+function fetchInventoryLogs() {
+    let tbody = document.getElementById('invArchiveTableBody');
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">جاري تحميل البيانات... <i class="fa-solid fa-spinner fa-spin"></i></td></tr>';
+    
+    fetch(`${GOOGLE_SHEETS_URL}?action=getInventoryLogs`)
+        .then(res => res.json())
+        .then(data => {
+            window.invLogsData = data;
+            renderInventoryDashboard(data);
+            renderInventoryArchive(data);
+        })
+        .catch(err => {
+            console.error(err);
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">خطأ في تحميل البيانات</td></tr>';
+        });
+}
+
+function renderInventoryDashboard(logs) {
+    document.getElementById('invDashTotal').innerText = logs.length;
+    
+    let senders = {};
+    let receivers = {};
+    let products = {};
+    
+    logs.forEach(log => {
+        let from = String(log.from).trim();
+        let to = String(log.to).trim();
+        if (from) senders[from] = (senders[from] || 0) + 1;
+        if (to) receivers[to] = (receivers[to] || 0) + 1;
+        
+        try {
+            let items = JSON.parse(log.items);
+            items.forEach(i => {
+                let pName = String(i.name).trim();
+                let pQty = parseInt(i.qty) || 0;
+                if (pName) {
+                    products[pName] = (products[pName] || 0) + pQty;
+                }
+            });
+        } catch(e) {}
+    });
+    
+    let topSender = Object.keys(senders).sort((a,b) => senders[b]-senders[a])[0] || '-';
+    let topReceiver = Object.keys(receivers).sort((a,b) => receivers[b]-receivers[a])[0] || '-';
+    let topProduct = Object.keys(products).sort((a,b) => products[b]-products[a])[0] || '-';
+    
+    document.getElementById('invDashTopSender').innerText = topSender;
+    document.getElementById('invDashTopReceiver').innerText = topReceiver;
+    document.getElementById('invDashTopProduct').innerText = topProduct;
+}
+
+function renderInventoryArchive(logs) {
+    let tbody = document.getElementById('invArchiveTableBody');
+    tbody.innerHTML = '';
+    
+    if (!logs || logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">لا توجد أذونات سابقة</td></tr>';
+        return;
+    }
+    
+    let reversed = [...logs].reverse();
+    
+    reversed.forEach(log => {
+        let tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><b>${log.logId}</b></td>
+            <td>${log.from}</td>
+            <td>${log.to}</td>
+            <td>${log.regName}</td>
+            <td dir="ltr" style="text-align:right;">${new Date(log.timestamp).toLocaleString('ar-EG', {dateStyle:'short', timeStyle:'short'})}</td>
+            <td style="text-align:center;">
+                <button class="interactive-btn" onclick="reprintInvLog('${log.logId}')" style="background:#3498db; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;" title="إعادة طباعة"><i class="fa-solid fa-print"></i></button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+window.reprintInvLog = function(logId) {
+    if (!window.invLogsData) return;
+    let log = window.invLogsData.find(l => l.logId === logId);
+    if (!log) return;
+    
+    let itemsArr = [];
+    try {
+        itemsArr = JSON.parse(log.items);
+    } catch(e) {}
+    
+    let itemsHtml = itemsArr.map(item => `
+        <tr>
+            <td style="text-align: right;">${item.name}</td>
+            <td style="text-align: center;"><b>${item.qty}</b></td>
+        </tr>
+    `).join('');
+    
+    let printWindow = window.open('', '_blank', 'width=400,height=600');
+    let html = `
+        <html dir="rtl" lang="ar">
+        <head>
+            <title>إذن ${log.logId}</title>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+            <style>
+                @page { margin: 0; }
+                body {
+                    font-family: Tahoma, Arial, sans-serif;
+                    color: #000;
+                    width: 80mm;
+                    margin: 0 auto;
+                    padding: 15px;
+                    font-size: 13px;
+                    line-height: 1.5;
+                }
+                .header { text-align: center; margin-bottom: 15px; }
+                .header h2 { margin: 0 0 5px 0; font-size: 20px; font-weight: bold; }
+                .header h3 { margin: 0 0 8px 0; font-size: 16px; font-weight: bold; }
+                .header p { margin: 2px 0; font-size: 12px; }
+                .divider { border-top: 2px dashed #000; margin: 10px 0; }
+                .info-box { margin-bottom: 15px; border: 1px solid #000; padding: 10px; border-radius: 5px; }
+                .info-box p { margin: 4px 0; font-weight: bold; font-size: 13px; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+                th { text-align: right; padding: 5px; border-top: 2px solid #000; border-bottom: 2px solid #000; font-weight: bold; font-size: 14px; }
+                td { padding: 5px; border-bottom: 1px dashed #ccc; }
+                .footer { text-align: center; margin-top: 15px; font-size: 11px; font-weight: bold; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h2>Candy Club</h2>
+                <h3>إذن حركة بضاعة <span style="font-size:10px;">(نسخة أرشيفية)</span></h3>
+                <p>رقم الإذن: <b style="font-size:14px;">${log.logId}</b></p>
+                <p>التاريخ: ${new Date(log.timestamp).toLocaleString('ar-EG')}</p>
+            </div>
+            <div class="divider"></div>
+            <div class="info-box">
+                <p><i class="fa-solid fa-user-tie" style="margin-left: 5px;"></i> <b>الراسل:</b> ${log.regName}</p>
+                <p><i class="fa-solid fa-store" style="margin-left: 5px;"></i> <b>من:</b> ${log.from}</p>
+                <p><i class="fa-solid fa-truck-fast" style="margin-left: 5px;"></i> <b>إلى:</b> ${log.to}</p>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 75%;">الصنف</th>
+                        <th style="width: 25%; text-align: center;">الكمية</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${itemsHtml}
+                </tbody>
+            </table>
+            ${log.notes ? `<div style="margin-bottom: 15px; font-size: 13px;"><p><i class="fa-solid fa-pen-to-square" style="margin-left: 5px;"></i> <b>ملاحظات:</b> ${log.notes}</p></div>` : ''}
+            <div class="divider"></div>
+            <div class="footer">
+                <p>مسجل إلكترونياً بـ Candy Club System</p>
+            </div>
+            <script>
+                window.onload = function() { setTimeout(function() { window.print(); }, 500); };
+            </script>
+        </body>
+        </html>
+    `;
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+};
+
+document.getElementById('refreshInvArchiveBtn')?.addEventListener('click', fetchInventoryLogs);
+
+document.getElementById('invSearchInput')?.addEventListener('input', function() {
+    let q = this.value.toLowerCase().trim();
+    if (!window.invLogsData) return;
+    let filtered = window.invLogsData.filter(log => {
+        return String(log.logId).toLowerCase().includes(q) ||
+               String(log.from).toLowerCase().includes(q) ||
+               String(log.to).toLowerCase().includes(q) ||
+               String(log.regName).toLowerCase().includes(q) ||
+               String(log.timestamp).toLowerCase().includes(q);
+    });
+    renderInventoryArchive(filtered);
+});

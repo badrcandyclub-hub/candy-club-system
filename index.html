@@ -675,8 +675,15 @@
         <section id="inventory-transfers-tab" class="tab-pane">
             <h2 class="section-title"><i class="fa-solid fa-exchange-alt"></i> حركة المخازن والأذونات</h2>
             
-            <div id="invFormContainer" class="glass-card" style="margin-bottom: 20px; transition: all 0.3s ease;">
-                <h3 style="color: var(--primary); margin-bottom: 15px; font-size: 1.2rem;"><i class="fa-solid fa-file-invoice"></i> إنشاء إذن جديد</h3>
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <button id="invCreateTabBtn" onclick="switchInvTab('create')" class="interactive-btn" style="padding: 10px 20px; border: none; border-radius: 8px; background: var(--primary); color: white; cursor: pointer; font-weight: bold; flex: 1;"><i class="fa-solid fa-plus"></i> إنشاء إذن جديد</button>
+                <button id="invArchiveTabBtn" onclick="switchInvTab('archive')" class="interactive-btn" style="padding: 10px 20px; border: none; border-radius: 8px; background: #e0e0e0; color: #333; cursor: pointer; font-weight: bold; flex: 1;"><i class="fa-solid fa-chart-bar"></i> الأرشيف والتحليلات</button>
+            </div>
+
+            <!-- SECTION: Create -->
+            <div id="invCreateSection">
+                <div id="invFormContainer" class="glass-card" style="margin-bottom: 20px; transition: all 0.3s ease;">
+                    <h3 style="color: var(--primary); margin-bottom: 15px; font-size: 1.2rem;"><i class="fa-solid fa-file-invoice"></i> إنشاء إذن جديد</h3>
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
 
@@ -744,7 +751,60 @@
                 <button id="savePrintInvBtn" class="btn-confirm interactive-btn" style="width: 100%; font-size: 1.2rem; padding: 15px; box-shadow: 0 4px 15px rgba(0,200,83,0.3);">
                     <i class="fa-solid fa-print"></i> حفظ وطباعة الإذن
                 </button>
-            </div>
+            </div> <!-- End invCreateSection -->
+
+            <!-- SECTION: Archive & Dashboard -->
+            <div id="invArchiveSection" style="display: none;">
+                <!-- Dashboard Cards -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                    <div class="glass-card" style="text-align: center; padding: 15px; border-top: 4px solid #3498db;">
+                        <h4 style="margin: 0 0 10px 0; color: #7f8c8d;"><i class="fa-solid fa-file-lines"></i> إجمالي الأذونات</h4>
+                        <div id="invDashTotal" style="font-size: 24px; font-weight: bold; color: #2c3e50;">0</div>
+                    </div>
+                    <div class="glass-card" style="text-align: center; padding: 15px; border-top: 4px solid #2ecc71;">
+                        <h4 style="margin: 0 0 10px 0; color: #7f8c8d;"><i class="fa-solid fa-truck-arrow-right"></i> أكثر جهة أرسلت</h4>
+                        <div id="invDashTopSender" style="font-size: 18px; font-weight: bold; color: #2c3e50;">-</div>
+                    </div>
+                    <div class="glass-card" style="text-align: center; padding: 15px; border-top: 4px solid #e67e22;">
+                        <h4 style="margin: 0 0 10px 0; color: #7f8c8d;"><i class="fa-solid fa-building-circle-check"></i> أكثر جهة استلمت</h4>
+                        <div id="invDashTopReceiver" style="font-size: 18px; font-weight: bold; color: #2c3e50;">-</div>
+                    </div>
+                    <div class="glass-card" style="text-align: center; padding: 15px; border-top: 4px solid #9b59b6;">
+                        <h4 style="margin: 0 0 10px 0; color: #7f8c8d;"><i class="fa-solid fa-box-open"></i> أكثر منتج تحويلاً</h4>
+                        <div id="invDashTopProduct" style="font-size: 18px; font-weight: bold; color: #2c3e50;">-</div>
+                    </div>
+                </div>
+
+                <!-- Archive Table & Search -->
+                <div class="glass-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                        <h3 style="margin: 0; color: var(--primary);"><i class="fa-solid fa-clock-rotate-left"></i> سجل الأذونات السابقة</h3>
+                        <button id="refreshInvArchiveBtn" class="interactive-btn" style="background: var(--secondary); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">
+                            <i class="fa-solid fa-rotate-right"></i> تحديث السجل
+                        </button>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <input type="text" id="invSearchInput" class="input-field" placeholder="ابحث برقم الإذن، اسم الراسل، المستلم، أو التاريخ..." style="margin-bottom: 0;">
+                    </div>
+                    <div class="table-container" style="max-height: 500px; overflow-y: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>رقم الإذن</th>
+                                    <th>من</th>
+                                    <th>إلى</th>
+                                    <th>المسجل</th>
+                                    <th>التاريخ</th>
+                                    <th style="text-align: center;">إجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody id="invArchiveTableBody">
+                                <tr><td colspan="6" style="text-align:center;">جاري تحميل البيانات...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div> <!-- End invArchiveSection -->
         </section>
 
         <section id="expiry-tab" class="tab-pane" style="position: relative;">
@@ -1714,7 +1774,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <script src="app.js?v=24.16"></script>
+    <script src="app.js?v=24.17"></script>
 </body>
 
 </html>
