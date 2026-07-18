@@ -1,26 +1,26 @@
-﻿// ==========================================
-// ًںڑ€ ظ†ط¸ط§ظ… ظƒط§ظ†ط¯ظٹ ظƒظ„ظˆط¨ ط§ظ„ظ…ط·ظˆط± V15.1 - (ط§ظ„ظ†ط³ط®ط© ط§ظ„ظƒط§ظ…ظ„ط© ط§ظ„ظ†ظ‡ط§ط¦ظٹط©)
-// â­گ طھط§ط±ظٹط® ط§ظ„طھط­ط¯ظٹط«: 2026-06-01
+// ==========================================
+// 🚀 نظام كاندي كلوب المطور V15.1 - (النسخة الكاملة النهائية)
+// ⭐ تاريخ التحديث: 2026-06-01
 // ==========================================
 
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
-  ui.createMenu('ًںچ¬ ط¥ط¯ط§ط±ط© ظƒط§ظ†ط¯ظٹ ظƒظ„ظˆط¨')
-      .addItem('ًں”„ ط¨ظ†ط§ط، ظˆطھط­ط¯ظٹط« ط§ظ„ظ†ط¸ط§ظ… ط§ظ„ط´ط§ظ…ظ„', 'setupCandyClubUX')
-      .addItem('âœ¨ ط¥ظ†ط´ط§ط، ط£ط°ظˆظ†ط§طھ ط§ظ„ظ…ط®ط§ط²ظ† ظˆط£ط±ط´ظٹظپ ط§ظ„ظ…ط¨ظٹط¹ط§طھ', 'createMissingSheets')
+  ui.createMenu('🍬 إدارة كاندي كلوب')
+      .addItem('🔄 بناء وتحديث النظام الشامل', 'setupCandyClubUX')
+      .addItem('✨ إنشاء أذونات المخازن وأرشيف المبيعات', 'createMissingSheets')
       .addToUi();
 }
 
-// â­گ ط¯ط§ظ„ط© ظ…ط®طµطµط© ظ„ط¥ظ†ط´ط§ط، ط§ظ„ط´ظٹطھط§طھ ط§ظ„ظ…ظپظ‚ظˆط¯ط© (ظ…ط«ظ„ ط£ط°ظˆظ†ط§طھ ط§ظ„ظ…ط®ط§ط²ظ† ظˆط£ط±ط´ظٹظپ ط§ظ„ظ…ط¨ظٹط¹ط§طھ)
+// ⭐ دالة مخصصة لإنشاء الشيتات المفقودة (مثل أذونات المخازن وأرشيف المبيعات)
 function createMissingSheets() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var headerFont = "Cairo";
 
-  // 1. ط£ط±ط´ظٹظپ ط§ظ„ظ…ط¨ظٹط¹ط§طھ
-  var archiveSheet = ss.getSheetByName("ط£ط±ط´ظٹظپ ط§ظ„ظ…ط¨ظٹط¹ط§طھ");
+  // 1. أرشيف المبيعات
+  var archiveSheet = ss.getSheetByName("أرشيف المبيعات");
   if (!archiveSheet) {
-      archiveSheet = ss.insertSheet("ط£ط±ط´ظٹظپ ط§ظ„ظ…ط¨ظٹط¹ط§طھ");
-      var archiveHeaders = ["ط§ط³ظ… ط§ظ„ظ…ظ†طھط¬", "ط§ظ„ظƒظ…ظٹط©", "طھط§ط±ظٹط® ط§ظ„ط§ظ†طھظ‡ط§ط،", "ط§ظ„ظ…ظƒط§ظ† / ط§ظ„ظ…ظˆط±ط¯", "ط§ط³ظ… ط§ظ„ظ…ط³ط¬ظ„", "طھط§ط±ظٹط® ط§ظ„طھط³ط¬ظٹظ„", "ط§ظ„ظ…ط³طھظ„ظ…", "ظ…ظ„ط§ط­ط¸ط§طھ", "ط§ظ„ط³ط¹ط± ط§ظ„ط£ط³ط§ط³ظٹ", "ط³ط¹ط± ط§ظ„ط¹ط±ط¶", "ط§ظ„ط­ط§ظ„ط©", "ط§ظ„ط¨ط§ط±ظƒظˆط¯", "طھط§ط±ظٹط® ط§ظ„ط¨ظٹط¹/ط§ظ„ط£ط±ط´ظپط©"];
+      archiveSheet = ss.insertSheet("أرشيف المبيعات");
+      var archiveHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "اسم المسجل", "تاريخ التسجيل", "المستلم", "ملاحظات", "السعر الأساسي", "سعر العرض", "الحالة", "الباركود", "تاريخ البيع/الأرشفة"];
       archiveSheet.getRange(1, 1, 1, archiveHeaders.length).setValues([archiveHeaders])
            .setBackground("#2c3e50").setFontColor("white").setFontFamily(headerFont).setFontSize(14).setFontWeight("bold")
            .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
@@ -28,11 +28,11 @@ function createMissingSheets() {
       archiveSheet.setFrozenRows(1);
   }
 
-  // 2. ط£ط°ظˆظ†ط§طھ ط§ظ„ظ…ط®ط§ط²ظ† (ط§ظ„ط¬ط¯ظٹط¯)
-  var invSheet = ss.getSheetByName("ط£ط°ظˆظ†ط§طھ ط§ظ„ظ…ط®ط§ط²ظ†");
+  // 2. أذونات المخازن (الجديد)
+  var invSheet = ss.getSheetByName("أذونات المخازن");
   if (!invSheet) {
-      invSheet = ss.insertSheet("ط£ط°ظˆظ†ط§طھ ط§ظ„ظ…ط®ط§ط²ظ†");
-      var invHeaders = ["ط±ظ‚ظ… ط§ظ„ط¥ط°ظ†", "ظ†ظˆط¹ ط§ظ„ط¥ط°ظ†", "ظ…ظ†", "ط¥ظ„ظ‰", "ط§ط³ظ… ط§ظ„ظ…ط³ط¬ظ„", "ط§ظ„طھط§ط±ظٹط® ظˆط§ظ„ظˆظ‚طھ", "ط§ظ„ط£طµظ†ط§ظپ ظˆط§ظ„ظƒظ…ظٹط§طھ", "ظ…ظ„ط§ط­ط¸ط§طھ"];
+      invSheet = ss.insertSheet("أذونات المخازن");
+      var invHeaders = ["رقم الإذن", "نوع الإذن", "من", "إلى", "اسم المسجل", "التاريخ والوقت", "الأصناف والكميات", "ملاحظات"];
       invSheet.getRange(1, 1, 1, invHeaders.length).setValues([invHeaders])
            .setBackground("#e67e22").setFontColor("white").setFontFamily(headerFont).setFontSize(14).setFontWeight("bold")
            .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
@@ -43,40 +43,40 @@ function createMissingSheets() {
       invSheet.setColumnWidth(7, 400); // column for products
   }
 
-  SpreadsheetApp.getUi().alert("âœ… طھظ… ط¥ظ†ط´ط§ط، ظˆطھط­ط¯ظٹط« ط§ظ„ط´ظٹطھط§طھ ط¨ظ†ط¬ط§ط­! ظٹظ…ظƒظ†ظƒ ط§ظ„ط¢ظ† ط§ط³طھط®ط¯ط§ظ… ط£ط±ط´ظٹظپ ط§ظ„ظ…ط¨ظٹط¹ط§طھ ظˆط£ط°ظˆظ†ط§طھ ط§ظ„ظ…ط®ط§ط²ظ†.");
+  SpreadsheetApp.getUi().alert("✅ تم إنشاء وتحديث الشيتات بنجاح! يمكنك الآن استخدام أرشيف المبيعات وأذونات المخازن.");
 }
 
-// â­گ ط¥ط¶ط§ظپط© ط¯ط§ظ„ط© ط§ظ„طھظپط§ط¹ظ„ ط§ظ„ظٹط¯ظˆظٹ: ط¹ط´ط§ظ† ظ„ظˆ ط؛ظٹط±طھ ط§ظ„ط­ط§ظ„ط© ظ…ظ† ط§ظ„ط¥ظƒط³ظٹظ„ ط¨ط¥ظٹط¯ظƒطŒ ط§ظ„ظ„ظˆظ† ظٹطھط؛ظٹط± ظˆط§ظ„ظ…ط§ظ„ظٹط© طھطھط­ط¯ط« ظپظˆط±ط§ظ‹
+// ⭐ إضافة دالة التفاعل اليدوي: عشان لو غيرت الحالة من الإكسيل بإيدك، اللون يتغير والمالية تتحدث فوراً
 function onEdit(e) {
   if (!e || !e.range) return;
   var sheet = e.range.getSheet();
-  if (sheet.getName() !== "ًں“‌ ط§ظ„ط·ظ„ط¨ط§طھ") return;
+  if (sheet.getName() !== "📝 الطلبات") return;
   
   var row = e.range.getRow();
   var col = e.range.getColumn();
   
-  // ط§ظ„ط¹ظ…ظˆط¯ 19 ظ‡ظˆ "ط­ط§ظ„ط© ط§ظ„ط·ظ„ط¨" (S)
+  // العمود 19 هو "حالة الطلب" (S)
   if (col === 19 && row > 1) {
     var status = e.value;
     var oldStatus = e.oldValue;
     var rowRange = sheet.getRange(row, 1, 1, sheet.getLastColumn());
     
-    if (status === "ظ…ط±طھط¬ط¹") {
-        rowRange.setBackground("#FEE2E2"); // ط£ط­ظ…ط± ظپط§طھط­
-        if (oldStatus !== "ظ…ط±طھط¬ط¹") {
+    if (status === "مرتجع") {
+        rowRange.setBackground("#FEE2E2"); // أحمر فاتح
+        if (oldStatus !== "مرتجع") {
             var phoneToSub = sheet.getRange(row, 8).getValue().toString().replace(/'/g, "").trim();
             var amtToSub = parseFloat(sheet.getRange(row, 18).getValue()) || 0;
-            subtractFromCustomerDB(SpreadsheetApp.getActiveSpreadsheet().getSheetByName("ًں‘¥ ظ‚ط§ط¹ط¯ط© ط§ظ„ط¹ظ…ظ„ط§ط،"), phoneToSub, amtToSub);
+            subtractFromCustomerDB(SpreadsheetApp.getActiveSpreadsheet().getSheetByName("👥 قاعدة العملاء"), phoneToSub, amtToSub);
         }
-    } else if (status === "طھظ… ط§ظ„طھظˆطµظٹظ„ ظˆظ…ظڈط­ط§ط³ط¨") {
-        rowRange.setBackground("#E8F5E9"); // ط£ط®ط¶ط± ظپط§طھط­ ظ…ط±ظٹط­
-    } else if (status === "طھظ… ط§ظ„طھظˆطµظٹظ„") {
-        rowRange.setBackground("#D4EDDA"); // ط£ط®ط¶ط± ط¨ط§ظ‡طھ (ظ‚ظٹط¯ ط§ظ„طھط­طµظٹظ„)
-    } else if (status === "ظپظٹ ط§ظ„ط´ط­ظ†" || status === "ظ‚ظٹط¯ ط§ظ„طھط¬ظ‡ظٹط²") {
-        rowRange.setBackground("#FFFFFF"); // ط£ط¨ظٹط¶ ط·ط¨ظٹط¹ظٹ
+    } else if (status === "تم التوصيل ومُحاسب") {
+        rowRange.setBackground("#E8F5E9"); // أخضر فاتح مريح
+    } else if (status === "تم التوصيل") {
+        rowRange.setBackground("#D4EDDA"); // أخضر باهت (قيد التحصيل)
+    } else if (status === "في الشحن" || status === "قيد التجهيز") {
+        rowRange.setBackground("#FFFFFF"); // أبيض طبيعي
     }
     
-    // طھط­ط¯ظٹط« ط§ظ„ظ…ط§ظ„ظٹط© ظپظٹ ط§ظ„ط®ظ„ظپظٹط©
+    // تحديث المالية في الخلفية
     calculateFinancials();
   }
 }
@@ -86,17 +86,17 @@ function setupCandyClubUX() {
   var headerFont = "Cairo"; 
   
   // ============================================================
-  // 1. ط´ظٹطھ ط§ظ„ط·ظ„ط¨ط§طھ
+  // 1. شيت الطلبات
   // ============================================================
-  var ordersSheet = ss.getSheetByName("ًں“‌ ط§ظ„ط·ظ„ط¨ط§طھ");
+  var ordersSheet = ss.getSheetByName("📝 الطلبات");
   if (!ordersSheet) {
     ordersSheet = ss.getSheets()[0];
-    ordersSheet.setName("ًں“‌ ط§ظ„ط·ظ„ط¨ط§طھ");
+    ordersSheet.setName("📝 الطلبات");
     var orderHeaders = [
-      "ط±ظ‚ظ… ط§ظ„ط·ظ„ط¨", "ط§ظ„طھط§ط±ظٹط®", "ط§ظ„ظˆظ‚طھ", "ط§ظ„ظ…ظ†طµط©", "ط§ط³ظ… ط§ظ„ط¹ظ…ظٹظ„", "ط§ظ„ظ…ط­ط§ظپط¸ط©", "ط§ظ„ط¹ظ†ظˆط§ظ† ط¨ط§ظ„طھظپطµظٹظ„", 
-      "ط±ظ‚ظ… ط§ظ„طھظˆط§طµظ„", "ط±ظ‚ظ… ط¢ط®ط±", "ظ†ظˆط¹ ط§ظ„طھظˆطµظٹظ„", "ط·ط±ظٹظ‚ط© ط§ظ„ط¯ظپط¹", "ط§ط³ظ… ط§ظ„ظ…ظ†ط¯ظˆط¨", "ظ…ظˆط¹ط¯ ط§ظ„طھط³ظ„ظٹظ…", 
-      "طھظپط§طµظٹظ„ ط§ظ„ظ…ظ†طھط¬ط§طھ", "ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ظ…ظ†طھط¬ط§طھ", "ط§ظ„ط®طµظ…", "ط³ط¹ط± ط§ظ„ط´ط­ظ†", "ط§ظ„ط¥ط¬ظ…ط§ظ„ظٹ ط¨ط§ظ„ط´ط­ظ†", "ط­ط§ظ„ط© ط§ظ„ط·ظ„ط¨", "ظ…ظ„ط§ط­ط¸ط§طھ", "ط§ظ„ظ…ظˆط¯ط±ظٹطھظˆط±",
-      "ط§ظ„ط¹ط±ط¨ظˆظ† (ظ…ط¯ظپظˆط¹)", "ط§ظ„ظ…طھط¨ظ‚ظٹ ط¹ظ†ط¯ ط§ظ„ط§ط³طھظ„ط§ظ…"
+      "رقم الطلب", "التاريخ", "الوقت", "المنصة", "اسم العميل", "المحافظة", "العنوان بالتفصيل", 
+      "رقم التواصل", "رقم آخر", "نوع التوصيل", "طريقة الدفع", "اسم المندوب", "موعد التسليم", 
+      "تفاصيل المنتجات", "إجمالي المنتجات", "الخصم", "سعر الشحن", "الإجمالي بالشحن", "حالة الطلب", "ملاحظات", "المودريتور",
+      "العربون (مدفوع)", "المتبقي عند الاستلام"
     ];
     ordersSheet.getRange(1, 1, 1, orderHeaders.length).setValues([orderHeaders])
                .setBackground("#FF1493").setFontColor("white").setFontFamily(headerFont).setFontSize(12).setFontWeight("bold")
@@ -106,17 +106,17 @@ function setupCandyClubUX() {
     
     ordersSheet.getRange("A2:W" + ordersSheet.getMaxRows()).clearDataValidations();
     var statusRange = ordersSheet.getRange("S2:S" + ordersSheet.getMaxRows()); 
-    var rule = SpreadsheetApp.newDataValidation().requireValueInList(["ظ‚ظٹط¯ ط§ظ„طھط¬ظ‡ظٹط²", "ظپظٹ ط§ظ„ط´ط­ظ†", "طھظ… ط§ظ„طھظˆطµظٹظ„", "طھظ… ط§ظ„طھظˆطµظٹظ„ ظˆظ…ظڈط­ط§ط³ط¨", "ظ…ط±طھط¬ط¹"], true).build();
+    var rule = SpreadsheetApp.newDataValidation().requireValueInList(["قيد التجهيز", "في الشحن", "تم التوصيل", "تم التوصيل ومُحاسب", "مرتجع"], true).build();
     statusRange.setDataValidation(rule);
   }
 
   // ============================================================
-  // 2. ط´ظٹطھ ط§ظ„ط¹ظ…ظ„ط§ط،
+  // 2. شيت العملاء
   // ============================================================
-  var customerSheet = ss.getSheetByName("ًں‘¥ ظ‚ط§ط¹ط¯ط© ط§ظ„ط¹ظ…ظ„ط§ط،");
+  var customerSheet = ss.getSheetByName("👥 قاعدة العملاء");
   if (!customerSheet) {
-    customerSheet = ss.insertSheet("ًں‘¥ ظ‚ط§ط¹ط¯ط© ط§ظ„ط¹ظ…ظ„ط§ط،");
-    var customerHeaders = ["ط§ط³ظ… ط§ظ„ط¹ظ…ظٹظ„", "ط§ظ„ظ…ظˆط¨ط§ظٹظ„", "ط§ظ„ظ…ط­ط§ظپط¸ط©", "ط§ظ„ط¹ظ†ظˆط§ظ†", "ط¹ط¯ط¯ ط§ظ„ط·ظ„ط¨ط§طھ", "ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ظ…ط¯ظپظˆط¹ط§طھ", "طھط§ط±ظٹط® ط¢ط®ط± ط·ظ„ط¨"];
+    customerSheet = ss.insertSheet("👥 قاعدة العملاء");
+    var customerHeaders = ["اسم العميل", "الموبايل", "المحافظة", "العنوان", "عدد الطلبات", "إجمالي المدفوعات", "تاريخ آخر طلب"];
     customerSheet.getRange(1, 1, 1, customerHeaders.length).setValues([customerHeaders])
                  .setBackground("#673AB7").setFontColor("white").setFontFamily(headerFont).setFontSize(12).setFontWeight("bold")
                  .setHorizontalAlignment("center").setVerticalAlignment("middle");
@@ -125,36 +125,36 @@ function setupCandyClubUX() {
   }
 
   // ============================================================
-  // 3. ط´ظٹطھ ط§ظ„ط¥ط¹ط¯ط§ط¯ط§طھ ظˆط§ظ„ط´ط­ظ†
+  // 3. شيت الإعدادات والشحن
   // ============================================================
-  var settingsSheet = ss.getSheetByName("âڑ™ï¸ڈ ط§ظ„ط¥ط¹ط¯ط§ط¯ط§طھ ظˆط§ظ„ط´ط­ظ†");
+  var settingsSheet = ss.getSheetByName("⚙️ الإعدادات والشحن");
   if (!settingsSheet) {
-    settingsSheet = ss.insertSheet("âڑ™ï¸ڈ ط§ظ„ط¥ط¹ط¯ط§ط¯ط§طھ ظˆط§ظ„ط´ط­ظ†");
+    settingsSheet = ss.insertSheet("⚙️ الإعدادات والشحن");
     
     settingsSheet.getRange(1, 13, 50, 4).setBorder(true, true, true, true, true, true, "#f39c12", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
     settingsSheet.getRange("M1:P1").setBackground("#e67e22").setFontColor("white").setFontFamily(headerFont).setFontSize(12).setFontWeight("bold");
-    settingsSheet.getRange("O1:P1").setValues([["ط¹ط¯ط¯ ط§ظ„ط£ظˆط±ط¯ط±ط§طھ", "طµط§ظپظٹ ط§ظ„ط±ط¨ط­"]]);
+    settingsSheet.getRange("O1:P1").setValues([["عدد الأوردرات", "صافي الربح"]]);
     settingsSheet.setColumnWidth(15, 120);
     settingsSheet.setColumnWidth(16, 120);
 
-    settingsSheet.getRange("O2:O50").setFormula('=IF(M2<>"", COUNTIFS(\'ًں“‌ ط§ظ„ط·ظ„ط¨ط§طھ\'!L:L, M2, \'ًں“‌ ط§ظ„ط·ظ„ط¨ط§طھ\'!S:S, "*طھظ… ط§ظ„طھظˆطµظٹظ„*"), "")');
-    settingsSheet.getRange("P2:P50").setFormula('=IF(M2<>"", SUMIFS(\'ًں“‌ ط§ظ„ط·ظ„ط¨ط§طھ\'!Q:Q, \'ًں“‌ ط§ظ„ط·ظ„ط¨ط§طھ\'!L:L, M2, \'ًں“‌ ط§ظ„ط·ظ„ط¨ط§طھ\'!S:S, "*طھظ… ط§ظ„طھظˆطµظٹظ„*"), "")');
+    settingsSheet.getRange("O2:O50").setFormula('=IF(M2<>"", COUNTIFS(\'📝 الطلبات\'!L:L, M2, \'📝 الطلبات\'!S:S, "*تم التوصيل*"), "")');
+    settingsSheet.getRange("P2:P50").setFormula('=IF(M2<>"", SUMIFS(\'📝 الطلبات\'!Q:Q, \'📝 الطلبات\'!L:L, M2, \'📝 الطلبات\'!S:S, "*تم التوصيل*"), "")');
 
-    settingsSheet.getRange("S1:T1").setValues([["ًں‘¤ ط§ظ„ظ…ظˆط¯ط±ظٹطھظˆط±", "ط¹ط¯ط¯ ط§ظ„ط£ظˆط±ط¯ط±ط§طھ"]]).setBackground("#8e44ad").setFontColor("white").setFontFamily(headerFont).setFontSize(12).setFontWeight("bold");
+    settingsSheet.getRange("S1:T1").setValues([["👤 المودريتور", "عدد الأوردرات"]]).setBackground("#8e44ad").setFontColor("white").setFontFamily(headerFont).setFontSize(12).setFontWeight("bold");
     settingsSheet.getRange(1, 19, 50, 2).setBorder(true, true, true, true, true, true, "#8e44ad", SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
     settingsSheet.setColumnWidth(19, 150);
     settingsSheet.setColumnWidth(20, 120);
 
-    settingsSheet.getRange("T2:T50").setFormula('=IF(S2<>"", COUNTIF(\'ًں“‌ ط§ظ„ط·ظ„ط¨ط§طھ\'!U:U, S2), "")');
+    settingsSheet.getRange("T2:T50").setFormula('=IF(S2<>"", COUNTIF(\'📝 الطلبات\'!U:U, S2), "")');
   }
 
   // ============================================================
-  // 4. ط´ظٹطھ ط§ظ„ظƒطھط§ظ„ظˆط¬
+  // 4. شيت الكتالوج
   // ============================================================
-  var catalogSheet = ss.getSheetByName("ًں“¦ ط§ظ„ظƒطھط§ظ„ظˆط¬");
+  var catalogSheet = ss.getSheetByName("📦 الكتالوج");
   if (!catalogSheet) {
-    catalogSheet = ss.insertSheet("ًں“¦ ط§ظ„ظƒطھط§ظ„ظˆط¬");
-    var catalogHeaders = ["ط§ط³ظ… ط§ظ„ظ…ظ†طھط¬", "ط§ظ„ط³ط¹ط± ط§ظ„ط£ط³ط§ط³ظٹ", "ط­ط§ظ„ط© ط§ظ„ط¹ط±ط¶", "ط³ط¹ط± ط§ظ„ط¹ط±ط¶"];
+    catalogSheet = ss.insertSheet("📦 الكتالوج");
+    var catalogHeaders = ["اسم المنتج", "السعر الأساسي", "حالة العرض", "سعر العرض"];
     catalogSheet.getRange(1, 1, 1, catalogHeaders.length).setValues([catalogHeaders])
                 .setBackground("#2ecc71").setFontColor("white").setFontFamily(headerFont).setFontSize(16).setFontWeight("bold")
                 .setHorizontalAlignment("center").setVerticalAlignment("middle");
@@ -170,12 +170,12 @@ function setupCandyClubUX() {
   }
 
   // ============================================================
-  // 5. ط´ظٹطھ ط§ظ„ظ†ظˆط§ظ‚طµ
+  // 5. شيت النواقص
   // ============================================================
-  var outOfStockSheet = ss.getSheetByName("âڈ³ ط§ظ„ظ†ظˆط§ظ‚طµ");
+  var outOfStockSheet = ss.getSheetByName("⏳ النواقص");
   if (!outOfStockSheet) {
-    outOfStockSheet = ss.insertSheet("âڈ³ ط§ظ„ظ†ظˆط§ظ‚طµ");
-    var oosHeaders = ["ط§ط³ظ… ط§ظ„ط¹ظ…ظٹظ„", "ط±ظ‚ظ… ط§ظ„ظ…ظˆط¨ط§ظٹظ„", "ط§ظ„ظ…ظ†طھط¬", "ط§ظ„ط؛ط±ط¶", "ط§ظ„طھط§ط±ظٹط®"];
+    outOfStockSheet = ss.insertSheet("⏳ النواقص");
+    var oosHeaders = ["اسم العميل", "رقم الموبايل", "المنتج", "الغرض", "التاريخ"];
     outOfStockSheet.getRange(1, 1, 1, oosHeaders.length).setValues([oosHeaders])
                    .setBackground("#e67e22").setFontColor("white").setFontFamily(headerFont).setFontSize(16).setFontWeight("bold")
                    .setHorizontalAlignment("center").setVerticalAlignment("middle");
@@ -192,12 +192,12 @@ function setupCandyClubUX() {
   }
 
   // ============================================================
-  // 6. â­گ V14.2: ط´ظٹطھ ط§ظ„ظ…ط¹ظ„ظ‚ط§طھ (ط­ظپط¸ ط§ظ„ط·ظ„ط¨ط§طھ ط§ظ„ظ…ط¹ظ„ظ‚ط© ظپظٹ ط¬ظˆط¬ظ„ ط´ظٹطھط³)
+  // 6. ⭐ V14.2: شيت المعلقات (حفظ الطلبات المعلقة في جوجل شيتس)
   // ============================================================
-  var draftsSheet = ss.getSheetByName("ًں“‚ ط§ظ„ظ…ط¹ظ„ظ‚ط§طھ");
+  var draftsSheet = ss.getSheetByName("📂 المعلقات");
   if (!draftsSheet) {
-    draftsSheet = ss.insertSheet("ًں“‚ ط§ظ„ظ…ط¹ظ„ظ‚ط§طھ");
-    var draftsHeaders = ["ط±ظ‚ظ… ط§ظ„ط·ظ„ط¨ (Draft ID)", "ط§ظ„طھط§ط±ظٹط® ظˆط§ظ„ظˆظ‚طھ", "ط¨ظٹط§ظ†ط§طھ ط§ظ„ط·ظ„ط¨ (JSON)"];
+    draftsSheet = ss.insertSheet("📂 المعلقات");
+    var draftsHeaders = ["رقم الطلب (Draft ID)", "التاريخ والوقت", "بيانات الطلب (JSON)"];
     draftsSheet.getRange(1, 1, 1, draftsHeaders.length).setValues([draftsHeaders])
                .setBackground("#34495e").setFontColor("white").setFontFamily(headerFont).setFontSize(12).setFontWeight("bold")
                .setHorizontalAlignment("center").setVerticalAlignment("middle");
@@ -209,12 +209,12 @@ function setupCandyClubUX() {
   }
 
   // ============================================================
-  // 7. ط´ظٹطھ ط§ظ„ط­ط³ط§ط¨ط§طھ ط§ظ„ظ…ط§ظ„ظٹط©
+  // 7. شيت الحسابات المالية
   // ============================================================
-  var finSheet = ss.getSheetByName("ًں“ٹ ط§ظ„ط­ط³ط§ط¨ط§طھ ظˆط§ظ„ظ…ط§ظ„ظٹط©");
+  var finSheet = ss.getSheetByName("📊 الحسابات والمالية");
   if (!finSheet) {
-    finSheet = ss.insertSheet("ًں“ٹ ط§ظ„ط­ط³ط§ط¨ط§طھ ظˆط§ظ„ظ…ط§ظ„ظٹط©");
-    var finHeaders = ["ط§ظ„ط¬ظ‡ط© (ظ…ظ†ط¯ظˆط¨/ط´ط±ظƒط©)", "ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ط·ظ„ط¨ط§طھ ط§ظ„ظ…ظڈط³ظ„ظ…ط©", "ط§ظ„ط¹ظ‡ط¯ط© (ظپظٹ ط§ظ„ط´ط­ظ†)", "ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ظƒط§ط´ ط§ظ„ظ…ط­طµظ„", "ط¥ط¬ظ…ط§ظ„ظٹ ظ…طµط§ط±ظٹظپ ط§ظ„ط´ط­ظ†", "طµط§ظپظٹ ط§ظ„ظ…ط¯ظٹظˆظ†ظٹط© ظ„ظ†ط§", "ط­ط§ظ„ط© ط§ظ„ط­ط³ط§ط¨"];
+    finSheet = ss.insertSheet("📊 الحسابات والمالية");
+    var finHeaders = ["الجهة (مندوب/شركة)", "إجمالي الطلبات المُسلمة", "العهدة (في الشحن)", "إجمالي الكاش المحصل", "إجمالي مصاريف الشحن", "صافي المديونية لنا", "حالة الحساب"];
     finSheet.getRange(1, 1, 1, finHeaders.length).setValues([finHeaders])
             .setBackground("#2c3e50").setFontColor("white").setFontFamily(headerFont).setFontSize(14).setFontWeight("bold")
             .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
@@ -231,14 +231,14 @@ function setupCandyClubUX() {
   }
 
   // ============================================================
-  // 8. ط´ظٹطھ ط§ظ„ط§ط³طھظ„ط§ظ…ط§طھ (ط§ظ„طھط­ط¯ظٹط« ط§ظ„ط°ظƒظٹ)
+  // 8. شيت الاستلامات (التحديث الذكي)
   // ============================================================
   var expirySheet = getExpirySheet(ss);
   if (!expirySheet) {
-      expirySheet = ss.insertSheet("ًں“¥ ط§ظ„ط§ط³طھظ„ط§ظ…ط§طھ");
+      expirySheet = ss.insertSheet("📥 الاستلامات");
   }
   
-  var expiryHeaders = ["ط§ط³ظ… ط§ظ„ظ…ظ†طھط¬", "ط§ظ„ظƒظ…ظٹط©", "طھط§ط±ظٹط® ط§ظ„ط§ظ†طھظ‡ط§ط،", "ط§ظ„ظ…ظƒط§ظ† / ط§ظ„ظ…ظˆط±ط¯", "ط§ط³ظ… ط§ظ„ظ…ط³ط¬ظ„", "طھط§ط±ظٹط® ط§ظ„طھط³ط¬ظٹظ„", "ط§ظ„ظ…ط³طھظ„ظ…", "ظ…ظ„ط§ط­ط¸ط§طھ", "ط§ظ„ط³ط¹ط± ط§ظ„ط£ط³ط§ط³ظٹ", "ط³ط¹ط± ط§ظ„ط¹ط±ط¶", "ط§ظ„ط­ط§ظ„ط©", "ط§ظ„ط¨ط§ط±ظƒظˆط¯"];
+  var expiryHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "اسم المسجل", "تاريخ التسجيل", "المستلم", "ملاحظات", "السعر الأساسي", "سعر العرض", "الحالة", "الباركود"];
   expirySheet.getRange(1, 1, 1, expiryHeaders.length).setValues([expiryHeaders])
              .setBackground("#2980b9").setFontColor("white").setFontFamily(headerFont).setFontSize(14).setFontWeight("bold")
              .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
@@ -248,12 +248,12 @@ function setupCandyClubUX() {
   expirySheet.setColumnWidth(2, 220);
 
   // ============================================================
-  // 9. ط£ط±ط´ظٹظپ ط§ظ„ظ…ط¨ظٹط¹ط§طھ
+  // 9. أرشيف المبيعات
   // ============================================================
-  var archiveSheet = ss.getSheetByName("ط£ط±ط´ظٹظپ ط§ظ„ظ…ط¨ظٹط¹ط§طھ");
+  var archiveSheet = ss.getSheetByName("أرشيف المبيعات");
   if (!archiveSheet) {
-      archiveSheet = ss.insertSheet("ط£ط±ط´ظٹظپ ط§ظ„ظ…ط¨ظٹط¹ط§طھ");
-      var archiveHeaders = ["ط§ط³ظ… ط§ظ„ظ…ظ†طھط¬", "ط§ظ„ظƒظ…ظٹط©", "طھط§ط±ظٹط® ط§ظ„ط§ظ†طھظ‡ط§ط،", "ط§ظ„ظ…ظƒط§ظ† / ط§ظ„ظ…ظˆط±ط¯", "ط§ط³ظ… ط§ظ„ظ…ط³ط¬ظ„", "طھط§ط±ظٹط® ط§ظ„طھط³ط¬ظٹظ„", "ط§ظ„ظ…ط³طھظ„ظ…", "ظ…ظ„ط§ط­ط¸ط§طھ", "ط§ظ„ط³ط¹ط± ط§ظ„ط£ط³ط§ط³ظٹ", "ط³ط¹ط± ط§ظ„ط¹ط±ط¶", "ط§ظ„ط­ط§ظ„ط©", "ط§ظ„ط¨ط§ط±ظƒظˆط¯", "طھط§ط±ظٹط® ط§ظ„ط¨ظٹط¹/ط§ظ„ط£ط±ط´ظپط©"];
+      archiveSheet = ss.insertSheet("أرشيف المبيعات");
+      var archiveHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "اسم المسجل", "تاريخ التسجيل", "المستلم", "ملاحظات", "السعر الأساسي", "سعر العرض", "الحالة", "الباركود", "تاريخ البيع/الأرشفة"];
       archiveSheet.getRange(1, 1, 1, archiveHeaders.length).setValues([archiveHeaders])
            .setBackground("#2c3e50").setFontColor("white").setFontFamily(headerFont).setFontSize(14).setFontWeight("bold")
            .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
@@ -263,34 +263,34 @@ function setupCandyClubUX() {
 
   calculateFinancials();
 
-  SpreadsheetApp.getUi().alert("âœ… طھظ… ط§ظ„طھط­ط¯ظٹط« ط§ظ„ط¢ظ…ظ† ظ„ظ„ظ†ط¸ط§ظ… ط§ظ„ط´ط§ظ…ظ„ V15.2 ط¨ظ†ط¬ط§ط­ ط¨ط¯ظˆظ† ظپظ‚ط¯ط§ظ† ط£ظٹ ط¨ظٹط§ظ†ط§طھ! ظˆطھظ… ط¥ظ†ط´ط§ط، ط£ط±ط´ظٹظپ ط§ظ„ظ…ط¨ظٹط¹ط§طھ.");
+  SpreadsheetApp.getUi().alert("✅ تم التحديث الآمن للنظام الشامل V15.2 بنجاح بدون فقدان أي بيانات! وتم إنشاء أرشيف المبيعات.");
 }
 
 // ============================================================
-// â­گ V15.1: ط¯ط§ظ„ط© ظ…ط³ط§ط¹ط¯ط© ظ„ظ„طھط¹ط±ظپ ط¹ظ„ظ‰ ط§ظ„ظ…ظ†طµط© ظ…ظ† ط§ظ„ظ†طµ
+// ⭐ V15.1: دالة مساعدة للتعرف على المنصة من النص
 // ============================================================
 function detectPlatformName(rawPlatform) {
   var plt = (rawPlatform || "").toString().toLowerCase();
-  if (plt.includes('ظˆط§طھط³') || plt.includes('whats')) return 'ظˆط§طھط³ط§ط¨';
-  if (plt.includes('ط§ظ†ط³طھط§') || plt.includes('insta') || plt.includes('ط§ظ†ط³طھط¬ط±ط§ظ…') || plt.includes('ط¥ظ†ط³طھط¬ط±ط§ظ…')) return 'ط§ظ†ط³طھط¬ط±ط§ظ…';
-  if (plt.includes('ظپظٹط³') || plt.includes('face') || plt.includes('facebook')) return 'ظپظٹط³ط¨ظˆظƒ';
-  if (plt.includes('طھظٹظƒ') || plt.includes('tiktok')) return 'طھظٹظƒ طھظˆظƒ';
-  return 'ط£ط®ط±ظ‰';
+  if (plt.includes('واتس') || plt.includes('whats')) return 'واتساب';
+  if (plt.includes('انستا') || plt.includes('insta') || plt.includes('انستجرام') || plt.includes('إنستجرام')) return 'انستجرام';
+  if (plt.includes('فيس') || plt.includes('face') || plt.includes('facebook')) return 'فيسبوك';
+  if (plt.includes('تيك') || plt.includes('tiktok')) return 'تيك توك';
+  return 'أخرى';
 }
 
 // ============================================================
-// â­گ V15.1: ط¯ط§ظ„ط© ظ…ط³طھظ‚ظ„ط© ظ„ط­ط³ط§ط¨ طھظ‚ط±ظٹط± ط´ظ‡ط± ظ…ط­ط¯ط¯
-// targetMonth = "2026-06" ظ…ط«ظ„ط§ظ‹
+// ⭐ V15.1: دالة مستقلة لحساب تقرير شهر محدد
+// targetMonth = "2026-06" مثلاً
 // ============================================================
 function buildMonthlyReport(ordersData, targetMonth) {
   var monthTopProductsMap = {};
-  var monthPlatformsMap   = { 'ظˆط§طھط³ط§ط¨': 0, 'ط§ظ†ط³طھط¬ط±ط§ظ…': 0, 'ظپظٹط³ط¨ظˆظƒ': 0, 'طھظٹظƒ طھظˆظƒ': 0, 'ط£ط®ط±ظ‰': 0 };
+  var monthPlatformsMap   = { 'واتساب': 0, 'انستجرام': 0, 'فيسبوك': 0, 'تيك توك': 0, 'أخرى': 0 };
   var monthSales          = 0;
   var completedMonthCount = 0;
   var monthOrderCount     = 0;
   var returnedCount       = 0;
-  var moderatorStats      = {}; // â­گ ط­ط³ط§ط¨ ط§ظ„ظ…ظˆط¯ط±ظٹطھظˆط±
-  var driverStats         = {}; // â­گ ط­ط³ط§ط¨ ط§ظ„ظ…ظ†ط§ط¯ظٹط¨
+  var moderatorStats      = {}; // ⭐ حساب المودريتور
+  var driverStats         = {}; // ⭐ حساب المناديب
 
   for (var j = 1; j < ordersData.length; j++) {
     var rowDate = ordersData[j][1] instanceof Date
@@ -300,10 +300,10 @@ function buildMonthlyReport(ordersData, targetMonth) {
     var status     = ordersData[j][18];
     var finalTotal = parseFloat(ordersData[j][17]) || 0;
     var shipping   = parseFloat(ordersData[j][16]) || 0;
-    var mod        = (ordersData[j][20] || "").toString().trim(); // ط¹ظ…ظˆط¯ 21 ظ‡ظˆ ط§ظ„ظ…ظˆط¯ط±ظٹطھظˆط±
-    var driver     = (ordersData[j][11] || "").toString().trim(); // ط¹ظ…ظˆط¯ 12 ظ‡ظˆ ط§ظ„ظ…ظ†ط¯ظˆط¨
+    var mod        = (ordersData[j][20] || "").toString().trim(); // عمود 21 هو المودريتور
+    var driver     = (ordersData[j][11] || "").toString().trim(); // عمود 12 هو المندوب
 
-    if (status !== "ظ…ط±طھط¬ط¹" && mod !== "") {
+    if (status !== "مرتجع" && mod !== "") {
       if (!moderatorStats[mod]) {
           moderatorStats[mod] = { monthSales: 0, monthOrderCount: 0, totalSales: 0, totalCount: 0 };
       }
@@ -316,8 +316,8 @@ function buildMonthlyReport(ordersData, targetMonth) {
       }
     }
 
-    // â­گ ط­ط³ط§ط¨ ط§ظ„ظ…ظ†ط§ط¯ظٹط¨
-    if (driver !== "" && (status === "طھظ… ط§ظ„طھظˆطµظٹظ„" || status === "طھظ… ط§ظ„طھظˆطµظٹظ„ ظˆظ…ظڈط­ط§ط³ط¨")) {
+    // ⭐ حساب المناديب
+    if (driver !== "" && (status === "تم التوصيل" || status === "تم التوصيل ومُحاسب")) {
       if (!driverStats[driver]) {
           driverStats[driver] = { monthProfit: 0, monthOrderCount: 0, totalProfit: 0, totalCount: 0 };
       }
@@ -330,27 +330,27 @@ function buildMonthlyReport(ordersData, targetMonth) {
       }
     }
 
-    // ظپظ‚ط· ط³ط¬ظ„ط§طھ ط§ظ„ط´ظ‡ط± ط§ظ„ظ…ط·ظ„ظˆط¨
+    // فقط سجلات الشهر المطلوب
     if (!rowDate.startsWith(targetMonth)) continue;
 
     monthOrderCount++;
 
-    if (status === "ظ…ط±طھط¬ط¹") {
+    if (status === "مرتجع") {
       returnedCount++;
-      continue; // ط§ظ„ظ…ط±طھط¬ط¹ط§طھ ظ„ط§ طھط¯ط®ظ„ ظپظٹ ط§ظ„ظ…ط¨ظٹط¹ط§طھ
+      continue; // المرتجعات لا تدخل في المبيعات
     }
 
     monthSales += finalTotal;
 
-    if (status === "طھظ… ط§ظ„طھظˆطµظٹظ„" || status === "طھظ… ط§ظ„طھظˆطµظٹظ„ ظˆظ…ظڈط­ط§ط³ط¨") {
+    if (status === "تم التوصيل" || status === "تم التوصيل ومُحاسب") {
       completedMonthCount++;
     }
 
-    // â­گ طھط¬ظ…ظٹط¹ ط§ظ„ظ…ظ†طھط¬ط§طھ
+    // ⭐ تجميع المنتجات
     if (ordersData[j][13]) {
       var parts = ordersData[j][13].toString().split('\n');
       parts.forEach(function(p) {
-        var m = p.match(/^(.+?)\s*-\s*ط§ظ„ظƒظ…ظٹط©:\s*(\d+)/);
+        var m = p.match(/^(.+?)\s*-\s*الكمية:\s*(\d+)/);
         if (m) {
           var pName = m[1].trim();
           var pQty  = parseInt(m[2]) || 1;
@@ -359,13 +359,13 @@ function buildMonthlyReport(ordersData, targetMonth) {
       });
     }
 
-    // â­گ طھط¬ظ…ظٹط¹ ط§ظ„ظ…ظ†طµط§طھ - ط¹ظ…ظˆط¯ ط§ظ„ظ…ظ†طµط© [3] ط£ظˆ ط§ظ„ظ…ظˆط¯ط±ظٹطھظˆط± [20] fallback
+    // ⭐ تجميع المنصات - عمود المنصة [3] أو المودريتور [20] fallback
     var rawPlt   = ordersData[j][3] || ordersData[j][20] || "";
     var pltName  = detectPlatformName(rawPlt);
     monthPlatformsMap[pltName]++;
   }
 
-  // طھط±طھظٹط¨ ط§ظ„ظ…ظ†طھط¬ط§طھ طھظ†ط§ط²ظ„ظٹط§ظ‹ ظˆط£ط®ط° ط£ظپط¶ظ„ 10
+  // ترتيب المنتجات تنازلياً وأخذ أفضل 10
   var sortedProducts = Object.keys(monthTopProductsMap).map(function(k) {
     return { name: k, qty: monthTopProductsMap[k] };
   }).sort(function(a, b) { return b.qty - a.qty; }).slice(0, 10);
@@ -382,13 +382,13 @@ function buildMonthlyReport(ordersData, targetMonth) {
   };
 }
 
-// â­گ ط¯ط§ظ„ط© ظ…ط³ط§ط¹ط¯ط© ظ„ظ„ط¨ط­ط« ط¹ظ† ط´ظٹطھ ط§ظ„ط§ط³طھظ„ط§ظ…ط§طھ ط¨ط؛ط¶ ط§ظ„ظ†ط¸ط± ط¹ظ† ط§ظ„ط¥ظٹظ…ظˆط¬ظٹ ط£ظˆ ط§ظ„ظ…ط³ط§ظپط§طھ
+// ⭐ دالة مساعدة للبحث عن شيت الاستلامات بغض النظر عن الإيموجي أو المسافات
 function getExpirySheet(ss) {
   var sheets = ss.getSheets();
   for (var i = 0; i < sheets.length; i++) {
     var sName = sheets[i].getName();
-    var cleanName = sName.replace(/ط£/g, "ط§").replace(/ط¥/g, "ط§").replace(/ط¢/g, "ط§").replace(/\s/g, "");
-    if (cleanName.indexOf("ط§ط³طھظ„ط§ظ…") !== -1 || cleanName.indexOf("طµظ„ط§ط­ظٹط§طھ") !== -1) {
+    var cleanName = sName.replace(/أ/g, "ا").replace(/إ/g, "ا").replace(/آ/g, "ا").replace(/\s/g, "");
+    if (cleanName.indexOf("استلام") !== -1 || cleanName.indexOf("صلاحيات") !== -1) {
       return sheets[i];
     }
   }
@@ -399,10 +399,10 @@ function doGet(e) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var action = e.parameter.action;
 
-  // â­گ ط§ظ„ط¨ط­ط« ط§ظ„ط´ط§ظ…ظ„
+  // ⭐ البحث الشامل
   if (action === "globalSearch") {
       var keyword = (e.parameter.query || "").toLowerCase().trim();
-      var ordersSheet = ss.getSheetByName("ًں“‌ ط§ظ„ط·ظ„ط¨ط§طھ");
+      var ordersSheet = ss.getSheetByName("📝 الطلبات");
       var searchResults = [];
       if (ordersSheet && keyword.length > 0) {
           var data = ordersSheet.getDataRange().getValues();
@@ -436,9 +436,9 @@ function doGet(e) {
       return ContentService.createTextOutput(JSON.stringify(searchResults.reverse())).setMimeType(ContentService.MimeType.JSON);
   }
 
-  // â­گ V15.1: ط¬ظ„ط¨ ط¨ظٹط§ظ†ط§طھ ط§ظ„ط¹ظ…ظ„ط§ط، ظ…ظ†ظپطµظ„ط§ظ‹ (Lazy Load)
+  // ⭐ V15.1: جلب بيانات العملاء منفصلاً (Lazy Load)
   if (action === "getCustomers") {
-    var customerSheet = ss.getSheetByName("ًں‘¥ ظ‚ط§ط¹ط¯ط© ط§ظ„ط¹ظ…ظ„ط§ط،");
+    var customerSheet = ss.getSheetByName("👥 قاعدة العملاء");
     var custResult = [];
     // VIP is based on completed deliveries, not on every order that was merely created.
     // Build the lookup once, then attach the completed-order count to each customer.
@@ -463,7 +463,7 @@ function doGet(e) {
     return ContentService.createTextOutput(JSON.stringify({ customers: custResult })).setMimeType(ContentService.MimeType.JSON);
   }
 
-  // â­گ V15.2: ط¬ظ„ط¨ ط¨ظٹط§ظ†ط§طھ ط§ظ„ط§ط³طھظ„ط§ظ…ط§طھ ظˆط§ظ„طµظ„ط§ط­ظٹط§طھ
+  // ⭐ V15.2: جلب بيانات الاستلامات والصلاحيات
   if (action === "getExpiries") {
     var expirySheet = getExpirySheet(ss);
     var expResult = [];
@@ -493,24 +493,24 @@ function doGet(e) {
   }
 
   // ============================================================
-  // ط§ظ„ظ€ request ط§ظ„ط±ط¦ظٹط³ظٹ
+  // الـ request الرئيسي
   // ============================================================
-  var ordersSheet  = ss.getSheetByName("ًں“‌ ط§ظ„ط·ظ„ط¨ط§طھ");
-  var settingsSheet = ss.getSheetByName("âڑ™ï¸ڈ ط§ظ„ط¥ط¹ط¯ط§ط¯ط§طھ ظˆط§ظ„ط´ط­ظ†");
-  var catalogSheet = ss.getSheetByName("ًں“¦ ط§ظ„ظƒطھط§ظ„ظˆط¬");
-  var oosSheet     = ss.getSheetByName("âڈ³ ط§ظ„ظ†ظˆط§ظ‚طµ");
-  var finSheet     = ss.getSheetByName("ًں“ٹ ط§ظ„ط­ط³ط§ط¨ط§طھ ظˆط§ظ„ظ…ط§ظ„ظٹط©");
-  var customerSheet = ss.getSheetByName("ًں‘¥ ظ‚ط§ط¹ط¯ط© ط§ظ„ط¹ظ…ظ„ط§ط،");
-  var draftsSheet  = ss.getSheetByName("ًں“‚ ط§ظ„ظ…ط¹ظ„ظ‚ط§طھ");
+  var ordersSheet  = ss.getSheetByName("📝 الطلبات");
+  var settingsSheet = ss.getSheetByName("⚙️ الإعدادات والشحن");
+  var catalogSheet = ss.getSheetByName("📦 الكتالوج");
+  var oosSheet     = ss.getSheetByName("⏳ النواقص");
+  var finSheet     = ss.getSheetByName("📊 الحسابات والمالية");
+  var customerSheet = ss.getSheetByName("👥 قاعدة العملاء");
+  var draftsSheet  = ss.getSheetByName("📂 المعلقات");
 
-  // â­گ V15.1: ظ†ط­ط¯ط¯ ط§ظ„ط´ظ‡ط± ط§ظ„ظ…ط·ظ„ظˆط¨ ظ„ظ„طھظ‚ط±ظٹط±
-  // - ط¥ط°ط§ ظƒط§ظ† date = "2026-06-01" ظپظ…ط¹ظ†ط§ظ‡ ظپظ„طھط± ط§ظ„ط³ط¬ظ„ ط¹ظ„ظ‰ ظٹظˆظ… 1 ظٹظˆظ†ظٹظˆ
-  // - currentMonth ظٹظڈط³طھط®ط¯ظ… ظ„ط­ط³ط§ط¨ ط¥ط­طµط§ط¦ظٹط§طھ ط§ظ„ط´ظ‡ط±
+  // ⭐ V15.1: نحدد الشهر المطلوب للتقرير
+  // - إذا كان date = "2026-06-01" فمعناه فلتر السجل على يوم 1 يونيو
+  // - currentMonth يُستخدم لحساب إحصائيات الشهر
   var filterDate   = e.parameter.date || Utilities.formatDate(new Date(), "Africa/Cairo", "yyyy-MM-dd");
   var currentMonth = filterDate.substring(0, 7); // "2026-06"
 
-  // â­گ ظ‡ظ„ ظ‡ط°ط§ request ظ„طھظ‚ط±ظٹط± ط´ظ‡ط± ظ…ط¹ظٹظ† (ط£ظˆظ„ ظٹظˆظ… ظپظٹ ط§ظ„ط´ظ‡ط±)طں
-  // ط¥ط°ط§ ظƒط§ظ† filterDate ظٹظ†طھظ‡ظٹ ط¨ظ€ "-01" ظپط؛ط§ظ„ط¨ط§ظ‹ ط·ظ„ط¨ طھظ‚ط±ظٹط± ط´ظ‡ط±ظٹ ظ…ط³طھظ‚ظ„
+  // ⭐ هل هذا request لتقرير شهر معين (أول يوم في الشهر)؟
+  // إذا كان filterDate ينتهي بـ "-01" فغالباً طلب تقرير شهري مستقل
   var isMonthlyReportRequest = filterDate.endsWith("-01");
 
   var response = { 
@@ -523,7 +523,7 @@ function doGet(e) {
     suspendedOrders: [], shippedOrders: []
   };
 
-  // â­گ ظ‚ط±ط§ط،ط© ط§ظ„ط·ظ„ط¨ط§طھ ط§ظ„ظ…ط¹ظ„ظ‚ط©
+  // ⭐ قراءة الطلبات المعلقة
   if (draftsSheet && draftsSheet.getLastRow() > 1) {
     var draftsData = draftsSheet.getDataRange().getValues();
     for (var i = 1; i < draftsData.length; i++) {
@@ -536,7 +536,7 @@ function doGet(e) {
     }
   }
 
-  // â­گ ط§ظ„ط­ط³ط§ط¨ط§طھ ط§ظ„ظ…ط§ظ„ظٹط©
+  // ⭐ الحسابات المالية
   if (finSheet) {
     var finData = finSheet.getDataRange().getValues();
     for (var i = 1; i < finData.length; i++) {
@@ -549,8 +549,8 @@ function doGet(e) {
     }
   }
 
-  // â­گ ط§ظ„ط¹ظ…ظ„ط§ط، - ظٹظڈط±ط³ظ„ظˆظ† ظپظ‚ط· ط¥ط°ط§ ظ„ظ… ظٹظƒظ† ط·ظ„ط¨ Lazy ظ…ظ†ظپطµظ„
-  // (ط§ظ„ظ€ Lazy fetch ظٹظ…ط± ظ…ظ† action=getCustomers)
+  // ⭐ العملاء - يُرسلون فقط إذا لم يكن طلب Lazy منفصل
+  // (الـ Lazy fetch يمر من action=getCustomers)
   if (customerSheet && !isMonthlyReportRequest) {
     var custData = customerSheet.getDataRange().getValues();
     for (var i = 1; i < custData.length; i++) {
@@ -563,7 +563,7 @@ function doGet(e) {
     }
   }
 
-  // â­گ ط§ظ„ظƒطھط§ظ„ظˆط¬
+  // ⭐ الكتالوج
   if (catalogSheet) {
     var cData = catalogSheet.getDataRange().getValues();
     for (var i = 1; i < cData.length; i++) {
@@ -573,7 +573,7 @@ function doGet(e) {
     }
   }
 
-  // â­گ ط§ظ„ظ†ظˆط§ظ‚طµ
+  // ⭐ النواقص
   if (oosSheet) {
     var oosData = oosSheet.getDataRange().getValues();
     for (var i = 1; i < oosData.length; i++) {
@@ -583,7 +583,7 @@ function doGet(e) {
     }
   }
 
-  // â­گ ط§ظ„ط¥ط¹ط¯ط§ط¯ط§طھ ظˆط§ظ„ط´ط­ظ† ظˆط§ظ„ظ…ظ†ط§ط¯ظٹط¨ ظˆط§ظ„ظ…ظˆط¯ط±ظٹطھظˆط±
+  // ⭐ الإعدادات والشحن والمناديب والمودريتور
   if (settingsSheet) {
     var sData = settingsSheet.getDataRange().getValues();
     for (var i = 1; i < sData.length; i++) {
@@ -595,20 +595,20 @@ function doGet(e) {
   }
 
   // ============================================================
-  // â­گ V15.1: ط§ظ„ظ…ظ†ط·ظ‚ ط§ظ„ط±ط¦ظٹط³ظٹ ظ„ظ‚ط±ط§ط،ط© ط§ظ„ط·ظ„ط¨ط§طھ
+  // ⭐ V15.1: المنطق الرئيسي لقراءة الطلبات
   // ============================================================
   if (ordersSheet) {
     var data = ordersSheet.getDataRange().getValues();
     var uniqueProducts = {};
 
-    // â­گ ط§ظ„ظٹظˆظ… ط§ظ„ظپط¹ظ„ظٹ (ظ„ظ„ط¥ط­طµط§ط¦ظٹط§طھ ط§ظ„ط­ظ‚ظٹظ‚ظٹط© ظ„ظ„ظٹظˆظ…)
+    // ⭐ اليوم الفعلي (للإحصائيات الحقيقية لليوم)
     var todayReal = Utilities.formatDate(new Date(), "Africa/Cairo", "yyyy-MM-dd");
     var todayMonth = todayReal.substring(0, 7);
 
-    // â­گ V15.1: ط¨ظ†ط§ط، ط§ظ„طھظ‚ط±ظٹط± ط§ظ„ط´ظ‡ط±ظٹ ط¨ط§ط³طھط®ط¯ط§ظ… ط§ظ„ط¯ط§ظ„ط© ط§ظ„ظ…ط³طھظ‚ظ„ط©
-    // - ط¥ط°ط§ ظƒط§ظ† ط·ظ„ط¨ طھظ‚ط±ظٹط± ط´ظ‡ط±ظٹ (filterDate = YYYY-MM-01): ظٹط­ط³ط¨ ظ„ظ„ط´ظ‡ط± ط§ظ„ظ…ط·ظ„ظˆط¨
-    // - ط®ظ„ط§ظپ ط°ظ„ظƒ: ظٹط­ط³ط¨ ظ„ظ„ط´ظ‡ط± ط§ظ„ط­ط§ظ„ظٹ ط§ظ„ظپط¹ظ„ظٹ
-    var reportMonth = currentMonth; // ط³ظˆط§ط، ظƒط§ظ† ط§ظ„ط´ظ‡ط± ط§ظ„ط­ط§ظ„ظٹ ط£ظˆ ط´ظ‡ط± ظ…ط®طھط§ط±
+    // ⭐ V15.1: بناء التقرير الشهري باستخدام الدالة المستقلة
+    // - إذا كان طلب تقرير شهري (filterDate = YYYY-MM-01): يحسب للشهر المطلوب
+    // - خلاف ذلك: يحسب للشهر الحالي الفعلي
+    var reportMonth = currentMonth; // سواء كان الشهر الحالي أو شهر مختار
     var monthlyReport = buildMonthlyReport(data, reportMonth);
     
     response.monthTopProducts    = monthlyReport.monthTopProducts;
@@ -620,13 +620,13 @@ function doGet(e) {
     response.moderatorStats      = monthlyReport.moderatorStats; // NEW
     response.driverStats         = monthlyReport.driverStats;    // NEW
 
-    // â­گ ط¥ط­طµط§ط¦ظٹط§طھ ط§ظ„ظٹظˆظ… ط§ظ„ط­ظ‚ظٹظ‚ظٹ (ط¯ط§ظٹظ…ط§ظ‹ ط§ظ„ظٹظˆظ… ط§ظ„ظپط¹ظ„ظٹطŒ ظ…ط´ filterDate)
+    // ⭐ إحصائيات اليوم الحقيقي (دايماً اليوم الفعلي، مش filterDate)
     var todayReport = buildDailyStats(data, todayReal);
     response.todayOrders          = todayReport.todayOrders;
     response.todaySales           = todayReport.todaySales;
     response.completedTodayCount  = todayReport.completedToday;
 
-    // â­گ ظ‚ط±ط§ط،ط© ط§ظ„ط³ط¬ظ„ (history) ظ„ظ„ظ€ filterDate ط§ظ„ظ…ط·ظ„ظˆط¨ط©
+    // ⭐ قراءة السجل (history) للـ filterDate المطلوبة
     for (var j = 1; j < data.length; j++) {
       var rowDate = data[j][1] instanceof Date
         ? Utilities.formatDate(data[j][1], "Africa/Cairo", "yyyy-MM-dd")
@@ -638,16 +638,16 @@ function doGet(e) {
       if (isNaN(remainingCash)) remainingCash = finalTotal;
       var driver = data[j][11];
 
-      // ط£ظˆط±ط¯ط±ط§طھ ط؛ظٹط± ظ…طµظپط§ط© ظ„ظ„ظ…ظ†ط§ط¯ظٹط¨
-      if (status === "طھظ… ط§ظ„طھظˆطµظٹظ„" && driver) {
+      // أوردرات غير مصفاة للمناديب
+      if (status === "تم التوصيل" && driver) {
         response.uncollectedOrders.push({
           id: data[j][0], driver: driver, total: finalTotal, remaining: remainingCash,
           payment: data[j][10], shipping: data[j][16], phone2: data[j][8] ? data[j][8].toString().replace(/'/g, "") : ""
         });
       }
 
-      // â­گ ط£ظˆط±ط¯ط±ط§طھ ظپظٹ ط§ظ„ط´ط­ظ†
-      if (status === "ظپظٹ ط§ظ„ط´ط­ظ†" && driver) {
+      // ⭐ أوردرات في الشحن
+      if (status === "في الشحن" && driver) {
         response.shippedOrders.push({
           id: data[j][0], driver: driver, total: finalTotal, remaining: remainingCash,
           payment: data[j][10], shipping: data[j][16], name: data[j][4], phone: data[j][7].toString().replace(/'/g, ""), phone2: data[j][8] ? data[j][8].toString().replace(/'/g, "") : "", address: data[j][6]
@@ -658,7 +658,7 @@ function doGet(e) {
         ? Utilities.formatDate(data[j][12], "Africa/Cairo", "yyyy-MM-dd")
         : (data[j][12] ? data[j][12].toString().replace(/'/g, "").trim() : "");
 
-      // â­گ ط§ظ„ط³ط¬ظ„: ظٹط¹ط±ط¶ ط§ظ„ط·ظ„ط¨ط§طھ ط­ط³ط¨ filterDate (ط§ظ„ظٹظˆظ… ط§ظ„ظ…ط®طھط§ط± ظپظٹ ط§ظ„ط³ط¬ظ„)
+      // ⭐ السجل: يعرض الطلبات حسب filterDate (اليوم المختار في السجل)
       if (rowDate === filterDate) {
         response.history.push({
           id: data[j][0], date: rowDate, time: data[j][2], name: data[j][4],
@@ -672,8 +672,8 @@ function doGet(e) {
         });
       }
 
-      // â­گ ط§ظ„ط£ظˆط±ط¯ط±ط§طھ ط§ظ„ظ…ط¹ظ„ظ‚ط© (ظ‚ظٹط¯ ط§ظ„طھط¬ظ‡ظٹط²) - ظƒظ„ظ‡ط§ ط¨ط¯ظˆظ† ظپظ„طھط± طھط§ط±ظٹط®
-      if (status === "ظ‚ظٹط¯ ط§ظ„طھط¬ظ‡ظٹط²") {
+      // ⭐ الأوردرات المعلقة (قيد التجهيز) - كلها بدون فلتر تاريخ
+      if (status === "قيد التجهيز") {
         response.pendingOrders.push({
           id: data[j][0], name: data[j][4],
           phone: data[j][7].toString().replace(/'/g, ""), phone2: data[j][8] ? data[j][8].toString().replace(/'/g, "") : "",
@@ -686,7 +686,7 @@ function doGet(e) {
         });
       }
 
-      // طھط¬ظ…ظٹط¹ ط§ظ„ظ…ظ†طھط¬ط§طھ ط§ظ„ظپط±ظٹط¯ط© ظ„ظ„ظ€ autocomplete
+      // تجميع المنتجات الفريدة للـ autocomplete
       if (data[j][13]) {
         var pParts = data[j][13].toString().split('\n');
         pParts.forEach(function(p) { 
@@ -703,7 +703,7 @@ function doGet(e) {
 }
 
 // ============================================================
-// â­گ V15.1: ط¯ط§ظ„ط© ظ…ط³طھظ‚ظ„ط© ظ„ط¥ط­طµط§ط¦ظٹط§طھ ظٹظˆظ… ظ…ط­ط¯ط¯
+// ⭐ V15.1: دالة مستقلة لإحصائيات يوم محدد
 // ============================================================
 function buildDailyStats(ordersData, targetDate) {
   var todayOrders  = 0;
@@ -720,11 +720,11 @@ function buildDailyStats(ordersData, targetDate) {
     var status     = ordersData[j][18];
     var finalTotal = parseFloat(ordersData[j][17]) || 0;
 
-    if (status !== "ظ…ط±طھط¬ط¹") {
+    if (status !== "مرتجع") {
       todayOrders++;
       todaySales += finalTotal;
     }
-    if (status === "طھظ… ط§ظ„طھظˆطµظٹظ„" || status === "طھظ… ط§ظ„طھظˆطµظٹظ„ ظˆظ…ظڈط­ط§ط³ط¨") {
+    if (status === "تم التوصيل" || status === "تم التوصيل ومُحاسب") {
       completedToday++;
     }
   }
@@ -738,13 +738,13 @@ function doPost(e) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var action = e.parameter.action;
-    var sSheet = ss.getSheetByName("âڑ™ï¸ڈ ط§ظ„ط¥ط¹ط¯ط§ط¯ط§طھ ظˆط§ظ„ط´ط­ظ†");
+    var sSheet = ss.getSheetByName("⚙️ الإعدادات والشحن");
 
     if (action === "addOrder") {
-      var sheet     = ss.getSheetByName("ًں“‌ ط§ظ„ط·ظ„ط¨ط§طھ");
-      var custSheet = ss.getSheetByName("ًں‘¥ ظ‚ط§ط¹ط¯ط© ط§ظ„ط¹ظ…ظ„ط§ط،");
+      var sheet     = ss.getSheetByName("📝 الطلبات");
+      var custSheet = ss.getSheetByName("👥 قاعدة العملاء");
       
-      // طھظˆظ„ظٹط¯ ط±ظ‚ظ… ط§ظ„ط·ظ„ط¨ ط¨ط´ظƒظ„ طھط³ظ„ط³ظ„ظٹ (CANDY-000001)
+      // توليد رقم الطلب بشكل تسلسلي (CANDY-000001)
       var nextIdNum = 1;
       var lastRow = sheet.getLastRow();
       
@@ -754,7 +754,7 @@ function doPost(e) {
         if (match) {
           nextIdNum = parseInt(match[1], 10) + 1;
         } else {
-          nextIdNum = lastRow; // ط§ط­طھظٹط§ط·ظٹ ظپظٹ ط­ط§ظ„ط© ظ„ظ… ظٹظƒظ† ط§ظ„ط±ظ‚ظ… ط¨ط§ظ„طµظٹط؛ط© ط§ظ„طµط­ظٹط­ط©
+          nextIdNum = lastRow; // احتياطي في حالة لم يكن الرقم بالصيغة الصحيحة
         }
       }
       
@@ -772,7 +772,7 @@ function doPost(e) {
         e.parameter.address, "'" + e.parameter.phone1, "'" + e.parameter.phone2, 
         e.parameter.orderType, e.parameter.payMethod, "", e.parameter.expDate, 
         e.parameter.products, e.parameter.pTotal, e.parameter.discount, 
-        e.parameter.shipping, e.parameter.finalTotal, "ظ‚ظٹط¯ ط§ظ„طھط¬ظ‡ظٹط²", e.parameter.notes, e.parameter.moderator,
+        e.parameter.shipping, e.parameter.finalTotal, "قيد التجهيز", e.parameter.notes, e.parameter.moderator,
         e.parameter.deposit || 0, e.parameter.remaining || e.parameter.finalTotal
       ];
       sheet.appendRow(row);
@@ -781,7 +781,7 @@ function doPost(e) {
     }
 
     else if (action === "updateOrderStatus") {
-      var sheet = ss.getSheetByName("ًں“‌ ط§ظ„ط·ظ„ط¨ط§طھ");
+      var sheet = ss.getSheetByName("📝 الطلبات");
       var data  = sheet.getDataRange().getValues();
       for (var i = 1; i < data.length; i++) {
         if (data[i][0] === e.parameter.orderId) {
@@ -789,18 +789,18 @@ function doPost(e) {
           sheet.getRange(i+1, 19).setValue(e.parameter.status);
           if (e.parameter.driverName) sheet.getRange(i+1, 12).setValue(e.parameter.driverName);
           
-          // â­گ ط§ظ„طھظ„ظˆظٹظ† ظˆط­ط³ط§ط¨ ط§ظ„ظ…ط±طھط¬ط¹
+          // ⭐ التلوين وحساب المرتجع
           var rowRange = sheet.getRange(i+1, 1, 1, sheet.getLastColumn());
-          if (e.parameter.status === "ظ…ط±طھط¬ط¹") {
+          if (e.parameter.status === "مرتجع") {
               rowRange.setBackground("#FEE2E2");
-              if (oldStatus !== "ظ…ط±طھط¬ط¹") {
+              if (oldStatus !== "مرتجع") {
                  var phoneToSub = data[i][7].toString().replace(/'/g, "").trim();
                  var amtToSub  = parseFloat(data[i][17]) || 0;
-                 subtractFromCustomerDB(ss.getSheetByName("ًں‘¥ ظ‚ط§ط¹ط¯ط© ط§ظ„ط¹ظ…ظ„ط§ط،"), phoneToSub, amtToSub);
+                 subtractFromCustomerDB(ss.getSheetByName("👥 قاعدة العملاء"), phoneToSub, amtToSub);
               }
-          } else if (e.parameter.status === "طھظ… ط§ظ„طھظˆطµظٹظ„") {
+          } else if (e.parameter.status === "تم التوصيل") {
               rowRange.setBackground("#D4EDDA");
-          } else if (e.parameter.status === "ظپظٹ ط§ظ„ط´ط­ظ†" || e.parameter.status === "ظ‚ظٹط¯ ط§ظ„طھط¬ظ‡ظٹط²") {
+          } else if (e.parameter.status === "في الشحن" || e.parameter.status === "قيد التجهيز") {
               rowRange.setBackground("#FFFFFF"); 
           }
           
@@ -811,11 +811,11 @@ function doPost(e) {
     }
 
     else if (action === "settleOrder") {
-        var sheet = ss.getSheetByName("ًں“‌ ط§ظ„ط·ظ„ط¨ط§طھ");
+        var sheet = ss.getSheetByName("📝 الطلبات");
         var data  = sheet.getDataRange().getValues();
         for (var i = 1; i < data.length; i++) {
             if (data[i][0] === e.parameter.orderId) {
-                sheet.getRange(i+1, 19).setValue("طھظ… ط§ظ„طھظˆطµظٹظ„ ظˆظ…ظڈط­ط§ط³ط¨");
+                sheet.getRange(i+1, 19).setValue("تم التوصيل ومُحاسب");
                 sheet.getRange(i+1, 1, 1, sheet.getLastColumn()).setBackground("#E8F5E9");
                 calculateFinancials();
                 return ContentService.createTextOutput("success");
@@ -903,18 +903,18 @@ function doPost(e) {
       }
     }
 
-    // â­گ V14.2: ط­ظپط¸ ط§ظ„ط·ظ„ط¨ ط§ظ„ظ…ط¹ظ„ظ‚
+    // ⭐ V14.2: حفظ الطلب المعلق
     else if (action === "suspendOrder") {
-      var draftSheet = ss.getSheetByName("ًں“‚ ط§ظ„ظ…ط¹ظ„ظ‚ط§طھ");
-      if (!draftSheet) draftSheet = ss.insertSheet("ًں“‚ ط§ظ„ظ…ط¹ظ„ظ‚ط§طھ");
+      var draftSheet = ss.getSheetByName("📂 المعلقات");
+      if (!draftSheet) draftSheet = ss.insertSheet("📂 المعلقات");
       var timestamp = Utilities.formatDate(new Date(), "Africa/Cairo", "yyyy-MM-dd hh:mm:ss a");
       draftSheet.appendRow([e.parameter.draftId, timestamp, e.parameter.draftJson]);
       return ContentService.createTextOutput("success");
     }
 
-    // â­گ V14.2: ظ…ط³ط­ ط§ظ„ط·ظ„ط¨ ط§ظ„ظ…ط¹ظ„ظ‚
+    // ⭐ V14.2: مسح الطلب المعلق
     else if (action === "removeSuspended") {
-      var draftSheet = ss.getSheetByName("ًں“‚ ط§ظ„ظ…ط¹ظ„ظ‚ط§طھ");
+      var draftSheet = ss.getSheetByName("📂 المعلقات");
       if (!draftSheet) return ContentService.createTextOutput("notfound");
       var dData = draftSheet.getDataRange().getValues();
       for (var k = dData.length - 1; k >= 1; k--) {
@@ -926,7 +926,7 @@ function doPost(e) {
     }
 
     else if (action === "updateCatalog") {
-      var cSheet = ss.getSheetByName("ًں“¦ ط§ظ„ظƒطھط§ظ„ظˆط¬");
+      var cSheet = ss.getSheetByName("📦 الكتالوج");
       var cData  = cSheet.getDataRange().getValues();
       var found  = false;
       for (var i = 1; i < cData.length; i++) {
@@ -940,7 +940,7 @@ function doPost(e) {
     }
 
     else if (action === "deleteProduct") {
-      var cSheet = ss.getSheetByName("ًں“¦ ط§ظ„ظƒطھط§ظ„ظˆط¬");
+      var cSheet = ss.getSheetByName("📦 الكتالوج");
       var cData  = cSheet.getDataRange().getValues();
       for (var i = 1; i < cData.length; i++) {
         if (cData[i][0] === e.parameter.name) {
@@ -951,14 +951,14 @@ function doPost(e) {
     }
 
     else if (action === "addOutOfStock") {
-      var oosSheet = ss.getSheetByName("âڈ³ ط§ظ„ظ†ظˆط§ظ‚طµ");
+      var oosSheet = ss.getSheetByName("⏳ النواقص");
       var d = Utilities.formatDate(new Date(), "Africa/Cairo", "yyyy-MM-dd hh:mm a");
       oosSheet.appendRow([e.parameter.customer, "'" + e.parameter.phone, e.parameter.product, e.parameter.reason, d]);
       return ContentService.createTextOutput("success");
     }
 
     else if (action === "deleteOutOfStock") {
-      var oosSheet = ss.getSheetByName("âڈ³ ط§ظ„ظ†ظˆط§ظ‚طµ");
+      var oosSheet = ss.getSheetByName("⏳ النواقص");
       var oosData  = oosSheet.getDataRange().getValues();
       for (var i = oosData.length - 1; i >= 1; i--) {
         if (oosData[i][1].toString().includes(e.parameter.phone) && oosData[i][2] === e.parameter.product) {
@@ -968,22 +968,22 @@ function doPost(e) {
       return ContentService.createTextOutput("success");
     }
 
-    // â­گ V15.2: ط¥ط¶ط§ظپط© ط§ط³طھظ„ط§ظ…ط© ط¬ط¯ظٹط¯ط© (ظ†ط¸ط§ظ… ط§ظ„طµظ„ط§ط­ظٹط§طھ)
+    // ⭐ V15.2: إضافة استلامة جديدة (نظام الصلاحيات)
     else if (action === "addExpiry") {
       var expirySheet = getExpirySheet(ss);
       if (!expirySheet) {
-          expirySheet = ss.insertSheet("ًں“¥ ط§ظ„ط§ط³طھظ„ط§ظ…ط§طھ");
-          var expiryHeaders = ["ط§ط³ظ… ط§ظ„ظ…ظ†طھط¬", "ط§ظ„ظƒظ…ظٹط©", "طھط§ط±ظٹط® ط§ظ„ط§ظ†طھظ‡ط§ط،", "ط§ظ„ظ…ظƒط§ظ† / ط§ظ„ظ…ظˆط±ط¯", "ط§ط³ظ… ط§ظ„ظ…ط³ط¬ظ„", "طھط§ط±ظٹط® ط§ظ„طھط³ط¬ظٹظ„", "ط§ظ„ظ…ط³طھظ„ظ…", "ظ…ظ„ط§ط­ط¸ط§طھ", "ط§ظ„ط³ط¹ط± ط§ظ„ط£ط³ط§ط³ظٹ", "ط³ط¹ط± ط§ظ„ط¹ط±ط¶", "ط§ظ„ط­ط§ظ„ط©", "ط§ظ„ط¨ط§ط±ظƒظˆط¯"];
+          expirySheet = ss.insertSheet("📥 الاستلامات");
+          var expiryHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "اسم المسجل", "تاريخ التسجيل", "المستلم", "ملاحظات", "السعر الأساسي", "سعر العرض", "الحالة", "الباركود"];
           expirySheet.getRange(1, 1, 1, expiryHeaders.length).setValues([expiryHeaders])
                .setBackground("#2980b9").setFontColor("white").setFontFamily("Cairo").setFontSize(14).setFontWeight("bold")
                .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
       } else {
-          // â­گ ط¥ط°ط§ ظƒط§ظ†طھ ط§ظ„ط´ظٹطھ ظ…ظˆط¬ظˆط¯ط© طھط£ظƒط¯ ظ…ظ† ظˆط¬ظˆط¯ ط¹ظ…ظˆط¯ ط§ظ„ط¨ط§ط±ظƒظˆط¯
+          // ⭐ إذا كانت الشيت موجودة تأكد من وجود عمود الباركود
           var currentCols = expirySheet.getLastColumn();
           if (currentCols > 0) {
             var currentHeaders = expirySheet.getRange(1, 1, 1, currentCols).getValues()[0];
-            if (currentHeaders.indexOf("ط§ظ„ط¨ط§ط±ظƒظˆط¯") === -1) {
-                expirySheet.getRange(1, currentCols + 1).setValue("ط§ظ„ط¨ط§ط±ظƒظˆط¯")
+            if (currentHeaders.indexOf("الباركود") === -1) {
+                expirySheet.getRange(1, currentCols + 1).setValue("الباركود")
                      .setBackground("#2980b9").setFontColor("white").setFontFamily("Cairo").setFontSize(14).setFontWeight("bold")
                      .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
             }
@@ -1006,22 +1006,22 @@ function doPost(e) {
       return ContentService.createTextOutput("success");
     }
 
-    // â­گ V15.3: ط¥ط¶ط§ظپط© ط§ط³طھظ„ط§ظ…ط§طھ ط¯ظپط¹ط© ظˆط§ط­ط¯ط© (ظ†ط¸ط§ظ… ط§ظ„ظ…ط­ط¶ط±)
+    // ⭐ V15.3: إضافة استلامات دفعة واحدة (نظام المحضر)
     else if (action === "addExpiriesBatch") {
       var expirySheet = getExpirySheet(ss);
       if (!expirySheet) {
-          expirySheet = ss.insertSheet("ًں“¥ ط§ظ„ط§ط³طھظ„ط§ظ…ط§طھ");
-          var expiryHeaders = ["ط§ط³ظ… ط§ظ„ظ…ظ†طھط¬", "ط§ظ„ظƒظ…ظٹط©", "طھط§ط±ظٹط® ط§ظ„ط§ظ†طھظ‡ط§ط،", "ط§ظ„ظ…ظƒط§ظ† / ط§ظ„ظ…ظˆط±ط¯", "ط§ط³ظ… ط§ظ„ظ…ط³ط¬ظ„", "طھط§ط±ظٹط® ط§ظ„طھط³ط¬ظٹظ„", "ط§ظ„ظ…ط³طھظ„ظ…", "ظ…ظ„ط§ط­ط¸ط§طھ", "ط§ظ„ط³ط¹ط± ط§ظ„ط£ط³ط§ط³ظٹ", "ط³ط¹ط± ط§ظ„ط¹ط±ط¶", "ط§ظ„ط­ط§ظ„ط©", "ط§ظ„ط¨ط§ط±ظƒظˆط¯"];
+          expirySheet = ss.insertSheet("📥 الاستلامات");
+          var expiryHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "اسم المسجل", "تاريخ التسجيل", "المستلم", "ملاحظات", "السعر الأساسي", "سعر العرض", "الحالة", "الباركود"];
           expirySheet.getRange(1, 1, 1, expiryHeaders.length).setValues([expiryHeaders])
                .setBackground("#2980b9").setFontColor("white").setFontFamily("Cairo").setFontSize(14).setFontWeight("bold")
                .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
       } else {
-          // â­گ ط¥ط°ط§ ظƒط§ظ†طھ ط§ظ„ط´ظٹطھ ظ…ظˆط¬ظˆط¯ط© طھط£ظƒط¯ ظ…ظ† ظˆط¬ظˆط¯ ط¹ظ…ظˆط¯ ط§ظ„ط¨ط§ط±ظƒظˆط¯
+          // ⭐ إذا كانت الشيت موجودة تأكد من وجود عمود الباركود
           var currentCols = expirySheet.getLastColumn();
           if (currentCols > 0) {
             var currentHeaders = expirySheet.getRange(1, 1, 1, currentCols).getValues()[0];
-            if (currentHeaders.indexOf("ط§ظ„ط¨ط§ط±ظƒظˆط¯") === -1) {
-                expirySheet.getRange(1, currentCols + 1).setValue("ط§ظ„ط¨ط§ط±ظƒظˆط¯")
+            if (currentHeaders.indexOf("الباركود") === -1) {
+                expirySheet.getRange(1, currentCols + 1).setValue("الباركود")
                      .setBackground("#2980b9").setFontColor("white").setFontFamily("Cairo").setFontSize(14).setFontWeight("bold")
                      .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
             }
@@ -1052,7 +1052,7 @@ function doPost(e) {
       return ContentService.createTextOutput("success");
     }
 
-    // â­گ طھط¹ط¯ظٹظ„ ط¨ظٹط§ظ†ط§طھ ط§ظ„ط§ط³طھظ„ط§ظ…ط© ظƒط§ظ…ظ„ط©
+    // ⭐ تعديل بيانات الاستلامة كاملة
     else if (action === "updateExpiryItemData") {
       var expirySheet = getExpirySheet(ss);
       if (expirySheet) {
@@ -1076,7 +1076,7 @@ function doPost(e) {
       return ContentService.createTextOutput("success");
     }
 
-    // â­گ V15.2: طھط­ط¯ظٹط« ط­ط§ظ„ط© ط§ظ„ط§ط³طھظ„ط§ظ…ط© (طھط´ط؛ظٹظ„ ط¹ط±ط¶ / طھظ… ط§ظ„ط¨ظٹط¹) ظˆطھط­ط¯ظٹط« ط§ظ„ط£ط³ط¹ط§ط±
+    // ⭐ V15.2: تحديث حالة الاستلامة (تشغيل عرض / تم البيع) وتحديث الأسعار
     else if (action === "updateExpiryStatus") {
       var expirySheet = getExpirySheet(ss);
       var productName = "";
@@ -1092,18 +1092,18 @@ function doPost(e) {
 
         for (var i = 1; i < expData.length; i++) {
           if (expData[i][0] == targetName && (!targetDate || expData[i][2].toString() == targetDate.toString())) {
-            // â­گ ط§ظ„ط£ط±ط´ظپط©: ط¹ظ†ط¯ ط§ظ„ط¶ط؛ط· ط¹ظ„ظ‰ "طھظ… ط§ظ„ط¨ظٹط¹" (ط§ظ„طھظٹ طھط±ط³ظ„ 'Deleted')
+            // ⭐ الأرشفة: عند الضغط على "تم البيع" (التي ترسل 'Deleted')
             if (newStatus === "Deleted") {
-               var archiveSheet = ss.getSheetByName("ط£ط±ط´ظٹظپ ط§ظ„ظ…ط¨ظٹط¹ط§طھ");
+               var archiveSheet = ss.getSheetByName("أرشيف المبيعات");
                if (!archiveSheet) {
-                  archiveSheet = ss.insertSheet("ط£ط±ط´ظٹظپ ط§ظ„ظ…ط¨ظٹط¹ط§طھ");
-                  var archiveHeaders = ["ط§ط³ظ… ط§ظ„ظ…ظ†طھط¬", "ط§ظ„ظƒظ…ظٹط©", "طھط§ط±ظٹط® ط§ظ„ط§ظ†طھظ‡ط§ط،", "ط§ظ„ظ…ظƒط§ظ† / ط§ظ„ظ…ظˆط±ط¯", "ط§ط³ظ… ط§ظ„ظ…ط³ط¬ظ„", "طھط§ط±ظٹط® ط§ظ„طھط³ط¬ظٹظ„", "ط§ظ„ظ…ط³طھظ„ظ…", "ظ…ظ„ط§ط­ط¸ط§طھ", "ط§ظ„ط³ط¹ط± ط§ظ„ط£ط³ط§ط³ظٹ", "ط³ط¹ط± ط§ظ„ط¹ط±ط¶", "ط§ظ„ط­ط§ظ„ط©", "ط§ظ„ط¨ط§ط±ظƒظˆط¯", "طھط§ط±ظٹط® ط§ظ„ط¨ظٹط¹/ط§ظ„ط£ط±ط´ظپط©"];
+                  archiveSheet = ss.insertSheet("أرشيف المبيعات");
+                  var archiveHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "اسم المسجل", "تاريخ التسجيل", "المستلم", "ملاحظات", "السعر الأساسي", "سعر العرض", "الحالة", "الباركود", "تاريخ البيع/الأرشفة"];
                   archiveSheet.getRange(1, 1, 1, archiveHeaders.length).setValues([archiveHeaders])
                        .setBackground("#2c3e50").setFontColor("white").setFontFamily("Cairo").setFontSize(14).setFontWeight("bold")
                        .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
                }
                var rowToArchive = expData[i].slice(0, 12);
-               rowToArchive[10] = "طھظ… ط§ظ„ط¨ظٹط¹";
+               rowToArchive[10] = "تم البيع";
                rowToArchive.push(Utilities.formatDate(new Date(), "Africa/Cairo", "yyyy-MM-dd hh:mm a"));
                archiveSheet.appendRow(rowToArchive);
                expirySheet.deleteRow(i + 1);
@@ -1125,19 +1125,19 @@ function doPost(e) {
         }
       }
 
-      // طھط­ط¯ظٹط« ط§ظ„ظƒطھط§ظ„ظˆط¬ ظپظˆط±ط§ظ‹
+      // تحديث الكتالوج فوراً
       if (productName) {
-         var cSheet = ss.getSheetByName("ًں“¦ ط§ظ„ظƒطھط§ظ„ظˆط¬");
+         var cSheet = ss.getSheetByName("📦 الكتالوج");
          if (cSheet) {
             var cData = cSheet.getDataRange().getValues();
             for (var c = 1; c < cData.length; c++) {
                if (cData[c][0] === productName) {
-                  if (newStatus === "ظپظٹ ط¹ط±ط¶") {
+                  if (newStatus === "في عرض") {
                      cSheet.getRange(c + 1, 3).setValue("TRUE");
                      if (e.parameter.offerPrice) cSheet.getRange(c + 1, 4).setValue(e.parameter.offerPrice);
-                  } else if (newStatus === "ظ…ط´ ظپظٹ ط¹ط±ط¶" || newStatus === "Deleted") {
+                  } else if (newStatus === "مش في عرض" || newStatus === "Deleted") {
                      cSheet.getRange(c + 1, 3).setValue("FALSE");
-                     cSheet.getRange(c + 1, 4).setValue(""); // ظ…ط³ط­ ط³ط¹ط± ط§ظ„ط¹ط±ط¶
+                     cSheet.getRange(c + 1, 4).setValue(""); // مسح سعر العرض
                   }
                   break;
                }
@@ -1147,12 +1147,12 @@ function doPost(e) {
       return ContentService.createTextOutput("success");
     }
 
-    // â­گ ظ†ط¸ط§ظ… ط­ط±ظƒط© ط§ظ„ظ…ط®ط§ط²ظ† ظˆط§ظ„ط£ط°ظˆظ†ط§طھ
+    // ⭐ نظام حركة المخازن والأذونات
     else if (action === "addInventoryLog") {
-      var invSheet = ss.getSheetByName("ط£ط°ظˆظ†ط§طھ ط§ظ„ظ…ط®ط§ط²ظ†");
+      var invSheet = ss.getSheetByName("أذونات المخازن");
       if (!invSheet) {
-          invSheet = ss.insertSheet("ط£ط°ظˆظ†ط§طھ ط§ظ„ظ…ط®ط§ط²ظ†");
-          var invHeaders = ["ط±ظ‚ظ… ط§ظ„ط¥ط°ظ†", "ظ†ظˆط¹ ط§ظ„ط¥ط°ظ†", "ظ…ظ†", "ط¥ظ„ظ‰", "ط§ط³ظ… ط§ظ„ظ…ط³ط¬ظ„", "ط§ظ„طھط§ط±ظٹط® ظˆط§ظ„ظˆظ‚طھ", "ط§ظ„ط£طµظ†ط§ظپ ظˆط§ظ„ظƒظ…ظٹط§طھ", "ظ…ظ„ط§ط­ط¸ط§طھ"];
+          invSheet = ss.insertSheet("أذونات المخازن");
+          var invHeaders = ["رقم الإذن", "نوع الإذن", "من", "إلى", "اسم المسجل", "التاريخ والوقت", "الأصناف والكميات", "ملاحظات"];
           invSheet.getRange(1, 1, 1, invHeaders.length).setValues([invHeaders])
               .setBackground("#e67e22").setFontColor("white").setFontFamily("Cairo").setFontSize(14).setFontWeight("bold")
               .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
@@ -1174,7 +1174,7 @@ function doPost(e) {
 }
 
 // ============================================================
-// ط¯ظˆط§ظ„ ظ‚ط§ط¹ط¯ط© ط¨ظٹط§ظ†ط§طھ ط§ظ„ط¹ظ…ظ„ط§ط،
+// دوال قاعدة بيانات العملاء
 // ============================================================
 function updateCustomerDB(sheet, name, phone, gov, address, amount, date) {
   var data       = sheet.getDataRange().getValues();
@@ -1205,12 +1205,12 @@ function subtractFromCustomerDB(sheet, phone, amount) {
 }
 
 // ============================================================
-// ط­ط³ط§ط¨ ط§ظ„ط­ط³ط§ط¨ط§طھ ط§ظ„ظ…ط§ظ„ظٹط© ظ„ظ„ظ…ظ†ط§ط¯ظٹط¨
+// حساب الحسابات المالية للمناديب
 // ============================================================
 function calculateFinancials() {
   var ss          = SpreadsheetApp.getActiveSpreadsheet();
-  var ordersSheet = ss.getSheetByName("ًں“‌ ط§ظ„ط·ظ„ط¨ط§طھ");
-  var finSheet    = ss.getSheetByName("ًں“ٹ ط§ظ„ط­ط³ط§ط¨ط§طھ ظˆط§ظ„ظ…ط§ظ„ظٹط©");
+  var ordersSheet = ss.getSheetByName("📝 الطلبات");
+  var finSheet    = ss.getSheetByName("📊 الحسابات والمالية");
   
   if (!ordersSheet || !finSheet) return;
 
@@ -1227,18 +1227,18 @@ function calculateFinancials() {
     var remainingCash = parseFloat(data[i][22]);
     if (isNaN(remainingCash)) remainingCash = finalTotal; 
 
-    var isCash    = payMethod.indexOf("ظƒط§ط´ ًں’µ") !== -1 || (payMethod.includes("ظƒط§ط´") && !payMethod.includes("ظپظˆط¯ط§ظپظˆظ†"));
-    var isDigital = payMethod.includes("ط¥ظ†ط³طھط§") || payMethod.includes("ط§ظ†ط³طھط§ط¨ط§ظٹ") || payMethod.includes("ظپظˆط¯ط§ظپظˆظ†") || payMethod.includes("طھط­ظˆظٹظ„") || payMethod.includes("ظ…ط­ظپط¸ط©");
+    var isCash    = payMethod.indexOf("كاش 💵") !== -1 || (payMethod.includes("كاش") && !payMethod.includes("فودافون"));
+    var isDigital = payMethod.includes("إنستا") || payMethod.includes("انستاباي") || payMethod.includes("فودافون") || payMethod.includes("تحويل") || payMethod.includes("محفظة");
 
-    if ((status === "طھظ… ط§ظ„طھظˆطµظٹظ„" || status === "ظپظٹ ط§ظ„ط´ط­ظ†") && driver) {
+    if ((status === "تم التوصيل" || status === "في الشحن") && driver) {
       if (!accounts[driver]) {
         accounts[driver] = { ordersCount: 0, inTransit: 0, cashCollected: 0, shippingFees: 0, netDue: 0 };
       }
       
-      if (status === "ظپظٹ ط§ظ„ط´ط­ظ†") {
+      if (status === "في الشحن") {
          if (isCash) { accounts[driver].inTransit += remainingCash; }
       } 
-      else if (status === "طھظ… ط§ظ„طھظˆطµظٹظ„") {
+      else if (status === "تم التوصيل") {
           accounts[driver].ordersCount++;
           if (isCash) {
             accounts[driver].cashCollected += remainingCash;
@@ -1260,7 +1260,7 @@ function calculateFinancials() {
   var row = 2;
   for (var drv in accounts) {
     var acc        = accounts[drv];
-    var statusText = acc.netDue > 0 ? "ط¹ط§ظٹط²ظٹظ† ظ…ظ†ظ‡" : (acc.netDue < 0 ? "ظ„ظٹظ‡ ط¹ظ†ط¯ظ†ط§" : "ط®ط§ظ„طµ");
+    var statusText = acc.netDue > 0 ? "عايزين منه" : (acc.netDue < 0 ? "ليه عندنا" : "خالص");
     
     finSheet.getRange(row, 1, 1, 7).setValues([[
       drv, acc.ordersCount, acc.inTransit, acc.cashCollected, acc.shippingFees, acc.netDue, statusText 
@@ -1270,11 +1270,11 @@ function calculateFinancials() {
 }
 
 // ============================================================
-// طھط­ظ„ظٹظ„ ظƒط¨ط§ط± ط§ظ„ط¹ظ…ظ„ط§ط، VIP
+// تحليل كبار العملاء VIP
 // ============================================================
 function analyzeVIPs() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var ordersSheet = ss.getSheetByName("ًں“‌ ط§ظ„ط·ظ„ط¨ط§طھ");
+  var ordersSheet = ss.getSheetByName("📝 الطلبات");
   if (!ordersSheet) return [];
   
   var data = ordersSheet.getDataRange().getValues();
@@ -1282,7 +1282,7 @@ function analyzeVIPs() {
   
   for (var i = 1; i < data.length; i++) {
     var status = data[i][18];
-    if (status === "طھظ… ط§ظ„طھظˆطµظٹظ„" || status === "طھظ… ط§ظ„طھظˆطµظٹظ„ ظˆظ…ظڈط­ط§ط³ط¨") {
+    if (status === "تم التوصيل" || status === "تم التوصيل ومُحاسب") {
       var phone = data[i][7].toString().replace(/'/g, "").trim();
       var name = data[i][4];
       var total = parseFloat(data[i][17]) || 0;
