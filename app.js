@@ -6963,7 +6963,20 @@ function renderInventoryDashboard(logs) {
                     products[pName] = (products[pName] || 0) + pQty;
                 }
             });
-        } catch(e) {}
+        } catch(e) {
+            // Fallback for plain string "Product (Qty) | Product (Qty)"
+            if (log.items) {
+                let parts = log.items.split("|");
+                parts.forEach(p => {
+                    let match = p.trim().match(/(.*?)\s+\((\d+)\)/);
+                    if (match) {
+                        let pName = match[1].trim();
+                        let pQty = parseInt(match[2]) || 0;
+                        if (pName) products[pName] = (products[pName] || 0) + pQty;
+                    }
+                });
+            }
+        }
     });
     
     let topSender = Object.keys(senders).sort((a,b) => senders[b]-senders[a])[0] || '-';
@@ -6993,7 +7006,7 @@ function renderInventoryArchive(logs) {
             <td>${log.from}</td>
             <td>${log.to}</td>
             <td>${log.regName}</td>
-            <td dir="ltr" style="text-align:right;">${new Date(log.timestamp).toLocaleString('ar-EG', {dateStyle:'short', timeStyle:'short'})}</td>
+            <td dir="ltr" style="text-align:right;">${log.timestamp}</td>
             <td style="text-align:center;">
                 <button class="interactive-btn" onclick="reprintInvLog('${log.logId}')" style="background:#3498db; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;" title="إعادة طباعة"><i class="fa-solid fa-print"></i></button>
             </td>
@@ -7010,7 +7023,17 @@ window.reprintInvLog = function(logId) {
     let itemsArr = [];
     try {
         itemsArr = JSON.parse(log.items);
-    } catch(e) {}
+    } catch(e) {
+        // Fallback for plain string
+        if (log.items) {
+            let parts = log.items.split("|");
+            itemsArr = parts.map(p => {
+                let match = p.trim().match(/(.*?)\s+\((\d+)\)/);
+                if (match) return { name: match[1].trim(), qty: match[2] };
+                return { name: p.trim(), qty: 1 };
+            });
+        }
+    }
     
     let itemsHtml = itemsArr.map(item => `
         <tr>
@@ -7054,7 +7077,7 @@ window.reprintInvLog = function(logId) {
                 <h2>Candy Club</h2>
                 <h3>إذن حركة بضاعة <span style="font-size:10px;">(نسخة أرشيفية)</span></h3>
                 <p>رقم الإذن: <b style="font-size:14px;">${log.logId}</b></p>
-                <p>التاريخ: ${new Date(log.timestamp).toLocaleString('ar-EG')}</p>
+                <p>التاريخ: ${log.timestamp}</p>
             </div>
             <div class="divider"></div>
             <div class="info-box">
