@@ -66,7 +66,7 @@ document.querySelectorAll('.nav-item').forEach(btn => {
 
         // Load expiry data every time the tab is opened, with a custom loading screen
         if (btn.getAttribute('data-target') === 'expiry-tab') {
-            const expiryBody = document.querySelector('#expiry-tab .expiry-body');
+            const expiryBody = document.querySelector('#expiry-tab');
             if (expiryBody) expiryBody.classList.add('skeleton-mode');
             
             loadExpiryData(); // Fetch fresh data every time
@@ -3512,7 +3512,7 @@ function loadExpiryData() {
         btn.style.pointerEvents = "none";
     }
     
-    const expiryBody = document.querySelector('#expiry-tab .expiry-body');
+    const expiryBody = document.querySelector('#expiry-tab');
     if (expiryBody) expiryBody.classList.add('skeleton-mode');
 
     // Lazy load the expiries from Google Sheets
@@ -3538,7 +3538,7 @@ function loadExpiryData() {
             renderExpiryDashboard();
             updateCatalogWithOffers(); // To highlight items on offer in the main cashier view
             
-            const expiryBody = document.querySelector('#expiry-tab .expiry-body');
+            const expiryBody = document.querySelector('#expiry-tab');
             if (expiryBody) expiryBody.classList.remove('skeleton-mode');
         })
         .catch(err => {
@@ -3551,7 +3551,7 @@ function loadExpiryData() {
             // Also call render to clear the "loading" or show empty states
             renderExpiryDashboard();
             
-            const expiryBody = document.querySelector('#expiry-tab .expiry-body');
+            const expiryBody = document.querySelector('#expiry-tab');
             if (expiryBody) expiryBody.classList.remove('skeleton-mode');
         });
 }
