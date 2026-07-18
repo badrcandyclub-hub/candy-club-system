@@ -6674,11 +6674,15 @@ document.addEventListener('DOMContentLoaded', () => {
         renderInvItems();
     };
     window.editInvItem = function(idx) {
-        let newQty = prompt("أدخل الكمية الجديدة لـ " + invItems[idx].name + ":", invItems[idx].qty);
-        if (newQty !== null && newQty.trim() !== "" && !isNaN(parseInt(newQty)) && parseInt(newQty) > 0) {
-            invItems[idx].qty = parseInt(newQty);
-            renderInvItems();
-        }
+        if (!invItems[idx]) return;
+        let item = invItems[idx];
+        document.getElementById('invProdName').value = item.name;
+        document.getElementById('invProdQty').value = item.qty;
+        document.getElementById('invProdBarcode').value = item.barcode || "";
+        
+        invItems.splice(idx, 1);
+        renderInvItems();
+        document.getElementById('invProdQty').focus();
     };
 
     function renderInvItems() {
@@ -6690,8 +6694,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td style="text-align: right; font-weight: bold; color: var(--text-main);">${item.name}</td>
                 <td style="text-align: center; font-weight: bold;">${item.qty}</td>
                 <td style="text-align: center;">
-                    <button class="btn btn-primary" style="padding: 5px 10px; font-size: 0.9rem;" onclick="window.editInvItem(${index})"><i class="fa-solid fa-pen"></i></button>
-                    <button class="btn btn-danger" style="padding: 5px 10px; font-size: 0.9rem;" onclick="window.deleteInvItem(${index})"><i class="fa-solid fa-trash"></i></button>
+                    <button type="button" style="background: rgba(41, 128, 185, 0.1); color: #2980b9; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; margin-left: 5px; transition: 0.3s;" onclick="window.editInvItem(${index})" onmouseover="this.style.background='#2980b9'; this.style.color='#fff';" onmouseout="this.style.background='rgba(41, 128, 185, 0.1)'; this.style.color='#2980b9';"><i class="fa-solid fa-pen-to-square"></i> تعديل</button>
+                    <button type="button" style="background: rgba(231, 76, 60, 0.1); color: #e74c3c; border: none; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; transition: 0.3s;" onclick="window.deleteInvItem(${index})" onmouseover="this.style.background='#e74c3c'; this.style.color='#fff';" onmouseout="this.style.background='rgba(231, 76, 60, 0.1)'; this.style.color='#e74c3c';"><i class="fa-solid fa-trash-can"></i> حذف</button>
                 </td>
             `;
             invItemsList.appendChild(tr);
@@ -6734,7 +6738,7 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append("type", type);
             formData.append("from", from);
             formData.append("to", to);
-            formData.append("regName", regName);
+            formData.append("regName", senderName ? senderName : regName);
             formData.append("items", itemsStr);
             formData.append("notes", notes);
 
@@ -6850,9 +6854,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="divider"></div>
 
                 <div class="info-box">
-                    <p>من: ${from}</p>
-                    <p>إلى: ${to}</p>
-                    <p>المسؤول / الراسل: ${senderDisplay}</p>
+                    <p><span style="font-size: 16px;">👤</span> <b>الراسل:</b> ${senderDisplay}</p>
+                    <p><span style="font-size: 16px;">🏢</span> <b>من:</b> ${from}</p>
+                    <p><span style="font-size: 16px;">🚚</span> <b>إلى:</b> ${to}</p>
                 </div>
 
                 <table>
@@ -6867,13 +6871,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     </tbody>
                 </table>
 
-                ${notes ? `<div style="margin-bottom: 15px; font-size: 13px;"><p><b>ملاحظات:</b> ${notes}</p></div>` : ''}
+                ${notes ? `<div style="margin-bottom: 15px; font-size: 13px;"><p><b>📝 ملاحظات:</b> ${notes}</p></div>` : ''}
 
                 <div class="divider"></div>
 
                 <div class="footer">
                     <p>مسجل إلكترونياً بـ Candy Club System</p>
-                    <p style="margin-top: 15px; font-size: 13px;">توقيع المستلم: ........................</p>
                 </div>
 
                 <script>
