@@ -8,7 +8,7 @@
     <link rel="icon" type="image/png" href="favicon.png?v=6">
     <link rel="apple-touch-icon" href="favicon.png?v=6">
     <link rel="manifest" href="app-manifest.json?v=999">
-    <link rel="stylesheet" href="style.css?v=24.4">
+    <link rel="stylesheet" href="style.css?v=24.5">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap"
         rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -697,10 +697,26 @@
                     </div>
                 </div>
 
-                <div class="input-with-action" style="margin-bottom: 20px;">
-                    <i class="fa-solid fa-barcode check-status-icon" style="color: var(--primary);"></i>
-                    <input type="text" id="invBarcodeScanner" class="input-field" placeholder="سكان الباركود أو ابحث عن الصنف لإضافته للإذن" autocomplete="off">
-                    <div id="invSuggestionsList" class="suggestions-list" style="display:none; z-index:100; max-height: 250px;"></div>
+                <div style="border: 2px dashed var(--primary); padding: 15px; border-radius: 10px; margin-bottom: 20px; background: var(--bg-light);">
+                    <h4 style="margin-top: 0; margin-bottom: 15px; color: var(--primary);"><i class="fa-solid fa-plus"></i> إضافة منتج للإذن</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                        <div style="grid-column: span 2;">
+                            <label style="display:block; margin-bottom:5px; font-weight:bold; color:var(--text-main);">الباركود:</label>
+                            <input type="text" id="invProdBarcode" class="input-field" placeholder="سكان الباركود لاستدعاء اسم المنتج..." style="margin-bottom:0; font-family: monospace; letter-spacing: 1px;" autocomplete="off" onkeypress="if(event.key === 'Enter') { document.getElementById('searchInvBarcodeBtn').click(); event.preventDefault(); }">
+                            <button type="button" id="searchInvBarcodeBtn" style="display: none;"></button>
+                        </div>
+                        <div style="grid-column: span 2;">
+                            <label style="display:block; margin-bottom:5px; font-weight:bold; color:var(--text-main);">اسم المنتج <span style="color:red;">*</span>:</label>
+                            <input type="text" id="invProdName" class="input-field" placeholder="اسم المنتج..." style="margin-bottom:0;">
+                        </div>
+                        <div>
+                            <label style="display:block; margin-bottom:5px; font-weight:bold; color:var(--text-main);">الكمية <span style="color:red;">*</span>:</label>
+                            <input type="number" id="invProdQty" class="input-field" placeholder="1" min="1" style="margin-bottom:0;">
+                        </div>
+                        <div style="display: flex; align-items: flex-end;">
+                            <button id="addInvItemBtn" type="button" class="btn-confirm interactive-btn" style="width: 100%; padding: 10px; font-weight: bold;"><i class="fa-solid fa-plus"></i> إضافة للإذن</button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="table-container" style="margin-bottom: 20px; overflow: visible;">
@@ -709,7 +725,6 @@
                             <tr>
                                 <th>المنتج</th>
                                 <th style="width: 120px;">الكمية</th>
-                                <th style="width: 50px;">حذف</th>
                             </tr>
                         </thead>
                         <tbody id="invItemsList">

@@ -6562,71 +6562,55 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // ⭐ نظام حركة المخازن والأذونات (الجديد)
-    const invBarcodeScanner = document.getElementById('invBarcodeScanner');
-    const invSuggestionsList = document.getElementById('invSuggestionsList');
+    const invProdBarcode = document.getElementById('invProdBarcode');
+    const searchInvBarcodeBtn = document.getElementById('searchInvBarcodeBtn');
+    const invProdName = document.getElementById('invProdName');
+    const invProdQty = document.getElementById('invProdQty');
+    const addInvItemBtn = document.getElementById('addInvItemBtn');
     const invItemsList = document.getElementById('invItemsList');
     const savePrintInvBtn = document.getElementById('savePrintInvBtn');
     
     let invItems = [];
     
-    if (invBarcodeScanner) {
-        // Auto complete
-        invBarcodeScanner.addEventListener('input', (e) => {
-            let val = e.target.value.trim().toLowerCase();
-            invSuggestionsList.innerHTML = '';
-            if (!val) {
-                invSuggestionsList.style.display = 'none';
-                return;
-            }
-            
-            let matches = barcodeCatalogData.filter(p => 
-                (p.name && p.name.toLowerCase().includes(val)) || 
-                (p.barcode && String(p.barcode).toLowerCase() === val)
-            );
-            
-            // Exact barcode match
-            let exactMatch = matches.find(p => p.barcode && String(p.barcode).toLowerCase() === val);
+    if (searchInvBarcodeBtn) {
+        searchInvBarcodeBtn.addEventListener('click', () => {
+            let val = invProdBarcode.value.trim().toLowerCase();
+            if(!val) return;
+            let exactMatch = barcodeCatalogData.find(p => p.barcode && String(p.barcode).toLowerCase() === val);
             if (exactMatch) {
-                addInvItem(exactMatch.name);
-                invBarcodeScanner.value = '';
-                invSuggestionsList.style.display = 'none';
-                return;
-            }
-            
-            if (matches.length > 0) {
-                matches.slice(0, 15).forEach(m => {
-                    let div = document.createElement('div');
-                    div.className = 'suggestion-item';
-                    div.innerHTML = `<b>${m.name}</b> ${m.barcode ? '<span class="price-badge">' + m.barcode + '</span>' : ''}`;
-                    div.onclick = () => {
-                        addInvItem(m.name);
-                        invBarcodeScanner.value = '';
-                        invSuggestionsList.style.display = 'none';
-                    };
-                    invSuggestionsList.appendChild(div);
-                });
-                invSuggestionsList.style.display = 'block';
+                invProdName.value = exactMatch.name;
+                invProdBarcode.value = '';
             } else {
-                invSuggestionsList.style.display = 'none';
-            }
-        });
-
-        // Hide suggestions on click outside
-        document.addEventListener('click', (e) => {
-            if (e.target !== invBarcodeScanner && e.target !== invSuggestionsList) {
-                invSuggestionsList.style.display = 'none';
+                showToast("المنتج غير موجود بالكتالوج", "warning");
             }
         });
     }
 
-    function addInvItem(name) {
-        let existing = invItems.find(i => i.name === name);
-        if (existing) {
-            existing.qty += 1;
-        } else {
-            invItems.push({ name: name, qty: 1 });
-        }
-        renderInvItems();
+    if (addInvItemBtn) {
+        addInvItemBtn.addEventListener('click', () => {
+            let name = invProdName.value.trim();
+            let qty = parseInt(invProdQty.value);
+            if (!name) {
+                showToast("برجاء إدخال اسم المنتج", "warning");
+                return;
+            }
+            if (isNaN(qty) || qty < 1) {
+                showToast("برجاء إدخال كمية صحيحة", "warning");
+                return;
+            }
+
+            let existing = invItems.find(i => i.name === name);
+            if (existing) {
+                existing.qty += qty;
+            } else {
+                invItems.push({ name: name, qty: qty });
+            }
+            
+            invProdName.value = '';
+            invProdQty.value = '1';
+            invProdBarcode.value = '';
+            renderInvItems();
+        });
     }
 
     function renderInvItems() {
@@ -6636,31 +6620,11 @@ document.addEventListener('DOMContentLoaded', () => {
             let tr = document.createElement('tr');
             tr.innerHTML = `
                 <td style="text-align: right; font-weight: bold; color: var(--text-main);">${item.name}</td>
-                <td>
-                    <input type="number" min="1" value="${item.qty}" class="input-field" style="margin-bottom:0; padding: 8px; text-align: center; font-weight: bold;" onchange="updateInvQty(${index}, this.value)">
-                </td>
-                <td>
-                    <button class="btn-cancel" style="padding: 5px 10px;" onclick="removeInvItem(${index})"><i class="fa-solid fa-trash"></i></button>
-                </td>
+                <td style="text-align: center; font-weight: bold;">${item.qty}</td>
             `;
             invItemsList.appendChild(tr);
         });
     }
-
-    window.updateInvQty = function(index, val) {
-        let v = parseInt(val);
-        if (v > 0) {
-            invItems[index].qty = v;
-        } else {
-            invItems[index].qty = 1;
-        }
-        renderInvItems();
-    };
-
-    window.removeInvItem = function(index) {
-        invItems.splice(index, 1);
-        renderInvItems();
-    };
 
     if (savePrintInvBtn) {
         savePrintInvBtn.addEventListener('click', () => {
