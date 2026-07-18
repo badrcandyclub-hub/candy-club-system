@@ -1243,7 +1243,7 @@ if (suspendBtn) {
         });
 
         // <i class=\'fa-solid fa-star\'></i> V14.2: Timestamp-based ID لمنع التكرار نهائياً
-        let draftId = "CANDY-" + Date.now().toString().slice(-5);
+        let draftId = "DRAFT-" + Date.now().toString().slice(-5);
         let draft = {
             id: draftId, date: new Date().toLocaleTimeString('ar-EG'),
             platform: document.getElementById('platform') ? document.getElementById('platform').value : "", name: name,

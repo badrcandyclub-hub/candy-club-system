@@ -709,9 +709,25 @@ function doPost(e) {
       var sheet     = ss.getSheetByName("📝 الطلبات");
       var custSheet = ss.getSheetByName("👥 قاعدة العملاء");
       
-      // ⭐ V14.2: Timestamp-based ID لمنع التكرار نهائياً
-      var tsStr = new Date().getTime().toString();
-      var id    = "CANDY-" + tsStr.slice(-6);
+      // توليد رقم الطلب بشكل تسلسلي (CANDY-000001)
+      var nextIdNum = 1;
+      var lastRow = sheet.getLastRow();
+      
+      if (lastRow > 1) {
+        var lastIdVal = sheet.getRange(lastRow, 1).getValue().toString();
+        var match = lastIdVal.match(/CANDY-(\d+)/);
+        if (match) {
+          nextIdNum = parseInt(match[1], 10) + 1;
+        } else {
+          nextIdNum = lastRow; // احتياطي في حالة لم يكن الرقم بالصيغة الصحيحة
+        }
+      }
+      
+      var idStr = nextIdNum.toString();
+      while (idStr.length < 6) {
+        idStr = "0" + idStr;
+      }
+      var id = "CANDY-" + idStr;
       
       var d = e.parameter.browserDate || Utilities.formatDate(new Date(), "Africa/Cairo", "yyyy-MM-dd");
       var t = Utilities.formatDate(new Date(), "Africa/Cairo", "hh:mm a");
@@ -1286,4 +1302,29 @@ function backfillBarcodes() {
   } catch (e) {
     SpreadsheetApp.getUi().alert("❌ حدث خطأ أثناء التحديث: " + e.message);
   }
+}
+
+// دالة مخصصة لترقيم الأوردرات القديمة بشكل تسلسلي مرة واحدة
+// يرجى تشغيلها يدوياً من داخل Google Apps Script لمرة واحدة فقط
+function renumberAllOrders() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("📝 الطلبات");
+  var lastRow = sheet.getLastRow();
+  
+  if (lastRow <= 1) {
+    SpreadsheetApp.getUi().alert("لا توجد طلبات لإعادة ترقيمها.");
+    return;
+  }
+  
+  var ids = [];
+  for (var i = 0; i < lastRow - 1; i++) {
+    var idNum = (i + 1).toString();
+    while (idNum.length < 6) {
+      idNum = "0" + idNum;
+    }
+    ids.push(["CANDY-" + idNum]);
+  }
+  
+  sheet.getRange(2, 1, ids.length, 1).setValues(ids);
+  SpreadsheetApp.getUi().alert("✅ تم إعادة ترقيم جميع الطلبات بنجاح!");
 }
