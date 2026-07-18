@@ -5636,6 +5636,12 @@ function renderFinancials(finList) {
     if (!container) return;
     container.innerHTML = '';
 
+    const now = new Date();
+    const driversMonthInput = document.getElementById('driversMonthFilter');
+    if (driversMonthInput && !driversMonthInput.value) {
+        driversMonthInput.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    }
+
     let allDrivers = window.driversList || [];
     let driversMap = {};
     allDrivers.forEach(d => {
@@ -5691,12 +5697,30 @@ function renderFinancials(finList) {
             ordersHtml += `</div>`;
         }
 
+        let dStats = (window.latestServerData && window.latestServerData.driverStats) ? window.latestServerData.driverStats[f.name] || { monthProfit: 0, monthOrderCount: 0, totalProfit: 0, totalCount: 0 } : { monthProfit: 0, monthOrderCount: 0, totalProfit: 0, totalCount: 0 };
+
+        let dashboardHtml = `
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; background: #f8f9fc; padding: 10px; border-radius: 8px; border: 1px solid #e3e6f0;">
+                <div style="text-align: center; border-left: 1px solid #e3e6f0; padding: 5px;">
+                    <div style="font-size: 0.75rem; color: #4e73df; font-weight: bold;">أرباح الشهر</div>
+                    <div style="font-size: 1.1rem; font-weight: bold; color: #5a5c69;">${dStats.monthProfit} <span style="font-size: 0.7rem;">ج.م</span></div>
+                    <div style="font-size: 0.7rem; color: #1cc88a; margin-top: 2px;">${dStats.monthOrderCount} أوردر</div>
+                </div>
+                <div style="text-align: center; padding: 5px;">
+                    <div style="font-size: 0.75rem; color: #f6c23e; font-weight: bold;">إجمالي الأرباح</div>
+                    <div style="font-size: 1.1rem; font-weight: bold; color: #5a5c69;">${dStats.totalProfit} <span style="font-size: 0.7rem;">ج.م</span></div>
+                    <div style="font-size: 0.7rem; color: #1cc88a; margin-top: 2px;">${dStats.totalCount} أوردر</div>
+                </div>
+            </div>
+        `;
+
         container.innerHTML += `
             <div class="${cardClass}" style="background: #fff; padding: 15px; border-radius: 12px; border: 1px solid ${cardBorderColor}; margin-bottom: 12px; box-shadow: ${cardShadow}; opacity: ${cardOpacity}; transition: all 0.3s ease;">
                 <div class="financial-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #f0f0f0; padding-bottom:8px; margin-bottom:10px;">
-                    <span style="font-weight:bold; font-size:1.1rem; color:var(--text-dark);"><i class=\'fa-solid fa-motorcycle\'></i> ${f.name}</span>
-                    <span style="font-size: 0.85rem; background:#f0f0f0; color:var(--text-dark); padding:3px 8px; border-radius:12px; font-weight:bold;">${f.ordersCount || 0} طلب</span>
+                    <span style="font-weight:bold; font-size:1.1rem; color:var(--text-dark);"><i class='fa-solid fa-motorcycle'></i> ${f.name}</span>
+                    <button class="btn-danger" onclick="deleteItem('deleteDriver', '${f.name}', 'couriers')" title="حذف المندوب" style="padding: 4px 8px; font-size: 0.8rem; border-radius: 6px; background: transparent; color: var(--danger); border: 1px solid var(--danger);"><i class="fa-solid fa-trash"></i></button>
                 </div>
+                ${dashboardHtml}
                 <div class="financial-details" style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:10px;">
                     <span style="background:#e8f4f8; padding:5px 10px; border-radius:6px; color:#555;">الكاش: <strong style="color:#2980b9;">${f.cashCollected || 0}</strong> ج</span>
                     <span style="background:#f9ebea; padding:5px 10px; border-radius:6px; color:#555;">الشحن: <strong style="color:#c0392b;">${f.shippingFees || 0}</strong> ج</span>
@@ -6445,6 +6469,17 @@ document.addEventListener('DOMContentLoaded', () => {
     
     window.refreshModeratorsStats = function() {
         const monthFilterInput = document.getElementById('moderatorsMonthFilter');
+        if (!monthFilterInput || !monthFilterInput.value) {
+            showToast("برجاء اختيار الشهر أولاً", "warning");
+            return;
+        }
+        const selectedMonth = monthFilterInput.value;
+        showToast("جاري جلب الإحصائيات...", "warning");
+        loadDataFromServer(selectedMonth + '-01');
+    };
+
+    window.refreshDriversStats = function() {
+        const monthFilterInput = document.getElementById('driversMonthFilter');
         if (!monthFilterInput || !monthFilterInput.value) {
             showToast("برجاء اختيار الشهر أولاً", "warning");
             return;

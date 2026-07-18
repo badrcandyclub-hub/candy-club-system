@@ -255,6 +255,7 @@ function buildMonthlyReport(ordersData, targetMonth) {
   var monthOrderCount     = 0;
   var returnedCount       = 0;
   var moderatorStats      = {}; // ⭐ حساب المودريتور
+  var driverStats         = {}; // ⭐ حساب المناديب
 
   for (var j = 1; j < ordersData.length; j++) {
     var rowDate = ordersData[j][1] instanceof Date
@@ -263,7 +264,9 @@ function buildMonthlyReport(ordersData, targetMonth) {
 
     var status     = ordersData[j][18];
     var finalTotal = parseFloat(ordersData[j][17]) || 0;
+    var shipping   = parseFloat(ordersData[j][16]) || 0;
     var mod        = (ordersData[j][20] || "").toString().trim(); // عمود 21 هو المودريتور
+    var driver     = (ordersData[j][11] || "").toString().trim(); // عمود 12 هو المندوب
 
     if (status !== "مرتجع" && mod !== "") {
       if (!moderatorStats[mod]) {
@@ -275,6 +278,20 @@ function buildMonthlyReport(ordersData, targetMonth) {
       if (rowDate.startsWith(targetMonth)) {
          moderatorStats[mod].monthSales += finalTotal;
          moderatorStats[mod].monthOrderCount++;
+      }
+    }
+
+    // ⭐ حساب المناديب
+    if (driver !== "" && (status === "تم التوصيل" || status === "تم التوصيل ومُحاسب")) {
+      if (!driverStats[driver]) {
+          driverStats[driver] = { monthProfit: 0, monthOrderCount: 0, totalProfit: 0, totalCount: 0 };
+      }
+      driverStats[driver].totalProfit += shipping;
+      driverStats[driver].totalCount++;
+      
+      if (rowDate.startsWith(targetMonth)) {
+         driverStats[driver].monthProfit += shipping;
+         driverStats[driver].monthOrderCount++;
       }
     }
 
@@ -325,7 +342,8 @@ function buildMonthlyReport(ordersData, targetMonth) {
     monthOrderCount:  monthOrderCount,
     completedMonthCount: completedMonthCount,
     returnedCount:    returnedCount,
-    moderatorStats:   moderatorStats
+    moderatorStats:   moderatorStats,
+    driverStats:      driverStats
   };
 }
 
@@ -565,6 +583,7 @@ function doGet(e) {
     response.monthOrderCount     = monthlyReport.monthOrderCount;
     response.returnedCount       = monthlyReport.returnedCount;
     response.moderatorStats      = monthlyReport.moderatorStats; // NEW
+    response.driverStats         = monthlyReport.driverStats;    // NEW
 
     // ⭐ إحصائيات اليوم الحقيقي (دايماً اليوم الفعلي، مش filterDate)
     var todayReport = buildDailyStats(data, todayReal);

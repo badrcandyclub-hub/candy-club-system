@@ -291,7 +291,6 @@
         <section id="shipping-tab" class="tab-pane">
             <div class="shipping-actions-row mb-15">
                 <button id="openZoneModalBtn" class="btn-outline interactive-btn">المناطق واسعار الشحن <i class="fa-solid fa-plus"></i></button>
-                <button id="openDriverModalBtn" class="btn-outline interactive-btn">المناديب <i class="fa-solid fa-plus"></i></button>
             </div>
 
             <div class="section-card" style="border-right: 4px solid var(--secondary);">
@@ -1112,6 +1111,18 @@
                         <h3 style="color: var(--success); margin: 0; display: inline-block;" id="financialsTotalAmount">إجمالي الحساب: 0 ج.م</h3>
                     </div>
                     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <div style="display: flex; gap: 5px; background: #FAFBFF; border: 1px solid var(--border); border-radius: 8px; padding: 5px;">
+                            <input type="text" id="newDriverName" placeholder="اسم المندوب" style="margin-bottom: 0; padding: 5px; width: 120px;">
+                            <input type="tel" id="newDriverPhone" placeholder="رقم الموبايل" style="margin-bottom: 0; padding: 5px; width: 120px;">
+                            <button id="addDriverBtn" class="btn-confirm" style="padding: 5px 10px;"><i class="fa-solid fa-plus"></i> إضافة</button>
+                        </div>
+                        
+                        <div style="display: flex; gap: 5px; align-items: center; background: #FAFBFF; border: 1px solid var(--border); border-radius: 8px; padding: 5px;">
+                            <label for="driversMonthFilter" style="margin:0; font-size: 0.85rem; font-weight:bold; color:var(--text-main);">تصفية بالشهر:</label>
+                            <input type="month" id="driversMonthFilter" style="margin-bottom:0; padding:4px; border:1px solid #ccc; border-radius:4px;">
+                            <button type="button" class="btn-primary" onclick="refreshDriversStats()" style="padding: 4px 10px; border-radius: 6px;"><i class="fa-solid fa-arrows-rotate"></i> جلب</button>
+                        </div>
+
                         <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: bold; background: var(--bg); padding: 5px 10px; border-radius: 8px;">
                             <input type="checkbox" id="selectAllFinancialsCheckbox" style="width: 18px; height: 18px;">
                             تحديد الكل
@@ -1333,24 +1344,7 @@
         </div>
     </div>
 
-    <div id="driverModal" class="modal-overlay">
-        <div class="modal-content" style="max-width: 600px;">
-            <h3 style="color: var(--primary); border-bottom: 2px solid var(--border); padding-bottom: 10px; margin-bottom: 15px;"><i class="fa-solid fa-motorcycle"></i> إدارة المناديب</h3>
-            
-            <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; background: var(--bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border);">
-                <input type="text" id="newDriverName" placeholder="اسم المندوب" style="margin-bottom: 0; flex: 1 1 150px;">
-                <input type="tel" id="newDriverPhone" placeholder="رقم الموبايل" style="margin-bottom: 0; flex: 1 1 150px;">
-            </div>
-            
-            <div class="modal-actions" style="margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 10px;">
-                <button id="addDriverBtn" class="btn-confirm" style="flex: 1 1 200px;">حفظ المندوب <i class="fa-solid fa-floppy-disk"></i></button>
-                <button id="closeDriverModal" class="btn-cancel" style="flex: 1 1 100px;">إغلاق</button>
-            </div>
-            
-            <h4 style="color: var(--text-main); font-size: 1rem; margin-bottom: 10px;"><i class="fa-solid fa-motorcycle"></i> المناديب المسجلين:</h4>
-            <div id="driversDisplayList" class="data-list-container" style="max-height: 200px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; background: transparent; border: none; padding: 0;"></div>
-        </div>
-    </div>
+    <!-- Driver modal removed and integrated into financials tab -->
     <div id="editCatalogModal" class="modal-overlay">
         <div class="modal-content">
             <h3 style="color: var(--primary); margin-bottom: 15px;"><i class="fa-solid fa-pencil"></i> تعديل المنتج</h3>
