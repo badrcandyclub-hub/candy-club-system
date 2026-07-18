@@ -32,15 +32,14 @@ function createMissingSheets() {
   var invSheet = ss.getSheetByName("📦 أذونات المخازن");
   if (!invSheet) {
       invSheet = ss.insertSheet("📦 أذونات المخازن");
-      var invHeaders = ["رقم الإذن", "نوع الإذن", "من", "إلى", "اسم المسجل", "التاريخ والوقت", "الأصناف والكميات والباركود", "ملاحظات"];
+      var invHeaders = ["رقم الإذن", "من", "إلى", "اسم المسجل", "التاريخ والوقت", "الأصناف والكميات والباركود", "ملاحظات"];
       invSheet.getRange(1, 1, 1, invHeaders.length).setValues([invHeaders])
            .setBackground("#e67e22").setFontColor("white").setFontFamily(headerFont).setFontSize(14).setFontWeight("bold")
            .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
       invSheet.setRowHeight(1, 45);
       invSheet.setFrozenRows(1);
       invSheet.setColumnWidth(1, 120);
-      invSheet.setColumnWidth(2, 120);
-      invSheet.setColumnWidth(7, 400); // column for products
+      invSheet.setColumnWidth(6, 400); // column for products
   }
 
   SpreadsheetApp.getUi().alert("✅ تم إنشاء وتحديث الشيتات بنجاح! يمكنك الآن استخدام أرشيف المبيعات وأذونات المخازن.");
