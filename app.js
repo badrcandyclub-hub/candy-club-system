@@ -3596,6 +3596,21 @@ if (startLedgerCameraScannerBtn) {
     });
 }
 
+const ledgerSearchBarcodeBtn = document.getElementById('ledgerSearchBarcodeBtn');
+if (ledgerSearchBarcodeBtn) {
+    ledgerSearchBarcodeBtn.addEventListener('click', () => {
+        const val = document.getElementById('ledgerProdBarcode').value.trim();
+        if (!val) {
+            showToast("يرجى كتابة الباركود أولاً", "warning");
+            return;
+        }
+        if (typeof currentScannerMode !== 'undefined') {
+            currentScannerMode = 'ledger';
+        }
+        processBarcodeAction(val);
+    });
+}
+
 // Add Item to Cart
 const addLedgerItemBtn = document.getElementById('addLedgerItemBtn');
 if (addLedgerItemBtn) {
