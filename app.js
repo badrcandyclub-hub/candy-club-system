@@ -4689,6 +4689,17 @@ if (btnExportDatePDF) {
         let legacyBatch = [];
         filtered.forEach(item => {
             let rDate = item.regDate || "";
+            
+            // If Apps Script returned the date as an ISO string (e.g., "2026-07-17T15:47:00.000Z"), format it back
+            if (typeof rDate === 'string' && rDate.includes("T") && rDate.endsWith("Z")) {
+                let d = new Date(rDate);
+                if (!isNaN(d.getTime())) {
+                    let dStr = d.toLocaleDateString('en-CA'); // "YYYY-MM-DD"
+                    let tStr = d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }); // "10:35 ص"
+                    rDate = dStr + " " + tStr;
+                }
+            }
+
             // Check if regDate has time appended (contains " AM", " PM", " ص", or " م")
             if (rDate.includes(" AM") || rDate.includes(" PM") || rDate.includes(" ص") || rDate.includes(" م") || rDate.includes(":")) {
                 if (!batches[rDate]) batches[rDate] = [];
