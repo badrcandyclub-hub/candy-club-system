@@ -6560,4 +6560,287 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast("جاري جلب الإحصائيات...", "warning");
         loadDataFromServer(selectedMonth + '-01');
     };
+
+    // ⭐ نظام حركة المخازن والأذونات (الجديد)
+    const invBarcodeScanner = document.getElementById('invBarcodeScanner');
+    const invSuggestionsList = document.getElementById('invSuggestionsList');
+    const invItemsList = document.getElementById('invItemsList');
+    const savePrintInvBtn = document.getElementById('savePrintInvBtn');
+    
+    let invItems = [];
+    
+    if (invBarcodeScanner) {
+        // Auto complete
+        invBarcodeScanner.addEventListener('input', (e) => {
+            let val = e.target.value.trim().toLowerCase();
+            invSuggestionsList.innerHTML = '';
+            if (!val) {
+                invSuggestionsList.style.display = 'none';
+                return;
+            }
+            
+            let matches = barcodeCatalogData.filter(p => 
+                (p.name && p.name.toLowerCase().includes(val)) || 
+                (p.barcode && String(p.barcode).toLowerCase() === val)
+            );
+            
+            // Exact barcode match
+            let exactMatch = matches.find(p => p.barcode && String(p.barcode).toLowerCase() === val);
+            if (exactMatch) {
+                addInvItem(exactMatch.name);
+                invBarcodeScanner.value = '';
+                invSuggestionsList.style.display = 'none';
+                return;
+            }
+            
+            if (matches.length > 0) {
+                matches.slice(0, 15).forEach(m => {
+                    let div = document.createElement('div');
+                    div.className = 'suggestion-item';
+                    div.innerHTML = `<b>${m.name}</b> ${m.barcode ? '<span class="price-badge">' + m.barcode + '</span>' : ''}`;
+                    div.onclick = () => {
+                        addInvItem(m.name);
+                        invBarcodeScanner.value = '';
+                        invSuggestionsList.style.display = 'none';
+                    };
+                    invSuggestionsList.appendChild(div);
+                });
+                invSuggestionsList.style.display = 'block';
+            } else {
+                invSuggestionsList.style.display = 'none';
+            }
+        });
+
+        // Hide suggestions on click outside
+        document.addEventListener('click', (e) => {
+            if (e.target !== invBarcodeScanner && e.target !== invSuggestionsList) {
+                invSuggestionsList.style.display = 'none';
+            }
+        });
+    }
+
+    function addInvItem(name) {
+        let existing = invItems.find(i => i.name === name);
+        if (existing) {
+            existing.qty += 1;
+        } else {
+            invItems.push({ name: name, qty: 1 });
+        }
+        renderInvItems();
+    }
+
+    function renderInvItems() {
+        if (!invItemsList) return;
+        invItemsList.innerHTML = '';
+        invItems.forEach((item, index) => {
+            let tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="text-align: right; font-weight: bold; color: var(--text-main);">${item.name}</td>
+                <td>
+                    <input type="number" min="1" value="${item.qty}" class="input-field" style="margin-bottom:0; padding: 8px; text-align: center; font-weight: bold;" onchange="updateInvQty(${index}, this.value)">
+                </td>
+                <td>
+                    <button class="btn-cancel" style="padding: 5px 10px;" onclick="removeInvItem(${index})"><i class="fa-solid fa-trash"></i></button>
+                </td>
+            `;
+            invItemsList.appendChild(tr);
+        });
+    }
+
+    window.updateInvQty = function(index, val) {
+        let v = parseInt(val);
+        if (v > 0) {
+            invItems[index].qty = v;
+        } else {
+            invItems[index].qty = 1;
+        }
+        renderInvItems();
+    };
+
+    window.removeInvItem = function(index) {
+        invItems.splice(index, 1);
+        renderInvItems();
+    };
+
+    if (savePrintInvBtn) {
+        savePrintInvBtn.addEventListener('click', () => {
+            let type = document.getElementById('invType').value;
+            let from = document.getElementById('invFrom').value.trim();
+            let to = document.getElementById('invTo').value.trim();
+            let notes = document.getElementById('invNotes').value.trim();
+            
+            if (!from || !to) {
+                showToast("برجاء إدخال جهة الإرسال وجهة الاستلام", "warning");
+                return;
+            }
+            if (invItems.length === 0) {
+                showToast("برجاء إضافة منتج واحد على الأقل", "warning");
+                return;
+            }
+
+            // Generate Sequential ID
+            let currentCount = parseInt(localStorage.getItem('invCounter') || "0") + 1;
+            localStorage.setItem('invCounter', currentCount);
+            let idStr = String(currentCount).padStart(6, '0');
+            let logId = `TRX-${idStr}`;
+
+            let itemsStr = invItems.map(i => `${i.name} (${i.qty})`).join(" | ");
+
+            let formData = new URLSearchParams();
+            formData.append("action", "addInventoryLog");
+            formData.append("logId", logId);
+            formData.append("type", type);
+            formData.append("from", from);
+            formData.append("to", to);
+            formData.append("regName", localStorage.getItem('cashierName') || "المدير");
+            formData.append("items", itemsStr);
+            formData.append("notes", notes);
+
+            setBtnLoading(savePrintInvBtn, true, "جاري الحفظ...");
+
+            fetch(googleAppUrl, {
+                method: 'POST',
+                body: formData
+            }).then(r => r.text()).then(res => {
+                setBtnLoading(savePrintInvBtn, false);
+                if(res.includes("success")) {
+                    showToast("تم حفظ الإذن بنجاح!", "success");
+                    
+                    // Print Thermal
+                    printInventoryReceipt(logId, type, from, to, invItems, notes);
+                    
+                    // Clear form
+                    invItems = [];
+                    renderInvItems();
+                    document.getElementById('invFrom').value = '';
+                    document.getElementById('invTo').value = '';
+                    document.getElementById('invNotes').value = '';
+                } else {
+                    showToast("حدث خطأ أثناء حفظ الإذن", "error");
+                }
+            }).catch(err => {
+                setBtnLoading(savePrintInvBtn, false);
+                showToast("خطأ في الاتصال بالسيرفر", "error");
+            });
+        });
+    }
+
+    function printInventoryReceipt(logId, type, from, to, items, notes) {
+        let printWindow = window.open('', '_blank', 'height=600,width=400');
+        if (!printWindow) {
+            showToast("يرجى تفعيل النوافذ المنبثقة (Pop-ups) للطباعة", "error");
+            return;
+        }
+
+        let itemsHtml = '';
+        items.forEach(i => {
+            itemsHtml += `
+                <tr>
+                    <td style="text-align: right; padding: 5px; border-bottom: 1px dashed #000;">${i.name}</td>
+                    <td style="text-align: center; padding: 5px; border-bottom: 1px dashed #000; font-weight: bold;">${i.qty}</td>
+                </tr>
+            `;
+        });
+
+        let dateStr = new Date().toLocaleString('ar-EG');
+        let cashierName = localStorage.getItem('cashierName') || "المدير";
+
+        let html = `
+            <html dir="rtl" lang="ar">
+            <head>
+                <title>إذن ${logId}</title>
+                <style>
+                    @page { margin: 0; }
+                    body {
+                        font-family: Tahoma, Arial, sans-serif;
+                        color: #000;
+                        width: 80mm;
+                        margin: 0 auto;
+                        padding: 10px;
+                        font-size: 13px;
+                        line-height: 1.4;
+                    }
+                    .header {
+                        text-align: center;
+                        margin-bottom: 15px;
+                        border-bottom: 2px dashed #000;
+                        padding-bottom: 10px;
+                    }
+                    .header h2 { margin: 0 0 5px 0; font-size: 18px; font-weight: bold; }
+                    .header p { margin: 2px 0; font-size: 13px; }
+                    .info-box {
+                        margin-bottom: 15px;
+                        border: 1px solid #000;
+                        padding: 8px;
+                        border-radius: 5px;
+                    }
+                    .info-box p { margin: 3px 0; font-weight: bold; }
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-bottom: 15px;
+                    }
+                    th {
+                        text-align: right;
+                        padding: 5px;
+                        border-bottom: 2px solid #000;
+                        font-weight: bold;
+                    }
+                    .footer {
+                        text-align: center;
+                        border-top: 2px dashed #000;
+                        padding-top: 10px;
+                        font-size: 12px;
+                        font-weight: bold;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h2>Candy Club</h2>
+                    <h2>${type}</h2>
+                    <p>رقم الإذن: <b style="font-size:15px;">${logId}</b></p>
+                    <p>التاريخ: ${dateStr}</p>
+                </div>
+
+                <div class="info-box">
+                    <p>من: ${from}</p>
+                    <p>إلى: ${to}</p>
+                    <p>المسؤول: ${cashierName}</p>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 75%;">الصنف</th>
+                            <th style="width: 25%; text-align: center;">الكمية</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${itemsHtml}
+                    </tbody>
+                </table>
+
+                ${notes ? `<div style="margin-bottom: 15px;"><p><b>ملاحظات:</b> ${notes}</p></div>` : ''}
+
+                <div class="footer">
+                    <p>مسجل إلكترونياً بـ Candy Club System</p>
+                    <p>توقيع المستلم: ........................</p>
+                </div>
+
+                <script>
+                    window.onload = function() {
+                        setTimeout(function() {
+                            window.print();
+                        }, 500);
+                    };
+                </script>
+            </body>
+            </html>
+        `;
+
+        printWindow.document.open();
+        printWindow.document.write(html);
+        printWindow.document.close();
+    }
 });
