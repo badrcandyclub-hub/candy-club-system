@@ -3715,14 +3715,14 @@ if (saveLedgerBtn) {
         }
 
         // Attach reg info to all items
-        const currentBatchId = Date.now().toString();
+        let timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+        let finalRegDate = regDate.trim() + " " + timeStr;
+
         const payload = ledgerCart.map(item => Object.assign({}, item, {
-            // Overload regDate to sneak the batchId past the Apps Script, which only writes known columns
-            // UPDATE: Removed batchId overloading as per user request to keep sheet clean
-            regDate: regDate,
+            // Include exact time in regDate to use it as a natural batch grouping ID!
+            regDate: finalRegDate,
             registrarName: regName,
-            receiver: receiverName,
-            batchId: currentBatchId
+            receiver: receiverName
         }));
 
         setBtnLoading(saveLedgerBtn, true, "جاري الحفظ...");
@@ -4684,13 +4684,15 @@ if (btnExportDatePDF) {
             return;
         }
 
-        // Group by batchId
+        // Group by exact time (natural batchId)
         let batches = {};
         let legacyBatch = [];
         filtered.forEach(item => {
-            if (item.batchId) {
-                if (!batches[item.batchId]) batches[item.batchId] = [];
-                batches[item.batchId].push(item);
+            let rDate = item.regDate || "";
+            // Check if regDate has time appended (contains " AM", " PM", " ص", or " م")
+            if (rDate.includes(" AM") || rDate.includes(" PM") || rDate.includes(" ص") || rDate.includes(" م") || rDate.includes(":")) {
+                if (!batches[rDate]) batches[rDate] = [];
+                batches[rDate].push(item);
             } else {
                 legacyBatch.push(item);
             }
