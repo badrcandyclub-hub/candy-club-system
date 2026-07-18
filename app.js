@@ -6711,12 +6711,26 @@ document.addEventListener('DOMContentLoaded', () => {
             let senderName = document.getElementById('invSenderName') ? document.getElementById('invSenderName').value.trim() : "";
             let regName = localStorage.getItem('cashierName') || "المدير";
 
-            // Generate Sequential ID without incrementing yet
-            if (localStorage.getItem('resetInv4') !== 'done') {
-                localStorage.setItem('invCounter', '0');
-                localStorage.setItem('resetInv4', 'done');
+            // Dynamically calculate Sequential ID based on server data
+            let currentCount = 1;
+            if (window.invLogsData) {
+                if (window.invLogsData.length > 0) {
+                    let maxId = 0;
+                    window.invLogsData.forEach(log => {
+                        let numMatch = String(log.logId).match(/\d+/);
+                        if (numMatch) {
+                            let num = parseInt(numMatch[0]);
+                            if (num > maxId) maxId = num;
+                        }
+                    });
+                    currentCount = maxId + 1;
+                } else {
+                    currentCount = 1; // Sheet is completely empty!
+                }
+            } else {
+                currentCount = parseInt(localStorage.getItem('invCounter') || "0") + 1;
             }
-            let currentCount = parseInt(localStorage.getItem('invCounter') || "0") + 1;
+
             let idStr = String(currentCount).padStart(6, '0');
             let logId = `TRX-${idStr}`;
 
@@ -6742,6 +6756,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 setBtnLoading(savePrintInvBtn, false);
                 showToast("تم حفظ الإذن بنجاح!", "success");
                 
+                // Refresh archive automatically
+                if (typeof fetchInventoryLogs === 'function') fetchInventoryLogs();
+
                 // Print Thermal
                 printInventoryReceipt(logId, from, to, invItems, notes, senderName, regName);
                 
@@ -7086,3 +7103,6 @@ document.getElementById('invSearchInput')?.addEventListener('input', function() 
     });
     renderInventoryArchive(filtered);
 });
+
+// Fetch on startup
+setTimeout(fetchInventoryLogs, 1500);
