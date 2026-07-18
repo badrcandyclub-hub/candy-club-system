@@ -10,6 +10,7 @@ function onOpen() {
       .addItem('⚡ تحديث باركود المنتجات القديمة (مؤقت)', 'backfillBarcodes')
       .addItem('🔢 إعادة ترقيم كل الأوردرات السابقة (تسلسلي)', 'renumberAllOrders')
       .addItem('🧹 تنظيف الصفوف الفارغة (يرفع البيانات لأعلى)', 'cleanUpEmptyRows')
+      .addItem('📅 تنظيف تواريخ التسجيل من الأرقام الغريبة', 'cleanUpDates')
       .addToUi();
 }
 
@@ -1376,4 +1377,50 @@ function cleanUpEmptyRows() {
   }
   
   ui.alert("✅ تم سد جميع الفراغات ورفع المنتجات لأعلى بنجاح وبأمان تام!");
+}
+
+// دالة مخصصة لتنظيف تواريخ التسجيل من أرقام الـ Batch IDs الغريبة
+function cleanUpDates() {
+  var ui = SpreadsheetApp.getUi();
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var maxDataRow = sheet.getLastRow();
+  
+  if (maxDataRow < 2) {
+    ui.alert("لا توجد بيانات لتنظيفها.");
+    return;
+  }
+  
+  var dateColIndex = -1;
+  var headers = sheet.getRange(1, 1, 1, sheet.getMaxColumns()).getValues()[0];
+  
+  for (var c = 0; c < headers.length; c++) {
+    if (headers[c].toString().trim() === "تاريخ التسجيل") {
+      dateColIndex = c + 1;
+      break;
+    }
+  }
+  
+  if (dateColIndex === -1) {
+    ui.alert("لم يتم العثور على عمود 'تاريخ التسجيل'.");
+    return;
+  }
+  
+  var dataRange = sheet.getRange(2, dateColIndex, maxDataRow - 1, 1);
+  var data = dataRange.getValues();
+  var fixedCount = 0;
+  
+  for (var i = 0; i < data.length; i++) {
+    var cellValue = data[i][0] ? data[i][0].toString() : "";
+    if (cellValue.includes("||")) {
+      data[i][0] = cellValue.split("||")[0].trim();
+      fixedCount++;
+    }
+  }
+  
+  if (fixedCount > 0) {
+    dataRange.setValues(data);
+    ui.alert("✅ تم تنظيف " + fixedCount + " تاريخ بنجاح وإزالة الأرقام الغريبة!");
+  } else {
+    ui.alert("جميع التواريخ نظيفة ولا توجد أرقام غريبة.");
+  }
 }

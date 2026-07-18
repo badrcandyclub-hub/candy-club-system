@@ -3718,7 +3718,8 @@ if (saveLedgerBtn) {
         const currentBatchId = Date.now().toString();
         const payload = ledgerCart.map(item => Object.assign({}, item, {
             // Overload regDate to sneak the batchId past the Apps Script, which only writes known columns
-            regDate: regDate + "||" + currentBatchId,
+            // UPDATE: Removed batchId overloading as per user request to keep sheet clean
+            regDate: regDate,
             registrarName: regName,
             receiver: receiverName,
             batchId: currentBatchId
