@@ -573,7 +573,7 @@ window.updateGovernoratesDropdown = function () {
 
     if (type === 'gov_shipping') {
         if (data.govs && data.govs.length > 0) {
-            let optgroup = document.createElement('optgroup'); optgroup.label = "<i class=\'fa-solid fa-truck-fast\'></i> المحافظات";
+            let optgroup = document.createElement('optgroup'); optgroup.label = "🚚 المحافظات";
             data.govs.forEach(z => {
                 optgroup.innerHTML += `<option value="${z.name}">${z.name} (${z.price} ج)</option>`;
             });
@@ -581,7 +581,7 @@ window.updateGovernoratesDropdown = function () {
         }
     } else {
         if (data.alex && data.alex.length > 0) {
-            let optgroup = document.createElement('optgroup'); optgroup.label = "<i class=\'fa-solid fa-link\'></i> مناطق الإسكندرية";
+            let optgroup = document.createElement('optgroup'); optgroup.label = "📍 مناطق الإسكندرية";
             data.alex.forEach(z => {
                 optgroup.innerHTML += `<option value="${z.name}">${z.name} (${z.price} ج)</option>`;
             });
