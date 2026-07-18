@@ -6653,9 +6653,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             invProdName.value = '';
-            invProdQty.value = '1';
+            invProdQty.value = '';
             invProdBarcode.value = '';
             renderInvItems();
+            invProdName.focus();
         });
     }
 
@@ -6711,9 +6712,9 @@ document.addEventListener('DOMContentLoaded', () => {
             let regName = localStorage.getItem('cashierName') || "المدير";
 
             // Generate Sequential ID without incrementing yet
-            if (localStorage.getItem('resetInv3') !== 'done') {
+            if (localStorage.getItem('resetInv4') !== 'done') {
                 localStorage.setItem('invCounter', '0');
-                localStorage.setItem('resetInv3', 'done');
+                localStorage.setItem('resetInv4', 'done');
             }
             let currentCount = parseInt(localStorage.getItem('invCounter') || "0") + 1;
             let idStr = String(currentCount).padStart(6, '0');
@@ -6842,9 +6843,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="divider"></div>
 
                 <div class="info-box">
-                    <p><span style="font-size: 16px;">👤</span> <b>الراسل:</b> ${senderDisplay}</p>
-                    <p><span style="font-size: 16px;">🏢</span> <b>من:</b> ${from}</p>
-                    <p><span style="font-size: 16px;">🚚</span> <b>إلى:</b> ${to}</p>
+                    <p><b>[ الراسل ]:</b> ${senderDisplay}</p>
+                    <p><b>[ من ]:</b> ${from}</p>
+                    <p><b>[ إلى ]:</b> ${to}</p>
                 </div>
 
                 <table>
@@ -6859,7 +6860,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </tbody>
                 </table>
 
-                ${notes ? `<div style="margin-bottom: 15px; font-size: 13px;"><p><b>📝 ملاحظات:</b> ${notes}</p></div>` : ''}
+                ${notes ? `<div style="margin-bottom: 15px; font-size: 13px;"><p><b>ملاحظات:</b> ${notes}</p></div>` : ''}
 
                 <div class="divider"></div>
 
