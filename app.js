@@ -1,4 +1,4 @@
-﻿// ==========================================
+// ==========================================
 // <i class=\'fa-solid fa-globe\'></i> العقل المدبر - سيستم كاندي كلوب (النسخة V13.6 - الشاملة والمحصنة)
 // ==========================================
 
@@ -23,10 +23,10 @@ window.updateInvTypeStyle = function() {
     let type = document.getElementById('invType').value;
     let container = document.getElementById('invFormContainer');
     if (type.includes('صرف')) {
-        container.style.borderTop = '5px solid #e67e22'; // Orange
+        container.style.borderTop = 'none';
         container.style.background = 'linear-gradient(to bottom, rgba(230, 126, 34, 0.05), transparent)';
     } else {
-        container.style.borderTop = '5px solid #2ecc71'; // Green
+        container.style.borderTop = 'none';
         container.style.background = 'linear-gradient(to bottom, rgba(46, 204, 113, 0.05), transparent)';
     }
 };
@@ -46,13 +46,17 @@ function setBtnLoading(btn, isLoading, originalText = "") {
     if (!btn) return;
     if (isLoading) {
         btn.disabled = true;
-        btn.dataset.origText = btn.innerText;
-        btn.innerHTML = "جاري التحميل <i class=\'fa-solid fa-hourglass-half\'></i>...";
+        btn.dataset.origHtml = btn.innerHTML;
+        btn.innerHTML = "<i class='fa-solid fa-spinner fa-spin' style='margin-left:8px;'></i> جاري التحميل...";
         btn.style.opacity = "0.7";
         btn.style.cursor = "not-allowed";
     } else {
         btn.disabled = false;
-        btn.innerText = originalText || btn.dataset.origText;
+        if (originalText) {
+            btn.innerHTML = originalText;
+        } else if (btn.dataset.origHtml) {
+            btn.innerHTML = btn.dataset.origHtml;
+        }
         btn.style.opacity = "1";
         btn.style.cursor = "pointer";
     }
@@ -6710,7 +6714,7 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append("items", itemsStr);
             formData.append("notes", notes);
 
-            setBtnLoading(savePrintInvBtn, true, "جاري الحفظ...");
+            setBtnLoading(savePrintInvBtn, true);
 
             fetch(googleAppUrl, {
                 method: 'POST',
