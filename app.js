@@ -66,25 +66,8 @@ document.querySelectorAll('.nav-item').forEach(btn => {
 
         // Load expiry data every time the tab is opened, with a custom loading screen
         if (btn.getAttribute('data-target') === 'expiry-tab') {
-            let overlay = document.getElementById('expiry-loading-overlay');
-            if (!overlay) {
-                // Create overlay dynamically if it doesn't exist to bypass HTML caching
-                overlay = document.createElement('div');
-                overlay.id = 'expiry-loading-overlay';
-                overlay.style.cssText = 'display: none; position: fixed; top: 130px; bottom: 80px; left: 0; right: 0; background: rgba(255, 255, 255, 0.95); z-index: 90; flex-direction: column; justify-content: center; align-items: center; border-radius: 15px; backdrop-filter: blur(5px);';
-                overlay.innerHTML = `
-                    <div style="border: 6px solid #f3f3f3; border-top: 6px solid #2980b9; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite;"></div>
-                    <h3 style="color: #2c3e50; margin-top: 20px; font-weight: bold;">جاري سحب بيانات الصلاحيات...</h3>
-                    <p style="color: #7f8c8d; font-size: 0.95rem;">يرجى الانتظار، لا تقم بالخروج من الصفحة</p>
-                    <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
-                `;
-                const expiryTab = document.getElementById('expiry-tab');
-                if (expiryTab) {
-                    expiryTab.style.position = 'relative';
-                    expiryTab.insertBefore(overlay, expiryTab.firstChild);
-                }
-            }
-            if (overlay) overlay.style.display = 'flex';
+            const expiryBody = document.querySelector('#expiry-tab .expiry-body');
+            if (expiryBody) expiryBody.classList.add('skeleton-mode');
             
             loadExpiryData(); // Fetch fresh data every time
             
@@ -3528,6 +3511,9 @@ function loadExpiryData() {
         btn.style.opacity = "0.7";
         btn.style.pointerEvents = "none";
     }
+    
+    const expiryBody = document.querySelector('#expiry-tab .expiry-body');
+    if (expiryBody) expiryBody.classList.add('skeleton-mode');
 
     // Lazy load the expiries from Google Sheets
     fetch(`${GOOGLE_SHEETS_URL}?action=getExpiries`)
@@ -3552,8 +3538,8 @@ function loadExpiryData() {
             renderExpiryDashboard();
             updateCatalogWithOffers(); // To highlight items on offer in the main cashier view
             
-            let overlay = document.getElementById('expiry-loading-overlay');
-            if (overlay) overlay.style.display = 'none';
+            const expiryBody = document.querySelector('#expiry-tab .expiry-body');
+            if (expiryBody) expiryBody.classList.remove('skeleton-mode');
         })
         .catch(err => {
             if (btn) {
@@ -3565,8 +3551,8 @@ function loadExpiryData() {
             // Also call render to clear the "loading" or show empty states
             renderExpiryDashboard();
             
-            let overlay = document.getElementById('expiry-loading-overlay');
-            if (overlay) overlay.style.display = 'none';
+            const expiryBody = document.querySelector('#expiry-tab .expiry-body');
+            if (expiryBody) expiryBody.classList.remove('skeleton-mode');
         });
 }
 

@@ -664,40 +664,58 @@
         <!-- ⭐ شاشة إدارة الصلاحيات والعروض (Expiry Dashboard) -->
         <section id="expiry-tab" class="tab-pane" style="position: relative;">
             
-            <!-- ⭐ شاشة تحميل مخصوصة لصفحة الصلاحيات (Skeleton Loader) -->
-            <div id="expiry-loading-overlay" style="display: none; position: absolute; top: 0; bottom: 0; left: 0; right: 0; background: var(--bg); z-index: 100; padding: 20px; border-radius: 15px;">
-                <!-- الهيكل -->
-                <div style="display: flex; justify-content: space-between; margin-bottom: 25px;">
-                    <div class="skeleton-box" style="width: 250px; height: 35px; border-radius: 10px;"></div>
-                    <div class="skeleton-box" style="width: 180px; height: 40px; border-radius: 10px;"></div>
-                </div>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 30px;">
-                    <div class="skeleton-box" style="height: 110px; border-radius: 15px;"></div>
-                    <div class="skeleton-box" style="height: 110px; border-radius: 15px;"></div>
-                    <div class="skeleton-box" style="height: 110px; border-radius: 15px;"></div>
-                    <div class="skeleton-box" style="height: 110px; border-radius: 15px;"></div>
-                </div>
-                <div style="display: flex; gap: 15px; margin-bottom: 25px;">
-                    <div class="skeleton-box" style="flex: 1; height: 45px; border-radius: 10px;"></div>
-                    <div class="skeleton-box" style="width: 120px; height: 45px; border-radius: 10px;"></div>
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <div class="skeleton-box" style="height: 60px; border-radius: 10px;"></div>
-                    <div class="skeleton-box" style="height: 60px; border-radius: 10px;"></div>
-                    <div class="skeleton-box" style="height: 60px; border-radius: 10px;"></div>
-                </div>
-                <style>
-                    .skeleton-box {
-                        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-                        background-size: 200% 100%;
-                        animation: skeletonLoading 1.5s infinite;
-                    }
-                    @keyframes skeletonLoading {
-                        0% { background-position: 200% 0; }
-                        100% { background-position: -200% 0; }
-                    }
-                </style>
-            </div>
+            <!-- ⏳ CSS للـ Skeleton Mode الحقيقي اللي بيطبق على نفس عناصر الصفحة -->
+            <style>
+                /* Skeleton Mode Styles */
+                .skeleton-mode {
+                    pointer-events: none !important;
+                    user-select: none !important;
+                }
+
+                .skeleton-mode .traffic-card,
+                .skeleton-mode .export-controls,
+                .skeleton-mode .search-box input,
+                .skeleton-mode .search-box button,
+                .skeleton-mode .interactive-btn,
+                .skeleton-mode input[type="month"],
+                .skeleton-mode input[type="date"] {
+                    background: #e2e8f0 !important;
+                    box-shadow: none !important;
+                    border: 1px solid #cbd5e1 !important;
+                    color: transparent !important;
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                .skeleton-mode .traffic-card *,
+                .skeleton-mode .export-controls label,
+                .skeleton-mode .search-box i,
+                .skeleton-mode .interactive-btn i {
+                    opacity: 0 !important;
+                }
+
+                .skeleton-mode input::placeholder {
+                    color: transparent !important;
+                }
+
+                /* The sweeping animation */
+                .skeleton-mode .traffic-card::after,
+                .skeleton-mode .export-controls::after,
+                .skeleton-mode .search-box button::after,
+                .skeleton-mode .interactive-btn::after {
+                    content: "";
+                    position: absolute;
+                    top: 0; right: 0; bottom: 0; left: 0;
+                    background: linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.6) 50%, transparent 75%);
+                    background-size: 200% 100%;
+                    animation: skeletonSweep 1.5s infinite linear;
+                }
+
+                @keyframes skeletonSweep {
+                    0% { background-position: 200% 0; }
+                    100% { background-position: -200% 0; }
+                }
+            </style>
 
             <div class="section-card">
                 <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px;">
