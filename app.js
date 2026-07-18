@@ -20,14 +20,19 @@ function playOrderSound() {
 }
 
 window.updateInvTypeStyle = function() {
-    let type = document.getElementById('invType').value;
+    let typeSelect = document.getElementById('invType');
+    let type = typeSelect.value;
     let container = document.getElementById('invFormContainer');
     if (type.includes('صرف')) {
         container.style.borderTop = 'none';
-        container.style.background = 'linear-gradient(to bottom, rgba(230, 126, 34, 0.05), transparent)';
+        container.style.background = 'linear-gradient(to bottom, rgba(230, 126, 34, 0.08), transparent)';
+        typeSelect.style.border = '2px solid #e67e22';
+        typeSelect.style.color = '#d35400';
     } else {
         container.style.borderTop = 'none';
-        container.style.background = 'linear-gradient(to bottom, rgba(46, 204, 113, 0.05), transparent)';
+        container.style.background = 'linear-gradient(to bottom, rgba(46, 204, 113, 0.08), transparent)';
+        typeSelect.style.border = '2px solid #2ecc71';
+        typeSelect.style.color = '#27ae60';
     }
 };
 
