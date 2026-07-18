@@ -1,4 +1,4 @@
-﻿// ==========================================
+// ==========================================
 // 🚀 نظام كاندي كلوب المطور V15.1 - (النسخة الكاملة النهائية)
 // ⭐ تاريخ التحديث: 2026-06-01
 // ==========================================
@@ -1061,12 +1061,12 @@ function doPost(e) {
                var archiveSheet = ss.getSheetByName("أرشيف المبيعات");
                if (!archiveSheet) {
                   archiveSheet = ss.insertSheet("أرشيف المبيعات");
-                  var archiveHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "اسم المسجل", "تاريخ التسجيل", "المستلم", "ملاحظات", "السعر الأساسي", "سعر العرض", "الحالة", "تاريخ البيع/الأرشفة"];
+                  var archiveHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "اسم المسجل", "تاريخ التسجيل", "المستلم", "ملاحظات", "السعر الأساسي", "سعر العرض", "الحالة", "الباركود", "تاريخ البيع/الأرشفة"];
                   archiveSheet.getRange(1, 1, 1, archiveHeaders.length).setValues([archiveHeaders])
                        .setBackground("#2c3e50").setFontColor("white").setFontFamily("Cairo").setFontSize(14).setFontWeight("bold")
                        .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
                }
-               var rowToArchive = expData[i].slice(0, 11);
+               var rowToArchive = expData[i].slice(0, 12);
                rowToArchive[10] = "تم البيع";
                rowToArchive.push(Utilities.formatDate(new Date(), "Africa/Cairo", "yyyy-MM-dd hh:mm a"));
                archiveSheet.appendRow(rowToArchive);
