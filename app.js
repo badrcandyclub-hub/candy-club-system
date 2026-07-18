@@ -4720,8 +4720,17 @@ function showBatchSelectionModal(batches, legacyBatch, dateVal) {
 
     Object.keys(batches).forEach((bId, idx) => {
         let items = batches[bId];
-        let d = new Date(parseInt(bId));
-        let timeStr = isNaN(d.getTime()) ? 'غير معروف' : d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+        
+        let timeStr = "غير معروف";
+        let splitTime = bId.match(/(\d{1,2}:\d{2}\s*(ص|م|AM|PM))/i);
+        if (splitTime && splitTime[1]) {
+            timeStr = splitTime[1];
+        } else if (bId.includes(":")) {
+            // fallback if it has a colon but no AM/PM
+            let parts = bId.split(" ");
+            timeStr = parts.length > 1 ? parts.slice(1).join(" ") : bId;
+        }
+
         let receiver = items[0].receiver || 'غير محدد';
         html += `
             <div style="display: flex; align-items: center; gap: 10px;">
