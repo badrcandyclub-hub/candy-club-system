@@ -9,6 +9,7 @@ function onOpen() {
       .addItem('🔄 بناء وتحديث النظام الشامل', 'setupCandyClubUX')
       .addItem('⚡ تحديث باركود المنتجات القديمة (مؤقت)', 'backfillBarcodes')
       .addItem('🔢 إعادة ترقيم كل الأوردرات السابقة (تسلسلي)', 'renumberAllOrders')
+      .addItem('🧹 تنظيف الصفوف الفارغة (يرفع البيانات لأعلى)', 'cleanUpEmptyRows')
       .addToUi();
 }
 
@@ -1328,4 +1329,32 @@ function renumberAllOrders() {
   
   sheet.getRange(2, 1, ids.length, 1).setValues(ids);
   SpreadsheetApp.getUi().alert("✅ تم إعادة ترقيم جميع الطلبات بنجاح!");
+}
+
+// دالة مخصصة لمسح الصفوف الفارغة بالكامل في الشيت المفتوح حالياً لرفع البيانات لأعلى
+function cleanUpEmptyRows() {
+  var ui = SpreadsheetApp.getUi();
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var lastRow = sheet.getMaxRows();
+  var maxDataRow = sheet.getLastRow();
+  
+  if (maxDataRow < 2) {
+    ui.alert("لا توجد بيانات لتنظيفها.");
+    return;
+  }
+  
+  // لضمان السرعة، نقوم بقراءة البيانات الموجودة
+  var data = sheet.getRange(2, 1, maxDataRow - 1, sheet.getMaxColumns()).getValues();
+  var deletedCount = 0;
+  
+  // المسح يتم من الأسفل للأعلى لتفادي مشاكل تغيير أرقام الصفوف أثناء المسح
+  for (var i = data.length - 1; i >= 0; i--) {
+    var isEmpty = data[i].every(function(cell) { return cell === ""; });
+    if (isEmpty) {
+      sheet.deleteRow(i + 2);
+      deletedCount++;
+    }
+  }
+  
+  ui.alert("✅ تم حذف " + deletedCount + " صف فارغ ورفع البيانات بنجاح في الشيت (" + sheet.getName() + ")!");
 }
