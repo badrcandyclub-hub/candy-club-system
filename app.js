@@ -3611,6 +3611,38 @@ if (ledgerSearchBarcodeBtn) {
     });
 }
 
+const startOrderCameraScannerBtn = document.getElementById('startOrderCameraScannerBtn');
+if (startOrderCameraScannerBtn) {
+    startOrderCameraScannerBtn.addEventListener('click', () => {
+        if (typeof currentScannerMode !== 'undefined') {
+            currentScannerMode = 'order';
+        }
+        const scannerModal = document.getElementById('scannerModal');
+        if (scannerModal) {
+            scannerModal.classList.add('active');
+            if (typeof startBarcodeScanner === 'function') {
+                startBarcodeScanner();
+            }
+        }
+    });
+}
+
+const orderSearchBarcodeBtn = document.getElementById('orderSearchBarcodeBtn');
+if (orderSearchBarcodeBtn) {
+    orderSearchBarcodeBtn.addEventListener('click', () => {
+        const val = document.getElementById('orderBarcodeInput').value.trim();
+        if (!val) {
+            showToast("يرجى كتابة الباركود أولاً", "warning");
+            return;
+        }
+        if (typeof currentScannerMode !== 'undefined') {
+            currentScannerMode = 'order';
+        }
+        processBarcodeAction(val);
+        document.getElementById('orderBarcodeInput').value = '';
+    });
+}
+
 // Add Item to Cart
 const addLedgerItemBtn = document.getElementById('addLedgerItemBtn');
 if (addLedgerItemBtn) {
