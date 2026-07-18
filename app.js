@@ -5700,16 +5700,19 @@ function renderFinancials(finList) {
         let dStats = (window.latestServerData && window.latestServerData.driverStats) ? window.latestServerData.driverStats[f.name] || { monthProfit: 0, monthOrderCount: 0, totalProfit: 0, totalCount: 0 } : { monthProfit: 0, monthOrderCount: 0, totalProfit: 0, totalCount: 0 };
 
         let dashboardHtml = `
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; background: #f8f9fc; padding: 10px; border-radius: 8px; border: 1px solid #e3e6f0;">
-                <div style="text-align: center; border-left: 1px solid #e3e6f0; padding: 5px;">
-                    <div style="font-size: 0.75rem; color: #4e73df; font-weight: bold;">أرباح الشهر</div>
-                    <div style="font-size: 1.1rem; font-weight: bold; color: #5a5c69;">${dStats.monthProfit} <span style="font-size: 0.7rem;">ج.م</span></div>
-                    <div style="font-size: 0.7rem; color: #1cc88a; margin-top: 2px;">${dStats.monthOrderCount} أوردر</div>
-                </div>
-                <div style="text-align: center; padding: 5px;">
-                    <div style="font-size: 0.75rem; color: #f6c23e; font-weight: bold;">إجمالي الأرباح</div>
-                    <div style="font-size: 1.1rem; font-weight: bold; color: #5a5c69;">${dStats.totalProfit} <span style="font-size: 0.7rem;">ج.م</span></div>
-                    <div style="font-size: 0.7rem; color: #1cc88a; margin-top: 2px;">${dStats.totalCount} أوردر</div>
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #e3e6f0;">
+                <strong style="font-size:0.85rem; color:#7f8c8d; display:block; margin-bottom:10px;"><i class="fa-solid fa-chart-line"></i> أداء المندوب (إحصائيات):</strong>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #f8f9fc; padding: 10px; border-radius: 8px; border: 1px solid #e3e6f0;">
+                    <div style="text-align: center; border-left: 1px solid #e3e6f0; padding: 5px;">
+                        <div style="font-size: 0.75rem; color: #4e73df; font-weight: bold;">أرباح الشهر</div>
+                        <div style="font-size: 1.1rem; font-weight: bold; color: #5a5c69;">${dStats.monthProfit} <span style="font-size: 0.7rem;">ج.م</span></div>
+                        <div style="font-size: 0.7rem; color: #1cc88a; margin-top: 2px;">${dStats.monthOrderCount} أوردر</div>
+                    </div>
+                    <div style="text-align: center; padding: 5px;">
+                        <div style="font-size: 0.75rem; color: #f6c23e; font-weight: bold;">إجمالي الأرباح</div>
+                        <div style="font-size: 1.1rem; font-weight: bold; color: #5a5c69;">${dStats.totalProfit} <span style="font-size: 0.7rem;">ج.م</span></div>
+                        <div style="font-size: 0.7rem; color: #1cc88a; margin-top: 2px;">${dStats.totalCount} أوردر</div>
+                    </div>
                 </div>
             </div>
         `;
@@ -5717,10 +5720,12 @@ function renderFinancials(finList) {
         container.innerHTML += `
             <div class="${cardClass}" style="background: #fff; padding: 15px; border-radius: 12px; border: 1px solid ${cardBorderColor}; margin-bottom: 12px; box-shadow: ${cardShadow}; opacity: ${cardOpacity}; transition: all 0.3s ease;">
                 <div class="financial-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #f0f0f0; padding-bottom:8px; margin-bottom:10px;">
-                    <span style="font-weight:bold; font-size:1.1rem; color:var(--text-dark);"><i class='fa-solid fa-motorcycle'></i> ${f.name}</span>
+                    <div>
+                        <span style="font-weight:bold; font-size:1.1rem; color:var(--text-dark);"><i class='fa-solid fa-motorcycle'></i> ${f.name}</span>
+                        <span style="font-size: 0.75rem; background:#f0f0f0; color:var(--text-dark); padding:2px 6px; border-radius:12px; margin-right: 5px; font-weight:bold;">${f.ordersCount || 0} طلب معلق</span>
+                    </div>
                     <button class="btn-danger" onclick="deleteItem('deleteDriver', '${f.name}', 'couriers')" title="حذف المندوب" style="padding: 4px 8px; font-size: 0.8rem; border-radius: 6px; background: transparent; color: var(--danger); border: 1px solid var(--danger);"><i class="fa-solid fa-trash"></i></button>
                 </div>
-                ${dashboardHtml}
                 <div class="financial-details" style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:10px;">
                     <span style="background:#e8f4f8; padding:5px 10px; border-radius:6px; color:#555;">الكاش: <strong style="color:#2980b9;">${f.cashCollected || 0}</strong> ج</span>
                     <span style="background:#f9ebea; padding:5px 10px; border-radius:6px; color:#555;">الشحن: <strong style="color:#c0392b;">${f.shippingFees || 0}</strong> ج</span>
@@ -5729,6 +5734,7 @@ function renderFinancials(finList) {
                     ${f.statusText} (${netDue} ج)
                 </div>
                 ${ordersHtml}
+                ${dashboardHtml}
             </div>
         `;
     });
