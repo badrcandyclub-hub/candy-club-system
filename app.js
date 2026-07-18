@@ -5652,7 +5652,7 @@ function renderFinancials(finList) {
 
     let driversArray = Object.values(driversMap);
     if (driversArray.length === 0) {
-        container.innerHTML = '<p class="empty-msg">لا توجد مناديب مسجلة.</p>';
+        container.innerHTML = '<p class="empty-msg" style="grid-column: 1 / -1;">لا توجد مناديب مسجلة.</p>';
         return;
     }
 
