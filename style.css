@@ -2108,33 +2108,41 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
     }
 
     /* أ¢آ­ع¯ ط·ع¾ط·آµط·ط›ط¸ظ¹ط·آ± ط·آ­ط·آ¬ط¸â€¦ ط¸ئ’ط·آ±ط¸ث†ط·ع¾ ط¸â€¦ط¸â€ ط·آ§ط·آ·ط¸â€ڑ ط·آ§ط¸â€‍ط·آ´ط·آ­ط¸â€  ط·آ¹ط¸â€‍ط¸â€° ط·آ§ط¸â€‍ط¸â€¦ط¸ث†ط·آ¨ط·آ§ط¸ظ¹ط¸â€‍ ط¸â€‍ط·ع¾ط¸ث†ط¸ظ¾ط¸ظ¹ط·آ± ط¸â€¦ط·آ³ط·آ§ط·آ­ط·آ© */
+    .zone-list-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
     .zone-premium-card {
-        padding: 10px 12px;
+        padding: 8px 10px;
         flex-direction: column;
     }
     .zone-title {
-        font-size: 0.95rem;
-        margin-bottom: 5px;
+        font-size: 0.9rem;
+        margin-bottom: 4px;
+    }
+    .zone-details-row {
+        flex-wrap: wrap;
+        gap: 5px;
     }
     .premium-badge, .duration-badge {
-        font-size: 0.75rem;
-        padding: 3px 6px;
+        font-size: 0.7rem;
+        padding: 3px 5px;
     }
     .zone-actions {
         flex-direction: row;
         justify-content: flex-end;
         padding-right: 0;
-        padding-top: 8px;
-        margin-top: 8px;
+        padding-top: 6px;
+        margin-top: 6px;
         border-right: none;
         border-top: 1px dashed var(--border);
-        gap: 8px;
+        gap: 6px;
     }
     .zone-actions button {
         flex: 1;
-        padding: 6px !important;
-        font-size: 0.85rem !important;
-        border-radius: 6px !important;
+        padding: 5px !important;
+        font-size: 0.8rem !important;
+        border-radius: 5px !important;
         width: auto !important;
         height: auto !important;
     }
