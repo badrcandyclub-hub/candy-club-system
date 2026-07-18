@@ -3541,7 +3541,7 @@ function loadExpiryData() {
             let rawData = Array.isArray(data) ? data : (data.expiries || []);
             // Extract batchId from overloaded regDate if present
             expiryData = rawData.map(item => {
-                if (item.regDate && item.regDate.includes("||")) {
+                if (item.regDate && typeof item.regDate === 'string' && item.regDate.includes("||")) {
                     let parts = item.regDate.split("||");
                     item.regDate = parts[0];
                     item.batchId = parts[1];

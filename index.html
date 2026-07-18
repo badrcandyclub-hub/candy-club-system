@@ -620,7 +620,7 @@
                         </div>
                         <div>
                             <p style="margin: 0; color: #7f8c8d; font-size: 0.9rem;">عملاء VIP</p>
-                            <h3 id="dashVipCustomers" style="margin: 0; color: var(--text-dark); font-size: 1.5rem;">0</h3>
+                            <h3 id="dashVipCustomers" style="margin: 0; color: #333; font-size: 1.5rem;">0</h3>
                         </div>
                     </div>
 
@@ -630,7 +630,7 @@
                         </div>
                         <div>
                             <p style="margin: 0; color: #7f8c8d; font-size: 0.9rem;">إجمالي الطلبات</p>
-                            <h3 id="dashTotalOrders" style="margin: 0; color: var(--text-dark); font-size: 1.5rem;">0</h3>
+                            <h3 id="dashTotalOrders" style="margin: 0; color: #333; font-size: 1.5rem;">0</h3>
                         </div>
                     </div>
                 </div>
@@ -664,12 +664,39 @@
         <!-- ⭐ شاشة إدارة الصلاحيات والعروض (Expiry Dashboard) -->
         <section id="expiry-tab" class="tab-pane" style="position: relative;">
             
-            <!-- ⭐ شاشة تحميل مخصوصة لصفحة الصلاحيات -->
-            <div id="expiry-loading-overlay" style="display: none; position: fixed; top: 130px; bottom: 80px; left: 0; right: 0; background: rgba(255, 255, 255, 0.95); z-index: 90; flex-direction: column; justify-content: center; align-items: center; border-radius: 15px; backdrop-filter: blur(5px);">
-                <div style="border: 6px solid #f3f3f3; border-top: 6px solid #2980b9; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite;"></div>
-                <h3 style="color: #2c3e50; margin-top: 20px; font-weight: bold;">جاري سحب بيانات الصلاحيات...</h3>
-                <p style="color: #7f8c8d; font-size: 0.95rem;">يرجى الانتظار، لا تقم بالخروج من الصفحة</p>
-                <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
+            <!-- ⭐ شاشة تحميل مخصوصة لصفحة الصلاحيات (Skeleton Loader) -->
+            <div id="expiry-loading-overlay" style="display: none; position: absolute; top: 0; bottom: 0; left: 0; right: 0; background: var(--bg); z-index: 100; padding: 20px; border-radius: 15px;">
+                <!-- الهيكل -->
+                <div style="display: flex; justify-content: space-between; margin-bottom: 25px;">
+                    <div class="skeleton-box" style="width: 250px; height: 35px; border-radius: 10px;"></div>
+                    <div class="skeleton-box" style="width: 180px; height: 40px; border-radius: 10px;"></div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 30px;">
+                    <div class="skeleton-box" style="height: 110px; border-radius: 15px;"></div>
+                    <div class="skeleton-box" style="height: 110px; border-radius: 15px;"></div>
+                    <div class="skeleton-box" style="height: 110px; border-radius: 15px;"></div>
+                    <div class="skeleton-box" style="height: 110px; border-radius: 15px;"></div>
+                </div>
+                <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+                    <div class="skeleton-box" style="flex: 1; height: 45px; border-radius: 10px;"></div>
+                    <div class="skeleton-box" style="width: 120px; height: 45px; border-radius: 10px;"></div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <div class="skeleton-box" style="height: 60px; border-radius: 10px;"></div>
+                    <div class="skeleton-box" style="height: 60px; border-radius: 10px;"></div>
+                    <div class="skeleton-box" style="height: 60px; border-radius: 10px;"></div>
+                </div>
+                <style>
+                    .skeleton-box {
+                        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+                        background-size: 200% 100%;
+                        animation: skeletonLoading 1.5s infinite;
+                    }
+                    @keyframes skeletonLoading {
+                        0% { background-position: 200% 0; }
+                        100% { background-position: -200% 0; }
+                    }
+                </style>
             </div>
 
             <div class="section-card">
