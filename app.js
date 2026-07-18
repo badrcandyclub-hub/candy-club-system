@@ -6785,6 +6785,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <html dir="rtl" lang="ar">
             <head>
                 <title>إذن ${logId}</title>
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
                 <style>
                     @page { margin: 0; }
                     body {
@@ -6843,9 +6844,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="divider"></div>
 
                 <div class="info-box">
-                    <p><b>[ الراسل ]:</b> ${senderDisplay}</p>
-                    <p><b>[ من ]:</b> ${from}</p>
-                    <p><b>[ إلى ]:</b> ${to}</p>
+                    <p><i class="fa-solid fa-user-tie" style="margin-left: 5px;"></i> <b>الراسل:</b> ${senderDisplay}</p>
+                    <p><i class="fa-solid fa-store" style="margin-left: 5px;"></i> <b>من:</b> ${from}</p>
+                    <p><i class="fa-solid fa-truck-fast" style="margin-left: 5px;"></i> <b>إلى:</b> ${to}</p>
                 </div>
 
                 <table>
@@ -6860,7 +6861,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </tbody>
                 </table>
 
-                ${notes ? `<div style="margin-bottom: 15px; font-size: 13px;"><p><b>ملاحظات:</b> ${notes}</p></div>` : ''}
+                ${notes ? `<div style="margin-bottom: 15px; font-size: 13px;"><p><i class="fa-solid fa-pen-to-square" style="margin-left: 5px;"></i> <b>ملاحظات:</b> ${notes}</p></div>` : ''}
 
                 <div class="divider"></div>
 
