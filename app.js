@@ -1,4 +1,4 @@
-// ==========================================
+﻿// ==========================================
 // <i class=\'fa-solid fa-globe\'></i> العقل المدبر - سيستم كاندي كلوب (النسخة V13.6 - الشاملة والمحصنة)
 // ==========================================
 
@@ -6944,7 +6944,67 @@ function fetchInventoryLogs() {
 function renderInventoryDashboard(logs) {
     document.getElementById('invDashTotal').innerText = logs.length;
     
+    // Calculate Month to Date
+    let now = new Date();
+    let currentMonth = now.getMonth();
+    let currentYear = now.getFullYear();
+    let monthLogs = logs.filter(log => {
+        // Parse "YYYY-MM-DD" from timestamp "2026-07-19 03:31:00 AM"
+        let parts = log.timestamp.split(" ")[0].split("-");
+        if(parts.length === 3) {
+            let logMonth = parseInt(parts[1]) - 1;
+            let logYear = parseInt(parts[0]);
+            return logMonth === currentMonth && logYear === currentYear;
+        }
+        return false;
+    });
+    
+    let monthTotalEl = document.getElementById('invDashMonthTotal');
+    if(monthTotalEl) monthTotalEl.innerText = `أذونات هذا الشهر: ${monthLogs.length}`;
+    
     let senders = {};
+    let receivers = {};
+    let products = {};
+    
+    logs.forEach(log => {
+        let from = String(log.from).trim();
+        let to = String(log.to).trim();
+        if (from) senders[from] = (senders[from] || 0) + 1;
+        if (to) receivers[to] = (receivers[to] || 0) + 1;
+        
+        try {
+            let items = JSON.parse(log.items);
+            items.forEach(i => {
+                let pName = String(i.name).trim();
+                let pQty = parseInt(i.qty) || 0;
+                if (pName) {
+                    products[pName] = (products[pName] || 0) + pQty;
+                }
+            });
+        } catch(e) {
+            if (log.items) {
+                let parts = log.items.split("|");
+                parts.forEach(p => {
+                    let match = p.trim().match(/(.*?)\s+\((\d+)\)/);
+                    if (match) {
+                        let pName = match[1].trim();
+                        let pQty = parseInt(match[2]) || 0;
+                        if (pName) products[pName] = (products[pName] || 0) + pQty;
+                    }
+                });
+            }
+        }
+    });
+    
+    // Global variables for Modal
+    window.invStatsSenders = Object.entries(senders).sort((a,b) => b[1]-a[1]);
+    window.invStatsReceivers = Object.entries(receivers).sort((a,b) => b[1]-a[1]);
+    window.invStatsProducts = Object.entries(products).sort((a,b) => b[1]-a[1]);
+    
+    document.getElementById('invDashTopSender').innerText = window.invStatsSenders[0] ? window.invStatsSenders[0][0] : '-';
+    document.getElementById('invDashTopReceiver').innerText = window.invStatsReceivers[0] ? window.invStatsReceivers[0][0] : '-';
+    document.getElementById('invDashTopProduct').innerText = window.invStatsProducts[0] ? window.invStatsProducts[0][0] : '-';
+};
     let receivers = {};
     let products = {};
     
@@ -6988,14 +7048,40 @@ function renderInventoryDashboard(logs) {
     document.getElementById('invDashTopProduct').innerText = topProduct;
 }
 
-function renderInventoryArchive(logs) {
+function renderInventoryArchive(logs, forceShow = false) {
     let tbody = document.getElementById('invArchiveTableBody');
     tbody.innerHTML = '';
     
-    if (!logs || logs.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">لا توجد أذونات سابقة</td></tr>';
+    let searchQ = document.getElementById('invSearchInput') ? document.getElementById('invSearchInput').value.trim() : '';
+    let dateQ = document.getElementById('invSearchDate') ? document.getElementById('invSearchDate').value : '';
+    
+    if (!forceShow && searchQ === '' && dateQ === '') {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#7f8c8d;"><i class="fa-solid fa-magnifying-glass"></i> برجاء البحث برقم الإذن أو اختيار تاريخ لعرض الأذونات لتخفيف الحمل على المتصفح</td></tr>';
         return;
     }
+    
+    if (!logs || logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">لا توجد أذونات مطابقة للبحث</td></tr>';
+        return;
+    }
+    
+    let reversed = [...logs].reverse();
+    
+    reversed.forEach(log => {
+        let tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><b>${log.logId}</b></td>
+            <td>${log.from}</td>
+            <td>${log.to}</td>
+            <td>${log.regName}</td>
+            <td dir="ltr" style="text-align:right;">${log.timestamp}</td>
+            <td style="text-align:center;">
+                <button class="interactive-btn" onclick="reprintInvLog('${log.logId}')" style="background:#3498db; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;" title="إعادة طباعة"><i class="fa-solid fa-print"></i></button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
     
     let reversed = [...logs].reverse();
     
@@ -7114,16 +7200,74 @@ window.reprintInvLog = function(logId) {
 
 document.getElementById('refreshInvArchiveBtn')?.addEventListener('click', fetchInventoryLogs);
 
-document.getElementById('invSearchInput')?.addEventListener('input', function() {
-    let q = this.value.toLowerCase().trim();
+function filterAndRenderArchive() {
     if (!window.invLogsData) return;
+    let q = document.getElementById('invSearchInput').value.toLowerCase().trim();
+    let dateQ = document.getElementById('invSearchDate').value; // YYYY-MM-DD
+    
     let filtered = window.invLogsData.filter(log => {
-        return String(log.logId).toLowerCase().includes(q) ||
+        let matchText = true;
+        let matchDate = true;
+        
+        if (q !== '') {
+            matchText = String(log.logId).toLowerCase().includes(q) ||
                String(log.from).toLowerCase().includes(q) ||
                String(log.to).toLowerCase().includes(q) ||
                String(log.regName).toLowerCase().includes(q) ||
                String(log.timestamp).toLowerCase().includes(q);
+        }
+        
+        if (dateQ !== '') {
+            // log.timestamp is like "2026-07-19 03:31:00 AM"
+            matchDate = log.timestamp.startsWith(dateQ);
+        }
+        
+        return matchText && matchDate;
     });
+    
+    renderInventoryArchive(filtered);
+}
+
+document.getElementById('invSearchInput')?.addEventListener('input', filterAndRenderArchive);
+document.getElementById('invSearchDate')?.addEventListener('change', filterAndRenderArchive);
+
+window.openInvStatsModal = function(type) {
+    let titleEl = document.getElementById('invStatsModalTitle');
+    let contentEl = document.getElementById('invStatsModalContent');
+    let title = "";
+    let data = [];
+    
+    if (type === 'sender') {
+        title = 'أعلى الفروع إرسالاً';
+        data = window.invStatsSenders || [];
+    } else if (type === 'receiver') {
+        title = 'أعلى الفروع استلاماً';
+        data = window.invStatsReceivers || [];
+    } else if (type === 'product') {
+        title = 'أكثر المنتجات تحويلاً (أعلى 10)';
+        data = window.invStatsProducts ? window.invStatsProducts.slice(0, 10) : [];
+    }
+    
+    titleEl.innerHTML = `<i class="fa-solid fa-list-ol"></i> ${title}`;
+    
+    if (data.length === 0) {
+        contentEl.innerHTML = `<div style="text-align:center; padding:20px; color:#7f8c8d;">لا توجد بيانات كافية</div>`;
+    } else {
+        let html = `<ul style="list-style:none; padding:0; margin:0;">`;
+        data.forEach((item, index) => {
+            html += `
+                <li style="display:flex; justify-content:space-between; padding:12px 15px; border-bottom:1px solid #eee; background:${index % 2 === 0 ? '#f9f9f9' : 'white'};">
+                    <span style="font-weight:bold; color:#2c3e50;"><span style="color:#3498db; margin-left:10px;">#${index+1}</span> ${item[0]}</span>
+                    <span style="background:var(--primary); color:white; padding:2px 8px; border-radius:12px; font-size:14px;">${item[1]}</span>
+                </li>
+            `;
+        });
+        html += `</ul>`;
+        contentEl.innerHTML = html;
+    }
+    
+    document.getElementById('invStatsModal').style.display = 'flex';
+};
     renderInventoryArchive(filtered);
 });
 

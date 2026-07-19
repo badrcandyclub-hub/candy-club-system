@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 
 <head>
@@ -761,18 +761,22 @@
                     <div class="glass-card" style="text-align: center; padding: 15px; border-top: 4px solid #3498db;">
                         <h4 style="margin: 0 0 10px 0; color: #7f8c8d;"><i class="fa-solid fa-file-lines"></i> إجمالي الأذونات</h4>
                         <div id="invDashTotal" style="font-size: 24px; font-weight: bold; color: #2c3e50;">0</div>
+                        <div id="invDashMonthTotal" style="font-size: 14px; color: #7f8c8d; margin-top: 5px;">أذونات هذا الشهر: 0</div>
                     </div>
-                    <div class="glass-card" style="text-align: center; padding: 15px; border-top: 4px solid #2ecc71;">
-                        <h4 style="margin: 0 0 10px 0; color: #7f8c8d;"><i class="fa-solid fa-truck-arrow-right"></i> أكثر جهة أرسلت</h4>
+                    <div class="glass-card interactive-btn" onclick="openInvStatsModal('sender')" style="text-align: center; padding: 15px; border-top: 4px solid #2ecc71; cursor: pointer;">
+                        <h4 style="margin: 0 0 10px 0; color: #7f8c8d;"><i class="fa-solid fa-truck-arrow-right"></i> أعلى جهة إرسال</h4>
                         <div id="invDashTopSender" style="font-size: 18px; font-weight: bold; color: #2c3e50;">-</div>
+                        <div style="font-size: 12px; color: #95a5a6; margin-top: 5px;"><i class="fa-solid fa-hand-pointer"></i> عرض القائمة</div>
                     </div>
-                    <div class="glass-card" style="text-align: center; padding: 15px; border-top: 4px solid #e67e22;">
-                        <h4 style="margin: 0 0 10px 0; color: #7f8c8d;"><i class="fa-solid fa-building-circle-check"></i> أكثر جهة استلمت</h4>
+                    <div class="glass-card interactive-btn" onclick="openInvStatsModal('receiver')" style="text-align: center; padding: 15px; border-top: 4px solid #e67e22; cursor: pointer;">
+                        <h4 style="margin: 0 0 10px 0; color: #7f8c8d;"><i class="fa-solid fa-building-circle-check"></i> أعلى جهة استلام</h4>
                         <div id="invDashTopReceiver" style="font-size: 18px; font-weight: bold; color: #2c3e50;">-</div>
+                        <div style="font-size: 12px; color: #95a5a6; margin-top: 5px;"><i class="fa-solid fa-hand-pointer"></i> عرض القائمة</div>
                     </div>
-                    <div class="glass-card" style="text-align: center; padding: 15px; border-top: 4px solid #9b59b6;">
+                    <div class="glass-card interactive-btn" onclick="openInvStatsModal('product')" style="text-align: center; padding: 15px; border-top: 4px solid #9b59b6; cursor: pointer;">
                         <h4 style="margin: 0 0 10px 0; color: #7f8c8d;"><i class="fa-solid fa-box-open"></i> أكثر منتج تحويلاً</h4>
                         <div id="invDashTopProduct" style="font-size: 18px; font-weight: bold; color: #2c3e50;">-</div>
+                        <div style="font-size: 12px; color: #95a5a6; margin-top: 5px;"><i class="fa-solid fa-hand-pointer"></i> عرض القائمة</div>
                     </div>
                 </div>
 
@@ -784,8 +788,9 @@
                             <i class="fa-solid fa-rotate-right"></i> تحديث السجل
                         </button>
                     </div>
-                    <div style="margin-bottom: 15px;">
-                        <input type="text" id="invSearchInput" class="input-field" placeholder="ابحث برقم الإذن، اسم الراسل، المستلم، أو التاريخ..." style="margin-bottom: 0;">
+                    <div style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                        <input type="text" id="invSearchInput" class="input-field" placeholder="ابحث برقم الإذن؟ اسم الجهة؟ المنتج؟..." style="margin-bottom: 0; flex: 2; min-width: 200px;">
+                        <input type="date" id="invSearchDate" class="input-field" style="margin-bottom: 0; flex: 1; min-width: 150px;">
                     </div>
                     <div class="table-container" style="max-height: 500px; overflow-y: auto;">
                         <table>
@@ -806,6 +811,16 @@
                     </div>
                 </div>
             </div> <!-- End invArchiveSection -->
+            <!-- Inventory Stats Modal -->
+            <div id="invStatsModal" class="modal-overlay" style="display: none; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; backdrop-filter: blur(5px);">
+                <div class="glass-card" style="width: 90%; max-width: 500px; background: white; padding: 25px; border-radius: 15px; position: relative; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                    <button onclick="document.getElementById('invStatsModal').style.display='none'" style="position: absolute; top: 15px; left: 15px; background: none; border: none; font-size: 1.5rem; color: #e74c3c; cursor: pointer; transition: transform 0.2s;"><i class="fa-solid fa-times"></i></button>
+                    <h3 id="invStatsModalTitle" style="margin-top: 0; color: var(--primary); border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 15px; text-align: center;"><i class="fa-solid fa-list-ol"></i> القائمة المفصلة</h3>
+                    <div id="invStatsModalContent" style="overflow-y: auto; flex: 1; padding-right: 5px;">
+                        <!-- List content goes here -->
+                    </div>
+                </div>
+            </div>
         </section>
 
         <section id="expiry-tab" class="tab-pane" style="position: relative;">
@@ -1775,7 +1790,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <script src="app.js?v=24.25"></script>
+    <script src="app.js?v=24.26"></script>
 </body>
 
 </html>
