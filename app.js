@@ -6745,7 +6745,7 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append("items", itemsStr);
             formData.append("notes", notes);
 
-            setBtnLoading(savePrintInvBtn, true);
+            try { setBtnLoading(savePrintInvBtn, true);
 
             fetch(GOOGLE_SHEETS_URL, {
                 method: 'POST',
