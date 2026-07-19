@@ -6918,38 +6918,38 @@ window.switchInvTab = function(tab) {
         document.getElementById('invArchiveTabBtn').style.color = 'white';
         document.getElementById('invCreateTabBtn').style.background = '#e0e0e0';
         document.getElementById('invCreateTabBtn').style.color = '#333';
-        if (!window.invLogsData) {
-            fetchInventoryLogs();
-        }
     }
 };
 
-function fetchInventoryLogs() {
+function fetchInventoryLogs(callback = null) {
     let tbody = document.getElementById('invArchiveTableBody');
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">جاري تحميل البيانات... <i class="fa-solid fa-spinner fa-spin"></i></td></tr>';
+    if (tbody && tbody.children.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:15px; color:#64748b;"><i class="fa-solid fa-spinner fa-spin"></i> جاري تحميل البيانات من السيرفر...</td></tr>';
+    }
     
     fetch(`${GOOGLE_SHEETS_URL}?action=getInventoryLogs&t=${new Date().getTime()}`)
         .then(res => res.json())
         .then(data => {
             window.invLogsData = data;
-            try { renderInventoryDashboard(data); } catch(e) { alert('Dash Error: ' + e); }
-            try { renderInventoryArchive(data); } catch(e) { alert('Archive Error: ' + e); }
+            try { renderInventoryDashboard(data); } catch(e) { console.error('Dash Error:', e); }
+            if (typeof callback === 'function') callback(data);
         })
         .catch(err => {
             console.error(err);
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">خطأ في تحميل البيانات</td></tr>';
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#ef4444; padding:15px;">خطأ في تحميل البيانات من السيرفر</td></tr>';
+            }
         });
 }
 
 function renderInventoryDashboard(logs) {
+    if (!logs) return;
     document.getElementById('invDashTotal').innerText = logs.length;
     
-    // Calculate Month to Date
     let now = new Date();
     let currentMonth = now.getMonth();
     let currentYear = now.getFullYear();
     let monthLogs = logs.filter(log => {
-        // Parse "YYYY-MM-DD" from timestamp "2026-07-19 03:31:00 AM"
         let parts = log.timestamp.split(" ")[0].split("-");
         if(parts.length === 3) {
             let logMonth = parseInt(parts[1]) - 1;
@@ -6960,11 +6960,12 @@ function renderInventoryDashboard(logs) {
     });
     
     let monthTotalEl = document.getElementById('invDashMonthTotal');
-    if(monthTotalEl) monthTotalEl.innerText = `أذونات هذا الشهر: ${monthLogs.length}`;
+    if (monthTotalEl) monthTotalEl.innerText = `أذونات هذا الشهر: ${monthLogs.length}`;
     
     let senders = {};
     let receivers = {};
     let products = {};
+    let monthsGroup = {};
     
     logs.forEach(log => {
         let from = String(log.from).trim();
@@ -6972,14 +6973,16 @@ function renderInventoryDashboard(logs) {
         if (from) senders[from] = (senders[from] || 0) + 1;
         if (to) receivers[to] = (receivers[to] || 0) + 1;
         
+        let datePart = log.timestamp.split(" ")[0]; // YYYY-MM-DD
+        let yearMonth = datePart.substring(0, 7); // YYYY-MM
+        if (yearMonth) monthsGroup[yearMonth] = (monthsGroup[yearMonth] || 0) + 1;
+        
         try {
             let items = JSON.parse(log.items);
             items.forEach(i => {
                 let pName = String(i.name).trim();
                 let pQty = parseInt(i.qty) || 0;
-                if (pName) {
-                    products[pName] = (products[pName] || 0) + pQty;
-                }
+                if (pName) products[pName] = (products[pName] || 0) + pQty;
             });
         } catch(e) {
             if (log.items) {
@@ -6996,30 +6999,23 @@ function renderInventoryDashboard(logs) {
         }
     });
     
-    // Global variables for Modal
     window.invStatsSenders = Object.entries(senders).sort((a,b) => b[1]-a[1]);
     window.invStatsReceivers = Object.entries(receivers).sort((a,b) => b[1]-a[1]);
     window.invStatsProducts = Object.entries(products).sort((a,b) => b[1]-a[1]);
+    window.invStatsMonths = Object.entries(monthsGroup).sort((a,b) => b[0].localeCompare(a[0]));
     
     document.getElementById('invDashTopSender').innerText = window.invStatsSenders[0] ? window.invStatsSenders[0][0] : '-';
     document.getElementById('invDashTopReceiver').innerText = window.invStatsReceivers[0] ? window.invStatsReceivers[0][0] : '-';
     document.getElementById('invDashTopProduct').innerText = window.invStatsProducts[0] ? window.invStatsProducts[0][0] : '-';
 }
 
-function renderInventoryArchive(logs, forceShow = false) {
+function renderInventoryArchive(logs) {
     let tbody = document.getElementById('invArchiveTableBody');
+    if (!tbody) return;
     tbody.innerHTML = '';
     
-    let searchQ = document.getElementById('invSearchInput') ? document.getElementById('invSearchInput').value.trim() : '';
-    let dateQ = document.getElementById('invSearchDate') ? document.getElementById('invSearchDate').value : '';
-    
-    if (!forceShow && searchQ === '' && dateQ === '') {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#7f8c8d;"><i class="fa-solid fa-magnifying-glass"></i> برجاء البحث برقم الإذن أو اختيار تاريخ لعرض الأذونات لتخفيف الحمل على المتصفح</td></tr>';
-        return;
-    }
-    
     if (!logs || logs.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">لا توجد أذونات مطابقة للبحث</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:20px;">لا توجد أذونات مطابقة للبحث</td></tr>';
         return;
     }
     
@@ -7034,15 +7030,143 @@ function renderInventoryArchive(logs, forceShow = false) {
             <td>${log.regName}</td>
             <td dir="ltr" style="text-align:right;">${log.timestamp}</td>
             <td style="text-align:center;">
-                <button class="interactive-btn" onclick="reprintInvLog('${log.logId}')" style="background:#3498db; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;" title="إعادة طباعة"><i class="fa-solid fa-print"></i></button>
+                <button class="interactive-btn" onclick="reprintInvLog('${log.logId}')" style="background:#3498db; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;" title="إعادة طباعة"><i class="fa-solid fa-print"></i></button>
             </td>
         `;
         tbody.appendChild(tr);
     });
 }
 
+function filterAndRenderArchive() {
+    let q = document.getElementById('invSearchInput') ? document.getElementById('invSearchInput').value.trim() : '';
+    let dateQ = document.getElementById('invSearchDate') ? document.getElementById('invSearchDate').value : '';
+    let tbody = document.getElementById('invArchiveTableBody');
+
+    if (q === '' && dateQ === '') {
+        if (tbody) tbody.innerHTML = '';
+        return;
+    }
+
+    if (!window.invLogsData) {
+        fetchInventoryLogs(() => filterAndRenderArchive());
+        return;
+    }
+
+    let filtered = window.invLogsData.filter(log => {
+        let matchText = true;
+        let matchDate = true;
+        
+        if (q !== '') {
+            // Strictly match logId only as requested
+            matchText = String(log.logId).toLowerCase().includes(q.toLowerCase());
+        }
+        
+        if (dateQ !== '') {
+            matchDate = String(log.timestamp).startsWith(dateQ);
+        }
+        
+        return matchText && matchDate;
+    });
+
+    renderInventoryArchive(filtered);
+}
+
+document.getElementById('invSearchInput')?\.addEventListener('input', filterAndRenderArchive);
+document.getElementById('invSearchDate')?\.addEventListener('change', filterAndRenderArchive);
+document.getElementById('refreshInvArchiveBtn')?\.addEventListener('click', () => {
+    fetchInventoryLogs(() => filterAndRenderArchive());
+});
+
+window.openInvStatsModal = function(type) {
+    let modal = document.getElementById('invStatsModal');
+    let titleEl = document.getElementById('invStatsModalTitle');
+    let contentEl = document.getElementById('invStatsModalContent');
+    
+    if (modal) modal.style.display = 'flex';
+
+    if (!window.invLogsData) {
+        contentEl.innerHTML = `<div style="text-align:center; padding:40px; color:#64748b;"><i class="fa-solid fa-circle-notch fa-spin fa-2x" style="color:var(--primary); margin-bottom:15px;"></i><br>جاري جلب البيانات من السيرفر...</div>`;
+        fetchInventoryLogs(() => window.openInvStatsModal(type));
+        return;
+    }
+
+    let title = "";
+    let data = [];
+    
+    if (type === 'months') {
+        title = 'أذونات الشهور والسنوات';
+        data = window.invStatsMonths || [];
+    } else if (type === 'sender') {
+        title = 'أعلى الفروع إرسالاً';
+        data = window.invStatsSenders || [];
+    } else if (type === 'receiver') {
+        title = 'أعلى الفروع استلاماً';
+        data = window.invStatsReceivers || [];
+    } else if (type === 'product') {
+        title = 'أكثر المنتجات تحويلاً (أعلى 10)';
+        data = window.invStatsProducts ? window.invStatsProducts.slice(0, 10) : [];
+    }
+    
+    titleEl.innerHTML = `<i class="fa-solid fa-chart-pie" style="color:var(--primary); margin-left:8px;"></i> ${title}`;
+    
+    if (data.length === 0) {
+        contentEl.innerHTML = `<div style="text-align:center; padding:30px; color:#94a3b8;">لا توجد بيانات متاحة</div>`;
+    } else if (type === 'months') {
+        let html = `<div style="display:flex; flex-direction:column; gap:10px;">`;
+        data.forEach(item => {
+            let [ym, count] = item;
+            let parts = ym.split("-");
+            let monthNames = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+            let mName = parts[1] ? monthNames[parseInt(parts[1]) - 1] : ym;
+            let label = `${mName} ${parts[0]}`;
+            
+            html += `
+                <div onclick="filterByMonthMonthModal('${ym}')" class="interactive-btn" style="display:flex; justify-content:space-between; align-items:center; padding:14px 18px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.borderColor='var(--primary)'; this.style.background='#f1f5f9';" onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc';">
+                    <span style="font-weight:bold; color:#1e293b; font-size:1rem;"><i class="fa-solid fa-calendar-days" style="color:var(--primary); margin-left:8px;"></i> ${label}</span>
+                    <span style="background:var(--primary); color:white; padding:4px 12px; border-radius:20px; font-weight:bold; font-size:0.875rem;">${count} إذن</span>
+                </div>
+            `;
+        });
+        html += `</div>`;
+        contentEl.innerHTML = html;
+    } else {
+        let html = `<div style="display:flex; flex-direction:column; gap:8px;">`;
+        data.forEach((item, index) => {
+            html += `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:${index % 2 === 0 ? '#f8fafc' : 'white'}; border:1px solid #f1f5f9; border-radius:10px;">
+                    <span style="font-weight:bold; color:#334155;"><span style="color:var(--primary); margin-left:8px; font-size:0.9rem;">#${index+1}</span> ${item[0]}</span>
+                    <span style="background:#e2e8f0; color:#1e293b; padding:3px 10px; border-radius:15px; font-weight:bold; font-size:0.85rem;">${item[1]}</span>
+                </div>
+            `;
+        });
+        html += `</div>`;
+        contentEl.innerHTML = html;
+    }
+};
+
+window.filterByMonthMonthModal = function(ym) {
+    let dateInput = document.getElementById('invSearchDate');
+    if (dateInput) dateInput.value = ym;
+    closeInvStatsModal();
+    filterAndRenderArchive();
+};
+
+window.closeInvStatsModal = function() {
+    let modal = document.getElementById('invStatsModal');
+    if (modal) modal.style.display = 'none';
+    // Purge data to free memory as requested
+    window.invLogsData = null;
+    window.invStatsSenders = null;
+    window.invStatsReceivers = null;
+    window.invStatsProducts = null;
+    window.invStatsMonths = null;
+};
+
 window.reprintInvLog = function(logId) {
-    if (!window.invLogsData) return;
+    if (!window.invLogsData) {
+        fetchInventoryLogs(() => window.reprintInvLog(logId));
+        return;
+    }
     let log = window.invLogsData.find(l => l.logId === logId);
     if (!log) return;
     
@@ -7050,7 +7174,6 @@ window.reprintInvLog = function(logId) {
     try {
         itemsArr = JSON.parse(log.items);
     } catch(e) {
-        // Fallback for plain string
         if (log.items) {
             let parts = log.items.split("|");
             itemsArr = parts.map(p => {
@@ -7137,77 +7260,3 @@ window.reprintInvLog = function(logId) {
     printWindow.document.write(html);
     printWindow.document.close();
 };
-
-document.getElementById('refreshInvArchiveBtn')?.addEventListener('click', fetchInventoryLogs);
-
-function filterAndRenderArchive() {
-    if (!window.invLogsData) return;
-    let q = document.getElementById('invSearchInput').value.toLowerCase().trim();
-    let dateQ = document.getElementById('invSearchDate').value; // YYYY-MM-DD
-    
-    let filtered = window.invLogsData.filter(log => {
-        let matchText = true;
-        let matchDate = true;
-        
-        if (q !== '') {
-            matchText = String(log.logId).toLowerCase().includes(q) ||
-               String(log.from).toLowerCase().includes(q) ||
-               String(log.to).toLowerCase().includes(q) ||
-               String(log.regName).toLowerCase().includes(q) ||
-               String(log.timestamp).toLowerCase().includes(q);
-        }
-        
-        if (dateQ !== '') {
-            // log.timestamp is like "2026-07-19 03:31:00 AM"
-            matchDate = log.timestamp.startsWith(dateQ);
-        }
-        
-        return matchText && matchDate;
-    });
-    
-    renderInventoryArchive(filtered);
-}
-
-document.getElementById('invSearchInput')?.addEventListener('input', filterAndRenderArchive);
-document.getElementById('invSearchDate')?.addEventListener('change', filterAndRenderArchive);
-
-window.openInvStatsModal = function(type) {
-    let titleEl = document.getElementById('invStatsModalTitle');
-    let contentEl = document.getElementById('invStatsModalContent');
-    let title = "";
-    let data = [];
-    
-    if (type === 'sender') {
-        title = 'أعلى الفروع إرسالاً';
-        data = window.invStatsSenders || [];
-    } else if (type === 'receiver') {
-        title = 'أعلى الفروع استلاماً';
-        data = window.invStatsReceivers || [];
-    } else if (type === 'product') {
-        title = 'أكثر المنتجات تحويلاً (أعلى 10)';
-        data = window.invStatsProducts ? window.invStatsProducts.slice(0, 10) : [];
-    }
-    
-    titleEl.innerHTML = `<i class="fa-solid fa-list-ol"></i> ${title}`;
-    
-    if (data.length === 0) {
-        contentEl.innerHTML = `<div style="text-align:center; padding:20px; color:#7f8c8d;">لا توجد بيانات كافية</div>`;
-    } else {
-        let html = `<ul style="list-style:none; padding:0; margin:0;">`;
-        data.forEach((item, index) => {
-            html += `
-                <li style="display:flex; justify-content:space-between; padding:12px 15px; border-bottom:1px solid #eee; background:${index % 2 === 0 ? '#f9f9f9' : 'white'};">
-                    <span style="font-weight:bold; color:#2c3e50;"><span style="color:#3498db; margin-left:10px;">#${index+1}</span> ${item[0]}</span>
-                    <span style="background:var(--primary); color:white; padding:2px 8px; border-radius:12px; font-size:14px;">${item[1]}</span>
-                </li>
-            `;
-        });
-        html += `</ul>`;
-        contentEl.innerHTML = html;
-    }
-    
-    document.getElementById('invStatsModal').style.display = 'flex';
-};
-
-// Fetch on startup
-setTimeout(fetchInventoryLogs, 1500);
