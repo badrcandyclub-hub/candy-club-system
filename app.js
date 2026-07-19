@@ -1,4 +1,4 @@
-// ==========================================
+﻿// ==========================================
 // <i class=\'fa-solid fa-globe\'></i> العقل المدبر - سيستم كاندي كلوب (النسخة V13.6 - الشاملة والمحصنة)
 // ==========================================
 
@@ -7113,7 +7113,7 @@ window.renderInvModalContent = function() {
             let mName = parts[1] ? monthNames[parseInt(parts[1]) - 1] : ym;
             let label = `${mName} ${parts[0]}`;
             html += `
-                <div onclick="filterByMonthMonthModal('${ym}')" class="interactive-btn" style="display:flex; justify-content:space-between; align-items:center; padding:14px 18px; background:rgba(255,255,255,0.7); border:1px solid rgba(255,255,255,0.8); border-radius:12px; cursor:pointer; transition:all 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.05);" onmouseover="this.style.borderColor='var(--primary)'; this.style.background='rgba(255,255,255,0.9)';" onmouseout="this.style.borderColor='rgba(255,255,255,0.8)'; this.style.background='rgba(255,255,255,0.7)';">
+                <div onclick="filterByMonthMonthModal('${ym}')" class="interactive-btn" style="display:flex; justify-content:space-between; align-items:center; padding:14px 18px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; cursor:pointer; transition:all 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.05);" onmouseover="this.style.borderColor='var(--primary)'; this.style.background='#f1f5f9';" onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc';">
                     <span style="font-weight:bold; color:#1e293b; font-size:1rem;"><i class="fa-solid fa-calendar-days" style="color:var(--primary); margin-left:8px;"></i> ${label}</span>
                     <span style="background:var(--primary); color:white; padding:4px 12px; border-radius:20px; font-weight:bold; font-size:0.875rem;">${count} إذن</span>
                 </div>`;
@@ -7123,9 +7123,9 @@ window.renderInvModalContent = function() {
         html += `<div style="display:flex; flex-direction:column; gap:8px;">`;
         pageData.forEach((item, i) => {
             let actualIndex = startIdx + i;
-            let bg = actualIndex % 2 === 0 ? 'rgba(248, 250, 252, 0.7)' : 'rgba(255, 255, 255, 0.8)';
+            let bg = actualIndex % 2 === 0 ? '#f8fafc' : '#ffffff';
             html += `
-                <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:${bg}; border:1px solid rgba(255,255,255,0.6); border-radius:10px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:${bg}; border:1px solid #f1f5f9; border-radius:10px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
                     <span style="font-weight:bold; color:#334155;"><span style="color:var(--primary); margin-left:8px; font-size:0.9rem;">#${actualIndex+1}</span> ${item[0]}</span>
                     <span style="background:#e2e8f0; color:#1e293b; padding:3px 10px; border-radius:15px; font-weight:bold; font-size:0.85rem;">${item[1]}</span>
                 </div>`;
