@@ -7268,8 +7268,6 @@ window.openInvStatsModal = function(type) {
     
     document.getElementById('invStatsModal').style.display = 'flex';
 };
-    renderInventoryArchive(filtered);
-});
 
 // Fetch on startup
 setTimeout(fetchInventoryLogs, 1500);
