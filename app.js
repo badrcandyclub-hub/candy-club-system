@@ -1,4 +1,4 @@
-// ==========================================
+﻿// ==========================================
 // <i class=\'fa-solid fa-globe\'></i> العقل المدبر - سيستم كاندي كلوب (النسخة V13.6 - الشاملة والمحصنة)
 // ==========================================
 
@@ -7022,24 +7022,6 @@ function renderInventoryArchive(logs, forceShow = false) {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">لا توجد أذونات مطابقة للبحث</td></tr>';
         return;
     }
-    
-    let reversed = [...logs].reverse();
-    
-    reversed.forEach(log => {
-        let tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td><b>${log.logId}</b></td>
-            <td>${log.from}</td>
-            <td>${log.to}</td>
-            <td>${log.regName}</td>
-            <td dir="ltr" style="text-align:right;">${log.timestamp}</td>
-            <td style="text-align:center;">
-                <button class="interactive-btn" onclick="reprintInvLog('${log.logId}')" style="background:#3498db; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;" title="إعادة طباعة"><i class="fa-solid fa-print"></i></button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
     
     let reversed = [...logs].reverse();
     
