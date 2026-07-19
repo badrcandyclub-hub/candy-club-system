@@ -6928,7 +6928,7 @@ function fetchInventoryLogs() {
     let tbody = document.getElementById('invArchiveTableBody');
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">جاري تحميل البيانات... <i class="fa-solid fa-spinner fa-spin"></i></td></tr>';
     
-    fetch(`${GOOGLE_SHEETS_URL}?action=getInventoryLogs`)
+    fetch(`${GOOGLE_SHEETS_URL}?action=getInventoryLogs&t=${new Date().getTime()}`)
         .then(res => res.json())
         .then(data => {
             window.invLogsData = data;
