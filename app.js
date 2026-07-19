@@ -6932,8 +6932,8 @@ function fetchInventoryLogs() {
         .then(res => res.json())
         .then(data => {
             window.invLogsData = data;
-            renderInventoryDashboard(data);
-            renderInventoryArchive(data);
+            try { renderInventoryDashboard(data); } catch(e) { alert('Dash Error: ' + e); }
+            try { renderInventoryArchive(data); } catch(e) { alert('Archive Error: ' + e); }
         })
         .catch(err => {
             console.error(err);
