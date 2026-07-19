@@ -1,18 +1,25 @@
-﻿
+/* =========================================
+   ظ‹ع؛ع†آ¬ CANDY CLUB أ¢â‚¬â€‌ Premium UI System
+   Full Width | RTL | V13 Enhanced
+   ========================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=Tajawal:wght@300;400;500;700&display=swap');
 
+/* =========================================
+   1. ط·آ§ط¸â€‍ط¸â€¦ط·ع¾ط·ط›ط¸ظ¹ط·آ±ط·آ§ط·ع¾ ط¸ث†ط·آ§ط¸â€‍ط·آ£ط¸â€‍ط¸ث†ط·آ§ط¸â€ 
+   ========================================= */
 :root {
-
+    /* Candy Club Signature Colors */
     --primary:        #E91E8C;
     --primary-light:  #FF80C6;
     --primary-glow:   rgba(233, 30, 140, 0.12);
     --primary-dark:   #C21875;
-
-    --secondary:      #6366F1; 
+    
+    --secondary:      #6366F1; /* Modern Indigo */
     --secondary-light:#818CF8;
     --secondary-glow: rgba(99, 102, 241, 0.12);
-
+    
+    /* Semantic Colors */
     --success:        #10B981;
     --success-light:  #ECFDF5;
     --warning:        #F59E0B;
@@ -21,35 +28,44 @@
     --danger-light:   #FEF2F2;
     --whatsapp:       #25D366;
 
-    --bg:             #F4F6F9; 
+    /* Backgrounds & Surfaces (Soft Minimalism) */
+    --bg:             #F4F6F9; /* Softer, slightly cool gray */
     --white:          #FFFFFF;
     --card:           #FFFFFF;
     --border:         #E2E8F0;
     --border-light:   #F1F5F9;
+    
+    /* Typography Colors */
+    --text-main:      #0F172A; /* Slate 900 for high contrast but not pure black */
+    --text-muted:     #64748B; /* Slate 500 */
+    --text-light:     #94A3B8; /* Slate 400 */
 
-    --text-main:      #0F172A; 
-    --text-muted:     #64748B; 
-    --text-light:     #94A3B8; 
-
+    /* Premium Shadows */
     --shadow-sm:      0 2px 4px rgba(15, 23, 42, 0.04);
     --shadow:         0 4px 12px rgba(15, 23, 42, 0.06);
     --shadow-lg:      0 12px 32px rgba(15, 23, 42, 0.08);
     --shadow-pink:    0 8px 24px rgba(233, 30, 140, 0.25);
     --shadow-floating:0 20px 40px rgba(15, 23, 42, 0.12);
 
+    /* Radii (Smoother curves) */
     --radius-sm:      10px;
     --radius:         16px;
     --radius-lg:      24px;
     --radius-xl:      32px;
-
+    
+    /* Layout Constants */
     --nav-height:     80px;
     --header-height:  70px;
     --sidebar-width:  260px;
 
+    /* Transitions */
     --transition:     all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
     --transition-slow:all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
+/* =========================================
+   2. ط·آ§ط¸â€‍ط·آ£ط·آ³ط·آ§ط·آ³ط¸ظ¹ط·آ§ط·ع¾
+   ========================================= */
 *, *::before, *::after {
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
@@ -78,6 +94,9 @@ h1, h2, h3, h4, h5 {
     margin: 0 0 12px;
 }
 
+/* =========================================
+   3. ط·آ§ط¸â€‍ط¸â€،ط¸ظ¹ط·آ¯ط·آ±
+   ========================================= */
 .app-header {
     background: var(--white);
     height: var(--header-height);
@@ -171,6 +190,9 @@ h1, h2, h3, h4, h5 {
     100% { zoom: 1; transform: none; opacity: 1; }
 }
 
+/* =========================================
+   4. ط·آ§ط¸â€‍ط·آ­ط·آ±ط¸ئ’ط·آ§ط·ع¾ ط¸ث†ط·آ§ط¸â€‍ط·آ£ط·آ²ط·آ±ط·آ§ط·آ± ط·آ§ط¸â€‍ط·آ¹ط·آ§ط¸â€¦ط·آ©
+   ========================================= */
 .interactive-btn {
     transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.2s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 0.2s, filter 0.2s;
     cursor: pointer;
@@ -205,9 +227,12 @@ h1, h2, h3, h4, h5 {
 .mb-15 { margin-bottom: 15px; }
 .text-center { text-align: center; }
 
+/* =========================================
+   5. ط·آ§ط¸â€‍ط¸â€¦ط·آ­ط·ع¾ط¸ث†ط¸â€° ط¸ث†ط·آ§ط¸â€‍ط¸ئ’ط·آ±ط¸ث†ط·ع¾
+   ========================================= */
 .app-content {
     padding: 24px 28px;
-    max-width: 1400px; 
+    max-width: 1400px; /* Constrain on huge screens for better reading */
     margin: 0 auto;
 }
 
@@ -288,6 +313,9 @@ h1, h2, h3, h4, h5 {
 .divider::before { right: 0; }
 .divider::after  { left: 0; }
 
+/* =========================================
+   6. ط·آ§ط¸â€‍ط¸â€¦ط·آ¯ط·آ®ط¸â€‍ط·آ§ط·ع¾ (Inputs)
+   ========================================= */
 label {
     display: block;
     margin-bottom: 8px;
@@ -309,7 +337,7 @@ textarea {
     font-size: 1rem;
     font-weight: 500;
     transition: var(--transition);
-    background: var(--bg); 
+    background: var(--bg); /* Softer background */
     color: var(--text-main);
     outline: none;
     box-shadow: inset 0 1px 2px rgba(0,0,0,0.01);
@@ -318,7 +346,7 @@ textarea {
 input:focus,
 select:focus,
 textarea:focus {
-    border-color: var(--secondary-light); 
+    border-color: var(--secondary-light); /* Indigo for focus looks more premium */
     background: var(--white);
     box-shadow: 0 0 0 4px var(--secondary-glow);
 }
@@ -412,6 +440,9 @@ body.dark-mode input[readonly] {
 
 .check-status-icon:hover { transform: scale(1.15); }
 
+/* =========================================
+   7. ط·آ¬ط·آ¯ط¸ث†ط¸â€‍ ط·آ§ط¸â€‍ط¸â€¦ط¸â€ ط·ع¾ط·آ¬ط·آ§ط·ع¾
+   ========================================= */
 .product-header-labels {
     display: flex;
     gap: 8px;
@@ -517,7 +548,7 @@ body.dark-mode input[readonly] {
     background: var(--primary-glow);
     border-color: var(--primary);
 }
-
+/* ط·آ´ط·آ±ط¸ظ¹ط·آ· ط·آ§ط¸â€‍ط·آ¹ط·آ±ط¸ث†ط·آ¶ ط·آ¯ط·آ§ط·آ®ط¸â€‍ ط·آ§ط¸â€‍ط¸ظ¾ط·آ§ط·ع¾ط¸ث†ط·آ±ط·آ© */
 .invoice-offer-bar {
     display: flex;
     justify-content: space-between;
@@ -538,6 +569,9 @@ body.dark-mode .invoice-offer-bar {
 .invoice-offer-bar .offer-prices span { color: var(--primary); font-weight: bold; margin: 0 5px; }
 .offer-mini-switch { display: flex; align-items: center; gap: 5px; font-weight: bold; color: var(--primary); }
 
+/* =========================================
+   8. ط·آ§ط¸â€‍ط¸â€،ط·آ¯ط¸ظ¹ط·آ© ط¸ث†ط·آ§ط¸â€‍ط·آ­ط·آ³ط·آ§ط·آ¨ط·آ§ط·ع¾
+   ========================================= */
 .totals-box {
     background: linear-gradient(135deg, #FAFBFF, #F5F0FF);
     border: 1.5px solid var(--border);
@@ -596,6 +630,8 @@ body.dark-mode .invoice-offer-bar {
     font-size: 0.9rem;
 }
 
+
+
 .switch {
     position: relative;
     display: inline-block;
@@ -642,6 +678,9 @@ input:checked + .slider:before { transform: translateX(24px); }
     border: 1px solid rgba(0,180,216,0.2);
 }
 
+/* =========================================
+   9. ط¸â€ڑط·آ³ط¸â€¦ ط·آ§ط¸â€‍ط·آ¯ط¸ظ¾ط·آ¹ ط¸ث†ط·آ§ط¸â€‍ط·آ£ط·آ²ط·آ±ط·آ§ط·آ± ط·آ§ط¸â€‍ط·آ±ط·آ¦ط¸ظ¹ط·آ³ط¸ظ¹ط·آ©
+   ========================================= */
 .payment-section {
     background: #FAFBFF;
     padding: 18px;
@@ -746,6 +785,9 @@ input:checked + .slider:before { transform: translateX(24px); }
     background: var(--primary-glow);
 }
 
+/* =========================================
+   10. ط·آ§ط¸â€‍ط·آ³ط·آ¬ط¸â€‍ط·إ’ ط·آ§ط¸â€‍ط·آ¨ط·آ­ط·آ«ط·إ’ ط¸ث†ط¸â€ڑط¸ث†ط·آ§ط·آ¦ط¸â€¦ ط·آ§ط¸â€‍ط·آ¨ط¸ظ¹ط·آ§ط¸â€ ط·آ§ط·ع¾
+   ========================================= */
 .search-box {
     display: flex;
     gap: 10px;
@@ -779,6 +821,9 @@ input:checked + .slider:before { transform: translateX(24px); }
     padding: 4px;
 }
 
+/* =========================================
+   Custom Webkit Scrollbar ط¸â€¦ط¸ث†ط·آ­ط·آ¯
+   ========================================= */
 ::-webkit-scrollbar { width: 10px; height: 10px; } 
 ::-webkit-scrollbar-track { background: #f1f2f6; border-radius: 8px; }
 ::-webkit-scrollbar-thumb { background: #E91E8C; border-radius: 8px; border: 2px solid #f1f2f6; }
@@ -793,7 +838,9 @@ input:checked + .slider:before { transform: translateX(24px); }
     border: 1.5px dashed var(--border);
     font-size: 0.9rem;
 }
-
+/* =========================================
+   11. ط·آ§ط¸â€‍ط·ع¾ط¸â€ڑط·آ§ط·آ±ط¸ظ¹ط·آ± ط¸ث†ط·آ§ط¸â€‍ط·آ¥ط·آ­ط·آµط·آ§ط·آ¦ط¸ظ¹ط·آ§ط·ع¾
+   ========================================= */
 .stats-row {
     display: flex;
     gap: 12px;
@@ -843,6 +890,9 @@ input:checked + .slider:before { transform: translateX(24px); }
     font-family: 'Cairo', sans-serif;
 }
 
+/* =========================================
+   12. ط·آ§ط¸â€‍ط·آ´ط·آ­ط¸â€  ط¸ث†ط·آ§ط¸â€‍ط¸â€¦ط¸â€ ط·آ§ط·آ¯ط¸ظ¹ط·آ¨
+   ========================================= */
 .shipping-actions-row {
     display: flex;
     gap: 10px;
@@ -857,6 +907,8 @@ input:checked + .slider:before { transform: translateX(24px); }
     padding: 8px;
     border: 1.5px solid var(--border);
 }
+
+
 
 .data-row {
     display: flex;
@@ -889,6 +941,9 @@ input:checked + .slider:before { transform: translateX(24px); }
     display: inline-block;
 }
 
+/* =========================================
+   13. ط·آ§ط¸â€‍ط¸â€ ط¸ث†ط·آ§ط¸ظ¾ط·آ° ط·آ§ط¸â€‍ط¸â€¦ط¸â€ ط·آ¨ط·آ«ط¸â€ڑط·آ© (Modals)
+   ========================================= */
 .modal-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -967,6 +1022,9 @@ input:checked + .slider:before { transform: translateX(24px); }
     box-shadow: 0 8px 20px rgba(0,180,216,0.4);
 }
 
+/* =========================================
+   14. ط·آ§ط¸â€‍ط·آ¥ط·آ´ط·آ¹ط·آ§ط·آ±ط·آ§ط·ع¾ (Toasts)
+   ========================================= */
 .toast-container {
     position: fixed;
     top: 78px;
@@ -1015,6 +1073,9 @@ input:checked + .slider:before { transform: translateX(24px); }
 .toast.error   { border-right: 4px solid var(--danger); }
 .toast.warning { border-right: 4px solid var(--warning); }
 
+/* =========================================
+   15. ط·آ´ط·آ±ط¸ظ¹ط·آ· ط·آ§ط¸â€‍ط·ع¾ط¸â€ ط¸â€ڑط¸â€‍ ط·آ§ط¸â€‍ط·آ³ط¸ظ¾ط¸â€‍ط¸ظ¹
+   ========================================= */
 .bottom-nav {
     position: fixed;
     bottom: 0;
@@ -1093,11 +1154,14 @@ input:checked + .slider:before { transform: translateX(24px); }
     transform: translateY(-1px);
 }
 
+/* =========================================
+   16. ط·آ§ط¸â€‍ط·آ·ط·آ¨ط·آ§ط·آ¹ط·آ© (80mm Thermal) - ط·آ§ط¸â€‍ط¸â€¦ط·آ¹ط·آ¯ط¸â€‍ط·آ©
+   ========================================= */
 .print-only { display: none; }
 
 @media print {
     @page {
-        margin: 0; 
+        margin: 0; /* ط·آ§ط¸â€‍ط·آ³ط·آ·ط·آ± ط·آ§ط¸â€‍ط·آ³ط·آ­ط·آ±ط¸ظ¹ ط¸â€‍ط¸â€¦ط¸â€ ط·آ¹ ط·آ§ط¸â€‍ط¸â€¦ط·ع¾ط·آµط¸ظ¾ط·آ­ ط¸â€¦ط¸â€  ط·آ·ط·آ¨ط·آ§ط·آ¹ط·آ© ط·آ±ط¸ث†ط·آ§ط·آ¨ط·آ· ط¸ث†ط·آ§ط·آ³ط¸â€¦ ط·آ§ط¸â€‍ط·آµط¸ظ¾ط·آ­ط·آ© */
     }
 
     body {
@@ -1110,6 +1174,7 @@ input:checked + .slider:before { transform: translateX(24px); }
         print-color-adjust: exact;
     }
 
+    /* ط·آ¥ط·آ®ط¸ظ¾ط·آ§ط·طŒ ط¸ئ’ط¸â€‍ ط¸â€¦ط·آ§ ط¸â€‍ط·آ§ ط¸ظ¹ط·آ®ط·آµ ط·آ§ط¸â€‍ط·آ·ط·آ¨ط·آ§ط·آ¹ط·آ© ط·آ¨ط¸â€¦ط·آ§ ط¸ظ¾ط¸ظ¹ط¸â€،ط·آ§ ط·آ§ط¸â€‍ط·آ¥ط·آ¶ط·آ§ط¸ظ¾ط·آ§ط·ع¾ ط·آ§ط¸â€‍ط·آ¬ط·آ¯ط¸ظ¹ط·آ¯ط·آ© */
     .app-header,
     .app-content,
     .bottom-nav,
@@ -1126,7 +1191,7 @@ input:checked + .slider:before { transform: translateX(24px); }
         color: #000;
         font-family: 'Cairo', sans-serif;
         font-size: 13px;
-
+        /* أ¢آ­ع¯ V15.0: ط¸â€¦ط¸â€ ط·آ¹ ط·آ§ط¸â€‍ط¸â€ڑط·آµ ط·آ­ط·ع¾ط¸â€° ط·ع¾ط·آ¸ط¸â€،ط·آ± ط¸ئ’ط¸â€‍ ط·آ§ط¸â€‍ط¸â€¦ط¸â€ ط·ع¾ط·آ¬ط·آ§ط·ع¾ */
         overflow: visible !important;
         max-height: none !important;
         height: auto !important;
@@ -1142,15 +1207,17 @@ input:checked + .slider:before { transform: translateX(24px); }
     }
     .receipt-header h2 { margin: 5px 0; font-size: 19px; font-weight: bold; }
     .receipt-header p  { margin: 0; font-size: 15px; font-weight: bold; }
-
+    
     .receipt-info p    { margin: 4px 0; font-weight: bold; font-size: 16px; }
-
+    
+    /* ط·آ§ط¸â€‍ط¸ث†ط·آ¶ط¸ث†ط·آ­ ط·آ§ط¸â€‍ط¸â€ڑط·آ§ط·آ·ط·آ¹ ط¸â€‍ط·آ¬ط¸â€¦ط¸ظ¹ط·آ¹ ط·آ§ط¸â€‍ط¸â€ ط·آµط¸ث†ط·آµ */
     .print-only, .print-only * {
         color: #000000 !important;
         font-size: 14px !important;
         font-weight: 500 !important;
     }
 
+    /* ط·ع¾ط·آ­ط·آ³ط¸ظ¹ط¸â€  ط·آ¥ط·آ¶ط·آ§ط¸ظ¾ط¸ظ¹ ط¸â€‍ط·آ¬ط·آ¯ط¸ث†ط¸â€‍ ط·آ§ط¸â€‍ط·آ·ط·آ¨ط·آ§ط·آ¹ط·آ© ط¸â€‍ط¸ظ¹ط¸ئ’ط¸ث†ط¸â€  ط·آ£ط¸ث†ط·آ¶ط·آ­ ط¸â€‍ط¸â€‍ط·آ¹ط¸â€¦ط¸ظ¹ط¸â€‍ */
     .receipt-table {
         width: 100%;
         border-collapse: collapse;
@@ -1192,7 +1259,7 @@ input:checked + .slider:before { transform: translateX(24px); }
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
     }
-
+    
     .receipt-totals h3 * {
         color: #ffffff !important;
     }
@@ -1209,7 +1276,7 @@ input:checked + .slider:before { transform: translateX(24px); }
         padding-top: 10px;
         font-weight: 600;
     }
-
+    
     .print-only hr {
         border: none !important;
         border-top: 2px solid #000 !important;
@@ -1226,6 +1293,7 @@ input:checked + .slider:before { transform: translateX(24px); }
         border: 2px solid #000 !important;
     }
 
+    /* Force remove borders from footer and ALL its children */
     .print-only .receipt-footer, 
     .print-only .receipt-footer *,
     .print-only .receipt-footer [style*="dashed"],
@@ -1240,7 +1308,9 @@ input:checked + .slider:before { transform: translateX(24px); }
         box-shadow: none !important;
     }
 }
-
+/* =========================================
+   17. ط·آ§ط¸â€‍ط¸ث†ط·آ¶ط·آ¹ ط·آ§ط¸â€‍ط¸â€‍ط¸ظ¹ط¸â€‍ط¸ظ¹ (Dark Mode)
+   ========================================= */
 body.dark-mode {
     --bg:         #0F1117;
     --card:       #1A1D2E;
@@ -1358,6 +1428,9 @@ body.dark-mode .delivery-prediction {
     border-color: rgba(0,180,216,0.15);
 }
 
+/* =========================================
+   12. ط·آ§ط¸â€‍ط·آ´ط·آ­ط¸â€  ط¸ث†ط·آ§ط¸â€‍ط¸â€¦ط¸â€ ط·آ§ط·آ¯ط¸ظ¹ط·آ¨
+   ========================================= */
 .shipping-actions-row {
     display: flex;
     gap: 10px;
@@ -1383,6 +1456,9 @@ body.dark-mode .delivery-prediction {
     border: 1.5px solid var(--border);
 }
 
+/* =========================================
+   ط·ع¾ط¸â€ ط·آ³ط¸ظ¹ط¸â€ڑ ط¸â€ڑط¸ث†ط·آ§ط·آ¦ط¸â€¦ ط¸â€¦ط¸â€ ط·آ§ط·آ·ط¸â€ڑ ط·آ§ط¸â€‍ط·آ´ط·آ­ط¸â€  (Accordion)
+   ========================================= */
 .zones-lists-container {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1408,9 +1484,10 @@ body.dark-mode .delivery-prediction {
     border: 1px solid var(--border);
     border-radius: 12px;
     user-select: none;
-    list-style: none; 
+    list-style: none; /* ط·آ¥ط·آ®ط¸ظ¾ط·آ§ط·طŒ ط·آ§ط¸â€‍ط¸â€¦ط·آ«ط¸â€‍ط·آ« ط·آ§ط¸â€‍ط·آ§ط¸ظ¾ط·ع¾ط·آ±ط·آ§ط·آ¶ط¸ظ¹ */
 }
 
+/* ط·آ¥ط·آ®ط¸ظ¾ط·آ§ط·طŒ ط·آ§ط¸â€‍ط¸â€¦ط·آ«ط¸â€‍ط·آ« ط·آ§ط¸â€‍ط·آ§ط¸ظ¾ط·ع¾ط·آ±ط·آ§ط·آ¶ط¸ظ¹ ط¸ظ¾ط¸ظ¹ Safari/Chrome */
 .zone-summary::-webkit-details-marker {
     display: none;
 }
@@ -1436,6 +1513,7 @@ body.dark-mode .delivery-prediction {
     gap: 15px;
 }
 
+/* أ¢آ­ع¯ Premium Zone Cards CSS */
 .zone-premium-card {
     display: flex;
     justify-content: space-between;
@@ -1574,6 +1652,8 @@ body.dark-mode .zone-summary {
     background: var(--card);
 }
 
+/* ظ‹ع؛ع‘ع‘ ط·آ¨ط·آ·ط·آ§ط¸â€ڑط·آ© ط·آ§ط¸â€‍ط·آ£ط¸ث†ط·آ±ط·آ¯ط·آ± ط¸ظ¾ط¸ظ¹ ط¸â€ڑط·آ³ط¸â€¦ ط·آ§ط¸â€‍ط·آ´ط·آ­ط¸â€  (REDESIGN)
+   ========================================= */
 .shipping-order-card {
     display: grid;
     grid-template-columns: 28px 1fr;
@@ -1723,6 +1803,7 @@ body.dark-mode .soc-info-row {
     white-space: nowrap;
 }
 
+/* ط·آ¨ط·آ·ط·آ§ط¸â€ڑط·آ© ط·آ§ط¸â€‍ط·آ­ط·آ¬ط¸ث†ط·آ²ط·آ§ط·ع¾ ط¸ث†ط·آ§ط¸â€‍ط¸ظ¾ط·آ±ط·آ¹ ط¸â€¦ط·آ¹ ط·آ£ط¸ئ’ط·آ´ط¸â€  ط·آ¨ط¸ث†ط·ع¾ط¸ث†ط¸â€ ط·آ§ط·ع¾ */
 .shipping-action-card {
     background: var(--white);
     border: 1.5px solid var(--border);
@@ -1813,6 +1894,7 @@ body.dark-mode .sac-finance-row {
 
 .sac-btn-convert:hover { filter: brightness(1.1); }
 
+/* ط·آ¨ط·آ·ط·آ§ط¸â€ڑط·آ© ط·ع¾ط¸â€ڑط¸ظ¾ط¸ظ¹ط¸â€‍ ط·آ§ط¸â€‍ط¸â€¦ط¸â€ ط·آ¯ط¸ث†ط·آ¨ */
 .shipped-order-card {
     display: grid;
     grid-template-columns: 28px 1fr;
@@ -1836,6 +1918,9 @@ body.dark-mode .shipped-order-card {
     box-shadow: 0 4px 14px rgba(0,200,83,0.15);
 }
 
+/* =========================================
+   19. ط·آ§ط¸â€‍ط¸ئ’ط·ع¾ط·آ§ط¸â€‍ط¸ث†ط·آ¬ ط¸ث†ط·آ§ط¸â€‍ط·آ¹ط·آ±ط¸ث†ط·آ¶
+   ========================================= */
 .offer-badge {
     background: linear-gradient(135deg, var(--primary), #FF6BB5);
     color: white;
@@ -1881,11 +1966,17 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
 
 .catalog-offer-price { font-size: 0.85rem; font-weight: 700; color: var(--primary); }
 
+
+
+/* =========================================
+   21. Desktop Layout أ¢â‚¬â€‌ ط·آ´ط·آ§ط·آ´ط·آ§ط·ع¾ ط¸ئ’ط·آ¨ط¸ظ¹ط·آ±ط·آ© (Full Width) أ¢آ­ع¯
+   ========================================= */
 @media (min-width: 900px) {
 
+    /* ط·ع¾ط¸â€¦ ط·آ¥ط¸â€‍ط·ط›ط·آ§ط·طŒ ط·آ§ط¸â€‍ط¸â€ڑط¸ظ¹ط¸ث†ط·آ¯ ط·آ¹ط¸â€‍ط¸â€° ط·آ¹ط·آ±ط·آ¶ ط·آ§ط¸â€‍ط·آ´ط·آ§ط·آ´ط·آ© ط¸â€‍ط·ع¾ط·آµط·آ¨ط·آ­ Full Width ط¸ث†ط·ع¾ط¸â€‍ط·ط›ط¸ظ¹ ط·آ§ط¸â€‍ط¸ظ¾ط·آ±ط·آ§ط·ط›ط·آ§ط·ع¾ */
     .app-content {
         padding: 30px 40px;
-        max-width: 100%; 
+        max-width: 100%; /* ط·آ§ط¸â€‍ط·آ¹ط·آ±ط·آ¶ ط·آ§ط¸â€‍ط¸ئ’ط·آ§ط¸â€¦ط¸â€‍ */
         margin: 0;
     }
 
@@ -1893,6 +1984,7 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
         padding: 0 40px;
     }
 
+    /* ط·آ§ط¸â€‍ط·آ¨ط·آ§ط·آ± ط·آ§ط¸â€‍ط·آ³ط¸ظ¾ط¸â€‍ط¸ظ¹ ط¸ظ¹ط·آ¸ط¸â€‍ ط·آ«ط·آ§ط·آ¨ط·ع¾ ط·آ£ط·آ³ط¸ظ¾ط¸â€‍ ط·آ§ط¸â€‍ط·آ´ط·آ§ط·آ´ط·آ© ط·آ²ط¸ظ¹ ط·آ§ط¸â€‍ط¸â€¦ط¸ث†ط·آ¨ط·آ§ط¸ظ¹ط¸â€‍ ط·آ¨ط·آ§ط¸â€‍ط·آ¸ط·آ¨ط·آ· أ¢آ­ع¯ */
     .bottom-nav {
         position: fixed;
         bottom: 0;
@@ -1934,6 +2026,7 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
         max-width: 360px;
     }
 
+    /* ط·ع¾ط¸â€ڑط·آ³ط¸ظ¹ط¸â€¦ ط·آ§ط¸â€‍ط¸ئ’ط·آ±ط¸ث†ط·ع¾ ط¸ظ¾ط¸ظ¹ ط·آ§ط¸â€‍ط·آ´ط·آ§ط·آ´ط·آ§ط·ع¾ ط·آ§ط¸â€‍ط¸ئ’ط·آ¨ط¸ظ¹ط·آ±ط·آ© ط·آ¹ط·آ´ط·آ§ط¸â€  ط·ع¾ط¸â€¦ط¸â€‍ط¸â€° ط·آ§ط¸â€‍ط¸â€¦ط·آ³ط·آ§ط·آ­ط·آ© ط·آµط·آ­ */
     #create-tab.active {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -1941,6 +2034,7 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
         align-items: start;
     }
 
+    /* ط¸â€ ط·آ®ط¸â€‍ط¸ظ¹ ط·آ§ط¸â€‍ط¸ئ’ط·آ§ط·آ±ط·ع¾ ط·آ§ط¸â€‍ط·آ£ط¸ث†ط¸â€‍ ط¸ظ¹ط·آ§ط·آ®ط·آ¯ ط·آ§ط¸â€‍ط¸â€¦ط·آ³ط·آ§ط·آ­ط·آ© ط¸ئ’ط¸â€‍ط¸â€،ط·آ§ ط¸â€‍ط¸ث†ط·آ­ط·آ¯ط¸â€، ط·آ¹ط·آ´ط·آ§ط¸â€  ط·آ§ط¸â€‍ط¸ظ¾ط¸ث†ط·آ±ط¸â€¦ ط·ع¾ط¸ظ¾ط·آ±ط·آ¯ */
     #create-tab .section-card {
         grid-column: 1 / -1; 
         max-width: 100%;
@@ -1961,6 +2055,7 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
         grid-column: 1 / -1;
     }
 
+    /* ط·ع¾ط·آ±ط·ع¾ط¸ظ¹ط·آ¨ ط¸ئ’ط·آ±ط¸ث†ط·ع¾ ط·آ§ط¸â€‍ط¸ئ’ط·ع¾ط·آ§ط¸â€‍ط¸ث†ط·آ¬ ط¸ث†ط·آ§ط¸â€‍ط¸â€ ط¸ث†ط·آ§ط¸â€ڑط·آµ ط·آ¬ط¸â€ ط·آ¨ ط·آ¨ط·آ¹ط·آ¶ */
     #catalog-tab.active {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -1970,7 +2065,7 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
 }
 
 @media (min-width: 1200px) {
-
+    /* ط·آ´ط·آ§ط·آ´ط·آ§ط·ع¾ ط·آ§ط¸â€‍ط¸ئ’ط¸ث†ط¸â€¦ط·آ¨ط¸ظ¹ط¸ث†ط·ع¾ط·آ± ط·آ§ط¸â€‍ط¸ث†ط·آ§ط·آ³ط·آ¹ط·آ© ط·آ¬ط·آ¯ط·آ§ط¸â€¹ */
     .app-content {
         padding: 40px 60px;
     }
@@ -1979,14 +2074,18 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
         grid-template-columns: 2fr 1.5fr; 
     }
 
+    /* ط¸ئ’ط·آ§ط·آ±ط·ع¾ ط·آ¥ط¸â€ ط·آ´ط·آ§ط·طŒ ط·آ·ط¸â€‍ط·آ¨ ط¸ظ¹ط·آ§ط·آ®ط·آ¯ ط¸â€¦ط·آ³ط·آ§ط·آ­ط·آ© ط·آ£ط¸ئ’ط·آ¨ط·آ± */
     #create-tab .section-card:first-child {
         grid-column: 1 / -1; 
     }
 }
 
+/* =========================================
+   22. ط¸â€¦ط¸ث†ط·آ¨ط·آ§ط¸ظ¹ط¸â€‍
+   ========================================= */
 @media (max-width: 899px) {
-    body { padding-top: 130px; } 
-    .app-content { padding: 10px 10px 100px 10px; } 
+    body { padding-top: 130px; } /* ط·آ¹ط·آ´ط·آ§ط¸â€  ط·آ§ط¸â€‍ط¸â€،ط¸ظ¹ط·آ¯ط·آ± ط¸â€‍ط¸â€¦ط·آ§ ط·آ¨ط¸ظ¹ط¸â€‍ط¸ظ¾ ط¸ث†ط¸ظ¹ط·آ²ط¸ظ¹ط·آ¯ ط·آ·ط¸ث†ط¸â€‍ط¸â€، ط¸â€¦ط¸ظ¹ط·ط›ط·آ·ط¸ظ¹ط·آ´ ط·آ¹ط¸â€‍ط¸â€° ط·آ§ط¸â€‍ط¸â€¦ط·آ­ط·ع¾ط¸ث†ط¸â€° */
+    .app-content { padding: 10px 10px 100px 10px; } /* ط¸â€¦ط·آ³ط·آ§ط·آ­ط·آ© ط·آ¥ط·آ¶ط·آ§ط¸ظ¾ط¸ظ¹ط·آ© ط·آ¨ط·آ§ط¸â€‍ط·آ£ط·آ³ط¸ظ¾ط¸â€‍ ط¸â€‍ط·ع¾ط·آ¬ط¸â€ ط·آ¨ ط·ع¾ط·ط›ط·آ·ط¸ظ¹ط·آ© ط·آ´ط·آ±ط¸ظ¹ط·آ· ط·آ§ط¸â€‍ط·ع¾ط¸â€ ط¸â€ڑط¸â€‍ */
     .app-header { 
         padding: 10px 16px; 
         height: var(--header-height); 
@@ -2004,11 +2103,13 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
     .logo-sub { display: none; }
     .section-card { padding: 16px 12px; margin-bottom: 15px; border-radius: 12px; }
     .stats-row { flex-wrap: wrap; }
-
+    
+    /* ط·آ¥ط·آµط¸â€‍ط·آ§ط·آ­ ط·آ²ط·آ±ط·آ§ط¸ظ¹ط·آ± ط·آ§ط¸â€‍ط·آ´ط·آ­ط¸â€  ط·آ§ط¸â€‍ط¸â€¦ط·آ®ط¸ظ¾ط¸ظ¹ط·آ© ط·آ¹ط¸â€‍ط¸â€° ط·آ§ط¸â€‍ط¸â€¦ط¸ث†ط·آ¨ط·آ§ط¸ظ¹ط¸â€‍ */
     .shipping-actions-row {
         flex-direction: column;
     }
 
+    /* أ¢آ­ع¯ ط·ع¾ط·آµط·ط›ط¸ظ¹ط·آ± ط·آ­ط·آ¬ط¸â€¦ ط¸ئ’ط·آ±ط¸ث†ط·ع¾ ط¸â€¦ط¸â€ ط·آ§ط·آ·ط¸â€ڑ ط·آ§ط¸â€‍ط·آ´ط·آ­ط¸â€  ط·آ¹ط¸â€‍ط¸â€° ط·آ§ط¸â€‍ط¸â€¦ط¸ث†ط·آ¨ط·آ§ط¸ظ¹ط¸â€‍ ط¸â€‍ط·ع¾ط¸ث†ط¸ظ¾ط¸ظ¹ط·آ± ط¸â€¦ط·آ³ط·آ§ط·آ­ط·آ© */
     .zone-list-grid {
         grid-template-columns: 1fr;
         gap: 10px;
@@ -2051,6 +2152,7 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
         display: inline !important;
     }
 
+    /* ط·ع¾ط·آµط¸â€¦ط¸ظ¹ط¸â€¦ ط·آ´ط·آ¨ط¸ئ’ط¸ظ¹ ط¸â€¦ط·آ®ط·آµط·آµ ط¸â€‍ط·آ®ط·آ§ط¸â€ ط·آ© ط·آ§ط¸â€‍ط¸â€¦ط¸â€ ط·ع¾ط·آ¬ط·آ§ط·ع¾ ط¸ظ¾ط¸ظ¹ ط·آ§ط¸â€‍ط¸ظ¾ط·آ§ط·ع¾ط¸ث†ط·آ±ط·آ© ط·آ¹ط¸â€‍ط¸â€° ط·آ§ط¸â€‍ط¸â€¦ط¸ث†ط·آ¨ط·آ§ط¸ظ¹ط¸â€‍ */
     .product-row {
         grid-template-columns: 1fr 1fr;
         grid-template-areas:
@@ -2059,32 +2161,32 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
             "qty actions";
         align-items: stretch;
     }
-
+    
     .product-name-input { grid-area: name; font-size: 1.1rem !important; }
     .product-price-input { grid-area: price; }
     .product-offer-input { grid-area: offer; }
     .product-qty-input { grid-area: qty; }
-
+    
     .btn-confirm-pro, .remove-product-btn { display: inline-block; }
-
+    
     .product-row-actions {
         grid-area: actions;
         display: flex;
         gap: 5px;
         width: 100%;
     }
-
+    
     .product-row-actions button {
         flex: 1;
         padding: 8px !important;
         border-radius: var(--radius) !important;
     }
-
+    
     .zones-lists-container {
-        grid-template-columns: 1fr; 
+        grid-template-columns: 1fr; /* ط·ع¾ط·آ±ط·ع¾ط¸ظ¹ط·آ¨ ط¸â€ڑط¸ث†ط·آ§ط·آ¦ط¸â€¦ ط¸â€¦ط¸â€ ط·آ§ط·آ·ط¸â€ڑ ط·آ§ط¸â€‍ط·آ´ط·آ­ط¸â€  ط¸ظ¾ط¸ث†ط¸â€ڑ ط·آ¨ط·آ¹ط·آ¶ط¸â€،ط·آ§ */
         gap: 15px;
     }
-
+    
     .stats-row .stat-item { min-width: calc(50% - 6px); }
     .bottom-nav { 
         height: auto; 
@@ -2094,14 +2196,16 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
     .nav-item { padding: 6px; min-width: 45px; }
     .nav-item .icon { font-size: 1.3rem; margin-bottom: 2px; }
     .nav-item .label { font-size: 0.7rem; }
-
+    
+    /* ط·ع¾ط·آ­ط·آ³ط¸ظ¹ط¸â€  ط·آ§ط¸â€‍ط¸â€ ط¸ث†ط·آ§ط¸ظ¾ط·آ° ط·آ§ط¸â€‍ط¸â€¦ط¸â€ ط·آ¨ط·آ«ط¸â€ڑط·آ© (Modals) ط¸â€‍ط·ع¾ط¸â€ ط·آ§ط·آ³ط·آ¨ ط·آ§ط¸â€‍ط¸â€¦ط¸ث†ط·آ¨ط·آ§ط¸ظ¹ط¸â€‍ */
     .modal-content { 
         padding: 15px 12px; 
         max-height: 95vh; 
         border-radius: 12px; 
         width: 95%;
     }
-
+    
+    /* ط·ع¾ط·آ­ط·آ³ط¸ظ¹ط¸â€  ط·آ£ط·آ²ط·آ±ط·آ§ط·آ± ط·آ§ط¸â€‍ط·آ¥ط·آ¬ط·آ±ط·آ§ط·طŒط·آ§ط·ع¾ ط¸ظ¾ط¸ظ¹ ط·آ§ط¸â€‍ط·آ¬ط·آ¯ط·آ§ط¸ث†ط¸â€‍ ط¸â€‍ط·ع¾ط·آ¬ط¸â€ ط·آ¨ ط·آ§ط¸â€‍ط·ع¾ط·آ¯ط·آ§ط·آ®ط¸â€‍ */
     td[style*="display: flex"] {
         flex-direction: column !important;
         gap: 8px !important;
@@ -2110,7 +2214,8 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
         width: 100% !important;
         padding: 8px !important;
     }
-
+    
+    /* ط·ع¾ط·آ­ط·آ³ط¸ظ¹ط¸â€  ط·آ§ط¸â€‍ط·آ¬ط·آ¯ط·آ§ط¸ث†ط¸â€‍ ط¸â€‍ط¸â€¦ط¸â€ ط·آ¹ ط·آ§ط¸â€‍ط·ع¾ط·آ¯ط·آ§ط·آ®ط¸â€‍ */
     .table-responsive, .data-table, .receipt-table { 
         display: block; 
         width: 100%; 
@@ -2118,41 +2223,45 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
         white-space: nowrap; 
         -webkit-overflow-scrolling: touch;
     }
-
+    
+    /* ط·آ¬ط·آ¹ط¸â€‍ ط·آ§ط¸â€‍ط¸â€ ط¸â€¦ط·آ§ط·آ°ط·آ¬ ط·آ¹ط¸â€¦ط¸ث†ط·آ¯ط¸ظ¹ط·آ© (Grid to Column) */
     .expiry-form-grid, .invoice-details-grid {
         grid-template-columns: 1fr !important;
         gap: 10px;
     }
-
+    
+    /* ط·آ¬ط·آ¹ط¸â€‍ ط·آ¹ط¸â€ ط·آ§ط·آµط·آ± ط·آ§ط¸â€‍ط·آ¥ط·آ¯ط·آ®ط·آ§ط¸â€‍ ط·ع¾ط¸â€¦ط¸â€‍ط·آ£ ط·آ§ط¸â€‍ط·آ´ط·آ§ط·آ´ط·آ© ط·آ¨ط·آ§ط¸â€‍ط¸ئ’ط·آ§ط¸â€¦ط¸â€‍ ط¸ظ¾ط¸ظ¹ ط·آ§ط¸â€‍ط¸â€¦ط¸ث†ط·آ¨ط·آ§ط¸ظ¹ط¸â€‍ */
     .expiry-form-grid > div {
         grid-column: span 1 !important;
     }
-
+    
+    /* ط·ع¾ط¸ئ’ط·آ¨ط¸ظ¹ط·آ± ط·آ­ط¸â€ڑط¸ث†ط¸â€‍ ط·آ§ط¸â€‍ط·آ¥ط·آ¯ط·آ®ط·آ§ط¸â€‍ ط¸â€‍ط·ع¾ط·آ³ط¸â€،ط¸ظ¹ط¸â€‍ ط·آ§ط¸â€‍ط¸â€‍ط¸â€¦ط·آ³ */
     input, select, textarea {
-        font-size: 16px !important; 
+        font-size: 16px !important; /* ط¸â€‍ط¸â€¦ط¸â€ ط·آ¹ Zoom ط¸ظ¾ط¸ظ¹ ط·آ§ط¸â€‍ط·آ¢ط¸ظ¹ط¸ظ¾ط¸ث†ط¸â€ /ط·آ§ط¸â€‍ط·آ£ط¸â€ ط·آ¯ط·آ±ط¸ث†ط¸ظ¹ط·آ¯ */
         padding: 12px 10px !important;
     }
-
+    
     .interactive-btn {
         padding: 14px !important;
         font-size: 1.1rem !important;
     }
-
+    
     .toast-container { top: 72px; }
 }
 
+/* ط·آ´ط·آ±ط¸ظ¹ط·آ· ط·آ§ط¸â€‍ط·آ¹ط·آ±ط¸ث†ط·آ¶ ط·آ§ط¸â€‍ط¸â€ ط¸ظ¹ط¸ث†ط¸â€  ط·آ¨ط¸ظ¹ط¸â€ ط¸ئ’ ط·آ§ط¸â€‍ط·آ§ط·آ­ط·ع¾ط·آ±ط·آ§ط¸ظ¾ط¸ظ¹ */
 .invoice-offer-bar {
     display: flex;
     align-items: center;
     gap: 10px;
-    background: #fff0f5; 
+    background: #fff0f5; /* ط·آ®ط¸â€‍ط¸ظ¾ط¸ظ¹ط·آ© ط¸ث†ط·آ±ط·آ¯ط¸ظ¹ ط·آ®ط¸ظ¾ط¸ظ¹ط¸ظ¾ */
     padding: 5px 12px;
     border-radius: 20px;
     font-size: 0.85rem;
-    border: 2px solid #FF1493; 
+    border: 2px solid #FF1493; /* ط·آ­ط·آ¯ط¸ث†ط·آ¯ ط¸â€ ط¸ظ¹ط¸ث†ط¸â€  ط·آ¨ط¸ظ¹ط¸â€ ط¸ئ’ */
     color: #FF1493;
     font-weight: bold;
-    animation: flash-border 1.5s infinite; 
+    animation: flash-border 1.5s infinite; /* ط·آ­ط·آ±ط¸ئ’ط·آ© ط¸ظ¾ط¸â€‍ط·آ§ط·آ´ ط·آ®ط¸ظ¾ط¸ظ¹ط¸ظ¾ط·آ© ط¸â€‍ط¸â€‍ط·آ¹ط¸ظ¹ط¸â€  */
 }
 body.dark-mode .invoice-offer-bar {
     background: #301020;
@@ -2163,17 +2272,21 @@ body.dark-mode .invoice-offer-bar {
     100% { border-color: #FF1493; }
 }
 
+/* ط·ع¾ط·آµط¸â€¦ط¸ظ¹ط¸â€¦ ط¸ئ’ط·آ±ط¸ث†ط·ع¾ ط·آ§ط¸â€‍ط·آ³ط·آ¬ط¸â€‍ ط·آ§ط¸â€‍ط·آ§ط·آ­ط·ع¾ط·آ±ط·آ§ط¸ظ¾ط¸ظ¹ط·آ© */
 .history-item {
-    background: var(--card); 
+    background: var(--card); /* ط·ع¾ط¸â€¦ ط·آ§ط¸â€‍ط·ع¾ط·آµط·آ­ط¸ظ¹ط·آ­ ط¸â€‍ط¸ظ¹ط¸â€ڑط·آ±ط·آ£ ط·آ§ط¸â€‍ط¸â€‍ط¸ث†ط¸â€  ط·آ¨ط¸â€ ط·آ¬ط·آ§ط·آ­ */
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 15px;
-    margin-bottom: 20px; 
+    margin-bottom: 20px; /* ط¸â€،ط·آ°ط·آ§ ط·آ§ط¸â€‍ط·آ¬ط·آ²ط·طŒ ط¸ظ¹ط·آµط¸â€ ط·آ¹ ط¸â€¦ط·آ³ط·آ§ط¸ظ¾ط·آ© ط·آ¨ط¸ظ¹ط¸â€  ط¸ئ’ط¸â€‍ ط·آ£ط¸ث†ط·آ±ط·آ¯ط·آ± ط¸ث†ط·آ§ط¸â€‍ط·آ°ط¸ظ¹ ط¸ظ¹ط¸â€‍ط¸ظ¹ط¸â€، */
     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     transition: transform 0.2s;
-    border-right: 5px solid var(--primary); 
+    border-right: 5px solid var(--primary); /* ط·آ®ط·آ· ط¸â€¦ط¸â€‍ط¸ث†ط¸â€  ط·آ¬ط·آ§ط¸â€ ط·آ¨ط¸ظ¹ ط¸â€‍ط¸â€‍ط·ع¾ط¸â€¦ط¸ظ¹ط¸ظ¹ط·آ² */
 }
 
+/* =========================================
+   23. ط·آ§ط¸â€‍ط·آ­ط·آ³ط·آ§ط·آ¨ط·آ§ط·ع¾ ط·آ§ط¸â€‍ط¸â€¦ط·آ§ط¸â€‍ط¸ظ¹ط·آ©
+   ========================================= */
 .financial-row {
     display: flex;
     flex-direction: column;
@@ -2213,6 +2326,7 @@ body.dark-mode .financial-row {
     margin-top: 5px;
 }
 
+/* ط¸ئ’ط·آ§ط·آ±ط·ع¾ ط·آ§ط¸â€‍ط¸â€¦ط¸â€ ط·آ¯ط¸ث†ط·آ¨ ط·آ§ط¸â€‍ط¸â€¦ط·آµط¸ظ¾ط·آ± (ط·آ§ط¸â€‍ط·آ­ط·آ³ط·آ§ط·آ¨ ط·آµط¸ظ¾ط·آ± - ط¸â€،ط·آ§ط·آ¯ط·آ¦) */
 .driver-card.settled {
     border-color: #e0e0e0 !important;
     box-shadow: none !important;
@@ -2227,6 +2341,11 @@ body.dark-mode .financial-row {
     border-color: #bdbdbd !important;
 }
 
+/* =========================================
+   24. ط·آ§ط¸â€‍ط·ع¾ط¸â€ ط·آ³ط¸ظ¹ط¸â€ڑط·آ§ط·ع¾ ط·آ§ط¸â€‍ط·آ¥ط·آ¶ط·آ§ط¸ظ¾ط¸ظ¹ط·آ© (V13.6 - ط·آ£ط·آ²ط·آ±ط·آ§ط·آ± ط·آ§ط¸â€‍ط·آ¹ط·آ±ط·آ¶ ط¸ث†ط·آ§ط¸â€‍ط·آ£ط¸ث†ط·آ±ط·آ¯ط·آ±ط·آ§ط·ع¾)
+   ========================================= */
+
+/* --- ط·آ²ط·آ±ط·آ§ط·آ± ط·ع¾ط¸ظ¾ط·آ¹ط¸ظ¹ط¸â€‍ ط·آ§ط¸â€‍ط·آ¹ط·آ±ط·آ¶ ط·آ¯ط·آ§ط·آ®ط¸â€‍ ط·آ§ط¸â€‍ط¸ظ¾ط·آ§ط·ع¾ط¸ث†ط·آ±ط·آ© --- */
 .btn-offer-toggle {
     background: #f1f2f6;
     color: #7B839A;
@@ -2237,7 +2356,7 @@ body.dark-mode .financial-row {
     padding: 8px 10px;
     transition: 0.3s;
     font-size: 0.85rem;
-    height: 38px; 
+    height: 38px; /* ط·آ¹ط·آ´ط·آ§ط¸â€  ط¸ظ¹ط·آ¨ط¸â€ڑط¸â€° ط¸â€ ط¸ظ¾ط·آ³ ط·آ·ط¸ث†ط¸â€‍ ط·آ®ط·آ§ط¸â€ ط·آ© ط·آ§ط¸â€‍ط·آ³ط·آ¹ط·آ± */
 }
 .btn-offer-toggle.active {
     background: #fff0f5;
@@ -2255,6 +2374,7 @@ body.dark-mode .btn-offer-toggle.active {
     border-color: #FF1493;
 }
 
+/* --- ط·ع¾ط¸â€ ط·آ³ط¸ظ¹ط¸â€ڑ ط·آ§ط¸â€‍ط·آ£ط¸ث†ط·آ±ط·آ¯ط·آ±ط·آ§ط·ع¾ ط·آ¬ط¸ث†ط·آ§ ط·آ§ط¸â€‍ط¸â€¦ط·آ¯ط¸ظ¹ط¸ث†ط¸â€ ط¸ظ¹ط·آ© (ط¸â€‍ط·ع¾ط·آµط¸ظ¾ط¸ظ¹ط·آ© ط·آ§ط¸â€‍ط·آ­ط·آ³ط·آ§ط·آ¨) --- */
 .financial-order-item {
     display: flex;
     justify-content: space-between;
@@ -2291,6 +2411,9 @@ body.dark-mode .btn-settle {
     color: #81c784;
 }
 
+/* =========================================
+   25. ط·آ¥ط·آ¹ط·آ¯ط·آ§ط·آ¯ط·آ§ط·ع¾ ط·آ§ط¸â€‍ط·آ·ط·آ¨ط·آ§ط·آ¹ط·آ© ط¸â€‍ط¸â€‍ط¸ظ¾ط·آ§ط·ع¾ط¸ث†ط·آ±ط·آ©
+   ========================================= */
 .print-only {
     display: none;
 }
@@ -2299,18 +2422,19 @@ body.dark-mode .btn-settle {
     body * {
         visibility: hidden;
     }
-
+    
     .print-only, .print-only * {
         visibility: visible;
     }
-
+    
     .print-only { position: relative !important; width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 0 4mm !important; box-sizing: border-box !important; }
-
+    
+    /* ط·ع¾ط·آµط·ط›ط¸ظ¹ط·آ± ط·آ§ط¸â€‍ط¸ظ¾ط·آ§ط·ع¾ط¸ث†ط·آ±ط·آ© ط¸ث†ط·آ¥ط¸â€‍ط·ط›ط·آ§ط·طŒ ط·آ§ط¸â€‍ط¸â€،ط¸ث†ط·آ§ط¸â€¦ط·آ´ ط·آ§ط¸â€‍ط¸â€¦ط·آ²ط·آ© ط·آ§ط¸â€‍ط·ع¾ط¸ظ¹ ط·ع¾ط·آ³ط·آ¨ط·آ¨ ط·آµط¸ظ¾ط·آ­ط·آ© ط¸ظ¾ط·آ§ط·آ±ط·ط›ط·آ© ط·آ¥ط·آ¶ط·آ§ط¸ظ¾ط¸ظ¹ط·آ© ط¸â€‍ط¸ث†ط·آ±ط¸â€ڑ ط·آ§ط¸â€‍ط¸â‚¬ PVC */
     @page {
         margin: 0;
         size: 80mm auto;
     }
-
+    
     body {
         margin: 0;
         padding: 0;
@@ -2319,16 +2443,19 @@ body.dark-mode .btn-settle {
 
     .receipt-header h2 { margin: 2px 0; font-size: 16px; }
     .receipt-info p, .receipt-totals p, .receipt-footer p { margin: 1px 0; font-size: 11px; }
-
+    
     .receipt-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 11px; }
     .receipt-table th { border: 1px solid #000; padding: 6px; text-align: center; background: #eee !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .receipt-table td { border: 1px solid #000; padding: 6px; text-align: center; }
-
+    
     #print-logo { object-fit: contain; max-height: 80px; }
-
+    
     hr { margin: 5px 0; border: 0; border-top: 1px dashed #000; }
 }
 
+/* =========================================
+   24. ط·آ£ط¸â€ ط¸ظ¹ط¸â€¦ط¸ظ¹ط·آ´ط¸â€  ط·آ§ط¸â€‍ط·ع¾ط¸â€ڑط·آ§ط·آ±ط¸ظ¹ط·آ±
+   ========================================= */
 @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(12px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -2343,6 +2470,9 @@ body.dark-mode .btn-settle {
     animation: countUp 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
 }
 
+/* =========================================
+   25. ط·آ¥ط·آµط¸â€‍ط·آ§ط·آ­ ط¸â€ ط¸â€،ط·آ§ط·آ¦ط¸ظ¹ ط¸â€‍ط¸â€‍ط¸ظ¾ط·آ§ط·ع¾ط¸ث†ط·آ±ط·آ© ط·آ§ط¸â€‍ط·آ­ط·آ±ط·آ§ط·آ±ط¸ظ¹ط·آ© (print)
+   ========================================= */
 @media print {
     .receipt-totals p {
         display: flex !important;
@@ -2371,6 +2501,9 @@ body.dark-mode .btn-settle {
     }
 }
 
+/* =========================================
+   14. أ¢آ­ع¯ ط¸â€¦ط¸ث†ط·آ¯ط·آ§ط¸â€‍ ط·آ­ط¸â€¦ط·آ§ط¸ظ¹ط·آ© ط·آ§ط¸â€‍ط·آ¥ط¸ئ’ط·آ³ط¸ظ¹ط¸â€‍ (Password Modal)
+   ========================================= */
 .excel-password-modal {
     max-width: 400px;
     padding: 30px;
@@ -2434,6 +2567,7 @@ body.dark-mode .btn-settle {
     opacity: 1;
 }
 
+/* ط·ع¾ط·آ£ط·آ«ط¸ظ¹ط·آ± ط·آ§ط¸â€‍ط·آ§ط¸â€،ط·ع¾ط·آ²ط·آ§ط·آ² ط·آ¹ط¸â€ ط·آ¯ ط·آ§ط¸â€‍ط·آ®ط·آ·ط·آ£ */
 .shake-animation {
     animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
 }
@@ -2445,6 +2579,9 @@ body.dark-mode .btn-settle {
     40%, 60% { transform: translate3d(4px, 0, 0); }
 }
 
+/* =========================================
+   26. ط·آ§ط¸â€‍ط·ع¾ط·آ­ط·آ¯ط¸ظ¹ط·آ«ط·آ§ط·ع¾ ط·آ§ط¸â€‍ط·آ¥ط·آ¶ط·آ§ط¸ظ¾ط¸ظ¹ط·آ© (V15.1) - ط·آ§ط¸â€‍ط·آ·ط·آ¨ط·آ§ط·آ¹ط·آ© ط¸ث†ط·آ§ط¸â€‍ط¸â‚¬ Offer Price
+   ========================================= */
 @media print {
     body {
         filter: grayscale(100%) contrast(150%);
@@ -2452,7 +2589,7 @@ body.dark-mode .btn-settle {
     body.print-mode-tags {
         filter: none !important;
     }
-
+    
     .print-gov-shipping th:nth-child(2),
     .print-gov-shipping th:nth-child(4),
     .print-gov-shipping td:nth-child(2),
@@ -2485,8 +2622,12 @@ body.dark-mode .btn-settle {
     }
 }
 
+/* =========================================
+   [Phase 3] Thermal Printer CSS Overhaul 
+   Energy Optimization & Readability
+   ========================================= */
 @media print {
-
+    /* 1. ط·ع¾ط¸ث†ط·آ­ط¸ظ¹ط·آ¯ ط¸ث†ط·ع¾ط¸â€ ط·آ¹ط¸ظ¹ط¸â€¦ ط·آ§ط¸â€‍ط·آ®ط·آ·ط¸ث†ط·آ· (Font Optimization) */
     body, .print-only, .print-only *, * {
         font-family: Tahoma, Arial, sans-serif !important;
         -webkit-font-smoothing: auto !important;
@@ -2508,13 +2649,16 @@ body.dark-mode .btn-settle {
         display: none !important;
     }
 
+    /* 2. ط·ع¾ط¸ئ’ط·آ¨ط¸ظ¹ط·آ± ط·آ§ط¸â€‍ط¸â€‍ط¸ث†ط·آ¬ط¸ث† ط¸ث†ط·ع¾ط¸ث†ط·آ³ط¸ظ¹ط·آ·ط¸â€، (Logo Sizing) - Removed to avoid conflicts with line 1152 */
+
+    /* 3. ط·ع¾ط·آ®ط¸ظ¾ط¸ظ¹ط¸ظ¾ ط·آ¥ط·آ±ط¸â€،ط·آ§ط¸â€ڑ ط·آ§ط¸â€‍ط·آ·ط·آ§ط·آ¨ط·آ¹ط·آ© ط¸ظ¾ط¸ظ¹ ط·آ­ط·آ¯ط¸ث†ط·آ¯ ط·آ§ط¸â€‍ط·آ¬ط·آ¯ط¸ث†ط¸â€‍ ط¸ث†ط·ع¾ط¸ئ’ط·آ¨ط¸ظ¹ط·آ± ط·آ§ط¸â€‍ط·آ®ط·آ· (Table Borders) */
     .receipt-table {
         width: 100% !important;
         border-collapse: collapse !important;
         display: table !important;
         white-space: normal !important;
     }
-
+    
     .receipt-table th,
     .receipt-table td {
         display: table-cell !important;
@@ -2528,6 +2672,7 @@ body.dark-mode .btn-settle {
         word-break: normal !important;
     }
 
+    /* 4. ط·آ¥ط·آ²ط·آ§ط¸â€‍ط·آ© ط·آ§ط¸â€‍ط¸ئ’ط·ع¾ط¸â€‍ ط·آ§ط¸â€‍ط·آ³ط¸ث†ط·آ¯ط·آ§ط·طŒ ط¸ث†ط·ع¾ط·آ¶ط·آ®ط¸ظ¹ط¸â€¦ ط·آ§ط¸â€‍ط·آ¥ط·آ¬ط¸â€¦ط·آ§ط¸â€‍ط¸ظ¹ ط·آ§ط¸â€‍ط¸â€ ط¸â€،ط·آ§ط·آ¦ط¸ظ¹ (Final Total Section) */
     .receipt-totals h3 {
         background: transparent !important;
         background-color: transparent !important;
@@ -2543,11 +2688,12 @@ body.dark-mode .btn-settle {
         align-items: center !important;
         gap: 5px !important;
     }
-
+    
     .receipt-totals h3 * {
         color: #000000 !important;
     }
 
+    /* 5. ط·ع¾ط¸ئ’ط·آ¨ط¸ظ¹ط·آ± ط·آ§ط¸â€‍ط·آ¨ط¸ظ¹ط·آ§ط¸â€ ط·آ§ط·ع¾ ط·آ§ط¸â€‍ط·آ³ط¸ظ¾ط¸â€‍ط¸ظ¹ط·آ© ط¸ث†ط·ع¾ط¸â€ ط·آ³ط¸ظ¹ط¸â€ڑ ط·آ§ط¸â€‍ط·ع¾ط·آ¨ط·آ§ط·آ¹ط·آ¯ (Bottom Details) */
     .receipt-totals p, 
     .receipt-footer, 
     .receipt-footer p,
@@ -2562,6 +2708,9 @@ body.dark-mode .btn-settle {
     }
 }
 
+/* =========================================
+   ط·ع¾ط·آ£ط·آ«ط¸ظ¹ط·آ±ط·آ§ط·ع¾ ط·آ§ط¸â€‍ط¸â€¦ط·آ§ط·آ³ط·آ­ ط·آ§ط¸â€‍ط·آ¶ط¸ث†ط·آ¦ط¸ظ¹ ط·آ§ط¸â€‍ط·آ°ط¸ئ’ط¸ظ¹ (Scanner Effects)
+   ========================================= */
 @keyframes flashSuccessAnim {
     0%   { background-color: rgba(46, 125, 50, 0.4); }
     100% { background-color: var(--card); }
@@ -2579,6 +2728,9 @@ body.dark-mode .btn-settle {
     border-radius: 10px;
 }
 
+/* =========================================
+   ط¸â€ ط·آ¸ط·آ§ط¸â€¦ ط·آ§ط¸â€‍ط·آ¥ط·آ´ط·آ¹ط·آ§ط·آ±ط·آ§ط·ع¾ (Toast Notifications)
+   ========================================= */
 .toast-container {
     position: fixed;
     bottom: 20px;
@@ -2632,6 +2784,7 @@ body.dark-mode .btn-settle {
     }
 }
 
+/* ط·آ¥ط·آµط¸â€‍ط·آ§ط·آ­ ط·آ¹ط·آ±ط·آ¶ ط·آ§ط¸â€‍ط¸ث†ط·آ§ط·آ¬ط¸â€،ط·آ© ط·آ§ط¸â€‍ط·آ¹ط¸â€‍ط¸ث†ط¸ظ¹ط·آ© ط¸ث†ط·آ£ط·آ²ط·آ±ط·آ§ط·آ± ط·آ§ط¸â€‍ط·ع¾ط·آ­ط·آ¯ط¸ظ¹ط·آ« ط¸ظ¾ط¸ظ¹ ط·آ§ط¸â€‍ط¸â€،ط¸ث†ط·آ§ط·ع¾ط¸ظ¾ */
 @media (max-width: 768px) {
     .header-controls, .status-container, .header-actions, .status-indicator {
         display: flex !important;
@@ -2649,6 +2802,9 @@ body.dark-mode .btn-settle {
     }
 }
 
+/* =========================================
+   14. ط·آ´ط·آ§ط·آ´ط·آ© ط·آ¥ط·آ¯ط·آ§ط·آ±ط·آ© ط·آ§ط¸â€‍ط·آµط¸â€‍ط·آ§ط·آ­ط¸ظ¹ط·آ§ط·ع¾ (Expiry Dashboard)
+   ========================================= */
 .expiry-dashboard-overlay {
     background: rgba(10, 15, 30, 0.85);
     backdrop-filter: blur(8px);
@@ -2878,6 +3034,7 @@ body.dark-mode .btn-settle {
 }
 .btn-close-item:hover { background: #c8e6c9; }
 
+/* Dark Mode Support for Expiry Dashboard */
 body.dark-mode .expiry-dashboard-content {
     background: #1A1D2E;
 }
@@ -2906,6 +3063,9 @@ body.dark-mode .expiry-form-grid input {
     border-color: #383D57;
 }
 
+/* ==========================================
+   Expiry Dashboard & Ledger Modal Styles
+   ========================================== */
 .traffic-light-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -3013,6 +3173,9 @@ body.dark-mode .expiry-form-grid input {
     100% { zoom: 1; transform: none; box-shadow: 0 0 0 0 rgba(142, 68, 173, 0); }
 }
 
+/* =========================================
+   26. UX & System Protection Additions
+   ========================================= */
 .loading-overlay-hidden { display: none !important; }
 #loading-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -3029,6 +3192,9 @@ body.dark-mode .expiry-form-grid input {
 .input-error-flash { border: 2px solid #ff1744 !important; animation: flash 0.5s ease-in-out 2; }
 @keyframes flash { 0%, 100% {opacity:1;} 50% {opacity:0.5;} }
 
+/* =========================================
+   21. Expiry Item Cards (Mobile & Desktop)
+   ========================================= */
 .expiry-item-row {
     background: var(--card);
     border-radius: var(--radius);
@@ -3058,6 +3224,8 @@ body.dark-mode .expiry-form-grid input {
     font-size: 0.95rem;
 }
 
+
+
 .expiry-item-actions {
     display: flex;
     gap: 10px;
@@ -3073,6 +3241,9 @@ body.dark-mode .expiry-form-grid input {
     border: none;
 }
 
+/* =========================================
+   22. Responsive Grid adjustments (Mobile)
+   ========================================= */
 @media (max-width: 768px) {
     .product-row {
         grid-template-columns: 1fr;
@@ -3093,6 +3264,9 @@ body.dark-mode .expiry-form-grid input {
     .product-row .product-price-input { text-align: left !important; }
 }
 
+/* =========================================
+   23. Sidebar Navigation & WhatsApp Campaigns
+   ========================================= */
 .menu-toggle-btn {
     background: none;
     border: none;
@@ -3142,6 +3316,8 @@ body.dark-mode .app-sidebar {
 .app-sidebar.open {
     right: 0;
 }
+
+
 
 .sidebar-header {
     display: flex;
@@ -3207,6 +3383,7 @@ body.dark-mode .app-sidebar {
     font-size: 1.4rem;
 }
 
+/* WhatsApp Campaign */
 .wa-customer-row {
     display: flex;
     justify-content: space-between;
@@ -3262,22 +3439,26 @@ body.dark-mode .app-sidebar {
     transform: scale(0.95);
 }
 
+/* Desktop Sidebar Tweaks (Removed per user request to keep it a slide-out drawer on all screens) */
 @media (min-width: 900px) {
-
+    /* Preserve main container padding if necessary, but actually we don't need padding if it's off-canvas */
     body {
         padding-left: 0;
     }
-
+    
     .app-header {
         left: 0;
         width: 100%;
     }
-
+    
     .toast-container {
         left: 20px;
     }
 }
 
+/* =========================================================================
+   24. Premium Animations & Transitions
+   ========================================================================= */
 @keyframes fadeInUp {
     from {
         opacity: 0;
@@ -3298,6 +3479,7 @@ body.dark-mode .app-sidebar {
     animation: fadeInUp 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
 }
 
+/* Enhancing nav-item hover */
 .nav-item {
     transition: all 0.3s ease;
 }
@@ -3315,6 +3497,7 @@ body.dark-mode .app-sidebar {
     transform: scale(1.15) rotate(-5deg);
 }
 
+/* Custom dashboard cards hover */
 .dash-card {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
@@ -3323,26 +3506,29 @@ body.dark-mode .app-sidebar {
     box-shadow: 0 8px 25px rgba(0,0,0,0.1);
 }
 
+/* =========================================
+   18. بطاقات الأسعار (Price Tags) - Candy Design
+   ========================================= */
 .price-tags-grid {
     display: flex;
     flex-wrap: wrap;
     gap: 15px;
     justify-content: center;
-    padding: 30px 20px 20px 20px; 
+    padding: 30px 20px 20px 20px; /* Extra top padding for overlapping logo */
     background: transparent;
 }
 
 .price-tag-card {
     position: relative;
     background: #fff;
-    border-radius: 0; 
-    overflow: visible; 
+    border-radius: 0; /* Changed to 0 for perfectly rectangular shape to cut easily */
+    overflow: visible; /* VERY IMPORTANT: allows logo to overlap */
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    padding: 6px; 
-    margin-top: 0; 
+    padding: 6px; /* Slightly thinner striped border */
+    margin-top: 0; /* Logo is now inside, no top margin needed */
     background-image: repeating-linear-gradient(
         -45deg,
         #f06292,
@@ -3354,15 +3540,16 @@ body.dark-mode .app-sidebar {
 
 .price-tag-inner {
     background: #fff;
-    border-radius: 0; 
+    border-radius: 0; /* Rectangular inner shape */
     flex: 1;
     display: flex;
     flex-direction: column;
-    border: 3px solid #e91e63; 
+    border: 3px solid #e91e63; /* Solid pink inner ring */
     position: relative;
-    padding: 5px 10px; 
+    padding: 5px 10px; /* Space from ring to dashed boxes */
 }
 
+/* Candy decorations */
 .candy-deco {
     position: absolute;
     font-size: 1.5rem;
@@ -3377,14 +3564,14 @@ body.dark-mode .app-sidebar {
 .price-tag-header {
     text-align: center;
     margin-bottom: 2px;
-    margin-top: -12px; 
+    margin-top: -12px; /* Pull the logo up to the top border slightly */
     z-index: 15;
 }
 
 .price-tag-logo {
     height: 60px;
     object-fit: contain;
-
+    /* Removed border-radius so the raw logo displays normally */
 }
 
 .price-tag-body {
@@ -3392,7 +3579,7 @@ body.dark-mode .app-sidebar {
     flex-direction: column;
     flex: 1;
     z-index: 5;
-    margin-top: 0; 
+    margin-top: 0; /* Logo is inside, no extra space needed */
 }
 
 .tag-box {
@@ -3415,10 +3602,11 @@ body.dark-mode .app-sidebar {
     margin-top: 5px;
 }
 
+/* Middle purple divider */
 .middle-divider-bar {
     background-color: #aa00ff;
     height: 15px;
-    margin: 0 -10px; 
+    margin: 0 -10px; /* Stretch across padding */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3455,7 +3643,7 @@ body.dark-mode .app-sidebar {
 .name-row .tag-value,
 .price-row .tag-label,
 .price-row .tag-value {
-    color: #4a148c; 
+    color: #4a148c; /* Purple text */
     font-family: 'Cairo', sans-serif;
 }
 
@@ -3483,9 +3671,10 @@ body.dark-mode .app-sidebar {
     object-fit: contain;
 }
 
+/* Offer specific styling */
 .price-tag-card.is-offer {
     background-color: #ff0000;
-    background-image: none; 
+    background-image: none; /* No gradients to avoid animation feeling */
 }
 
 .price-tag-card.is-offer .price-tag-inner {
@@ -3504,7 +3693,7 @@ body.dark-mode .app-sidebar {
 .price-tag-card.is-offer .price-row .tag-value,
 .price-tag-card.is-offer .name-row .tag-label,
 .price-tag-card.is-offer .name-row .tag-value {
-    color: #b71c1c; 
+    color: #b71c1c; /* Dark red text */
 }
 
 .offer-badge {
@@ -3536,6 +3725,8 @@ body.dark-mode .app-sidebar {
     margin-left: 8px;
 }
 
+/* Sizes - Absolute Proportional Scaling using wrappers */
+/* The wrapper reserves the physical space on the page */
 .price-tag-wrapper {
     display: inline-block;
     vertical-align: top;
@@ -3548,6 +3739,7 @@ body.dark-mode .app-sidebar {
 .price-tag-wrapper.size-medium { width: 9.5cm; height: 6.3cm; }
 .price-tag-wrapper.size-small { width: 4.5cm; height: 3.0cm; }
 
+/* The inner card is ALWAYS rendered internally at large dimensions (13.5x9) */
 .price-tag-card { 
     width: 13.5cm; 
     height: 9cm; 
@@ -3555,7 +3747,7 @@ body.dark-mode .app-sidebar {
     flex-direction: column;
     overflow: hidden; 
     margin: 0;
-    transform-origin: top right; 
+    transform-origin: top right; /* Because the page is RTL */
     -webkit-print-color-adjust: exact !important; 
     print-color-adjust: exact !important;
 }
@@ -3564,25 +3756,28 @@ body.dark-mode .app-sidebar {
 .price-tag-card .candy-deco { font-size: 1.4rem; }
 .price-tag-card .offer-badge { font-size: 1.1rem; padding: 5px 10px; }
 
+/* We simply scale it down to fit perfectly inside the wrapper! */
 .price-tag-wrapper.size-large .price-tag-card {
     zoom: 1; transform: none;
 }
 .price-tag-wrapper.size-medium .price-tag-card {
-    zoom: 0.703; transform: none; 
+    zoom: 0.703; transform: none; /* 9.5 / 13.5 = 0.703 */
 }
 .price-tag-wrapper.size-small .price-tag-card {
-    zoom: 0.333; transform: none; 
+    zoom: 0.333; transform: none; /* 4.5 / 13.5 = 0.333 */
 }
+
 
 .print-tags-only {
     display: none;
 }
 
+/* Print media queries */
 @media print {
     @page {
         margin: 5mm; 
     }
-
+    
     body.print-mode-tags * {
         visibility: hidden;
     }
@@ -3601,21 +3796,21 @@ body.dark-mode .app-sidebar {
         margin: 0;
         padding: 0;
     }
-
+    
     body.print-mode-tags .price-tags-grid {
         display: flex;
         flex-wrap: wrap;
-        gap: 15px !important; 
+        gap: 15px !important; /* Large white gap to allow cutting with scissors */
         justify-content: flex-start;
         padding: 0; 
         background: transparent;
         margin: 0 auto;
     }
-
+    
     body.print-mode-tags .price-tag-wrapper {
         page-break-inside: avoid;
-        margin-bottom: 15px !important; 
-
+        margin-bottom: 15px !important; /* Space between rows for cutting */
+        /* Center the wrapper horizontally slightly to avoid right-hugging */
     }
 
     body.print-mode-tags .price-tag-card {
@@ -3623,7 +3818,7 @@ body.dark-mode .app-sidebar {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
         margin: 0 !important;
-
+        /* Removed border: 1px solid #ccc that was pushing the inner sizing and causing cutoff */
     }
 
 }
