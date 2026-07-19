@@ -6728,7 +6728,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     currentCount = 1; // Sheet is completely empty!
                 }
             } else {
-                currentCount = parseInt(localStorage.getItem('invCounter') || "0") + 1;
+                try { currentCount = parseInt(localStorage.getItem('invCounter') || "0") + 1; } catch(e) { currentCount = 1; }
             }
 
             let idStr = String(currentCount).padStart(6, '0');
@@ -6745,14 +6745,14 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append("items", itemsStr);
             formData.append("notes", notes);
 
-            try { setBtnLoading(savePrintInvBtn, true);
+            setBtnLoading(savePrintInvBtn, true);
 
             fetch(GOOGLE_SHEETS_URL, {
                 method: 'POST',
                 mode: 'no-cors',
                 body: formData
             }).then(() => {
-                localStorage.setItem('invCounter', currentCount);
+                try { localStorage.setItem('invCounter', currentCount); } catch(e) {}
                 setBtnLoading(savePrintInvBtn, false);
                 showToast("تم حفظ الإذن بنجاح!", "success");
                 
