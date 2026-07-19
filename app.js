@@ -7051,24 +7051,30 @@ function filterAndRenderArchive() {
         fetchInventoryLogs(() => filterAndRenderArchive());
         return;
     }
+    
+    // Show a loading spinner to give visual feedback that search is happening
+    if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:#64748b; font-weight:bold; font-size:1.1rem;"><i class="fa-solid fa-circle-notch fa-spin fa-2x" style="color:var(--primary); margin-bottom:15px; display:block;"></i> جاري البحث في الأرشيف...</td></tr>`;
+    }
 
-    let filtered = window.invLogsData.filter(log => {
-        let matchText = true;
-        let matchDate = true;
-        
-        if (q !== '') {
-            // Strictly match logId only as requested
-            matchText = String(log.logId).toLowerCase().includes(q.toLowerCase());
-        }
-        
-        if (dateQ !== '') {
-            matchDate = String(log.timestamp).startsWith(dateQ);
-        }
-        
-        return matchText && matchDate;
-    });
+    // Simulate a slight delay for the UI to breathe and show the spinner
+    setTimeout(() => {
+        let filtered = window.invLogsData.filter(log => {
+            // If searching by Log ID, IGNORE the date completely!
+            if (q !== '') {
+                return String(log.logId).toLowerCase().includes(q.toLowerCase());
+            }
+            
+            // Otherwise, filter by date if selected
+            if (dateQ !== '') {
+                return String(log.timestamp).startsWith(dateQ);
+            }
+            
+            return true;
+        });
 
-    renderInventoryArchive(filtered);
+        renderInventoryArchive(filtered);
+    }, 300);
 }
 
 document.getElementById('invSearchInput')?.addEventListener('input', filterAndRenderArchive);
