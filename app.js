@@ -1,4 +1,4 @@
-﻿// ==========================================
+// ==========================================
 // <i class=\'fa-solid fa-globe\'></i> العقل المدبر - سيستم كاندي كلوب (النسخة V13.6 - الشاملة والمحصنة)
 // ==========================================
 
@@ -7186,15 +7186,6 @@ window.openInvStatsModal = function(type) {
     window.invModalPerPage = 15;
     
     renderInvModalContent();
-}; border:1px solid #f1f5f9; border-radius:10px;">
-                    <span style="font-weight:bold; color:#334155;"><span style="color:var(--primary); margin-left:8px; font-size:0.9rem;">#${index+1}</span> ${item[0]}</span>
-                    <span style="background:#e2e8f0; color:#1e293b; padding:3px 10px; border-radius:15px; font-weight:bold; font-size:0.85rem;">${item[1]}</span>
-                </div>
-            `;
-        });
-        html += `</div>`;
-        contentEl.innerHTML = html;
-    }
 };
 
 window.filterByMonthMonthModal = function(ym) {
