@@ -7004,48 +7004,6 @@ function renderInventoryDashboard(logs) {
     document.getElementById('invDashTopSender').innerText = window.invStatsSenders[0] ? window.invStatsSenders[0][0] : '-';
     document.getElementById('invDashTopReceiver').innerText = window.invStatsReceivers[0] ? window.invStatsReceivers[0][0] : '-';
     document.getElementById('invDashTopProduct').innerText = window.invStatsProducts[0] ? window.invStatsProducts[0][0] : '-';
-};
-    let receivers = {};
-    let products = {};
-    
-    logs.forEach(log => {
-        let from = String(log.from).trim();
-        let to = String(log.to).trim();
-        if (from) senders[from] = (senders[from] || 0) + 1;
-        if (to) receivers[to] = (receivers[to] || 0) + 1;
-        
-        try {
-            let items = JSON.parse(log.items);
-            items.forEach(i => {
-                let pName = String(i.name).trim();
-                let pQty = parseInt(i.qty) || 0;
-                if (pName) {
-                    products[pName] = (products[pName] || 0) + pQty;
-                }
-            });
-        } catch(e) {
-            // Fallback for plain string "Product (Qty) | Product (Qty)"
-            if (log.items) {
-                let parts = log.items.split("|");
-                parts.forEach(p => {
-                    let match = p.trim().match(/(.*?)\s+\((\d+)\)/);
-                    if (match) {
-                        let pName = match[1].trim();
-                        let pQty = parseInt(match[2]) || 0;
-                        if (pName) products[pName] = (products[pName] || 0) + pQty;
-                    }
-                });
-            }
-        }
-    });
-    
-    let topSender = Object.keys(senders).sort((a,b) => senders[b]-senders[a])[0] || '-';
-    let topReceiver = Object.keys(receivers).sort((a,b) => receivers[b]-receivers[a])[0] || '-';
-    let topProduct = Object.keys(products).sort((a,b) => products[b]-products[a])[0] || '-';
-    
-    document.getElementById('invDashTopSender').innerText = topSender;
-    document.getElementById('invDashTopReceiver').innerText = topReceiver;
-    document.getElementById('invDashTopProduct').innerText = topProduct;
 }
 
 function renderInventoryArchive(logs, forceShow = false) {
