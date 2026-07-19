@@ -1,4 +1,4 @@
-// ==========================================
+﻿// ==========================================
 // <i class=\'fa-solid fa-globe\'></i> العقل المدبر - سيستم كاندي كلوب (النسخة V13.6 - الشاملة والمحصنة)
 // ==========================================
 
@@ -7077,6 +7077,77 @@ document.getElementById('refreshInvArchiveBtn')?.addEventListener('click', () =>
     fetchInventoryLogs(() => filterAndRenderArchive());
 });
 
+window.invModalCurrentData = [];
+window.invModalCurrentType = '';
+window.invModalCurrentPage = 1;
+window.invModalPerPage = 15;
+
+window.renderInvModalContent = function() {
+    let contentEl = document.getElementById('invStatsModalContent');
+    let data = window.invModalCurrentData;
+    let type = window.invModalCurrentType;
+    let page = window.invModalCurrentPage;
+    let perPage = window.invModalPerPage;
+    
+    if (!data || data.length === 0) {
+        contentEl.innerHTML = `<div style="text-align:center; padding:30px; color:#94a3b8;">لا توجد بيانات متاحة</div>`;
+        return;
+    }
+    
+    let totalPages = Math.ceil(data.length / perPage);
+    if (page > totalPages) page = totalPages;
+    if (page < 1) page = 1;
+    window.invModalCurrentPage = page;
+    
+    let startIdx = (page - 1) * perPage;
+    let pageData = data.slice(startIdx, startIdx + perPage);
+    
+    let html = '';
+    
+    if (type === 'months') {
+        html += `<div style="display:flex; flex-direction:column; gap:10px;">`;
+        pageData.forEach(item => {
+            let [ym, count] = item;
+            let parts = ym.split("-");
+            let monthNames = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+            let mName = parts[1] ? monthNames[parseInt(parts[1]) - 1] : ym;
+            let label = `${mName} ${parts[0]}`;
+            html += `
+                <div onclick="filterByMonthMonthModal('${ym}')" class="interactive-btn" style="display:flex; justify-content:space-between; align-items:center; padding:14px 18px; background:rgba(255,255,255,0.7); border:1px solid rgba(255,255,255,0.8); border-radius:12px; cursor:pointer; transition:all 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.05);" onmouseover="this.style.borderColor='var(--primary)'; this.style.background='rgba(255,255,255,0.9)';" onmouseout="this.style.borderColor='rgba(255,255,255,0.8)'; this.style.background='rgba(255,255,255,0.7)';">
+                    <span style="font-weight:bold; color:#1e293b; font-size:1rem;"><i class="fa-solid fa-calendar-days" style="color:var(--primary); margin-left:8px;"></i> ${label}</span>
+                    <span style="background:var(--primary); color:white; padding:4px 12px; border-radius:20px; font-weight:bold; font-size:0.875rem;">${count} إذن</span>
+                </div>`;
+        });
+        html += `</div>`;
+    } else {
+        html += `<div style="display:flex; flex-direction:column; gap:8px;">`;
+        pageData.forEach((item, i) => {
+            let actualIndex = startIdx + i;
+            let bg = actualIndex % 2 === 0 ? 'rgba(248, 250, 252, 0.7)' : 'rgba(255, 255, 255, 0.8)';
+            html += `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:${bg}; border:1px solid rgba(255,255,255,0.6); border-radius:10px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                    <span style="font-weight:bold; color:#334155;"><span style="color:var(--primary); margin-left:8px; font-size:0.9rem;">#${actualIndex+1}</span> ${item[0]}</span>
+                    <span style="background:#e2e8f0; color:#1e293b; padding:3px 10px; border-radius:15px; font-weight:bold; font-size:0.85rem;">${item[1]}</span>
+                </div>`;
+        });
+        html += `</div>`;
+    }
+    
+    if (totalPages > 1) {
+        let prevDisabled = page === 1 ? 'disabled style="opacity:0.5;cursor:not-allowed;background:#94a3b8;color:white;border:none;border-radius:5px;padding:6px 15px;"' : 'style="background:var(--primary);color:white;border:none;border-radius:5px;padding:6px 15px;cursor:pointer;"';
+        let nextDisabled = page === totalPages ? 'disabled style="opacity:0.5;cursor:not-allowed;background:#94a3b8;color:white;border:none;border-radius:5px;padding:6px 15px;"' : 'style="background:var(--primary);color:white;border:none;border-radius:5px;padding:6px 15px;cursor:pointer;"';
+        
+        html += `
+        <div style="display:flex; justify-content:center; align-items:center; margin-top:20px; gap:15px; padding-top: 15px; border-top: 1px solid rgba(0,0,0,0.05);">
+            <button onclick="window.invModalCurrentPage--; renderInvModalContent();" ${prevDisabled}><i class="fa-solid fa-arrow-right"></i> السابق</button>
+            <span style="font-weight:bold; color:#64748b; font-size:0.9rem;">صفحة ${page} من ${totalPages}</span>
+            <button onclick="window.invModalCurrentPage++; renderInvModalContent();" ${nextDisabled}>التالي <i class="fa-solid fa-arrow-left"></i></button>
+        </div>`;
+    }
+    
+    contentEl.innerHTML = html;
+};
+
 window.openInvStatsModal = function(type) {
     let modal = document.getElementById('invStatsModal');
     let titleEl = document.getElementById('invStatsModalTitle');
@@ -7103,37 +7174,19 @@ window.openInvStatsModal = function(type) {
         title = 'أعلى الفروع استلاماً';
         data = window.invStatsReceivers || [];
     } else if (type === 'product') {
-        title = 'أكثر المنتجات تحويلاً (أعلى 10)';
-        data = window.invStatsProducts ? window.invStatsProducts.slice(0, 10) : [];
+        title = 'أكثر المنتجات تحويلاً';
+        data = window.invStatsProducts || [];
     }
     
     titleEl.innerHTML = `<i class="fa-solid fa-chart-pie" style="color:var(--primary); margin-left:8px;"></i> ${title}`;
     
-    if (data.length === 0) {
-        contentEl.innerHTML = `<div style="text-align:center; padding:30px; color:#94a3b8;">لا توجد بيانات متاحة</div>`;
-    } else if (type === 'months') {
-        let html = `<div style="display:flex; flex-direction:column; gap:10px;">`;
-        data.forEach(item => {
-            let [ym, count] = item;
-            let parts = ym.split("-");
-            let monthNames = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
-            let mName = parts[1] ? monthNames[parseInt(parts[1]) - 1] : ym;
-            let label = `${mName} ${parts[0]}`;
-            
-            html += `
-                <div onclick="filterByMonthMonthModal('${ym}')" class="interactive-btn" style="display:flex; justify-content:space-between; align-items:center; padding:14px 18px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.borderColor='var(--primary)'; this.style.background='#f1f5f9';" onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc';">
-                    <span style="font-weight:bold; color:#1e293b; font-size:1rem;"><i class="fa-solid fa-calendar-days" style="color:var(--primary); margin-left:8px;"></i> ${label}</span>
-                    <span style="background:var(--primary); color:white; padding:4px 12px; border-radius:20px; font-weight:bold; font-size:0.875rem;">${count} إذن</span>
-                </div>
-            `;
-        });
-        html += `</div>`;
-        contentEl.innerHTML = html;
-    } else {
-        let html = `<div style="display:flex; flex-direction:column; gap:8px;">`;
-        data.forEach((item, index) => {
-            html += `
-                <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:${index % 2 === 0 ? '#f8fafc' : 'white'}; border:1px solid #f1f5f9; border-radius:10px;">
+    window.invModalCurrentType = type;
+    window.invModalCurrentData = data;
+    window.invModalCurrentPage = 1;
+    window.invModalPerPage = 15;
+    
+    renderInvModalContent();
+}; border:1px solid #f1f5f9; border-radius:10px;">
                     <span style="font-weight:bold; color:#334155;"><span style="color:var(--primary); margin-left:8px; font-size:0.9rem;">#${index+1}</span> ${item[0]}</span>
                     <span style="background:#e2e8f0; color:#1e293b; padding:3px 10px; border-radius:15px; font-weight:bold; font-size:0.85rem;">${item[1]}</span>
                 </div>
