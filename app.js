@@ -1,4 +1,4 @@
-﻿// ==========================================
+// ==========================================
 // <i class=\'fa-solid fa-globe\'></i> العقل المدبر - سيستم كاندي كلوب (النسخة V13.6 - الشاملة والمحصنة)
 // ==========================================
 
@@ -7071,9 +7071,9 @@ function filterAndRenderArchive() {
     renderInventoryArchive(filtered);
 }
 
-document.getElementById('invSearchInput')?\.addEventListener('input', filterAndRenderArchive);
-document.getElementById('invSearchDate')?\.addEventListener('change', filterAndRenderArchive);
-document.getElementById('refreshInvArchiveBtn')?\.addEventListener('click', () => {
+document.getElementById('invSearchInput')?.addEventListener('input', filterAndRenderArchive);
+document.getElementById('invSearchDate')?.addEventListener('change', filterAndRenderArchive);
+document.getElementById('refreshInvArchiveBtn')?.addEventListener('click', () => {
     fetchInventoryLogs(() => filterAndRenderArchive());
 });
 
