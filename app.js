@@ -5615,13 +5615,19 @@ if(waCopyImageBtn) {
     });
 }
 
+// --- Smart Assistant WA Logic ---
+window.waAssistantQueue = [];
+window.waAssistantIndex = 0;
+window.waIsPaused = false;
+window.waMessageTemplate = "";
+
 const waStartCampaignBtn = document.getElementById("waStartCampaignBtn");
 if(waStartCampaignBtn) {
-    waStartCampaignBtn.addEventListener("click", () => { return; // DISABLED - replaced with Smart Assistant at end of file
-        const list = document.getElementById("waCustomerList");
+    waStartCampaignBtn.addEventListener("click", () => {
         const countSpan = document.getElementById("waQueueCount");
         const container = document.getElementById("waQueueContainer");
-        const targetType = waTargetGroup ? waTargetGroup.value : "all";
+        const targetGroup = document.getElementById("waTargetGroup");
+        const targetType = targetGroup ? targetGroup.value : "all";
         
         let validCustomers = [];
         
@@ -5649,94 +5655,154 @@ if(waStartCampaignBtn) {
             alert("لا يوجد عملاء في هذه الفئة المستهدفة.");
             return;
         }
+
+        const textElem = document.getElementById("waCampaignText");
+        const messageText = textElem ? textElem.value : "";
+        if(!messageText.trim()) {
+            alert("برجاء كتابة نص رسالة العرض أولاً.");
+            textElem.focus();
+            return;
+        }
         
-        list.innerHTML = "";
-        countSpan.innerText = validCustomers.length;
+        if(!confirm("سيتم إرسال الحملة إلى " + validCustomers.length + " عميل باستخدام المساعد الذكي. هل أنت مستعد للبدء؟")) {
+            return;
+        }
+        
+        window.waAssistantQueue = validCustomers;
+        window.waAssistantIndex = 0;
+        window.waMessageTemplate = messageText;
+        
+        countSpan.innerText = "0 / " + validCustomers.length;
         container.style.display = "block";
-        
-        validCustomers.forEach((c, index) => {
-            let div = document.createElement("div");
-            div.className = "wa-customer-row";
-            div.id = `wa-row-${index}`;
-            div.style.cssText = "display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid #eee; padding: 12px 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); margin-bottom: 8px;";
-            
-            div.innerHTML = `
-                <div>
-                    <strong style="color: var(--primary);"><i class=\'fa-solid fa-user\'></i> ${c.name}</strong><br>
-                    <span style="font-size:0.8rem; color:#7f8c8d;"><i class=\'fa-solid fa-phone\'></i> ${c.phone} ${c.visits !== undefined ? `| <i class=\'fa-solid fa-bag-shopping\'></i> زيارات: ${c.visits}` : ''}</span>
-                </div>
-                <button class="wa-send-btn interactive-btn" id="wa-btn-${index}" onclick="sendWaCampaign(${index}, '${c.name}', '${c.phone}')" style="background: #25D366; color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">إرسال <i class=\'fa-solid fa-rocket\'></i></button>
-            `;
-            list.appendChild(div);
-        });
-        
         container.scrollIntoView({ behavior: "smooth" });
+        
+        renderNextAssistantCustomer();
     });
 }
 
-window.sendWaCampaign = function(index, name, phone) {
-    if(waCooldownTime > 0) {
-        return; // DISABLED
-    }
+function renderNextAssistantCustomer() {
+    const statusText = document.getElementById("waAssistantStatus");
+    const nameText = document.getElementById("waCurrentCustomerName");
+    const sendBtn = document.getElementById("waSendNextBtn");
+    const countSpan = document.getElementById("waQueueCount");
     
-    let textElem = document.getElementById("waCampaignText");
-    if(!textElem) return;
+    countSpan.innerText = window.waAssistantIndex + " / " + window.waAssistantQueue.length;
     
-    let text = textElem.value;
-    if(!text.trim()) {
-        alert("برجاء كتابة نص رسالة العرض أولاً.");
-        textElem.focus();
+    if (window.waAssistantIndex >= window.waAssistantQueue.length) {
+        nameText.innerText = "اكتملت الحملة بنجاح! 🎉";
+        statusText.innerText = "تم إرسال جميع الرسائل.";
+        statusText.style.color = "#27ae60";
+        sendBtn.style.display = "none";
+        playBeep(2); // double beep
         return;
     }
     
-    text = text.replace(/\[الاسم\]/g, name);
-    
-    let cleanPhone = sanitizePhone(phone);
-    if(!cleanPhone) {
-        alert("رقم الهاتف غير صالح.");
+    // Check Pause Batch
+    const pauseBatch = parseInt(document.getElementById("waPauseBatch").value) || 35;
+    if (window.waAssistantIndex > 0 && window.waAssistantIndex % pauseBatch === 0 && !window.waIsPaused) {
+        startWaPauseTimer();
         return;
     }
     
-    let url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
-    window.open(url, "_blank");
+    window.waIsPaused = false;
     
-    let btn = document.getElementById(`wa-btn-${index}`);
-    if(btn) {
-        btn.innerHTML = "تم الإرسال <i class=\'fa-solid fa-check\'></i>";
-        btn.style.background = "#bdc3c7";
-        btn.style.color = "#2c3e50";
-        btn.disabled = true;
-    }
+    const customer = window.waAssistantQueue[window.waAssistantIndex];
+    nameText.innerHTML = '<i class="fa-solid fa-user"></i> ' + customer.name + ' <br><small style="font-size:0.9rem; color:#7f8c8d;">' + customer.phone + '</small>';
+    statusText.innerText = "مستعد للإرسال.. اضغط الزر أدناه ⬇️";
+    statusText.style.color = "#27ae60";
+    sendBtn.style.display = "inline-block";
+    sendBtn.style.background = "#25D366";
+    sendBtn.innerHTML = '<i class="fa-brands fa-whatsapp"></i> إرسال الآن للعميل';
     
-    // Start Cooldown (15 seconds recommended for anti-ban)
-    startWaCooldown(15); 
-};
+    sendBtn.onclick = () => {
+        executeWaSend(customer);
+    };
+    
+    playBeep(); // Beep to notify user it's ready
+}
 
-function startWaCooldown(seconds) {
-    waCooldownTime = seconds;
-    const timerSpan = document.getElementById("waCooldownTimer");
-    if(!timerSpan) return;
+function executeWaSend(customer) {
+    const sendBtn = document.getElementById("waSendNextBtn");
+    const statusText = document.getElementById("waAssistantStatus");
     
-    timerSpan.style.display = "inline";
+    let text = window.waMessageTemplate.replace(/\[الاسم\]/g, customer.name);
+    let cleanPhone = sanitizePhone(customer.phone);
     
-    document.querySelectorAll(".wa-send-btn").forEach(b => {
-        if(!b.innerHTML.includes("fa-check")) b.disabled = true;
-    });
+    if(cleanPhone) {
+        let url = 'https://wa.me/' + cleanPhone + '?text=' + encodeURIComponent(text);
+        window.open(url, "_blank");
+    }
     
-    if(waCooldownInterval) clearInterval(waCooldownInterval);
+    window.waAssistantIndex++;
+    sendBtn.style.display = "none";
     
-    waCooldownInterval = setInterval(() => {
-        waCooldownTime--;
-        timerSpan.innerHTML = `<i class=\'fa-solid fa-hourglass-half\'></i> انتظر ${waCooldownTime} ثانية لحماية حسابك...`;
+    const minDelay = parseInt(document.getElementById("waDelayMin").value) || 20;
+    const maxDelay = parseInt(document.getElementById("waDelayMax").value) || 40;
+    let delaySeconds = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
+    
+    statusText.style.color = "#e67e22";
+    
+    if(window.waAssistantTimer) clearInterval(window.waAssistantTimer);
+    window.waAssistantTimer = setInterval(() => {
+        delaySeconds--;
+        statusText.innerHTML = '<i class="fa-solid fa-hourglass-half"></i> حماية الحساب: يُرجى الانتظار ' + delaySeconds + ' ثانية...';
         
-        if(waCooldownTime <= 0) {
-            clearInterval(waCooldownInterval);
-            timerSpan.style.display = "none";
-            document.querySelectorAll(".wa-send-btn").forEach(b => {
-                if(!b.innerHTML.includes("fa-check")) b.disabled = false;
-            });
+        if (delaySeconds <= 0) {
+            clearInterval(window.waAssistantTimer);
+            renderNextAssistantCustomer();
         }
     }, 1000);
+}
+
+function startWaPauseTimer() {
+    window.waIsPaused = true;
+    const statusText = document.getElementById("waAssistantStatus");
+    const sendBtn = document.getElementById("waSendNextBtn");
+    
+    sendBtn.style.display = "none";
+    statusText.style.color = "#c0392b";
+    
+    const pauseMins = parseInt(document.getElementById("waPauseMins").value) || 8;
+    let pauseSeconds = pauseMins * 60;
+    
+    if(window.waAssistantTimer) clearInterval(window.waAssistantTimer);
+    window.waAssistantTimer = setInterval(() => {
+        pauseSeconds--;
+        let m = Math.floor(pauseSeconds / 60);
+        let s = pauseSeconds % 60;
+        let sStr = s < 10 ? "0" + s : s;
+        statusText.innerHTML = '<i class="fa-solid fa-mug-hot"></i> استراحة أمان إجبارية! نعود بعد: ' + m + ':' + sStr;
+        
+        if (pauseSeconds <= 0) {
+            clearInterval(window.waAssistantTimer);
+            window.waIsPaused = false;
+            renderNextAssistantCustomer();
+        }
+    }, 1000);
+}
+
+function playBeep(times = 1) {
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let i = 0;
+        function beep() {
+            if(i >= times) return;
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.type = "sine";
+            oscillator.frequency.value = 800;
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            oscillator.start();
+            setTimeout(() => {
+                oscillator.stop();
+                i++;
+                setTimeout(beep, 200);
+            }, 150);
+        }
+        beep();
+    } catch(e) {}
 }
 
 // --- Override renderFinancials to fix broken HTML and add Checkboxes ---
@@ -7310,196 +7376,4 @@ window.reprintInvLog = function(logId) {
     printWindow.document.close();
 };
 
-// --- Smart Assistant WA Logic ---
-window.waAssistantQueue = [];
-window.waAssistantIndex = 0;
-window.waIsPaused = false;
-window.waMessageTemplate = "";
 
-const waStartCampaignBtnNew = document.getElementById("waStartCampaignBtn");
-if(waStartCampaignBtnNew) {
-    // Clone to remove all previous event listeners
-    const cloneBtn = waStartCampaignBtnNew.cloneNode(true);
-    waStartCampaignBtnNew.parentNode.replaceChild(cloneBtn, waStartCampaignBtnNew);
-    
-    cloneBtn.addEventListener("click", () => {
-        const countSpan = document.getElementById("waQueueCount");
-        const container = document.getElementById("waQueueContainer");
-        const targetGroup = document.getElementById("waTargetGroup");
-        const targetType = targetGroup ? targetGroup.value : "all";
-        
-        let validCustomers = [];
-        
-        if (targetType === "custom") {
-            const text = document.getElementById("waCustomNumbers").value;
-            const numbers = text.split(/[\n,]+/).map(n => n.trim()).filter(n => n);
-            validCustomers = numbers.map(n => ({ name: "عميل", phone: n }));
-        } else {
-            if(!window.customersData || window.customersData.length === 0) {
-                alert("لا يوجد عملاء مسجلين حالياً.");
-                return;
-            }
-            let baseCustomers = window.customersData.filter(c => c.phone && c.phone.length >= 10);
-            
-            if (targetType === "vip") {
-                validCustomers = baseCustomers.filter(c => (parseInt(c.visits) || 0) >= 3);
-            } else if (targetType === "inactive") {
-                validCustomers = baseCustomers.filter(c => (parseInt(c.visits) || 0) <= 1);
-            } else {
-                validCustomers = baseCustomers;
-            }
-        }
-        
-        if(validCustomers.length === 0) {
-            alert("لا يوجد عملاء في هذه الفئة المستهدفة.");
-            return;
-        }
-
-        const textElem = document.getElementById("waCampaignText");
-        const messageText = textElem ? textElem.value : "";
-        if(!messageText.trim()) {
-            alert("برجاء كتابة نص رسالة العرض أولاً.");
-            textElem.focus();
-            return;
-        }
-        
-        if(!confirm("سيتم إرسال الحملة إلى " + validCustomers.length + " عميل باستخدام المساعد الذكي. هل أنت مستعد للبدء؟")) {
-            return;
-        }
-        
-        window.waAssistantQueue = validCustomers;
-        window.waAssistantIndex = 0;
-        window.waMessageTemplate = messageText;
-        
-        countSpan.innerText = "0 / " + validCustomers.length;
-        container.style.display = "block";
-        container.scrollIntoView({ behavior: "smooth" });
-        
-        renderNextAssistantCustomer();
-    });
-}
-
-function renderNextAssistantCustomer() {
-    const statusText = document.getElementById("waAssistantStatus");
-    const nameText = document.getElementById("waCurrentCustomerName");
-    const sendBtn = document.getElementById("waSendNextBtn");
-    const countSpan = document.getElementById("waQueueCount");
-    
-    countSpan.innerText = window.waAssistantIndex + " / " + window.waAssistantQueue.length;
-    
-    if (window.waAssistantIndex >= window.waAssistantQueue.length) {
-        nameText.innerText = "اكتملت الحملة بنجاح! 🎉";
-        statusText.innerText = "تم إرسال جميع الرسائل.";
-        statusText.style.color = "#27ae60";
-        sendBtn.style.display = "none";
-        playBeep(2); // double beep
-        return;
-    }
-    
-    // Check Pause Batch
-    const pauseBatch = parseInt(document.getElementById("waPauseBatch").value) || 35;
-    if (window.waAssistantIndex > 0 && window.waAssistantIndex % pauseBatch === 0 && !window.waIsPaused) {
-        startWaPauseTimer();
-        return;
-    }
-    
-    window.waIsPaused = false;
-    
-    const customer = window.waAssistantQueue[window.waAssistantIndex];
-    nameText.innerHTML = '<i class="fa-solid fa-user"></i> ' + customer.name + ' <br><small style="font-size:0.9rem; color:#7f8c8d;">' + customer.phone + '</small>';
-    statusText.innerText = "مستعد للإرسال.. اضغط الزر أدناه ⬇️";
-    statusText.style.color = "#27ae60";
-    sendBtn.style.display = "inline-block";
-    sendBtn.style.background = "#25D366";
-    sendBtn.innerHTML = '<i class="fa-brands fa-whatsapp"></i> إرسال الآن للعميل';
-    
-    sendBtn.onclick = () => {
-        executeWaSend(customer);
-    };
-    
-    playBeep(); // Beep to notify user it's ready
-}
-
-function executeWaSend(customer) {
-    const sendBtn = document.getElementById("waSendNextBtn");
-    const statusText = document.getElementById("waAssistantStatus");
-    
-    let text = window.waMessageTemplate.replace(/\[الاسم\]/g, customer.name);
-    let cleanPhone = sanitizePhone(customer.phone);
-    
-    if(cleanPhone) {
-        let url = 'https://wa.me/' + cleanPhone + '?text=' + encodeURIComponent(text);
-        window.open(url, "_blank");
-    }
-    
-    window.waAssistantIndex++;
-    sendBtn.style.display = "none";
-    
-    const minDelay = parseInt(document.getElementById("waDelayMin").value) || 20;
-    const maxDelay = parseInt(document.getElementById("waDelayMax").value) || 40;
-    let delaySeconds = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
-    
-    statusText.style.color = "#e67e22";
-    
-    if(window.waAssistantTimer) clearInterval(window.waAssistantTimer);
-    window.waAssistantTimer = setInterval(() => {
-        delaySeconds--;
-        statusText.innerHTML = '<i class="fa-solid fa-hourglass-half"></i> حماية الحساب: يُرجى الانتظار ' + delaySeconds + ' ثانية...';
-        
-        if (delaySeconds <= 0) {
-            clearInterval(window.waAssistantTimer);
-            renderNextAssistantCustomer();
-        }
-    }, 1000);
-}
-
-function startWaPauseTimer() {
-    window.waIsPaused = true;
-    const statusText = document.getElementById("waAssistantStatus");
-    const sendBtn = document.getElementById("waSendNextBtn");
-    
-    sendBtn.style.display = "none";
-    statusText.style.color = "#c0392b";
-    
-    const pauseMins = parseInt(document.getElementById("waPauseMins").value) || 8;
-    let pauseSeconds = pauseMins * 60;
-    
-    if(window.waAssistantTimer) clearInterval(window.waAssistantTimer);
-    window.waAssistantTimer = setInterval(() => {
-        pauseSeconds--;
-        let m = Math.floor(pauseSeconds / 60);
-        let s = pauseSeconds % 60;
-        let sStr = s < 10 ? "0" + s : s;
-        statusText.innerHTML = '<i class="fa-solid fa-mug-hot"></i> استراحة أمان إجبارية! نعود بعد: ' + m + ':' + sStr;
-        
-        if (pauseSeconds <= 0) {
-            clearInterval(window.waAssistantTimer);
-            window.waIsPaused = false;
-            renderNextAssistantCustomer();
-        }
-    }, 1000);
-}
-
-function playBeep(times = 1) {
-    try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        let i = 0;
-        function beep() {
-            if(i >= times) return;
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            oscillator.type = "sine";
-            oscillator.frequency.value = 800;
-            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            oscillator.start();
-            setTimeout(() => {
-                oscillator.stop();
-                i++;
-                setTimeout(beep, 200);
-            }, 150);
-        }
-        beep();
-    } catch(e) {}
-}
