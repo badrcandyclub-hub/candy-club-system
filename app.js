@@ -5678,8 +5678,6 @@ window.sendWaCampaign = function(index, name, phone) {
     if(waCooldownTime > 0) {
         return; // DISABLED
     }
-        return;
-    }
     
     let textElem = document.getElementById("waCampaignText");
     if(!textElem) return;
