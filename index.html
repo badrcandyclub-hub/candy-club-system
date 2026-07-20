@@ -480,18 +480,35 @@
             <div class="section-card" style="border-right: 4px solid #25D366; background: #fdfdfd;">
                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px;">
                     <h2 style="color: #075E54; margin: 0; display: flex; align-items: center; gap: 8px;">
-                        <i class="fa-brands fa-whatsapp icon" style="font-size: 1.5rem;"></i> حملات الواتساب الاحترافية
+                        <i class="fa-brands fa-whatsapp icon" style="font-size: 1.5rem;"></i> حملات الواتساب (المساعد الذكي)
                     </h2>
-                    <span style="background: #25D366; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">Pro Mode + Bot</span>
+                    <span style="background: #25D366; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">Smart Assistant</span>
                 </div>
 
-                <!-- Bot Status Panel -->
-                <div id="waBotStatusPanel" style="background: #fce4e4; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #f5c6c6;">
-                    <div>
-                        <h4 style="margin: 0 0 5px 0; color: #c0392b;"><i class="fa-solid fa-robot"></i> حالة خادم الروبوت</h4>
-                        <span id="waBotStatusText" style="font-size: 0.9rem; color: #c0392b; font-weight: bold;">غير متصل (الرجاء تشغيل server.js) ❌</span>
+                <!-- إعدادات الأمان -->
+                <div class="wa-setup-box" style="background: #fff3cd; padding: 15px; border-radius: 12px; border: 1px solid #ffeeba; margin-bottom: 20px;">
+                    <h4 style="margin: 0 0 10px 0; color: #856404;"><i class="fa-solid fa-shield-halved"></i> إعدادات الأمان (لتجنب الحظر)</h4>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <label style="font-size: 0.85rem; color: #856404;">تأخير عشوائي (ثانية):</label>
+                            <div style="display: flex; gap: 5px; align-items: center;">
+                                <input type="number" id="waDelayMin" value="20" min="5" style="width: 70px; padding: 5px; border: 1px solid #ccc; border-radius: 5px;"> إلى 
+                                <input type="number" id="waDelayMax" value="40" min="10" style="width: 70px; padding: 5px; border: 1px solid #ccc; border-radius: 5px;">
+                            </div>
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <label style="font-size: 0.85rem; color: #856404;">استراحة بعد (رسائل):</label>
+                            <div style="display: flex; gap: 5px; align-items: center;">
+                                <input type="number" id="waPauseBatch" value="35" min="10" style="width: 70px; padding: 5px; border: 1px solid #ccc; border-radius: 5px;">
+                            </div>
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <label style="font-size: 0.85rem; color: #856404;">مدة الاستراحة (دقائق):</label>
+                            <div style="display: flex; gap: 5px; align-items: center;">
+                                <input type="number" id="waPauseMins" value="8" min="1" style="width: 70px; padding: 5px; border: 1px solid #ccc; border-radius: 5px;">
+                            </div>
+                        </div>
                     </div>
-                    <button id="waCheckBotBtn" class="interactive-btn" style="background: #c0392b; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer;">تحديث الحالة <i class="fa-solid fa-rotate-right"></i></button>
                 </div>
 
                 <!-- 1. إعداد الاستهداف -->
@@ -539,22 +556,20 @@
                 <!-- 3. طابور الإرسال (يظهر بعد بدء الحملة) -->
                 <div id="waQueueContainer" style="display: none; margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: #e8f5e9; padding: 10px 15px; border-radius: 8px; border-right: 4px solid #25D366;">
-                        <h4 style="margin: 0; color: #1b5e20;"><i class="fa-solid fa-bullseye"></i> العملاء المستهدفين: <strong id="waQueueCount" style="font-size: 1.2rem;">0</strong></h4>
-                        <span id="waCooldownTimer" style="font-size: 0.9rem; color: #c0392b; font-weight: bold; display: none;"><i class="fa-solid fa-hourglass-half"></i> انتظر... حماية من الحظر</span>
+                        <h4 style="margin: 0; color: #1b5e20;"><i class="fa-solid fa-bullseye"></i> تقدم الحملة: <strong id="waQueueCount" style="font-size: 1.2rem;">0 / 0</strong></h4>
                     </div>
                     
-                    <div id="waBotProgress" style="display: none; margin-bottom: 15px; background: #fff; border: 1px solid #ddd; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-                        <h4 style="margin: 0 0 10px 0; color: #2980b9;" id="waBotProgressText">التقدم: 0 / 0 رسالة</h4>
-                        <div style="width: 100%; background: #ecf0f1; height: 22px; border-radius: 11px; overflow: hidden; margin-bottom: 10px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);">
-                            <div id="waBotProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #2ecc71, #27ae60); transition: width 0.4s ease; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8rem; font-weight: bold;">0%</div>
-                        </div>
-                        <p id="waBotWaitText" style="margin: 0; font-size: 0.95rem; color: #e67e22; font-weight: bold;"></p>
-                        <p id="waBotFailedText" style="margin: 5px 0 0 0; font-size: 0.85rem; color: #c0392b; font-weight: bold; display: none;">فشل: 0</p>
+                    <div id="waSmartAssistantPanel" style="background: #fff; border: 2px dashed #3498db; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                        <h3 id="waCurrentCustomerName" style="color: #2c3e50; margin: 0 0 10px 0; font-size: 1.5rem;">--</h3>
+                        <p id="waAssistantStatus" style="color: #e67e22; font-weight: bold; margin-bottom: 20px; font-size: 1.2rem;">مستعد للبدء</p>
+                        
+                        <button id="waSendNextBtn" class="interactive-btn" style="background: #25D366; color: white; border: none; padding: 15px 40px; border-radius: 30px; font-size: 1.3rem; font-weight: bold; cursor: pointer; display: none; margin: 0 auto; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);">
+                            <i class="fa-brands fa-whatsapp"></i> إرسال الآن للعميل
+                        </button>
                     </div>
                     
-                    <div id="waCustomerList" class="data-list-container scroll-list" style="max-height: 500px; padding: 5px; display: flex; flex-direction: column; gap: 10px; background: transparent; border: none;">
-                        <!-- العملاء هنا -->
-                    </div>
+                    <!-- مخفي: القائمة القديمة -->
+                    <div id="waCustomerList" style="display: none;"></div>
                 </div>
             </div>
         </section>

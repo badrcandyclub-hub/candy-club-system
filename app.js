@@ -1,4 +1,4 @@
-﻿// ==========================================
+// ==========================================
 // <i class=\'fa-solid fa-globe\'></i> العقل المدبر - سيستم كاندي كلوب (النسخة V13.6 - الشاملة والمحصنة)
 // ==========================================
 
@@ -5617,7 +5617,7 @@ if(waCopyImageBtn) {
 
 const waStartCampaignBtn = document.getElementById("waStartCampaignBtn");
 if(waStartCampaignBtn) {
-    waStartCampaignBtn.addEventListener("click", () => {
+    waStartCampaignBtn.addEventListener("click", () => { return; // DISABLED - replaced with Smart Assistant at end of file
         const list = document.getElementById("waCustomerList");
         const countSpan = document.getElementById("waQueueCount");
         const container = document.getElementById("waQueueContainer");
@@ -5676,7 +5676,8 @@ if(waStartCampaignBtn) {
 
 window.sendWaCampaign = function(index, name, phone) {
     if(waCooldownTime > 0) {
-        alert("برجاء الانتظار حتى ينتهي العداد لحماية رقمك من الحظر.");
+        return; // DISABLED
+    }
         return;
     }
     
@@ -7310,3 +7311,197 @@ window.reprintInvLog = function(logId) {
     printWindow.document.write(html);
     printWindow.document.close();
 };
+
+// --- Smart Assistant WA Logic ---
+window.waAssistantQueue = [];
+window.waAssistantIndex = 0;
+window.waIsPaused = false;
+window.waMessageTemplate = "";
+
+const waStartCampaignBtnNew = document.getElementById("waStartCampaignBtn");
+if(waStartCampaignBtnNew) {
+    // Clone to remove all previous event listeners
+    const cloneBtn = waStartCampaignBtnNew.cloneNode(true);
+    waStartCampaignBtnNew.parentNode.replaceChild(cloneBtn, waStartCampaignBtnNew);
+    
+    cloneBtn.addEventListener("click", () => {
+        const countSpan = document.getElementById("waQueueCount");
+        const container = document.getElementById("waQueueContainer");
+        const targetGroup = document.getElementById("waTargetGroup");
+        const targetType = targetGroup ? targetGroup.value : "all";
+        
+        let validCustomers = [];
+        
+        if (targetType === "custom") {
+            const text = document.getElementById("waCustomNumbers").value;
+            const numbers = text.split(/[\n,]+/).map(n => n.trim()).filter(n => n);
+            validCustomers = numbers.map(n => ({ name: "عميل", phone: n }));
+        } else {
+            if(!window.customersData || window.customersData.length === 0) {
+                alert("لا يوجد عملاء مسجلين حالياً.");
+                return;
+            }
+            let baseCustomers = window.customersData.filter(c => c.phone && c.phone.length >= 10);
+            
+            if (targetType === "vip") {
+                validCustomers = baseCustomers.filter(c => (parseInt(c.visits) || 0) >= 3);
+            } else if (targetType === "inactive") {
+                validCustomers = baseCustomers.filter(c => (parseInt(c.visits) || 0) <= 1);
+            } else {
+                validCustomers = baseCustomers;
+            }
+        }
+        
+        if(validCustomers.length === 0) {
+            alert("لا يوجد عملاء في هذه الفئة المستهدفة.");
+            return;
+        }
+
+        const textElem = document.getElementById("waCampaignText");
+        const messageText = textElem ? textElem.value : "";
+        if(!messageText.trim()) {
+            alert("برجاء كتابة نص رسالة العرض أولاً.");
+            textElem.focus();
+            return;
+        }
+        
+        if(!confirm("سيتم إرسال الحملة إلى " + validCustomers.length + " عميل باستخدام المساعد الذكي. هل أنت مستعد للبدء؟")) {
+            return;
+        }
+        
+        window.waAssistantQueue = validCustomers;
+        window.waAssistantIndex = 0;
+        window.waMessageTemplate = messageText;
+        
+        countSpan.innerText = "0 / " + validCustomers.length;
+        container.style.display = "block";
+        container.scrollIntoView({ behavior: "smooth" });
+        
+        renderNextAssistantCustomer();
+    });
+}
+
+function renderNextAssistantCustomer() {
+    const statusText = document.getElementById("waAssistantStatus");
+    const nameText = document.getElementById("waCurrentCustomerName");
+    const sendBtn = document.getElementById("waSendNextBtn");
+    const countSpan = document.getElementById("waQueueCount");
+    
+    countSpan.innerText = window.waAssistantIndex + " / " + window.waAssistantQueue.length;
+    
+    if (window.waAssistantIndex >= window.waAssistantQueue.length) {
+        nameText.innerText = "اكتملت الحملة بنجاح! 🎉";
+        statusText.innerText = "تم إرسال جميع الرسائل.";
+        statusText.style.color = "#27ae60";
+        sendBtn.style.display = "none";
+        playBeep(2); // double beep
+        return;
+    }
+    
+    // Check Pause Batch
+    const pauseBatch = parseInt(document.getElementById("waPauseBatch").value) || 35;
+    if (window.waAssistantIndex > 0 && window.waAssistantIndex % pauseBatch === 0 && !window.waIsPaused) {
+        startWaPauseTimer();
+        return;
+    }
+    
+    window.waIsPaused = false;
+    
+    const customer = window.waAssistantQueue[window.waAssistantIndex];
+    nameText.innerHTML = '<i class="fa-solid fa-user"></i> ' + customer.name + ' <br><small style="font-size:0.9rem; color:#7f8c8d;">' + customer.phone + '</small>';
+    statusText.innerText = "مستعد للإرسال.. اضغط الزر أدناه ⬇️";
+    statusText.style.color = "#27ae60";
+    sendBtn.style.display = "inline-block";
+    sendBtn.style.background = "#25D366";
+    sendBtn.innerHTML = '<i class="fa-brands fa-whatsapp"></i> إرسال الآن للعميل';
+    
+    sendBtn.onclick = () => {
+        executeWaSend(customer);
+    };
+    
+    playBeep(); // Beep to notify user it's ready
+}
+
+function executeWaSend(customer) {
+    const sendBtn = document.getElementById("waSendNextBtn");
+    const statusText = document.getElementById("waAssistantStatus");
+    
+    let text = window.waMessageTemplate.replace(/\[الاسم\]/g, customer.name);
+    let cleanPhone = sanitizePhone(customer.phone);
+    
+    if(cleanPhone) {
+        let url = 'https://wa.me/' + cleanPhone + '?text=' + encodeURIComponent(text);
+        window.open(url, "_blank");
+    }
+    
+    window.waAssistantIndex++;
+    sendBtn.style.display = "none";
+    
+    const minDelay = parseInt(document.getElementById("waDelayMin").value) || 20;
+    const maxDelay = parseInt(document.getElementById("waDelayMax").value) || 40;
+    let delaySeconds = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
+    
+    statusText.style.color = "#e67e22";
+    
+    if(window.waAssistantTimer) clearInterval(window.waAssistantTimer);
+    window.waAssistantTimer = setInterval(() => {
+        delaySeconds--;
+        statusText.innerHTML = '<i class="fa-solid fa-hourglass-half"></i> حماية الحساب: يُرجى الانتظار ' + delaySeconds + ' ثانية...';
+        
+        if (delaySeconds <= 0) {
+            clearInterval(window.waAssistantTimer);
+            renderNextAssistantCustomer();
+        }
+    }, 1000);
+}
+
+function startWaPauseTimer() {
+    window.waIsPaused = true;
+    const statusText = document.getElementById("waAssistantStatus");
+    const sendBtn = document.getElementById("waSendNextBtn");
+    
+    sendBtn.style.display = "none";
+    statusText.style.color = "#c0392b";
+    
+    const pauseMins = parseInt(document.getElementById("waPauseMins").value) || 8;
+    let pauseSeconds = pauseMins * 60;
+    
+    if(window.waAssistantTimer) clearInterval(window.waAssistantTimer);
+    window.waAssistantTimer = setInterval(() => {
+        pauseSeconds--;
+        let m = Math.floor(pauseSeconds / 60);
+        let s = pauseSeconds % 60;
+        let sStr = s < 10 ? "0" + s : s;
+        statusText.innerHTML = '<i class="fa-solid fa-mug-hot"></i> استراحة أمان إجبارية! نعود بعد: ' + m + ':' + sStr;
+        
+        if (pauseSeconds <= 0) {
+            clearInterval(window.waAssistantTimer);
+            window.waIsPaused = false;
+            renderNextAssistantCustomer();
+        }
+    }, 1000);
+}
+
+function playBeep(times = 1) {
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let i = 0;
+        function beep() {
+            if(i >= times) return;
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.type = "sine";
+            oscillator.frequency.value = 800;
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            oscillator.start();
+            setTimeout(() => {
+                oscillator.stop();
+                i++;
+                setTimeout(beep, 200);
+            }, 150);
+        }
+        beep();
+    } catch(e) {}
+}
