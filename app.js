@@ -1,8 +1,11 @@
 // ==========================================
-// <i class=\'fa-solid fa-globe\'></i> العقل المدبر - سيستم كاندي كلوب (النسخة V13.6 - الشاملة والمحصنة)
+// <i class=\'fa-solid fa-globe\'></i> العقل المدبر - سيستم كاندي كلوب (النسخة V16.0 - الشاملة والمحصنة)
 // ==========================================
 
 const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbwi24io7fKY7nizjIutPBpQvZHBx1O28_hu91QVcdF7PLFqTJ48dNJqFPdbqRuGDKI3Uw/exec";
+
+// ⭐ V16: متغير المستخدم الحالي
+let currentUser = null;
 
 // ==========================================
 // 1. نظام الإشعارات (Toasts) وقفل الأزرار (Loading) والصوتيات
@@ -66,6 +69,11 @@ document.querySelectorAll('.nav-item').forEach(btn => {
         let targetElement = document.getElementById(targetId);
         if (targetElement) targetElement.classList.add('active');
         
+        // ⭐ V16: تحميل المستخدمين إذا تم فتح التاب
+        if (targetId === 'users-tab') {
+            loadUsersList();
+        }
+
         // Hide suspended button unless in create-tab
         const suspendedBtn = document.getElementById('openSuspendedBtn');
         if (suspendedBtn) {
@@ -167,9 +175,8 @@ window.onload = () => {
         loadDataFromServer();
     });
 
-    loadDataFromServer();
-    if (typeof updateSuspendedCount === 'function') updateSuspendedCount();
-    // <i class=\'fa-solid fa-star\'></i> V14.2: عداد المعلقات يُقرأ من السيرفر مباشرة بعد loadDataFromServer
+    // ⭐ V16: تحقق من الجلسة بدلاً من التحميل المباشر
+    checkSession();
 };
 
 function loadDataFromServer(customDate = null) {
@@ -177,7 +184,11 @@ function loadDataFromServer(customDate = null) {
     if (syncStatus) { syncStatus.innerText = "جاري التحميل..."; syncStatus.style.color = "#FF8C00"; }
 
     let fetchDate = customDate || currentFilterDate;
-    fetch(`${GOOGLE_SHEETS_URL}?date=${fetchDate}`)
+    
+    // ⭐ V16: إرسال الصلاحيات للباك إند
+    let permsParam = currentUser ? `&permissions=${encodeURIComponent(currentUser.permissions)}` : "";
+    
+    fetch(`${GOOGLE_SHEETS_URL}?date=${fetchDate}${permsParam}`)
         .then(res => res.json())
         .then(data => {
             if (syncStatus) { syncStatus.innerText = "متصل"; syncStatus.style.color = "#00C853"; }
@@ -7377,3 +7388,285 @@ window.reprintInvLog = function(logId) {
 };
 
 
+
+// ==========================================
+// â­گ V16: ظ†ط¸ط§ظ… ط§ظ„ط¬ظ„ط³ط§طھ ظˆط¥ط¯ط§ط±ط© ط§ظ„ظ…ط³طھط®ط¯ظ…ظٹظ†
+// ==========================================
+function checkSession() {
+    let stored = localStorage.getItem('cc_user');
+    if (stored) {
+        try {
+            currentUser = JSON.parse(stored);
+            document.getElementById('login-screen').style.display = 'none';
+            applyPermissions();
+            loadDataFromServer();
+            if (typeof updateSuspendedCount === 'function') updateSuspendedCount();
+        } catch (e) {
+            console.error("Invalid session", e);
+            showLogin();
+        }
+    } else {
+        showLogin();
+    }
+}
+
+function showLogin() {
+    document.getElementById('login-screen').style.display = 'flex';
+}
+
+window.handleLogin = function(e) {
+    e.preventDefault();
+    const user = document.getElementById('login-username').value;
+    const pass = document.getElementById('login-password').value;
+    const btn = document.getElementById('login-btn');
+    const err = document.getElementById('login-error');
+    
+    setBtnLoading(btn, true, "ط¬ط§ط±ظٹ ط§ظ„ط¯ط®ظˆظ„...");
+    err.style.display = 'none';
+    
+    fetch(`${GOOGLE_SHEETS_URL}?action=login&username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                currentUser = {
+                    username: data.username,
+                    displayName: data.displayName,
+                    permissions: data.permissions
+                };
+                localStorage.setItem('cc_user', JSON.stringify(currentUser));
+                document.getElementById('login-screen').style.display = 'none';
+                applyPermissions();
+                loadDataFromServer();
+                if (typeof updateSuspendedCount === 'function') updateSuspendedCount();
+                showToast(`ط£ظ‡ظ„ط§ظ‹ ط¨ظƒ ظٹط§ ${currentUser.displayName}`);
+            } else {
+                err.innerText = data.error || "ط®ط·ط£ ظپظٹ طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„";
+                err.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            err.innerText = "ظپط´ظ„ ط§ظ„ط§طھطµط§ظ„ ط¨ط§ظ„ط³ظٹط±ظپط±";
+            err.style.display = 'block';
+        })
+        .finally(() => {
+            setBtnLoading(btn, false, "طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„");
+        });
+};
+
+window.handleLogout = function() {
+    localStorage.removeItem('cc_user');
+    location.reload();
+};
+
+function applyPermissions() {
+    if (!currentUser) return;
+    
+    let headerLogoSub = document.querySelector('.logo-sub');
+    if (headerLogoSub) {
+        headerLogoSub.innerHTML = `ظ…ط±ط­ط¨ط§ظ‹ ${currentUser.displayName} <span style="font-size:0.7rem; color:#a5d6a7;">(${currentUser.permissions === 'ALL' ? 'ظ…ط¯ظٹط±' : 'ظ…ظˆط¸ظپ'})</span>`;
+    }
+
+    let isFullAccess = (currentUser.permissions === "ALL");
+    let perms = isFullAccess ? [] : currentUser.permissions.split(",");
+    
+    function hasPerm(p) { return isFullAccess || perms.includes(p); }
+    
+    document.querySelectorAll('.nav-item').forEach(btn => {
+        let target = btn.dataset.target;
+        if (!target) return;
+        let permKey = target.replace("-tab", "");
+        
+        if (permKey === "inventory-transfers") permKey = "inventory";
+        if (permKey === "price-tags") permKey = "pricetags";
+        if (permKey === "whatsapp-campaign") permKey = "whatsapp";
+        
+        // Always show users tab if full access
+        if (permKey === "users" && !isFullAccess) {
+            btn.style.display = "none";
+            return;
+        }
+        
+        if (hasPerm(permKey) || isFullAccess) {
+            btn.style.display = "flex";
+        } else {
+            btn.style.display = "none";
+        }
+    });
+
+    document.querySelectorAll('.menu-group').forEach(group => {
+        let visibleItems = Array.from(group.querySelectorAll('.nav-item')).filter(i => i.style.display !== "none");
+        if (visibleItems.length === 0) {
+            group.style.display = "none";
+        } else {
+            group.style.display = "block";
+        }
+    });
+
+    let firstVisibleBtn = document.querySelector('.nav-item[style*="display: flex"]');
+    if (firstVisibleBtn && (!hasPerm("create") && !isFullAccess)) {
+        setTimeout(() => firstVisibleBtn.click(), 100);
+    }
+}
+
+window.openAddUserModal = function() {
+    document.getElementById('user-mode').value = 'add';
+    document.getElementById('u-username').value = '';
+    document.getElementById('u-username').readOnly = false;
+    document.getElementById('u-displayname').value = '';
+    document.getElementById('u-password').value = '';
+    document.getElementById('u-password').required = true;
+    document.getElementById('u-pass-req').style.display = 'inline';
+    document.getElementById('u-status-group').style.display = 'none';
+    
+    document.querySelectorAll('input[name="u-perms"]').forEach(c => c.checked = false);
+    
+    document.getElementById('userModalTitle').innerText = 'ط¥ط¶ط§ظپط© ظ…ط³طھط®ط¯ظ… ط¬ط¯ظٹط¯';
+    document.getElementById('userModal').style.display = 'flex';
+};
+
+window.openEditUserModal = function(username, displayName, permsStr, status) {
+    document.getElementById('user-mode').value = 'edit';
+    document.getElementById('u-username').value = username;
+    document.getElementById('u-username').readOnly = true; 
+    document.getElementById('u-displayname').value = displayName;
+    document.getElementById('u-password').value = '';
+    document.getElementById('u-password').required = false; 
+    document.getElementById('u-pass-req').style.display = 'none';
+    
+    document.getElementById('u-status').value = status;
+    document.getElementById('u-status-group').style.display = 'block';
+    
+    let checkboxes = document.querySelectorAll('input[name="u-perms"]');
+    checkboxes.forEach(c => c.checked = false);
+    
+    if (permsStr === "ALL") {
+        document.querySelector('input[name="u-perms"][value="ALL"]').checked = true;
+        window.toggleAllPerms(document.querySelector('input[name="u-perms"][value="ALL"]'));
+    } else {
+        let pList = permsStr.split(",");
+        checkboxes.forEach(c => {
+            if (pList.includes(c.value)) c.checked = true;
+        });
+    }
+    
+    document.getElementById('userModalTitle').innerText = 'طھط¹ط¯ظٹظ„ ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ط³طھط®ط¯ظ…';
+    document.getElementById('userModal').style.display = 'flex';
+};
+
+window.toggleAllPerms = function(chk) {
+    let checkboxes = document.querySelectorAll('input[name="u-perms"]');
+    if (chk.checked) {
+        checkboxes.forEach(c => { if(c.value !== "ALL") { c.checked = true; c.disabled = true; } });
+    } else {
+        checkboxes.forEach(c => { if(c.value !== "ALL") { c.disabled = false; } });
+    }
+};
+
+window.handleUserSubmit = function(e) {
+    e.preventDefault();
+    const mode = document.getElementById('user-mode').value;
+    const username = document.getElementById('u-username').value;
+    const displayName = document.getElementById('u-displayname').value;
+    const password = document.getElementById('u-password').value;
+    const status = document.getElementById('u-status') ? document.getElementById('u-status').value : "ظ†ط´ط·";
+    
+    let perms = [];
+    if (document.querySelector('input[name="u-perms"][value="ALL"]').checked) {
+        perms = ["ALL"];
+    } else {
+        document.querySelectorAll('input[name="u-perms"]:checked').forEach(c => {
+            if (c.value !== "ALL") perms.push(c.value);
+        });
+    }
+    
+    if (perms.length === 0) {
+        showToast("ظٹط¬ط¨ ط§ط®طھظٹط§ط± طµظ„ط§ط­ظٹط© ظˆط§ط­ط¯ط© ط¹ظ„ظ‰ ط§ظ„ط£ظ‚ظ„", "error");
+        return;
+    }
+    
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    setBtnLoading(submitBtn, true, "ط¬ط§ط±ظٹ ط§ظ„ط­ظپط¸...");
+    
+    let formData = new FormData();
+    formData.append("action", mode === 'add' ? 'addUser' : 'updateUser');
+    formData.append("username", username);
+    formData.append("displayName", displayName);
+    formData.append("permissions", perms.join(","));
+    if (mode === 'add' || password !== "") formData.append("password", password);
+    if (mode === 'edit') formData.append("newPassword", password); 
+    if (mode === 'edit') formData.append("status", status);
+    
+    fetch(GOOGLE_SHEETS_URL, { method: "POST", body: formData })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(mode === 'add' ? "طھظ…طھ ط¥ط¶ط§ظپط© ط§ظ„ظ…ط³طھط®ط¯ظ… ط¨ظ†ط¬ط§ط­" : "طھظ… طھط¹ط¯ظٹظ„ ط§ظ„ظ…ط³طھط®ط¯ظ… ط¨ظ†ط¬ط§ط­");
+                document.getElementById('userModal').style.display = 'none';
+                window.loadUsersList();
+            } else {
+                showToast(data.error || "ط­ط¯ط« ط®ط·ط£ ط£ط«ظ†ط§ط، ط§ظ„ط­ظپط¸", "error");
+            }
+        })
+        .catch(e => showToast("ظپط´ظ„ ط§ظ„ط§طھطµط§ظ„ ط¨ط§ظ„ط³ظٹط±ظپط±", "error"))
+        .finally(() => setBtnLoading(submitBtn, false));
+};
+
+window.loadUsersList = function() {
+    let tbody = document.getElementById('usersTbody');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:20px;">ط¬ط§ط±ظٹ طھط­ظ…ظٹظ„ ط§ظ„ظ…ط³طھط®ط¯ظ…ظٹظ†...</td></tr>';
+    
+    fetch(`${GOOGLE_SHEETS_URL}?action=getUsers`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.users && data.users.length > 0) {
+                tbody.innerHTML = '';
+                data.users.forEach(u => {
+                    let permsBadge = u.permissions === "ALL" 
+                        ? `<span style="background:#1a237e; color:white; padding:2px 8px; border-radius:12px; font-size:0.8rem;">ظƒظ„ ط§ظ„طµظ„ط§ط­ظٹط§طھ</span>` 
+                        : u.permissions.split(",").map(p => `<span style="background:#e2e8f0; color:#475569; padding:2px 8px; border-radius:12px; font-size:0.8rem; margin:2px; display:inline-block;">${p}</span>`).join("");
+                        
+                    let statusBadge = u.status === "ظ†ط´ط·"
+                        ? `<span style="color:#059669; font-weight:bold;"><i class="fa-solid fa-check-circle"></i> ظ†ط´ط·</span>`
+                        : `<span style="color:#dc2626; font-weight:bold;"><i class="fa-solid fa-ban"></i> ظ…ظˆظ‚ظˆظپ</span>`;
+                        
+                    let tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="font-weight:bold;">${u.username}</td>
+                        <td>${u.displayName}</td>
+                        <td style="line-height:1.5;">${permsBadge}</td>
+                        <td>${statusBadge}</td>
+                        <td dir="ltr" style="font-size:0.9rem;">${u.lastLogin || '-'}</td>
+                        <td>
+                            <button class="interactive-btn" onclick="openEditUserModal('${u.username}', '${u.displayName}', '${u.permissions}', '${u.status}')" style="background:none; border:none; color:#3b82f6; cursor:pointer; font-size:1.1rem; margin:0 5px;" title="طھط¹ط¯ظٹظ„"><i class="fa-solid fa-pen-to-square"></i></button>
+                            ${u.username !== "admin" ? `<button class="interactive-btn" onclick="deleteUser('${u.username}')" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:1.1rem; margin:0 5px;" title="ط­ط°ظپ"><i class="fa-solid fa-trash"></i></button>` : ''}
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:20px;">ظ„ط§ ظٹظˆط¬ط¯ ظ…ط³طھط®ط¯ظ…ظٹظ†.</td></tr>';
+            }
+        })
+        .catch(e => {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#ef4444; padding:20px;">ظپط´ظ„ طھط­ظ…ظٹظ„ ط§ظ„ظ…ط³طھط®ط¯ظ…ظٹظ†.</td></tr>';
+        });
+};
+
+window.deleteUser = function(username) {
+    if(confirm(`ظ‡ظ„ ط£ظ†طھ ظ…طھط£ظƒط¯ ظ…ظ† ط­ط°ظپ ط§ظ„ظ…ط³طھط®ط¯ظ… ${username}طں`)) {
+        let formData = new FormData();
+        formData.append("action", "deleteUser");
+        formData.append("username", username);
+        fetch(GOOGLE_SHEETS_URL, { method: "POST", body: formData })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    showToast("طھظ… ط­ط°ظپ ط§ظ„ظ…ط³طھط®ط¯ظ…");
+                    window.loadUsersList();
+                } else {
+                    showToast(data.error || "ط®ط·ط£", "error");
+                }
+            });
+    }
+};

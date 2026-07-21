@@ -19,6 +19,22 @@
 </head>
 
 <body>
+    <!-- ⭐ V16: Login Screen -->
+    <div id="login-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-color, #f4f6f8); z-index:99999; display:flex; justify-content:center; align-items:center;">
+        <div style="background:white; padding:30px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.1); width:90%; max-width:400px; text-align:center;">
+            <div style="margin-bottom: 20px;">
+                <h1 style="color:var(--primary, #1a237e); margin:0; font-size: 2rem;">CANDY CLUB</h1>
+                <p style="color:#64748b; margin:5px 0 0 0; font-size: 0.9rem;">نظام الإدارة V16.0</p>
+            </div>
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <input type="text" id="login-username" placeholder="اسم المستخدم" required style="width:100%; padding:12px; margin-bottom:15px; border:1px solid #cbd5e1; border-radius:8px; font-family:inherit; text-align: right; box-sizing: border-box;">
+                <input type="password" id="login-password" placeholder="كلمة المرور" required style="width:100%; padding:12px; margin-bottom:20px; border:1px solid #cbd5e1; border-radius:8px; font-family:inherit; text-align: right; box-sizing: border-box;">
+                <button type="submit" id="login-btn" class="interactive-btn" style="width:100%; padding:12px; background:var(--primary, #1a237e); color:white; border:none; border-radius:8px; font-size:1.1rem; font-family:inherit; cursor:pointer;">تسجيل الدخول</button>
+            </form>
+            <div id="login-error" style="color:#ef4444; margin-top:15px; font-size:0.9rem; display:none; background: #fee2e2; padding: 10px; border-radius: 8px;"></div>
+        </div>
+    </div>
+
     <div id="offline-bar" style="display:none; background:#d32f2f; color:#fff; text-align:center; padding:8px; font-weight:bold; position:fixed; top:0; left:0; width:100%; z-index:10000;"><i class="fa-solid fa-triangle-exclamation"></i> عذراً، انقطع اتصالك بالإنترنت! تم قفل الحفظ مؤقتاً لحماية بياناتك.</div>
 
     <div id="toast-container" class="toast-container"></div>
@@ -599,6 +615,36 @@
                 </div>
                 <div id="moderatorsDashboardContainer" class="reports-grid" style="flex: 1; overflow-y: auto; display: grid; gap: 15px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); align-items: start;">
                     <p class="empty-msg">جاري تجميع البيانات...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ⭐ V16: Users Tab -->
+        <section id="users-tab" class="tab-pane">
+            <div class="section-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 class="section-title" style="margin: 0;"><i class="fa-solid fa-user-shield"></i> إدارة المستخدمين</h3>
+                    <button class="btn-primary interactive-btn" style="padding: 10px 15px; font-size: 0.9rem;" onclick="openAddUserModal()">
+                        <i class="fa-solid fa-user-plus"></i> مستخدم جديد
+                    </button>
+                </div>
+                
+                <div style="overflow-x: auto;">
+                    <table class="data-table" id="usersTable" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>اسم المستخدم</th>
+                                <th>الاسم الظاهر</th>
+                                <th>الصلاحيات</th>
+                                <th>الحالة</th>
+                                <th>آخر دخول</th>
+                                <th>إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTbody">
+                            <tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:20px;">جاري تحميل المستخدمين...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </section>
@@ -1457,7 +1503,17 @@
                     <button class="nav-item" data-target="settings-tab" style="color: #95a5a6;">
                         <span class="icon"><i class="fa-solid fa-gear"></i></span><span class="label">الإعدادات</span>
                     </button>
+                    <button class="nav-item" data-target="users-tab" style="color: #e91e63;">
+                        <span class="icon"><i class="fa-solid fa-user-shield"></i></span><span class="label">المستخدمين</span>
+                    </button>
                 </div>
+            </div>
+
+            <!-- زر تسجيل الخروج -->
+            <div style="margin-top: 30px; padding: 0 15px; padding-bottom: 20px;">
+                <button onclick="handleLogout()" class="interactive-btn" style="width: 100%; padding: 12px; background: #ffebee; color: #d32f2f; border: 1px solid #ffcdd2; border-radius: 8px; font-family: inherit; font-size: 1rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i class="fa-solid fa-right-from-bracket"></i> تسجيل خروج
+                </button>
             </div>
         </div>
     </nav>
@@ -1814,7 +1870,69 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <script src="app.js?v=24.37"></script>
+    <!-- ⭐ V16: User Modal -->
+    <div id="userModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 id="userModalTitle">إضافة مستخدم جديد</h3>
+                <button class="close-modal-btn" onclick="document.getElementById('userModal').style.display='none'"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="userForm" onsubmit="handleUserSubmit(event)">
+                <input type="hidden" id="user-mode" value="add">
+                
+                <div class="form-group">
+                    <label>اسم المستخدم (للدخول) <span style="color:red">*</span></label>
+                    <input type="text" id="u-username" class="form-input" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>الاسم الظاهر <span style="color:red">*</span></label>
+                    <input type="text" id="u-displayname" class="form-input" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>كلمة المرور <span id="u-pass-req" style="color:red">*</span></label>
+                    <input type="password" id="u-password" class="form-input" placeholder="اتركه فارغاً إذا لم ترد تغييره (في حالة التعديل)">
+                </div>
+
+                <div class="form-group" id="u-status-group" style="display:none;">
+                    <label>الحالة</label>
+                    <select id="u-status" class="form-input">
+                        <option value="نشط">نشط</option>
+                        <option value="موقوف">موقوف</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>الصلاحيات (الأقسام المسموح بها)</label>
+                    <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u-perms" value="ALL" onchange="toggleAllPerms(this)"> <strong>كل الصلاحيات (المدير)</strong></label>
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u-perms" value="create"> إنشاء طلب</label>
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u-perms" value="catalog"> الكتالوج والنواقص</label>
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u-perms" value="history"> السجل المباشر</label>
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u-perms" value="shipping"> الشحن والمناطق</label>
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u-perms" value="reports"> التقارير</label>
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u-perms" value="whatsapp"> حملات الواتساب</label>
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u-perms" value="moderators"> المودريتور</label>
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u-perms" value="settings"> الإعدادات</label>
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u-perms" value="customers"> العملاء</label>
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u-perms" value="inventory"> حركة المخازن</label>
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u-perms" value="expiry"> الصلاحيات</label>
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u-perms" value="pricetags"> كروت الأسعار</label>
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u-perms" value="financials"> حساب المناديب</label>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" class="btn-primary interactive-btn" style="flex: 1;"><i class="fa-solid fa-save"></i> حفظ</button>
+                    <button type="button" class="btn-outline interactive-btn" style="flex: 1;" onclick="document.getElementById('userModal').style.display='none'">إلغاء</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js?v=24.5" defer></script>
+</body>
 
 <!-- Inventory Stats Modal -->
 <div id="invStatsModal" class="modal-overlay" style="display: none; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 999999; animation: fadeIn 0.2s ease;">

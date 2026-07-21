@@ -260,9 +260,32 @@ function setupCandyClubUX() {
       archiveSheet.setFrozenRows(1);
   }
 
+  // ============================================================
+  // 10. شيت المستخدمين (نظام تسجيل الدخول والصلاحيات)
+  // ============================================================
+  var usersSheet = ss.getSheetByName("👥 المستخدمين");
+  if (!usersSheet) {
+      usersSheet = ss.insertSheet("👥 المستخدمين");
+      var usersHeaders = ["اسم المستخدم", "كلمة السر (مشفرة)", "الاسم الظاهر", "الصلاحيات", "الحالة", "آخر دخول"];
+      usersSheet.getRange(1, 1, 1, usersHeaders.length).setValues([usersHeaders])
+           .setBackground("#1a237e").setFontColor("white").setFontFamily(headerFont).setFontSize(14).setFontWeight("bold")
+           .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
+      usersSheet.setRowHeight(1, 45);
+      usersSheet.setFrozenRows(1);
+      usersSheet.setColumnWidth(1, 180);
+      usersSheet.setColumnWidth(2, 280);
+      usersSheet.setColumnWidth(3, 180);
+      usersSheet.setColumnWidth(4, 400);
+      usersSheet.setColumnWidth(5, 100);
+      usersSheet.setColumnWidth(6, 180);
+      // إضافة يوزر المدير الافتراضي
+      var defaultPass = hashPassword("admin123");
+      usersSheet.appendRow(["admin", defaultPass, "المدير", "ALL", "نشط", ""]);
+  }
+
   calculateFinancials();
 
-  SpreadsheetApp.getUi().alert("✅ تم التحديث الآمن للنظام الشامل V15.2 بنجاح بدون فقدان أي بيانات! وتم إنشاء أرشيف المبيعات.");
+  SpreadsheetApp.getUi().alert("✅ تم التحديث الآمن للنظام الشامل V16 بنجاح! تم إنشاء نظام المستخدمين والصلاحيات.");
 }
 
 // ============================================================
@@ -394,9 +417,83 @@ function getExpirySheet(ss) {
   return null;
 }
 
+// ============================================================
+// ⭐ V16: نظام المستخدمين والصلاحيات
+// ============================================================
+function hashPassword(password) {
+  var raw = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, password, Utilities.Charset.UTF_8);
+  var hash = '';
+  for (var i = 0; i < raw.length; i++) {
+    var byte = raw[i];
+    if (byte < 0) byte += 256;
+    var hex = byte.toString(16);
+    if (hex.length === 1) hex = '0' + hex;
+    hash += hex;
+  }
+  return hash;
+}
+
+function authenticateUser(username, password) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var usersSheet = ss.getSheetByName("👥 المستخدمين");
+  if (!usersSheet || usersSheet.getLastRow() < 2) {
+    return { success: false, error: "لا يوجد مستخدمين مسجلين. يرجى تشغيل إعداد النظام أولاً." };
+  }
+  var data = usersSheet.getDataRange().getValues();
+  var hashedPass = hashPassword(password);
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][0].toString().trim() === username.trim()) {
+      if (data[i][4] !== "نشط") {
+        return { success: false, error: "هذا الحساب موقوف. تواصل مع المدير." };
+      }
+      if (data[i][1].toString().trim() === hashedPass) {
+        // تحديث آخر دخول
+        usersSheet.getRange(i + 1, 6).setValue(Utilities.formatDate(new Date(), "Africa/Cairo", "yyyy-MM-dd hh:mm a"));
+        return {
+          success: true,
+          username: data[i][0],
+          displayName: data[i][2],
+          permissions: data[i][3].toString(),
+          status: data[i][4]
+        };
+      } else {
+        return { success: false, error: "كلمة السر غير صحيحة." };
+      }
+    }
+  }
+  return { success: false, error: "اسم المستخدم غير موجود." };
+}
+
 function doGet(e) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var action = e.parameter.action;
+
+  // ⭐ V16: تسجيل الدخول
+  if (action === "login") {
+    var result = authenticateUser(e.parameter.username || "", e.parameter.password || "");
+    return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  // ⭐ V16: جلب قائمة المستخدمين (للمدير)
+  if (action === "getUsers") {
+    var usersSheet = ss.getSheetByName("👥 المستخدمين");
+    var users = [];
+    if (usersSheet && usersSheet.getLastRow() > 1) {
+      var uData = usersSheet.getDataRange().getValues();
+      for (var i = 1; i < uData.length; i++) {
+        if (uData[i][0]) {
+          users.push({
+            username: uData[i][0],
+            displayName: uData[i][2],
+            permissions: uData[i][3],
+            status: uData[i][4],
+            lastLogin: uData[i][5]
+          });
+        }
+      }
+    }
+    return ContentService.createTextOutput(JSON.stringify({ users: users })).setMimeType(ContentService.MimeType.JSON);
+  }
 
   // ⭐ جلب بيانات المخازن والأذونات
   if (action === "getInventoryLogs") {
@@ -515,22 +612,29 @@ function doGet(e) {
   // ============================================================
   // الـ request الرئيسي
   // ============================================================
-  var ordersSheet  = ss.getSheetByName("📝 الطلبات");
-  var settingsSheet = ss.getSheetByName("⚙️ الإعدادات والشحن");
-  var catalogSheet = ss.getSheetByName("📦 الكتالوج");
-  var oosSheet     = ss.getSheetByName("⏳ النواقص");
-  var finSheet     = ss.getSheetByName("📊 الحسابات والمالية");
-  var customerSheet = ss.getSheetByName("👥 قاعدة العملاء");
-  var draftsSheet  = ss.getSheetByName("📂 المعلقات");
+  
+  // ⭐ V16: قراءة الصلاحيات المرسلة من الفرونت
+  var userPerms = (e.parameter.permissions || "ALL").toString();
+  var isFullAccess = (userPerms === "ALL");
+  var permsList = isFullAccess ? [] : userPerms.split(",");
+  
+  function hasPerm(perm) {
+    if (isFullAccess) return true;
+    return permsList.indexOf(perm) !== -1;
+  }
+  
+  var ordersSheet  = (hasPerm("create") || hasPerm("history") || hasPerm("reports") || hasPerm("financials") || hasPerm("shipping") || hasPerm("customers")) ? ss.getSheetByName("📝 الطلبات") : null;
+  var settingsSheet = (hasPerm("shipping") || hasPerm("create") || hasPerm("moderators")) ? ss.getSheetByName("⚙️ الإعدادات والشحن") : null;
+  var catalogSheet = hasPerm("catalog") ? ss.getSheetByName("📦 الكتالوج") : null;
+  var oosSheet     = hasPerm("catalog") ? ss.getSheetByName("⏳ النواقص") : null;
+  var finSheet     = hasPerm("financials") ? ss.getSheetByName("📊 الحسابات والمالية") : null;
+  var customerSheet = hasPerm("customers") ? ss.getSheetByName("👥 قاعدة العملاء") : null;
+  var draftsSheet  = hasPerm("create") ? ss.getSheetByName("📂 المعلقات") : null;
 
   // ⭐ V15.1: نحدد الشهر المطلوب للتقرير
-  // - إذا كان date = "2026-06-01" فمعناه فلتر السجل على يوم 1 يونيو
-  // - currentMonth يُستخدم لحساب إحصائيات الشهر
   var filterDate   = e.parameter.date || Utilities.formatDate(new Date(), "Africa/Cairo", "yyyy-MM-dd");
-  var currentMonth = filterDate.substring(0, 7); // "2026-06"
+  var currentMonth = filterDate.substring(0, 7);
 
-  // ⭐ هل هذا request لتقرير شهر معين (أول يوم في الشهر)؟
-  // إذا كان filterDate ينتهي بـ "-01" فغالباً طلب تقرير شهري مستقل
   var isMonthlyReportRequest = filterDate.endsWith("-01");
 
   var response = { 
@@ -1187,6 +1291,56 @@ function doPost(e) {
 
       invSheet.appendRow([logId, from, to, regName, timestamp, items, notes]);
       return ContentService.createTextOutput("success");
+    }
+
+    // ⭐ V16: إدارة المستخدمين
+    else if (action === "addUser") {
+      var usersSheet = ss.getSheetByName("👥 المستخدمين");
+      if (!usersSheet) return ContentService.createTextOutput(JSON.stringify({success: false, error: "شيت المستخدمين غير موجود"})).setMimeType(ContentService.MimeType.JSON);
+      // التحقق من عدم تكرار اسم المستخدم
+      var uData = usersSheet.getDataRange().getValues();
+      for (var u = 1; u < uData.length; u++) {
+        if (uData[u][0].toString().trim() === e.parameter.username.trim()) {
+          return ContentService.createTextOutput(JSON.stringify({success: false, error: "اسم المستخدم موجود بالفعل"})).setMimeType(ContentService.MimeType.JSON);
+        }
+      }
+      var hashedPass = hashPassword(e.parameter.password);
+      usersSheet.appendRow([e.parameter.username, hashedPass, e.parameter.displayName, e.parameter.permissions, "نشط", ""]);
+      return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    else if (action === "updateUser") {
+      var usersSheet = ss.getSheetByName("👥 المستخدمين");
+      if (!usersSheet) return ContentService.createTextOutput(JSON.stringify({success: false, error: "شيت المستخدمين غير موجود"})).setMimeType(ContentService.MimeType.JSON);
+      var uData = usersSheet.getDataRange().getValues();
+      for (var u = 1; u < uData.length; u++) {
+        if (uData[u][0].toString().trim() === e.parameter.username.trim()) {
+          if (e.parameter.displayName) usersSheet.getRange(u + 1, 3).setValue(e.parameter.displayName);
+          if (e.parameter.permissions) usersSheet.getRange(u + 1, 4).setValue(e.parameter.permissions);
+          if (e.parameter.status) usersSheet.getRange(u + 1, 5).setValue(e.parameter.status);
+          if (e.parameter.newPassword && e.parameter.newPassword !== "") {
+            usersSheet.getRange(u + 1, 2).setValue(hashPassword(e.parameter.newPassword));
+          }
+          return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({success: false, error: "المستخدم غير موجود"})).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    else if (action === "deleteUser") {
+      var usersSheet = ss.getSheetByName("👥 المستخدمين");
+      if (!usersSheet) return ContentService.createTextOutput(JSON.stringify({success: false, error: "شيت المستخدمين غير موجود"})).setMimeType(ContentService.MimeType.JSON);
+      if (e.parameter.username === "admin") {
+        return ContentService.createTextOutput(JSON.stringify({success: false, error: "لا يمكن حذف حساب المدير"})).setMimeType(ContentService.MimeType.JSON);
+      }
+      var uData = usersSheet.getDataRange().getValues();
+      for (var u = 1; u < uData.length; u++) {
+        if (uData[u][0].toString().trim() === e.parameter.username.trim()) {
+          usersSheet.deleteRow(u + 1);
+          return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({success: false, error: "المستخدم غير موجود"})).setMimeType(ContentService.MimeType.JSON);
     }
 
   } finally { lock.releaseLock(); }
