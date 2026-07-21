@@ -7509,12 +7509,7 @@ window.handleLogin = function(e) {
     // ⭐ Hardcoded Admin Login
     if (user === "badr" && pass === "01210351419") {
         let isAdminPage = window.location.pathname.toLowerCase().includes('admin.html');
-        if (!isAdminPage) {
-            err.innerText = "أنت مدير! يرجى الدخول من صفحة الإدارة (admin.html).";
-            err.style.display = 'block';
-            setBtnLoading(btn, false, "تسجيل الدخول");
-            return;
-        }
+        // Admin can login anywhere
         currentUser = {
             username: "badr",
             displayName: "المدير العام",
@@ -7542,11 +7537,7 @@ window.handleLogin = function(e) {
                     return;
                 }
                 
-                if (!isAdminPage && data.permissions === "ALL") {
-                    err.innerText = "أنت مدير! يرجى الدخول من صفحة الإدارة (admin.html).";
-                    err.style.display = 'block';
-                    return;
-                }
+                // Note: ALL users can login to index.html regardless of roles now
 
                 currentUser = {
                     username: data.username,
@@ -7583,9 +7574,10 @@ function applyPermissions() {
     
     let headerLogoSub = document.querySelector('.logo-sub');
     if (headerLogoSub) {
-        headerLogoSub.innerHTML = `مرحباً ${currentUser.displayName} <span style="font-size:0.7rem; color:#a5d6a7;">(${currentUser.permissions === 'ALL' ? 'مدير' : 'موظف'})</span>`;
+        headerLogoSub.innerHTML = `مرحباً ${currentUser.displayName}`;
     }
 
+    // Keep ALL logic JUST for the hardcoded local 'badr' admin
     let isFullAccess = (currentUser.permissions === "ALL");
     let perms = isFullAccess ? [] : currentUser.permissions.split(",");
     
@@ -7659,28 +7651,16 @@ window.openEditUserModal = function(username, displayName, permsStr, status) {
     let checkboxes = document.querySelectorAll('input[name="u-perms"]');
     checkboxes.forEach(c => c.checked = false);
     
-    if (permsStr === "ALL") {
-        document.querySelector('input[name="u-perms"][value="ALL"]').checked = true;
-        window.toggleAllPerms(document.querySelector('input[name="u-perms"][value="ALL"]'));
-    } else {
-        let pList = permsStr.split(",");
-        checkboxes.forEach(c => {
-            if (pList.includes(c.value)) c.checked = true;
-        });
-    }
+    let pList = permsStr.split(",");
+    checkboxes.forEach(c => {
+        if (pList.includes(c.value)) c.checked = true;
+    });
     
     document.getElementById('userModalTitle').innerText = 'تعديل بيانات المستخدم';
     document.getElementById('userModal').style.display = 'flex';
 };
 
-window.toggleAllPerms = function(chk) {
-    let checkboxes = document.querySelectorAll('input[name="u-perms"]');
-    if (chk.checked) {
-        checkboxes.forEach(c => { if(c.value !== "ALL") { c.checked = true; c.disabled = true; } });
-    } else {
-        checkboxes.forEach(c => { if(c.value !== "ALL") { c.disabled = false; } });
-    }
-};
+
 
 window.handleUserSubmit = function(e) {
     e.preventDefault();
@@ -7691,13 +7671,9 @@ window.handleUserSubmit = function(e) {
     const status = document.getElementById('u-status') ? document.getElementById('u-status').value : "نشط";
     
     let perms = [];
-    if (document.querySelector('input[name="u-perms"][value="ALL"]').checked) {
-        perms = ["ALL"];
-    } else {
-        document.querySelectorAll('input[name="u-perms"]:checked').forEach(c => {
-            if (c.value !== "ALL") perms.push(c.value);
-        });
-    }
+    document.querySelectorAll('input[name="u-perms"]:checked').forEach(c => {
+        perms.push(c.value);
+    });
     
     if (perms.length === 0) {
         showToast("يجب اختيار صلاحية واحدة على الأقل", "error");
@@ -7802,17 +7778,4 @@ window.togglePermCard = function(label) {
     }, 10);
 };
 
-let originalToggleAllPerms = window.toggleAllPerms;
-window.toggleAllPerms = function(chk) {
-    originalToggleAllPerms(chk);
-    setTimeout(() => {
-        document.querySelectorAll('.perm-card').forEach(card => {
-            let innerChk = card.querySelector('input[type="checkbox"]');
-            if (innerChk && innerChk.checked) {
-                card.classList.add('active-perm');
-            } else {
-                card.classList.remove('active-perm');
-            }
-        });
-    }, 20);
-};
+
