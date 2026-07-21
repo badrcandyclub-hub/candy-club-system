@@ -7159,11 +7159,7 @@ function handleLogin(user, pass, btn, err) {
                     return;
                 }
                 
-                if (!isAdminPage && data.permissions === "ALL") {
-                    err.innerText = "أنت مدير! يرجى الدخول من صفحة الإدارة (admin.html).";
-                    err.style.display = 'block';
-                    return;
-                }
+                // Note: ALL users can login to index.html regardless of roles now
 
                 currentUser = {
                     username: data.username,
