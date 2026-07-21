@@ -1,4 +1,4 @@
-// ==========================================
+﻿// ==========================================
 // <i class=\'fa-solid fa-globe\'></i> العقل المدبر - سيستم كاندي كلوب (النسخة V16.0 - الشاملة والمحصنة)
 // ==========================================
 
@@ -7113,6 +7113,83 @@ function renderInventoryArchive(logs) {
     });
 }
 
+// ==========================================
+// ⭐ V16: نظام الجلسات وإدارة المستخدمين
+// ==========================================
+function checkSession() {
+    let stored = localStorage.getItem('cc_user');
+    if (stored) {
+        try {
+            currentUser = JSON.parse(stored);
+            
+            let isAdminPage = window.location.pathname.toLowerCase().includes('admin.html');
+            if (isAdminPage && currentUser.permissions !== "ALL") {
+                console.warn("Unauthorized access to admin panel.");
+                localStorage.removeItem('cc_user');
+                currentUser = null;
+                showLogin();
+                return;
+            }
+            
+            document.getElementById('login-screen').style.display = 'none';
+            applyPermissions();
+            loadDataFromServer();
+            if (typeof updateSuspendedCount === 'function') updateSuspendedCount();
+        } catch (e) {
+            console.error("Invalid session", e);
+            showLogin();
+        }
+    } else {
+        showLogin();
+    }
+}
+
+function handleLogin(user, pass, btn, err) {
+    setBtnLoading(btn, true, "جاري الدخول...");
+    
+    fetch(`${GOOGLE_SHEETS_URL}?action=login&username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                let isAdminPage = window.location.pathname.toLowerCase().includes('admin.html');
+                
+                if (isAdminPage && data.permissions !== "ALL") {
+                    err.innerText = "عذراً، هذه اللوحة مخصصة للمديرين فقط.";
+                    err.style.display = 'block';
+                    return;
+                }
+                
+                if (!isAdminPage && data.permissions === "ALL") {
+                    err.innerText = "أنت مدير! يرجى الدخول من صفحة الإدارة (admin.html).";
+                    err.style.display = 'block';
+                    return;
+                }
+
+                currentUser = {
+                    username: data.username,
+                    displayName: data.displayName,
+                    permissions: data.permissions
+                };
+                localStorage.setItem('cc_user', JSON.stringify(currentUser));
+                document.getElementById('login-screen').style.display = 'none';
+                applyPermissions();
+                loadDataFromServer();
+                if (typeof updateSuspendedCount === 'function') updateSuspendedCount();
+                showToast(`أهلاً بك يا ${currentUser.displayName}`);
+            } else {
+                err.innerText = data.error || "خطأ في تسجيل الدخول";
+                err.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            err.innerText = "فشل الاتصال بالسيرفر";
+            err.style.display = 'block';
+        })
+        .finally(() => {
+            setBtnLoading(btn, false, "تسجيل الدخول");
+        });
+}
+
 function filterAndRenderArchive() {
     let q = document.getElementById('invSearchInput') ? document.getElementById('invSearchInput').value.trim() : '';
     let dateQ = document.getElementById('invSearchDate') ? document.getElementById('invSearchDate').value : '';
@@ -7388,15 +7465,24 @@ window.reprintInvLog = function(logId) {
 };
 
 
-
 // ==========================================
-// â­گ V16: ظ†ط¸ط§ظ… ط§ظ„ط¬ظ„ط³ط§طھ ظˆط¥ط¯ط§ط±ط© ط§ظ„ظ…ط³طھط®ط¯ظ…ظٹظ†
+// ⭐ V16: نظام الجلسات وإدارة المستخدمين
 // ==========================================
 function checkSession() {
     let stored = localStorage.getItem('cc_user');
     if (stored) {
         try {
             currentUser = JSON.parse(stored);
+            
+            let isAdminPage = window.location.pathname.toLowerCase().includes('admin.html');
+            if (isAdminPage && currentUser.permissions !== "ALL") {
+                console.warn("Unauthorized access to admin panel.");
+                localStorage.removeItem('cc_user');
+                currentUser = null;
+                showLogin();
+                return;
+            }
+            
             document.getElementById('login-screen').style.display = 'none';
             applyPermissions();
             loadDataFromServer();
@@ -7421,13 +7507,27 @@ window.handleLogin = function(e) {
     const btn = document.getElementById('login-btn');
     const err = document.getElementById('login-error');
     
-    setBtnLoading(btn, true, "ط¬ط§ط±ظٹ ط§ظ„ط¯ط®ظˆظ„...");
+    setBtnLoading(btn, true, "جاري الدخول...");
     err.style.display = 'none';
     
     fetch(`${GOOGLE_SHEETS_URL}?action=login&username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`)
         .then(res => res.json())
         .then(data => {
             if (data.success) {
+                let isAdminPage = window.location.pathname.toLowerCase().includes('admin.html');
+                
+                if (isAdminPage && data.permissions !== "ALL") {
+                    err.innerText = "عذراً، هذه اللوحة مخصصة للمديرين فقط.";
+                    err.style.display = 'block';
+                    return;
+                }
+                
+                if (!isAdminPage && data.permissions === "ALL") {
+                    err.innerText = "أنت مدير! يرجى الدخول من صفحة الإدارة (admin.html).";
+                    err.style.display = 'block';
+                    return;
+                }
+
                 currentUser = {
                     username: data.username,
                     displayName: data.displayName,
@@ -7438,24 +7538,24 @@ window.handleLogin = function(e) {
                 applyPermissions();
                 loadDataFromServer();
                 if (typeof updateSuspendedCount === 'function') updateSuspendedCount();
-                showToast(`ط£ظ‡ظ„ط§ظ‹ ط¨ظƒ ظٹط§ ${currentUser.displayName}`);
+                showToast(`أهلاً بك يا ${currentUser.displayName}`);
             } else {
-                err.innerText = data.error || "ط®ط·ط£ ظپظٹ طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„";
+                err.innerText = data.error || "خطأ في تسجيل الدخول";
                 err.style.display = 'block';
             }
         })
         .catch(error => {
-            err.innerText = "ظپط´ظ„ ط§ظ„ط§طھطµط§ظ„ ط¨ط§ظ„ط³ظٹط±ظپط±";
+            err.innerText = "فشل الاتصال بالسيرفر";
             err.style.display = 'block';
         })
         .finally(() => {
-            setBtnLoading(btn, false, "طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„");
+            setBtnLoading(btn, false, "تسجيل الدخول");
         });
 };
 
 window.handleLogout = function() {
     localStorage.removeItem('cc_user');
-    location.reload();
+    window.location.reload();
 };
 
 function applyPermissions() {
@@ -7463,7 +7563,7 @@ function applyPermissions() {
     
     let headerLogoSub = document.querySelector('.logo-sub');
     if (headerLogoSub) {
-        headerLogoSub.innerHTML = `ظ…ط±ط­ط¨ط§ظ‹ ${currentUser.displayName} <span style="font-size:0.7rem; color:#a5d6a7;">(${currentUser.permissions === 'ALL' ? 'ظ…ط¯ظٹط±' : 'ظ…ظˆط¸ظپ'})</span>`;
+        headerLogoSub.innerHTML = `مرحباً ${currentUser.displayName} <span style="font-size:0.7rem; color:#a5d6a7;">(${currentUser.permissions === 'ALL' ? 'مدير' : 'موظف'})</span>`;
     }
 
     let isFullAccess = (currentUser.permissions === "ALL");
@@ -7520,7 +7620,7 @@ window.openAddUserModal = function() {
     
     document.querySelectorAll('input[name="u-perms"]').forEach(c => c.checked = false);
     
-    document.getElementById('userModalTitle').innerText = 'ط¥ط¶ط§ظپط© ظ…ط³طھط®ط¯ظ… ط¬ط¯ظٹط¯';
+    document.getElementById('userModalTitle').innerText = 'إضافة مستخدم جديد';
     document.getElementById('userModal').style.display = 'flex';
 };
 
@@ -7549,7 +7649,7 @@ window.openEditUserModal = function(username, displayName, permsStr, status) {
         });
     }
     
-    document.getElementById('userModalTitle').innerText = 'طھط¹ط¯ظٹظ„ ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ط³طھط®ط¯ظ…';
+    document.getElementById('userModalTitle').innerText = 'تعديل بيانات المستخدم';
     document.getElementById('userModal').style.display = 'flex';
 };
 
@@ -7568,7 +7668,7 @@ window.handleUserSubmit = function(e) {
     const username = document.getElementById('u-username').value;
     const displayName = document.getElementById('u-displayname').value;
     const password = document.getElementById('u-password').value;
-    const status = document.getElementById('u-status') ? document.getElementById('u-status').value : "ظ†ط´ط·";
+    const status = document.getElementById('u-status') ? document.getElementById('u-status').value : "نشط";
     
     let perms = [];
     if (document.querySelector('input[name="u-perms"][value="ALL"]').checked) {
@@ -7580,12 +7680,12 @@ window.handleUserSubmit = function(e) {
     }
     
     if (perms.length === 0) {
-        showToast("ظٹط¬ط¨ ط§ط®طھظٹط§ط± طµظ„ط§ط­ظٹط© ظˆط§ط­ط¯ط© ط¹ظ„ظ‰ ط§ظ„ط£ظ‚ظ„", "error");
+        showToast("يجب اختيار صلاحية واحدة على الأقل", "error");
         return;
     }
     
     const submitBtn = e.target.querySelector('button[type="submit"]');
-    setBtnLoading(submitBtn, true, "ط¬ط§ط±ظٹ ط§ظ„ط­ظپط¸...");
+    setBtnLoading(submitBtn, true, "جاري الحفظ...");
     
     let formData = new FormData();
     formData.append("action", mode === 'add' ? 'addUser' : 'updateUser');
@@ -7600,21 +7700,21 @@ window.handleUserSubmit = function(e) {
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                showToast(mode === 'add' ? "طھظ…طھ ط¥ط¶ط§ظپط© ط§ظ„ظ…ط³طھط®ط¯ظ… ط¨ظ†ط¬ط§ط­" : "طھظ… طھط¹ط¯ظٹظ„ ط§ظ„ظ…ط³طھط®ط¯ظ… ط¨ظ†ط¬ط§ط­");
+                showToast(mode === 'add' ? "تمت إضافة المستخدم بنجاح" : "تم تعديل المستخدم بنجاح");
                 document.getElementById('userModal').style.display = 'none';
                 window.loadUsersList();
             } else {
-                showToast(data.error || "ط­ط¯ط« ط®ط·ط£ ط£ط«ظ†ط§ط، ط§ظ„ط­ظپط¸", "error");
+                showToast(data.error || "حدث خطأ أثناء الحفظ", "error");
             }
         })
-        .catch(e => showToast("ظپط´ظ„ ط§ظ„ط§طھطµط§ظ„ ط¨ط§ظ„ط³ظٹط±ظپط±", "error"))
+        .catch(e => showToast("فشل الاتصال بالسيرفر", "error"))
         .finally(() => setBtnLoading(submitBtn, false));
 };
 
 window.loadUsersList = function() {
     let tbody = document.getElementById('usersTbody');
     if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:20px;">ط¬ط§ط±ظٹ طھط­ظ…ظٹظ„ ط§ظ„ظ…ط³طھط®ط¯ظ…ظٹظ†...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:20px;">جاري تحميل المستخدمين...</td></tr>';
     
     fetch(`${GOOGLE_SHEETS_URL}?action=getUsers`)
         .then(res => res.json())
@@ -7623,12 +7723,12 @@ window.loadUsersList = function() {
                 tbody.innerHTML = '';
                 data.users.forEach(u => {
                     let permsBadge = u.permissions === "ALL" 
-                        ? `<span style="background:#1a237e; color:white; padding:2px 8px; border-radius:12px; font-size:0.8rem;">ظƒظ„ ط§ظ„طµظ„ط§ط­ظٹط§طھ</span>` 
+                        ? `<span style="background:#1a237e; color:white; padding:2px 8px; border-radius:12px; font-size:0.8rem;">كل الصلاحيات</span>` 
                         : u.permissions.split(",").map(p => `<span style="background:#e2e8f0; color:#475569; padding:2px 8px; border-radius:12px; font-size:0.8rem; margin:2px; display:inline-block;">${p}</span>`).join("");
                         
-                    let statusBadge = u.status === "ظ†ط´ط·"
-                        ? `<span style="color:#059669; font-weight:bold;"><i class="fa-solid fa-check-circle"></i> ظ†ط´ط·</span>`
-                        : `<span style="color:#dc2626; font-weight:bold;"><i class="fa-solid fa-ban"></i> ظ…ظˆظ‚ظˆظپ</span>`;
+                    let statusBadge = u.status === "نشط"
+                        ? `<span style="color:#059669; font-weight:bold;"><i class="fa-solid fa-check-circle"></i> نشط</span>`
+                        : `<span style="color:#dc2626; font-weight:bold;"><i class="fa-solid fa-ban"></i> موقوف</span>`;
                         
                     let tr = document.createElement('tr');
                     tr.innerHTML = `
@@ -7638,23 +7738,23 @@ window.loadUsersList = function() {
                         <td>${statusBadge}</td>
                         <td dir="ltr" style="font-size:0.9rem;">${u.lastLogin || '-'}</td>
                         <td>
-                            <button class="interactive-btn" onclick="openEditUserModal('${u.username}', '${u.displayName}', '${u.permissions}', '${u.status}')" style="background:none; border:none; color:#3b82f6; cursor:pointer; font-size:1.1rem; margin:0 5px;" title="طھط¹ط¯ظٹظ„"><i class="fa-solid fa-pen-to-square"></i></button>
-                            ${u.username !== "admin" ? `<button class="interactive-btn" onclick="deleteUser('${u.username}')" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:1.1rem; margin:0 5px;" title="ط­ط°ظپ"><i class="fa-solid fa-trash"></i></button>` : ''}
+                            <button class="interactive-btn" onclick="openEditUserModal('${u.username}', '${u.displayName}', '${u.permissions}', '${u.status}')" style="background:none; border:none; color:#3b82f6; cursor:pointer; font-size:1.1rem; margin:0 5px;" title="تعديل"><i class="fa-solid fa-pen-to-square"></i></button>
+                            ${u.username !== "admin" ? `<button class="interactive-btn" onclick="deleteUser('${u.username}')" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:1.1rem; margin:0 5px;" title="حذف"><i class="fa-solid fa-trash"></i></button>` : ''}
                         </td>
                     `;
                     tbody.appendChild(tr);
                 });
             } else {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:20px;">ظ„ط§ ظٹظˆط¬ط¯ ظ…ط³طھط®ط¯ظ…ظٹظ†.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:20px;">لا يوجد مستخدمين.</td></tr>';
             }
         })
         .catch(e => {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#ef4444; padding:20px;">ظپط´ظ„ طھط­ظ…ظٹظ„ ط§ظ„ظ…ط³طھط®ط¯ظ…ظٹظ†.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#ef4444; padding:20px;">فشل تحميل المستخدمين.</td></tr>';
         });
 };
 
 window.deleteUser = function(username) {
-    if(confirm(`ظ‡ظ„ ط£ظ†طھ ظ…طھط£ظƒط¯ ظ…ظ† ط­ط°ظپ ط§ظ„ظ…ط³طھط®ط¯ظ… ${username}طں`)) {
+    if(confirm(`هل أنت متأكد من حذف المستخدم ${username}؟`)) {
         let formData = new FormData();
         formData.append("action", "deleteUser");
         formData.append("username", username);
@@ -7662,11 +7762,12 @@ window.deleteUser = function(username) {
             .then(res => res.json())
             .then(data => {
                 if(data.success) {
-                    showToast("طھظ… ط­ط°ظپ ط§ظ„ظ…ط³طھط®ط¯ظ…");
+                    showToast("تم حذف المستخدم");
                     window.loadUsersList();
                 } else {
-                    showToast(data.error || "ط®ط·ط£", "error");
+                    showToast(data.error || "خطأ", "error");
                 }
             });
     }
 };
+
