@@ -7600,8 +7600,20 @@ function applyPermissions() {
         
         if (hasPerm(permKey) || isFullAccess) {
             btn.style.display = "flex";
+            btn.classList.remove('locked-nav-item');
+            btn.onclick = null; // restore normal click
         } else {
-            btn.style.display = "none";
+            btn.style.display = "flex"; // Keep it visible for marketing!
+            btn.classList.add('locked-nav-item');
+            btn.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (window.showToast) {
+                    window.showToast("ليس لديك صلاحية لفتح هذه الشاشة. تواصل مع الإدارة للإشتراك 🔒", "error");
+                } else {
+                    alert("ليس لديك صلاحية لفتح هذه الشاشة. تواصل مع الإدارة للإشتراك 🔒");
+                }
+            };
         }
     });
 
@@ -7636,12 +7648,12 @@ window.openAddUserModal = function() {
     document.getElementById('userModal').style.display = 'flex';
 };
 
-window.openEditUserModal = function(username, displayName, permsStr, status) {
+window.openEditUserModal = function(username, displayName, permsStr, status, password) {
     document.getElementById('user-mode').value = 'edit';
     document.getElementById('u-username').value = username;
     document.getElementById('u-username').readOnly = true; 
     document.getElementById('u-displayname').value = displayName;
-    document.getElementById('u-password').value = '';
+    document.getElementById('u-password').value = password || '';
     document.getElementById('u-password').required = false; 
     document.getElementById('u-pass-req').style.display = 'none';
     
@@ -7734,7 +7746,7 @@ window.loadUsersList = function() {
                         <td>${statusBadge}</td>
                         <td dir="ltr" style="font-size:0.9rem;">${u.lastLogin || '-'}</td>
                         <td>
-                            <button class="interactive-btn" onclick="openEditUserModal('${u.username}', '${u.displayName}', '${u.permissions}', '${u.status}')" style="background:none; border:none; color:#3b82f6; cursor:pointer; font-size:1.1rem; margin:0 5px;" title="تعديل"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button class="interactive-btn" onclick="openEditUserModal('${u.username}', '${u.displayName}', '${u.permissions}', '${u.status}', '${u.password}')" style="background:none; border:none; color:#3b82f6; cursor:pointer; font-size:1.1rem; margin:0 5px;" title="تعديل"><i class="fa-solid fa-pen-to-square"></i></button>
                             ${u.username !== "admin" ? `<button class="interactive-btn" onclick="deleteUser('${u.username}')" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:1.1rem; margin:0 5px;" title="حذف"><i class="fa-solid fa-trash"></i></button>` : ''}
                         </td>
                     `;

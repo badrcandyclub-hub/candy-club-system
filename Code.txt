@@ -278,9 +278,9 @@ function setupCandyClubUX() {
       usersSheet.setColumnWidth(4, 400);
       usersSheet.setColumnWidth(5, 100);
       usersSheet.setColumnWidth(6, 180);
-      // حساب المدير الافتراضي
-      var defaultPass = hashPassword("01210351419");
-      usersSheet.appendRow(["badr", defaultPass, "المدير", "ALL", "نشط", ""]);
+      // الحساب الافتراضي
+      var defaultPass = "01210351419";
+      usersSheet.appendRow(["badr", defaultPass, "المدير العام", "ALL", "نشط", ""]);
   }
 
   calculateFinancials();
@@ -420,18 +420,6 @@ function getExpirySheet(ss) {
 // ============================================================
 // ⭐ V16: نظام المستخدمين والصلاحيات
 // ============================================================
-function hashPassword(password) {
-  var raw = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, password, Utilities.Charset.UTF_8);
-  var hash = '';
-  for (var i = 0; i < raw.length; i++) {
-    var byte = raw[i];
-    if (byte < 0) byte += 256;
-    var hex = byte.toString(16);
-    if (hex.length === 1) hex = '0' + hex;
-    hash += hex;
-  }
-  return hash;
-}
 
 function authenticateUser(username, password) {
   // ⭐ Hardcoded Admin Login
@@ -445,13 +433,13 @@ function authenticateUser(username, password) {
     return { success: false, error: "لا يوجد مستخدمين مسجلين. يرجى تشغيل إعداد النظام أولاً." };
   }
   var data = usersSheet.getDataRange().getValues();
-  var hashedPass = hashPassword(password);
+  var inputPass = password.toString().trim();
   for (var i = 1; i < data.length; i++) {
     if (data[i][0].toString().trim() === username.trim()) {
       if (data[i][4] !== "نشط") {
         return { success: false, error: "هذا الحساب موقوف. تواصل مع المدير." };
       }
-      if (data[i][1].toString().trim() === hashedPass) {
+      if (data[i][1].toString().trim() === inputPass) {
         // تحديث آخر دخول
         usersSheet.getRange(i + 1, 6).setValue(Utilities.formatDate(new Date(), "Africa/Cairo", "yyyy-MM-dd hh:mm a"));
         return {
@@ -482,22 +470,23 @@ function doGet(e) {
   // ⭐ V16: جلب قائمة المستخدمين (للمدير)
   if (action === "getUsers") {
     var usersSheet = ss.getSheetByName("👥 المستخدمين");
-    var users = [];
+    var usersList = [];
     if (usersSheet && usersSheet.getLastRow() > 1) {
-      var uData = usersSheet.getDataRange().getValues();
-      for (var i = 1; i < uData.length; i++) {
-        if (uData[i][0]) {
-          users.push({
-            username: uData[i][0],
-            displayName: uData[i][2],
-            permissions: uData[i][3],
-            status: uData[i][4],
-            lastLogin: uData[i][5]
+      var data = usersSheet.getDataRange().getValues();
+      for (var i = 1; i < data.length; i++) {
+        if (data[i][0]) {
+          usersList.push({
+            username: data[i][0],
+            password: data[i][1],
+            displayName: data[i][2],
+            permissions: data[i][3],
+            status: data[i][4],
+            lastLogin: data[i][5]
           });
         }
       }
     }
-    return ContentService.createTextOutput(JSON.stringify({ users: users })).setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(JSON.stringify({ users: usersList })).setMimeType(ContentService.MimeType.JSON);
   }
 
   // ⭐ جلب بيانات المخازن والأذونات
@@ -1309,8 +1298,7 @@ function doPost(e) {
           return ContentService.createTextOutput(JSON.stringify({success: false, error: "اسم المستخدم موجود بالفعل"})).setMimeType(ContentService.MimeType.JSON);
         }
       }
-      var hashedPass = hashPassword(e.parameter.password);
-      usersSheet.appendRow([e.parameter.username, hashedPass, e.parameter.displayName, e.parameter.permissions, "نشط", ""]);
+      usersSheet.appendRow([e.parameter.username, e.parameter.password, e.parameter.displayName, e.parameter.permissions, "نشط", ""]);
       return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
     }
 
@@ -1324,7 +1312,7 @@ function doPost(e) {
           if (e.parameter.permissions) usersSheet.getRange(u + 1, 4).setValue(e.parameter.permissions);
           if (e.parameter.status) usersSheet.getRange(u + 1, 5).setValue(e.parameter.status);
           if (e.parameter.newPassword && e.parameter.newPassword !== "") {
-            usersSheet.getRange(u + 1, 2).setValue(hashPassword(e.parameter.newPassword));
+            usersSheet.getRange(u + 1, 2).setValue(e.parameter.newPassword);
           }
           return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
         }
