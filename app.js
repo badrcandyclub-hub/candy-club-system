@@ -3043,7 +3043,7 @@ function fetchCatalogFromFirebase() {
 }
 
 // تشغيل الدالة فور تحميل الصفحة
-window.addEventListener('load', fetchCatalogFromFirebase);
+// fetchCatalogFromFirebase moved to conditional load
 
 // 2. إصدار صوت Beep قصير عند نجاح المسح
 function playBeepSound() {
@@ -7592,11 +7592,7 @@ function applyPermissions() {
         if (permKey === "price-tags") permKey = "pricetags";
         if (permKey === "whatsapp-campaign") permKey = "whatsapp";
         
-        // Always show users tab if full access
-        if (permKey === "users" && !isFullAccess) {
-            btn.style.display = "none";
-            return;
-        }
+        
         
         if (hasPerm(permKey) || isFullAccess) {
             btn.style.display = "flex";
@@ -7788,6 +7784,340 @@ window.togglePermCard = function(label) {
             label.classList.remove('active-perm');
         }
     }, 10);
+};
+
+
+
+
+// ==========================================
+// V16: Performance & Search Optimizations
+// Overrides
+// ==========================================
+
+function fetchInventoryLogs(callback = null, query = "") {
+    let tbody = document.getElementById('invArchiveTableBody');
+    if (tbody && tbody.children.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:15px; color:#64748b;"><i class="fa-solid fa-spinner fa-spin"></i> ط¬ط§ط±ظٹ ط³ط­ط¨ ط§ظ„ط¨ظٹط§ظ†ط§طھ...</td></tr>';
+    }
+    
+    let url = `${GOOGLE_SHEETS_URL}?action=getInventoryLogs&t=${new Date().getTime()}`;
+    if (query !== "") {
+        url += `&q=${encodeURIComponent(query)}`;
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:15px; color:#64748b;"><i class="fa-solid fa-search fa-bounce"></i> ط¬ط§ط±ظٹ ط§ظ„ط¨ط­ط« ط§ظ„ظ…ط¨ط§ط´ط± ظپظٹ ط§ظ„ط³ظٹط±ظپط±...</td></tr>';
+        }
+    }
+
+    fetch(url)
+        .then(res => res.json())
+        .then(data => {
+            window.invLogsData = data;
+            try { if (query === "") renderInventoryDashboard(data); } catch(e) { console.error('Dash Error:', e); }
+            if (typeof callback === 'function') callback(data);
+        })
+        .catch(err => {
+            console.error(err);
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#ef4444; padding:15px;">ط®ط·ط£ ظپظٹ طھط­ظ…ظٹظ„ ط§ظ„ط¨ظٹط§ظ†ط§طھ</td></tr>';
+            }
+        });
+}
+
+function filterAndRenderArchive() {
+    let q = document.getElementById('invSearchQ').value.trim();
+    let dateQ = document.getElementById('invDateQ').value;
+    let tbody = document.getElementById('invArchiveTableBody');
+
+    if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:#64748b; font-weight:bold; font-size:1.1rem;"><i class="fa-solid fa-circle-notch fa-spin fa-2x" style="color:var(--primary); margin-bottom:15px; display:block;"></i> ط¬ط§ط±ظٹ ط§ظ„ط¨ط­ط«...</td></tr>`;
+    }
+
+    if (q !== '') {
+        // Server side search for ID
+        fetchInventoryLogs(() => {
+            renderInventoryArchive(window.invLogsData);
+        }, q);
+        return;
+    }
+
+    if (!window.invLogsData) {
+        fetchInventoryLogs(() => filterAndRenderArchive());
+        return;
+    }
+
+    setTimeout(() => {
+        let filtered = window.invLogsData || [];
+        if (dateQ !== '') {
+            filtered = filtered.filter(log => String(log.timestamp).startsWith(dateQ));
+        }
+        renderInventoryArchive(filtered);
+    }, 150);
+}
+
+window.reprintInvLog = function(logId) {
+    if (!window.invLogsData) {
+        fetchInventoryLogs(() => window.reprintInvLog(logId));
+        return;
+    }
+    let log = window.invLogsData.find(l => l.logId === logId);
+    if (!log) {
+        fetchInventoryLogs(() => window.reprintInvLog(logId), logId);
+        return;
+    }
+    
+    let itemsArr = [];
+    try {
+        itemsArr = JSON.parse(log.items);
+    } catch(e) {
+        if (log.items) {
+            let parts = log.items.split("|");
+            itemsArr = parts.map(p => {
+                let match = p.trim().match(/(.*?)\s+\((\d+)\)/);
+                if (match) return { name: match[1].trim(), qty: match[2] };
+                return { name: p.trim(), qty: 1 };
+            });
+        }
+    }
+    
+    let itemsHtml = itemsArr.map(item => `
+        <tr>
+            <td style="text-align: right;">${item.name} ${item.barcode ? '<br><small style="color:#666">'+item.barcode+'</small>' : ''}</td>
+            <td style="text-align: center;"><b>${item.qty}</b></td>
+        </tr>
+    `).join('');
+    
+    let printWindow = window.open('', '_blank', 'height=600,width=400');
+    if (!printWindow) {
+        showToast("ط¨ط±ط¬ط§ط، طھظپط¹ظٹظ„ ط§ظ„ظ†ظˆط§ظپط° ط§ظ„ظ…ظ†ط¨ط«ظ‚ط© (Pop-ups) ظ„ظ„ط·ط¨ط§ط¹ط©", "error");
+        return;
+    }
+    
+    let html = `
+        <html dir="rtl" lang="ar">
+        <head>
+            <title>ط¥ط°ظ† ظ…ط®ط²ظ† #${log.logId}</title>
+            <style>
+                body { font-family: 'Cairo', sans-serif; margin: 0; padding: 15px; color: #000; font-size: 14px; background: #fff; }
+                .receipt-header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 10px; margin-bottom: 10px; }
+                .receipt-title { font-size: 18px; font-weight: bold; margin: 0 0 5px 0; }
+                .info-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                th { border-bottom: 1px solid #000; padding: 5px 0; text-align: right; font-size: 13px; }
+                td { padding: 5px 0; border-bottom: 1px dotted #ccc; font-size: 14px; }
+                .notes { margin-top: 10px; font-size: 12px; border-top: 1px solid #000; padding-top: 5px; }
+                .footer { text-align: center; margin-top: 15px; font-size: 11px; font-style: italic; }
+            </style>
+        </head>
+        <body>
+            <div class="receipt-header">
+                <h2 class="receipt-title">ط¥ط°ظ† ط­ط±ظƒط© ظ…ط®ط§ط²ظ†</h2>
+                <div style="font-size: 14px; font-weight: bold; margin-bottom: 5px;">#${log.logId}</div>
+                <div style="font-size: 12px;">طھط§ط±ظٹط®: <span dir="ltr">${log.timestamp}</span></div>
+            </div>
+            
+            <div class="info-row">
+                <span><b>ظ…ظ†:</b> ${log.from}</span>
+                <span><b>ط¥ظ„ظ‰:</b> ${log.to}</span>
+            </div>
+            <div class="info-row">
+                <span><b>ط§ظ„ظ…ط³ط¬ظ„:</b> ${log.regName}</span>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th style="text-align: right;">ط§ظ„طµظ†ظپ</th>
+                        <th style="text-align: center; width: 40px;">ط§ظ„ظƒظ…ظٹط©</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${itemsHtml}
+                </tbody>
+            </table>
+            
+            ${log.notes ? `<div class="notes"><b>ظ…ظ„ط§ط­ط¸ط§طھ:</b> ${log.notes}</div>` : ''}
+            
+            <div class="footer">
+                Candy Club System<br>
+                ${new Date().toLocaleString('en-GB')}
+            </div>
+            
+            <script>
+                window.onload = function() { setTimeout(function() { window.print(); }, 500); };
+            </script>
+        </body>
+        </html>
+    `;
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+};
+
+function printInventoryReceipt(logId, from, to, items, notes, senderName, regName) {
+    let printWindow = window.open('', '_blank', 'height=600,width=400');
+    if (!printWindow) {
+        showToast("ط¨ط±ط¬ط§ط، طھظپط¹ظٹظ„ ط§ظ„ظ†ظˆط§ظپط° ط§ظ„ظ…ظ†ط¨ط«ظ‚ط© (Pop-ups) ظ„ظ„ط·ط¨ط§ط¹ط©", "error");
+        return;
+    }
+
+    let itemsHtml = '';
+    items.forEach(item => {
+        itemsHtml += `
+            <div class="item-row">
+                <span>${item.name} ${item.barcode ? '<br><small style="font-size:0.7rem; color:#666">'+item.barcode+'</small>' : ''}</span>
+                <span>${item.qty}</span>
+            </div>
+        `;
+    });
+
+    let now = new Date();
+    let timeStr = now.toLocaleString('en-GB');
+
+    let html = `
+        <html dir="rtl" lang="ar">
+        <head>
+            <title>ط¥ط°ظ† ظ…ط®ط²ظ† #${logId}</title>
+            <style>
+                @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+                body {
+                    font-family: 'Cairo', sans-serif;
+                    margin: 0;
+                    padding: 10px;
+                    color: #000;
+                    background: #fff;
+                    font-size: 13px;
+                }
+                .header {
+                    text-align: center;
+                    border-bottom: 2px dashed #000;
+                    padding-bottom: 10px;
+                    margin-bottom: 10px;
+                }
+                .title {
+                    font-size: 18px;
+                    font-weight: 700;
+                    margin: 0 0 5px 0;
+                }
+                .log-id {
+                    font-size: 16px;
+                    font-weight: bold;
+                    margin-bottom: 5px;
+                }
+                .meta-row {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 4px;
+                    font-size: 12px;
+                }
+                .items-section {
+                    margin-top: 10px;
+                    border-bottom: 2px dashed #000;
+                    padding-bottom: 10px;
+                }
+                .item-header {
+                    display: flex;
+                    justify-content: space-between;
+                    font-weight: bold;
+                    border-bottom: 1px solid #000;
+                    padding-bottom: 4px;
+                    margin-bottom: 4px;
+                }
+                .item-row {
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 3px 0;
+                    border-bottom: 1px dotted #ccc;
+                    font-weight: 600;
+                }
+                .notes-section {
+                    margin-top: 10px;
+                    font-size: 12px;
+                }
+                .footer {
+                    text-align: center;
+                    margin-top: 15px;
+                    font-size: 10px;
+                    color: #333;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h2 class="title">ط¥ط°ظ† ط­ط±ظƒط© ظ…ط®ط§ط²ظ†</h2>
+                <div class="log-id">#${logId}</div>
+                <div style="font-size: 11px;" dir="ltr">${timeStr}</div>
+            </div>
+            
+            <div class="meta-row">
+                <span><b>ظ…ظ†:</b> ${from}</span>
+                <span><b>ط¥ظ„ظ‰:</b> ${to}</span>
+            </div>
+            
+            <div class="meta-row" style="margin-top:5px;">
+                <span><b>ظ…ظڈط³ظ„ظ…:</b> ${senderName || '---'}</span>
+                <span><b>ظ…ظڈط³طھظ„ظ…:</b> .......................</span>
+            </div>
+            
+            <div class="items-section">
+                <div class="item-header">
+                    <span>ط§ظ„طµظ†ظپ</span>
+                    <span>ط§ظ„ظƒظ…ظٹط©</span>
+                </div>
+                ${itemsHtml}
+            </div>
+            
+            ${notes ? `
+            <div class="notes-section">
+                <b>ظ…ظ„ط§ط­ط¸ط§طھ:</b> ${notes}
+            </div>` : ''}
+            
+            <div style="margin-top: 15px; display: flex; justify-content: space-between; font-size: 11px;">
+                <div style="text-align: center;">
+                    <b>طھظˆظ‚ظٹط¹ ط§ظ„ظ…ظڈط³ظ„ظ…</b><br>
+                    ...................
+                </div>
+                <div style="text-align: center;">
+                    <b>طھظˆظ‚ظٹط¹ ط§ظ„ظ…ظڈط³طھظ„ظ…</b><br>
+                    ...................
+                </div>
+            </div>
+            
+            <div class="footer">
+                ط³ظڈط¬ظ„ ط¨ظˆط§ط³ط·ط©: ${regName}<br>
+                Candy Club System
+            </div>
+            
+            <script>
+                window.onload = function() {
+                    setTimeout(function() {
+                        window.print();
+                    }, 500);
+                };
+            </script>
+        </body>
+        </html>
+    `;
+    
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+}
+
+// Override loadDataFromServer to conditionally fetch catalog
+const originalLoadData = loadDataFromServer;
+loadDataFromServer = function(customDate = null) {
+    if (currentUser) {
+        let perms = currentUser.permissions.split(",");
+        let isFull = currentUser.permissions === "ALL";
+        if (isFull || perms.includes("catalog") || perms.includes("create") || perms.includes("pricetags") || perms.includes("inventory")) {
+            if(typeof fetchCatalogFromFirebase === 'function') {
+                fetchCatalogFromFirebase();
+            }
+        }
+    }
+    // Call the original but ensure we don't duplicate logic.
+    // Wait, calling originalLoadData will do the normal fetch which is fine because the backend filters.
+    return originalLoadData.apply(this, arguments);
 };
 
 
