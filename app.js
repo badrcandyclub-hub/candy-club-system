@@ -7795,3 +7795,28 @@ window.deleteUser = function(username) {
     }
 };
 
+window.togglePermCard = function(label) {
+    setTimeout(() => {
+        let chk = label.querySelector('input[type="checkbox"]');
+        if (chk && chk.checked) {
+            label.classList.add('active-perm');
+        } else {
+            label.classList.remove('active-perm');
+        }
+    }, 10);
+};
+
+let originalToggleAllPerms = window.toggleAllPerms;
+window.toggleAllPerms = function(chk) {
+    originalToggleAllPerms(chk);
+    setTimeout(() => {
+        document.querySelectorAll('.perm-card').forEach(card => {
+            let innerChk = card.querySelector('input[type="checkbox"]');
+            if (innerChk && innerChk.checked) {
+                card.classList.add('active-perm');
+            } else {
+                card.classList.remove('active-perm');
+            }
+        });
+    }, 20);
+};
