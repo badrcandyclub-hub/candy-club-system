@@ -7376,7 +7376,10 @@ window.reprintInvLog = function(logId) {
         return;
     }
     let log = window.invLogsData.find(l => l.logId === logId);
-    if (!log) return;
+    if (!log) {
+        fetchInventoryLogs(() => window.reprintInvLog(logId), logId);
+        return;
+    }
     
     let itemsArr = [];
     try {
@@ -7393,6 +7396,86 @@ window.reprintInvLog = function(logId) {
                     return { name, qty, barcode };
                 }
                 return { name: p.trim(), qty: 1, barcode: '' };
+            });
+        }
+    }
+    
+    let itemsHtml = itemsArr.map(item => `
+        <tr>
+            <td style="text-align: right;"><b>${item.name}</b></td>
+            <td style="text-align: center; font-family: monospace; font-size:12px; color:#444;">${item.barcode || '-'}</td>
+            <td style="text-align: center;"><b>${item.qty}</b></td>
+        </tr>
+    `).join('');
+    
+    let printWindow = window.open('', '_blank', 'height=600,width=450');
+    if (!printWindow) {
+        showToast("يرجى تفعيل النوافذ المنبثقة (Pop-ups) للطباعة", "error");
+        return;
+    }
+    
+    let html = `
+        <html dir="rtl" lang="ar">
+        <head>
+            <title>إذن مخزن #${log.logId}</title>
+            <style>
+                body { font-family: 'Cairo', Tahoma, sans-serif; margin: 0; padding: 15px; color: #000; font-size: 14px; background: #fff; }
+                .receipt-header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 10px; margin-bottom: 10px; }
+                .receipt-title { font-size: 18px; font-weight: bold; margin: 0 0 5px 0; }
+                .info-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                th { border-bottom: 2px solid #000; padding: 6px 4px; font-size: 13px; text-align: right; }
+                td { padding: 6px 4px; border-bottom: 1px dotted #ccc; font-size: 13px; }
+                .notes { margin-top: 10px; font-size: 12px; border-top: 1px solid #000; padding-top: 5px; }
+                .footer { text-align: center; margin-top: 15px; font-size: 11px; font-style: italic; }
+            </style>
+        </head>
+        <body>
+            <div class="receipt-header">
+                <h2 class="receipt-title">إذن حركة مخازن</h2>
+                <div style="font-size: 15px; font-weight: bold; margin-bottom: 5px;">#${log.logId}</div>
+                <div style="font-size: 12px;">التاريخ: <span dir="ltr">${log.timestamp}</span></div>
+            </div>
+            
+            <div class="info-row">
+                <span><b>من:</b> ${log.from}</span>
+                <span><b>إلى:</b> ${log.to}</span>
+            </div>
+            <div class="info-row">
+                <span><b>المسجل:</b> ${log.regName}</span>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th style="text-align: right;">الصنف</th>
+                        <th style="text-align: center;">الباركود</th>
+                        <th style="text-align: center; width: 50px;">الكمية</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${itemsHtml}
+                </tbody>
+            </table>
+            
+            ${log.notes ? `<div class="notes"><b>ملاحظات:</b> ${log.notes}</div>` : ''}
+            
+            <div class="footer">
+                Candy Club System<br>
+                ${new Date().toLocaleString('en-GB')}
+            </div>
+            
+            <script>
+                window.onload = function() { setTimeout(function() { window.print(); }, 500); };
+            </script>
+        </body>
+        </html>
+    `;
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+};
+                return { name: p.trim(), qty: 1 };
             });
         }
     }
@@ -7897,8 +7980,7 @@ window.reprintInvLog = function(logId) {
     
     let itemsHtml = itemsArr.map(item => `
         <tr>
-            <td style="text-align: right;"><b>${item.name}</b></td>
-            <td style="text-align: center; font-family: monospace; font-size:12px; color:#444;">${item.barcode || '-'}</td>
+            <td style="text-align: right;">${item.name} ${item.barcode ? '<br><small style="color:#666">'+item.barcode+'</small>' : ''}</td>
             <td style="text-align: center;"><b>${item.qty}</b></td>
         </tr>
     `).join('');
@@ -7943,9 +8025,8 @@ window.reprintInvLog = function(logId) {
             <table>
                 <thead>
                     <tr>
-                        <th style="text-align: right;">الصنف</th>
-                        <th style="text-align: center;">الباركود</th>
-                        <th style="text-align: center; width: 50px;">الكمية</th>
+                        <th style="text-align: right;">ط§ظ„طµظ†ظپ</th>
+                        <th style="text-align: center; width: 40px;">ط§ظ„ظƒظ…ظٹط©</th>
                     </tr>
                 </thead>
                 <tbody>
