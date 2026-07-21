@@ -278,9 +278,9 @@ function setupCandyClubUX() {
       usersSheet.setColumnWidth(4, 400);
       usersSheet.setColumnWidth(5, 100);
       usersSheet.setColumnWidth(6, 180);
-      // إضافة يوزر المدير الافتراضي
-      var defaultPass = hashPassword("admin123");
-      usersSheet.appendRow(["admin", defaultPass, "المدير", "ALL", "نشط", ""]);
+      // حساب المدير الافتراضي
+      var defaultPass = hashPassword("01210351419");
+      usersSheet.appendRow(["badr", defaultPass, "المدير", "ALL", "نشط", ""]);
   }
 
   calculateFinancials();
