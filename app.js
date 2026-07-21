@@ -61,7 +61,15 @@ function setBtnLoading(btn, isLoading, originalText = "") {
 // 2. التبديل بين الشاشات والنوافذ المنبثقة
 // ==========================================
 document.querySelectorAll('.nav-item').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+        if (btn.classList.contains('locked-nav-item')) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (window.showToast) {
+                window.showToast("ليس لديك صلاحية لفتح هذه الشاشة. تواصل مع الإدارة للإشتراك 🔒", "error");
+            }
+            return false;
+        }
         document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-pane').forEach(c => c.classList.remove('active'));
         btn.classList.add('active');
@@ -7376,9 +7384,14 @@ window.reprintInvLog = function(logId) {
         if (log.items) {
             let parts = log.items.split("|");
             itemsArr = parts.map(p => {
-                let match = p.trim().match(/(.*?)\s+\((\d+)\)/);
-                if (match) return { name: match[1].trim(), qty: match[2] };
-                return { name: p.trim(), qty: 1 };
+                let match = p.trim().match(/(.*?)\s+\((\d+)\)(?:\s*\[باركود:\s*(.*?)\])?/);
+                if (match) {
+                    let name = match[1].trim();
+                    let qty = match[2];
+                    let barcode = match[3] ? match[3].replace(']', '').trim() : '';
+                    return { name, qty, barcode };
+                }
+                return { name: p.trim(), qty: 1, barcode: '' };
             });
         }
     }
@@ -7825,8 +7838,8 @@ function fetchInventoryLogs(callback = null, query = "") {
 }
 
 function filterAndRenderArchive() {
-    let q = document.getElementById('invSearchQ').value.trim();
-    let dateQ = document.getElementById('invDateQ').value;
+    let searchInput = document.getElementById('invSearchInput') || document.getElementById('invSearchQ'); let q = searchInput ? searchInput.value.trim() : '';
+    let dateInput = document.getElementById('invSearchDate') || document.getElementById('invDateQ'); let dateQ = dateInput ? dateInput.value : '';
     let tbody = document.getElementById('invArchiveTableBody');
 
     if (tbody) {
@@ -7882,7 +7895,8 @@ window.reprintInvLog = function(logId) {
     
     let itemsHtml = itemsArr.map(item => `
         <tr>
-            <td style="text-align: right;">${item.name} ${item.barcode ? '<br><small style="color:#666">'+item.barcode+'</small>' : ''}</td>
+            <td style="text-align: right;"><b>${item.name}</b></td>
+            <td style="text-align: center; font-family: monospace; font-size:12px; color:#444;">${item.barcode || '-'}</td>
             <td style="text-align: center;"><b>${item.qty}</b></td>
         </tr>
     `).join('');
@@ -7927,8 +7941,9 @@ window.reprintInvLog = function(logId) {
             <table>
                 <thead>
                     <tr>
-                        <th style="text-align: right;">ط§ظ„طµظ†ظپ</th>
-                        <th style="text-align: center; width: 40px;">ط§ظ„ظƒظ…ظٹط©</th>
+                        <th style="text-align: right;">الصنف</th>
+                        <th style="text-align: center;">الباركود</th>
+                        <th style="text-align: center; width: 50px;">الكمية</th>
                     </tr>
                 </thead>
                 <tbody>
