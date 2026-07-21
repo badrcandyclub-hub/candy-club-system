@@ -7591,6 +7591,7 @@ function applyPermissions() {
         if (permKey === "inventory-transfers") permKey = "inventory";
         if (permKey === "price-tags") permKey = "pricetags";
         if (permKey === "whatsapp-campaign") permKey = "whatsapp";
+        if (permKey === "users") { btn.style.display = window.location.pathname.toLowerCase().includes("admin.html") ? "flex" : "none"; if (btn.style.display==="flex") btn.onclick=null; return; }
         
         
         

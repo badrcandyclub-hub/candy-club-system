@@ -639,42 +639,14 @@
             </div>
         </section>
 
-        <!-- ⭐ V16: Users Tab -->
-        <section id="users-tab" class="tab-pane">
-            <div class="section-card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3 class="section-title" style="margin: 0;"><i class="fa-solid fa-user-shield"></i> إدارة المستخدمين</h3>
-                    <button class="btn-primary interactive-btn" style="padding: 10px 15px; font-size: 0.9rem;" onclick="openAddUserModal()">
-                        <i class="fa-solid fa-user-plus"></i> مستخدم جديد
-                    </button>
-                </div>
-                
-                <div style="overflow-x: auto;">
-                    <table class="data-table" id="usersTable" style="width: 100%;">
-                        <thead>
-                            <tr>
-                                <th>اسم المستخدم</th>
-                                <th>الاسم الظاهر</th>
-                                <th>الصلاحيات</th>
-                                <th>الحالة</th>
-                                <th>آخر دخول</th>
-                                <th>إجراءات</th>
-                            </tr>
-                        </thead>
-                        <tbody id="usersTbody">
-                            <tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:20px;">جاري تحميل المستخدمين...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
+
 
         <section id="settings-tab" class="tab-pane">
 
 
 
             <div class="section-card text-center">
-                <h3 class="section-title"><i class="fa-solid fa-gears"></i> إعدادات السيستم</h3>
+                <h3 class="section-title"><i class="fa-solid fa-gears"></i> الإعدادات</h3>
 
 
 
@@ -1523,9 +1495,7 @@
                     <button class="nav-item" data-target="settings-tab" style="color: #95a5a6;">
                         <span class="icon"><i class="fa-solid fa-gear"></i></span><span class="label">الإعدادات</span>
                     </button>
-                    <button class="nav-item" data-target="users-tab" style="color: #e91e63;">
-                        <span class="icon"><i class="fa-solid fa-user-shield"></i></span><span class="label">المستخدمين</span>
-                    </button>
+
                 </div>
             </div>
 
@@ -1892,10 +1862,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <!-- ⭐ V16: User Modal -->
     <div id="userModal" class="modal-overlay">
-        <div class="modal-content" style="max-width: 500px;">
-            <div class="modal-header">
+        <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header" style="position: relative; display: flex; justify-content: center; align-items: center;">
+                <button class="close-modal-btn" onclick="document.getElementById('userModal').style.display='none'" style="position: absolute; left: 15px; top: 15px; background: #e74c3c; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; display: flex; justify-content: center; align-items: center; cursor: pointer; font-size: 1.2rem; box-shadow: 0 2px 5px rgba(0,0,0,0.2);"><i class="fa-solid fa-xmark"></i></button>
                 <h3 id="userModalTitle">إضافة مستخدم جديد</h3>
-                <button class="close-modal-btn" onclick="document.getElementById('userModal').style.display='none'"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <form id="userForm" onsubmit="handleUserSubmit(event)">
                 <input type="hidden" id="user-mode" value="add">
@@ -1912,7 +1882,7 @@
                 
                 <div class="form-group">
                     <label>كلمة المرور <span id="u-pass-req" style="color:red">*</span></label>
-                    <input type="password" id="u-password" class="form-input" placeholder="اتركه فارغاً إذا لم ترد تغييره (في حالة التعديل)">
+                    <input type="text" id="u-password" class="form-input" placeholder="اتركه فارغاً إذا لم ترد تغييره (في حالة التعديل)">
                 </div>
 
                 <div class="form-group" id="u-status-group" style="display:none;">
