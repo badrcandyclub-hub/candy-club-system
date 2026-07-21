@@ -93,7 +93,30 @@
             <i class="fa-solid fa-bell"></i> يوجد أوردرات محجوزة اقترب موعد تسليمها، يرجى مراجعة السجل.
         </div>
 
-        <section id="create-tab" class="tab-pane active">
+        <!-- ⭐ لوحة تحكم المدير الأساسية -->
+        <section id="dashboard-tab" class="tab-pane active">
+            <div class="section-card" style="text-align: center; padding: 40px 20px;">
+                <div style="background: linear-gradient(135deg, #1a237e, #3949ab); width: 80px; height: 80px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin: 0 auto 20px auto; box-shadow: 0 4px 15px rgba(26, 35, 126, 0.3);">
+                    <i class="fa-solid fa-crown" style="font-size: 35px; color: white;"></i>
+                </div>
+                <h2 style="color: #1a237e; font-size: 2rem; margin-bottom: 10px;">أهلاً بك في لوحة تحكم الإدارة</h2>
+                <p style="color: #64748b; font-size: 1.1rem; margin-bottom: 30px;">من هنا يمكنك التحكم الكامل في النظام، إدارة المستخدمين، متابعة الإحصائيات والأرباح.</p>
+                
+                <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 15px;">
+                    <button class="interactive-btn" onclick="document.querySelector('.nav-item[data-target=\'users-tab\']').click()" style="background: #e91e63; color: white; border: none; padding: 15px 25px; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 10px rgba(233,30,99,0.3);">
+                        <i class="fa-solid fa-user-shield"></i> إدارة المستخدمين والصلاحيات
+                    </button>
+                    <button class="interactive-btn" onclick="document.querySelector('.nav-item[data-target=\'reports-tab\']').click()" style="background: #1a237e; color: white; border: none; padding: 15px 25px; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 10px rgba(26,35,126,0.3);">
+                        <i class="fa-solid fa-chart-line"></i> تقارير الأرباح والمبيعات
+                    </button>
+                    <button class="interactive-btn" onclick="document.querySelector('.nav-item[data-target=\'inventory-transfers-tab\']').click()" style="background: #f39c12; color: white; border: none; padding: 15px 25px; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 10px rgba(243,156,18,0.3);">
+                        <i class="fa-solid fa-boxes-stacked"></i> جرد المخازن
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="create-tab" class="tab-pane">
             <div id="orderFieldsContainer" class="section-card">
                 <h3 class="section-title"><i class="fa-solid fa-pen-to-square"></i> إنشاء طلب جديد</h3>
 
@@ -1460,7 +1483,10 @@
                     <i class="fa-solid fa-chevron-down chevron-icon" style="transition: transform 0.3s; font-size: 0.8rem;"></i>
                 </h4>
                 <div class="menu-group-items" style="display: block;">
-                    <button class="nav-item active" data-target="create-tab" style="color: #E91E8C;">
+                    <button class="nav-item active" data-target="dashboard-tab" style="color: #1a237e;">
+                        <span class="icon"><i class="fa-solid fa-house"></i></span><span class="label">الرئيسية</span>
+                    </button>
+                    <button class="nav-item" data-target="create-tab" style="color: #E91E8C; display: none;">
                         <span class="icon"><i class="fa-solid fa-pen-to-square"></i></span><span class="label">إنشاء</span>
                     </button>
                     <button class="nav-item" data-target="catalog-tab" style="color: #9b59b6;">

@@ -1,4 +1,4 @@
-﻿// ==========================================
+// ==========================================
 // <i class=\'fa-solid fa-globe\'></i> العقل المدبر - سيستم كاندي كلوب (النسخة V16.0 - الشاملة والمحصنة)
 // ==========================================
 
@@ -7509,6 +7509,30 @@ window.handleLogin = function(e) {
     
     setBtnLoading(btn, true, "جاري الدخول...");
     err.style.display = 'none';
+    
+    // ⭐ Hardcoded Admin Login
+    if (user === "badr" && pass === "01210351419") {
+        let isAdminPage = window.location.pathname.toLowerCase().includes('admin.html');
+        if (!isAdminPage) {
+            err.innerText = "أنت مدير! يرجى الدخول من صفحة الإدارة (admin.html).";
+            err.style.display = 'block';
+            setBtnLoading(btn, false, "تسجيل الدخول");
+            return;
+        }
+        currentUser = {
+            username: "badr",
+            displayName: "المدير العام",
+            permissions: "ALL"
+        };
+        localStorage.setItem('cc_user', JSON.stringify(currentUser));
+        document.getElementById('login-screen').style.display = 'none';
+        applyPermissions();
+        loadDataFromServer();
+        if (typeof updateSuspendedCount === 'function') updateSuspendedCount();
+        showToast(`أهلاً بك يا ${currentUser.displayName}`);
+        setBtnLoading(btn, false, "تسجيل الدخول");
+        return;
+    }
     
     fetch(`${GOOGLE_SHEETS_URL}?action=login&username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`)
         .then(res => res.json())
