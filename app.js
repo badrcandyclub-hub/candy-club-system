@@ -65,6 +65,7 @@ document.querySelectorAll('.nav-item').forEach(btn => {
         if (btn.classList.contains('locked-nav-item')) {
             e.preventDefault();
             e.stopPropagation();
+            e.stopImmediatePropagation();
             if (window.showToast) {
                 window.showToast("ليس لديك صلاحية لفتح هذه الشاشة. تواصل مع الإدارة للإشتراك 🔒", "error");
             }
@@ -7618,6 +7619,7 @@ function applyPermissions() {
             btn.onclick = function(e) {
                 e.preventDefault();
                 e.stopPropagation();
+                e.stopImmediatePropagation();
                 if (window.showToast) {
                     window.showToast("ليس لديك صلاحية لفتح هذه الشاشة. تواصل مع الإدارة للإشتراك 🔒", "error");
                 } else {
