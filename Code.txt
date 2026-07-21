@@ -1310,6 +1310,8 @@ function doPost(e) {
         }
       }
       usersSheet.appendRow([e.parameter.username, e.parameter.password, e.parameter.displayName, e.parameter.permissions, "نشط", ""]);
+      // Ensure password column (B) is treated as text to keep leading zeros
+      usersSheet.getRange(usersSheet.getLastRow(), 2).setNumberFormat("@");
       return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
     }
 
@@ -1324,6 +1326,8 @@ function doPost(e) {
           if (e.parameter.status) usersSheet.getRange(u + 1, 5).setValue(e.parameter.status);
           if (e.parameter.newPassword && e.parameter.newPassword !== "") {
             usersSheet.getRange(u + 1, 2).setValue(e.parameter.newPassword);
+            // Preserve leading zeros in updated password
+            usersSheet.getRange(u + 1, 2).setNumberFormat("@");
           }
           return ContentService.createTextOutput(JSON.stringify({success: true})).setMimeType(ContentService.MimeType.JSON);
         }
