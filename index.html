@@ -20,35 +20,35 @@
 
 <body>
     <!-- ⭐ V16: Login Screen -->
-    <div id="login-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background-color:#0f172a; z-index:99999; display:flex; justify-content:center; align-items:center; font-family: 'Cairo', sans-serif;">
-        <div style="background-color:#1e293b; padding:40px 30px; border-radius:16px; box-shadow:0 15px 35px rgba(0,0,0,0.3); border: 1px solid #334155; width:90%; max-width:400px; text-align:center; position:relative;">
+    <div id="login-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background-color:#f4f6f8; z-index:99999; display:flex; justify-content:center; align-items:center; font-family: 'Cairo', sans-serif;">
+        <div style="background-color:#ffffff; padding:40px 30px; border-radius:16px; box-shadow:0 10px 25px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; width:90%; max-width:400px; text-align:center; position:relative;">
             
             <div style="margin-bottom: 30px;">
-                <h1 style="color:#f8fafc; margin:0; font-size: 1.8rem; font-weight: 700;">بوابة المساعد</h1>
-                <p style="color:#94a3b8; margin:5px 0 0 0; font-size: 0.95rem;">تسجيل الحضور والعمليات اليومية</p>
+                <h1 style="color:#1a237e; margin:0; font-size: 1.8rem; font-weight: 800;">بوابة المساعد</h1>
+                <p style="color:#64748b; margin:5px 0 0 0; font-size: 0.95rem; font-weight: 600;">تسجيل الحضور والعمليات اليومية</p>
             </div>
             
             <form id="loginForm" onsubmit="handleLogin(event)" style="text-align: right;">
                 <div style="margin-bottom: 15px;">
-                    <label style="color:#cbd5e1; font-size:0.9rem; margin-bottom:8px; display:block; font-weight:bold;">اسم المستخدم</label>
-                    <input type="text" id="login-username" placeholder="Assistant Username" required style="width:100%; padding:14px 15px; border:1px solid #334155; border-radius:10px; background:#0f172a; color:#f8fafc; font-family:inherit; text-align: right; box-sizing: border-box; font-size: 1rem; outline: none; transition: border-color 0.3s;" onfocus="this.style.borderColor='#10b981'" onblur="this.style.borderColor='#334155'">
+                    <label style="color:#334155; font-size:0.9rem; margin-bottom:8px; display:block; font-weight:bold;">اسم المستخدم</label>
+                    <input type="text" id="login-username" placeholder="Assistant Username" required style="width:100%; padding:14px 15px; border:1px solid #cbd5e1; border-radius:10px; background:#f8fafc; color:#1e293b; font-family:inherit; text-align: right; box-sizing: border-box; font-size: 1rem; outline: none; transition: border-color 0.3s;" onfocus="this.style.borderColor='#1a237e'" onblur="this.style.borderColor='#cbd5e1'">
                 </div>
                 
                 <div style="margin-bottom: 25px;">
-                    <label style="color:#cbd5e1; font-size:0.9rem; margin-bottom:8px; display:block; font-weight:bold;">كلمة المرور</label>
+                    <label style="color:#334155; font-size:0.9rem; margin-bottom:8px; display:block; font-weight:bold;">كلمة المرور</label>
                     <div style="position: relative;">
-                        <input type="password" id="login-password" placeholder="Password" required style="width:100%; padding:14px 15px; padding-left: 45px; border:1px solid #334155; border-radius:10px; background:#0f172a; color:#f8fafc; font-family:inherit; text-align: right; box-sizing: border-box; font-size: 1rem; outline: none; transition: border-color 0.3s;" onfocus="this.style.borderColor='#10b981'" onblur="this.style.borderColor='#334155'">
+                        <input type="password" id="login-password" placeholder="Password" required style="width:100%; padding:14px 15px; padding-left: 45px; border:1px solid #cbd5e1; border-radius:10px; background:#f8fafc; color:#1e293b; font-family:inherit; text-align: right; box-sizing: border-box; font-size: 1rem; outline: none; transition: border-color 0.3s;" onfocus="this.style.borderColor='#1a237e'" onblur="this.style.borderColor='#cbd5e1'">
                         <i class="fa-solid fa-eye" id="togglePasswordBtn" onclick="const p = document.getElementById('login-password'); p.type = p.type === 'password' ? 'text' : 'password'; this.classList.toggle('fa-eye-slash');" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #64748b; cursor: pointer; font-size: 1.1rem;"></i>
                     </div>
                 </div>
                 
-                <button type="submit" id="login-btn" class="interactive-btn" style="width:100%; padding:14px; background: linear-gradient(135deg, #10b981, #059669); color:white; border:none; border-radius:10px; font-size:1.1rem; font-weight:bold; font-family:inherit; cursor:pointer; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); transition: transform 0.2s, box-shadow 0.2s;">تسجيل الدخول</button>
+                <button type="submit" id="login-btn" class="interactive-btn" style="width:100%; padding:14px; background: linear-gradient(135deg, #1a237e, #3949ab); color:white; border:none; border-radius:10px; font-size:1.1rem; font-weight:bold; font-family:inherit; cursor:pointer; box-shadow: 0 4px 12px rgba(26, 35, 126, 0.3); transition: transform 0.2s, box-shadow 0.2s;">تسجيل الدخول</button>
             </form>
             
-            <div id="login-error" style="color:#fca5a5; margin-top:15px; font-size:0.95rem; display:none; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); padding: 12px; border-radius: 8px;"></div>
+            <div id="login-error" style="color:#ef4444; margin-top:15px; font-size:0.95rem; display:none; background: #fee2e2; border: 1px solid #fca5a5; padding: 12px; border-radius: 8px;"></div>
             
-            <div style="margin-top: 25px; border-top: 1px solid #334155; padding-top: 15px;">
-                <a href="admin.html" style="color:#94a3b8; text-decoration: none; font-size: 0.95rem; transition: color 0.3s;" onmouseover="this.style.color='#f8fafc'" onmouseout="this.style.color='#94a3b8'">
+            <div style="margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+                <a href="admin.html" style="color:#64748b; text-decoration: none; font-size: 0.95rem; font-weight: bold; transition: color 0.3s;" onmouseover="this.style.color='#1a237e'" onmouseout="this.style.color='#64748b'">
                     الرجوع للمدير <i class="fa-solid fa-arrow-right" style="margin-left: 5px;"></i>
                 </a>
             </div>
