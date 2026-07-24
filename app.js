@@ -3574,12 +3574,22 @@ function loadExpiryData() {
                 btn.style.pointerEvents = "auto";
             }
             let rawData = Array.isArray(data) ? data : (data.expiries || []);
-            // Extract batchId from overloaded regDate if present
+            // Extract batchId from overloaded regDate if present and restore the time!
             expiryData = rawData.map(item => {
                 if (item.regDate && typeof item.regDate === 'string' && item.regDate.includes("||")) {
                     let parts = item.regDate.split("||");
-                    item.regDate = parts[0];
-                    item.batchId = parts[1];
+                    let datePart = parts[0].trim();
+                    let timestampPart = parts[1];
+                    item.batchId = timestampPart;
+                    
+                    // Convert the timestamp back into a readable time string (AM/PM) so it groups correctly
+                    let d = new Date(parseInt(timestampPart));
+                    if (!isNaN(d.getTime())) {
+                        let tStr = d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+                        item.regDate = datePart + " " + tStr;
+                    } else {
+                        item.regDate = datePart;
+                    }
                 }
                 return item;
             });
