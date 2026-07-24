@@ -7080,7 +7080,7 @@ function renderInventoryDashboard(logs) {
             if (log.items) {
                 let parts = log.items.split("|");
                 parts.forEach(p => {
-                    let match = p.trim().match(/(.*?)\s+\((\d+)\)/);
+                    let match = p.trim().match(/(.*?)\s+\((\d+)\)(?:\s*\[باركود:\s*(.*?)\])?/);
                     if (match) {
                         let pName = match[1].trim();
                         let pQty = parseInt(match[2]) || 0;
@@ -7920,8 +7920,13 @@ window.reprintInvLog = function(logId) {
         if (log.items) {
             let parts = log.items.split("|");
             itemsArr = parts.map(p => {
-                let match = p.trim().match(/(.*?)\s+\((\d+)\)/);
-                if (match) return { name: match[1].trim(), qty: match[2] };
+                let match = p.trim().match(/(.*?)\s+\((\d+)\)(?:\s*\[باركود:\s*(.*?)\])?/);
+                if (match) {
+                    let name = match[1].trim();
+                    let qty = match[2];
+                    let barcode = match[3] ? match[3].replace(']', '').trim() : '';
+                    return { name, qty, barcode };
+                }
                 return { name: p.trim(), qty: 1 };
             });
         }
@@ -7929,7 +7934,8 @@ window.reprintInvLog = function(logId) {
     
     let itemsHtml = itemsArr.map(item => `
         <tr>
-            <td style="text-align: right;">${item.name} ${item.barcode ? '<br><small style="color:#666">'+item.barcode+'</small>' : ''}</td>
+            <td style="text-align: right; font-weight: bold;">${item.name}</td>
+            <td style="text-align: center; font-family: monospace; font-size: 11px; color: #333;">${item.barcode || '-'}</td>
             <td style="text-align: center;"><b>${item.qty}</b></td>
         </tr>
     `).join('');
@@ -7975,7 +7981,8 @@ window.reprintInvLog = function(logId) {
                 <thead>
                     <tr>
                         <th style="text-align: right;">الصنف</th>
-                        <th style="text-align: center; width: 40px;">الكمية</th>
+                        <th style="text-align: center;">الباركود</th>
+                        <th style="text-align: center; width: 50px;">الكمية</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -8107,9 +8114,10 @@ function printInventoryReceipt(logId, from, to, items, notes, senderName, regNam
             </div>
             
             <div class="items-section">
-                <div class="item-header">
-                    <span>الصنف</span>
-                    <span>الكمية</span>
+                <div class="item-header" style="display: flex; justify-content: space-between; font-weight: bold; border-bottom: 2px solid #000; padding-bottom: 4px; margin-bottom: 4px;">
+                    <span style="flex: 2; text-align: right;">الصنف</span>
+                    <span style="flex: 1.5; text-align: center;">الباركود</span>
+                    <span style="flex: 1; text-align: center;">الكمية</span>
                 </div>
                 ${itemsHtml}
             </div>
