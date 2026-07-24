@@ -593,18 +593,28 @@ function doGet(e) {
       var expData = expirySheet.getDataRange().getValues();
       if (expData.length > 0) {
         var headers = expData[0];
-        var idxName = headers.indexOf("اسم الصنف");
-        var idxQty = headers.indexOf("الكمية");
-        var idxExp = headers.indexOf("تاريخ الصلاحية");
-        var idxLoc = headers.indexOf("مكان التخزين");
-        var idxRegName = headers.indexOf("اسم المسجل");
-        var idxRegDate = headers.indexOf("تاريخ التسجيل");
-        var idxReceiver = headers.indexOf("اسم المستلم");
-        var idxNotes = headers.indexOf("ملاحظات");
-        var idxOrig = headers.indexOf("السعر الأصلي");
-        var idxOffer = headers.indexOf("سعر العرض");
-        var idxStatus = headers.indexOf("الحالة");
-        var idxBarcode = headers.indexOf("الباركود");
+        
+        // Helper inline function to support fallback header names (aliases)
+        var findIdx = function(aliases) {
+          for (var j = 0; j < aliases.length; j++) {
+            var idx = headers.indexOf(aliases[j]);
+            if (idx !== -1) return idx;
+          }
+          return -1;
+        };
+
+        var idxName = findIdx(["اسم المنتج", "اسم الصنف", "الاسم"]);
+        var idxQty = findIdx(["الكمية"]);
+        var idxExp = findIdx(["تاريخ الانتهاء", "تاريخ الصلاحية"]);
+        var idxLoc = findIdx(["المكان / المورد", "مكان التخزين", "المكان"]);
+        var idxRegName = findIdx(["اسم المسجل"]);
+        var idxRegDate = findIdx(["تاريخ التسجيل", "تاريخ الادخال"]);
+        var idxReceiver = findIdx(["المستلم", "اسم المستلم"]);
+        var idxNotes = findIdx(["ملاحظات"]);
+        var idxOrig = findIdx(["السعر الأساسي", "السعر الأصلي"]);
+        var idxOffer = findIdx(["سعر العرض"]);
+        var idxStatus = findIdx(["الحالة"]);
+        var idxBarcode = findIdx(["الباركود"]);
 
         for (var i = 1; i < expData.length; i++) {
           var row = expData[i];
