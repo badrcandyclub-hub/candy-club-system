@@ -3056,31 +3056,7 @@ function fetchCatalogFromFirebase() {
 
 // 2. إصدار صوت Beep قصير عند نجاح المسح
 function playBeepSound() {
-    try {
-        if (typeof window.playSuccessBeep === 'function') {
-            window.playSuccessBeep();
-        } else {
-            let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            let oscillator = audioCtx.createOscillator();
-            let gainNode = audioCtx.createGain();
-
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-
-            oscillator.type = 'sine';
-            oscillator.frequency.value = 2750; // تردد الكاشير الحقيقي
-            
-            // Flat volume (sustain) then abrupt stop
-            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
-            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime + 0.07);
-            gainNode.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
-
-            oscillator.start(audioCtx.currentTime);
-            oscillator.stop(audioCtx.currentTime + 0.08);
-        }
-    } catch (e) {
-        console.warn("Web Audio API غير مدعوم في هذا المتصفح");
-    }
+    playBeep(2750, 'sine', 0.08, 0.5);
 }
 
 // 3. فتح وإغلاق النوافذ
@@ -3235,12 +3211,21 @@ function processBarcodeAction(val) {
     }
 }
 
+let isScanProcessing = false;
+
 function onScanSuccess(decodedText, decodedResult) {
+    if (isScanProcessing) return;
+    isScanProcessing = true;
+
     stopBarcodeScanner();
     scannerModal.classList.remove('active');
     
     let val = String(decodedText).trim();
     processBarcodeAction(val);
+
+    setTimeout(() => {
+        isScanProcessing = false;
+    }, 1200);
 }
 
 function onScanFailure(error) {
@@ -5483,23 +5468,66 @@ window.hideLoading = function() {
     if (overlay) overlay.classList.add('loading-overlay-hidden');
 };
 
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-function playBeep(frequency, type, duration, vol) {
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    const oscillator = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-    oscillator.type = type;
-    oscillator.frequency.value = frequency;
-    
-    // Flat volume (sustain) then abrupt stop (mimics a real scanner/piezo buzzer)
-    gainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
-    gainNode.gain.setValueAtTime(vol, audioCtx.currentTime + duration - 0.01);
-    gainNode.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-    oscillator.start();
-    oscillator.stop(audioCtx.currentTime + duration);
+let globalAudioCtx = null;
+
+function getGlobalAudioContext() {
+    if (!globalAudioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+            globalAudioCtx = new AudioContextClass();
+        }
+    }
+    if (globalAudioCtx && globalAudioCtx.state === 'suspended') {
+        globalAudioCtx.resume().catch(() => {});
+    }
+    return globalAudioCtx;
+}
+
+['click', 'touchstart', 'keydown'].forEach(evt => {
+    window.addEventListener(evt, () => {
+        getGlobalAudioContext();
+    }, { once: false, passive: true });
+});
+
+function playBeep(frequency = 2750, type = 'sine', duration = 0.08, vol = 0.5) {
+    try {
+        const ctx = getGlobalAudioContext();
+        if (!ctx) return;
+
+        if (ctx.state !== 'running') {
+            ctx.resume().then(() => {
+                playBeep(frequency, type, duration, vol);
+            }).catch(() => {});
+            return;
+        }
+
+        const now = ctx.currentTime;
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, now);
+
+        gainNode.gain.setValueAtTime(vol, now);
+        gainNode.gain.setValueAtTime(vol, now + Math.max(0, duration - 0.01));
+        gainNode.gain.linearRampToValueAtTime(0.0001, now + duration);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+
+        oscillator.start(now);
+        oscillator.stop(now + duration);
+
+        setTimeout(() => {
+            try {
+                oscillator.disconnect();
+                gainNode.disconnect();
+            } catch (e) {}
+        }, (duration + 0.1) * 1000);
+
+    } catch (e) {
+        console.warn("Audio playback error:", e);
+    }
 }
 
 window.playSuccessBeep = function() { playBeep(2750, 'sine', 0.08, 0.5); };
@@ -5802,27 +5830,16 @@ function startWaPauseTimer() {
 }
 
 function playWaAssistantBeep(times = 1) {
-    try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        let i = 0;
-        function beep() {
-            if(i >= times) return;
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            oscillator.type = "sine";
-            oscillator.frequency.value = 800;
-            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            oscillator.start();
-            setTimeout(() => {
-                oscillator.stop();
-                i++;
-                setTimeout(beep, 200);
-            }, 150);
+    let count = 0;
+    function trigger() {
+        if (count >= times) return;
+        playBeep(800, 'sine', 0.15, 0.1);
+        count++;
+        if (count < times) {
+            setTimeout(trigger, 350);
         }
-        beep();
-    } catch(e) {}
+    }
+    trigger();
 }
 
 // --- Override renderFinancials to fix broken HTML and add Checkboxes ---
