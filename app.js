@@ -3802,11 +3802,10 @@ if (saveLedgerBtn) {
         }
 
         const regDate = document.getElementById('ledgerRegDate').value;
-        const regName = document.getElementById('ledgerRegistrarName').value;
         const receiverName = document.getElementById('ledgerReceiverName').value;
 
-        if (!regDate || !regName || !receiverName) {
-            showToast("يرجى إدخال تاريخ التسجيل واسم المسجل واسم المستلم في أعلى المحضر.", "warning");
+        if (!regDate || !receiverName) {
+            showToast("يرجى إدخال تاريخ التسجيل واسم المستلم في أعلى المحضر.", "warning");
             return;
         }
 
@@ -3817,7 +3816,6 @@ if (saveLedgerBtn) {
         const payload = ledgerCart.map(item => Object.assign({}, item, {
             // Include exact time in regDate to use it as a natural batch grouping ID!
             regDate: finalRegDate,
-            registrarName: regName,
             receiver: receiverName
         }));
 
@@ -7597,6 +7595,14 @@ function applyPermissions() {
     if (headerLogoSub) {
         headerLogoSub.innerHTML = `مرحباً ${currentUser.displayName}`;
     }
+
+    // Auto-fill names for convenience
+    let invSenderField = document.getElementById('invSenderName');
+    if (invSenderField && !invSenderField.value) invSenderField.value = currentUser.displayName;
+    
+    let ledgerReceiverField = document.getElementById('ledgerReceiverName');
+    if (ledgerReceiverField && !ledgerReceiverField.value) ledgerReceiverField.value = currentUser.displayName;
+
 
     // Keep ALL logic JUST for the hardcoded local 'badr' admin
     let isFullAccess = (currentUser.permissions === "ALL");

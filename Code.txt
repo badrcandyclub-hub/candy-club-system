@@ -237,7 +237,7 @@ function setupCandyClubUX() {
       expirySheet = ss.insertSheet("📥 الاستلامات");
   }
   
-  var expiryHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "اسم المسجل", "تاريخ التسجيل", "المستلم", "ملاحظات", "السعر الأساسي", "سعر العرض", "الحالة", "الباركود"];
+  var expiryHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "تاريخ التسجيل", "المستلم", "ملاحظات", "السعر الأساسي", "سعر العرض", "الحالة", "الباركود"];
   expirySheet.getRange(1, 1, 1, expiryHeaders.length).setValues([expiryHeaders])
              .setBackground("#2980b9").setFontColor("white").setFontFamily(headerFont).setFontSize(14).setFontWeight("bold")
              .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
@@ -1102,7 +1102,7 @@ function doPost(e) {
       var expirySheet = getExpirySheet(ss);
       if (!expirySheet) {
           expirySheet = ss.insertSheet("📥 الاستلامات");
-          var expiryHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "اسم المسجل", "تاريخ التسجيل", "المستلم", "ملاحظات", "السعر الأساسي", "سعر العرض", "الحالة", "الباركود"];
+          var expiryHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "تاريخ التسجيل", "المستلم", "ملاحظات", "السعر الأساسي", "سعر العرض", "الحالة", "الباركود"];
           expirySheet.getRange(1, 1, 1, expiryHeaders.length).setValues([expiryHeaders])
                .setBackground("#2980b9").setFontColor("white").setFontFamily("Cairo").setFontSize(14).setFontWeight("bold")
                .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
@@ -1123,7 +1123,6 @@ function doPost(e) {
         e.parameter.qty, 
         e.parameter.expiryDate, 
         e.parameter.location, 
-        e.parameter.registrarName,
         e.parameter.regDate,
         e.parameter.receiver, 
         e.parameter.notes,
@@ -1165,7 +1164,6 @@ function doPost(e) {
           item.qty,
           item.expiryDate,
           item.location,
-          item.registrarName,
           item.regDate,
           item.receiver,
           item.notes,

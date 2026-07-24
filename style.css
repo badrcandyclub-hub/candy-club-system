@@ -2001,7 +2001,7 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
     .logo-container { width: auto; justify-content: center; }
     .header-right { min-width: unset !important; }
     .logo-text { font-size: 1.3rem; }
-    .logo-sub { display: none; }
+    /* .logo-sub { display: none; } */
     .section-card { padding: 16px 12px; margin-bottom: 15px; border-radius: 12px; }
     .stats-row { flex-wrap: wrap; }
 
