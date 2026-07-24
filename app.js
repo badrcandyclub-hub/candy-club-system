@@ -7845,14 +7845,14 @@ window.togglePermCard = function(label) {
 function fetchInventoryLogs(callback = null, query = "") {
     let tbody = document.getElementById('invArchiveTableBody');
     if (tbody && tbody.children.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:15px; color:#64748b;"><i class="fa-solid fa-spinner fa-spin"></i> ط¬ط§ط±ظٹ ط³ط­ط¨ ط§ظ„ط¨ظٹط§ظ†ط§طھ...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:15px; color:#64748b;"><i class="fa-solid fa-spinner fa-spin"></i> جاري سحب البيانات...</td></tr>';
     }
     
     let url = `${GOOGLE_SHEETS_URL}?action=getInventoryLogs&t=${new Date().getTime()}`;
     if (query !== "") {
         url += `&q=${encodeURIComponent(query)}`;
         if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:15px; color:#64748b;"><i class="fa-solid fa-search fa-bounce"></i> ط¬ط§ط±ظٹ ط§ظ„ط¨ط­ط« ط§ظ„ظ…ط¨ط§ط´ط± ظپظٹ ط§ظ„ط³ظٹط±ظپط±...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:15px; color:#64748b;"><i class="fa-solid fa-search fa-bounce"></i> جاري البحث المباشر في السيرفر...</td></tr>';
         }
     }
 
@@ -7866,7 +7866,7 @@ function fetchInventoryLogs(callback = null, query = "") {
         .catch(err => {
             console.error(err);
             if (tbody) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#ef4444; padding:15px;">ط®ط·ط£ ظپظٹ طھط­ظ…ظٹظ„ ط§ظ„ط¨ظٹط§ظ†ط§طھ</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#ef4444; padding:15px;">خطأ في تحميل البيانات</td></tr>';
             }
         });
 }
@@ -7877,7 +7877,7 @@ function filterAndRenderArchive() {
     let tbody = document.getElementById('invArchiveTableBody');
 
     if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:#64748b; font-weight:bold; font-size:1.1rem;"><i class="fa-solid fa-circle-notch fa-spin fa-2x" style="color:var(--primary); margin-bottom:15px; display:block;"></i> ط¬ط§ط±ظٹ ط§ظ„ط¨ط­ط«...</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:#64748b; font-weight:bold; font-size:1.1rem;"><i class="fa-solid fa-circle-notch fa-spin fa-2x" style="color:var(--primary); margin-bottom:15px; display:block;"></i> جاري البحث...</td></tr>`;
     }
 
     if (q !== '') {
@@ -7936,14 +7936,14 @@ window.reprintInvLog = function(logId) {
     
     let printWindow = window.open('', '_blank', 'height=600,width=400');
     if (!printWindow) {
-        showToast("ط¨ط±ط¬ط§ط، طھظپط¹ظٹظ„ ط§ظ„ظ†ظˆط§ظپط° ط§ظ„ظ…ظ†ط¨ط«ظ‚ط© (Pop-ups) ظ„ظ„ط·ط¨ط§ط¹ط©", "error");
+        showToast("برجاء تفعيل النوافذ المنبثقة (Pop-ups) للطباعة", "error");
         return;
     }
     
     let html = `
         <html dir="rtl" lang="ar">
         <head>
-            <title>ط¥ط°ظ† ظ…ط®ط²ظ† #${log.logId}</title>
+            <title>إذن مخزن #${log.logId}</title>
             <style>
                 body { font-family: 'Cairo', sans-serif; margin: 0; padding: 15px; color: #000; font-size: 14px; background: #fff; }
                 .receipt-header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 10px; margin-bottom: 10px; }
@@ -7958,24 +7958,24 @@ window.reprintInvLog = function(logId) {
         </head>
         <body>
             <div class="receipt-header">
-                <h2 class="receipt-title">ط¥ط°ظ† ط­ط±ظƒط© ظ…ط®ط§ط²ظ†</h2>
+                <h2 class="receipt-title">إذن حركة مخازن</h2>
                 <div style="font-size: 14px; font-weight: bold; margin-bottom: 5px;">#${log.logId}</div>
-                <div style="font-size: 12px;">طھط§ط±ظٹط®: <span dir="ltr">${log.timestamp}</span></div>
+                <div style="font-size: 12px;">تاريخ: <span dir="ltr">${log.timestamp}</span></div>
             </div>
             
             <div class="info-row">
-                <span><b>ظ…ظ†:</b> ${log.from}</span>
-                <span><b>ط¥ظ„ظ‰:</b> ${log.to}</span>
+                <span><b>من:</b> ${log.from}</span>
+                <span><b>إلى:</b> ${log.to}</span>
             </div>
             <div class="info-row">
-                <span><b>ط§ظ„ظ…ط³ط¬ظ„:</b> ${log.regName}</span>
+                <span><b>المسجل:</b> ${log.regName}</span>
             </div>
             
             <table>
                 <thead>
                     <tr>
-                        <th style="text-align: right;">ط§ظ„طµظ†ظپ</th>
-                        <th style="text-align: center; width: 40px;">ط§ظ„ظƒظ…ظٹط©</th>
+                        <th style="text-align: right;">الصنف</th>
+                        <th style="text-align: center; width: 40px;">الكمية</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -7983,7 +7983,7 @@ window.reprintInvLog = function(logId) {
                 </tbody>
             </table>
             
-            ${log.notes ? `<div class="notes"><b>ظ…ظ„ط§ط­ط¸ط§طھ:</b> ${log.notes}</div>` : ''}
+            ${log.notes ? `<div class="notes"><b>ملاحظات:</b> ${log.notes}</div>` : ''}
             
             <div class="footer">
                 Candy Club System<br>
@@ -8004,7 +8004,7 @@ window.reprintInvLog = function(logId) {
 function printInventoryReceipt(logId, from, to, items, notes, senderName, regName) {
     let printWindow = window.open('', '_blank', 'height=600,width=400');
     if (!printWindow) {
-        showToast("ط¨ط±ط¬ط§ط، طھظپط¹ظٹظ„ ط§ظ„ظ†ظˆط§ظپط° ط§ظ„ظ…ظ†ط¨ط«ظ‚ط© (Pop-ups) ظ„ظ„ط·ط¨ط§ط¹ط©", "error");
+        showToast("برجاء تفعيل النوافذ المنبثقة (Pop-ups) للطباعة", "error");
         return;
     }
 
@@ -8024,7 +8024,7 @@ function printInventoryReceipt(logId, from, to, items, notes, senderName, regNam
     let html = `
         <html dir="rtl" lang="ar">
         <head>
-            <title>ط¥ط°ظ† ظ…ط®ط²ظ† #${logId}</title>
+            <title>إذن مخزن #${logId}</title>
             <style>
                 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
                 body {
@@ -8091,47 +8091,47 @@ function printInventoryReceipt(logId, from, to, items, notes, senderName, regNam
         </head>
         <body>
             <div class="header">
-                <h2 class="title">ط¥ط°ظ† ط­ط±ظƒط© ظ…ط®ط§ط²ظ†</h2>
+                <h2 class="title">إذن حركة مخازن</h2>
                 <div class="log-id">#${logId}</div>
                 <div style="font-size: 11px;" dir="ltr">${timeStr}</div>
             </div>
             
             <div class="meta-row">
-                <span><b>ظ…ظ†:</b> ${from}</span>
-                <span><b>ط¥ظ„ظ‰:</b> ${to}</span>
+                <span><b>من:</b> ${from}</span>
+                <span><b>إلى:</b> ${to}</span>
             </div>
             
             <div class="meta-row" style="margin-top:5px;">
-                <span><b>ظ…ظڈط³ظ„ظ…:</b> ${senderName || '---'}</span>
-                <span><b>ظ…ظڈط³طھظ„ظ…:</b> .......................</span>
+                <span><b>مُسلم:</b> ${senderName || '---'}</span>
+                <span><b>مُستلم:</b> .......................</span>
             </div>
             
             <div class="items-section">
                 <div class="item-header">
-                    <span>ط§ظ„طµظ†ظپ</span>
-                    <span>ط§ظ„ظƒظ…ظٹط©</span>
+                    <span>الصنف</span>
+                    <span>الكمية</span>
                 </div>
                 ${itemsHtml}
             </div>
             
             ${notes ? `
             <div class="notes-section">
-                <b>ظ…ظ„ط§ط­ط¸ط§طھ:</b> ${notes}
+                <b>ملاحظات:</b> ${notes}
             </div>` : ''}
             
             <div style="margin-top: 15px; display: flex; justify-content: space-between; font-size: 11px;">
                 <div style="text-align: center;">
-                    <b>طھظˆظ‚ظٹط¹ ط§ظ„ظ…ظڈط³ظ„ظ…</b><br>
+                    <b>توقيع المُسلم</b><br>
                     ...................
                 </div>
                 <div style="text-align: center;">
-                    <b>طھظˆظ‚ظٹط¹ ط§ظ„ظ…ظڈط³طھظ„ظ…</b><br>
+                    <b>توقيع المُستلم</b><br>
                     ...................
                 </div>
             </div>
             
             <div class="footer">
-                ط³ظڈط¬ظ„ ط¨ظˆط§ط³ط·ط©: ${regName}<br>
+                سُجل بواسطة: ${regName}<br>
                 Candy Club System
             </div>
             
