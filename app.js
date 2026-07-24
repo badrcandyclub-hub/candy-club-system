@@ -6868,131 +6868,159 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function printInventoryReceipt(logId, from, to, items, notes, senderName, regName) {
-        let printWindow = window.open('', '_blank', 'height=600,width=400');
-        if (!printWindow) {
-            showToast("يرجى تفعيل النوافذ المنبثقة (Pop-ups) للطباعة", "error");
-            return;
-        }
-
-        let itemsHtml = '';
-        items.forEach(i => {
-            itemsHtml += `
-                <tr>
-                    <td style="text-align: right; padding: 8px 5px; border-bottom: 1px dashed #ccc;">
-                        <div style="font-weight: bold; font-size: 14px;">${i.name}</div>
-                        ${i.barcode ? `<div style="font-size: 11px; color: #555; margin-top: 3px;">باركود: ${i.barcode}</div>` : ''}
-                    </td>
-                    <td style="text-align: center; padding: 8px 5px; border-bottom: 1px dashed #ccc; font-weight: bold; font-size: 15px;">${i.qty}</td>
-                </tr>
-            `;
-        });
-
-        let dateStr = new Date().toLocaleString('ar-EG');
-        let senderDisplay = senderName ? senderName : regName;
-
-        let html = `
-            <html dir="rtl" lang="ar">
-            <head>
-                <title>إذن ${logId}</title>
-                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-                <style>
-                    @page { margin: 0; }
-                    body {
-                        font-family: Tahoma, Arial, sans-serif;
-                        color: #000;
-                        width: 80mm;
-                        margin: 0 auto;
-                        padding: 15px;
-                        font-size: 13px;
-                        line-height: 1.5;
-                    }
-                    .header {
-                        text-align: center;
-                        margin-bottom: 15px;
-                    }
-                    .header h2 { margin: 0 0 5px 0; font-size: 20px; font-weight: bold; }
-                    .header h3 { margin: 0 0 8px 0; font-size: 16px; font-weight: bold; }
-                    .header p { margin: 2px 0; font-size: 12px; }
-                    .divider { border-top: 2px dashed #000; margin: 10px 0; }
-                    .info-box {
-                        margin-bottom: 15px;
-                        border: 1px solid #000;
-                        padding: 10px;
-                        border-radius: 5px;
-                    }
-                    .info-box p { margin: 4px 0; font-weight: bold; font-size: 13px; }
-                    table {
-                        width: 100%;
-                        border-collapse: collapse;
-                        margin-bottom: 15px;
-                    }
-                    th {
-                        text-align: right;
-                        padding: 5px;
-                        border-top: 2px solid #000;
-                        border-bottom: 2px solid #000;
-                        font-weight: bold;
-                        font-size: 14px;
-                    }
-                    .footer {
-                        text-align: center;
-                        margin-top: 15px;
-                        font-size: 11px;
-                        font-weight: bold;
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="header">
-                    <h2>Candy Club</h2>
-                    <h3>إذن حركة بضاعة</h3>
-                    <p>رقم الإذن: <b style="font-size:14px;">${logId}</b></p>
-                    <p>التاريخ: ${dateStr}</p>
-                </div>
-
-                <div class="divider"></div>
-
-                <div class="info-box">
-                    <p><i class="fa-solid fa-user-tie" style="margin-left: 5px;"></i> <b>الراسل:</b> ${senderDisplay}</p>
-                    <p><i class="fa-solid fa-store" style="margin-left: 5px;"></i> <b>من:</b> ${from}</p>
-                    <p><i class="fa-solid fa-truck-fast" style="margin-left: 5px;"></i> <b>إلى:</b> ${to}</p>
-                </div>
-
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="width: 75%;">الصنف</th>
-                            <th style="width: 25%; text-align: center;">الكمية</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${itemsHtml}
-                    </tbody>
-                </table>
-
-                ${notes ? `<div style="margin-bottom: 15px; font-size: 13px;"><p><i class="fa-solid fa-pen-to-square" style="margin-left: 5px;"></i> <b>ملاحظات:</b> ${notes}</p></div>` : ''}
-
-                <div class="divider"></div>
-
-                <div class="footer">
-                    <p>مسجل إلكترونياً بـ Candy Club System</p>
-                </div>
-
-                <script>
-                    window.onload = function() {
-                        setTimeout(function() {
-                            window.print();
-                        }, 500);
-                    };
-                </script>
-            </body>
-            </html>
-        `;
-
-        printWindow.document.open();
-        printWindow.document.write(html);
-        printWindow.document.close();
+    let printWindow = window.open('', '_blank', 'height=600,width=450');
+    if (!printWindow) {
+        showToast("برجاء تفعيل النوافذ المنبثقة (Pop-ups) للطباعة", "error");
+        return;
     }
+
+    let itemsHtml = '';
+    items.forEach(item => {
+        itemsHtml += `
+            <tr style="border-bottom: 1px dashed #000;">
+                <td style="text-align: right; padding: 6px 4px; vertical-align: top;">
+                    <div style="font-weight: bold; font-size: 13px; line-height: 1.3; word-break: break-word; white-space: normal; color: #000;">${item.name}</div>
+                    ${item.barcode ? `<div style="font-family: monospace; font-size: 11px; font-weight: bold; color: #000; letter-spacing: 0.5px; margin-top: 2px;">${item.barcode}</div>` : ''}
+                </td>
+                <td style="text-align: center; padding: 6px 4px; vertical-align: top; font-weight: bold; font-size: 14px; color: #000; width: 45px;">${item.qty}</td>
+            </tr>
+        `;
+    });
+
+    let now = new Date();
+    let timeStr = now.toLocaleString('en-GB');
+
+    let html = `
+        <html dir="rtl" lang="ar">
+        <head>
+            <title>إذن مخزن #${logId}</title>
+            <style>
+                @page { margin: 5mm; }
+                body {
+                    font-family: 'Cairo', Tahoma, sans-serif;
+                    margin: 0;
+                    padding: 10px;
+                    color: #000;
+                    background: #fff;
+                    font-size: 13px;
+                    line-height: 1.4;
+                }
+                .header {
+                    text-align: center;
+                    border-bottom: 2px dashed #000;
+                    padding-bottom: 8px;
+                    margin-bottom: 8px;
+                }
+                .title {
+                    font-size: 17px;
+                    font-weight: 700;
+                    margin: 0 0 4px 0;
+                }
+                .log-id {
+                    font-size: 14px;
+                    font-weight: bold;
+                    margin-bottom: 3px;
+                }
+                .meta-row {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 4px;
+                    font-size: 12px;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 8px;
+                }
+                th {
+                    text-align: right;
+                    padding: 6px 4px;
+                    border-bottom: 2px solid #000;
+                    font-weight: bold;
+                    font-size: 13px;
+                }
+                td {
+                    padding: 6px 4px;
+                }
+                .notes-section {
+                    margin-top: 8px;
+                    font-size: 12px;
+                    border-top: 1px solid #000;
+                    padding-top: 5px;
+                }
+                .footer {
+                    text-align: center;
+                    margin-top: 12px;
+                    font-size: 10px;
+                    color: #333;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h2 class="title">إذن حركة مخازن</h2>
+                <div class="log-id">#${logId}</div>
+                <div style="font-size: 11px;" dir="ltr">${timeStr}</div>
+            </div>
+            
+            <div class="meta-row">
+                <span><b>من:</b> ${from}</span>
+                <span><b>إلى:</b> ${to}</span>
+            </div>
+            
+            <div class="meta-row" style="margin-top:3px;">
+                <span><b>مُسلم:</b> ${senderName || '---'}</span>
+                <span><b>مُستلم:</b> .......................</span>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th style="text-align: right;">الصنف</th>
+                        <th style="text-align: center; width: 45px;">الكمية</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${itemsHtml}
+                </tbody>
+            </table>
+            
+            ${notes ? `
+            <div class="notes-section">
+                <b>ملاحظات:</b> ${notes}
+            </div>` : ''}
+            
+            <div style="margin-top: 12px; display: flex; justify-content: space-between; font-size: 11px;">
+                <div style="text-align: center;">
+                    <b>توقيع المُسلم</b><br>
+                    ...................
+                </div>
+                <div style="text-align: center;">
+                    <b>توقيع المُستلم</b><br>
+                    ...................
+                </div>
+            </div>
+            
+            <div class="footer">
+                سُجل بواسطة: ${regName}<br>
+                Candy Club System
+            </div>
+            
+            <script>
+                window.onload = function() {
+                    setTimeout(function() {
+                        window.print();
+                    }, 500);
+                };
+            </script>
+        </body>
+        </html>
+    `;
+    
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+}
 });
 // --- Inventory Archive & Dashboard Logic ---
 window.switchInvTab = function(tab) {
@@ -7415,16 +7443,18 @@ window.reprintInvLog = function(logId) {
     }
     
     let itemsHtml = itemsArr.map(item => `
-        <tr>
-            <td style="text-align: right;"><b>${item.name}</b></td>
-            <td style="text-align: center; font-family: monospace; font-size:12px; color:#444;">${item.barcode || '-'}</td>
-            <td style="text-align: center;"><b>${item.qty}</b></td>
+        <tr style="border-bottom: 1px dashed #000;">
+            <td style="text-align: right; padding: 6px 4px; vertical-align: top;">
+                <div style="font-weight: bold; font-size: 13px; line-height: 1.3; word-break: break-word; white-space: normal; color: #000;">${item.name}</div>
+                ${item.barcode ? `<div style="font-family: monospace; font-size: 11px; font-weight: bold; color: #000; letter-spacing: 0.5px; margin-top: 2px;">${item.barcode}</div>` : ''}
+            </td>
+            <td style="text-align: center; padding: 6px 4px; vertical-align: top; font-weight: bold; font-size: 14px; color: #000; width: 45px;">${item.qty}</td>
         </tr>
     `).join('');
     
     let printWindow = window.open('', '_blank', 'height=600,width=450');
     if (!printWindow) {
-        showToast("يرجى تفعيل النوافذ المنبثقة (Pop-ups) للطباعة", "error");
+        showToast("برجاء تفعيل النوافذ المنبثقة (Pop-ups) للطباعة", "error");
         return;
     }
     
@@ -7433,22 +7463,23 @@ window.reprintInvLog = function(logId) {
         <head>
             <title>إذن مخزن #${log.logId}</title>
             <style>
-                body { font-family: 'Cairo', Tahoma, sans-serif; margin: 0; padding: 15px; color: #000; font-size: 14px; background: #fff; }
-                .receipt-header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 10px; margin-bottom: 10px; }
-                .receipt-title { font-size: 18px; font-weight: bold; margin: 0 0 5px 0; }
-                .info-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px; }
-                table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                @page { margin: 5mm; }
+                body { font-family: 'Cairo', Tahoma, sans-serif; margin: 0; padding: 10px; color: #000; font-size: 13px; background: #fff; line-height: 1.4; }
+                .receipt-header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 8px; margin-bottom: 8px; }
+                .receipt-title { font-size: 17px; font-weight: bold; margin: 0 0 4px 0; }
+                .info-row { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 12px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 8px; }
                 th { border-bottom: 2px solid #000; padding: 6px 4px; font-size: 13px; text-align: right; }
-                td { padding: 6px 4px; border-bottom: 1px dotted #ccc; font-size: 13px; }
-                .notes { margin-top: 10px; font-size: 12px; border-top: 1px solid #000; padding-top: 5px; }
-                .footer { text-align: center; margin-top: 15px; font-size: 11px; font-style: italic; }
+                td { padding: 6px 4px; }
+                .notes { margin-top: 8px; font-size: 12px; border-top: 1px solid #000; padding-top: 5px; }
+                .footer { text-align: center; margin-top: 12px; font-size: 11px; }
             </style>
         </head>
         <body>
             <div class="receipt-header">
                 <h2 class="receipt-title">إذن حركة مخازن</h2>
-                <div style="font-size: 15px; font-weight: bold; margin-bottom: 5px;">#${log.logId}</div>
-                <div style="font-size: 12px;">التاريخ: <span dir="ltr">${log.timestamp}</span></div>
+                <div style="font-size: 14px; font-weight: bold; margin-bottom: 3px;">#${log.logId}</div>
+                <div style="font-size: 11px;">تاريخ: <span dir="ltr">${log.timestamp}</span></div>
             </div>
             
             <div class="info-row">
@@ -7463,8 +7494,7 @@ window.reprintInvLog = function(logId) {
                 <thead>
                     <tr>
                         <th style="text-align: right;">الصنف</th>
-                        <th style="text-align: center;">الباركود</th>
-                        <th style="text-align: center; width: 50px;">الكمية</th>
+                        <th style="text-align: center; width: 45px;">الكمية</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -7474,6 +7504,15 @@ window.reprintInvLog = function(logId) {
             
             ${log.notes ? `<div class="notes"><b>ملاحظات:</b> ${log.notes}</div>` : ''}
             
+            <div style="margin-top: 12px; display: flex; justify-content: space-between; font-size: 11px;">
+                <div style="text-align: center;">
+                    <b>توقيع المُسلم</b><br>...................
+                </div>
+                <div style="text-align: center;">
+                    <b>توقيع المُستلم</b><br>...................
+                </div>
+            </div>
+
             <div class="footer">
                 Candy Club System<br>
                 ${new Date().toLocaleString('en-GB')}
@@ -7487,7 +7526,8 @@ window.reprintInvLog = function(logId) {
     `;
     printWindow.document.open();
     printWindow.document.write(html);
-};
+    printWindow.document.close();
+};;
 
 
 // ==========================================
@@ -7927,20 +7967,22 @@ window.reprintInvLog = function(logId) {
                     let barcode = match[3] ? match[3].replace(']', '').trim() : '';
                     return { name, qty, barcode };
                 }
-                return { name: p.trim(), qty: 1 };
+                return { name: p.trim(), qty: 1, barcode: '' };
             });
         }
     }
     
     let itemsHtml = itemsArr.map(item => `
-        <tr>
-            <td style="text-align: right; font-weight: bold;">${item.name}</td>
-            <td style="text-align: center; font-family: monospace; font-size: 11px; color: #333;">${item.barcode || '-'}</td>
-            <td style="text-align: center;"><b>${item.qty}</b></td>
+        <tr style="border-bottom: 1px dashed #000;">
+            <td style="text-align: right; padding: 6px 4px; vertical-align: top;">
+                <div style="font-weight: bold; font-size: 13px; line-height: 1.3; word-break: break-word; white-space: normal; color: #000;">${item.name}</div>
+                ${item.barcode ? `<div style="font-family: monospace; font-size: 11px; font-weight: bold; color: #000; letter-spacing: 0.5px; margin-top: 2px;">${item.barcode}</div>` : ''}
+            </td>
+            <td style="text-align: center; padding: 6px 4px; vertical-align: top; font-weight: bold; font-size: 14px; color: #000; width: 45px;">${item.qty}</td>
         </tr>
     `).join('');
     
-    let printWindow = window.open('', '_blank', 'height=600,width=400');
+    let printWindow = window.open('', '_blank', 'height=600,width=450');
     if (!printWindow) {
         showToast("برجاء تفعيل النوافذ المنبثقة (Pop-ups) للطباعة", "error");
         return;
@@ -7951,22 +7993,23 @@ window.reprintInvLog = function(logId) {
         <head>
             <title>إذن مخزن #${log.logId}</title>
             <style>
-                body { font-family: 'Cairo', sans-serif; margin: 0; padding: 15px; color: #000; font-size: 14px; background: #fff; }
-                .receipt-header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 10px; margin-bottom: 10px; }
-                .receipt-title { font-size: 18px; font-weight: bold; margin: 0 0 5px 0; }
-                .info-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px; }
-                table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-                th { border-bottom: 1px solid #000; padding: 5px 0; text-align: right; font-size: 13px; }
-                td { padding: 5px 0; border-bottom: 1px dotted #ccc; font-size: 14px; }
-                .notes { margin-top: 10px; font-size: 12px; border-top: 1px solid #000; padding-top: 5px; }
-                .footer { text-align: center; margin-top: 15px; font-size: 11px; font-style: italic; }
+                @page { margin: 5mm; }
+                body { font-family: 'Cairo', Tahoma, sans-serif; margin: 0; padding: 10px; color: #000; font-size: 13px; background: #fff; line-height: 1.4; }
+                .receipt-header { text-align: center; border-bottom: 2px dashed #000; padding-bottom: 8px; margin-bottom: 8px; }
+                .receipt-title { font-size: 17px; font-weight: bold; margin: 0 0 4px 0; }
+                .info-row { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 12px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+                th { border-bottom: 2px solid #000; padding: 6px 4px; font-size: 13px; text-align: right; }
+                td { padding: 6px 4px; }
+                .notes { margin-top: 8px; font-size: 12px; border-top: 1px solid #000; padding-top: 5px; }
+                .footer { text-align: center; margin-top: 12px; font-size: 11px; }
             </style>
         </head>
         <body>
             <div class="receipt-header">
                 <h2 class="receipt-title">إذن حركة مخازن</h2>
-                <div style="font-size: 14px; font-weight: bold; margin-bottom: 5px;">#${log.logId}</div>
-                <div style="font-size: 12px;">تاريخ: <span dir="ltr">${log.timestamp}</span></div>
+                <div style="font-size: 14px; font-weight: bold; margin-bottom: 3px;">#${log.logId}</div>
+                <div style="font-size: 11px;">تاريخ: <span dir="ltr">${log.timestamp}</span></div>
             </div>
             
             <div class="info-row">
@@ -7981,8 +8024,7 @@ window.reprintInvLog = function(logId) {
                 <thead>
                     <tr>
                         <th style="text-align: right;">الصنف</th>
-                        <th style="text-align: center;">الباركود</th>
-                        <th style="text-align: center; width: 50px;">الكمية</th>
+                        <th style="text-align: center; width: 45px;">الكمية</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -7992,6 +8034,15 @@ window.reprintInvLog = function(logId) {
             
             ${log.notes ? `<div class="notes"><b>ملاحظات:</b> ${log.notes}</div>` : ''}
             
+            <div style="margin-top: 12px; display: flex; justify-content: space-between; font-size: 11px;">
+                <div style="text-align: center;">
+                    <b>توقيع المُسلم</b><br>...................
+                </div>
+                <div style="text-align: center;">
+                    <b>توقيع المُستلم</b><br>...................
+                </div>
+            </div>
+
             <div class="footer">
                 Candy Club System<br>
                 ${new Date().toLocaleString('en-GB')}
@@ -8006,10 +8057,10 @@ window.reprintInvLog = function(logId) {
     printWindow.document.open();
     printWindow.document.write(html);
     printWindow.document.close();
-};
+};;
 
 function printInventoryReceipt(logId, from, to, items, notes, senderName, regName) {
-    let printWindow = window.open('', '_blank', 'height=600,width=400');
+    let printWindow = window.open('', '_blank', 'height=600,width=450');
     if (!printWindow) {
         showToast("برجاء تفعيل النوافذ المنبثقة (Pop-ups) للطباعة", "error");
         return;
@@ -8018,10 +8069,13 @@ function printInventoryReceipt(logId, from, to, items, notes, senderName, regNam
     let itemsHtml = '';
     items.forEach(item => {
         itemsHtml += `
-            <div class="item-row">
-                <span>${item.name} ${item.barcode ? '<br><small style="font-size:0.7rem; color:#666">'+item.barcode+'</small>' : ''}</span>
-                <span>${item.qty}</span>
-            </div>
+            <tr style="border-bottom: 1px dashed #000;">
+                <td style="text-align: right; padding: 6px 4px; vertical-align: top;">
+                    <div style="font-weight: bold; font-size: 13px; line-height: 1.3; word-break: break-word; white-space: normal; color: #000;">${item.name}</div>
+                    ${item.barcode ? `<div style="font-family: monospace; font-size: 11px; font-weight: bold; color: #000; letter-spacing: 0.5px; margin-top: 2px;">${item.barcode}</div>` : ''}
+                </td>
+                <td style="text-align: center; padding: 6px 4px; vertical-align: top; font-weight: bold; font-size: 14px; color: #000; width: 45px;">${item.qty}</td>
+            </tr>
         `;
     });
 
@@ -8033,30 +8087,31 @@ function printInventoryReceipt(logId, from, to, items, notes, senderName, regNam
         <head>
             <title>إذن مخزن #${logId}</title>
             <style>
-                @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+                @page { margin: 5mm; }
                 body {
-                    font-family: 'Cairo', sans-serif;
+                    font-family: 'Cairo', Tahoma, sans-serif;
                     margin: 0;
                     padding: 10px;
                     color: #000;
                     background: #fff;
                     font-size: 13px;
+                    line-height: 1.4;
                 }
                 .header {
                     text-align: center;
                     border-bottom: 2px dashed #000;
-                    padding-bottom: 10px;
-                    margin-bottom: 10px;
+                    padding-bottom: 8px;
+                    margin-bottom: 8px;
                 }
                 .title {
-                    font-size: 18px;
+                    font-size: 17px;
                     font-weight: 700;
-                    margin: 0 0 5px 0;
+                    margin: 0 0 4px 0;
                 }
                 .log-id {
-                    font-size: 16px;
+                    font-size: 14px;
                     font-weight: bold;
-                    margin-bottom: 5px;
+                    margin-bottom: 3px;
                 }
                 .meta-row {
                     display: flex;
@@ -8064,33 +8119,30 @@ function printInventoryReceipt(logId, from, to, items, notes, senderName, regNam
                     margin-bottom: 4px;
                     font-size: 12px;
                 }
-                .items-section {
-                    margin-top: 10px;
-                    border-bottom: 2px dashed #000;
-                    padding-bottom: 10px;
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 8px;
                 }
-                .item-header {
-                    display: flex;
-                    justify-content: space-between;
+                th {
+                    text-align: right;
+                    padding: 6px 4px;
+                    border-bottom: 2px solid #000;
                     font-weight: bold;
-                    border-bottom: 1px solid #000;
-                    padding-bottom: 4px;
-                    margin-bottom: 4px;
+                    font-size: 13px;
                 }
-                .item-row {
-                    display: flex;
-                    justify-content: space-between;
-                    padding: 3px 0;
-                    border-bottom: 1px dotted #ccc;
-                    font-weight: 600;
+                td {
+                    padding: 6px 4px;
                 }
                 .notes-section {
-                    margin-top: 10px;
+                    margin-top: 8px;
                     font-size: 12px;
+                    border-top: 1px solid #000;
+                    padding-top: 5px;
                 }
                 .footer {
                     text-align: center;
-                    margin-top: 15px;
+                    margin-top: 12px;
                     font-size: 10px;
                     color: #333;
                 }
@@ -8108,26 +8160,29 @@ function printInventoryReceipt(logId, from, to, items, notes, senderName, regNam
                 <span><b>إلى:</b> ${to}</span>
             </div>
             
-            <div class="meta-row" style="margin-top:5px;">
+            <div class="meta-row" style="margin-top:3px;">
                 <span><b>مُسلم:</b> ${senderName || '---'}</span>
                 <span><b>مُستلم:</b> .......................</span>
             </div>
             
-            <div class="items-section">
-                <div class="item-header" style="display: flex; justify-content: space-between; font-weight: bold; border-bottom: 2px solid #000; padding-bottom: 4px; margin-bottom: 4px;">
-                    <span style="flex: 2; text-align: right;">الصنف</span>
-                    <span style="flex: 1.5; text-align: center;">الباركود</span>
-                    <span style="flex: 1; text-align: center;">الكمية</span>
-                </div>
-                ${itemsHtml}
-            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="text-align: right;">الصنف</th>
+                        <th style="text-align: center; width: 45px;">الكمية</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${itemsHtml}
+                </tbody>
+            </table>
             
             ${notes ? `
             <div class="notes-section">
                 <b>ملاحظات:</b> ${notes}
             </div>` : ''}
             
-            <div style="margin-top: 15px; display: flex; justify-content: space-between; font-size: 11px;">
+            <div style="margin-top: 12px; display: flex; justify-content: space-between; font-size: 11px;">
                 <div style="text-align: center;">
                     <b>توقيع المُسلم</b><br>
                     ...................
