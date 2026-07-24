@@ -7132,6 +7132,13 @@ function checkSession() {
                 showLogin();
                 return;
             }
+            if (!isAdminPage && currentUser.permissions === "ALL") {
+                console.warn("Admin account cannot be used in the employee portal.");
+                localStorage.removeItem('cc_user');
+                currentUser = null;
+                showLogin();
+                return;
+            }
             
             document.getElementById('login-screen').style.display = 'none';
             applyPermissions();
@@ -7657,22 +7664,20 @@ function applyPermissions() {
     );
     
     if (firstUnlockedBtn) {
-        // Trigger a click to open it automatically
-        setTimeout(() => {
-            let targetId = firstUnlockedBtn.getAttribute('data-target');
-            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.tab-pane').forEach(c => c.classList.remove('active'));
-            firstUnlockedBtn.classList.add('active');
-            let targetElement = document.getElementById(targetId);
-            if (targetElement) targetElement.classList.add('active');
-            
-            // if it's expiry tab, load data
-            if (targetId === 'expiry-tab' && typeof loadExpiryData === 'function') {
-                const expiryBody = document.querySelector('#expiry-tab');
-                if (expiryBody) expiryBody.classList.add('skeleton-mode');
-                loadExpiryData();
+        // Trigger a real DOM click so all the initialization logic runs perfectly
+        setTimeout(() => firstUnlockedBtn.click(), 100);
+    } else {
+        // Fallback if somehow they have NO permissions at all
+        let loginScreen = document.getElementById('login-screen');
+        if(loginScreen) {
+            loginScreen.style.display = 'flex';
+            let err = document.getElementById('login-error');
+            if(err) {
+                err.innerText = "هذا الحساب لا يملك أي صلاحيات.";
+                err.style.display = 'block';
             }
-        }, 100);
+            localStorage.removeItem('cc_user');
+        }
     }
 }
 
