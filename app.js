@@ -5472,66 +5472,40 @@ window.hideLoading = function() {
     if (overlay) overlay.classList.add('loading-overlay-hidden');
 };
 
-let globalAudioCtx = null;
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-function getGlobalAudioContext() {
-    if (!globalAudioCtx) {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (AudioContextClass) {
-            globalAudioCtx = new AudioContextClass();
-        }
-    }
-    if (globalAudioCtx && globalAudioCtx.state === 'suspended') {
-        globalAudioCtx.resume().catch(() => {});
-    }
-    return globalAudioCtx;
-}
-
-['click', 'touchstart', 'keydown'].forEach(evt => {
-    window.addEventListener(evt, () => {
-        getGlobalAudioContext();
-    }, { once: false, passive: true });
-});
-
-function playBeep(frequency = 2750, type = 'sine', duration = 0.08, vol = 0.5) {
+function playBeep(frequency, type, duration, vol) {
     try {
-        const ctx = getGlobalAudioContext();
-        if (!ctx) return;
-
-        if (ctx.state !== 'running') {
-            ctx.resume().then(() => {
-                playBeep(frequency, type, duration, vol);
-            }).catch(() => {});
-            return;
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
         }
-
-        const now = ctx.currentTime;
-        const oscillator = ctx.createOscillator();
-        const gainNode = ctx.createGain();
-
+        
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        
         oscillator.type = type;
-        oscillator.frequency.setValueAtTime(frequency, now);
-
+        oscillator.frequency.value = frequency;
+        
+        let now = audioCtx.currentTime;
+        
         gainNode.gain.setValueAtTime(vol, now);
-        gainNode.gain.setValueAtTime(vol, now + Math.max(0, duration - 0.01));
-        gainNode.gain.linearRampToValueAtTime(0.0001, now + duration);
-
+        gainNode.gain.setValueAtTime(vol, now + duration - 0.01);
+        gainNode.gain.linearRampToValueAtTime(0.001, now + duration);
+        
         oscillator.connect(gainNode);
-        gainNode.connect(ctx.destination);
-
+        gainNode.connect(audioCtx.destination);
+        
         oscillator.start(now);
         oscillator.stop(now + duration);
 
+        // الصمام السحري: إجبار الصوت على القطع بعد نصف ثانية حتى لو علق المتصفح
         setTimeout(() => {
             try {
                 oscillator.disconnect();
                 gainNode.disconnect();
-            } catch (e) {}
-        }, (duration + 0.1) * 1000);
-
-    } catch (e) {
-        console.warn("Audio playback error:", e);
-    }
+            } catch(e) {}
+        }, 500); 
+    } catch(e) {}
 }
 
 window.playSuccessBeep = function() { playBeep(2750, 'sine', 0.08, 0.5); };
