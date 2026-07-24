@@ -7519,7 +7519,14 @@ window.handleLogin = function(e) {
     // ⭐ Hardcoded Admin Login
     if (user === "badr" && pass === "01210351419") {
         let isAdminPage = window.location.pathname.toLowerCase().includes('admin.html');
-        // Admin can login anywhere
+        
+        if (!isAdminPage) {
+            err.innerText = "عذراً، هذا الحساب مخصص للوحة الإدارة فقط. يرجى الدخول بحساب موظف.";
+            err.style.display = 'block';
+            setBtnLoading(btn, false, "تسجيل الدخول");
+            return;
+        }
+
         currentUser = {
             username: "badr",
             displayName: "المدير العام",
@@ -7547,7 +7554,11 @@ window.handleLogin = function(e) {
                     return;
                 }
                 
-                // Note: ALL users can login to index.html regardless of roles now
+                if (!isAdminPage && data.permissions === "ALL") {
+                    err.innerText = "عذراً، هذا الحساب مخصص للوحة الإدارة فقط. يرجى الدخول بحساب موظف.";
+                    err.style.display = 'block';
+                    return;
+                }
 
                 currentUser = {
                     username: data.username,
