@@ -1211,19 +1211,39 @@ function doPost(e) {
       var expirySheet = getExpirySheet(ss);
       if (expirySheet) {
         var expData = expirySheet.getDataRange().getValues();
-        var targetIdParts = e.parameter.id ? e.parameter.id.split('|') : [];
-        var targetName = targetIdParts[0] || e.parameter.id;
-        var targetQty = targetIdParts[1] || "";
-        var targetDate = targetIdParts[2] || "";
+        if (expData.length > 0) {
+          var headers = expData[0];
+          var targetIdParts = e.parameter.id ? e.parameter.id.split('|') : [];
+          var targetName = targetIdParts[0] || e.parameter.id;
+          var targetDate = targetIdParts[2] || "";
 
-        for (var i = 1; i < expData.length; i++) {
-          if (expData[i][0] == targetName && (!targetDate || expData[i][2].toString() == targetDate.toString())) {
-            expirySheet.getRange(i + 1, 2).setValue(e.parameter.qty);
-            expirySheet.getRange(i + 1, 3).setValue(e.parameter.expiryDate);
-            expirySheet.getRange(i + 1, 4).setValue(e.parameter.location);
-            expirySheet.getRange(i + 1, 7).setValue(e.parameter.receiver);
-            expirySheet.getRange(i + 1, 8).setValue(e.parameter.notes);
-            break;
+          // find column indexes dynamically based on aliases
+          function getColIdx(possibleNames) {
+            for (var c = 0; c < headers.length; c++) {
+              for (var j = 0; j < possibleNames.length; j++) {
+                if (headers[c].toString().trim() === possibleNames[j]) return c + 1;
+              }
+            }
+            return -1;
+          }
+
+          var colQty = getColIdx(["الكمية"]);
+          var colExp = getColIdx(["تاريخ الانتهاء", "تاريخ الصلاحية"]);
+          var colLoc = getColIdx(["المكان / المورد", "الرف / المكان", "مكان التخزين", "المكان"]);
+          var colRec = getColIdx(["المستلم", "اسم المستلم"]);
+          var colNot = getColIdx(["ملاحظات", "الملاحظات"]);
+          var colBar = getColIdx(["الباركود", "باركود"]);
+
+          for (var i = 1; i < expData.length; i++) {
+            if (expData[i][0] == targetName && (!targetDate || expData[i][2].toString() == targetDate.toString())) {
+              if (colQty > 0) expirySheet.getRange(i + 1, colQty).setValue(e.parameter.qty);
+              if (colExp > 0) expirySheet.getRange(i + 1, colExp).setValue(e.parameter.expiryDate);
+              if (colLoc > 0) expirySheet.getRange(i + 1, colLoc).setValue(e.parameter.location);
+              if (colRec > 0) expirySheet.getRange(i + 1, colRec).setValue(e.parameter.receiver);
+              if (colNot > 0) expirySheet.getRange(i + 1, colNot).setValue(e.parameter.notes);
+              if (colBar > 0) expirySheet.getRange(i + 1, colBar).setValue(e.parameter.barcode);
+              break;
+            }
           }
         }
       }
