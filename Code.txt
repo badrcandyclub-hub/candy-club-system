@@ -591,23 +591,40 @@ function doGet(e) {
     var expResult = [];
     if (expirySheet) {
       var expData = expirySheet.getDataRange().getValues();
-      for (var i = 1; i < expData.length; i++) {
-        if (expData[i][0]) {
-          expResult.push({
-            id: expData[i][0] + '|' + expData[i][1] + '|' + expData[i][2],
-            name: expData[i][0],
-            qty: expData[i][1],
-            expiryDate: expData[i][2],
-            location: expData[i][3],
-            registrarName: expData[i][4],
-            regDate: expData[i][5],
-            receiver: expData[i][6],
-            notes: expData[i][7],
-            originalPrice: expData[i][8],
-            offerPrice: expData[i][9],
-            status: expData[i][10],
-            barcode: expData[i][11] || ""
-          });
+      if (expData.length > 0) {
+        var headers = expData[0];
+        var idxName = findColumnIndex(headers, "اسم الصنف");
+        var idxQty = findColumnIndex(headers, "الكمية");
+        var idxExp = findColumnIndex(headers, "تاريخ الصلاحية");
+        var idxLoc = findColumnIndex(headers, "مكان التخزين");
+        var idxRegName = findColumnIndex(headers, "اسم المسجل");
+        var idxRegDate = findColumnIndex(headers, "تاريخ التسجيل");
+        var idxReceiver = findColumnIndex(headers, "اسم المستلم");
+        var idxNotes = findColumnIndex(headers, "ملاحظات");
+        var idxOrig = findColumnIndex(headers, "السعر الأصلي");
+        var idxOffer = findColumnIndex(headers, "سعر العرض");
+        var idxStatus = findColumnIndex(headers, "الحالة");
+        var idxBarcode = findColumnIndex(headers, "الباركود");
+
+        for (var i = 1; i < expData.length; i++) {
+          var row = expData[i];
+          if (idxName !== -1 && row[idxName]) {
+            expResult.push({
+              id: row[idxName] + '|' + (idxQty !== -1 ? row[idxQty] : '') + '|' + (idxExp !== -1 ? row[idxExp] : ''),
+              name: row[idxName] || "",
+              qty: idxQty !== -1 ? row[idxQty] : "",
+              expiryDate: idxExp !== -1 ? row[idxExp] : "",
+              location: idxLoc !== -1 ? row[idxLoc] : "",
+              registrarName: idxRegName !== -1 ? row[idxRegName] : "",
+              regDate: idxRegDate !== -1 ? row[idxRegDate] : "",
+              receiver: idxReceiver !== -1 ? row[idxReceiver] : "",
+              notes: idxNotes !== -1 ? row[idxNotes] : "",
+              originalPrice: idxOrig !== -1 ? row[idxOrig] : "",
+              offerPrice: idxOffer !== -1 ? row[idxOffer] : "",
+              status: idxStatus !== -1 ? row[idxStatus] : "",
+              barcode: idxBarcode !== -1 ? (row[idxBarcode] || "") : ""
+            });
+          }
         }
       }
     }
