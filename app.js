@@ -5472,22 +5472,66 @@ window.hideLoading = function() {
     if (overlay) overlay.classList.add('loading-overlay-hidden');
 };
 
-// ==========================================
-// Base64 Audio Beep (No Web Audio API Bugs!)
-// ==========================================
-// A very short, clean 2.7kHz beep encoded in Base64 (MP3 format)
-const BEEP_MP3 = 'data:audio/mp3;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAAHAAACcQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA//+7DEAAABeAkwAAAAAABwEAAwEAAAB/5//9v/7gEQAP//8AAAAAAAAB//7sMQAAEHACQAAAAAAHAQAHAQAAH/n//2//uARAQ///wAAAAAAAAH//uwxAAAcbJAAAAAAAcBAAcBAAAf+f//b/+4BEBD///AAAAAAAAAf/+7DEAABykkAAAAAABwEABwEAAAB/5//9v/7gEQEP//8AAAAAAAAB//7sMQAAHJyQAAAAAAHAQAHAQAAH/n//2//uARAQ///wAAAAAAAAH//uwxAAAcvJAAAAAAAcBAAcBAAAf+f//b/+4BEBD///AAAAAAAAAf/+7DEAABy8kAAAAAABwEABwEAAAB/5//9v/7gEQEP//8AAAAAAAAB//7sMQAAHNyQAAAAAAHAQAHAQAAH/n//2//uARAQ///wAAAAAAAAH//uwxAAAc5JAAAAAAAcBAAcBAAAf+f//b/+4BEBD///AAAAAAAAAf/+7DEAAAz4AAAAAAABwEABwEAAAB/5//9v/7gEQEP//8AAAAAAAAB';
-const beepSoundPlayer = new Audio(BEEP_MP3);
-beepSoundPlayer.volume = 0.5;
+let globalAudioCtx = null;
 
-function playBeep() {
+function getGlobalAudioContext() {
+    if (!globalAudioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+            globalAudioCtx = new AudioContextClass();
+        }
+    }
+    if (globalAudioCtx && globalAudioCtx.state === 'suspended') {
+        globalAudioCtx.resume().catch(() => {});
+    }
+    return globalAudioCtx;
+}
+
+['click', 'touchstart', 'keydown'].forEach(evt => {
+    window.addEventListener(evt, () => {
+        getGlobalAudioContext();
+    }, { once: false, passive: true });
+});
+
+function playBeep(frequency = 2750, type = 'sine', duration = 0.08, vol = 0.5) {
     try {
-        let clone = beepSoundPlayer.cloneNode();
-        clone.volume = 0.5;
-        clone.play().catch(e => {
-            console.warn('Audio play failed, maybe needs user interaction first.', e);
-        });
-    } catch(e) {}
+        const ctx = getGlobalAudioContext();
+        if (!ctx) return;
+
+        if (ctx.state !== 'running') {
+            ctx.resume().then(() => {
+                playBeep(frequency, type, duration, vol);
+            }).catch(() => {});
+            return;
+        }
+
+        const now = ctx.currentTime;
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, now);
+
+        gainNode.gain.setValueAtTime(vol, now);
+        gainNode.gain.setValueAtTime(vol, now + Math.max(0, duration - 0.01));
+        gainNode.gain.linearRampToValueAtTime(0.0001, now + duration);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+
+        oscillator.start(now);
+        oscillator.stop(now + duration);
+
+        setTimeout(() => {
+            try {
+                oscillator.disconnect();
+                gainNode.disconnect();
+            } catch (e) {}
+        }, (duration + 0.1) * 1000);
+
+    } catch (e) {
+        console.warn("Audio playback error:", e);
+    }
 }
 
 window.playSuccessBeep = function() { playBeep(2750, 'sine', 0.08, 0.5); };
