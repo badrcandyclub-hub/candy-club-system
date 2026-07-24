@@ -593,18 +593,18 @@ function doGet(e) {
       var expData = expirySheet.getDataRange().getValues();
       if (expData.length > 0) {
         var headers = expData[0];
-        var idxName = findColumnIndex(headers, "اسم الصنف");
-        var idxQty = findColumnIndex(headers, "الكمية");
-        var idxExp = findColumnIndex(headers, "تاريخ الصلاحية");
-        var idxLoc = findColumnIndex(headers, "مكان التخزين");
-        var idxRegName = findColumnIndex(headers, "اسم المسجل");
-        var idxRegDate = findColumnIndex(headers, "تاريخ التسجيل");
-        var idxReceiver = findColumnIndex(headers, "اسم المستلم");
-        var idxNotes = findColumnIndex(headers, "ملاحظات");
-        var idxOrig = findColumnIndex(headers, "السعر الأصلي");
-        var idxOffer = findColumnIndex(headers, "سعر العرض");
-        var idxStatus = findColumnIndex(headers, "الحالة");
-        var idxBarcode = findColumnIndex(headers, "الباركود");
+        var idxName = headers.indexOf("اسم الصنف");
+        var idxQty = headers.indexOf("الكمية");
+        var idxExp = headers.indexOf("تاريخ الصلاحية");
+        var idxLoc = headers.indexOf("مكان التخزين");
+        var idxRegName = headers.indexOf("اسم المسجل");
+        var idxRegDate = headers.indexOf("تاريخ التسجيل");
+        var idxReceiver = headers.indexOf("اسم المستلم");
+        var idxNotes = headers.indexOf("ملاحظات");
+        var idxOrig = headers.indexOf("السعر الأصلي");
+        var idxOffer = headers.indexOf("سعر العرض");
+        var idxStatus = headers.indexOf("الحالة");
+        var idxBarcode = headers.indexOf("الباركود");
 
         for (var i = 1; i < expData.length; i++) {
           var row = expData[i];
