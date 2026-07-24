@@ -7651,9 +7651,28 @@ function applyPermissions() {
         }
     });
 
-    let firstVisibleBtn = document.querySelector('.nav-item[style*="display: flex"]');
-    if (firstVisibleBtn && (!hasPerm("create") && !isFullAccess)) {
-        setTimeout(() => firstVisibleBtn.click(), 100);
+    // Find the first UNLOCKED button and click it to open that tab
+    let firstUnlockedBtn = Array.from(document.querySelectorAll('.nav-item')).find(btn => 
+        !btn.classList.contains('locked-nav-item') && btn.style.display !== 'none'
+    );
+    
+    if (firstUnlockedBtn) {
+        // Trigger a click to open it automatically
+        setTimeout(() => {
+            let targetId = firstUnlockedBtn.getAttribute('data-target');
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(c => c.classList.remove('active'));
+            firstUnlockedBtn.classList.add('active');
+            let targetElement = document.getElementById(targetId);
+            if (targetElement) targetElement.classList.add('active');
+            
+            // if it's expiry tab, load data
+            if (targetId === 'expiry-tab' && typeof loadExpiryData === 'function') {
+                const expiryBody = document.querySelector('#expiry-tab');
+                if (expiryBody) expiryBody.classList.add('skeleton-mode');
+                loadExpiryData();
+            }
+        }, 100);
     }
 }
 
