@@ -7142,7 +7142,7 @@ function checkSession() {
             
             document.getElementById('login-screen').style.display = 'none';
             applyPermissions();
-            loadDataFromServer();
+            if (typeof loadDataFromServer === 'function') loadDataFromServer();
             if (typeof updateSuspendedCount === 'function') updateSuspendedCount();
         } catch (e) {
             console.error("Invalid session", e);
@@ -7493,10 +7493,17 @@ function checkSession() {
                 showLogin();
                 return;
             }
+            if (!isAdminPage && currentUser.permissions === "ALL") {
+                console.warn("Admin account cannot be used in the employee portal.");
+                localStorage.removeItem('cc_user');
+                currentUser = null;
+                showLogin();
+                return;
+            }
             
             document.getElementById('login-screen').style.display = 'none';
             applyPermissions();
-            loadDataFromServer();
+            if (typeof loadDataFromServer === 'function') loadDataFromServer();
             if (typeof updateSuspendedCount === 'function') updateSuspendedCount();
         } catch (e) {
             console.error("Invalid session", e);
@@ -7518,34 +7525,8 @@ window.handleLogin = function(e) {
     const btn = document.getElementById('login-btn');
     const err = document.getElementById('login-error');
     
-    setBtnLoading(btn, true, "جاري الدخول...");
+    if (typeof setBtnLoading === 'function') setBtnLoading(btn, true, "جاري الدخول...");
     err.style.display = 'none';
-    
-    // ⭐ Hardcoded Admin Login
-    if (user === "badr" && pass === "01210351419") {
-        let isAdminPage = window.location.pathname.toLowerCase().includes('admin.html');
-        
-        if (!isAdminPage) {
-            err.innerText = "عذراً، هذا الحساب مخصص للوحة الإدارة فقط. يرجى الدخول بحساب موظف.";
-            err.style.display = 'block';
-            setBtnLoading(btn, false, "تسجيل الدخول");
-            return;
-        }
-
-        currentUser = {
-            username: "badr",
-            displayName: "المدير العام",
-            permissions: "ALL"
-        };
-        localStorage.setItem('cc_user', JSON.stringify(currentUser));
-        document.getElementById('login-screen').style.display = 'none';
-        applyPermissions();
-        loadDataFromServer();
-        if (typeof updateSuspendedCount === 'function') updateSuspendedCount();
-        showToast(`أهلاً بك يا ${currentUser.displayName}`);
-        setBtnLoading(btn, false, "تسجيل الدخول");
-        return;
-    }
     
     fetch(`${GOOGLE_SHEETS_URL}?action=login&username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`)
         .then(res => res.json())
