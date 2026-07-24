@@ -5713,7 +5713,7 @@ function renderNextAssistantCustomer() {
         statusText.innerText = "تم إرسال جميع الرسائل.";
         statusText.style.color = "#27ae60";
         sendBtn.style.display = "none";
-        playBeep(2); // double beep
+        playWaAssistantBeep(2); // double beep
         return;
     }
     
@@ -5738,7 +5738,7 @@ function renderNextAssistantCustomer() {
         executeWaSend(customer);
     };
     
-    playBeep(); // Beep to notify user it's ready
+    playWaAssistantBeep(); // Beep to notify user it's ready
 }
 
 function executeWaSend(customer) {
@@ -5801,7 +5801,7 @@ function startWaPauseTimer() {
     }, 1000);
 }
 
-function playBeep(times = 1) {
+function playWaAssistantBeep(times = 1) {
     try {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let i = 0;
