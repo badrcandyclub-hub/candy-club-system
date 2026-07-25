@@ -2191,26 +2191,13 @@ function buildMonthFilterOptions() {
     sel.innerHTML = '<option value="">اختر الشهر</option>';
     let arabicMonths = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
 
-    // <i class=\'fa-solid fa-star\'></i> Fix: جمع كل الشهور الفعلية من البيانات المتاحة
-    let availableMonths = new Set();
-    let allDataSources = [
-        ...(window.orderHistoryData || []),
-        ...(window.pendingOrdersData || []),
-        ...(window.uncollectedOrdersData || [])
-    ];
-
-    allDataSources.forEach(o => {
-        let d = (o.date || "").slice(0, 7); // "2026-05"
-        if (d && d.length === 7 && d.includes('-')) availableMonths.add(d);
-    });
-
-    // <i class=\'fa-solid fa-star\'></i> Fix: إضافة الشهر الحالي دائماً (بدون toISOString)
     let now = new Date();
-    let currentMonthVal = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-    availableMonths.add(currentMonthVal);
-
-    // ترتيب الشهور من الأحدث للأقدم
-    let sortedMonths = Array.from(availableMonths).sort().reverse();
+    let sortedMonths = [];
+    for (let i = 0; i < 24; i++) {
+        let d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        let monthStr = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+        sortedMonths.push(monthStr);
+    }
 
     sortedMonths.forEach(monthVal => {
         let [yr, mo] = monthVal.split('-');
@@ -2219,10 +2206,16 @@ function buildMonthFilterOptions() {
         let label = arabicMonths[moIdx] + ' ' + yr;
         let opt = document.createElement('option');
         opt.value = monthVal;
-        opt.textContent = monthVal === currentMonthVal ? label + ' (الحالي)' : label;
+        if (monthVal === (now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0'))) {
+            label += ' (الحالي)';
+        }
+        opt.innerText = label;
         sel.appendChild(opt);
     });
-    if (currentVal) sel.value = currentVal;
+
+    if (currentVal && sortedMonths.includes(currentVal)) {
+        sel.value = currentVal;
+    }
 }
 
 // <i class=\'fa-solid fa-star\'></i> V15.1: عرض تقرير شهر محدد - يجلب من السيرفر
