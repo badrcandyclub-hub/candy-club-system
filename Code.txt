@@ -797,6 +797,8 @@ function doGet(e) {
     response.returnedCount       = monthlyReport.returnedCount;
     response.moderatorStats      = monthlyReport.moderatorStats; // NEW
     response.driverStats         = monthlyReport.driverStats;    // NEW
+    response.monthZonesStats     = monthlyReport.monthZonesStats; // FIX: Return the zones data
+
 
     // ⭐ إحصائيات اليوم الحقيقي (دايماً اليوم الفعلي، مش filterDate)
     var todayReport = buildDailyStats(data, todayReal);
