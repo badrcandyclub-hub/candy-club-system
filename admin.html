@@ -604,9 +604,6 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h3 class="section-title" style="margin: 0;"><i class="fa-solid fa-user-shield"></i> إدارة المستخدمين</h3>
                     <div style="display: flex; gap: 10px; align-items: center;">
-                        <button type="button" id="openGoogleSheetBtn" class="interactive-btn" style="padding: 10px 18px; background: #e8f5e9; color: #2e7d32; border: 2px solid #c8e6c9; border-radius: 12px; font-weight: bold; font-family: 'Cairo', sans-serif; font-size: 0.9rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
-                            <i class="fa-solid fa-file-excel"></i> فتح قاعدة البيانات (الإكسيل)
-                        </button>
                         <button class="btn-primary interactive-btn" style="padding: 10px 15px; font-size: 0.9rem;" onclick="openAddUserModal()">
                             <i class="fa-solid fa-user-plus"></i> مستخدم جديد
                         </button>
@@ -1393,6 +1390,9 @@
                     </button>
                     <button class="nav-item" data-target="users-tab" style="color: #e91e63;">
                         <span class="icon"><i class="fa-solid fa-user-shield"></i></span><span class="label">إدارة المستخدمين</span>
+                    </button>
+                    <button id="openGoogleSheetBtn" class="nav-item" style="color: #2e7d32; cursor: pointer; border: none; background: transparent; width: 100%; text-align: right; display: flex; align-items: center; font-family: inherit; font-size: 1rem; margin-top: 5px;">
+                        <span class="icon"><i class="fa-solid fa-file-excel"></i></span><span class="label">فتح قاعدة البيانات</span>
                     </button>
                 </div>
             </div>
