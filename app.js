@@ -2279,7 +2279,19 @@ function renderReportForMonth(targetMonth) {
             let zonesEl = document.getElementById('zonesAnalyticsList');
             if (zonesEl) {
                 let zones = data.monthZonesStats || [];
-                if (zones.length === 0) {
+                // Fallback: If server hasn't returned monthZonesStats yet, compute from loaded history
+                if ((!zones || zones.length === 0) && Array.isArray(window.orderHistoryData) && window.orderHistoryData.length > 0) {
+                    let map = {};
+                    window.orderHistoryData.forEach(o => {
+                        let z = o.gov || o.zone || (o.address ? o.address.split(/[-،,\n]/)[0].trim() : "غير محددة");
+                        if (!z) z = "غير محددة";
+                        if (!map[z]) map[z] = { name: z, count: 0, totalShipping: 0 };
+                        map[z].count++;
+                        if (o.status !== "مرتجع") map[z].totalShipping += (parseFloat(o.shipping) || 0);
+                    });
+                    zones = Object.values(map).sort((a, b) => b.count - a.count);
+                }
+                if (!zones || zones.length === 0) {
                     zonesEl.innerHTML = '<p class="empty-msg">لا توجد بيانات شحن في هذا الشهر.</p>';
                 } else {
                     let html = '';
@@ -6772,7 +6784,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 // ⭐ V16.1: تتبع الأوردر ومعرفة مندوبه
-window.searchDriverOrder = function() {
+
+// ⭐ V16.2: تتبع الأوردر الشامل (محلي + سيرفر لكل الحالات)
+window.searchDriverOrder = async function() {
     let q = document.getElementById('driverOrderSearchInput');
     if(!q || !q.value.trim()) {
         if (window.showToast) window.showToast("برجاء إدخال رقم الأوردر للبحث", "warning");
@@ -6780,28 +6794,61 @@ window.searchDriverOrder = function() {
     }
     let val = q.value.trim().toLowerCase();
     
-    // Search in history
-    let order = (window.orderHistoryData || []).find(o => String(o.id).toLowerCase() === val) ||
-                (window.pendingOrdersData || []).find(o => String(o.id).toLowerCase() === val) ||
-                (window.uncollectedOrdersData || []).find(o => String(o.id).toLowerCase() === val);
-                
-    if(!order) {
-        if (window.customAlert) customAlert("<i class='fa-solid fa-circle-exclamation' style='color:var(--danger)'></i> <b>لم يتم العثور على الأوردر.</b><br>تأكد من كتابة الرقم بشكل صحيح.");
+    // 1. البحث الشامل في كل القوائم المحلية في الذاكرة
+    let allOrders = [
+        ...(window.orderHistoryData || []),
+        ...(window.pendingOrdersData || []),
+        ...(window.uncollectedOrdersData || []),
+        ...(window.shippedOrdersData || []),
+        ...(window.searchResultsCache || []),
+        ...((window.latestServerData && window.latestServerData.shippedOrders) || []),
+        ...((window.latestServerData && window.latestServerData.history) || []),
+        ...((window.latestServerData && window.latestServerData.pendingOrders) || []),
+        ...((window.latestServerData && window.latestServerData.uncollectedOrders) || [])
+    ];
+    
+    let order = allOrders.find(o => o && o.id && String(o.id).toLowerCase().trim() === val);
+    
+    // 2. إذا لم نجده في الذاكرة، نبحث في السيرفر فوراً عن طريق globalSearch
+    if (!order) {
+        if (window.showToast) window.showToast("جاري البحث في قاعدة البيانات...", "info");
+        try {
+            let res = await fetch(`${GOOGLE_SHEETS_URL}?action=globalSearch&query=${encodeURIComponent(val)}`);
+            let data = await res.json();
+            if (Array.isArray(data) && data.length > 0) {
+                order = data.find(o => String(o.id).toLowerCase().trim() === val) || data[0];
+            }
+        } catch(e) {
+            console.error("Search fetch error:", e);
+        }
+    }
+    
+    if (!order) {
+        if (window.customAlert) customAlert("<i class='fa-solid fa-circle-exclamation' style='color:var(--danger)'></i> <b>لم يتم العثور على الأوردر (`" + val + "").</b><br>تأكد من كتابة الرقم بشكل صحيح.");
         return;
     }
     
     let driverName = order.driver || "غير محدد";
-    let statusText = order.status || "غير معروفة";
-    let statusColor = statusText.includes("توصيل") ? "var(--success)" : (statusText.includes("مرتجع") ? "var(--danger)" : "var(--primary)");
+    let statusText = order.status || "قيد التجهيز";
+    let statusColor = "var(--primary)";
+    if (statusText.includes("تم التوصيل")) statusColor = "var(--success)";
+    else if (statusText.includes("مرتجع")) statusColor = "var(--danger)";
+    else if (statusText.includes("في الشحن")) statusColor = "#f39c12";
+    
+    let zoneName = order.gov || order.zone || order.address || '--';
+    let totalAmt = order.remaining !== undefined ? order.remaining : (order.total || 0);
     
     let msg = `
-        <div style="text-align:right; font-size:1.1rem; line-height:1.6;">
+        <div style="text-align:right; font-size:1.05rem; line-height:1.7;">
+            <div style="background:${statusColor}15; border-right:4px solid ${statusColor}; padding:10px; border-radius:6px; margin-bottom:10px;">
+                <strong style="color:${statusColor}; font-size:1.1rem;"><i class="fa-solid fa-box"></i> حالة الأوردر: ${statusText}</strong>
+            </div>
             <strong>رقم الأوردر:</strong> ${order.id}<br>
-            <strong>اسم العميل:</strong> ${order.name}<br>
-            <strong>حالة الأوردر:</strong> <span style="background:${statusColor}15; color:${statusColor}; padding:3px 8px; border-radius:6px; font-weight:bold;">${statusText}</span><br>
-            <strong>المندوب الحالي:</strong> <span style="color:var(--primary); font-weight:bold;"><i class="fa-solid fa-motorcycle"></i> ${driverName}</span><br>
-            <strong>المنطقة:</strong> ${order.gov || order.address || '--'}<br>
-            <strong>إجمالي المطلوب:</strong> ${order.remaining || order.total} ج.م
+            <strong>اسم العميل:</strong> ${order.name || '--'}<br>
+            <strong>الهاتف:</strong> ${order.phone || '--'}<br>
+            <strong>المندوب المسند له:</strong> <span style="color:var(--primary); font-weight:bold;"><i class="fa-solid fa-motorcycle"></i> ${driverName}</span><br>
+            <strong>المنطقة / العنوان:</strong> ${zoneName}<br>
+            <strong>المبلغ المطلوب:</strong> <strong style="color:var(--success);">${totalAmt} ج.م</strong>
         </div>
     `;
     if (window.customAlert) customAlert(msg);

@@ -371,14 +371,17 @@ function buildMonthlyReport(ordersData, targetMonth) {
 
     // ⭐ تحليل مناطق الشحن للشهر
     var zone = (ordersData[j][5] || "").toString().trim(); // عمود 6 (المنطقة/المحافظة)
-    if (zone !== "") {
-       if (!monthZonesMap[zone]) {
-          monthZonesMap[zone] = { count: 0, totalShipping: 0 };
-       }
-       monthZonesMap[zone].count++;
-       if (status !== "مرتجع") { // إضافة مصاريف الشحن فقط لو الأوردر متلغاش
-           monthZonesMap[zone].totalShipping += shipping;
-       }
+    if (!zone && ordersData[j][6]) {
+       zone = ordersData[j][6].toString().split(/[-،,\n]/)[0].trim();
+    }
+    if (!zone) zone = "غير محددة";
+
+    if (!monthZonesMap[zone]) {
+       monthZonesMap[zone] = { count: 0, totalShipping: 0 };
+    }
+    monthZonesMap[zone].count++;
+    if (status !== "مرتجع") { // إضافة مصاريف الشحن فقط لو الأوردر متلغاش
+        monthZonesMap[zone].totalShipping += shipping;
     }
 
     // ⭐ تجميع المنتجات
