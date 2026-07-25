@@ -2308,7 +2308,7 @@ function renderReportForMonth(targetMonth) {
                                 <strong>${totalShippingAllZones} ج.م</strong>
                             </div>
                             <div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:5px;">
-                                <span>تكلفة مندوب ثابت (300ج × 26 يوم):</span>
+                                <span>تكلفة مندوب ثابت (300ج × 30 يوم):</span>
                                 <strong>${totalFixedCost} ج.م</strong>
                             </div>
                             <hr style="border-color:#ffe082; margin:10px 0;">
