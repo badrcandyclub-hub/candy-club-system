@@ -2192,8 +2192,8 @@ function buildMonthFilterOptions() {
     let arabicMonths = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
 
     let now = new Date();
-    // System started around May 2024
-    let startYear = 2024;
+    // System started around May 2026
+    let startYear = 2026;
     let startMonth = 4; // 0-indexed, so 4 is May
     
     let sortedMonths = [];
