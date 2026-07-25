@@ -371,10 +371,16 @@ function buildMonthlyReport(ordersData, targetMonth) {
 
     // ⭐ تحليل مناطق الشحن للشهر
     var zone = (ordersData[j][5] || "").toString().trim(); // عمود 6 (المنطقة/المحافظة)
-    if (!zone && ordersData[j][6]) {
-       zone = ordersData[j][6].toString().split(/[-،,\n]/)[0].trim();
+    var orderType = (ordersData[j][9] || "").toString().trim();
+    
+    if (orderType === "استلام من الفرع" || orderType === "استلام من الفرع ") {
+        zone = "استلام من الفرع";
+    } else {
+        if (!zone && ordersData[j][6]) {
+           zone = ordersData[j][6].toString().split(/[-،,\n]/)[0].trim();
+        }
+        if (!zone) zone = "غير محددة";
     }
-    if (!zone) zone = "غير محددة";
 
     if (!monthZonesMap[zone]) {
        monthZonesMap[zone] = { count: 0, totalShipping: 0 };
