@@ -6824,7 +6824,7 @@ window.searchDriverOrder = async function() {
     }
     
     if (!order) {
-        if (window.customAlert) customAlert("<i class='fa-solid fa-circle-exclamation' style='color:var(--danger)'></i> <b>لم يتم العثور على الأوردر (`" + val + "").</b><br>تأكد من كتابة الرقم بشكل صحيح.");
+        if (window.customAlert) customAlert("<i class='fa-solid fa-circle-exclamation' style='color:var(--danger)'></i> <b>لم يتم العثور على الأوردر ( " + val + " ).</b><br>تأكد من كتابة الرقم بشكل صحيح.");
         return;
     }
     
