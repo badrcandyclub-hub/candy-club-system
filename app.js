@@ -6894,6 +6894,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <html dir="rtl" lang="ar">
         <head>
             <title>إذن مخزن #${logId}</title>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
             <style>
                 @page { margin: 5mm; }
                 body {
@@ -6964,13 +6965,13 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             
             <div class="meta-row">
-                <span><b>من:</b> ${from}</span>
-                <span><b>إلى:</b> ${to}</span>
+                <span><i class="fa-solid fa-boxes-packing" style="color:#000; margin-left:4px;"></i><b>من:</b> ${from}</span>
+                <span><i class="fa-solid fa-location-dot" style="color:#000; margin-left:4px;"></i><b>إلى:</b> ${to}</span>
             </div>
             
             <div class="meta-row" style="margin-top:3px;">
-                <span><b>مُسلم:</b> ${senderName || '---'}</span>
-                <span><b>مُستلم:</b> .......................</span>
+                <span><i class="fa-solid fa-truck-ramp-box" style="color:#000; margin-left:4px;"></i><b>مُسلم:</b> ${senderName || '---'}</span>
+                <span><i class="fa-solid fa-user-pen" style="color:#000; margin-left:4px;"></i><b>سُجل بواسطة:</b> ${regName}</span>
             </div>
             
             <table>
@@ -6987,19 +6988,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             ${notes ? `
             <div class="notes-section">
-                <b>ملاحظات:</b> ${notes}
+                <i class="fa-solid fa-note-sticky" style="color:#000; margin-left:4px;"></i><b>ملاحظات:</b> ${notes}
             </div>` : ''}
-            
-            <div style="margin-top: 12px; display: flex; justify-content: space-between; font-size: 11px;">
-                <div style="text-align: center;">
-                    <b>توقيع المُسلم</b><br>
-                    ...................
-                </div>
-                <div style="text-align: center;">
-                    <b>توقيع المُستلم</b><br>
-                    ...................
-                </div>
-            </div>
             
             <div class="footer">
                 سُجل بواسطة: ${regName}<br>
@@ -7462,6 +7452,7 @@ window.reprintInvLog = function(logId) {
         <html dir="rtl" lang="ar">
         <head>
             <title>إذن مخزن #${log.logId}</title>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
             <style>
                 @page { margin: 5mm; }
                 body { font-family: 'Cairo', Tahoma, sans-serif; margin: 0; padding: 10px; color: #000; font-size: 13px; background: #fff; line-height: 1.4; }
@@ -7483,11 +7474,11 @@ window.reprintInvLog = function(logId) {
             </div>
             
             <div class="info-row">
-                <span><b>من:</b> ${log.from}</span>
-                <span><b>إلى:</b> ${log.to}</span>
+                <span><i class="fa-solid fa-boxes-packing" style="color:#000; margin-left:4px;"></i><b>من:</b> ${log.from}</span>
+                <span><i class="fa-solid fa-location-dot" style="color:#000; margin-left:4px;"></i><b>إلى:</b> ${log.to}</span>
             </div>
             <div class="info-row">
-                <span><b>المسجل:</b> ${log.regName}</span>
+                <span><i class="fa-solid fa-user-pen" style="color:#000; margin-left:4px;"></i><b>المسجل:</b> ${log.regName}</span>
             </div>
             
             <table>
@@ -7502,16 +7493,7 @@ window.reprintInvLog = function(logId) {
                 </tbody>
             </table>
             
-            ${log.notes ? `<div class="notes"><b>ملاحظات:</b> ${log.notes}</div>` : ''}
-            
-            <div style="margin-top: 12px; display: flex; justify-content: space-between; font-size: 11px;">
-                <div style="text-align: center;">
-                    <b>توقيع المُسلم</b><br>...................
-                </div>
-                <div style="text-align: center;">
-                    <b>توقيع المُستلم</b><br>...................
-                </div>
-            </div>
+            ${log.notes ? `<div class="notes"><i class="fa-solid fa-note-sticky" style="color:#000; margin-left:4px;"></i><b>ملاحظات:</b> ${log.notes}</div>` : ''}
 
             <div class="footer">
                 Candy Club System<br>
@@ -7527,7 +7509,7 @@ window.reprintInvLog = function(logId) {
     printWindow.document.open();
     printWindow.document.write(html);
     printWindow.document.close();
-};;
+};;;
 
 
 // ==========================================
@@ -7992,6 +7974,7 @@ window.reprintInvLog = function(logId) {
         <html dir="rtl" lang="ar">
         <head>
             <title>إذن مخزن #${log.logId}</title>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
             <style>
                 @page { margin: 5mm; }
                 body { font-family: 'Cairo', Tahoma, sans-serif; margin: 0; padding: 10px; color: #000; font-size: 13px; background: #fff; line-height: 1.4; }
@@ -8013,11 +7996,11 @@ window.reprintInvLog = function(logId) {
             </div>
             
             <div class="info-row">
-                <span><b>من:</b> ${log.from}</span>
-                <span><b>إلى:</b> ${log.to}</span>
+                <span><i class="fa-solid fa-boxes-packing" style="color:#000; margin-left:4px;"></i><b>من:</b> ${log.from}</span>
+                <span><i class="fa-solid fa-location-dot" style="color:#000; margin-left:4px;"></i><b>إلى:</b> ${log.to}</span>
             </div>
             <div class="info-row">
-                <span><b>المسجل:</b> ${log.regName}</span>
+                <span><i class="fa-solid fa-user-pen" style="color:#000; margin-left:4px;"></i><b>المسجل:</b> ${log.regName}</span>
             </div>
             
             <table>
@@ -8032,16 +8015,7 @@ window.reprintInvLog = function(logId) {
                 </tbody>
             </table>
             
-            ${log.notes ? `<div class="notes"><b>ملاحظات:</b> ${log.notes}</div>` : ''}
-            
-            <div style="margin-top: 12px; display: flex; justify-content: space-between; font-size: 11px;">
-                <div style="text-align: center;">
-                    <b>توقيع المُسلم</b><br>...................
-                </div>
-                <div style="text-align: center;">
-                    <b>توقيع المُستلم</b><br>...................
-                </div>
-            </div>
+            ${log.notes ? `<div class="notes"><i class="fa-solid fa-note-sticky" style="color:#000; margin-left:4px;"></i><b>ملاحظات:</b> ${log.notes}</div>` : ''}
 
             <div class="footer">
                 Candy Club System<br>
@@ -8057,7 +8031,7 @@ window.reprintInvLog = function(logId) {
     printWindow.document.open();
     printWindow.document.write(html);
     printWindow.document.close();
-};;
+};;;
 
 function printInventoryReceipt(logId, from, to, items, notes, senderName, regName) {
     let printWindow = window.open('', '_blank', 'height=600,width=450');
@@ -8086,6 +8060,7 @@ function printInventoryReceipt(logId, from, to, items, notes, senderName, regNam
         <html dir="rtl" lang="ar">
         <head>
             <title>إذن مخزن #${logId}</title>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
             <style>
                 @page { margin: 5mm; }
                 body {
@@ -8156,13 +8131,13 @@ function printInventoryReceipt(logId, from, to, items, notes, senderName, regNam
             </div>
             
             <div class="meta-row">
-                <span><b>من:</b> ${from}</span>
-                <span><b>إلى:</b> ${to}</span>
+                <span><i class="fa-solid fa-boxes-packing" style="color:#000; margin-left:4px;"></i><b>من:</b> ${from}</span>
+                <span><i class="fa-solid fa-location-dot" style="color:#000; margin-left:4px;"></i><b>إلى:</b> ${to}</span>
             </div>
             
             <div class="meta-row" style="margin-top:3px;">
-                <span><b>مُسلم:</b> ${senderName || '---'}</span>
-                <span><b>مُستلم:</b> .......................</span>
+                <span><i class="fa-solid fa-truck-ramp-box" style="color:#000; margin-left:4px;"></i><b>مُسلم:</b> ${senderName || '---'}</span>
+                <span><i class="fa-solid fa-user-pen" style="color:#000; margin-left:4px;"></i><b>سُجل بواسطة:</b> ${regName}</span>
             </div>
             
             <table>
@@ -8179,19 +8154,8 @@ function printInventoryReceipt(logId, from, to, items, notes, senderName, regNam
             
             ${notes ? `
             <div class="notes-section">
-                <b>ملاحظات:</b> ${notes}
+                <i class="fa-solid fa-note-sticky" style="color:#000; margin-left:4px;"></i><b>ملاحظات:</b> ${notes}
             </div>` : ''}
-            
-            <div style="margin-top: 12px; display: flex; justify-content: space-between; font-size: 11px;">
-                <div style="text-align: center;">
-                    <b>توقيع المُسلم</b><br>
-                    ...................
-                </div>
-                <div style="text-align: center;">
-                    <b>توقيع المُستلم</b><br>
-                    ...................
-                </div>
-            </div>
             
             <div class="footer">
                 سُجل بواسطة: ${regName}<br>
