@@ -307,6 +307,7 @@ function detectPlatformName(rawPlatform) {
 function buildMonthlyReport(ordersData, targetMonth) {
   var monthTopProductsMap = {};
   var monthPlatformsMap   = { 'واتساب': 0, 'انستجرام': 0, 'فيسبوك': 0, 'تيك توك': 0, 'أخرى': 0 };
+  var monthZonesMap       = {}; // ⭐ تحليل مناطق الشحن
   var monthSales          = 0;
   var completedMonthCount = 0;
   var monthOrderCount     = 0;
@@ -368,6 +369,18 @@ function buildMonthlyReport(ordersData, targetMonth) {
       completedMonthCount++;
     }
 
+    // ⭐ تحليل مناطق الشحن للشهر
+    var zone = (ordersData[j][5] || "").toString().trim(); // عمود 6 (المنطقة/المحافظة)
+    if (zone !== "") {
+       if (!monthZonesMap[zone]) {
+          monthZonesMap[zone] = { count: 0, totalShipping: 0 };
+       }
+       monthZonesMap[zone].count++;
+       if (status !== "مرتجع") { // إضافة مصاريف الشحن فقط لو الأوردر متلغاش
+           monthZonesMap[zone].totalShipping += shipping;
+       }
+    }
+
     // ⭐ تجميع المنتجات
     if (ordersData[j][13]) {
       var parts = ordersData[j][13].toString().split('\n');
@@ -392,9 +405,15 @@ function buildMonthlyReport(ordersData, targetMonth) {
     return { name: k, qty: monthTopProductsMap[k] };
   }).sort(function(a, b) { return b.qty - a.qty; }).slice(0, 10);
 
+  // ترتيب المناطق تنازلياً
+  var sortedZones = Object.keys(monthZonesMap).map(function(k) {
+    return { name: k, count: monthZonesMap[k].count, totalShipping: monthZonesMap[k].totalShipping };
+  }).sort(function(a, b) { return b.count - a.count; });
+
   return {
     monthTopProducts: sortedProducts,
     monthPlatforms:   monthPlatformsMap,
+    monthZonesStats:  sortedZones, // ⭐ الداتا الجديدة للداشبورد
     monthSales:       monthSales,
     monthOrderCount:  monthOrderCount,
     completedMonthCount: completedMonthCount,
@@ -781,6 +800,7 @@ function doGet(e) {
     response.todayOrders          = todayReport.todayOrders;
     response.todaySales           = todayReport.todaySales;
     response.completedTodayCount  = todayReport.completedToday;
+    response.todayDriverStats     = todayReport.todayDriverStats; // ⭐ إضافة إحصائيات مناديب اليوم
 
     // ⭐ قراءة السجل (history) للـ filterDate المطلوبة
     for (var j = 1; j < data.length; j++) {
@@ -865,6 +885,7 @@ function buildDailyStats(ordersData, targetDate) {
   var todayOrders  = 0;
   var todaySales   = 0;
   var completedToday = 0;
+  var todayDriverStats = {}; // ⭐ إحصائيات المناديب
 
   for (var j = 1; j < ordersData.length; j++) {
     var rowDate = ordersData[j][1] instanceof Date
@@ -875,17 +896,28 @@ function buildDailyStats(ordersData, targetDate) {
 
     var status     = ordersData[j][18];
     var finalTotal = parseFloat(ordersData[j][17]) || 0;
+    var driver     = (ordersData[j][11] || "").toString().trim();
+    var shipping   = parseFloat(ordersData[j][16]) || 0;
 
     if (status !== "مرتجع") {
       todayOrders++;
       todaySales += finalTotal;
+      
+      // ⭐ حساب أرباح المناديب لليوم الحالي
+      if (driver !== "") {
+         if (!todayDriverStats[driver]) {
+             todayDriverStats[driver] = { count: 0, profit: 0 };
+         }
+         todayDriverStats[driver].count++;
+         todayDriverStats[driver].profit += shipping;
+      }
     }
     if (status === "تم التوصيل" || status === "تم التوصيل ومُحاسب") {
       completedToday++;
     }
   }
 
-  return { todayOrders: todayOrders, todaySales: todaySales, completedToday: completedToday };
+  return { todayOrders: todayOrders, todaySales: todaySales, completedToday: completedToday, todayDriverStats: todayDriverStats };
 }
 
 function doPost(e) {
