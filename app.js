@@ -2278,20 +2278,12 @@ function renderReportForMonth(targetMonth) {
             // تحليل مناطق الشحن
             let zonesEl = document.getElementById('zonesAnalyticsList');
             if (zonesEl) {
-                let zones = data.monthZonesStats || [];
-                // Fallback: If server hasn't returned monthZonesStats yet, compute from loaded history
-                if ((!zones || zones.length === 0) && Array.isArray(window.orderHistoryData) && window.orderHistoryData.length > 0) {
-                    let map = {};
-                    window.orderHistoryData.forEach(o => {
-                        let z = o.gov || o.zone || (o.address ? o.address.split(/[-،,\n]/)[0].trim() : "غير محددة");
-                        if (!z) z = "غير محددة";
-                        if (!map[z]) map[z] = { name: z, count: 0, totalShipping: 0 };
-                        map[z].count++;
-                        if (o.status !== "مرتجع") map[z].totalShipping += (parseFloat(o.shipping) || 0);
-                    });
-                    zones = Object.values(map).sort((a, b) => b.count - a.count);
-                }
-                if (!zones || zones.length === 0) {
+                let zones = data.monthZonesStats;
+                
+                // If server is old and doesn't return monthZonesStats
+                if (!zones) {
+                    zonesEl.innerHTML = '<p class="empty-msg" style="color:var(--danger);"><i class="fa-solid fa-circle-exclamation"></i> يرجى تحديث كود الإكسيل وعمل "New Deployment" لظهور التحليلات بشكل صحيح.</p>';
+                } else if (zones.length === 0) {
                     zonesEl.innerHTML = '<p class="empty-msg">لا توجد بيانات شحن في هذا الشهر.</p>';
                 } else {
                     let html = '';
@@ -2304,7 +2296,7 @@ function renderReportForMonth(targetMonth) {
                     });
                     
                     let fixedSalary = 300; // يومية افتراضية للمندوب الثابت
-                    let estimatedDaysInMonth = 26; // استبعاد 4 أيام جمعة
+                    let estimatedDaysInMonth = 30; // 30 يوم عمل بدون إجازات // استبعاد 4 أيام جمعة
                     let totalFixedCost = fixedSalary * estimatedDaysInMonth;
                     let potentialSavings = totalShippingAllZones - totalFixedCost;
                     
