@@ -2192,11 +2192,23 @@ function buildMonthFilterOptions() {
     let arabicMonths = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
 
     let now = new Date();
+    // System started around May 2024
+    let startYear = 2024;
+    let startMonth = 4; // 0-indexed, so 4 is May
+    
     let sortedMonths = [];
-    for (let i = 0; i < 24; i++) {
-        let d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        let monthStr = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    let currYear = now.getFullYear();
+    let currMonth = now.getMonth();
+    
+    while (currYear > startYear || (currYear === startYear && currMonth >= startMonth)) {
+        let monthStr = currYear + '-' + String(currMonth + 1).padStart(2, '0');
         sortedMonths.push(monthStr);
+        
+        currMonth--;
+        if (currMonth < 0) {
+            currMonth = 11;
+            currYear--;
+        }
     }
 
     sortedMonths.forEach(monthVal => {
