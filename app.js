@@ -145,18 +145,159 @@ document.querySelectorAll('.nav-item').forEach(btn => {
     });
 });
 
-function setupModal(openBtnId, modalId, closeBtnId) {
+// Generic modal registration with History API support (mobile back button friendly)
+// When a modal opens we push a history state { modalOpen: modalId } so mobile back closes it (popstate).
+// On popstate, if state doesn't contain modalOpen we close the currently open modal.
+window._openModalId = window._openModalId || null;
+
+function openModalWithHistory(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    if (modal.classList.contains('active')) return;
+
+    // Close any other open modal first (skip history change for that close)
+    if (window._openModalId && window._openModalId !== modalId) {
+        const prev = document.getElementById(window._openModalId);
+        if (prev) prev.classList.remove('active');
+        window._openModalId = null;
+    }
+
+    modal.classList.add('active');
+    window._openModalId = modalId;
+
+    try {
+        history.pushState({ modalOpen: modalId }, '');
+    } catch (e) {
+        // ignore (some browsers may restrict pushState in file://)
+        console.warn('pushState failed for modal:', modalId, e);
+    }
+}
+
+function closeModalWithHistory(modalId, skipBack) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    if (!modal.classList.contains('active')) return;
+
+    modal.classList.remove('active');
+    if (window._openModalId === modalId) window._openModalId = null;
+
+    if (!skipBack) {
+        const st = history.state || {};
+        if (st && st.modalOpen === modalId) {
+            try { history.back(); } catch (e) { /* ignore */ }
+        }
+    }
+}
+
+function setupModal(openBtnId, modalId, closeBtnId, overlayId) {
     const openBtn = document.getElementById(openBtnId);
     const closeBtn = document.getElementById(closeBtnId);
     const modal = document.getElementById(modalId);
-    if (openBtn && closeBtn && modal) {
-        openBtn.addEventListener('click', () => modal.classList.add('active'));
-        closeBtn.addEventListener('click', () => modal.classList.remove('active'));
+    const overlay = overlayId ? document.getElementById(overlayId) : null;
+
+    if (openBtn && modal) {
+        openBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            openModalWithHistory(modalId);
+        });
     }
+
+    if (closeBtn && modal) {
+        closeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            closeModalWithHistory(modalId);
+        });
+    }
+
+    if (overlay && modal) {
+        overlay.addEventListener('click', () => closeModalWithHistory(modalId));
+    }
+
+    // allow ESC to close
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal && modal.classList.contains('active')) {
+            closeModalWithHistory(modalId);
+        }
+    });
 }
-setupModal('openZoneModalBtn', 'zoneModal', 'closeZoneModal');
-setupModal('openDriverModalBtn', 'driverModal', 'closeDriverModal');
-setupModal('openSuspendedBtn', 'suspendedModal', 'closeSuspendedModal');
+
+// Global popstate handler - close open modal if state no longer has modalOpen
+window.addEventListener('popstate', (e) => {
+    const state = e.state || {};
+
+    // If the new state declares a modalOpen, open it (useful for navigation forward)
+    if (state && state.modalOpen) {
+        const mid = state.modalOpen;
+        if (window._openModalId !== mid) {
+            // close current
+            if (window._openModalId) {
+                const cur = document.getElementById(window._openModalId);
+                if (cur) cur.classList.remove('active');
+            }
+            const m = document.getElementById(mid);
+            if (m) {
+                m.classList.add('active');
+                window._openModalId = mid;
+            }
+        }
+        return;
+    }
+
+    // If no modalOpen in state, close currently open modal (if any)
+    if (!state || Object.keys(state).length === 0) {
+        if (window._openModalId) {
+            const cur = document.getElementById(window._openModalId);
+            if (cur) cur.classList.remove('active');
+            window._openModalId = null;
+            return;
+        }
+    }
+
+    // If state has other flags (e.g., sidebarOpen) leave it to existing handlers
+});
+
+// Register existing modals (add overlay id if available)
+setupModal('openZoneModalBtn', 'zoneModal', 'closeZoneModal', 'zoneModalOverlay');
+setupModal('openDriverModalBtn', 'driverModal', 'closeDriverModal', 'driverModalOverlay');
+setupModal('openSuspendedBtn', 'suspendedModal', 'closeSuspendedModal', 'suspendedModalOverlay');
+
+// MutationObserver: keep History API in sync with programmatic class changes on modals
+// This helps when existing code opens/closes modals via classList.add/remove without calling our helpers.
+try {
+    const modalObserver = new MutationObserver((mutations) => {
+        mutations.forEach(m => {
+            if (m.type !== 'attributes' || m.attributeName !== 'class') return;
+            const target = m.target;
+            if (!(target instanceof Element)) return;
+            // detect modal-overlay or modal elements
+            if (!target.classList.contains('modal-overlay') && !target.classList.contains('modal')) return;
+            const id = target.id;
+            if (!id) return;
+
+            const isActive = target.classList.contains('active');
+            const synced = target.dataset.historySynced === 'true';
+
+            if (isActive && !synced) {
+                // modal opened programmatically - push state and mark synced
+                try { history.pushState({ modalOpen: id }, ''); } catch (e) { /* ignore */ }
+                target.dataset.historySynced = 'true';
+                window._openModalId = id;
+            } else if (!isActive && synced) {
+                // modal closed programmatically - if history state matches, go back to pop it
+                target.dataset.historySynced = 'false';
+                const st = history.state || {};
+                if (st && st.modalOpen === id) {
+                    try { history.back(); } catch (e) { /* ignore */ }
+                }
+                if (window._openModalId === id) window._openModalId = null;
+            }
+        });
+    });
+
+    modalObserver.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['class'] });
+} catch (e) {
+    console.warn('Modal observer init failed', e);
+}
 
 // ==========================================
 // 3. تحميل الداتا الأساسية من الإكسيل
