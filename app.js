@@ -7,6 +7,50 @@ const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbwi24io7fKY7n
 // ⭐ V16: متغير المستخدم الحالي
 let currentUser = null;
 
+// Defensive wrapper for any external handleKeyDown handlers that may access undefined values.
+// This avoids uncaught TypeError crashes when a third-party script binds document.handleKeyDown.
+(function () {
+    function safeHandleKeyDown(original) {
+        function wrapped(event) {
+            if (!event || !event.target) {
+                return;
+            }
+            try {
+                return original.call(this, event);
+            } catch (err) {
+                console.warn('Wrapped handleKeyDown caught error:', err);
+                return;
+            }
+        }
+        wrapped.__isSafeWrapped = true;
+        return wrapped;
+    }
+
+    function patchDocumentHandleKeyDown() {
+        try {
+            const doc = document;
+            const current = doc.handleKeyDown;
+            if (typeof current === 'function' && !current.__isSafeWrapped) {
+                doc.handleKeyDown = safeHandleKeyDown(current);
+            }
+        } catch (err) {
+            console.warn('patchDocumentHandleKeyDown failed:', err);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', patchDocumentHandleKeyDown);
+    window.addEventListener('load', patchDocumentHandleKeyDown);
+
+    let attempts = 0;
+    const intervalId = setInterval(() => {
+        patchDocumentHandleKeyDown();
+        attempts += 1;
+        if (attempts >= 5) {
+            clearInterval(intervalId);
+        }
+    }, 500);
+})();
+
 // ==========================================
 // 1. نظام الإشعارات (Toasts) وقفل الأزرار (Loading) والصوتيات
 // ==========================================
