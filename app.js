@@ -5611,9 +5611,9 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
 }
 
 function generatePDFReceipt(filteredData, dateVal) {
-    // Determine receiver and registrar from the first item (assuming same batch)
-    let receiver = filteredData[0].receiver || '.........................';
-    let registrar = filteredData[0].registrarName || '.........................';
+    // Determine receiver name from the selected batch items
+    let receivers = [...new Set(filteredData.map(item => item.receiver).filter(r => r && String(r).trim() !== ''))];
+    let receiver = receivers.length > 0 ? receivers.join(' / ') : '.........................';
 
     let printWindow = window.open('', '_blank', 'height=800,width=800');
     if (!printWindow) {
@@ -5678,10 +5678,9 @@ function generatePDFReceipt(filteredData, dateVal) {
             <div class="info-section">
                 <div class="info-box">
                     <div><span class="info-label">تاريخ التسجيل:</span> <span style="font-weight:bold; color:#E91E8C;">${dateVal}</span></div>
-                    <div style="margin-top: 10px;"><span class="info-label">اسم المسجل:</span> <strong>${registrar}</strong></div>
+                    <div style="margin-top: 10px;"><span class="info-label">اسم المستلم:</span> <strong>${receiver}</strong></div>
                 </div>
                 <div class="info-box">
-                    <div><span class="info-label">اسم المستلم:</span> <span style="font-weight:bold; font-size:1.1em;">${receiver}</span></div>
                     <div style="margin-top: 10px;"><span class="info-label">إجمالي الأصناف:</span> <strong>${filteredData.length}</strong></div>
                 </div>
             </div>
@@ -5716,17 +5715,6 @@ function generatePDFReceipt(filteredData, dateVal) {
                     }).join('')}
                 </tbody>
             </table>
-
-            <div class="signatures">
-                <div class="sig-box">
-                    <div style="font-weight: bold; color: #333;">توقيع المُسلم (المسجل)</div>
-                    <div class="sig-line"></div>
-                </div>
-                <div class="sig-box">
-                    <div style="font-weight: bold; color: #333;">توقيع المُستلم</div>
-                    <div class="sig-line"></div>
-                </div>
-            </div>
 
             <div class="footer">
                 تم استخراج هذا الإيصال آلياً من نظام Candy Club - ${new Date().toLocaleString('ar-EG')}
