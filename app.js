@@ -126,6 +126,8 @@ document.querySelectorAll('.nav-item').forEach(btn => {
         if (targetId === 'users-tab') {
             loadUsersList();
         }
+        if (targetId === 'hr-tab') { if (typeof initHrTab === 'function') initHrTab(); }
+        if (targetId === 'hr-admin-tab') { if (typeof initHrAdminTab === 'function') initHrAdminTab(); }
 
         // ⭐ V16.1: Auto load financials
         if (targetId === 'financials-tab') {
