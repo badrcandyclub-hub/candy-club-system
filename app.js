@@ -387,6 +387,18 @@ function loadDataFromServer(customDate = null) {
     const syncStatus = document.getElementById('sync-status');
     if (syncStatus) { syncStatus.innerText = "جاري التحميل..."; syncStatus.style.color = "#FF8C00"; }
 
+    // Refresh HR Admin tab if it's currently active
+    let hrAdminTab = document.getElementById('hr-admin-tab');
+    if (hrAdminTab && hrAdminTab.classList.contains('active')) {
+        if (typeof initHrAdminTab === 'function') setTimeout(initHrAdminTab, 100);
+    }
+    
+    // Refresh Employee HR tab if it's currently active
+    let hrTab = document.getElementById('hr-tab');
+    if (hrTab && hrTab.classList.contains('active')) {
+        if (typeof initHrTab === 'function') setTimeout(initHrTab, 100);
+    }
+
     let fetchDate = customDate || currentFilterDate;
     
     // ⭐ V16: إرسال الصلاحيات للباك إند
@@ -9057,13 +9069,13 @@ window.handleEditStatusChange = function() {
     let text = document.getElementById('editAttHoursText');
     
     if (status === 'غائب' || status === 'إجازة بدون مرتب') {
-        inInput.value = '';
-        outInput.value = '';
+        inInput.value = '00:00';
+        outInput.value = '00:00';
         if (text) text.textContent = '0 ساعة';
         if (preview) preview.style.display = 'flex';
     } else if (status === 'إجازة مدفوعة') {
-        inInput.value = '';
-        outInput.value = '';
+        inInput.value = '00:00';
+        outInput.value = '00:00';
         if (text) text.textContent = '8 ساعة';
         if (preview) preview.style.display = 'flex';
     } else {
