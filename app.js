@@ -8658,9 +8658,11 @@ function handleCheckIn() {
             showToast('تم تسجيل الحضور بنجاح', 'success');
             hrTodayStatus = 'checkedIn';
             updateHrButtons();
+        })
+        .finally(() => {
+            btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> تسجيل حضور';
+            btn.disabled = false;
         });
-
-    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> تسجيل حضور';
 }
 
 function handleCheckOut() {
@@ -8700,9 +8702,11 @@ function handleCheckOut() {
             showToast('تم تسجيل الانصراف بنجاح', 'success');
             hrTodayStatus = 'checkedOut';
             updateHrButtons();
+        })
+        .finally(() => {
+            btn.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> تسجيل انصراف';
+            btn.disabled = false;
         });
-
-    btn.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> تسجيل انصراف';
 }
 
 function handleLeaveRequest() {
@@ -8711,6 +8715,14 @@ function handleLeaveRequest() {
     let type = document.getElementById('leaveType');
     let notes = document.getElementById('leaveNotes');
     if (!date || !date.value) { showToast('اختر تاريخ الإجازة', 'warning'); return; }
+
+    let btn = date.closest('.section-card').querySelector('button.btn-search');
+    let originalHtml = 'إرسال <i class="fa-solid fa-paper-plane"></i>';
+    if(btn) {
+        originalHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الإرسال...';
+        btn.disabled = true;
+    }
 
     let formData = new URLSearchParams();
     formData.append('action', 'requestLeave');
@@ -8722,12 +8734,18 @@ function handleLeaveRequest() {
     fetch(GOOGLE_SHEETS_URL, { method: 'POST', body: formData })
         .then(r => r.text())
         .then(() => {
-            showToast('✅ تم إرسال طلب الإجازة', 'success');
+            showToast('✅ تم إرسال طلب الإجازة بنجاح', 'success');
             date.value = '';
             notes.value = '';
             loadMyAttendance();
         })
-        .catch(() => showToast('تم إرسال الطلب', 'success'));
+        .catch(() => showToast('✅ تم إرسال الطلب (مع خطأ)', 'success'))
+        .finally(() => {
+            if(btn) {
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            }
+        });
 }
 
 function loadMyAttendance() {
@@ -8825,26 +8843,78 @@ function renderAttendanceTable(records, container, isAdminView = false) {
         });
         html += '</tbody></table>';
     } else {
-        // Employee View (Chic Modern Cards/Table)
-        html += '<div class="hr-chic-grid">';
-        records.reverse().forEach(r => {
-            let color = statusColors[r.status] || '#546e7a';
-            html += '<div class="hr-chic-card">';
-            html += '  <div class="hr-chic-header" style="border-bottom: 2px solid ' + color + '40;">';
-            html += '    <span class="hr-chic-date"><i class="fa-regular fa-calendar"></i> ' + r.date + '</span>';
-            html += '    <span class="hr-chic-status" style="background:' + color + '20; color:' + color + ';">' + r.status + '</span>';
-            html += '  </div>';
-            html += '  <div class="hr-chic-body">';
-            html += '    <div class="hr-chic-time"><div><i class="fa-solid fa-arrow-right-to-bracket" style="color:#2e7d32;"></i> الدخول</div><b>' + (r.checkIn || '--') + '</b></div>';
-            html += '    <div class="hr-chic-time"><div><i class="fa-solid fa-arrow-right-from-bracket" style="color:#c62828;"></i> الانصراف</div><b>' + (r.checkOut || '--') + '</b></div>';
-            html += '    <div class="hr-chic-total"><div><i class="fa-solid fa-stopwatch" style="color:#1565c0;"></i> المدة</div><b>' + (r.hours || '--') + '</b></div>';
-            html += '  </div>';
-            if (r.notes) {
-                html += '  <div class="hr-chic-notes"><i class="fa-solid fa-circle-info"></i> ' + r.notes + '</div>';
+        // Full Month Table logic for Employee
+        let monthInput = document.getElementById('hrEmpMonthFilter');
+        if (!monthInput || !monthInput.value) {
+            html += '<p style="text-align:center;">اختر الشهر</p>';
+        } else {
+            let yearMonth = monthInput.value;
+            let [y, m] = yearMonth.split('-');
+            let daysInMonth = new Date(y, m, 0).getDate();
+            
+            html += '<table class="hr-table" style="width:100%;">';
+            html += '<thead><tr><th>التاريخ</th><th>الحضور</th><th>الانصراف</th><th>المدة</th><th>الحالة</th><th>ملاحظات</th></tr></thead><tbody>';
+            
+            let today = new Date();
+            today.setHours(0,0,0,0);
+            
+            for (let i = 1; i <= daysInMonth; i++) {
+                let dateStr = yearMonth + '-' + String(i).padStart(2, '0');
+                let r = records.find(rec => rec.date === dateStr);
+                let loopDate = new Date(dateStr);
+                loopDate.setHours(0,0,0,0);
+                
+                if (r) {
+                    let isPaidLeave = r.status === 'إجازة مدفوعة' && r.notes.includes('تمت الموافقة');
+                    let isUnpaidLeave = r.status === 'إجازة بدون مرتب' && r.notes.includes('تمت الموافقة');
+                    let isPending = r.notes.includes('بانتظار الموافقة');
+                    let isRejected = r.notes.includes('مرفوضة');
+                    
+                    let rowStyle = '';
+                    let inVal = r.checkIn || '-';
+                    let outVal = r.checkOut || '-';
+                    let hrsVal = r.hours || '-';
+                    
+                    if (isPaidLeave) {
+                        rowStyle = 'background-color: #fff9c4;'; // Yellow
+                        inVal = '0'; outVal = '0'; hrsVal = '8 ساعة و 0 دقيقة';
+                    } else if (isUnpaidLeave) {
+                        rowStyle = 'background-color: #ffebee; color: #b71c1c;'; // Red
+                        inVal = '0'; outVal = '0'; hrsVal = '0 ساعة';
+                    } else if (isPending) {
+                        rowStyle = 'background-color: #fff3e0;'; // Light orange
+                    } else if (isRejected) {
+                        rowStyle = 'background-color: #fce4ec;'; // Light pink
+                    }
+                    
+                    html += `<tr style="${rowStyle}">`;
+                    html += `<td>${dateStr}</td>`;
+                    html += `<td style="font-weight:bold; color:${isUnpaidLeave?'#b71c1c':'#2e7d32'};">${inVal}</td>`;
+                    html += `<td style="font-weight:bold; color:${isUnpaidLeave?'#b71c1c':'#c62828'};">${outVal}</td>`;
+                    html += `<td style="font-weight:bold; color:#1a237e;">${hrsVal}</td>`;
+                    html += `<td><span style="background:rgba(0,0,0,0.05); padding:4px 8px; border-radius:12px; font-size:0.85rem; font-weight:bold;">${r.status}</span></td>`;
+                    html += `<td>${r.notes || '-'}</td>`;
+                    html += `</tr>`;
+                } else {
+                    if (loopDate < today) {
+                        html += `<tr style="background-color: #f5f5f5; color: #9e9e9e;">`;
+                        html += `<td>${dateStr}</td>`;
+                        html += `<td style="color:#9e9e9e;">0</td><td style="color:#9e9e9e;">0</td><td style="color:#9e9e9e;">0</td>`;
+                        html += `<td><span style="background:#e0e0e0; color:#424242; padding:4px 8px; border-radius:12px; font-size:0.85rem; font-weight:bold;">غائب</span></td>`;
+                        html += `<td>-</td>`;
+                        html += `</tr>`;
+                    } else {
+                        html += `<tr>`;
+                        html += `<td style="color:#9e9e9e;">${dateStr}</td>`;
+                        html += `<td style="color:#9e9e9e;">--</td><td style="color:#9e9e9e;">--</td><td style="color:#9e9e9e;">--</td>`;
+                        html += `<td><span style="background:#f5f5f5; color:#9e9e9e; padding:4px 8px; border-radius:12px; font-size:0.85rem;">لم يسجل</span></td>`;
+                        html += `<td style="color:#9e9e9e;">-</td>`;
+                        html += `</tr>`;
+                    }
+                }
             }
-            html += '</div>';
-        });
-        html += '</div>';
+            html += '</tbody></table>';
+        }
     }
     
     container.innerHTML = html;
@@ -8869,7 +8939,14 @@ window.promptEditHours = function(employee, date, currentHours) {
 };
 
 
-window.handleLeaveDecision = function(employee, date, decision) {
+window.handleLeaveDecision = function(employee, date, decision, btnElement = null) {
+    let originalHtml = '';
+    if (btnElement) {
+        originalHtml = btnElement.innerHTML;
+        btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ...';
+        btnElement.disabled = true;
+    }
+
     let formData = new URLSearchParams();
     formData.append('action', 'manageLeave');
     formData.append('employeeName', employee);
@@ -8879,9 +8956,17 @@ window.handleLeaveDecision = function(employee, date, decision) {
     fetch(GOOGLE_SHEETS_URL, { method: 'POST', body: formData })
         .then(() => {
             showToast(decision === 'approve' ? '✅ تمت الموافقة' : '❌ تم الرفض', 'success');
+            if(typeof loadPendingLeaves === 'function') loadPendingLeaves();
+            if(typeof loadAdminAttendance === 'function') loadAdminAttendance();
             loadMyAttendance();
         })
-        .catch(() => showToast('تم الحفظ', 'success'));
+        .catch(() => showToast('تم الحفظ', 'success'))
+        .finally(() => {
+            if (btnElement) {
+                btnElement.innerHTML = originalHtml;
+                btnElement.disabled = false;
+            }
+        });
 };
 
 function initHrAdminTab() {
