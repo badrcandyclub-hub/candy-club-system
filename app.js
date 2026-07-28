@@ -8865,10 +8865,10 @@ function renderAttendanceTable(records, container, isAdminView = false) {
                 loopDate.setHours(0,0,0,0);
                 
                 if (r) {
-                    let isPaidLeave = r.status === 'إجازة مدفوعة' && r.notes.includes('تمت الموافقة');
-                    let isUnpaidLeave = r.status === 'إجازة بدون مرتب' && r.notes.includes('تمت الموافقة');
-                    let isPending = r.notes.includes('بانتظار الموافقة');
-                    let isRejected = r.notes.includes('مرفوضة');
+                    let isPaidLeave = r.status === 'إجازة مدفوعة' && r.requestStatus === '✅ تمت الموافقة';
+                    let isUnpaidLeave = r.status === 'إجازة بدون مرتب' && r.requestStatus === '✅ تمت الموافقة';
+                    let isPending = r.requestStatus === 'بانتظار الموافقة';
+                    let isRejected = r.requestStatus === '❌ مرفوضة';
                     
                     let rowStyle = '';
                     let inVal = r.checkIn || '-';
@@ -9167,7 +9167,7 @@ function loadPendingLeaves() {
             pending.forEach(p => {
                 html += '<div class="hr-pending-item" style="background:#fff3e0; border:1px solid #ffb74d; border-radius:8px; padding:12px; margin-bottom:10px;">';
                 html += '<div style="margin-bottom:8px;"><strong>' + p.employee + '</strong> - ' + p.date + ' <span class="hr-badge" style="background:#ff9800; color:white; padding:2px 8px; border-radius:12px; font-size:0.8rem;">' + p.status + '</span></div>';
-                if (p.notes) html += '<div style="font-size:0.85rem; color:#666; margin-bottom:8px;"><i class="fa-solid fa-note-sticky"></i> ' + p.notes.replace('(بانتظار الموافقة)','') + '</div>';
+                if (p.notes) html += '<div style="font-size:0.85rem; color:#666; margin-bottom:8px;"><i class="fa-solid fa-note-sticky"></i> ' + p.notes + '</div>';
                 html += '<div style="display:flex; gap:8px;">';
                 html += '<button class="interactive-btn" onclick="handleLeaveDecision(\'' + p.employee + '\', \'' + p.date + '\', \'approve\')" style="background:#2e7d32; color:white; border:none; padding:6px 16px; border-radius:6px; cursor:pointer; flex:1;"><i class="fa-solid fa-check"></i> موافقة</button>';
                 html += '<button class="interactive-btn" onclick="handleLeaveDecision(\'' + p.employee + '\', \'' + p.date + '\', \'reject\')" style="background:#c62828; color:white; border:none; padding:6px 16px; border-radius:6px; cursor:pointer; flex:1;"><i class="fa-solid fa-xmark"></i> رفض</button>';
