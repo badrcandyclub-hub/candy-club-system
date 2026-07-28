@@ -76,26 +76,7 @@ function onEdit(e) {
     }
     
     // تحديث المالية في الخلفية
-    // ============================================================
-  // 11. شيت الحضور والانصراف (نظام HR)
-  // ============================================================
-  var attendanceSheet = ss.getSheetByName("📅 سجل الحضور");
-  if (!attendanceSheet) {
-      attendanceSheet = ss.insertSheet("📅 سجل الحضور");
-      var attHeaders = ["اسم الموظف", "التاريخ", "وقت الحضور", "وقت الانصراف", "إجمالي الساعات", "الحالة", "ملاحظات"];
-      attendanceSheet.getRange(1, 1, 1, attHeaders.length).setValues([attHeaders])
-           .setBackground("#00897b").setFontColor("white").setFontFamily(headerFont).setFontSize(14).setFontWeight("bold")
-           .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
-      attendanceSheet.setRowHeight(1, 45);
-      attendanceSheet.setFrozenRows(1);
-      attendanceSheet.setColumnWidth(1, 180);
-      attendanceSheet.setColumnWidth(2, 140);
-      attendanceSheet.setColumnWidth(3, 120);
-      attendanceSheet.setColumnWidth(4, 120);
-      attendanceSheet.setColumnWidth(5, 120);
-      attendanceSheet.setColumnWidth(6, 140);
-      attendanceSheet.setColumnWidth(7, 250);
-  }
+
 
   calculateFinancials();
   }
