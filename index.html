@@ -1489,12 +1489,20 @@
                                 </select>
                             </div>
                             <div style="flex:1; min-width: 140px;">
-                                <label style="font-size: 0.85rem;">الشهر</label>
-                                <input type="month" id="hrAdminMonthFilter" style="width:100%;">
+                                <label style="font-size: 0.85rem;">التاريخ (يوم)</label>
+                                <input type="date" id="hrAdminDateFilter" style="width:100%;">
                             </div>
                             <button class="btn-search interactive-btn" onclick="loadAdminAttendance()" style="padding: 11px 20px;">
                                 عرض <i class="fa-solid fa-magnifying-glass"></i>
                             </button>
+                        </div>
+                        
+                        <!-- PDF Export Row -->
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 12px; padding-top: 10px; border-top: 1px dashed #ccc;">
+                            <div style="flex:1; min-width: 140px;">
+                                <label style="font-size: 0.85rem;">شهر التقرير (للتصدير PDF فقط)</label>
+                                <input type="month" id="hrAdminPdfMonth" style="width:100%;">
+                            </div>
                             <button class="interactive-btn" onclick="exportAttendancePDF()" style="padding: 11px 20px; background: #c62828; color: white; border: none; border-radius: 8px; cursor: pointer;">
                                 <i class="fa-solid fa-file-pdf"></i> تقرير PDF
                             </button>

@@ -8746,7 +8746,7 @@ function loadMyAttendance() {
     fetch(GOOGLE_SHEETS_URL + '?action=getAttendance&employee=' + encodeURIComponent(empFilter) + '&month=' + month)
         .then(r => r.json())
         .then(data => {
-            renderAttendanceTable(data.attendance || [], document.getElementById('hrAttendanceHistory'));
+            renderAttendanceTable(data.attendance || [], document.getElementById('hrAttendanceHistory'), false);
             
             // Update stats
             let myRecords = (data.attendance || []).filter(r => r.employee === currentUser.displayName);
@@ -8808,7 +8808,7 @@ function loadMyAttendance() {
         .catch(err => console.error('HR load error:', err));
 }
 
-function renderAttendanceTable(records, container) {
+function renderAttendanceTable(records, container, isAdminView = false) {
     if (!container) return;
     if (records.length === 0) {
         container.innerHTML = '<p style="text-align:center; color:var(--text-muted); padding:20px;">لا توجد بيانات</p>';
@@ -8822,25 +8822,72 @@ function renderAttendanceTable(records, container) {
         'إجازة مرفوضة': '#c62828'
     };
 
-    let html = '<table class="hr-table"><thead><tr>';
-    html += '<th>الموظف</th><th>التاريخ</th><th>الحضور</th><th>الانصراف</th><th>الساعات</th><th>الحالة</th><th>ملاحظات</th>';
-    html += '</tr></thead><tbody>';
+    let html = '';
     
-    records.reverse().forEach(r => {
-        let color = statusColors[r.status] || '#546e7a';
-        html += '<tr>';
-        html += '<td>' + r.employee + '</td>';
-        html += '<td>' + r.date + '</td>';
-        html += '<td>' + r.checkIn + '</td>';
-        html += '<td>' + r.checkOut + '</td>';
-        html += '<td>' + r.hours + '</td>';
-        html += '<td><span style="background:' + color + '15; color:' + color + '; padding:3px 10px; border-radius:20px; font-size:0.8rem; font-weight:bold;">' + r.status + '</span></td>';
-        html += '<td style="font-size:0.8rem; color:var(--text-muted);">' + (r.notes || '') + '</td>';
-        html += '</tr>';
-    });
-    html += '</tbody></table>';
+    if (isAdminView) {
+        // Admin View (Standard Table with Edit Button)
+        html += '<table class="hr-table"><thead><tr>';
+        html += '<th>الموظف</th><th>التاريخ</th><th>الحضور</th><th>الانصراف</th><th>الساعات</th><th>تعديل</th><th>الحالة</th><th>ملاحظات</th>';
+        html += '</tr></thead><tbody>';
+        
+        records.reverse().forEach(r => {
+            let color = statusColors[r.status] || '#546e7a';
+            html += '<tr>';
+            html += '<td>' + r.employee + '</td>';
+            html += '<td>' + r.date + '</td>';
+            html += '<td>' + r.checkIn + '</td>';
+            html += '<td>' + r.checkOut + '</td>';
+            html += '<td style="font-weight:bold; color:#1a237e;">' + r.hours + '</td>';
+            html += '<td><button class="interactive-btn" onclick="promptEditHours(\'' + r.employee + '\', \'' + r.date + '\', \'' + r.hours + '\')" style="background:#fff; color:#ff9800; border:1px solid #ff9800; padding:4px 8px; border-radius:6px; cursor:pointer;"><i class="fa-solid fa-pen"></i></button></td>';
+            html += '<td><span style="background:' + color + '15; color:' + color + '; padding:3px 10px; border-radius:20px; font-size:0.8rem; font-weight:bold;">' + r.status + '</span></td>';
+            html += '<td style="font-size:0.8rem; color:var(--text-muted);">' + (r.notes || '') + '</td>';
+            html += '</tr>';
+        });
+        html += '</tbody></table>';
+    } else {
+        // Employee View (Chic Modern Cards/Table)
+        html += '<div class="hr-chic-grid">';
+        records.reverse().forEach(r => {
+            let color = statusColors[r.status] || '#546e7a';
+            html += '<div class="hr-chic-card">';
+            html += '  <div class="hr-chic-header" style="border-bottom: 2px solid ' + color + '40;">';
+            html += '    <span class="hr-chic-date"><i class="fa-regular fa-calendar"></i> ' + r.date + '</span>';
+            html += '    <span class="hr-chic-status" style="background:' + color + '20; color:' + color + ';">' + r.status + '</span>';
+            html += '  </div>';
+            html += '  <div class="hr-chic-body">';
+            html += '    <div class="hr-chic-time"><div><i class="fa-solid fa-arrow-right-to-bracket" style="color:#2e7d32;"></i> الدخول</div><b>' + (r.checkIn || '--') + '</b></div>';
+            html += '    <div class="hr-chic-time"><div><i class="fa-solid fa-arrow-right-from-bracket" style="color:#c62828;"></i> الانصراف</div><b>' + (r.checkOut || '--') + '</b></div>';
+            html += '    <div class="hr-chic-total"><div><i class="fa-solid fa-stopwatch" style="color:#1565c0;"></i> المدة</div><b>' + (r.hours || '--') + '</b></div>';
+            html += '  </div>';
+            if (r.notes) {
+                html += '  <div class="hr-chic-notes"><i class="fa-solid fa-circle-info"></i> ' + r.notes + '</div>';
+            }
+            html += '</div>';
+        });
+        html += '</div>';
+    }
+    
     container.innerHTML = html;
 }
+
+window.promptEditHours = function(employee, date, currentHours) {
+    let newVal = window.prompt("تعديل إجمالي الساعات للموظف: " + employee + "\nالتاريخ: " + date + "\nاكتب عدد الساعات (مثلاً: 8 ساعات و 30 دقيقة):", currentHours);
+    if (newVal !== null && newVal.trim() !== "") {
+        let formData = new URLSearchParams();
+        formData.append('action', 'editAttendanceHours');
+        formData.append('employeeName', employee);
+        formData.append('date', date);
+        formData.append('hours', newVal);
+
+        fetch(GOOGLE_SHEETS_URL, { method: 'POST', body: formData })
+            .then(() => {
+                showToast('✅ تم تعديل الساعات بنجاح', 'success');
+                loadAdminAttendance(); // Reload table
+            })
+            .catch(() => showToast('حدث خطأ في الاتصال', 'error'));
+    }
+};
+
 
 window.handleLeaveDecision = function(employee, date, decision) {
     let formData = new URLSearchParams();
@@ -8859,14 +8906,14 @@ window.handleLeaveDecision = function(employee, date, decision) {
 
 function loadAdminAttendance() {
     let empFilter = document.getElementById('hrAdminEmployeeFilter');
-    let monthFilter = document.getElementById('hrAdminMonthFilter');
+    let dateFilter = document.getElementById('hrAdminDateFilter');
     let emp = empFilter ? empFilter.value : '';
-    let month = monthFilter ? monthFilter.value : '';
+    let exactDate = dateFilter ? dateFilter.value : '';
 
-    fetch(GOOGLE_SHEETS_URL + '?action=getAttendance&employee=' + encodeURIComponent(emp) + '&month=' + month)
+    fetch(GOOGLE_SHEETS_URL + '?action=getAttendance&employee=' + encodeURIComponent(emp) + '&exactDate=' + exactDate)
         .then(r => r.json())
         .then(data => {
-            renderAttendanceTable(data.attendance || [], document.getElementById('hrAdminAttendanceTable'));
+            renderAttendanceTable(data.attendance || [], document.getElementById('hrAdminAttendanceTable'), true);
         })
         .catch(err => console.error('Admin attendance error:', err));
 }
@@ -8897,35 +8944,66 @@ function handleAdminAddLeave() {
 }
 
 function exportAttendancePDF() {
-    let tableContainer = document.getElementById('hrAdminAttendanceTable');
-    if (!tableContainer || !tableContainer.querySelector('table')) {
-        showToast('اعرض البيانات أولاً', 'warning');
+    let monthInput = document.getElementById('hrAdminPdfMonth');
+    let monthStr = monthInput ? monthInput.value : '';
+    if (!monthStr) {
+        showToast('يرجى اختيار شهر التقرير أولاً', 'warning');
         return;
     }
 
-    let month = document.getElementById('hrAdminMonthFilter');
-    let monthStr = month ? month.value : '';
+    showToast('⏳ جاري تحضير التقرير، يرجى الانتظار...', 'info');
 
-    let pdfContent = document.createElement('div');
-    pdfContent.style.direction = 'rtl';
-    pdfContent.style.fontFamily = 'Cairo, sans-serif';
-    pdfContent.style.padding = '20px';
-    pdfContent.innerHTML = '<h2 style="text-align:center; color:#00897b;">تقرير حضور وانصراف الموظفين</h2>';
-    pdfContent.innerHTML += '<p style="text-align:center; color:#666;">الشهر: ' + monthStr + '</p>';
-    pdfContent.innerHTML += '<p style="text-align:center; color:#666;">Candy Club - كاندي كلوب</p><hr>';
-    pdfContent.innerHTML += tableContainer.innerHTML;
+    fetch(GOOGLE_SHEETS_URL + '?action=getAttendance&month=' + monthStr)
+        .then(r => r.json())
+        .then(data => {
+            let records = data.attendance || [];
+            if (records.length === 0) {
+                showToast('لا توجد بيانات لهذا الشهر', 'warning');
+                return;
+            }
 
-    if (typeof html2pdf !== 'undefined') {
-        html2pdf().set({
-            margin: 10,
-            filename: 'attendance_' + monthStr + '.pdf',
-            html2canvas: { scale: 2 },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-        }).from(pdfContent).save();
-        showToast('📄 جاري تحميل التقرير', 'success');
-    } else {
-        showToast('مكتبة PDF غير متوفرة', 'error');
-    }
+            let pdfContent = document.createElement('div');
+            pdfContent.style.direction = 'rtl';
+            pdfContent.style.fontFamily = 'Cairo, sans-serif';
+            pdfContent.style.padding = '20px';
+            pdfContent.innerHTML = '<h2 style="text-align:center; color:#00897b;">تقرير حضور وانصراف الموظفين</h2>';
+            pdfContent.innerHTML += '<p style="text-align:center; color:#666;">الشهر: <b dir="ltr">' + monthStr + '</b></p>';
+            pdfContent.innerHTML += '<p style="text-align:center; color:#666;">Candy Club - كاندي كلوب</p><hr>';
+
+            // Build PDF Table manually without the "Edit" button
+            let html = '<table style="width:100%; border-collapse:collapse; text-align:center; font-size:12px; margin-top:15px;" border="1">';
+            html += '<tr style="background-color:#00897b; color:white;"><th>الموظف</th><th>التاريخ</th><th>الحضور</th><th>الانصراف</th><th>الساعات</th><th>الحالة</th><th>ملاحظات</th></tr>';
+            records.forEach(r => {
+                html += '<tr>';
+                html += '<td style="padding:5px;">' + r.employee + '</td>';
+                html += '<td style="padding:5px;">' + r.date + '</td>';
+                html += '<td style="padding:5px;">' + r.checkIn + '</td>';
+                html += '<td style="padding:5px;">' + r.checkOut + '</td>';
+                html += '<td style="padding:5px; font-weight:bold;">' + r.hours + '</td>';
+                html += '<td style="padding:5px;">' + r.status + '</td>';
+                html += '<td style="padding:5px; font-size:10px; color:#555;">' + (r.notes || '') + '</td>';
+                html += '</tr>';
+            });
+            html += '</table>';
+            
+            pdfContent.innerHTML += html;
+
+            if (typeof html2pdf !== 'undefined') {
+                html2pdf().set({
+                    margin: 10,
+                    filename: 'attendance_' + monthStr + '.pdf',
+                    html2canvas: { scale: 2 },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+                }).from(pdfContent).save();
+                showToast('✅ تم تحميل التقرير', 'success');
+            } else {
+                showToast('مكتبة PDF غير متوفرة', 'error');
+            }
+        })
+        .catch(err => {
+            console.error('PDF error:', err);
+            showToast('حدث خطأ أثناء جلب البيانات', 'error');
+        });
 }
 
 // Initialize HR Employee tab
@@ -8950,11 +9028,16 @@ function initHrAdminTab() {
     // Populate employee dropdowns
     populateHrEmployeeDropdowns();
     
-    // Set default month
+    // Set default date and PDF month
     let now = new Date();
     let monthStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-    let adminMonth = document.getElementById('hrAdminMonthFilter');
-    if (adminMonth) adminMonth.value = monthStr;
+    let dateStr = now.toLocaleDateString('en-CA');
+    
+    let adminDate = document.getElementById('hrAdminDateFilter');
+    if (adminDate) adminDate.value = dateStr;
+    
+    let adminPdfMonth = document.getElementById('hrAdminPdfMonth');
+    if (adminPdfMonth) adminPdfMonth.value = monthStr;
     
     loadAdminAttendance();
 }

@@ -524,6 +524,7 @@ function doGet(e) {
     var attendanceList = [];
     var filterEmployee = e.parameter.employee || "";
     var filterMonth = e.parameter.month || "";
+    var filterDate = e.parameter.exactDate || "";
     
     if (attSheet && attSheet.getLastRow() > 1) {
       var data = attSheet.getDataRange().getValues();
@@ -534,7 +535,11 @@ function doGet(e) {
         
         // Apply filters
         if (filterEmployee && empName !== filterEmployee) continue;
-        if (filterMonth && dateVal.substring(0, 7) !== filterMonth) continue;
+        if (filterDate) {
+          if (dateVal !== filterDate) continue;
+        } else if (filterMonth && dateVal.substring(0, 7) !== filterMonth) {
+          continue;
+        }
         
         attendanceList.push({
           employee: empName,
@@ -1531,6 +1536,7 @@ function doPost(e) {
       }
       
       attSheet.appendRow([empName, "'" + attDate, attTime, "", "", "حاضر", ""]);
+      attSheet.getRange(attSheet.getLastRow(), 1, 1, 7).setBackground("#e8f5e9");
       return ContentService.createTextOutput(JSON.stringify({success: true, message: "تم تسجيل الحضور بنجاح", time: attTime})).setMimeType(ContentService.MimeType.JSON);
     }
 
@@ -1558,10 +1564,13 @@ function doPost(e) {
           var outDate = new Date("2026-01-01 " + outTime);
           var diffMs = outDate - inDate;
           if (diffMs < 0) diffMs += 24 * 60 * 60 * 1000;
-          var hours = (diffMs / (1000 * 60 * 60)).toFixed(1);
+          var totalH = Math.floor(diffMs / (1000 * 60 * 60));
+          var totalM = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+          var timeString = totalH + " ساعة";
+          if (totalM > 0) timeString += " و " + totalM + " دقيقة";
           
-          attSheet.getRange(a + 1, 5).setValue(hours + " ساعة");
-          return ContentService.createTextOutput(JSON.stringify({success: true, message: "تم تسجيل الانصراف بنجاح", time: outTime, hours: hours})).setMimeType(ContentService.MimeType.JSON);
+          attSheet.getRange(a + 1, 5).setValue(timeString);
+          return ContentService.createTextOutput(JSON.stringify({success: true, message: "تم تسجيل الانصراف بنجاح", time: outTime, hours: timeString})).setMimeType(ContentService.MimeType.JSON);
         }
       }
       return ContentService.createTextOutput(JSON.stringify({success: false, error: "لم يتم العثور على سجل حضور مفتوح لهذا اليوم"})).setMimeType(ContentService.MimeType.JSON);
@@ -1612,11 +1621,13 @@ function doPost(e) {
           if (decision === "approve") {
             var notes = (attData[a][6] || "").toString().replace(" (بانتظار الموافقة)", "");
             attSheet.getRange(a + 1, 7).setValue(notes + " ✅ تمت الموافقة");
+            attSheet.getRange(a + 1, 1, 1, 7).setBackground(attData[a][5] === "إجازة مدفوعة" ? "#e3f2fd" : "#fff3e0");
           } else {
             attSheet.getRange(a + 1, 5).setValue("0");
             attSheet.getRange(a + 1, 6).setValue("إجازة مرفوضة");
             var notes = (attData[a][6] || "").toString().replace(" (بانتظار الموافقة)", "");
             attSheet.getRange(a + 1, 7).setValue(notes + " ❌ مرفوضة");
+            attSheet.getRange(a + 1, 1, 1, 7).setBackground("#ffebee");
           }
           return ContentService.createTextOutput(JSON.stringify({success: true, message: decision === "approve" ? "تمت الموافقة" : "تم الرفض"})).setMimeType(ContentService.MimeType.JSON);
         }
@@ -1638,6 +1649,7 @@ function doPost(e) {
       
       var hoursCredit = leaveType === "إجازة مدفوعة" ? "8 ساعة" : "0";
       attSheet.appendRow([empName, "'" + leaveDate, "-", "-", hoursCredit, leaveType, notes + " ✅ تمت الموافقة"]);
+      attSheet.getRange(attSheet.getLastRow(), 1, 1, 7).setBackground(leaveType === "إجازة مدفوعة" ? "#e3f2fd" : "#fff3e0");
       return ContentService.createTextOutput(JSON.stringify({success: true, message: "تمت إضافة الإجازة"})).setMimeType(ContentService.MimeType.JSON);
     }
 
