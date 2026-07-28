@@ -579,6 +579,31 @@ function doGet(e) {
     return ContentService.createTextOutput(JSON.stringify({ attendance: attendanceList, leaveBalance: leaveBalance })).setMimeType(ContentService.MimeType.JSON);
   }
 
+  // ============================================================
+  // ⭐ HR: جلب طلبات الإجازة المعلقة لجميع الموظفين (للمدير)
+  // ============================================================
+  if (action === "getPendingLeaves") {
+    var attSheet = ss.getSheetByName("📅 سجل الحضور");
+    var pendingList = [];
+    if (attSheet && attSheet.getLastRow() > 1) {
+      var data = attSheet.getDataRange().getValues();
+      for (var i = 1; i < data.length; i++) {
+        var notes = (data[i][6] || "").toString();
+        if (notes.indexOf("بانتظار الموافقة") !== -1) {
+          var dateVal = "";
+          try { dateVal = Utilities.formatDate(new Date(data[i][1]), "Africa/Cairo", "yyyy-MM-dd"); } catch(ex) { dateVal = data[i][1].toString().replace("'",""); }
+          pendingList.push({
+            employee: (data[i][0] || "").toString().trim(),
+            date: dateVal,
+            status: (data[i][5] || "").toString(),
+            notes: notes
+          });
+        }
+      }
+    }
+    return ContentService.createTextOutput(JSON.stringify({ pending: pendingList })).setMimeType(ContentService.MimeType.JSON);
+  }
+
   // ⭐ V16: جلب قائمة المستخدمين (للمدير)
   if (action === "getUsers") {
     var usersSheet = ss.getSheetByName("👥 المستخدمين");

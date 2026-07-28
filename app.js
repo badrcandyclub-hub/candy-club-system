@@ -8783,27 +8783,7 @@ function loadMyAttendance() {
             }
             updateHrButtons();
 
-            // Admin: pending leaves
-            if (isAdmin) {
-                let pendingDiv = document.getElementById('hrPendingLeaves');
-                if (pendingDiv) {
-                    let pending = (data.attendance || []).filter(r => r.notes && r.notes.includes('بانتظار الموافقة'));
-                    if (pending.length === 0) {
-                        pendingDiv.innerHTML = '<p style="text-align:center; color:var(--text-muted);">لا توجد طلبات معلقة</p>';
-                    } else {
-                        let html = '';
-                        pending.forEach(p => {
-                            html += '<div class="hr-pending-item">';
-                            html += '<div><strong>' + p.employee + '</strong> - ' + p.date + ' <span class="hr-badge">' + p.status + '</span></div>';
-                            html += '<div style="display:flex; gap:8px; margin-top:8px;">';
-                            html += '<button class="interactive-btn" onclick="handleLeaveDecision(\'' + p.employee + '\', \'' + p.date + '\', \'approve\')" style="background:#2e7d32; color:white; border:none; padding:6px 16px; border-radius:6px; cursor:pointer;"><i class="fa-solid fa-check"></i> موافقة</button>';
-                            html += '<button class="interactive-btn" onclick="handleLeaveDecision(\'' + p.employee + '\', \'' + p.date + '\', \'reject\')" style="background:#c62828; color:white; border:none; padding:6px 16px; border-radius:6px; cursor:pointer;"><i class="fa-solid fa-xmark"></i> رفض</button>';
-                            html += '</div></div>';
-                        });
-                        pendingDiv.innerHTML = html;
-                    }
-                }
-            }
+            // (Admin pending leaves moved to separate API loadPendingLeaves)
         })
         .catch(err => console.error('HR load error:', err));
 }
@@ -8903,6 +8883,11 @@ window.handleLeaveDecision = function(employee, date, decision) {
         })
         .catch(() => showToast('تم الحفظ', 'success'));
 };
+
+function initHrAdminTab() {
+    loadAdminAttendance();
+    loadPendingLeaves();
+}
 
 function loadAdminAttendance() {
     let empFilter = document.getElementById('hrAdminEmployeeFilter');
@@ -9074,3 +9059,40 @@ document.addEventListener('click', function(e) {
         setTimeout(initHrAdminTab, 100);
     }
 });
+
+function loadPendingLeaves() {
+    if (!currentUser || currentUser.permissions !== 'ALL' && currentUser.permissions !== 'hr-admin') return;
+    
+    let pendingDiv = document.getElementById('hrPendingLeaves');
+    if (!pendingDiv) return;
+    
+    pendingDiv.innerHTML = '<p style="text-align:center;"><i class="fa-solid fa-spinner fa-spin"></i> جاري تحميل الطلبات...</p>';
+    
+    fetch(scriptUrl + '?action=getPendingLeaves', {
+        method: 'GET',
+        mode: 'cors'
+    })
+    .then(res => res.json())
+    .then(data => {
+        let pending = data.pending || [];
+        if (pending.length === 0) {
+            pendingDiv.innerHTML = '<p style="text-align:center; color:var(--text-muted);">لا توجد طلبات معلقة</p>';
+        } else {
+            let html = '';
+            pending.forEach(p => {
+                html += '<div class="hr-pending-item" style="background:#fff3e0; border:1px solid #ffb74d; border-radius:8px; padding:12px; margin-bottom:10px;">';
+                html += '<div style="margin-bottom:8px;"><strong>' + p.employee + '</strong> - ' + p.date + ' <span class="hr-badge" style="background:#ff9800; color:white; padding:2px 8px; border-radius:12px; font-size:0.8rem;">' + p.status + '</span></div>';
+                if (p.notes) html += '<div style="font-size:0.85rem; color:#666; margin-bottom:8px;"><i class="fa-solid fa-note-sticky"></i> ' + p.notes.replace('(بانتظار الموافقة)','') + '</div>';
+                html += '<div style="display:flex; gap:8px;">';
+                html += '<button class="interactive-btn" onclick="handleLeaveDecision(\'' + p.employee + '\', \'' + p.date + '\', \'approve\')" style="background:#2e7d32; color:white; border:none; padding:6px 16px; border-radius:6px; cursor:pointer; flex:1;"><i class="fa-solid fa-check"></i> موافقة</button>';
+                html += '<button class="interactive-btn" onclick="handleLeaveDecision(\'' + p.employee + '\', \'' + p.date + '\', \'reject\')" style="background:#c62828; color:white; border:none; padding:6px 16px; border-radius:6px; cursor:pointer; flex:1;"><i class="fa-solid fa-xmark"></i> رفض</button>';
+                html += '</div></div>';
+            });
+            pendingDiv.innerHTML = html;
+        }
+    })
+    .catch(err => {
+        console.error('Pending leaves error:', err);
+        pendingDiv.innerHTML = '<p style="text-align:center; color:red;">خطأ في التحميل</p>';
+    });
+}
