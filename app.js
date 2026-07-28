@@ -8883,6 +8883,8 @@ function renderAttendanceTable(records, container, isAdminView = false) {
         [...records].reverse().forEach((r, idx) => {
             let color = statusColors[r.status] || '#546e7a';
             let bgRow = idx % 2 === 0 ? '#fff' : '#f8f9fa';
+            let safeNotes = (r.notes || '').replace(/'/g, "\\'");
+            let empName = (r.employee || '').replace(/'/g, "\\'");
             html += `<tr style="background:${bgRow}; border-bottom:1px solid #e9ecef; transition:background 0.15s;" onmouseover="this.style.background='#e3f2fd'" onmouseout="this.style.background='${bgRow}'">`;
             html += `<td style="padding:10px; text-align:center; font-weight:bold; font-size:0.85rem;">${r.employee}</td>`;
             html += `<td style="padding:10px; text-align:center; font-size:0.85rem; color:#546e7a;">${r.date}</td>`;
@@ -8890,7 +8892,7 @@ function renderAttendanceTable(records, container, isAdminView = false) {
             html += `<td style="padding:10px; text-align:center; font-weight:bold; color:#c62828; font-size:0.85rem;">${r.checkOut || '-'}</td>`;
             html += `<td style="padding:10px; text-align:center; font-weight:900; color:#1a237e; font-size:0.9rem;">${r.hours || '-'}</td>`;
             html += `<td style="padding:10px; text-align:center;"><span style="background:${color}20; color:${color}; padding:4px 10px; border-radius:20px; font-size:0.78rem; font-weight:bold; white-space:nowrap;">${r.status}</span></td>`;
-            html += `<td style="padding:10px; text-align:center;"><button class="interactive-btn" onclick="openEditAttendanceModal('${r.employee}','${r.date}','${r.checkIn||''}','${r.checkOut||''}','${r.status||''}','${(r.notes||'').replace(/'/g,'\\'')}' )" style="background:linear-gradient(135deg,#ff9800,#ef6c00); color:white; border:none; padding:7px 12px; border-radius:8px; cursor:pointer; font-size:0.8rem; display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-pen"></i></button></td>`;
+            html += `<td style="padding:10px; text-align:center;"><button class="interactive-btn" onclick="openEditAttendanceModal('${empName}','${r.date}','${r.checkIn||''}','${r.checkOut||''}','${r.status||''}','${safeNotes}')" style="background:linear-gradient(135deg,#ff9800,#ef6c00); color:white; border:none; padding:7px 12px; border-radius:8px; cursor:pointer; font-size:0.8rem; display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-pen"></i></button></td>`;
             html += '</tr>';
         });
         html += '</tbody></table></div>';
