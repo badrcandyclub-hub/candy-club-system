@@ -8971,14 +8971,7 @@ function renderAttendanceTable(records, container, isAdminView = false) {
                     html += `<td style="padding:10px 8px; text-align:center; font-weight:900; color:#1a237e; font-size:0.9rem;">${hrsVal}</td>`;
                     html += `<td style="padding:10px 8px; text-align:center;">${statusBadge}</td>`;
                     html += '</tr>';
-                } else if (isWeekend) {
-                    html += `<tr style="background:#f3f0ff; border-bottom:1px solid #e8e4f5; opacity:0.7;">`;
-                    html += `<td style="padding:10px 8px; text-align:center;"><div style="font-weight:bold;font-size:0.85rem;color:#7e57c2;">${String(i).padStart(2,'0')}</div><div style="font-size:0.7rem;color:#9575cd;">${dayName}</div></td>`;
-                    html += `<td style="padding:10px 8px; text-align:center; color:#b0bec5;">-</td>`;
-                    html += `<td style="padding:10px 8px; text-align:center; color:#b0bec5;">-</td>`;
-                    html += `<td style="padding:10px 8px; text-align:center; color:#b0bec5;">-</td>`;
-                    html += `<td style="padding:10px 8px; text-align:center;"><span style="background:#ede7f620;color:#9575cd;padding:3px 8px;border-radius:20px;font-size:0.72rem;">🏠 إجازة أسبوعية</span></td>`;
-                    html += '</tr>';
+
                 } else if (isFuture) {
                     html += `<tr style="background:#fafafa; border-bottom:1px solid #eee; opacity:0.6;">`;
                     html += `<td style="padding:10px 8px; text-align:center;"><div style="font-size:0.85rem;color:#bdbdbd;">${String(i).padStart(2,'0')}</div><div style="font-size:0.7rem;color:#bdbdbd;">${dayName}</div></td>`;
@@ -9382,7 +9375,10 @@ document.addEventListener('click', function(e) {
 });
 
 function loadPendingLeaves() {
-    if (!currentUser || currentUser.permissions !== 'ALL' && currentUser.permissions !== 'hr-admin') return;
+    if (!currentUser) return;
+    let isFullAccess = (currentUser.permissions === "ALL");
+    let perms = isFullAccess ? [] : (currentUser.permissions || "").split(",");
+    if (!isFullAccess && !perms.includes('hr-admin')) return;
     
     let pendingDiv = document.getElementById('hrPendingLeaves');
     if (!pendingDiv) return;
