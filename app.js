@@ -8732,14 +8732,18 @@ function handleLeaveRequest() {
     formData.append('notes', notes.value || '');
 
     fetch(GOOGLE_SHEETS_URL, { method: 'POST', body: formData })
-        .then(r => r.text())
-        .then(() => {
-            showToast('✅ تم إرسال طلب الإجازة بنجاح', 'success');
-            date.value = '';
-            notes.value = '';
-            loadMyAttendance();
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                showToast('✅ تم إرسال طلب الإجازة بنجاح', 'success');
+                date.value = '';
+                notes.value = '';
+                loadMyAttendance();
+            } else {
+                showToast(data.error || 'حدث خطأ أثناء الإرسال', 'error');
+            }
         })
-        .catch(() => showToast('✅ تم إرسال الطلب (مع خطأ)', 'success'))
+        .catch(() => showToast('حدث خطأ في الاتصال', 'error'))
         .finally(() => {
             if(btn) {
                 btn.innerHTML = originalHtml;
@@ -9029,12 +9033,18 @@ window.openEditAttendanceModal = function(employee, date, checkIn, checkOut, sta
 
     document.getElementById('editAttCheckIn').value = to24h(checkIn);
     document.getElementById('editAttCheckOut').value = to24h(checkOut);
-    let statusEl = document.getElementById('editAttStatus');
-    if (statusEl) statusEl.value = status || 'حاضر';
+    
     let notesEl = document.getElementById('editAttNotes');
     if (notesEl) notesEl.value = notes || '';
-
-    calcEditHours();
+    
+    let statusEl = document.getElementById('editAttStatus');
+    if (statusEl) {
+        statusEl.value = status || 'حاضر';
+        // Delay slightly to let values set, then update UI based on status
+        setTimeout(handleEditStatusChange, 10);
+    } else {
+        calcEditHours();
+    }
 
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
@@ -9046,11 +9056,46 @@ window.closeEditAttendanceModal = function() {
     document.body.style.overflow = '';
 };
 
-window.calcEditHours = function() {
-    let inVal = document.getElementById('editAttCheckIn').value;
-    let outVal = document.getElementById('editAttCheckOut').value;
+window.handleEditStatusChange = function() {
+    let status = document.getElementById('editAttStatus').value;
+    let inInput = document.getElementById('editAttCheckIn');
+    let outInput = document.getElementById('editAttCheckOut');
     let preview = document.getElementById('editAttHoursPreview');
     let text = document.getElementById('editAttHoursText');
+    
+    if (status === 'غائب' || status === 'إجازة بدون مرتب') {
+        inInput.value = '';
+        outInput.value = '';
+        if (text) text.textContent = '0 ساعة';
+        if (preview) preview.style.display = 'flex';
+    } else if (status === 'إجازة مدفوعة') {
+        inInput.value = '';
+        outInput.value = '';
+        if (text) text.textContent = '8 ساعة';
+        if (preview) preview.style.display = 'flex';
+    } else {
+        calcEditHours();
+    }
+};
+
+window.calcEditHours = function() {
+    let status = document.getElementById('editAttStatus').value;
+    let preview = document.getElementById('editAttHoursPreview');
+    let text = document.getElementById('editAttHoursText');
+    
+    if (status === 'غائب' || status === 'إجازة بدون مرتب') {
+        if (text) text.textContent = '0 ساعة';
+        if (preview) preview.style.display = 'flex';
+        return;
+    }
+    if (status === 'إجازة مدفوعة') {
+        if (text) text.textContent = '8 ساعة';
+        if (preview) preview.style.display = 'flex';
+        return;
+    }
+
+    let inVal = document.getElementById('editAttCheckIn').value;
+    let outVal = document.getElementById('editAttCheckOut').value;
     if (!preview || !text) return;
 
     if (inVal && outVal) {
@@ -9135,13 +9180,18 @@ window.handleLeaveDecision = function(employee, date, decision, btnElement = nul
     formData.append('decision', decision);
 
     fetch(GOOGLE_SHEETS_URL, { method: 'POST', body: formData })
-        .then(() => {
-            showToast(decision === 'approve' ? '✅ تمت الموافقة' : '❌ تم الرفض', 'success');
-            if(typeof loadPendingLeaves === 'function') loadPendingLeaves();
-            if(typeof loadAdminAttendance === 'function') loadAdminAttendance();
-            loadMyAttendance();
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                showToast(decision === 'approve' ? '✅ تمت الموافقة' : '❌ تم الرفض', 'success');
+                if(typeof loadPendingLeaves === 'function') loadPendingLeaves();
+                if(typeof loadAdminAttendance === 'function') loadAdminAttendance();
+                loadMyAttendance();
+            } else {
+                showToast(data.error || 'حدث خطأ', 'error');
+            }
         })
-        .catch(() => showToast('تم الحفظ', 'success'))
+        .catch(() => showToast('حدث خطأ في الاتصال', 'error'))
         .finally(() => {
             if (btnElement) {
                 btnElement.innerHTML = originalHtml;
@@ -9185,13 +9235,18 @@ function handleAdminAddLeave() {
     formData.append('notes', notes.value || 'أضيفت بواسطة المدير');
 
     fetch(GOOGLE_SHEETS_URL, { method: 'POST', body: formData })
-        .then(() => {
-            showToast('✅ تمت إضافة الإجازة', 'success');
-            date.value = '';
-            notes.value = '';
-            loadAdminAttendance();
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                showToast('✅ تمت إضافة الإجازة', 'success');
+                date.value = '';
+                notes.value = '';
+                loadAdminAttendance();
+            } else {
+                showToast(data.error || 'حدث خطأ', 'error');
+            }
         })
-        .catch(() => showToast('تمت الإضافة', 'success'));
+        .catch(() => showToast('حدث خطأ في الاتصال', 'error'));
 }
 
 function exportAttendancePDF() {
