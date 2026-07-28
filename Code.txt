@@ -1691,6 +1691,52 @@ function doPost(e) {
       return ContentService.createTextOutput(JSON.stringify({success: true, message: "تمت إضافة الإجازة"})).setMimeType(ContentService.MimeType.JSON);
     }
 
+    // ============================================================
+    // ⭐ HR: تعديل بيانات الحضور (للمدير) - Admin Edit Attendance
+    // ============================================================
+    if (action === "editAttendance") {
+      var attSheet = ss.getSheetByName("📅 سجل الحضور");
+      if (!attSheet) return ContentService.createTextOutput(JSON.stringify({success: false, error: "شيت الحضور غير موجود"})).setMimeType(ContentService.MimeType.JSON);
+      
+      var empName = e.parameter.employeeName || "";
+      var editDate = e.parameter.date || "";
+      var newCheckIn = e.parameter.checkIn || "";
+      var newCheckOut = e.parameter.checkOut || "";
+      var newStatus = e.parameter.status || "";
+      var newNotes = e.parameter.notes || "";
+      
+      var attData = attSheet.getDataRange().getValues();
+      for (var a = 1; a < attData.length; a++) {
+        var existDate = "";
+        try { existDate = Utilities.formatDate(new Date(attData[a][1]), "Africa/Cairo", "yyyy-MM-dd"); } catch(ex) { existDate = attData[a][1].toString().replace("'",""); }
+        if (attData[a][0].toString().trim() === empName && existDate === editDate) {
+          // Update checkIn and checkOut
+          if (newCheckIn) attSheet.getRange(a + 1, 3).setValue(newCheckIn);
+          if (newCheckOut) attSheet.getRange(a + 1, 4).setValue(newCheckOut);
+          if (newStatus) attSheet.getRange(a + 1, 6).setValue(newStatus);
+          if (newNotes !== undefined) attSheet.getRange(a + 1, 8).setValue(newNotes);
+          
+          // Auto-calculate hours if both times provided
+          if (newCheckIn && newCheckOut && newCheckOut !== "-" && newCheckIn !== "-") {
+            try {
+              var inDate2 = new Date("2026-01-01 " + newCheckIn);
+              var outDate2 = new Date("2026-01-01 " + newCheckOut);
+              var diffMs2 = outDate2 - inDate2;
+              if (diffMs2 < 0) diffMs2 += 24 * 60 * 60 * 1000;
+              var totalH2 = Math.floor(diffMs2 / (1000 * 60 * 60));
+              var totalM2 = Math.floor((diffMs2 % (1000 * 60 * 60)) / (1000 * 60));
+              var timeString2 = totalH2 + " ساعة";
+              if (totalM2 > 0) timeString2 += " و " + totalM2 + " دقيقة";
+              attSheet.getRange(a + 1, 5).setValue(timeString2);
+            } catch(calcErr) {}
+          }
+          
+          return ContentService.createTextOutput(JSON.stringify({success: true, message: "تم التعديل بنجاح"})).setMimeType(ContentService.MimeType.JSON);
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({success: false, error: "لم يتم العثور على السجل"})).setMimeType(ContentService.MimeType.JSON);
+    }
+
 
   } finally { lock.releaseLock(); }
 }

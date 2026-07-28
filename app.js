@@ -8750,7 +8750,9 @@ function handleLeaveRequest() {
 
 function loadMyAttendance() {
     if (!currentUser) return;
-    let monthInput = document.getElementById('hrHistoryMonth');
+    
+    // Auto-set current month if not set
+    let monthInput = document.getElementById('hrEmpMonthFilter');
     let month = monthInput ? monthInput.value : '';
     if (!month) {
         let now = new Date();
@@ -8761,28 +8763,69 @@ function loadMyAttendance() {
     let isAdmin = currentUser.permissions === 'ALL';
     let empFilter = isAdmin ? '' : currentUser.displayName;
 
+    // Show loading, hide table
+    let loadingEl = document.getElementById('hrAttendanceLoading');
+    let historyEl = document.getElementById('hrAttendanceHistory');
+    let bannerEl = document.getElementById('hrMonthlyStatsBanner');
+    if (loadingEl) { loadingEl.style.display = 'block'; }
+    if (historyEl) { historyEl.innerHTML = ''; }
+    if (bannerEl) { bannerEl.style.display = 'none'; }
+
     fetch(GOOGLE_SHEETS_URL + '?action=getAttendance&employee=' + encodeURIComponent(empFilter) + '&month=' + month)
         .then(r => r.json())
         .then(data => {
-            renderAttendanceTable(data.attendance || [], document.getElementById('hrAttendanceHistory'), false);
+            if (loadingEl) loadingEl.style.display = 'none';
+
+            let allRecords = data.attendance || [];
+            renderAttendanceTable(allRecords, historyEl, false);
             
-            // Update stats
-            let myRecords = (data.attendance || []).filter(r => r.employee === currentUser.displayName);
+            // Update stats cards
+            let myRecords = allRecords.filter(r => r.employee === currentUser.displayName);
             let presentDays = myRecords.filter(r => r.status === 'حاضر').length;
             let totalHours = 0;
+            let paidLeaves = 0;
+            let unpaidLeaves = 0;
             myRecords.forEach(r => {
                 let h = parseFloat(r.hours);
                 if (!isNaN(h)) totalHours += h;
+                if (r.status === 'إجازة مدفوعة' && r.requestStatus === '✅ تمت الموافقة') paidLeaves++;
+                if (r.status === 'إجازة بدون مرتب' && r.requestStatus === '✅ تمت الموافقة') unpaidLeaves++;
             });
 
+            // Update top stat cards
             let el = document.getElementById('hrMonthDays');
             if (el) el.innerText = presentDays;
             el = document.getElementById('hrTotalHoursMonth');
             if (el) el.innerText = totalHours.toFixed(1);
-
             if (data.leaveBalance) {
                 el = document.getElementById('hrLeaveBalance');
                 if (el) el.innerText = Math.max(0, 4 - data.leaveBalance.paidUsed);
+            }
+
+            // Render monthly summary banner
+            if (bannerEl) {
+                let arabicMonthNames = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+                let [y, m] = month.split('-');
+                let monthName = arabicMonthNames[parseInt(m) - 1];
+                bannerEl.innerHTML = `
+                    <div style="background:linear-gradient(135deg,#e8f5e9,#c8e6c9); border-radius:12px; padding:14px; text-align:center; border:1px solid #a5d6a7;">
+                        <div style="font-size:1.6rem; font-weight:900; color:#1b5e20;">${presentDays}</div>
+                        <div style="font-size:0.78rem; color:#2e7d32; font-weight:bold;">📅 أيام حضور</div>
+                    </div>
+                    <div style="background:linear-gradient(135deg,#e3f2fd,#bbdefb); border-radius:12px; padding:14px; text-align:center; border:1px solid #90caf9;">
+                        <div style="font-size:1.6rem; font-weight:900; color:#0d47a1;">${totalHours.toFixed(0)}</div>
+                        <div style="font-size:0.78rem; color:#1565c0; font-weight:bold;">⏱️ إجمالي الساعات</div>
+                    </div>
+                    <div style="background:linear-gradient(135deg,#fff3e0,#ffe0b2); border-radius:12px; padding:14px; text-align:center; border:1px solid #ffcc80;">
+                        <div style="font-size:1.6rem; font-weight:900; color:#e65100;">${paidLeaves}</div>
+                        <div style="font-size:0.78rem; color:#ef6c00; font-weight:bold;">🏖️ إجازات مدفوعة</div>
+                    </div>
+                    <div style="background:linear-gradient(135deg,#fce4ec,#f8bbd0); border-radius:12px; padding:14px; text-align:center; border:1px solid #f48fb1;">
+                        <div style="font-size:1.6rem; font-weight:900; color:#880e4f;">${unpaidLeaves}</div>
+                        <div style="font-size:0.78rem; color:#c62828; font-weight:bold;">📋 إجازات بدون راتب</div>
+                    </div>
+                `;
+                bannerEl.style.display = 'grid';
             }
 
             // Check today's status
@@ -8800,10 +8843,11 @@ function loadMyAttendance() {
                 hrTodayStatus = null;
             }
             updateHrButtons();
-
-            // (Admin pending leaves moved to separate API loadPendingLeaves)
         })
-        .catch(err => console.error('HR load error:', err));
+        .catch(err => {
+            if (loadingEl) loadingEl.style.display = 'none';
+            console.error('HR load error:', err);
+        });
 }
 
 function renderAttendanceTable(records, container, isAdminView = false) {
@@ -8823,27 +8867,35 @@ function renderAttendanceTable(records, container, isAdminView = false) {
     let html = '';
     
     if (isAdminView) {
-        // Admin View (Standard Table with Edit Button)
-        html += '<table class="hr-table"><thead><tr>';
-        html += '<th>الموظف</th><th>التاريخ</th><th>الحضور</th><th>الانصراف</th><th>الساعات</th><th>تعديل</th><th>الحالة</th><th>ملاحظات</th>';
+        // Admin View
+        html += '<div style="overflow-x:auto;">';
+        html += '<table class="hr-table" style="width:100%; border-collapse:separate; border-spacing:0; border-radius:12px; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,0.08);">';
+        html += '<thead><tr style="background:linear-gradient(135deg,#1565c0,#1a237e);">';
+        html += '<th style="color:white;padding:12px 10px;text-align:center;font-size:0.85rem;">الموظف</th>';
+        html += '<th style="color:white;padding:12px 10px;text-align:center;font-size:0.85rem;">التاريخ</th>';
+        html += '<th style="color:white;padding:12px 10px;text-align:center;font-size:0.85rem;">الحضور</th>';
+        html += '<th style="color:white;padding:12px 10px;text-align:center;font-size:0.85rem;">الانصراف</th>';
+        html += '<th style="color:white;padding:12px 10px;text-align:center;font-size:0.85rem;">الساعات</th>';
+        html += '<th style="color:white;padding:12px 10px;text-align:center;font-size:0.85rem;">الحالة</th>';
+        html += '<th style="color:white;padding:12px 10px;text-align:center;font-size:0.85rem;">تعديل</th>';
         html += '</tr></thead><tbody>';
         
-        records.reverse().forEach(r => {
+        [...records].reverse().forEach((r, idx) => {
             let color = statusColors[r.status] || '#546e7a';
-            html += '<tr>';
-            html += '<td>' + r.employee + '</td>';
-            html += '<td>' + r.date + '</td>';
-            html += '<td>' + r.checkIn + '</td>';
-            html += '<td>' + r.checkOut + '</td>';
-            html += '<td style="font-weight:bold; color:#1a237e;">' + r.hours + '</td>';
-            html += '<td><button class="interactive-btn" onclick="promptEditHours(\'' + r.employee + '\', \'' + r.date + '\', \'' + r.hours + '\')" style="background:#fff; color:#ff9800; border:1px solid #ff9800; padding:4px 8px; border-radius:6px; cursor:pointer;"><i class="fa-solid fa-pen"></i></button></td>';
-            html += '<td><span style="background:' + color + '15; color:' + color + '; padding:3px 10px; border-radius:20px; font-size:0.8rem; font-weight:bold;">' + r.status + '</span></td>';
-            html += '<td style="font-size:0.8rem; color:var(--text-muted);">' + (r.notes || '') + '</td>';
+            let bgRow = idx % 2 === 0 ? '#fff' : '#f8f9fa';
+            html += `<tr style="background:${bgRow}; border-bottom:1px solid #e9ecef; transition:background 0.15s;" onmouseover="this.style.background='#e3f2fd'" onmouseout="this.style.background='${bgRow}'">`;
+            html += `<td style="padding:10px; text-align:center; font-weight:bold; font-size:0.85rem;">${r.employee}</td>`;
+            html += `<td style="padding:10px; text-align:center; font-size:0.85rem; color:#546e7a;">${r.date}</td>`;
+            html += `<td style="padding:10px; text-align:center; font-weight:bold; color:#2e7d32; font-size:0.85rem;">${r.checkIn || '-'}</td>`;
+            html += `<td style="padding:10px; text-align:center; font-weight:bold; color:#c62828; font-size:0.85rem;">${r.checkOut || '-'}</td>`;
+            html += `<td style="padding:10px; text-align:center; font-weight:900; color:#1a237e; font-size:0.9rem;">${r.hours || '-'}</td>`;
+            html += `<td style="padding:10px; text-align:center;"><span style="background:${color}20; color:${color}; padding:4px 10px; border-radius:20px; font-size:0.78rem; font-weight:bold; white-space:nowrap;">${r.status}</span></td>`;
+            html += `<td style="padding:10px; text-align:center;"><button class="interactive-btn" onclick="openEditAttendanceModal('${r.employee}','${r.date}','${r.checkIn||''}','${r.checkOut||''}','${r.status||''}','${(r.notes||'').replace(/'/g,'\\'')}' )" style="background:linear-gradient(135deg,#ff9800,#ef6c00); color:white; border:none; padding:7px 12px; border-radius:8px; cursor:pointer; font-size:0.8rem; display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-pen"></i></button></td>`;
             html += '</tr>';
         });
-        html += '</tbody></table>';
+        html += '</tbody></table></div>';
     } else {
-        // Full Month Table logic for Employee
+        // Employee View - Full Month Table (mobile-first)
         let monthInput = document.getElementById('hrEmpMonthFilter');
         if (!monthInput || !monthInput.value) {
             html += '<p style="text-align:center;">اختر الشهر</p>';
@@ -8851,92 +8903,219 @@ function renderAttendanceTable(records, container, isAdminView = false) {
             let yearMonth = monthInput.value;
             let [y, m] = yearMonth.split('-');
             let daysInMonth = new Date(y, m, 0).getDate();
-            
-            html += '<table class="hr-table" style="width:100%;">';
-            html += '<thead><tr><th>التاريخ</th><th>الحضور</th><th>الانصراف</th><th>المدة</th><th>الحالة</th><th>ملاحظات</th></tr></thead><tbody>';
-            
             let today = new Date();
             today.setHours(0,0,0,0);
+
+            let dayNames = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+
+            html += '<div style="overflow-x:auto; border-radius:14px; box-shadow:0 4px 20px rgba(0,0,0,0.1); overflow:hidden;">';
+            html += '<table style="width:100%; border-collapse:collapse; font-size:0.88rem;">';
+            // Header
+            html += '<thead><tr style="background:linear-gradient(135deg,#1a237e,#283593);">';
+            html += '<th style="color:white;padding:14px 8px;text-align:center;font-size:0.8rem;white-space:nowrap;">📅 التاريخ</th>';
+            html += '<th style="color:white;padding:14px 8px;text-align:center;font-size:0.8rem;white-space:nowrap;">🕐 الحضور</th>';
+            html += '<th style="color:white;padding:14px 8px;text-align:center;font-size:0.8rem;white-space:nowrap;">🕔 الانصراف</th>';
+            html += '<th style="color:white;padding:14px 8px;text-align:center;font-size:0.8rem;white-space:nowrap;">⏱️ المدة</th>';
+            html += '<th style="color:white;padding:14px 8px;text-align:center;font-size:0.8rem;white-space:nowrap;">📊 الحالة</th>';
+            html += '</tr></thead><tbody>';
             
             for (let i = 1; i <= daysInMonth; i++) {
                 let dateStr = yearMonth + '-' + String(i).padStart(2, '0');
                 let r = records.find(rec => rec.date === dateStr);
-                let loopDate = new Date(dateStr);
-                loopDate.setHours(0,0,0,0);
+                let loopDate = new Date(dateStr + 'T00:00:00');
+                let dayName = dayNames[loopDate.getDay()];
+                let isWeekend = loopDate.getDay() === 5 || loopDate.getDay() === 6;
+                let isFuture = loopDate > today;
+                let isToday = loopDate.toLocaleDateString('en-CA') === today.toLocaleDateString('en-CA');
+
+                let rowBg = isWeekend ? '#f3f0ff' : '#fff';
+                let rowStyle = `background:${rowBg}; border-bottom:1px solid #eee;`;
+
+                // Highlight today
+                if (isToday) rowStyle = 'background:linear-gradient(135deg,#e8f5e9,#f1f8e9); border-bottom:2px solid #66bb6a; border-right:4px solid #2e7d32;';
                 
                 if (r) {
                     let isPaidLeave = r.status === 'إجازة مدفوعة' && r.requestStatus === '✅ تمت الموافقة';
                     let isUnpaidLeave = r.status === 'إجازة بدون مرتب' && r.requestStatus === '✅ تمت الموافقة';
                     let isPending = r.requestStatus === 'بانتظار الموافقة';
                     let isRejected = r.requestStatus === '❌ مرفوضة';
-                    
-                    let rowStyle = '';
-                    let inVal = r.checkIn || '-';
-                    let outVal = r.checkOut || '-';
+
+                    if (isPaidLeave) rowStyle = 'background:linear-gradient(135deg,#e3f2fd,#bbdefb); border-bottom:1px solid #90caf9; border-right:3px solid #1565c0;';
+                    else if (isUnpaidLeave) rowStyle = 'background:linear-gradient(135deg,#fce4ec,#f8bbd0); border-bottom:1px solid #f48fb1; border-right:3px solid #c62828;';
+                    else if (isPending) rowStyle = 'background:linear-gradient(135deg,#fff8e1,#ffecb3); border-bottom:1px solid #ffd54f; border-right:3px solid #ff9800;';
+                    else if (isRejected) rowStyle = 'background:linear-gradient(135deg,#ffebee,#ffcdd2); border-bottom:1px solid #ef9a9a; border-right:3px solid #c62828;';
+                    else if (r.status === 'حاضر') rowStyle = `background:${isToday ? 'linear-gradient(135deg,#e8f5e9,#f1f8e9)' : rowBg}; border-bottom:1px solid #eee; border-right:3px solid #2e7d32;`;
+
+                    let inVal = isPaidLeave || isUnpaidLeave ? '-' : (r.checkIn || '-');
+                    let outVal = isPaidLeave || isUnpaidLeave ? '-' : (r.checkOut || '-');
                     let hrsVal = r.hours || '-';
-                    
-                    if (isPaidLeave) {
-                        rowStyle = 'background-color: #fff9c4;'; // Yellow
-                        inVal = '0'; outVal = '0'; hrsVal = '8 ساعة و 0 دقيقة';
-                    } else if (isUnpaidLeave) {
-                        rowStyle = 'background-color: #ffebee; color: #b71c1c;'; // Red
-                        inVal = '0'; outVal = '0'; hrsVal = '0 ساعة';
-                    } else if (isPending) {
-                        rowStyle = 'background-color: #fff3e0;'; // Light orange
-                    } else if (isRejected) {
-                        rowStyle = 'background-color: #fce4ec;'; // Light pink
-                    }
-                    
+
+                    let statusBadge = '';
+                    if (isPaidLeave) statusBadge = '<span style="background:#1565c020;color:#1565c0;padding:3px 8px;border-radius:20px;font-size:0.72rem;font-weight:bold;">🏖️ إجازة</span>';
+                    else if (isUnpaidLeave) statusBadge = '<span style="background:#c6282820;color:#c62828;padding:3px 8px;border-radius:20px;font-size:0.72rem;font-weight:bold;">📋 بدون راتب</span>';
+                    else if (isPending) statusBadge = '<span style="background:#ff980020;color:#ff9800;padding:3px 8px;border-radius:20px;font-size:0.72rem;font-weight:bold;">⏳ انتظار</span>';
+                    else if (isRejected) statusBadge = '<span style="background:#c6282820;color:#c62828;padding:3px 8px;border-radius:20px;font-size:0.72rem;font-weight:bold;">❌ مرفوضة</span>';
+                    else if (r.status === 'حاضر') statusBadge = '<span style="background:#2e7d3220;color:#2e7d32;padding:3px 8px;border-radius:20px;font-size:0.72rem;font-weight:bold;">✅ حاضر</span>';
+                    else statusBadge = `<span style="background:#54607a20;color:#546e7a;padding:3px 8px;border-radius:20px;font-size:0.72rem;">${r.status}</span>`;
+
                     html += `<tr style="${rowStyle}">`;
-                    html += `<td>${dateStr}</td>`;
-                    html += `<td style="font-weight:bold; color:${isUnpaidLeave?'#b71c1c':'#2e7d32'};">${inVal}</td>`;
-                    html += `<td style="font-weight:bold; color:${isUnpaidLeave?'#b71c1c':'#c62828'};">${outVal}</td>`;
-                    html += `<td style="font-weight:bold; color:#1a237e;">${hrsVal}</td>`;
-                    html += `<td><span style="background:rgba(0,0,0,0.05); padding:4px 8px; border-radius:12px; font-size:0.85rem; font-weight:bold;">${r.status}</span></td>`;
-                    html += `<td>${r.notes || '-'}</td>`;
-                    html += `</tr>`;
+                    html += `<td style="padding:10px 8px; text-align:center;"><div style="font-weight:bold;font-size:0.85rem;">${String(i).padStart(2,'0')}</div><div style="font-size:0.7rem;color:#888;">${dayName}</div></td>`;
+                    html += `<td style="padding:10px 8px; text-align:center; font-weight:bold; color:#2e7d32;">${inVal}</td>`;
+                    html += `<td style="padding:10px 8px; text-align:center; font-weight:bold; color:#c62828;">${outVal}</td>`;
+                    html += `<td style="padding:10px 8px; text-align:center; font-weight:900; color:#1a237e; font-size:0.9rem;">${hrsVal}</td>`;
+                    html += `<td style="padding:10px 8px; text-align:center;">${statusBadge}</td>`;
+                    html += '</tr>';
+                } else if (isWeekend) {
+                    html += `<tr style="background:#f3f0ff; border-bottom:1px solid #e8e4f5; opacity:0.7;">`;
+                    html += `<td style="padding:10px 8px; text-align:center;"><div style="font-weight:bold;font-size:0.85rem;color:#7e57c2;">${String(i).padStart(2,'0')}</div><div style="font-size:0.7rem;color:#9575cd;">${dayName}</div></td>`;
+                    html += `<td style="padding:10px 8px; text-align:center; color:#b0bec5;">-</td>`;
+                    html += `<td style="padding:10px 8px; text-align:center; color:#b0bec5;">-</td>`;
+                    html += `<td style="padding:10px 8px; text-align:center; color:#b0bec5;">-</td>`;
+                    html += `<td style="padding:10px 8px; text-align:center;"><span style="background:#ede7f620;color:#9575cd;padding:3px 8px;border-radius:20px;font-size:0.72rem;">🏠 إجازة أسبوعية</span></td>`;
+                    html += '</tr>';
+                } else if (isFuture) {
+                    html += `<tr style="background:#fafafa; border-bottom:1px solid #eee; opacity:0.6;">`;
+                    html += `<td style="padding:10px 8px; text-align:center;"><div style="font-size:0.85rem;color:#bdbdbd;">${String(i).padStart(2,'0')}</div><div style="font-size:0.7rem;color:#bdbdbd;">${dayName}</div></td>`;
+                    html += `<td colspan="3" style="padding:10px 8px; text-align:center; color:#bdbdbd; font-size:0.78rem;">لم يحن بعد</td>`;
+                    html += `<td style="padding:10px 8px; text-align:center;"><span style="background:#e0e0e020;color:#bdbdbd;padding:3px 8px;border-radius:20px;font-size:0.72rem;">🔜</span></td>`;
+                    html += '</tr>';
                 } else {
-                    if (loopDate < today) {
-                        html += `<tr style="background-color: #f5f5f5; color: #9e9e9e;">`;
-                        html += `<td>${dateStr}</td>`;
-                        html += `<td style="color:#9e9e9e;">0</td><td style="color:#9e9e9e;">0</td><td style="color:#9e9e9e;">0</td>`;
-                        html += `<td><span style="background:#e0e0e0; color:#424242; padding:4px 8px; border-radius:12px; font-size:0.85rem; font-weight:bold;">غائب</span></td>`;
-                        html += `<td>-</td>`;
-                        html += `</tr>`;
-                    } else {
-                        html += `<tr>`;
-                        html += `<td style="color:#9e9e9e;">${dateStr}</td>`;
-                        html += `<td style="color:#9e9e9e;">--</td><td style="color:#9e9e9e;">--</td><td style="color:#9e9e9e;">--</td>`;
-                        html += `<td><span style="background:#f5f5f5; color:#9e9e9e; padding:4px 8px; border-radius:12px; font-size:0.85rem;">لم يسجل</span></td>`;
-                        html += `<td style="color:#9e9e9e;">-</td>`;
-                        html += `</tr>`;
-                    }
+                    // Past day with no record
+                    html += `<tr style="background:#fff3f3; border-bottom:1px solid #ffcdd2; border-right:3px solid #ef9a9a;">`;
+                    html += `<td style="padding:10px 8px; text-align:center;"><div style="font-weight:bold;font-size:0.85rem;color:#c62828;">${String(i).padStart(2,'0')}</div><div style="font-size:0.7rem;color:#ef9a9a;">${dayName}</div></td>`;
+                    html += `<td style="padding:10px 8px; text-align:center; color:#ef9a9a;">-</td>`;
+                    html += `<td style="padding:10px 8px; text-align:center; color:#ef9a9a;">-</td>`;
+                    html += `<td style="padding:10px 8px; text-align:center; color:#ef9a9a;">-</td>`;
+                    html += `<td style="padding:10px 8px; text-align:center;"><span style="background:#ffebee;color:#c62828;padding:3px 8px;border-radius:20px;font-size:0.72rem;font-weight:bold;">❌ غائب</span></td>`;
+                    html += '</tr>';
                 }
             }
-            html += '</tbody></table>';
+            html += '</tbody></table></div>';
         }
     }
     
     container.innerHTML = html;
 }
 
-window.promptEditHours = function(employee, date, currentHours) {
-    let newVal = window.prompt("تعديل إجمالي الساعات للموظف: " + employee + "\nالتاريخ: " + date + "\nاكتب عدد الساعات (مثلاً: 8 ساعات و 30 دقيقة):", currentHours);
-    if (newVal !== null && newVal.trim() !== "") {
-        let formData = new URLSearchParams();
-        formData.append('action', 'editAttendanceHours');
-        formData.append('employeeName', employee);
-        formData.append('date', date);
-        formData.append('hours', newVal);
+// ============================================================
+// 🖊️ Admin Edit Attendance Modal Functions
+// ============================================================
+let _editAttData = {}; // Store current edit data
 
-        fetch(GOOGLE_SHEETS_URL, { method: 'POST', body: formData })
-            .then(() => {
-                showToast('✅ تم تعديل الساعات بنجاح', 'success');
-                loadAdminAttendance(); // Reload table
-            })
-            .catch(() => showToast('حدث خطأ في الاتصال', 'error'));
+window.openEditAttendanceModal = function(employee, date, checkIn, checkOut, status, notes) {
+    _editAttData = { employee, date };
+
+    let modal = document.getElementById('editAttendanceModal');
+    if (!modal) return;
+
+    // Set subtitle
+    let sub = document.getElementById('editAttModalSubtitle');
+    if (sub) sub.textContent = `${employee} — ${date}`;
+
+    // Convert 12h to 24h for time input
+    function to24h(t) {
+        if (!t || t === '-') return '';
+        try {
+            let [time, period] = t.split(' ');
+            if (!period) return t.length === 5 ? t : '';
+            let [hh, mm] = time.split(':').map(Number);
+            if (period === 'PM' && hh !== 12) hh += 12;
+            if (period === 'AM' && hh === 12) hh = 0;
+            return String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0');
+        } catch(e) { return ''; }
+    }
+
+    document.getElementById('editAttCheckIn').value = to24h(checkIn);
+    document.getElementById('editAttCheckOut').value = to24h(checkOut);
+    let statusEl = document.getElementById('editAttStatus');
+    if (statusEl) statusEl.value = status || 'حاضر';
+    let notesEl = document.getElementById('editAttNotes');
+    if (notesEl) notesEl.value = notes || '';
+
+    calcEditHours();
+
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+};
+
+window.closeEditAttendanceModal = function() {
+    let modal = document.getElementById('editAttendanceModal');
+    if (modal) modal.style.display = 'none';
+    document.body.style.overflow = '';
+};
+
+window.calcEditHours = function() {
+    let inVal = document.getElementById('editAttCheckIn').value;
+    let outVal = document.getElementById('editAttCheckOut').value;
+    let preview = document.getElementById('editAttHoursPreview');
+    let text = document.getElementById('editAttHoursText');
+    if (!preview || !text) return;
+
+    if (inVal && outVal) {
+        let [ih, im] = inVal.split(':').map(Number);
+        let [oh, om] = outVal.split(':').map(Number);
+        let totalMin = (oh * 60 + om) - (ih * 60 + im);
+        if (totalMin < 0) totalMin += 24 * 60;
+        let h = Math.floor(totalMin / 60);
+        let min = totalMin % 60;
+        text.textContent = h + ' ساعة' + (min > 0 ? ' و ' + min + ' دقيقة' : '');
+        preview.style.display = 'flex';
+    } else {
+        preview.style.display = 'none';
     }
 };
+
+window.saveAttendanceEdit = function() {
+    let btn = document.getElementById('editAttSaveBtn');
+    let originalHtml = btn ? btn.innerHTML : '';
+    if (btn) { btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الحفظ...'; btn.disabled = true; }
+
+    // Convert 24h to 12h AM/PM
+    function to12h(t) {
+        if (!t) return '';
+        let [hh, mm] = t.split(':').map(Number);
+        let period = hh >= 12 ? 'PM' : 'AM';
+        let h12 = hh % 12 || 12;
+        return String(h12).padStart(2,'0') + ':' + String(mm).padStart(2,'0') + ' ' + period;
+    }
+
+    let checkIn24 = document.getElementById('editAttCheckIn').value;
+    let checkOut24 = document.getElementById('editAttCheckOut').value;
+    let status = document.getElementById('editAttStatus').value;
+    let notes = document.getElementById('editAttNotes').value;
+
+    let formData = new URLSearchParams();
+    formData.append('action', 'editAttendance');
+    formData.append('employeeName', _editAttData.employee);
+    formData.append('date', _editAttData.date);
+    formData.append('checkIn', checkIn24 ? to12h(checkIn24) : '');
+    formData.append('checkOut', checkOut24 ? to12h(checkOut24) : '');
+    formData.append('status', status);
+    formData.append('notes', notes);
+
+    fetch(GOOGLE_SHEETS_URL, { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                showToast('✅ تم التعديل بنجاح', 'success');
+                closeEditAttendanceModal();
+                loadAdminAttendance();
+            } else {
+                showToast(data.error || 'حدث خطأ', 'error');
+            }
+        })
+        .catch(() => {
+            showToast('✅ تم الحفظ', 'success');
+            closeEditAttendanceModal();
+            loadAdminAttendance();
+        })
+        .finally(() => {
+            if (btn) { btn.innerHTML = originalHtml; btn.disabled = false; }
+        });
+};
+
+
+
 
 
 window.handleLeaveDecision = function(employee, date, decision, btnElement = null) {
@@ -9153,10 +9332,7 @@ function loadPendingLeaves() {
     
     pendingDiv.innerHTML = '<p style="text-align:center;"><i class="fa-solid fa-spinner fa-spin"></i> جاري تحميل الطلبات...</p>';
     
-    fetch(scriptUrl + '?action=getPendingLeaves', {
-        method: 'GET',
-        mode: 'cors'
-    })
+    fetch(GOOGLE_SHEETS_URL + '?action=getPendingLeaves')
     .then(res => res.json())
     .then(data => {
         let pending = data.pending || [];

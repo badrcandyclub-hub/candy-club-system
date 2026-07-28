@@ -1475,9 +1475,22 @@
                     <div class="section-card" style="margin-top: 15px; border-right: 4px solid #1a237e;">
                         <h4 style="color: #1a237e; margin: 0 0 15px;"><i class="fa-solid fa-clock-rotate-left"></i> السجل الشهري</h4>
                         
-                        <div style="display: flex; gap: 10px; margin-bottom: 15px; align-items: center; background: #f5f5f5; padding: 10px; border-radius: 8px;">
-                            <label style="font-size: 0.9rem; font-weight: bold; color: #1a237e;"><i class="fa-solid fa-calendar"></i> تصفح شهر:</label>
-                            <input type="month" id="hrEmpMonthFilter" onchange="loadMyAttendance()" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc; flex:1; max-width:200px;">
+                        <!-- Month Filter -->
+                        <div style="display: flex; gap: 10px; margin-bottom: 15px; align-items: center; flex-wrap: wrap;">
+                            <div style="display:flex; align-items:center; gap:8px; background:linear-gradient(135deg,#1a237e,#283593); padding:10px 16px; border-radius:10px; flex:1;">
+                                <i class="fa-solid fa-calendar-days" style="color:white; font-size:1.2rem;"></i>
+                                <input type="month" id="hrEmpMonthFilter" onchange="loadMyAttendance()" 
+                                    style="background:transparent; border:none; color:white; font-size:1rem; font-family:inherit; cursor:pointer; flex:1; outline:none;">
+                            </div>
+                        </div>
+
+                        <!-- Monthly Stats Banner -->
+                        <div id="hrMonthlyStatsBanner" style="display:none; grid-template-columns:repeat(auto-fit, minmax(130px,1fr)); gap:10px; margin-bottom:16px;"></div>
+
+                        <!-- Loading Indicator -->
+                        <div id="hrAttendanceLoading" style="display:none; text-align:center; padding:30px; color:#1a237e;">
+                            <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+                            <p style="margin-top:10px; font-size:0.9rem;">جاري تحميل بيانات الشهر...</p>
                         </div>
                         
                         <div id="hrAttendanceHistory" style="overflow-x: auto;"></div>
@@ -2086,6 +2099,99 @@
         <div style="text-align: center; color: var(--text-muted); font-size: 12px; margin-bottom: 10px; margin-top: 10px; opacity: 0.7;">الإصدار: v29.0</div>
     <script src="app.js?v=28.0" charset="UTF-8" defer></script>
 </body>
+
+<!-- ====================================== -->
+<!-- 🖊️ Admin Edit Attendance Modal        -->
+<!-- ====================================== -->
+<div id="editAttendanceModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.55); backdrop-filter:blur(6px); z-index:999999; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:20px; padding:28px; width:92%; max-width:440px; box-shadow:0 20px 60px rgba(0,0,0,0.3); position:relative; animation:fadeIn 0.2s ease;">
+        
+        <!-- Close -->
+        <button onclick="closeEditAttendanceModal()" style="position:absolute; top:14px; left:14px; background:#f5f5f5; border:none; border-radius:50%; width:34px; height:34px; font-size:1.1rem; cursor:pointer; color:#555; display:flex; align-items:center; justify-content:center;">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <!-- Header -->
+        <div style="text-align:center; margin-bottom:20px;">
+            <div style="background:linear-gradient(135deg,#1565c0,#1a237e); width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 12px; box-shadow:0 4px 15px rgba(21,101,192,0.4);">
+                <i class="fa-solid fa-pen-to-square" style="color:white; font-size:1.5rem;"></i>
+            </div>
+            <h3 style="margin:0; color:#1a237e; font-size:1.15rem;">تعديل سجل الحضور</h3>
+            <p id="editAttModalSubtitle" style="margin:4px 0 0; color:#666; font-size:0.85rem;"></p>
+        </div>
+
+        <!-- Form -->
+        <div style="display:flex; flex-direction:column; gap:16px;">
+            
+            <!-- CheckIn Time -->
+            <div>
+                <label style="display:block; font-size:0.85rem; font-weight:bold; color:#2e7d32; margin-bottom:6px;">
+                    <i class="fa-solid fa-right-to-bracket"></i> وقت الحضور
+                </label>
+                <input type="time" id="editAttCheckIn" 
+                    style="width:100%; padding:12px; border:2px solid #e0e0e0; border-radius:10px; font-size:1.1rem; font-family:inherit; box-sizing:border-box; transition:border-color 0.2s;"
+                    onfocus="this.style.borderColor='#2e7d32'"
+                    onblur="this.style.borderColor='#e0e0e0'"
+                    onchange="calcEditHours()">
+            </div>
+
+            <!-- CheckOut Time -->
+            <div>
+                <label style="display:block; font-size:0.85rem; font-weight:bold; color:#c62828; margin-bottom:6px;">
+                    <i class="fa-solid fa-right-from-bracket"></i> وقت الانصراف
+                </label>
+                <input type="time" id="editAttCheckOut" 
+                    style="width:100%; padding:12px; border:2px solid #e0e0e0; border-radius:10px; font-size:1.1rem; font-family:inherit; box-sizing:border-box; transition:border-color 0.2s;"
+                    onfocus="this.style.borderColor='#c62828'"
+                    onblur="this.style.borderColor='#e0e0e0'"
+                    onchange="calcEditHours()">
+            </div>
+
+            <!-- Auto-calculated Hours -->
+            <div id="editAttHoursPreview" style="background:linear-gradient(135deg,#e8f5e9,#c8e6c9); border-radius:10px; padding:12px 16px; display:none; align-items:center; gap:10px;">
+                <i class="fa-solid fa-clock" style="color:#2e7d32; font-size:1.2rem;"></i>
+                <div>
+                    <div style="font-size:0.75rem; color:#388e3c;">إجمالي الساعات المحسوبة</div>
+                    <div id="editAttHoursText" style="font-size:1.2rem; font-weight:bold; color:#1b5e20;"></div>
+                </div>
+            </div>
+
+            <!-- Status -->
+            <div>
+                <label style="display:block; font-size:0.85rem; font-weight:bold; color:#546e7a; margin-bottom:6px;">
+                    <i class="fa-solid fa-tag"></i> الحالة
+                </label>
+                <select id="editAttStatus" style="width:100%; padding:12px; border:2px solid #e0e0e0; border-radius:10px; font-size:1rem; font-family:inherit; box-sizing:border-box;">
+                    <option value="حاضر">✅ حاضر</option>
+                    <option value="إجازة مدفوعة">🏖️ إجازة مدفوعة</option>
+                    <option value="إجازة بدون مرتب">📋 إجازة بدون مرتب</option>
+                    <option value="غائب">❌ غائب</option>
+                </select>
+            </div>
+
+            <!-- Notes -->
+            <div>
+                <label style="display:block; font-size:0.85rem; font-weight:bold; color:#546e7a; margin-bottom:6px;">
+                    <i class="fa-solid fa-note-sticky"></i> ملاحظات
+                </label>
+                <input type="text" id="editAttNotes" placeholder="ملاحظات اختيارية..." 
+                    style="width:100%; padding:12px; border:2px solid #e0e0e0; border-radius:10px; font-size:1rem; font-family:inherit; box-sizing:border-box;">
+            </div>
+
+            <!-- Buttons -->
+            <div style="display:flex; gap:10px; margin-top:4px;">
+                <button id="editAttSaveBtn" onclick="saveAttendanceEdit()" 
+                    style="flex:1; background:linear-gradient(135deg,#1565c0,#1a237e); color:white; border:none; padding:14px; border-radius:12px; font-size:1rem; font-weight:bold; cursor:pointer; font-family:inherit; display:flex; align-items:center; justify-content:center; gap:8px; transition:opacity 0.2s;">
+                    <i class="fa-solid fa-floppy-disk"></i> حفظ التعديلات
+                </button>
+                <button onclick="closeEditAttendanceModal()" 
+                    style="padding:14px 20px; background:#f5f5f5; color:#333; border:none; border-radius:12px; font-size:1rem; cursor:pointer; font-family:inherit;">
+                    إلغاء
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Inventory Stats Modal -->
 <div id="invStatsModal" class="modal-overlay" style="display: none; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 999999; animation: fadeIn 0.2s ease;">
