@@ -1470,10 +1470,15 @@
                             </button>
                         </div>
                     </div>
-                </div>
+            </div>
+        </section>
 
+        <!-- ⭐ HR Admin: شئون الموظفين (للمدير) -->
+        <section id="hr-admin-tab" class="tab-pane">
+            <div class="section-card" style="border-right: 4px solid #1565c0; margin-bottom: 15px;">
+                <h3 style="color: #1565c0; margin: 0 0 15px;"><i class="fa-solid fa-users-line"></i> شئون الموظفين (للمدير)</h3>
                 <!-- Admin View: Attendance Dashboard -->
-                <div id="hrAdminView" style="display:none;">
+                <div id="hrAdminView">
                     <div class="section-card" style="margin-bottom: 15px; border-right: 4px solid #1565c0;">
                         <h4 style="color: #1565c0; margin: 0 0 12px;"><i class="fa-solid fa-users-line"></i> متابعة حضور الموظفين</h4>
                         <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 12px;">
@@ -1531,21 +1536,6 @@
                         <h4 style="color: #ff6f00; margin: 0 0 12px;"><i class="fa-solid fa-bell"></i> طلبات الإجازات المعلقة</h4>
                         <div id="hrPendingLeaves"></div>
                     </div>
-                </div>
-
-                <!-- Attendance History (for both) -->
-                <div class="section-card" style="margin-top: 15px; border-right: 4px solid #546e7a;">
-                    <h4 style="color: #546e7a; margin: 0 0 12px;"><i class="fa-solid fa-list-check"></i> سجل الحضور</h4>
-                    <div style="display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; align-items: flex-end;">
-                        <div style="flex:1; min-width: 140px;">
-                            <label style="font-size: 0.85rem;">الشهر</label>
-                            <input type="month" id="hrHistoryMonth" style="width:100%;">
-                        </div>
-                        <button class="btn-search interactive-btn" onclick="loadMyAttendance()" style="padding: 11px 20px;">
-                            عرض <i class="fa-solid fa-magnifying-glass"></i>
-                        </button>
-                    </div>
-                    <div id="hrAttendanceHistory" style="overflow-x: auto;"></div>
                 </div>
             </div>
         </section>
@@ -1619,15 +1609,27 @@
 
             <div class="menu-group">
                 <h4 class="menu-group-title" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                    شئون الموظفين
+                    <i class="fa-solid fa-chevron-down chevron-icon" style="transition: transform 0.3s; font-size: 0.8rem;"></i>
+                </h4>
+                <div class="menu-group-items" style="display: none;">
+                    <button class="nav-item" data-target="hr-tab" style="color: #00897b;">
+                        <span class="icon"><i class="fa-solid fa-fingerprint"></i></span><span class="label">سجل الحضور</span>
+                    </button>
+                    <button class="nav-item" data-target="hr-admin-tab" style="color: #1565c0;">
+                        <span class="icon"><i class="fa-solid fa-users-line"></i></span><span class="label">متابعة الحضور (للمدير)</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="menu-group">
+                <h4 class="menu-group-title" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
                     الإدارة والتقارير
                     <i class="fa-solid fa-chevron-down chevron-icon" style="transition: transform 0.3s; font-size: 0.8rem;"></i>
                 </h4>
                 <div class="menu-group-items" style="display: none;">
                     <button class="nav-item" data-target="reports-tab" style="color: #795548;">
                         <span class="icon"><i class="fa-solid fa-chart-line"></i></span><span class="label">التقارير</span>
-                    </button>
-                    <button class="nav-item" data-target="hr-tab" style="color: #00897b;">
-                        <span class="icon"><i class="fa-solid fa-fingerprint"></i></span><span class="label">الحضور والانصراف</span>
                     </button>
                     <button class="nav-item" data-target="moderators-tab" style="color: #8e24aa;">
                         <span class="icon"><i class="fa-solid fa-users-gear"></i></span><span class="label">إدارة الكاشيرية</span>

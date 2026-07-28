@@ -8928,33 +8928,35 @@ function exportAttendancePDF() {
     }
 }
 
-// Initialize HR tab when opened
+// Initialize HR Employee tab
 function initHrTab() {
     if (!currentUser) return;
-    let isAdmin = currentUser.permissions === 'ALL';
     
+    // Always show employee view since it's now in its own tab
     let empView = document.getElementById('hrEmployeeView');
-    let adminView = document.getElementById('hrAdminView');
-    
-    if (isAdmin) {
-        if (empView) empView.style.display = 'none';
-        if (adminView) adminView.style.display = 'block';
-        
-        // Populate employee dropdowns
-        populateHrEmployeeDropdowns();
-        
-        // Set default month
-        let now = new Date();
-        let monthStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-        let adminMonth = document.getElementById('hrAdminMonthFilter');
-        if (adminMonth) adminMonth.value = monthStr;
-    } else {
-        if (empView) empView.style.display = 'block';
-        if (adminView) adminView.style.display = 'none';
-    }
+    if (empView) empView.style.display = 'block';
     
     initHrGps();
     loadMyAttendance();
+}
+
+// Initialize HR Admin tab
+function initHrAdminTab() {
+    if (!currentUser) return;
+    
+    let adminView = document.getElementById('hrAdminView');
+    if (adminView) adminView.style.display = 'block';
+    
+    // Populate employee dropdowns
+    populateHrEmployeeDropdowns();
+    
+    // Set default month
+    let now = new Date();
+    let monthStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    let adminMonth = document.getElementById('hrAdminMonthFilter');
+    if (adminMonth) adminMonth.value = monthStr;
+    
+    loadAdminAttendance();
 }
 
 function populateHrEmployeeDropdowns() {
@@ -8977,10 +8979,15 @@ function populateHrEmployeeDropdowns() {
         .catch(() => {});
 }
 
-// Listen for HR tab activation
+// Listen for HR tabs activation
 document.addEventListener('click', function(e) {
-    let navItem = e.target.closest('.nav-item[data-target="hr-tab"]');
-    if (navItem) {
+    let hrTabBtn = e.target.closest('.nav-item[data-target="hr-tab"]');
+    let hrAdminTabBtn = e.target.closest('.nav-item[data-target="hr-admin-tab"]');
+    
+    if (hrTabBtn) {
         setTimeout(initHrTab, 100);
+    }
+    if (hrAdminTabBtn) {
+        setTimeout(initHrAdminTab, 100);
     }
 });
