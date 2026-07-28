@@ -42,7 +42,11 @@ function createMissingSheets() {
       invSheet.setColumnWidth(6, 400); // column for products
   }
 
-  SpreadsheetApp.getUi().alert("✅ تم إنشاء وتحديث الشيتات بنجاح! يمكنك الآن استخدام أرشيف المبيعات وأذونات المخازن.");
+  try {
+    SpreadsheetApp.getUi().alert("✅ تم إنشاء وتحديث الشيتات بنجاح! يمكنك الآن استخدام أرشيف المبيعات وأذونات المخازن.");
+  } catch (e) {
+    Logger.log("UI Alert skipped: " + e.message);
+  }
 }
 
 // ⭐ إضافة دالة التفاعل اليدوي: عشان لو غيرت الحالة من الإكسيل بإيدك، اللون يتغير والمالية تتحدث فوراً
@@ -287,7 +291,11 @@ function setupCandyClubUX() {
 
   calculateFinancials();
 
-  SpreadsheetApp.getUi().alert("✅ تم التحديث الآمن للنظام الشامل V16 بنجاح! تم إنشاء نظام المستخدمين والصلاحيات.");
+  try {
+    SpreadsheetApp.getUi().alert("✅ تم التحديث الآمن للنظام الشامل V16 بنجاح! تم إنشاء نظام المستخدمين والصلاحيات.");
+  } catch (e) {
+    Logger.log("UI Alert skipped: " + e.message);
+  }
 }
 
 // ============================================================
