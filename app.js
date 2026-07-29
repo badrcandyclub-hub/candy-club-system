@@ -8806,8 +8806,8 @@ function loadMyAttendance() {
             myRecords.forEach(r => {
                 let h = parseFloat(r.hours);
                 if (!isNaN(h)) totalHours += h;
-                if (r.status === 'إجازة مدفوعة' && r.requestStatus === '✅ تمت الموافقة') paidLeaves++;
-                if (r.status === 'إجازة بدون مرتب' && r.requestStatus === '✅ تمت الموافقة') unpaidLeaves++;
+                if (r.status === 'إجازة مدفوعة' && r.requestStatus !== 'بانتظار الموافقة' && r.requestStatus !== '❌ مرفوضة') paidLeaves++;
+                if (r.status === 'إجازة بدون مرتب' && r.requestStatus !== 'بانتظار الموافقة' && r.requestStatus !== '❌ مرفوضة') unpaidLeaves++;
             });
 
             // Update top stat cards
@@ -8831,7 +8831,7 @@ function loadMyAttendance() {
                         <div style="font-size:0.78rem; color:#2e7d32; font-weight:bold;">📅 أيام حضور</div>
                     </div>
                     <div style="background:linear-gradient(135deg,#e3f2fd,#bbdefb); border-radius:12px; padding:14px; text-align:center; border:1px solid #90caf9;">
-                        <div style="font-size:1.6rem; font-weight:900; color:#0d47a1;">${totalHours.toFixed(0)}</div>
+                        <div style="font-size:1.6rem; font-weight:900; color:#0d47a1;">${totalHours.toFixed(1)}</div>
                         <div style="font-size:0.78rem; color:#1565c0; font-weight:bold;">⏱️ إجمالي الساعات</div>
                     </div>
                     <div style="background:linear-gradient(135deg,#fff3e0,#ffe0b2); border-radius:12px; padding:14px; text-align:center; border:1px solid #ffcc80;">
@@ -8955,8 +8955,8 @@ function renderAttendanceTable(records, container, isAdminView = false) {
                 if (isToday) rowStyle = 'background:linear-gradient(135deg,#e8f5e9,#f1f8e9); border-bottom:2px solid #66bb6a; border-right:4px solid #2e7d32;';
                 
                 if (r) {
-                    let isPaidLeave = r.status === 'إجازة مدفوعة' && r.requestStatus === '✅ تمت الموافقة';
-                    let isUnpaidLeave = r.status === 'إجازة بدون مرتب' && r.requestStatus === '✅ تمت الموافقة';
+                    let isPaidLeave = r.status === 'إجازة مدفوعة' && r.requestStatus !== 'بانتظار الموافقة' && r.requestStatus !== '❌ مرفوضة';
+                    let isUnpaidLeave = r.status === 'إجازة بدون مرتب' && r.requestStatus !== 'بانتظار الموافقة' && r.requestStatus !== '❌ مرفوضة';
                     let isPending = r.requestStatus === 'بانتظار الموافقة';
                     let isRejected = r.requestStatus === '❌ مرفوضة';
 
