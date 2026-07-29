@@ -8804,7 +8804,21 @@ function loadMyAttendance() {
             let paidLeaves = 0;
             let unpaidLeaves = 0;
             myRecords.forEach(r => {
-                let h = parseFloat(r.hours);
+                let hStr = r.hours ? r.hours.toString() : "0";
+                let h = 0;
+                let hMatch = hStr.match(/(\d+(?:\.\d+)?)\s*ساعة/);
+                let mMatch = hStr.match(/(\d+)\s*دقيقة/);
+                
+                if (hMatch) {
+                    h += parseFloat(hMatch[1]);
+                } else if (!isNaN(parseFloat(hStr))) {
+                    h += parseFloat(hStr);
+                }
+                
+                if (mMatch) {
+                    h += parseFloat(mMatch[1]) / 60;
+                }
+                
                 if (!isNaN(h)) totalHours += h;
                 if (r.status === 'إجازة مدفوعة' && r.requestStatus !== 'بانتظار الموافقة' && r.requestStatus !== '❌ مرفوضة') paidLeaves++;
                 if (r.status === 'إجازة بدون مرتب' && r.requestStatus !== 'بانتظار الموافقة' && r.requestStatus !== '❌ مرفوضة') unpaidLeaves++;
@@ -8928,7 +8942,7 @@ function renderAttendanceTable(records, container, isAdminView = false) {
 
             let dayNames = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
 
-            html += '<div style="overflow-x:auto; -webkit-overflow-scrolling:touch; width:100%; border-radius:14px; box-shadow:0 4px 20px rgba(0,0,0,0.1); overflow:hidden;">';
+            html += '<div style="overflow-x:auto; -webkit-overflow-scrolling:touch; width:100%; border-radius:14px; box-shadow:0 4px 20px rgba(0,0,0,0.1);">';
             html += '<table style="width:100%; min-width:600px; border-collapse:collapse; font-size:0.88rem;">';
             // Header
             html += '<thead><tr style="background:linear-gradient(135deg,#1a237e,#283593);">';
