@@ -9399,7 +9399,7 @@ function loadPendingLeaves() {
     
     pendingDiv.innerHTML = '<p style="text-align:center;"><i class="fa-solid fa-spinner fa-spin"></i> جاري تحميل الطلبات...</p>';
     
-    fetch(GOOGLE_SHEETS_URL + '?action=getPendingLeaves&t=' + new Date().getTime())
+    fetch(GOOGLE_SHEETS_URL + '?action=getPendingLeaves')
     .then(res => res.json())
     .then(data => {
         let pending = data.pending || [];
