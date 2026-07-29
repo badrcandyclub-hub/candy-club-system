@@ -9207,7 +9207,10 @@ window.handleLeaveDecision = function(employee, date, decision, btnElement = nul
         });
 };
 
-// Removed duplicate initHrAdminTab
+function initHrAdminTab() {
+    loadAdminAttendance();
+    loadPendingLeaves();
+}
 
 function loadAdminAttendance() {
     let empFilter = document.getElementById('hrAdminEmployeeFilter');
@@ -9350,7 +9353,6 @@ function initHrAdminTab() {
     if (adminPdfMonth) adminPdfMonth.value = monthStr;
     
     loadAdminAttendance();
-    loadPendingLeaves();
 }
 
 function populateHrEmployeeDropdowns() {
