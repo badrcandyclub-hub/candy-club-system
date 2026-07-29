@@ -8983,11 +8983,18 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
             if (records.length === 0) {
                 html += '<tr><td colspan="7" style="text-align:center; padding:20px;">لا توجد سجلات لهذا الشهر</td></tr>';
             } else {
-                let rowsPerPage = 25;
-                let reversedRecords = [...records].reverse();
+                let [y, m] = yearMonth.split('-');
+                let daysInMonth = new Date(y, m, 0).getDate();
                 
-                reversedRecords.forEach((r, idx) => {
-                    let pageNum = Math.floor(idx / rowsPerPage) + 1;
+                let sortedRecords = [...records].sort((a, b) => {
+                    if (a.date !== b.date) return a.date.localeCompare(b.date);
+                    return (a.employee || '').localeCompare(b.employee || '');
+                });
+                
+                sortedRecords.forEach((r, idx) => {
+                    let dayMatch = r.date.match(/\d{4}-\d{2}-(\d{2})/);
+                    let pageNum = dayMatch ? parseInt(dayMatch[1], 10) : 1;
+                    
                     let displayStyle = pageNum === 1 ? '' : 'display:none;';
                     let color = statusColors[r.status] || '#546e7a';
                     let bgRow = idx % 2 === 0 ? '#fff' : '#f8f9fa';
@@ -9009,10 +9016,21 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
                     html += '</tr>';
                 });
                 
+                html += `<tr id="admin-monthly-empty-msg" style="display:none;"><td colspan="7" style="text-align:center; padding:20px; color:#546e7a; font-weight:bold;">لا توجد سجلات في هذا اليوم</td></tr>`;
+                
                 if (!window.changeAdminMonthlyPage) {
                     window.changeAdminMonthlyPage = function(pageNum) {
                         document.querySelectorAll('.admin-monthly-row').forEach(el => el.style.display = 'none');
-                        document.querySelectorAll('.admin-monthly-row.page-' + pageNum).forEach(el => el.style.display = '');
+                        let rowsForPage = document.querySelectorAll('.admin-monthly-row.page-' + pageNum);
+                        
+                        let emptyMsg = document.getElementById('admin-monthly-empty-msg');
+                        if (rowsForPage.length === 0) {
+                            if (emptyMsg) emptyMsg.style.display = '';
+                        } else {
+                            if (emptyMsg) emptyMsg.style.display = 'none';
+                            rowsForPage.forEach(el => el.style.display = '');
+                        }
+                        
                         document.querySelectorAll('.admin-monthly-page-btn').forEach(btn => {
                             if (parseInt(btn.getAttribute('data-page')) === pageNum) {
                                 btn.style.background = '#1565c0';
@@ -9023,6 +9041,9 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
                             }
                         });
                     };
+                    setTimeout(() => { if (window.changeAdminMonthlyPage) window.changeAdminMonthlyPage(1); }, 50);
+                } else {
+                    setTimeout(() => { if (window.changeAdminMonthlyPage) window.changeAdminMonthlyPage(1); }, 50);
                 }
             }
         } else {
@@ -9099,16 +9120,17 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
         html += '</tbody></table></div>';
         
         if (selectedEmp === '' && records.length > 0) {
-            let totalPages = Math.ceil(records.length / 25);
-            if (totalPages > 1) {
-                html += '<div style="display:flex; justify-content:center; align-items:center; gap:5px; margin-top:15px; flex-wrap:wrap; padding: 10px; background: #f8f9fa; border-radius: 10px;">';
-                for (let p = 1; p <= totalPages; p++) {
-                    let btnBg = p === 1 ? '#1565c0' : '#e0e0e0';
-                    let btnColor = p === 1 ? '#fff' : '#333';
-                    html += `<button class="admin-monthly-page-btn" data-page="${p}" onclick="changeAdminMonthlyPage(${p})" style="background:${btnBg}; color:${btnColor}; border:none; padding:8px 14px; border-radius:6px; cursor:pointer; font-weight:bold; transition:all 0.2s; min-width:35px;">${p}</button>`;
-                }
-                html += '</div>';
+            let [y, m] = yearMonth.split('-');
+            let daysInMonth = new Date(y, m, 0).getDate();
+            
+            html += '<div style="display:flex; justify-content:center; align-items:center; gap:5px; margin-top:15px; flex-wrap:wrap; padding: 10px; background: #f8f9fa; border-radius: 10px;">';
+            html += '<div style="width:100%; text-align:center; font-weight:bold; color:#1565c0; margin-bottom:5px; font-size:0.9rem;">أيام الشهر</div>';
+            for (let p = 1; p <= daysInMonth; p++) {
+                let btnBg = p === 1 ? '#1565c0' : '#e0e0e0';
+                let btnColor = p === 1 ? '#fff' : '#333';
+                html += `<button class="admin-monthly-page-btn" data-page="${p}" onclick="changeAdminMonthlyPage(${p})" style="background:${btnBg}; color:${btnColor}; border:none; padding:8px 14px; border-radius:6px; cursor:pointer; font-weight:bold; transition:all 0.2s; min-width:35px;">${p}</button>`;
             }
+            html += '</div>';
         }
     } else {
         // Employee View - Full Month Table (mobile-first)
