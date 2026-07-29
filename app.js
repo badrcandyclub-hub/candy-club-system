@@ -9389,11 +9389,6 @@ document.addEventListener('click', function(e) {
 });
 
 function loadPendingLeaves() {
-    if (!currentUser) return;
-    let isFullAccess = (currentUser.permissions === "ALL");
-    let perms = isFullAccess ? [] : (currentUser.permissions || "").split(",");
-    if (!isFullAccess && !perms.includes('hr-admin')) return;
-    
     let pendingDiv = document.getElementById('hrPendingLeaves');
     if (!pendingDiv) return;
     
