@@ -8976,7 +8976,7 @@ function renderAttendanceTable(records, container, isAdminView = false) {
                 let isFuture = loopDate > today;
                 let isToday = loopDate.toLocaleDateString('en-CA') === today.toLocaleDateString('en-CA');
 
-                let rowBg = isWeekend ? '#f3f0ff' : '#fff';
+                let rowBg = '#fff';
                 let rowStyle = `background:${rowBg}; border-bottom:1px solid #eee;`;
 
                 // Highlight today
@@ -8988,9 +8988,9 @@ function renderAttendanceTable(records, container, isAdminView = false) {
                     let isPending = r.requestStatus === 'بانتظار الموافقة';
                     let isRejected = r.requestStatus === '❌ مرفوضة';
 
-                    if (isPaidLeave) rowStyle = 'background:linear-gradient(135deg,#e3f2fd,#bbdefb); border-bottom:1px solid #90caf9; border-right:3px solid #1565c0;';
+                    if (isPaidLeave) rowStyle = 'background:linear-gradient(135deg,#fffde7,#fff59d); border-bottom:1px solid #fff176; border-right:3px solid #fbc02d;';
                     else if (isUnpaidLeave) rowStyle = 'background:linear-gradient(135deg,#fce4ec,#f8bbd0); border-bottom:1px solid #f48fb1; border-right:3px solid #c62828;';
-                    else if (isPending) rowStyle = 'background:linear-gradient(135deg,#fff8e1,#ffecb3); border-bottom:1px solid #ffd54f; border-right:3px solid #ff9800;';
+                    else if (isPending) rowStyle = 'background:linear-gradient(135deg,#f3e5f5,#e1bee7); border-bottom:1px solid #ce93d8; border-right:3px solid #ab47bc;'; // Changed pending to purple to avoid conflict with yellow
                     else if (isRejected) rowStyle = 'background:linear-gradient(135deg,#ffebee,#ffcdd2); border-bottom:1px solid #ef9a9a; border-right:3px solid #c62828;';
                     else if (r.status === 'حاضر') rowStyle = `background:${isToday ? 'linear-gradient(135deg,#e8f5e9,#f1f8e9)' : rowBg}; border-bottom:1px solid #eee; border-right:3px solid #2e7d32;`;
 
@@ -8999,9 +8999,9 @@ function renderAttendanceTable(records, container, isAdminView = false) {
                     let hrsVal = r.hours || '-';
 
                     let statusBadge = '';
-                    if (isPaidLeave) statusBadge = '<span style="background:#1565c020;color:#1565c0;padding:3px 8px;border-radius:20px;font-size:0.72rem;font-weight:bold;">🏖️ إجازة</span>';
+                    if (isPaidLeave) statusBadge = '<span style="background:#fbc02d20;color:#f57f17;padding:3px 8px;border-radius:20px;font-size:0.72rem;font-weight:bold;">🏖️ إجازة مدفوعة</span>';
                     else if (isUnpaidLeave) statusBadge = '<span style="background:#c6282820;color:#c62828;padding:3px 8px;border-radius:20px;font-size:0.72rem;font-weight:bold;">📋 بدون راتب</span>';
-                    else if (isPending) statusBadge = '<span style="background:#ff980020;color:#ff9800;padding:3px 8px;border-radius:20px;font-size:0.72rem;font-weight:bold;">⏳ انتظار</span>';
+                    else if (isPending) statusBadge = '<span style="background:#ab47bc20;color:#ab47bc;padding:3px 8px;border-radius:20px;font-size:0.72rem;font-weight:bold;">⏳ انتظار</span>';
                     else if (isRejected) statusBadge = '<span style="background:#c6282820;color:#c62828;padding:3px 8px;border-radius:20px;font-size:0.72rem;font-weight:bold;">❌ مرفوضة</span>';
                     else if (r.status === 'حاضر') statusBadge = '<span style="background:#2e7d3220;color:#2e7d32;padding:3px 8px;border-radius:20px;font-size:0.72rem;font-weight:bold;">✅ حاضر</span>';
                     else statusBadge = `<span style="background:#54607a20;color:#546e7a;padding:3px 8px;border-radius:20px;font-size:0.72rem;">${r.status}</span>`;
