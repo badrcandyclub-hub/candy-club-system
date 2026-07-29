@@ -8798,7 +8798,7 @@ function loadMyAttendance() {
             renderAttendanceTable(allRecords, historyEl, false);
             
             // Update stats cards
-            let myRecords = allRecords.filter(r => r.employee === currentUser.displayName);
+            let myRecords = allRecords.filter(r => r.employee === currentUser.displayName && r.date && r.date.startsWith(yearMonth));
             let presentDays = myRecords.filter(r => r.status === 'حاضر').length;
             let totalHours = 0;
             let paidLeaves = 0;
@@ -8832,11 +8832,17 @@ function loadMyAttendance() {
                 if (r.status === 'إجازة بدون مرتب' && r.requestStatus !== 'بانتظار الموافقة' && r.requestStatus !== '❌ مرفوضة') unpaidLeaves++;
             });
 
+            // Format totalHours to HH:MM
+            let thHours = Math.floor(totalHours);
+            let thMins = Math.round((totalHours - thHours) * 60);
+            if (thMins === 60) { thHours++; thMins = 0; }
+            let formattedTotalHours = thHours + ":" + thMins.toString().padStart(2, '0');
+
             // Update top stat cards
             let el = document.getElementById('hrMonthDays');
             if (el) el.innerText = presentDays;
             el = document.getElementById('hrTotalHoursMonth');
-            if (el) el.innerText = totalHours.toFixed(1);
+            if (el) el.innerText = formattedTotalHours;
             if (data.leaveBalance) {
                 el = document.getElementById('hrLeaveBalance');
                 if (el) el.innerText = Math.max(0, 4 - data.leaveBalance.paidUsed);
@@ -8853,7 +8859,7 @@ function loadMyAttendance() {
                         <div style="font-size:0.78rem; color:#2e7d32; font-weight:bold;">📅 أيام حضور</div>
                     </div>
                     <div style="background:linear-gradient(135deg,#e3f2fd,#bbdefb); border-radius:12px; padding:14px; text-align:center; border:1px solid #90caf9;">
-                        <div style="font-size:1.6rem; font-weight:900; color:#0d47a1;">${totalHours.toFixed(1)}</div>
+                        <div style="font-size:1.6rem; font-weight:900; color:#0d47a1;">${formattedTotalHours}</div>
                         <div style="font-size:0.78rem; color:#1565c0; font-weight:bold;">⏱️ إجمالي الساعات</div>
                     </div>
                     <div style="background:linear-gradient(135deg,#fff3e0,#ffe0b2); border-radius:12px; padding:14px; text-align:center; border:1px solid #ffcc80;">
