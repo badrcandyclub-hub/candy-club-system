@@ -8,6 +8,7 @@ function onOpen() {
   ui.createMenu('🍬 إدارة كاندي كلوب')
       .addItem('🔄 بناء وتحديث النظام الشامل', 'setupCandyClubUX')
       .addItem('✨ إنشاء أذونات المخازن وأرشيف المبيعات', 'createMissingSheets')
+      .addItem('🛠️ إصلاح توقيت الحضور (AM/PM)', 'fixHistoricalAmPmData')
       .addToUi();
 }
 
@@ -1780,6 +1781,64 @@ function doPost(e) {
       }
       return ContentService.createTextOutput(JSON.stringify({success: false, error: "لم يتم العثور على السجل"})).setMimeType(ContentService.MimeType.JSON);
     }
+    if (action === "fixAmPmData") {
+      var attSheet = ss.getSheetByName("📅 سجل الحضور");
+      if (!attSheet) return ContentService.createTextOutput(JSON.stringify({success: false, error: "Sheet not found"})).setMimeType(ContentService.MimeType.JSON);
+      
+      var data = attSheet.getDataRange().getValues();
+      var fixedCount = 0;
+      
+      for (var a = 1; a < data.length; a++) {
+        var inStr = (data[a][2] || "").toString().trim();
+        var outStr = (data[a][3] || "").toString().trim();
+        var hrStr = (data[a][4] || "").toString().trim();
+        
+        if (!inStr || !outStr || inStr === "-" || outStr === "-" || !hrStr || hrStr === "0") continue;
+        
+        var loggedHours = parseFloat(hrStr);
+        if (isNaN(loggedHours)) {
+          var hMatch = hrStr.match(/(\d+(?:\.\d+)?)\s*ساعة/);
+          if (hMatch) loggedHours = parseFloat(hMatch[1]);
+        }
+        
+        if (isNaN(loggedHours) || loggedHours <= 0) continue;
+        
+        var bestIn = inStr;
+        var bestOut = outStr;
+        var foundMatch = false;
+        
+        var ampm = ["AM", "PM"];
+        for (var a1 = 0; a1 < 2; a1++) {
+          for (var a2 = 0; a2 < 2; a2++) {
+            var testIn = inStr.replace(/AM|PM/gi, "").trim() + " " + ampm[a1];
+            var testOut = outStr.replace(/AM|PM/gi, "").trim() + " " + ampm[a2];
+            
+            try {
+              var d1 = new Date("2026-01-01 " + testIn);
+              var d2 = new Date("2026-01-01 " + testOut);
+              var diffMs = d2 - d1;
+              if (diffMs < 0) diffMs += 24 * 60 * 60 * 1000;
+              var calcH = diffMs / (1000 * 60 * 60);
+              
+              if (Math.abs(calcH - loggedHours) <= 0.1) {
+                bestIn = testIn;
+                bestOut = testOut;
+                foundMatch = true;
+                break;
+              }
+            } catch(e) {}
+          }
+          if (foundMatch) break;
+        }
+        
+        if (foundMatch && (bestIn !== inStr || bestOut !== outStr)) {
+          attSheet.getRange(a + 1, 3).setValue(bestIn);
+          attSheet.getRange(a + 1, 4).setValue(bestOut);
+          fixedCount++;
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({success: true, fixedCount: fixedCount})).setMimeType(ContentService.MimeType.JSON);
+    }
 
 
   } finally { lock.releaseLock(); }
@@ -1916,3 +1975,74 @@ function analyzeVIPs() {
   return vipList;
 }
 
+// ============================================================
+// إصلاح الـ AM/PM في سجل الحضور (للمدير)
+// ============================================================
+function fixHistoricalAmPmData() {
+  var ui = SpreadsheetApp.getUi();
+  var response = ui.alert("تأكيد الإصلاح", "سيقوم هذا الزر بالمرور على جميع سجلات الحضور القديمة، وإذا وجد أن التوقيت (AM/PM) غير متوافق مع إجمالي ساعات العمل المسجلة، سيقوم بتعديل التوقيت (AM/PM) فقط دون المساس بعدد الساعات.\n\nهل أنت متأكد من رغبتك في الاستمرار؟", ui.ButtonSet.YES_NO);
+  
+  if (response == ui.Button.YES) {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var attSheet = ss.getSheetByName("📅 سجل الحضور");
+    if (!attSheet) {
+      ui.alert("خطأ", "لم يتم العثور على شيت سجل الحضور.", ui.ButtonSet.OK);
+      return;
+    }
+    
+    var data = attSheet.getDataRange().getValues();
+    var fixedCount = 0;
+    
+    for (var a = 1; a < data.length; a++) {
+      var inStr = (data[a][2] || "").toString().trim();
+      var outStr = (data[a][3] || "").toString().trim();
+      var hrStr = (data[a][4] || "").toString().trim();
+      
+      if (!inStr || !outStr || inStr === "-" || outStr === "-" || !hrStr || hrStr === "0") continue;
+      
+      var loggedHours = parseFloat(hrStr);
+      if (isNaN(loggedHours)) {
+        var hMatch = hrStr.match(/(\d+(?:\.\d+)?)\s*ساعة/);
+        if (hMatch) loggedHours = parseFloat(hMatch[1]);
+      }
+      
+      if (isNaN(loggedHours) || loggedHours <= 0) continue;
+      
+      var bestIn = inStr;
+      var bestOut = outStr;
+      var foundMatch = false;
+      
+      var ampm = ["AM", "PM"];
+      for (var a1 = 0; a1 < 2; a1++) {
+        for (var a2 = 0; a2 < 2; a2++) {
+          var testIn = inStr.replace(/AM|PM/gi, "").trim() + " " + ampm[a1];
+          var testOut = outStr.replace(/AM|PM/gi, "").trim() + " " + ampm[a2];
+          
+          try {
+            var d1 = new Date("2026-01-01 " + testIn);
+            var d2 = new Date("2026-01-01 " + testOut);
+            var diffMs = d2 - d1;
+            if (diffMs < 0) diffMs += 24 * 60 * 60 * 1000;
+            var calcH = diffMs / (1000 * 60 * 60);
+            
+            if (Math.abs(calcH - loggedHours) <= 0.1) {
+              bestIn = testIn;
+              bestOut = testOut;
+              foundMatch = true;
+              break;
+            }
+          } catch(e) {}
+        }
+        if (foundMatch) break;
+      }
+      
+      if (foundMatch && (bestIn !== inStr || bestOut !== outStr)) {
+        attSheet.getRange(a + 1, 3).setValue(bestIn);
+        attSheet.getRange(a + 1, 4).setValue(bestOut);
+        fixedCount++;
+      }
+    }
+    
+    ui.alert("تم بنجاح", "تم فحص السجلات وإصلاح توقيت " + fixedCount + " سجل بنجاح!", ui.ButtonSet.OK);
+  }
+}
