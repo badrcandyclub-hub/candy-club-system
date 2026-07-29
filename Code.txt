@@ -1727,6 +1727,7 @@ function doPost(e) {
       var newCheckOut = e.parameter.checkOut || "";
       var newStatus = e.parameter.status || "";
       var newNotes = e.parameter.notes || "";
+      var hoursOverride = e.parameter.hoursOverride || "";
       
       var attData = attSheet.getDataRange().getValues();
       for (var a = 1; a < attData.length; a++) {
@@ -1750,8 +1751,10 @@ function doPost(e) {
             if (newCheckOut) attSheet.getRange(a + 1, 4).setValue(newCheckOut);
             if (newStatus) attSheet.getRange(a + 1, 6).setValue(newStatus);
             
-            // Auto-calculate hours if both times provided
-            if (newCheckIn && newCheckOut && newCheckOut !== "-" && newCheckIn !== "-") {
+            // Auto-calculate hours if both times provided and no override
+            if (hoursOverride) {
+                attSheet.getRange(a + 1, 5).setValue(hoursOverride + " ساعة");
+            } else if (newCheckIn && newCheckOut && newCheckOut !== "-" && newCheckIn !== "-") {
               try {
                 var inDate2 = new Date("2026-01-01 " + newCheckIn);
                 var outDate2 = new Date("2026-01-01 " + newCheckOut);
@@ -1764,6 +1767,10 @@ function doPost(e) {
                 attSheet.getRange(a + 1, 5).setValue(timeString2);
               } catch(calcErr) {}
             }
+          }
+
+          if (hoursOverride && (newStatus === "إجازة مدفوعة" || newStatus === "غائب" || newStatus === "إجازة بدون مرتب")) {
+              attSheet.getRange(a + 1, 5).setValue(hoursOverride + " ساعة");
           }
 
           if (newNotes !== undefined) attSheet.getRange(a + 1, 8).setValue(newNotes);

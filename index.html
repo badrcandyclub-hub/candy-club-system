@@ -1504,35 +1504,43 @@
                 <h3 style="color: #1565c0; margin: 0 0 15px;"><i class="fa-solid fa-users-line"></i> شئون الموظفين (للمدير)</h3>
                 <!-- Admin View: Attendance Dashboard -->
                 <div id="hrAdminView">
+                    <!-- Admin View: Daily Dashboard -->
                     <div class="section-card" style="margin-bottom: 15px; border-right: 4px solid #1565c0;">
-                        <h4 style="color: #1565c0; margin: 0 0 12px;"><i class="fa-solid fa-users-line"></i> متابعة حضور الموظفين</h4>
+                        <h4 style="color: #1565c0; margin: 0 0 12px;"><i class="fa-solid fa-calendar-day"></i> الحضور اليومي للموظفين</h4>
                         <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 12px;">
                             <div style="flex:1; min-width: 140px;">
-                                <label style="font-size: 0.85rem;">الموظف</label>
-                                <select id="hrAdminEmployeeFilter" style="width:100%;">
-                                    <option value="">كل الموظفين</option>
+                                <label style="font-size: 0.85rem;">التاريخ (يوم)</label>
+                                <input type="date" id="hrAdminDailyDateFilter" style="width:100%;">
+                            </div>
+                            <button class="btn-search interactive-btn" onclick="loadAdminDailyAttendance()" style="padding: 11px 20px;">
+                                عرض الحضور اليومي <i class="fa-solid fa-magnifying-glass"></i>
+                            </button>
+                        </div>
+                        <div id="hrAdminDailyAttendanceTable" style="overflow-x: auto;"></div>
+                    </div>
+
+                    <!-- Admin View: Monthly Dashboard & PDF -->
+                    <div class="section-card" style="margin-bottom: 15px; border-right: 4px solid #7b1fa2;">
+                        <h4 style="color: #7b1fa2; margin: 0 0 12px;"><i class="fa-solid fa-calendar-days"></i> السجل الشهري وتصدير PDF</h4>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 12px;">
+                            <div style="flex:1; min-width: 140px;">
+                                <label style="font-size: 0.85rem;">الموظف (اختياري للعرض)</label>
+                                <select id="hrAdminMonthlyEmployeeFilter" style="width:100%;">
+                                    <option value="">اختر موظف لعرض سجله</option>
                                 </select>
                             </div>
                             <div style="flex:1; min-width: 140px;">
-                                <label style="font-size: 0.85rem;">التاريخ (يوم)</label>
-                                <input type="date" id="hrAdminDateFilter" style="width:100%;">
+                                <label style="font-size: 0.85rem;">الشهر (للعرض وللتصدير)</label>
+                                <input type="month" id="hrAdminMonthlyMonthFilter" style="width:100%;">
                             </div>
-                            <button class="btn-search interactive-btn" onclick="loadAdminAttendance()" style="padding: 11px 20px;">
-                                عرض <i class="fa-solid fa-magnifying-glass"></i>
+                            <button class="btn-search interactive-btn" onclick="loadAdminMonthlyAttendance()" style="padding: 11px 20px;">
+                                عرض الشهر <i class="fa-solid fa-magnifying-glass"></i>
                             </button>
-                        </div>
-                        
-                        <!-- PDF Export Row -->
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 12px; padding-top: 10px; border-top: 1px dashed #ccc;">
-                            <div style="flex:1; min-width: 140px;">
-                                <label style="font-size: 0.85rem;">شهر التقرير (للتصدير PDF فقط)</label>
-                                <input type="month" id="hrAdminPdfMonth" style="width:100%;">
-                            </div>
                             <button class="interactive-btn" onclick="exportAttendancePDF()" style="padding: 11px 20px; background: #c62828; color: white; border: none; border-radius: 8px; cursor: pointer;">
-                                <i class="fa-solid fa-file-pdf"></i> تقرير PDF
+                                <i class="fa-solid fa-file-pdf"></i> تصدير PDF مجمع
                             </button>
                         </div>
-                        <div id="hrAdminAttendanceTable" style="overflow-x: auto;"></div>
+                        <div id="hrAdminMonthlyAttendanceTable" style="overflow-x: auto;"></div>
                     </div>
 
                     <!-- Admin: Add Leave -->
@@ -2167,6 +2175,15 @@
                     <option value="إجازة بدون مرتب">📋 إجازة بدون مرتب</option>
                     <option value="غائب">❌ غائب</option>
                 </select>
+            </div>
+
+            <!-- Manual Hours Override -->
+            <div>
+                <label style="display:block; font-size:0.85rem; font-weight:bold; color:#ff9800; margin-bottom:6px;">
+                    <i class="fa-solid fa-stopwatch"></i> ساعات العمل (تعديل يدوي - اختياري)
+                </label>
+                <input type="number" id="editAttManualHours" step="0.1" placeholder="مثال: 12" 
+                    style="width:100%; padding:12px; border:2px solid #e0e0e0; border-radius:10px; font-size:1rem; font-family:inherit; box-sizing:border-box;">
             </div>
 
             <!-- Notes -->

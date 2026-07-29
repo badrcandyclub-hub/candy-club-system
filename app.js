@@ -8896,9 +8896,9 @@ function loadMyAttendance() {
         });
 }
 
-function renderAttendanceTable(records, container, isAdminView = false) {
+function renderAttendanceTable(records, container, isAdminView = false, isMonthly = false) {
     if (!container) return;
-    if (records.length === 0) {
+    if (records.length === 0 && !isMonthly) {
         container.innerHTML = '<p style="text-align:center; color:var(--text-muted); padding:20px;">لا توجد بيانات</p>';
         return;
     }
@@ -8907,13 +8907,14 @@ function renderAttendanceTable(records, container, isAdminView = false) {
         'حاضر': '#2e7d32',
         'إجازة مدفوعة': '#1565c0',
         'إجازة بدون مرتب': '#ef6c00',
-        'إجازة مرفوضة': '#c62828'
+        'إجازة مرفوضة': '#c62828',
+        'غائب': '#c62828'
     };
 
     let html = '';
     
-    if (isAdminView) {
-        // Admin View
+    if (isAdminView && !isMonthly) {
+        // Admin View - Daily (All Employees for ONE Day)
         html += '<div style="overflow-x:auto; -webkit-overflow-scrolling:touch; width:100%; padding-bottom:5px;">';
         html += '<table class="hr-table" style="width:100%; min-width:700px; border-collapse:separate; border-spacing:0; border-radius:12px; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,0.08);">';
         html += '<thead><tr style="background:linear-gradient(135deg,#1565c0,#1a237e);">';
@@ -8926,21 +8927,25 @@ function renderAttendanceTable(records, container, isAdminView = false) {
         html += '<th style="color:white;padding:12px 10px;text-align:center;font-size:0.85rem;">تعديل</th>';
         html += '</tr></thead><tbody>';
         
-        [...records].reverse().forEach((r, idx) => {
-            let color = statusColors[r.status] || '#546e7a';
-            let bgRow = idx % 2 === 0 ? '#fff' : '#f8f9fa';
-            let safeNotes = (r.notes || '').replace(/'/g, "\\'");
-            let empName = (r.employee || '').replace(/'/g, "\\'");
-            html += `<tr style="background:${bgRow}; border-bottom:1px solid #e9ecef; transition:background 0.15s;" onmouseover="this.style.background='#e3f2fd'" onmouseout="this.style.background='${bgRow}'">`;
-            html += `<td style="padding:10px; text-align:center; font-weight:bold; font-size:0.85rem;">${r.employee}</td>`;
-            html += `<td style="padding:10px; text-align:center; font-size:0.85rem; color:#546e7a;">${r.date}</td>`;
-            html += `<td style="padding:10px; text-align:center; font-weight:bold; color:#2e7d32; font-size:0.85rem;">${r.checkIn || '-'}</td>`;
-            html += `<td style="padding:10px; text-align:center; font-weight:bold; color:#c62828; font-size:0.85rem;">${r.checkOut || '-'}</td>`;
-            html += `<td style="padding:10px; text-align:center; font-weight:900; color:#1a237e; font-size:0.9rem;">${r.hours || '-'}</td>`;
-            html += `<td style="padding:10px; text-align:center;"><span style="background:${color}20; color:${color}; padding:4px 10px; border-radius:20px; font-size:0.78rem; font-weight:bold; white-space:nowrap;">${r.status}</span></td>`;
-            html += `<td style="padding:10px; text-align:center;"><button class="interactive-btn" onclick="openEditAttendanceModal('${empName}','${r.date}','${r.checkIn||''}','${r.checkOut||''}','${r.status||''}','${safeNotes}')" style="background:linear-gradient(135deg,#ff9800,#ef6c00); color:white; border:none; padding:7px 12px; border-radius:8px; cursor:pointer; font-size:0.8rem; display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-pen"></i></button></td>`;
-            html += '</tr>';
-        });
+        if (records.length === 0) {
+            html += '<tr><td colspan="7" style="text-align:center; padding:20px;">لا توجد سجلات لهذا اليوم</td></tr>';
+        } else {
+            [...records].reverse().forEach((r, idx) => {
+                let color = statusColors[r.status] || '#546e7a';
+                let bgRow = idx % 2 === 0 ? '#fff' : '#f8f9fa';
+                let safeNotes = (r.notes || '').replace(/'/g, "\\'");
+                let empName = (r.employee || '').replace(/'/g, "\\'");
+                html += `<tr style="background:${bgRow}; border-bottom:1px solid #e9ecef; transition:background 0.15s;" onmouseover="this.style.background='#e3f2fd'" onmouseout="this.style.background='${bgRow}'">`;
+                html += `<td style="padding:10px; text-align:center; font-weight:bold; font-size:0.85rem;">${r.employee}</td>`;
+                html += `<td style="padding:10px; text-align:center; font-size:0.85rem; color:#546e7a;">${r.date}</td>`;
+                html += `<td style="padding:10px; text-align:center; font-weight:bold; color:#2e7d32; font-size:0.85rem;">${r.checkIn || '-'}</td>`;
+                html += `<td style="padding:10px; text-align:center; font-weight:bold; color:#c62828; font-size:0.85rem;">${r.checkOut || '-'}</td>`;
+                html += `<td style="padding:10px; text-align:center; font-weight:900; color:#1a237e; font-size:0.9rem;">${r.hours || '-'}</td>`;
+                html += `<td style="padding:10px; text-align:center;"><span style="background:${color}20; color:${color}; padding:4px 10px; border-radius:20px; font-size:0.78rem; font-weight:bold; white-space:nowrap;">${r.status}</span></td>`;
+                html += `<td style="padding:10px; text-align:center;"><button class="interactive-btn" onclick="openEditAttendanceModal('${empName}','${r.date}','${r.checkIn||''}','${r.checkOut||''}','${r.status||''}','${safeNotes}','${r.hours||''}')" style="background:linear-gradient(135deg,#ff9800,#ef6c00); color:white; border:none; padding:7px 12px; border-radius:8px; cursor:pointer; font-size:0.8rem; display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-pen"></i></button></td>`;
+                html += '</tr>';
+            });
+        }
         html += '</tbody></table></div>';
     } else {
         // Employee View - Full Month Table (mobile-first)
@@ -9043,7 +9048,7 @@ function renderAttendanceTable(records, container, isAdminView = false) {
 // ============================================================
 let _editAttData = {}; // Store current edit data
 
-window.openEditAttendanceModal = function(employee, date, checkIn, checkOut, status, notes) {
+window.openEditAttendanceModal = function(employee, date, checkIn, checkOut, status, notes, hoursStr) {
     _editAttData = { employee, date };
 
     let modal = document.getElementById('editAttendanceModal');
@@ -9072,6 +9077,17 @@ window.openEditAttendanceModal = function(employee, date, checkIn, checkOut, sta
     let notesEl = document.getElementById('editAttNotes');
     if (notesEl) notesEl.value = notes || '';
     
+    // Extract hours if available
+    let hoursEl = document.getElementById('editAttManualHours');
+    if (hoursEl) {
+        if (hoursStr) {
+            let hMatch = hoursStr.match(/(\d+(?:\.\d+)?)/);
+            hoursEl.value = hMatch ? hMatch[1] : '';
+        } else {
+            hoursEl.value = '';
+        }
+    }
+
     let statusEl = document.getElementById('editAttStatus');
     if (statusEl) {
         statusEl.value = status || 'حاضر';
@@ -9165,6 +9181,7 @@ window.saveAttendanceEdit = function() {
     let checkOut24 = document.getElementById('editAttCheckOut').value;
     let status = document.getElementById('editAttStatus').value;
     let notes = document.getElementById('editAttNotes').value;
+    let manualHours = document.getElementById('editAttManualHours').value;
 
     let formData = new URLSearchParams();
     formData.append('action', 'editAttendance');
@@ -9174,6 +9191,7 @@ window.saveAttendanceEdit = function() {
     formData.append('checkOut', checkOut24 ? to12h(checkOut24) : '');
     formData.append('status', status);
     formData.append('notes', notes);
+    formData.append('hoursOverride', manualHours);
 
     fetch(GOOGLE_SHEETS_URL, { method: 'POST', body: formData })
         .then(r => r.json())
@@ -9237,18 +9255,51 @@ window.handleLeaveDecision = function(employee, date, decision, btnElement = nul
 
 // Removed duplicate initHrAdminTab
 
-function loadAdminAttendance() {
-    let empFilter = document.getElementById('hrAdminEmployeeFilter');
-    let dateFilter = document.getElementById('hrAdminDateFilter');
-    let emp = empFilter ? empFilter.value : '';
+function loadAdminDailyAttendance() {
+    let dateFilter = document.getElementById('hrAdminDailyDateFilter');
     let exactDate = dateFilter ? dateFilter.value : '';
+    if (!exactDate) {
+        showToast('برجاء اختيار التاريخ', 'warning');
+        return;
+    }
 
-    fetch(GOOGLE_SHEETS_URL + '?action=getAttendance&employee=' + encodeURIComponent(emp) + '&exactDate=' + exactDate)
+    let tableEl = document.getElementById('hrAdminDailyAttendanceTable');
+    if (tableEl) tableEl.innerHTML = '<div style="text-align:center; padding:20px;"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p>جاري تحميل الحضور اليومي...</p></div>';
+
+    fetch(GOOGLE_SHEETS_URL + '?action=getAttendance&employee=&exactDate=' + exactDate)
         .then(r => r.json())
         .then(data => {
-            renderAttendanceTable(data.attendance || [], document.getElementById('hrAdminAttendanceTable'), true);
+            renderAttendanceTable(data.attendance || [], tableEl, true, false); // true for isAdminView, false for isMonthly
         })
-        .catch(err => console.error('Admin attendance error:', err));
+        .catch(err => {
+            console.error('Admin daily attendance error:', err);
+            if (tableEl) tableEl.innerHTML = '<div style="color:red; text-align:center;">حدث خطأ أثناء جلب البيانات.</div>';
+        });
+}
+
+function loadAdminMonthlyAttendance() {
+    let empFilter = document.getElementById('hrAdminMonthlyEmployeeFilter');
+    let monthFilter = document.getElementById('hrAdminMonthlyMonthFilter');
+    let emp = empFilter ? empFilter.value : '';
+    let month = monthFilter ? monthFilter.value : '';
+    
+    if (!month) {
+        showToast('برجاء اختيار الشهر', 'warning');
+        return;
+    }
+
+    let tableEl = document.getElementById('hrAdminMonthlyAttendanceTable');
+    if (tableEl) tableEl.innerHTML = '<div style="text-align:center; padding:20px;"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p>جاري تحميل السجل الشهري...</p></div>';
+
+    fetch(GOOGLE_SHEETS_URL + '?action=getAttendance&employee=' + encodeURIComponent(emp) + '&month=' + month)
+        .then(r => r.json())
+        .then(data => {
+            renderAttendanceTable(data.attendance || [], tableEl, true, true); // true for isAdminView, true for isMonthly
+        })
+        .catch(err => {
+            console.error('Admin monthly attendance error:', err);
+            if (tableEl) tableEl.innerHTML = '<div style="color:red; text-align:center;">حدث خطأ أثناء جلب البيانات.</div>';
+        });
 }
 
 function handleAdminAddLeave() {
@@ -9282,14 +9333,14 @@ function handleAdminAddLeave() {
 }
 
 function exportAttendancePDF() {
-    let monthInput = document.getElementById('hrAdminPdfMonth');
+    let monthInput = document.getElementById('hrAdminMonthlyMonthFilter');
     let monthStr = monthInput ? monthInput.value : '';
     if (!monthStr) {
-        showToast('يرجى اختيار شهر التقرير أولاً', 'warning');
+        showToast('يرجى اختيار شهر التقرير من قسم السجل الشهري أولاً', 'warning');
         return;
     }
 
-    showToast('⏳ جاري تحضير التقرير، يرجى الانتظار...', 'info');
+    showToast('⏳ جاري تحضير التقرير المجمع، يرجى الانتظار...', 'info');
 
     fetch(GOOGLE_SHEETS_URL + '?action=getAttendance&month=' + monthStr)
         .then(r => r.json())
@@ -9300,40 +9351,98 @@ function exportAttendancePDF() {
                 return;
             }
 
+            // Group by employee and calculate total hours
+            let employeeTotals = {};
+            records.forEach(r => {
+                if (!employeeTotals[r.employee]) {
+                    employeeTotals[r.employee] = 0;
+                }
+                
+                let hStr = String(r.hours || '').trim();
+                let h = 0;
+                if (hStr && hStr !== '-' && hStr !== '0' && hStr !== 'undefined') {
+                    // Try parsing 8:20 ساعة format
+                    let parts = hStr.split('ساعة');
+                    if (parts[0] && parts[0].includes(':')) {
+                        let timeParts = parts[0].split(':');
+                        h += parseFloat(timeParts[0]) || 0;
+                        h += (parseFloat(timeParts[1]) || 0) / 60;
+                    } else {
+                        let hMatch = hStr.match(/(\d+(?:\.\d+)?)\s*ساعة/);
+                        let mMatch = hStr.match(/(\d+(?:\.\d+)?)\s*دقيقة/);
+                        if (hMatch) {
+                            h += parseFloat(hMatch[1]);
+                        } else if (!isNaN(parseFloat(hStr))) {
+                            h += parseFloat(hStr);
+                        }
+                        if (mMatch) {
+                            h += parseFloat(mMatch[1]) / 60;
+                        }
+                    }
+                }
+                if (!isNaN(h)) {
+                    employeeTotals[r.employee] += h;
+                }
+            });
+
             let pdfContent = document.createElement('div');
             pdfContent.style.direction = 'rtl';
             pdfContent.style.fontFamily = 'Cairo, sans-serif';
-            pdfContent.style.padding = '20px';
-            pdfContent.innerHTML = '<h2 style="text-align:center; color:#00897b;">تقرير حضور وانصراف الموظفين</h2>';
-            pdfContent.innerHTML += '<p style="text-align:center; color:#666;">الشهر: <b dir="ltr">' + monthStr + '</b></p>';
-            pdfContent.innerHTML += '<p style="text-align:center; color:#666;">Candy Club - كاندي كلوب</p><hr>';
+            pdfContent.style.padding = '40px';
+            pdfContent.style.background = '#ffffff';
 
-            // Build PDF Table manually without the "Edit" button
-            let html = '<table style="width:100%; border-collapse:collapse; text-align:center; font-size:12px; margin-top:15px;" border="1">';
-            html += '<tr style="background-color:#00897b; color:white;"><th>الموظف</th><th>التاريخ</th><th>الحضور</th><th>الانصراف</th><th>الساعات</th><th>الحالة</th><th>ملاحظات</th></tr>';
-            records.forEach(r => {
-                html += '<tr>';
-                html += '<td style="padding:5px;">' + r.employee + '</td>';
-                html += '<td style="padding:5px;">' + r.date + '</td>';
-                html += '<td style="padding:5px;">' + r.checkIn + '</td>';
-                html += '<td style="padding:5px;">' + r.checkOut + '</td>';
-                html += '<td style="padding:5px; font-weight:bold;">' + r.hours + '</td>';
-                html += '<td style="padding:5px;">' + r.status + '</td>';
-                html += '<td style="padding:5px; font-size:10px; color:#555;">' + (r.notes || '') + '</td>';
+            let html = `
+            <div style="text-align:center; margin-bottom:30px;">
+                <h1 style="color:#1a237e; font-size:2.2rem; margin:0; margin-bottom:10px;">تقرير الساعات الشهري المجمع</h1>
+                <h3 style="color:#ff9800; font-size:1.4rem; margin:0; margin-bottom:15px;">Candy Club - كاندي كلوب</h3>
+                <div style="display:inline-block; background:linear-gradient(135deg,#e3f2fd,#bbdefb); padding:10px 25px; border-radius:30px; color:#1565c0; font-weight:bold; font-size:1.1rem; border:2px solid #90caf9;">
+                    <i class="fa-solid fa-calendar-days"></i> شهر التقرير: <span dir="ltr">${monthStr}</span>
+                </div>
+            </div>
+            <hr style="border:none; border-top:3px dashed #e0e0e0; margin-bottom:30px;">
+            `;
+
+            html += '<table style="width:100%; border-collapse:separate; border-spacing:0; text-align:center; font-size:1.1rem; border-radius:12px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.1);">';
+            html += '<tr style="background:linear-gradient(135deg,#1565c0,#1a237e); color:white;">';
+            html += '<th style="padding:15px; font-size:1.2rem; border-bottom:3px solid #0d47a1;">👤 اسم الموظف</th>';
+            html += '<th style="padding:15px; font-size:1.2rem; border-bottom:3px solid #0d47a1;">⏱️ إجمالي ساعات العمل</th>';
+            html += '</tr>';
+
+            let count = 0;
+            for (const [emp, totalH] of Object.entries(employeeTotals)) {
+                let bgRow = count % 2 === 0 ? '#ffffff' : '#f8f9fa';
+                
+                // Format totalH to HH:MM format
+                let tHrs = Math.floor(totalH);
+                let tMins = Math.round((totalH - tHrs) * 60);
+                if (tMins === 60) { tHrs++; tMins = 0; }
+                let finalHoursStr = `${tHrs}:${String(tMins).padStart(2,'0')}`;
+                
+                html += `<tr style="background:${bgRow};">`;
+                html += `<td style="padding:15px; font-weight:bold; color:#333; border-bottom:1px solid #eee;">${emp}</td>`;
+                html += `<td style="padding:15px; font-weight:900; color:#2e7d32; font-size:1.2rem; border-bottom:1px solid #eee;" dir="ltr">${finalHoursStr}</td>`;
                 html += '</tr>';
-            });
+                count++;
+            }
             html += '</table>';
             
-            pdfContent.innerHTML += html;
+            html += `
+            <div style="margin-top:40px; text-align:center; font-size:0.9rem; color:#9e9e9e;">
+                <p>تم استخراج هذا التقرير تلقائياً بواسطة نظام Candy Club.</p>
+                <p>عدد الموظفين في التقرير: ${count} موظف</p>
+            </div>
+            `;
+            
+            pdfContent.innerHTML = html;
 
             if (typeof html2pdf !== 'undefined') {
                 html2pdf().set({
-                    margin: 10,
-                    filename: 'attendance_' + monthStr + '.pdf',
-                    html2canvas: { scale: 2 },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+                    margin: 15,
+                    filename: 'Monthly_Hours_Report_' + monthStr + '.pdf',
+                    html2canvas: { scale: 2, useCORS: true },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 }).from(pdfContent).save();
-                showToast('✅ تم تحميل التقرير', 'success');
+                showToast('✅ تم تحميل التقرير المجمع بنجاح', 'success');
             } else {
                 showToast('مكتبة PDF غير متوفرة', 'error');
             }
@@ -9371,13 +9480,13 @@ function initHrAdminTab() {
     let monthStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
     let dateStr = now.toLocaleDateString('en-CA');
     
-    let adminDate = document.getElementById('hrAdminDateFilter');
-    if (adminDate) adminDate.value = dateStr;
+    let dailyDate = document.getElementById('hrAdminDailyDateFilter');
+    if (dailyDate) dailyDate.value = dateStr;
     
-    let adminPdfMonth = document.getElementById('hrAdminPdfMonth');
-    if (adminPdfMonth) adminPdfMonth.value = monthStr;
+    let monthlyMonth = document.getElementById('hrAdminMonthlyMonthFilter');
+    if (monthlyMonth) monthlyMonth.value = monthStr;
     
-    loadAdminAttendance();
+    loadAdminDailyAttendance();
     loadPendingLeaves();
 }
 
@@ -9386,10 +9495,10 @@ function populateHrEmployeeDropdowns() {
         .then(r => r.json())
         .then(data => {
             let users = data.users || [];
-            ['hrAdminEmployeeFilter', 'adminLeaveEmployee'].forEach(id => {
+            ['hrAdminMonthlyEmployeeFilter', 'adminLeaveEmployee'].forEach(id => {
                 let sel = document.getElementById(id);
                 if (!sel) return;
-                let firstOpt = id === 'hrAdminEmployeeFilter' ? '<option value="">كل الموظفين</option>' : '<option value="">اختر موظف</option>';
+                let firstOpt = id === 'hrAdminMonthlyEmployeeFilter' ? '<option value="">كل الموظفين</option>' : '<option value="">اختر موظف</option>';
                 sel.innerHTML = firstOpt;
                 users.forEach(u => {
                     if (u.status === 'نشط') {
@@ -9398,7 +9507,7 @@ function populateHrEmployeeDropdowns() {
                 });
             });
         })
-        .catch(() => {});
+        .catch(err => console.error('Error fetching users:', err));
 }
 
 // Listen for HR tabs activation
