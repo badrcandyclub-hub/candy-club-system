@@ -8806,17 +8806,25 @@ function loadMyAttendance() {
             myRecords.forEach(r => {
                 let hStr = r.hours ? r.hours.toString() : "0";
                 let h = 0;
-                let hMatch = hStr.match(/(\d+(?:\.\d+)?)\s*ساعة/);
-                let mMatch = hStr.match(/(\d+)\s*دقيقة/);
                 
-                if (hMatch) {
-                    h += parseFloat(hMatch[1]);
-                } else if (!isNaN(parseFloat(hStr))) {
-                    h += parseFloat(hStr);
-                }
-                
-                if (mMatch) {
-                    h += parseFloat(mMatch[1]) / 60;
+                if (hStr.includes(':')) {
+                    let parts = hStr.match(/(\d+):(\d+)/);
+                    if (parts) {
+                        h = parseInt(parts[1], 10) + parseInt(parts[2], 10) / 60;
+                    }
+                } else {
+                    let hMatch = hStr.match(/(\d+(?:\.\d+)?)\s*ساعة/);
+                    let mMatch = hStr.match(/(\d+)\s*دقيقة/);
+                    
+                    if (hMatch) {
+                        h += parseFloat(hMatch[1]);
+                    } else if (!isNaN(parseFloat(hStr))) {
+                        h += parseFloat(hStr);
+                    }
+                    
+                    if (mMatch) {
+                        h += parseFloat(mMatch[1]) / 60;
+                    }
                 }
                 
                 if (!isNaN(h)) totalHours += h;
