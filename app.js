@@ -8556,7 +8556,7 @@ loadDataFromServer = function(customDate = null) {
 // ============================================================
 const HR_BRANCH_LAT = 31.209774;
 const HR_BRANCH_LNG = 29.935520;
-const HR_RADIUS_METERS = 100;
+const HR_RADIUS_METERS = 50;
 let hrGpsWatchId = null;
 let hrIsInRange = false;
 let hrTodayStatus = null; // null, 'checkedIn', 'checkedOut'
@@ -8886,8 +8886,8 @@ function renderAttendanceTable(records, container, isAdminView = false) {
     
     if (isAdminView) {
         // Admin View
-        html += '<div style="overflow-x:auto;">';
-        html += '<table class="hr-table" style="width:100%; border-collapse:separate; border-spacing:0; border-radius:12px; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,0.08);">';
+        html += '<div style="overflow-x:auto; -webkit-overflow-scrolling:touch; width:100%; padding-bottom:5px;">';
+        html += '<table class="hr-table" style="width:100%; min-width:700px; border-collapse:separate; border-spacing:0; border-radius:12px; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,0.08);">';
         html += '<thead><tr style="background:linear-gradient(135deg,#1565c0,#1a237e);">';
         html += '<th style="color:white;padding:12px 10px;text-align:center;font-size:0.85rem;">الموظف</th>';
         html += '<th style="color:white;padding:12px 10px;text-align:center;font-size:0.85rem;">التاريخ</th>';
@@ -8928,8 +8928,8 @@ function renderAttendanceTable(records, container, isAdminView = false) {
 
             let dayNames = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
 
-            html += '<div style="overflow-x:auto; border-radius:14px; box-shadow:0 4px 20px rgba(0,0,0,0.1); overflow:hidden;">';
-            html += '<table style="width:100%; border-collapse:collapse; font-size:0.88rem;">';
+            html += '<div style="overflow-x:auto; -webkit-overflow-scrolling:touch; width:100%; border-radius:14px; box-shadow:0 4px 20px rgba(0,0,0,0.1); overflow:hidden;">';
+            html += '<table style="width:100%; min-width:600px; border-collapse:collapse; font-size:0.88rem;">';
             // Header
             html += '<thead><tr style="background:linear-gradient(135deg,#1a237e,#283593);">';
             html += '<th style="color:white;padding:14px 8px;text-align:center;font-size:0.8rem;white-space:nowrap;">📅 التاريخ</th>';
