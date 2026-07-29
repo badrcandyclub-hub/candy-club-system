@@ -582,6 +582,30 @@ function doGet(e) {
   }
 
   // ============================================================
+  // ⭐ HR: رفع جماعي لبيانات الحضور (تاريخية من الإكسيل)
+  // ============================================================
+  if (action === "bulkUploadAttendance") {
+    var attSheet = ss.getSheetByName("📅 سجل الحضور");
+    if (!attSheet) return ContentService.createTextOutput(JSON.stringify({success: false, error: "شيت الحضور غير موجود"})).setMimeType(ContentService.MimeType.JSON);
+    
+    try {
+      var dataStr = e.postData.contents;
+      var data = JSON.parse(dataStr);
+      var rows = [];
+      for (var i = 0; i < data.length; i++) {
+        var r = data[i];
+        rows.push([r.empName, "'" + r.date, r.checkIn, r.checkOut, r.hours, r.status, "", r.notes]);
+      }
+      if (rows.length > 0) {
+        attSheet.getRange(attSheet.getLastRow() + 1, 1, rows.length, 8).setValues(rows);
+      }
+      return ContentService.createTextOutput(JSON.stringify({success: true, count: rows.length})).setMimeType(ContentService.MimeType.JSON);
+    } catch(err) {
+      return ContentService.createTextOutput(JSON.stringify({success: false, error: err.toString()})).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+
+  // ============================================================
   // ⭐ HR: جلب طلبات الإجازة المعلقة لجميع الموظفين (للمدير)
   // ============================================================
   if (action === "getPendingLeaves") {
