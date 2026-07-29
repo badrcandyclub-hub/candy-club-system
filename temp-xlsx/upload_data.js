@@ -47,7 +47,14 @@ files.forEach(file => {
                     }
 
                     let status = "حاضر";
-                    if (!checkIn && !checkOut) status = "غائب";
+                    if (!checkIn && !checkOut) {
+                        // If no checkin/checkout but hours are recorded (e.g. 8 hours), it's Paid Leave
+                        if (hoursStr && hoursStr !== "0" && hoursStr !== "0:00") {
+                            status = "إجازة مدفوعة";
+                        } else {
+                            status = "غائب";
+                        }
+                    }
 
                     allData.push({
                         empName: finalEmpName,
@@ -71,7 +78,6 @@ console.log(`Extracted ${allData.length} valid attendance records.`);
 async function uploadData() {
     console.log("Starting bulk upload...");
     try {
-        // Need to follow redirects correctly. Node's fetch handles it automatically.
         const response = await fetch(GOOGLE_SHEETS_URL + "?action=bulkUploadAttendance", {
             method: 'POST',
             body: JSON.stringify(allData)
