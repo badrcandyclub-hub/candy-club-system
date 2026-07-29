@@ -8905,7 +8905,7 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
 
     let statusColors = {
         'حاضر': '#2e7d32',
-        'إجازة مدفوعة': '#1565c0',
+        'إجازة مدفوعة': '#f57f17',
         'إجازة بدون مرتب': '#ef6c00',
         'إجازة مرفوضة': '#c62828',
         'غائب': '#c62828'
@@ -8933,9 +8933,14 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
             [...records].reverse().forEach((r, idx) => {
                 let color = statusColors[r.status] || '#546e7a';
                 let bgRow = idx % 2 === 0 ? '#fff' : '#f8f9fa';
+                let rowBorder = '';
+                if (r.status === 'إجازة مدفوعة' && r.requestStatus !== 'بانتظار الموافقة' && r.requestStatus !== '❌ مرفوضة') {
+                    bgRow = 'linear-gradient(135deg,#fffde7,#fff59d)';
+                    rowBorder = 'border-right:3px solid #fbc02d;';
+                }
                 let safeNotes = (r.notes || '').replace(/'/g, "\\'");
                 let empName = (r.employee || '').replace(/'/g, "\\'");
-                html += `<tr style="background:${bgRow}; border-bottom:1px solid #e9ecef; transition:background 0.15s;" onmouseover="this.style.background='#e3f2fd'" onmouseout="this.style.background='${bgRow}'">`;
+                html += `<tr style="background:${bgRow}; border-bottom:1px solid #e9ecef; ${rowBorder} transition:background 0.15s;" onmouseover="this.style.background='#e3f2fd'" onmouseout="this.style.background='${bgRow}'">`;
                 html += `<td style="padding:10px; text-align:center; font-weight:bold; font-size:0.85rem;">${r.employee}</td>`;
                 html += `<td style="padding:10px; text-align:center; font-size:0.85rem; color:#546e7a;">${r.date}</td>`;
                 html += `<td style="padding:10px; text-align:center; font-weight:bold; color:#2e7d32; font-size:0.85rem;">${r.checkIn || '-'}</td>`;
@@ -8981,9 +8986,14 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
                 [...records].reverse().forEach((r, idx) => {
                     let color = statusColors[r.status] || '#546e7a';
                     let bgRow = idx % 2 === 0 ? '#fff' : '#f8f9fa';
+                    let rowBorder = '';
+                    if (r.status === 'إجازة مدفوعة' && r.requestStatus !== 'بانتظار الموافقة' && r.requestStatus !== '❌ مرفوضة') {
+                        bgRow = 'linear-gradient(135deg,#fffde7,#fff59d)';
+                        rowBorder = 'border-right:3px solid #fbc02d;';
+                    }
                     let safeNotes = (r.notes || '').replace(/'/g, "\\'");
                     let empName = (r.employee || '').replace(/'/g, "\\'");
-                    html += `<tr style="background:${bgRow}; border-bottom:1px solid #e9ecef; transition:background 0.15s;" onmouseover="this.style.background='#e3f2fd'" onmouseout="this.style.background='${bgRow}'">`;
+                    html += `<tr style="background:${bgRow}; border-bottom:1px solid #e9ecef; ${rowBorder} transition:background 0.15s;" onmouseover="this.style.background='#e3f2fd'" onmouseout="this.style.background='${bgRow}'">`;
                     html += `<td style="padding:10px; text-align:center; font-weight:bold; font-size:0.85rem;">${r.employee}</td>`;
                     html += `<td style="padding:10px; text-align:center; font-size:0.85rem; color:#546e7a;">${r.date}</td>`;
                     html += `<td style="padding:10px; text-align:center; font-weight:bold; color:#2e7d32; font-size:0.85rem;">${r.checkIn || '-'}</td>`;
@@ -9028,9 +9038,15 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
 
                 if (r) {
                     let color = statusColors[r.status] || '#546e7a';
+                    let rowBorder = '';
+                    if (r.status === 'إجازة مدفوعة' && r.requestStatus !== 'بانتظار الموافقة' && r.requestStatus !== '❌ مرفوضة') {
+                        bgRow = 'linear-gradient(135deg,#fffde7,#fff59d)';
+                        rowBorder = 'border-right:3px solid #fbc02d;';
+                    }
                     let safeNotes = (r.notes || '').replace(/'/g, "\\'");
 
-                    html += `<tr style="${rowStyle}" onmouseover="this.style.background='#e3f2fd'" onmouseout="this.style.background='${isToday?'#e8f5e9':bgRow}'">`;
+                    let actualBg = isToday && r.status !== 'إجازة مدفوعة' ? '#e8f5e9' : bgRow;
+                    html += `<tr style="background:${actualBg}; border-bottom:1px solid #eee; ${rowBorder} transition:background 0.15s;" onmouseover="this.style.background='#e3f2fd'" onmouseout="this.style.background='${actualBg}'">`;
                     html += `<td style="padding:10px; text-align:center; font-weight:bold; font-size:0.85rem;">${selectedEmp}</td>`;
                     html += `<td style="padding:10px; text-align:center; font-size:0.85rem; color:#546e7a;">${dateStr}<br><span style="font-size:0.7rem;">${dayName}</span></td>`;
                     html += `<td style="padding:10px; text-align:center; font-weight:bold; color:#2e7d32; font-size:0.85rem;">${r.checkIn || '-'}</td>`;
