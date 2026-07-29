@@ -8798,7 +8798,7 @@ function loadMyAttendance() {
             renderAttendanceTable(allRecords, historyEl, false);
             
             // Update stats cards
-            let myRecords = allRecords.filter(r => r.employee === currentUser.displayName && r.date && r.date.startsWith(yearMonth));
+            let myRecords = allRecords.filter(r => r.employee === currentUser.displayName && r.date && r.date.startsWith(month));
             let presentDays = myRecords.filter(r => r.status === 'حاضر').length;
             let totalHours = 0;
             let paidLeaves = 0;
