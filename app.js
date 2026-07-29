@@ -8947,6 +8947,119 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
             });
         }
         html += '</tbody></table></div>';
+    } else if (isAdminView && isMonthly) {
+        // Admin View - Monthly
+        let empFilter = document.getElementById('hrAdminMonthlyEmployeeFilter');
+        let monthInput = document.getElementById('hrAdminMonthlyMonthFilter');
+        let selectedEmp = empFilter ? empFilter.value : '';
+        let yearMonth = monthInput ? monthInput.value : '';
+        
+        if (!yearMonth) {
+            html += '<p style="text-align:center;">اختر الشهر</p>';
+            container.innerHTML = html;
+            return;
+        }
+
+        html += '<div style="overflow-x:auto; -webkit-overflow-scrolling:touch; width:100%; padding-bottom:5px;">';
+        html += '<table class="hr-table" style="width:100%; min-width:700px; border-collapse:separate; border-spacing:0; border-radius:12px; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,0.08);">';
+        
+        if (selectedEmp === '') {
+            // All Employees Monthly - show flat list of records
+            html += '<thead><tr style="background:linear-gradient(135deg,#1565c0,#1a237e);">';
+            html += '<th style="color:white;padding:12px 10px;text-align:center;font-size:0.85rem;">الموظف</th>';
+            html += '<th style="color:white;padding:12px 10px;text-align:center;font-size:0.85rem;">التاريخ</th>';
+            html += '<th style="color:white;padding:12px 10px;text-align:center;font-size:0.85rem;">الحضور</th>';
+            html += '<th style="color:white;padding:12px 10px;text-align:center;font-size:0.85rem;">الانصراف</th>';
+            html += '<th style="color:white;padding:12px 10px;text-align:center;font-size:0.85rem;">الساعات</th>';
+            html += '<th style="color:white;padding:12px 10px;text-align:center;font-size:0.85rem;">الحالة</th>';
+            html += '<th style="color:white;padding:12px 10px;text-align:center;font-size:0.85rem;">تعديل</th>';
+            html += '</tr></thead><tbody>';
+
+            if (records.length === 0) {
+                html += '<tr><td colspan="7" style="text-align:center; padding:20px;">لا توجد سجلات لهذا الشهر</td></tr>';
+            } else {
+                [...records].reverse().forEach((r, idx) => {
+                    let color = statusColors[r.status] || '#546e7a';
+                    let bgRow = idx % 2 === 0 ? '#fff' : '#f8f9fa';
+                    let safeNotes = (r.notes || '').replace(/'/g, "\\'");
+                    let empName = (r.employee || '').replace(/'/g, "\\'");
+                    html += `<tr style="background:${bgRow}; border-bottom:1px solid #e9ecef; transition:background 0.15s;" onmouseover="this.style.background='#e3f2fd'" onmouseout="this.style.background='${bgRow}'">`;
+                    html += `<td style="padding:10px; text-align:center; font-weight:bold; font-size:0.85rem;">${r.employee}</td>`;
+                    html += `<td style="padding:10px; text-align:center; font-size:0.85rem; color:#546e7a;">${r.date}</td>`;
+                    html += `<td style="padding:10px; text-align:center; font-weight:bold; color:#2e7d32; font-size:0.85rem;">${r.checkIn || '-'}</td>`;
+                    html += `<td style="padding:10px; text-align:center; font-weight:bold; color:#c62828; font-size:0.85rem;">${r.checkOut || '-'}</td>`;
+                    html += `<td style="padding:10px; text-align:center; font-weight:900; color:#1a237e; font-size:0.9rem;">${r.hours || '-'}</td>`;
+                    html += `<td style="padding:10px; text-align:center;"><span style="background:${color}20; color:${color}; padding:4px 10px; border-radius:20px; font-size:0.78rem; font-weight:bold; white-space:nowrap;">${r.status}</span></td>`;
+                    html += `<td style="padding:10px; text-align:center;"><button class="interactive-btn" onclick="openEditAttendanceModal('${empName}','${r.date}','${r.checkIn||''}','${r.checkOut||''}','${r.status||''}','${safeNotes}','${r.hours||''}')" style="background:linear-gradient(135deg,#ff9800,#ef6c00); color:white; border:none; padding:7px 12px; border-radius:8px; cursor:pointer; font-size:0.8rem; display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-pen"></i></button></td>`;
+                    html += '</tr>';
+                });
+            }
+        } else {
+            // Single Employee Selected - Show Days 1 to 30
+            let [y, m] = yearMonth.split('-');
+            let daysInMonth = new Date(y, m, 0).getDate();
+            let today = new Date();
+            today.setHours(0,0,0,0);
+            let dayNames = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+
+            html += '<thead><tr style="background:linear-gradient(135deg,#1565c0,#1a237e);">';
+            html += '<th style="color:white;padding:12px 10px;text-align:center;font-size:0.85rem;">الموظف</th>';
+            html += '<th style="color:white;padding:12px 10px;text-align:center;font-size:0.85rem;">التاريخ</th>';
+            html += '<th style="color:white;padding:12px 10px;text-align:center;font-size:0.85rem;">الحضور</th>';
+            html += '<th style="color:white;padding:12px 10px;text-align:center;font-size:0.85rem;">الانصراف</th>';
+            html += '<th style="color:white;padding:12px 10px;text-align:center;font-size:0.85rem;">الساعات</th>';
+            html += '<th style="color:white;padding:12px 10px;text-align:center;font-size:0.85rem;">الحالة</th>';
+            html += '<th style="color:white;padding:12px 10px;text-align:center;font-size:0.85rem;">تعديل</th>';
+            html += '</tr></thead><tbody>';
+
+            for (let i = 1; i <= daysInMonth; i++) {
+                let dateStr = yearMonth + '-' + String(i).padStart(2, '0');
+                let r = records.find(rec => rec.date === dateStr);
+                let loopDate = new Date(dateStr + 'T00:00:00');
+                let dayName = dayNames[loopDate.getDay()];
+                let isFuture = loopDate > today;
+                let isToday = loopDate.toLocaleDateString('en-CA') === today.toLocaleDateString('en-CA');
+                
+                let bgRow = i % 2 === 0 ? '#fff' : '#f8f9fa';
+                let rowStyle = `background:${bgRow}; border-bottom:1px solid #eee; transition:background 0.15s;`;
+                if (isToday) rowStyle = 'background:linear-gradient(135deg,#e8f5e9,#f1f8e9); border-bottom:2px solid #66bb6a; border-right:4px solid #2e7d32;';
+
+                let empNameEscaped = selectedEmp.replace(/'/g, "\\'");
+
+                if (r) {
+                    let color = statusColors[r.status] || '#546e7a';
+                    let safeNotes = (r.notes || '').replace(/'/g, "\\'");
+
+                    html += `<tr style="${rowStyle}" onmouseover="this.style.background='#e3f2fd'" onmouseout="this.style.background='${isToday?'#e8f5e9':bgRow}'">`;
+                    html += `<td style="padding:10px; text-align:center; font-weight:bold; font-size:0.85rem;">${selectedEmp}</td>`;
+                    html += `<td style="padding:10px; text-align:center; font-size:0.85rem; color:#546e7a;">${dateStr}<br><span style="font-size:0.7rem;">${dayName}</span></td>`;
+                    html += `<td style="padding:10px; text-align:center; font-weight:bold; color:#2e7d32; font-size:0.85rem;">${r.checkIn || '-'}</td>`;
+                    html += `<td style="padding:10px; text-align:center; font-weight:bold; color:#c62828; font-size:0.85rem;">${r.checkOut || '-'}</td>`;
+                    html += `<td style="padding:10px; text-align:center; font-weight:900; color:#1a237e; font-size:0.9rem;">${r.hours || '-'}</td>`;
+                    html += `<td style="padding:10px; text-align:center;"><span style="background:${color}20; color:${color}; padding:4px 10px; border-radius:20px; font-size:0.78rem; font-weight:bold; white-space:nowrap;">${r.status}</span></td>`;
+                    html += `<td style="padding:10px; text-align:center;"><button class="interactive-btn" onclick="openEditAttendanceModal('${empNameEscaped}','${dateStr}','${r.checkIn||''}','${r.checkOut||''}','${r.status||''}','${safeNotes}','${r.hours||''}')" style="background:linear-gradient(135deg,#ff9800,#ef6c00); color:white; border:none; padding:7px 12px; border-radius:8px; cursor:pointer; font-size:0.8rem; display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-pen"></i></button></td>`;
+                    html += '</tr>';
+                } else if (isFuture) {
+                    html += `<tr style="background:#fafafa; border-bottom:1px solid #eee; opacity:0.6;">`;
+                    html += `<td style="padding:10px; text-align:center; font-weight:bold; font-size:0.85rem; color:#bdbdbd;">${selectedEmp}</td>`;
+                    html += `<td style="padding:10px; text-align:center; font-size:0.85rem; color:#bdbdbd;">${dateStr}<br><span style="font-size:0.7rem;">${dayName}</span></td>`;
+                    html += `<td colspan="3" style="padding:10px; text-align:center; color:#bdbdbd; font-size:0.78rem;">لم يحن بعد</td>`;
+                    html += `<td style="padding:10px; text-align:center;"><span style="background:#e0e0e020;color:#bdbdbd;padding:3px 8px;border-radius:20px;font-size:0.72rem;">🔜</span></td>`;
+                    html += `<td style="padding:10px; text-align:center;">-</td>`;
+                    html += '</tr>';
+                } else {
+                    // Past day with no record -> غائب (Absent)
+                    html += `<tr style="background:#fff3f3; border-bottom:1px solid #ffcdd2;">`;
+                    html += `<td style="padding:10px; text-align:center; font-weight:bold; font-size:0.85rem;">${selectedEmp}</td>`;
+                    html += `<td style="padding:10px; text-align:center; font-size:0.85rem; color:#c62828;">${dateStr}<br><span style="font-size:0.7rem;">${dayName}</span></td>`;
+                    html += `<td colspan="3" style="padding:10px; text-align:center; color:#c62828; font-size:0.78rem; font-weight:bold;">غائب</td>`;
+                    html += `<td style="padding:10px; text-align:center;"><span style="background:#ef9a9a20;color:#c62828;padding:3px 8px;border-radius:20px;font-size:0.72rem;font-weight:bold;">❌ غائب</span></td>`;
+                    html += `<td style="padding:10px; text-align:center;"><button class="interactive-btn" onclick="openEditAttendanceModal('${empNameEscaped}','${dateStr}','','','غائب','','')" style="background:linear-gradient(135deg,#ff9800,#ef6c00); color:white; border:none; padding:7px 12px; border-radius:8px; cursor:pointer; font-size:0.8rem; display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-pen"></i></button></td>`;
+                    html += '</tr>';
+                }
+            }
+        }
+        html += '</tbody></table></div>';
     } else {
         // Employee View - Full Month Table (mobile-first)
         let monthInput = document.getElementById('hrEmpMonthFilter');
