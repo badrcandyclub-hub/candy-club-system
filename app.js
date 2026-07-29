@@ -8983,7 +8983,12 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
             if (records.length === 0) {
                 html += '<tr><td colspan="7" style="text-align:center; padding:20px;">لا توجد سجلات لهذا الشهر</td></tr>';
             } else {
-                [...records].reverse().forEach((r, idx) => {
+                let rowsPerPage = 25;
+                let reversedRecords = [...records].reverse();
+                
+                reversedRecords.forEach((r, idx) => {
+                    let pageNum = Math.floor(idx / rowsPerPage) + 1;
+                    let displayStyle = pageNum === 1 ? '' : 'display:none;';
                     let color = statusColors[r.status] || '#546e7a';
                     let bgRow = idx % 2 === 0 ? '#fff' : '#f8f9fa';
                     let rowBorder = '';
@@ -8993,7 +8998,7 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
                     }
                     let safeNotes = (r.notes || '').replace(/'/g, "\\'");
                     let empName = (r.employee || '').replace(/'/g, "\\'");
-                    html += `<tr style="background:${bgRow}; border-bottom:1px solid #e9ecef; ${rowBorder} transition:background 0.15s;" onmouseover="this.style.background='#e3f2fd'" onmouseout="this.style.background='${bgRow}'">`;
+                    html += `<tr class="admin-monthly-row page-${pageNum}" style="background:${bgRow}; border-bottom:1px solid #e9ecef; ${rowBorder} transition:background 0.15s; ${displayStyle}" onmouseover="this.style.background='#e3f2fd'" onmouseout="this.style.background='${bgRow}'">`;
                     html += `<td style="padding:10px; text-align:center; font-weight:bold; font-size:0.85rem;">${r.employee}</td>`;
                     html += `<td style="padding:10px; text-align:center; font-size:0.85rem; color:#546e7a;">${r.date}</td>`;
                     html += `<td style="padding:10px; text-align:center; font-weight:bold; color:#2e7d32; font-size:0.85rem;">${r.checkIn || '-'}</td>`;
@@ -9003,6 +9008,22 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
                     html += `<td style="padding:10px; text-align:center;"><button class="interactive-btn" onclick="openEditAttendanceModal('${empName}','${r.date}','${r.checkIn||''}','${r.checkOut||''}','${r.status||''}','${safeNotes}','${r.hours||''}')" style="background:linear-gradient(135deg,#ff9800,#ef6c00); color:white; border:none; padding:7px 12px; border-radius:8px; cursor:pointer; font-size:0.8rem; display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-pen"></i></button></td>`;
                     html += '</tr>';
                 });
+                
+                if (!window.changeAdminMonthlyPage) {
+                    window.changeAdminMonthlyPage = function(pageNum) {
+                        document.querySelectorAll('.admin-monthly-row').forEach(el => el.style.display = 'none');
+                        document.querySelectorAll('.admin-monthly-row.page-' + pageNum).forEach(el => el.style.display = '');
+                        document.querySelectorAll('.admin-monthly-page-btn').forEach(btn => {
+                            if (parseInt(btn.getAttribute('data-page')) === pageNum) {
+                                btn.style.background = '#1565c0';
+                                btn.style.color = '#fff';
+                            } else {
+                                btn.style.background = '#e0e0e0';
+                                btn.style.color = '#333';
+                            }
+                        });
+                    };
+                }
             }
         } else {
             // Single Employee Selected - Show Days 1 to 30
@@ -9076,6 +9097,19 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
             }
         }
         html += '</tbody></table></div>';
+        
+        if (selectedEmp === '' && records.length > 0) {
+            let totalPages = Math.ceil(records.length / 25);
+            if (totalPages > 1) {
+                html += '<div style="display:flex; justify-content:center; align-items:center; gap:5px; margin-top:15px; flex-wrap:wrap; padding: 10px; background: #f8f9fa; border-radius: 10px;">';
+                for (let p = 1; p <= totalPages; p++) {
+                    let btnBg = p === 1 ? '#1565c0' : '#e0e0e0';
+                    let btnColor = p === 1 ? '#fff' : '#333';
+                    html += `<button class="admin-monthly-page-btn" data-page="${p}" onclick="changeAdminMonthlyPage(${p})" style="background:${btnBg}; color:${btnColor}; border:none; padding:8px 14px; border-radius:6px; cursor:pointer; font-weight:bold; transition:all 0.2s; min-width:35px;">${p}</button>`;
+                }
+                html += '</div>';
+            }
+        }
     } else {
         // Employee View - Full Month Table (mobile-first)
         let monthInput = document.getElementById('hrEmpMonthFilter');
@@ -9562,23 +9596,43 @@ function exportAttendancePDF() {
             </div>
             `;
             
-            pdfContent.innerHTML = html;
-
-            if (typeof html2pdf !== 'undefined') {
-                html2pdf().set({
-                    margin: 15,
-                    filename: 'Monthly_Hours_Report_' + monthStr + '.pdf',
-                    html2canvas: { scale: 2, useCORS: true },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                }).from(pdfContent).save();
-                showToast('✅ تم تحميل التقرير المجمع بنجاح', 'success');
+            let printWindow = window.open('', '_blank', 'width=900,height=700');
+            if (printWindow) {
+                printWindow.document.write(`
+                    <html>
+                    <head>
+                        <title>تقرير الساعات - ${monthStr}</title>
+                        <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+                        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                        <style>
+                            body { margin: 0; padding: 20px; font-family: 'Cairo', sans-serif; direction: rtl; background: #fff; }
+                            @media print {
+                                body { padding: 0; }
+                                @page { size: A4 portrait; margin: 15mm; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        ${html}
+                        <script>
+                            window.onload = function() {
+                                setTimeout(function() {
+                                    window.print();
+                                }, 500);
+                            };
+                        </script>
+                    </body>
+                    </html>
+                `);
+                printWindow.document.close();
+                showToast('✅ تم فتح التقرير للطباعة', 'success');
             } else {
-                showToast('مكتبة PDF غير متوفرة', 'error');
+                showToast('❌ تم حظر النافذة المنبثقة، يرجى السماح بها', 'error');
             }
         })
         .catch(err => {
-            console.error('PDF error:', err);
-            showToast('حدث خطأ أثناء جلب البيانات', 'error');
+            console.error('Print error:', err);
+            showToast('حدث خطأ أثناء تحضير التقرير', 'error');
         });
 }
 
