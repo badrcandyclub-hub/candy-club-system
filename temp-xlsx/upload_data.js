@@ -63,7 +63,7 @@ files.forEach(file => {
                         checkOut: checkOut,
                         hours: finalHours,
                         status: status,
-                        notes: "تم الرفع من الإكسيل"
+                        notes: ""
                     });
                 }
             }
