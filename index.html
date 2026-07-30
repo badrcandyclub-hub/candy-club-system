@@ -2136,11 +2136,12 @@
                 <label style="display:block; font-size:0.85rem; font-weight:bold; color:#2e7d32; margin-bottom:6px;">
                     <i class="fa-solid fa-right-to-bracket"></i> وقت الحضور
                 </label>
-                <input type="time" id="editAttCheckIn" 
+                <input type="text" id="editAttCheckIn" 
                     style="width:100%; padding:12px; border:2px solid #e0e0e0; border-radius:10px; font-size:1.1rem; font-family:inherit; box-sizing:border-box; transition:border-color 0.2s;"
                     onfocus="this.style.borderColor='#2e7d32'"
                     onblur="this.style.borderColor='#e0e0e0'"
-                    onchange="calcEditHours()">
+                    onchange="calcEditHours()"
+                    placeholder="مثال: 10:00 AM">
             </div>
 
             <!-- CheckOut Time -->
@@ -2148,11 +2149,12 @@
                 <label style="display:block; font-size:0.85rem; font-weight:bold; color:#c62828; margin-bottom:6px;">
                     <i class="fa-solid fa-right-from-bracket"></i> وقت الانصراف
                 </label>
-                <input type="time" id="editAttCheckOut" 
+                <input type="text" id="editAttCheckOut" 
                     style="width:100%; padding:12px; border:2px solid #e0e0e0; border-radius:10px; font-size:1.1rem; font-family:inherit; box-sizing:border-box; transition:border-color 0.2s;"
                     onfocus="this.style.borderColor='#c62828'"
                     onblur="this.style.borderColor='#e0e0e0'"
-                    onchange="calcEditHours()">
+                    onchange="calcEditHours()"
+                    placeholder="مثال: 05:00 PM">
             </div>
 
             <!-- Auto-calculated Hours -->

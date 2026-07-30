@@ -8556,7 +8556,7 @@ loadDataFromServer = function(customDate = null) {
 // ============================================================
 const HR_BRANCH_LAT = 31.209774;
 const HR_BRANCH_LNG = 29.935520;
-const HR_RADIUS_METERS = 50;
+const HR_RADIUS_METERS = 100; // Geofencing radius
 let hrGpsWatchId = null;
 let hrIsInRange = false;
 let hrTodayStatus = null; // null, 'checkedIn', 'checkedOut'
@@ -9064,6 +9064,8 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
             html += '<th style="color:white;padding:12px 10px;text-align:center;font-size:0.85rem;">تعديل</th>';
             html += '</tr></thead><tbody>';
 
+            let singleEmpTotalHours = 0;
+            
             for (let i = 1; i <= daysInMonth; i++) {
                 let dateStr = yearMonth + '-' + String(i).padStart(2, '0');
                 let r = records.find(rec => rec.date === dateStr);
@@ -9086,6 +9088,24 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
                         rowBorder = 'border-right:3px solid #fbc02d;';
                     }
                     let safeNotes = (r.notes || '').replace(/'/g, "\\'");
+                    
+                    let hStr = String(r.hours || '').trim();
+                    let h = 0;
+                    if (hStr && hStr !== '-' && hStr !== '0' && hStr !== 'undefined') {
+                        let parts = hStr.split('ساعة');
+                        if (parts[0] && parts[0].includes(':')) {
+                            let timeParts = parts[0].split(':');
+                            h += parseFloat(timeParts[0]) || 0;
+                            h += (parseFloat(timeParts[1]) || 0) / 60;
+                        } else {
+                            let hMatch = hStr.match(/(\d+(?:\.\d+)?)\s*ساعة/);
+                            let mMatch = hStr.match(/(\d+(?:\.\d+)?)\s*دقيقة/);
+                            if (hMatch) h += parseFloat(hMatch[1]);
+                            else if (!isNaN(parseFloat(hStr))) h += parseFloat(hStr);
+                            if (mMatch) h += parseFloat(mMatch[1]) / 60;
+                        }
+                    }
+                    if (!isNaN(h)) singleEmpTotalHours += h;
 
                     let actualBg = isToday && r.status !== 'إجازة مدفوعة' ? '#e8f5e9' : bgRow;
                     html += `<tr style="background:${actualBg}; border-bottom:1px solid #eee; ${rowBorder} transition:background 0.15s;" onmouseover="this.style.background='#e3f2fd'" onmouseout="this.style.background='${actualBg}'">`;
@@ -9116,8 +9136,20 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
                     html += '</tr>';
                 }
             }
+            
+            let tHrs = Math.floor(singleEmpTotalHours);
+            let tMins = Math.round((singleEmpTotalHours - tHrs) * 60);
+            if (tMins === 60) { tHrs++; tMins = 0; }
+            let finalHoursStr = `${tHrs}:${String(tMins).padStart(2,'0')}`;
+            
+            html += '</tbody>';
+            html += '<tfoot>';
+            html += `<tr style="background:#e3f2fd; border-top:2px solid #1565c0;">`;
+            html += `<td colspan="4" style="padding:15px; text-align:left; font-weight:bold; font-size:1.1rem; color:#1565c0;">إجمالي ساعات العمل خلال الشهر:</td>`;
+            html += `<td colspan="3" style="padding:15px; text-align:right; font-weight:900; color:#1a237e; font-size:1.2rem;" dir="ltr">${finalHoursStr} ساعة</td>`;
+            html += `</tr>`;
+            html += '</tfoot></table></div>';
         }
-        html += '</tbody></table></div>';
         
         if (selectedEmp === '' && records.length > 0) {
             let [y, m] = yearMonth.split('-');
@@ -9243,21 +9275,9 @@ window.openEditAttendanceModal = function(employee, date, checkIn, checkOut, sta
     let sub = document.getElementById('editAttModalSubtitle');
     if (sub) sub.textContent = `${employee} — ${date}`;
 
-    // Convert 12h to 24h for time input
-    function to24h(t) {
-        if (!t || t === '-') return '';
-        try {
-            let [time, period] = t.split(' ');
-            if (!period) return t.length === 5 ? t : '';
-            let [hh, mm] = time.split(':').map(Number);
-            if (period === 'PM' && hh !== 12) hh += 12;
-            if (period === 'AM' && hh === 12) hh = 0;
-            return String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0');
-        } catch(e) { return ''; }
-    }
-
-    document.getElementById('editAttCheckIn').value = to24h(checkIn);
-    document.getElementById('editAttCheckOut').value = to24h(checkOut);
+    // We no longer convert to 24h since inputs are text and can accept any string like 10:00 AM
+    document.getElementById('editAttCheckIn').value = (!checkIn || checkIn === '-') ? '' : checkIn;
+    document.getElementById('editAttCheckOut').value = (!checkOut || checkOut === '-') ? '' : checkOut;
     
     let notesEl = document.getElementById('editAttNotes');
     if (notesEl) notesEl.value = notes || '';
@@ -9335,17 +9355,35 @@ window.calcEditHours = function() {
     if (!preview || !text) return;
 
     if (inVal && outVal) {
-        let [ih, im] = inVal.split(':').map(Number);
-        let [oh, om] = outVal.split(':').map(Number);
-        let totalMin = (oh * 60 + om) - (ih * 60 + im);
-        if (totalMin < 0) totalMin += 24 * 60;
-        let h = Math.floor(totalMin / 60);
-        let min = totalMin % 60;
-        text.textContent = h + ' ساعة' + (min > 0 ? ' و ' + min + ' دقيقة' : '');
-        preview.style.display = 'flex';
-    } else {
-        preview.style.display = 'none';
+        try {
+            let ih = 0, im = 0, oh = 0, om = 0;
+            let inMatch = inVal.match(/(\d+):(\d+)/);
+            let outMatch = outVal.match(/(\d+):(\d+)/);
+            
+            if (inMatch && outMatch) {
+                ih = parseInt(inMatch[1]); im = parseInt(inMatch[2]);
+                if (inVal.toLowerCase().includes('pm') && ih !== 12) ih += 12;
+                if (inVal.toLowerCase().includes('am') && ih === 12) ih = 0;
+
+                oh = parseInt(outMatch[1]); om = parseInt(outMatch[2]);
+                if (outVal.toLowerCase().includes('pm') && oh !== 12) oh += 12;
+                if (outVal.toLowerCase().includes('am') && oh === 12) oh = 0;
+
+                let totalMin = (oh * 60 + om) - (ih * 60 + im);
+                if (totalMin < 0) totalMin += 24 * 60;
+                let h = Math.floor(totalMin / 60);
+                let min = totalMin % 60;
+                
+                if (!isNaN(h) && !isNaN(min)) {
+                    text.textContent = h + ' ساعة' + (min > 0 ? ' و ' + min + ' دقيقة' : '');
+                    preview.style.display = 'flex';
+                    return;
+                }
+            }
+        } catch(e) {}
     }
+    
+    preview.style.display = 'none';
 };
 
 window.saveAttendanceEdit = function() {
@@ -9353,17 +9391,8 @@ window.saveAttendanceEdit = function() {
     let originalHtml = btn ? btn.innerHTML : '';
     if (btn) { btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الحفظ...'; btn.disabled = true; }
 
-    // Convert 24h to 12h AM/PM
-    function to12h(t) {
-        if (!t) return '';
-        let [hh, mm] = t.split(':').map(Number);
-        let period = hh >= 12 ? 'PM' : 'AM';
-        let h12 = hh % 12 || 12;
-        return String(h12).padStart(2,'0') + ':' + String(mm).padStart(2,'0') + ' ' + period;
-    }
-
-    let checkIn24 = document.getElementById('editAttCheckIn').value;
-    let checkOut24 = document.getElementById('editAttCheckOut').value;
+    let checkInVal = document.getElementById('editAttCheckIn').value;
+    let checkOutVal = document.getElementById('editAttCheckOut').value;
     let status = document.getElementById('editAttStatus').value;
     let notes = document.getElementById('editAttNotes').value;
     let manualHours = document.getElementById('editAttManualHours').value;
@@ -9372,8 +9401,8 @@ window.saveAttendanceEdit = function() {
     formData.append('action', 'editAttendance');
     formData.append('employeeName', _editAttData.employee);
     formData.append('date', _editAttData.date);
-    formData.append('checkIn', checkIn24 ? to12h(checkIn24) : '');
-    formData.append('checkOut', checkOut24 ? to12h(checkOut24) : '');
+    formData.append('checkIn', checkInVal);
+    formData.append('checkOut', checkOutVal);
     formData.append('status', status);
     formData.append('notes', notes);
     formData.append('hoursOverride', manualHours);
@@ -9519,15 +9548,18 @@ function handleAdminAddLeave() {
 
 function exportAttendancePDF() {
     let monthInput = document.getElementById('hrAdminMonthlyMonthFilter');
+    let empInput = document.getElementById('hrAdminMonthlyEmployeeFilter');
     let monthStr = monthInput ? monthInput.value : '';
+    let empStr = empInput ? empInput.value : '';
+
     if (!monthStr) {
         showToast('يرجى اختيار شهر التقرير من قسم السجل الشهري أولاً', 'warning');
         return;
     }
 
-    showToast('⏳ جاري تحضير التقرير المجمع، يرجى الانتظار...', 'info');
+    showToast('⏳ جاري تحضير التقرير، يرجى الانتظار...', 'info');
 
-    fetch(GOOGLE_SHEETS_URL + '?action=getAttendance&month=' + monthStr)
+    fetch(GOOGLE_SHEETS_URL + '?action=getAttendance&employee=' + encodeURIComponent(empStr) + '&month=' + monthStr)
         .then(r => r.json())
         .then(data => {
             let records = data.attendance || [];
@@ -9536,85 +9568,184 @@ function exportAttendancePDF() {
                 return;
             }
 
-            // Group by employee and calculate total hours
-            let employeeTotals = {};
-            records.forEach(r => {
-                if (!employeeTotals[r.employee]) {
-                    employeeTotals[r.employee] = 0;
-                }
+            let html = '';
+            
+            if (empStr !== '') {
+                // Single Employee Detailed Report
+                html += `
+                <div style="text-align:center; margin-bottom:30px;">
+                    <h1 style="color:#1a237e; font-size:2.2rem; margin:0; margin-bottom:10px;">تقرير الحضور الشهري المفصل</h1>
+                    <h3 style="color:#ff9800; font-size:1.4rem; margin:0; margin-bottom:15px;">Candy Club - كاندي كلوب</h3>
+                    <div style="display:inline-block; background:linear-gradient(135deg,#e3f2fd,#bbdefb); padding:10px 25px; border-radius:30px; color:#1565c0; font-weight:bold; font-size:1.1rem; border:2px solid #90caf9; margin-bottom:10px;">
+                        <i class="fa-solid fa-calendar-days"></i> شهر التقرير: <span dir="ltr">${monthStr}</span>
+                    </div>
+                    <div style="font-size:1.4rem; font-weight:bold; color:#2e7d32;">
+                        👤 الموظف: ${empStr}
+                    </div>
+                </div>
+                <hr style="border:none; border-top:3px dashed #e0e0e0; margin-bottom:30px;">
+                `;
+
+                let [y, m] = monthStr.split('-');
+                let daysInMonth = new Date(y, m, 0).getDate();
+                let today = new Date();
+                today.setHours(0,0,0,0);
+                let dayNames = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+
+                html += '<table style="width:100%; border-collapse:separate; border-spacing:0; text-align:center; font-size:1.1rem; border-radius:12px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.1);">';
+                html += '<thead><tr style="background:linear-gradient(135deg,#1565c0,#1a237e); color:white;">';
+                html += '<th style="padding:15px; font-size:1.1rem; border-bottom:3px solid #0d47a1;">التاريخ</th>';
+                html += '<th style="padding:15px; font-size:1.1rem; border-bottom:3px solid #0d47a1;">الحضور</th>';
+                html += '<th style="padding:15px; font-size:1.1rem; border-bottom:3px solid #0d47a1;">الانصراف</th>';
+                html += '<th style="padding:15px; font-size:1.1rem; border-bottom:3px solid #0d47a1;">الساعات</th>';
+                html += '<th style="padding:15px; font-size:1.1rem; border-bottom:3px solid #0d47a1;">الحالة</th>';
+                html += '</tr></thead><tbody>';
+
+                let singleEmpTotalHours = 0;
                 
-                let hStr = String(r.hours || '').trim();
-                let h = 0;
-                if (hStr && hStr !== '-' && hStr !== '0' && hStr !== 'undefined') {
-                    // Try parsing 8:20 ساعة format
-                    let parts = hStr.split('ساعة');
-                    if (parts[0] && parts[0].includes(':')) {
-                        let timeParts = parts[0].split(':');
-                        h += parseFloat(timeParts[0]) || 0;
-                        h += (parseFloat(timeParts[1]) || 0) / 60;
+                for (let i = 1; i <= daysInMonth; i++) {
+                    let dateStr = monthStr + '-' + String(i).padStart(2, '0');
+                    let r = records.find(rec => rec.date === dateStr);
+                    let loopDate = new Date(dateStr + 'T00:00:00');
+                    let dayName = dayNames[loopDate.getDay()];
+                    let isFuture = loopDate > today;
+                    let isToday = loopDate.toLocaleDateString('en-CA') === today.toLocaleDateString('en-CA');
+                    
+                    let bgRow = i % 2 === 0 ? '#ffffff' : '#f8f9fa';
+                    if (isToday) bgRow = '#e8f5e9';
+
+                    if (r) {
+                        let rowBorder = '';
+                        if (r.status === 'إجازة مدفوعة' && r.requestStatus !== 'بانتظار الموافقة' && r.requestStatus !== '❌ مرفوضة') {
+                            bgRow = '#fffde7';
+                        }
+                        
+                        let hStr = String(r.hours || '').trim();
+                        let h = 0;
+                        if (hStr && hStr !== '-' && hStr !== '0' && hStr !== 'undefined') {
+                            let parts = hStr.split('ساعة');
+                            if (parts[0] && parts[0].includes(':')) {
+                                let timeParts = parts[0].split(':');
+                                h += parseFloat(timeParts[0]) || 0;
+                                h += (parseFloat(timeParts[1]) || 0) / 60;
+                            } else {
+                                let hMatch = hStr.match(/(\d+(?:\.\d+)?)\s*ساعة/);
+                                let mMatch = hStr.match(/(\d+(?:\.\d+)?)\s*دقيقة/);
+                                if (hMatch) h += parseFloat(hMatch[1]);
+                                else if (!isNaN(parseFloat(hStr))) h += parseFloat(hStr);
+                                if (mMatch) h += parseFloat(mMatch[1]) / 60;
+                            }
+                        }
+                        if (!isNaN(h)) singleEmpTotalHours += h;
+
+                        html += `<tr style="background:${bgRow};">`;
+                        html += `<td style="padding:12px; border-bottom:1px solid #eee;">${dateStr}<br><span style="font-size:0.8rem; color:#757575;">${dayName}</span></td>`;
+                        html += `<td style="padding:12px; border-bottom:1px solid #eee; font-weight:bold; color:#2e7d32;">${r.checkIn || '-'}</td>`;
+                        html += `<td style="padding:12px; border-bottom:1px solid #eee; font-weight:bold; color:#c62828;">${r.checkOut || '-'}</td>`;
+                        html += `<td style="padding:12px; border-bottom:1px solid #eee; font-weight:900; color:#1a237e;">${r.hours || '-'}</td>`;
+                        html += `<td style="padding:12px; border-bottom:1px solid #eee; font-weight:bold;">${r.status}</td>`;
+                        html += '</tr>';
+                    } else if (isFuture) {
+                        html += `<tr style="background:#fafafa; opacity:0.6;">`;
+                        html += `<td style="padding:12px; border-bottom:1px solid #eee; color:#bdbdbd;">${dateStr}<br><span style="font-size:0.8rem;">${dayName}</span></td>`;
+                        html += `<td colspan="3" style="padding:12px; border-bottom:1px solid #eee; color:#bdbdbd;">لم يحن بعد</td>`;
+                        html += `<td style="padding:12px; border-bottom:1px solid #eee; color:#bdbdbd;">🔜</td>`;
+                        html += '</tr>';
                     } else {
-                        let hMatch = hStr.match(/(\d+(?:\.\d+)?)\s*ساعة/);
-                        let mMatch = hStr.match(/(\d+(?:\.\d+)?)\s*دقيقة/);
-                        if (hMatch) {
-                            h += parseFloat(hMatch[1]);
-                        } else if (!isNaN(parseFloat(hStr))) {
-                            h += parseFloat(hStr);
-                        }
-                        if (mMatch) {
-                            h += parseFloat(mMatch[1]) / 60;
-                        }
+                        html += `<tr style="background:#fff3f3;">`;
+                        html += `<td style="padding:12px; border-bottom:1px solid #eee; color:#c62828;">${dateStr}<br><span style="font-size:0.8rem;">${dayName}</span></td>`;
+                        html += `<td colspan="3" style="padding:12px; border-bottom:1px solid #eee; color:#c62828; font-weight:bold;">غائب</td>`;
+                        html += `<td style="padding:12px; border-bottom:1px solid #eee; color:#c62828; font-weight:bold;">❌ غائب</td>`;
+                        html += '</tr>';
                     }
                 }
-                if (!isNaN(h)) {
-                    employeeTotals[r.employee] += h;
-                }
-            });
-
-            let pdfContent = document.createElement('div');
-            pdfContent.style.direction = 'rtl';
-            pdfContent.style.fontFamily = 'Cairo, sans-serif';
-            pdfContent.style.padding = '40px';
-            pdfContent.style.background = '#ffffff';
-
-            let html = `
-            <div style="text-align:center; margin-bottom:30px;">
-                <h1 style="color:#1a237e; font-size:2.2rem; margin:0; margin-bottom:10px;">تقرير الساعات الشهري المجمع</h1>
-                <h3 style="color:#ff9800; font-size:1.4rem; margin:0; margin-bottom:15px;">Candy Club - كاندي كلوب</h3>
-                <div style="display:inline-block; background:linear-gradient(135deg,#e3f2fd,#bbdefb); padding:10px 25px; border-radius:30px; color:#1565c0; font-weight:bold; font-size:1.1rem; border:2px solid #90caf9;">
-                    <i class="fa-solid fa-calendar-days"></i> شهر التقرير: <span dir="ltr">${monthStr}</span>
-                </div>
-            </div>
-            <hr style="border:none; border-top:3px dashed #e0e0e0; margin-bottom:30px;">
-            `;
-
-            html += '<table style="width:100%; border-collapse:separate; border-spacing:0; text-align:center; font-size:1.1rem; border-radius:12px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.1);">';
-            html += '<tr style="background:linear-gradient(135deg,#1565c0,#1a237e); color:white;">';
-            html += '<th style="padding:15px; font-size:1.2rem; border-bottom:3px solid #0d47a1;">👤 اسم الموظف</th>';
-            html += '<th style="padding:15px; font-size:1.2rem; border-bottom:3px solid #0d47a1;">⏱️ إجمالي ساعات العمل</th>';
-            html += '</tr>';
-
-            let count = 0;
-            for (const [emp, totalH] of Object.entries(employeeTotals)) {
-                let bgRow = count % 2 === 0 ? '#ffffff' : '#f8f9fa';
                 
-                // Format totalH to HH:MM format
-                let tHrs = Math.floor(totalH);
-                let tMins = Math.round((totalH - tHrs) * 60);
+                let tHrs = Math.floor(singleEmpTotalHours);
+                let tMins = Math.round((singleEmpTotalHours - tHrs) * 60);
                 if (tMins === 60) { tHrs++; tMins = 0; }
                 let finalHoursStr = `${tHrs}:${String(tMins).padStart(2,'0')}`;
                 
-                html += `<tr style="background:${bgRow};">`;
-                html += `<td style="padding:15px; font-weight:bold; color:#333; border-bottom:1px solid #eee;">${emp}</td>`;
-                html += `<td style="padding:15px; font-weight:900; color:#2e7d32; font-size:1.2rem; border-bottom:1px solid #eee;" dir="ltr">${finalHoursStr}</td>`;
+                html += '</tbody>';
+                html += '<tfoot>';
+                html += `<tr style="background:#e3f2fd; border-top:2px solid #1565c0;">`;
+                html += `<td colspan="3" style="padding:15px; text-align:left; font-weight:bold; font-size:1.2rem; color:#1565c0;">إجمالي الساعات:</td>`;
+                html += `<td colspan="2" style="padding:15px; text-align:right; font-weight:900; color:#1a237e; font-size:1.3rem;" dir="ltr">${finalHoursStr} ساعة</td>`;
+                html += `</tr>`;
+                html += '</tfoot></table>';
+                
+            } else {
+                // All Employees Summary Report
+                let employeeTotals = {};
+                records.forEach(r => {
+                    if (!employeeTotals[r.employee]) {
+                        employeeTotals[r.employee] = 0;
+                    }
+                    
+                    let hStr = String(r.hours || '').trim();
+                    let h = 0;
+                    if (hStr && hStr !== '-' && hStr !== '0' && hStr !== 'undefined') {
+                        let parts = hStr.split('ساعة');
+                        if (parts[0] && parts[0].includes(':')) {
+                            let timeParts = parts[0].split(':');
+                            h += parseFloat(timeParts[0]) || 0;
+                            h += (parseFloat(timeParts[1]) || 0) / 60;
+                        } else {
+                            let hMatch = hStr.match(/(\d+(?:\.\d+)?)\s*ساعة/);
+                            let mMatch = hStr.match(/(\d+(?:\.\d+)?)\s*دقيقة/);
+                            if (hMatch) h += parseFloat(hMatch[1]);
+                            else if (!isNaN(parseFloat(hStr))) h += parseFloat(hStr);
+                            if (mMatch) h += parseFloat(mMatch[1]) / 60;
+                        }
+                    }
+                    if (!isNaN(h)) {
+                        employeeTotals[r.employee] += h;
+                    }
+                });
+
+                html += `
+                <div style="text-align:center; margin-bottom:30px;">
+                    <h1 style="color:#1a237e; font-size:2.2rem; margin:0; margin-bottom:10px;">تقرير الساعات الشهري المجمع</h1>
+                    <h3 style="color:#ff9800; font-size:1.4rem; margin:0; margin-bottom:15px;">Candy Club - كاندي كلوب</h3>
+                    <div style="display:inline-block; background:linear-gradient(135deg,#e3f2fd,#bbdefb); padding:10px 25px; border-radius:30px; color:#1565c0; font-weight:bold; font-size:1.1rem; border:2px solid #90caf9;">
+                        <i class="fa-solid fa-calendar-days"></i> شهر التقرير: <span dir="ltr">${monthStr}</span>
+                    </div>
+                </div>
+                <hr style="border:none; border-top:3px dashed #e0e0e0; margin-bottom:30px;">
+                `;
+
+                html += '<table style="width:100%; border-collapse:separate; border-spacing:0; text-align:center; font-size:1.1rem; border-radius:12px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.1);">';
+                html += '<tr style="background:linear-gradient(135deg,#1565c0,#1a237e); color:white;">';
+                html += '<th style="padding:15px; font-size:1.2rem; border-bottom:3px solid #0d47a1;">👤 اسم الموظف</th>';
+                html += '<th style="padding:15px; font-size:1.2rem; border-bottom:3px solid #0d47a1;">⏱️ إجمالي ساعات العمل</th>';
                 html += '</tr>';
-                count++;
+
+                let count = 0;
+                for (const [emp, totalH] of Object.entries(employeeTotals)) {
+                    let bgRow = count % 2 === 0 ? '#ffffff' : '#f8f9fa';
+                    
+                    let tHrs = Math.floor(totalH);
+                    let tMins = Math.round((totalH - tHrs) * 60);
+                    if (tMins === 60) { tHrs++; tMins = 0; }
+                    let finalHoursStr = `${tHrs}:${String(tMins).padStart(2,'0')}`;
+                    
+                    html += `<tr style="background:${bgRow};">`;
+                    html += `<td style="padding:15px; font-weight:bold; color:#333; border-bottom:1px solid #eee;">${emp}</td>`;
+                    html += `<td style="padding:15px; font-weight:900; color:#2e7d32; font-size:1.2rem; border-bottom:1px solid #eee;" dir="ltr">${finalHoursStr}</td>`;
+                    html += '</tr>';
+                    count++;
+                }
+                html += '</table>';
+                
+                html += `
+                <div style="margin-top:40px; text-align:center; font-size:0.9rem; color:#9e9e9e;">
+                    <p>عدد الموظفين في التقرير: ${count} موظف</p>
+                </div>
+                `;
             }
-            html += '</table>';
-            
+
             html += `
-            <div style="margin-top:40px; text-align:center; font-size:0.9rem; color:#9e9e9e;">
+            <div style="margin-top:15px; text-align:center; font-size:0.9rem; color:#9e9e9e;">
                 <p>تم استخراج هذا التقرير تلقائياً بواسطة نظام Candy Club.</p>
-                <p>عدد الموظفين في التقرير: ${count} موظف</p>
             </div>
             `;
             
