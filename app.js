@@ -9397,7 +9397,7 @@ window.openEditAttendanceModal = function(employee, date, checkIn, checkOut, sta
     let hoursEl = document.getElementById('editAttManualHours');
     if (hoursEl) {
         if (hoursStr) {
-            hoursEl.value = hoursStr.replace(' ساعة', '').trim();
+            hoursEl.value = formatHoursDisplay(hoursStr);
         } else {
             hoursEl.value = '';
         }
