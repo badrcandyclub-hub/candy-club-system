@@ -8868,12 +8868,8 @@ function loadMyAttendance() {
                         <div style="font-size:1.6rem; font-weight:900; color:#e65100;">${paidLeaves}</div>
                         <div style="font-size:0.78rem; color:#ef6c00; font-weight:bold;">🏖️ إجازات مدفوعة</div>
                     </div>
-                    <div style="background:linear-gradient(135deg,#fce4ec,#f8bbd0); border-radius:12px; padding:14px; text-align:center; border:1px solid #f48fb1;">
-                        <div style="font-size:1.6rem; font-weight:900; color:#880e4f;">${unpaidLeaves}</div>
-                        <div style="font-size:0.78rem; color:#c62828; font-weight:bold;">📋 بدون راتب</div>
-                    </div>
                     <div style="background:linear-gradient(135deg,#ffebee,#ffcdd2); border-radius:12px; padding:14px; text-align:center; border:1px solid #ef9a9a;">
-                        <div style="font-size:1.6rem; font-weight:900; color:#b71c1c;">${absences}</div>
+                        <div style="font-size:1.6rem; font-weight:900; color:#b71c1c;">${unpaidLeaves + absences}</div>
                         <div style="font-size:0.78rem; color:#c62828; font-weight:bold;">❌ غياب</div>
                     </div>
                 `;
@@ -9120,12 +9116,8 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
                         <div style="font-size:1.6rem; font-weight:900; color:#e65100;">${adminPaidLeaves}</div>
                         <div style="font-size:0.78rem; color:#ef6c00; font-weight:bold;">🏖️ إجازات مدفوعة</div>
                     </div>
-                    <div style="background:linear-gradient(135deg,#fce4ec,#f8bbd0); border-radius:12px; padding:14px; text-align:center; border:1px solid #f48fb1;">
-                        <div style="font-size:1.6rem; font-weight:900; color:#880e4f;">${adminUnpaidLeaves}</div>
-                        <div style="font-size:0.78rem; color:#c62828; font-weight:bold;">📋 بدون راتب</div>
-                    </div>
                     <div style="background:linear-gradient(135deg,#ffebee,#ffcdd2); border-radius:12px; padding:14px; text-align:center; border:1px solid #ef9a9a;">
-                        <div style="font-size:1.6rem; font-weight:900; color:#b71c1c;">${adminAbsences}</div>
+                        <div style="font-size:1.6rem; font-weight:900; color:#b71c1c;">${adminUnpaidLeaves + adminAbsences}</div>
                         <div style="font-size:0.78rem; color:#c62828; font-weight:bold;">❌ غياب</div>
                     </div>
                 </div>
