@@ -8838,7 +8838,22 @@ function loadMyAttendance() {
             if (thMins === 60) { thHours++; thMins = 0; }
             let formattedTotalHours = thHours + ":" + thMins.toString().padStart(2, '0');
             
-            let absences = myRecords.filter(r => r.status === 'غائب').length;
+            let [statYear, statMonth] = month.split('-');
+            let statDaysInMonth = new Date(statYear, statMonth, 0).getDate();
+            let statToday = new Date();
+            statToday.setHours(0,0,0,0);
+            
+            let absences = 0;
+            for (let i = 1; i <= statDaysInMonth; i++) {
+                let dStr = month + '-' + String(i).padStart(2, '0');
+                let rec = myRecords.find(r => r.date === dStr);
+                let lDate = new Date(dStr + 'T00:00:00');
+                if (rec) {
+                    if (rec.status === 'غائب') absences++;
+                } else if (lDate <= statToday) {
+                    absences++;
+                }
+            }
 
             // Update top stat cards
             let el = document.getElementById('hrMonthDays');
@@ -9072,30 +9087,37 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
             let adminAbsences = 0;
             let adminTotalHours = 0;
             
-            records.forEach(r => {
-                if (r.status === 'حاضر') adminPresentDays++;
-                if (r.status === 'غائب') adminAbsences++;
-                if (r.status === 'إجازة مدفوعة' && r.requestStatus !== 'بانتظار الموافقة' && r.requestStatus !== '❌ مرفوضة') adminPaidLeaves++;
-                if (r.status === 'إجازة بدون مرتب' && r.requestStatus !== 'بانتظار الموافقة' && r.requestStatus !== '❌ مرفوضة') adminUnpaidLeaves++;
-                
-                let hStr = String(r.hours || '').trim();
-                let h = 0;
-                if (hStr && hStr !== '-' && hStr !== '0' && hStr !== 'undefined') {
-                    let parts = hStr.split('ساعة');
-                    if (parts[0] && parts[0].includes(':')) {
-                        let timeParts = parts[0].split(':');
-                        h += parseFloat(timeParts[0]) || 0;
-                        h += (parseFloat(timeParts[1]) || 0) / 60;
-                    } else {
-                        let hMatch = hStr.match(/(\d+(?:\.\d+)?)\s*ساعة/);
-                        let mMatch = hStr.match(/(\d+(?:\.\d+)?)\s*دقيقة/);
-                        if (hMatch) h += parseFloat(hMatch[1]);
-                        else if (!isNaN(parseFloat(hStr))) h += parseFloat(hStr);
-                        if (mMatch) h += parseFloat(mMatch[1]) / 60;
+            for (let i = 1; i <= daysInMonth; i++) {
+                let dStr = yearMonth + '-' + String(i).padStart(2, '0');
+                let r = records.find(rec => rec.date === dStr);
+                let lDate = new Date(dStr + 'T00:00:00');
+                if (r) {
+                    if (r.status === 'حاضر') adminPresentDays++;
+                    if (r.status === 'غائب') adminAbsences++;
+                    if (r.status === 'إجازة مدفوعة' && r.requestStatus !== 'بانتظار الموافقة' && r.requestStatus !== '❌ مرفوضة') adminPaidLeaves++;
+                    if (r.status === 'إجازة بدون مرتب' && r.requestStatus !== 'بانتظار الموافقة' && r.requestStatus !== '❌ مرفوضة') adminUnpaidLeaves++;
+                    
+                    let hStr = String(r.hours || '').trim();
+                    let h = 0;
+                    if (hStr && hStr !== '-' && hStr !== '0' && hStr !== 'undefined') {
+                        let parts = hStr.split('ساعة');
+                        if (parts[0] && parts[0].includes(':')) {
+                            let timeParts = parts[0].split(':');
+                            h += parseFloat(timeParts[0]) || 0;
+                            h += (parseFloat(timeParts[1]) || 0) / 60;
+                        } else {
+                            let hMatch = hStr.match(/(\d+(?:\.\d+)?)\s*ساعة/);
+                            let mMatch = hStr.match(/(\d+(?:\.\d+)?)\s*دقيقة/);
+                            if (hMatch) h += parseFloat(hMatch[1]);
+                            else if (!isNaN(parseFloat(hStr))) h += parseFloat(hStr);
+                            if (mMatch) h += parseFloat(mMatch[1]) / 60;
+                        }
                     }
+                    if (!isNaN(h)) adminTotalHours += h;
+                } else if (lDate <= today) {
+                    adminAbsences++;
                 }
-                if (!isNaN(h)) adminTotalHours += h;
-            });
+            }
             
             let adminTHrs = Math.floor(adminTotalHours);
             let adminTMins = Math.round((adminTotalHours - adminTHrs) * 60);
