@@ -4,6 +4,35 @@
 
 const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbwi24io7fKY7nizjIutPBpQvZHBx1O28_hu91QVcdF7PLFqTJ48dNJqFPdbqRuGDKI3Uw/exec";
 
+function formatHoursDisplay(hStr) {
+    if (!hStr || hStr === '-') return '-';
+    hStr = String(hStr).trim();
+    if (hStr.includes(':')) return hStr.replace('ساعة', '').trim();
+    
+    let h = 0;
+    let hMatch = hStr.match(/(\d+(?:\.\d+)?)\s*ساعة/);
+    let mMatch = hStr.match(/(\d+(?:\.\d+)?)\s*دقيقة/);
+    
+    if (hMatch) {
+        h += parseFloat(hMatch[1]);
+    } else if (!isNaN(parseFloat(hStr))) {
+        h += parseFloat(hStr);
+    }
+    
+    if (mMatch) {
+        h += parseFloat(mMatch[1]) / 60;
+    }
+    
+    if (h === 0 && !hStr.includes('0')) return hStr; // Fallback to original text if couldn't parse
+    
+    let tHrs = Math.floor(h);
+    let tMins = Math.round((h - tHrs) * 60);
+    if (tMins === 60) { tHrs++; tMins = 0; }
+    
+    return tHrs + ":" + String(tMins).padStart(2, '0');
+}
+
+
 // ⭐ V16: متغير المستخدم الحالي
 let currentUser = null;
 
@@ -8789,7 +8818,7 @@ function loadMyAttendance() {
     if (historyEl) { historyEl.innerHTML = ''; }
     if (bannerEl) { bannerEl.style.display = 'none'; }
 
-    fetch(GOOGLE_SHEETS_URL + '?action=getAttendance&employee=' + encodeURIComponent(empFilter) + '&month=' + month)
+    fetch(GOOGLE_SHEETS_URL + '?action=getAttendance&employee=' + encodeURIComponent(empFilter) + '&month=' + month + '&t=' + new Date().getTime())
         .then(r => r.json())
         .then(data => {
             if (loadingEl) loadingEl.style.display = 'none';
@@ -8898,7 +8927,7 @@ function loadMyAttendance() {
                 if (todayRec.checkOut && todayRec.checkOut !== '-' && todayRec.checkOut !== '') {
                     hrTodayStatus = 'checkedOut';
                     let hEl = document.getElementById('hrTodayHours');
-                    if (hEl) hEl.innerText = todayRec.hours.replace(' ساعة', '');
+                    if (hEl) hEl.innerText = formatHoursDisplay(todayRec.hours);
                 } else if (todayRec.status === 'حاضر') {
                     hrTodayStatus = 'checkedIn';
                 }
@@ -9300,7 +9329,7 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
 
                     let inVal = isPaidLeave || isUnpaidLeave ? '-' : (r.checkIn || '-');
                     let outVal = isPaidLeave || isUnpaidLeave ? '-' : (r.checkOut || '-');
-                    let hrsVal = r.hours || '-';
+                    let hrsVal = formatHoursDisplay(r.hours);
 
                     let statusBadge = '';
                     if (isPaidLeave) statusBadge = '<span style="background:#fbc02d20;color:#f57f17;padding:3px 8px;border-radius:20px;font-size:0.72rem;font-weight:bold;">🏖️ إجازة مدفوعة</span>';
@@ -9560,7 +9589,7 @@ function loadAdminDailyAttendance() {
     let tableEl = document.getElementById('hrAdminDailyAttendanceTable');
     if (tableEl) tableEl.innerHTML = '<div style="text-align:center; padding:20px;"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p>جاري تحميل الحضور اليومي...</p></div>';
 
-    fetch(GOOGLE_SHEETS_URL + '?action=getAttendance&employee=&exactDate=' + exactDate)
+    fetch(GOOGLE_SHEETS_URL + '?action=getAttendance&employee=&exactDate=' + exactDate + '&t=' + new Date().getTime())
         .then(r => r.json())
         .then(data => {
             renderAttendanceTable(data.attendance || [], tableEl, true, false); // true for isAdminView, false for isMonthly
@@ -9585,7 +9614,7 @@ function loadAdminMonthlyAttendance() {
     let tableEl = document.getElementById('hrAdminMonthlyAttendanceTable');
     if (tableEl) tableEl.innerHTML = '<div style="text-align:center; padding:20px;"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p>جاري تحميل السجل الشهري...</p></div>';
 
-    fetch(GOOGLE_SHEETS_URL + '?action=getAttendance&employee=' + encodeURIComponent(emp) + '&month=' + month)
+    fetch(GOOGLE_SHEETS_URL + '?action=getAttendance&employee=' + encodeURIComponent(emp) + '&month=' + month + '&t=' + new Date().getTime())
         .then(r => r.json())
         .then(data => {
             renderAttendanceTable(data.attendance || [], tableEl, true, true); // true for isAdminView, true for isMonthly
@@ -9639,7 +9668,7 @@ function exportAttendancePDF() {
 
     showToast('⏳ جاري تحضير التقرير، يرجى الانتظار...', 'info');
 
-    fetch(GOOGLE_SHEETS_URL + '?action=getAttendance&employee=' + encodeURIComponent(empStr) + '&month=' + monthStr)
+    fetch(GOOGLE_SHEETS_URL + '?action=getAttendance&employee=' + encodeURIComponent(empStr) + '&month=' + monthStr + '&t=' + new Date().getTime())
         .then(r => r.json())
         .then(data => {
             let records = data.attendance || [];
@@ -9722,7 +9751,7 @@ function exportAttendancePDF() {
                         html += `<td style="padding:12px; border-bottom:1px solid #eee;">${dateStr}<br><span style="font-size:0.8rem; color:#757575;">${dayName}</span></td>`;
                         html += `<td style="padding:12px; border-bottom:1px solid #eee; font-weight:bold; color:#2e7d32;">${r.checkIn || '-'}</td>`;
                         html += `<td style="padding:12px; border-bottom:1px solid #eee; font-weight:bold; color:#c62828;">${r.checkOut || '-'}</td>`;
-                        html += `<td style="padding:12px; border-bottom:1px solid #eee; font-weight:900; color:#1a237e;">${r.hours || '-'}</td>`;
+                        html += `<td style="padding:12px; border-bottom:1px solid #eee; font-weight:900; color:#1a237e;">${formatHoursDisplay(r.hours)}</td>`;
                         html += `<td style="padding:12px; border-bottom:1px solid #eee; font-weight:bold;">${r.status}</td>`;
                         html += '</tr>';
                     } else if (isFuture) {
