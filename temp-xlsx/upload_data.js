@@ -1,93 +1,59 @@
-const fs = require('fs');
-const path = require('path');
 const xlsx = require('xlsx');
-
-const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbwi24io7fKY7nizjIutPBpQvZHBx1O28_hu91QVcdF7PLFqTJ48dNJqFPdbqRuGDKI3Uw/exec";
-
-const dir = path.join(__dirname, '..');
-const files = fs.readdirSync(dir).filter(f => f.endsWith('.xlsx'));
-
-let allData = [];
-const nameMap = { 'بدر': 'بدر علاء' };
-
-files.forEach(file => {
-    try {
-        const filePath = path.join(dir, file);
-        const workbook = xlsx.readFile(filePath, { cellDates: true });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        
-        const data = xlsx.utils.sheet_to_json(sheet, { header: 1, raw: false });
-        let rawEmpName = file.replace('.xlsx', '').trim();
-        let finalEmpName = nameMap[rawEmpName] || rawEmpName;
-        
-        data.forEach(row => {
-            if (row.length > 5 && typeof row[4] === 'string' && row[4].includes('/')) {
-                let dateParts = row[4].split('/');
-                if (dateParts.length === 3) {
-                    let m = dateParts[0].padStart(2, '0');
-                    let d = dateParts[1].padStart(2, '0');
-                    let y = dateParts[2].length === 2 ? '20' + dateParts[2] : dateParts[2];
-                    let dateStr = `${y}-${m}-${d}`;
-                    
-                    let checkIn = row[6] || "";
-                    let checkOut = row[7] || "";
-                    let hoursStr = row[8] || "";
-                    
-                    let finalHours = hoursStr;
-                    if (hoursStr.includes(':')) {
-                       let parts = hoursStr.split(':');
-                       let h = parseInt(parts[0]);
-                       let min = parseInt(parts[1]);
-                       if (min === 30) finalHours = h + '.5 ساعة';
-                       else if (min === 0) finalHours = h + ' ساعة';
-                       else finalHours = hoursStr + ' ساعة';
-                    } else if (hoursStr !== "") {
-                       finalHours = hoursStr + ' ساعة';
-                    }
-
-                    let status = "حاضر";
-                    if (!checkIn && !checkOut) {
-                        // If no checkin/checkout but hours are recorded (e.g. 8 hours), it's Paid Leave
-                        if (hoursStr && hoursStr !== "0" && hoursStr !== "0:00") {
-                            status = "إجازة مدفوعة";
-                        } else {
-                            status = "غائب";
-                        }
-                    }
-
-                    allData.push({
-                        empName: finalEmpName,
-                        date: dateStr,
-                        checkIn: checkIn,
-                        checkOut: checkOut,
-                        hours: finalHours,
-                        status: status,
-                        notes: ""
-                    });
-                }
-            }
-        });
-    } catch (e) {
-        console.error('Error processing', file, e.message);
-    }
-});
-
-console.log(`Extracted ${allData.length} valid attendance records.`);
+const fetch = require('node-fetch'); // Requires node-fetch or native fetch in Node 18+
 
 async function uploadData() {
-    console.log("Starting bulk upload...");
-    try {
-        const response = await fetch(GOOGLE_SHEETS_URL + "?action=bulkUploadAttendance", {
-            method: 'POST',
-            body: JSON.stringify(allData)
+    const workbook = xlsx.readFile('d:\\candy-club-system\\ملف حضور شهر 7\\Combined_July.xlsx');
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const data = xlsx.utils.sheet_to_json(sheet, {header: 1, raw: false});
+    
+    // Convert to objects
+    let records = [];
+    for (let i = 1; i < data.length; i++) {
+        let row = data[i];
+        if (!row || row.length === 0) continue;
+        records.push({
+            empName: row[0],
+            date: row[1],
+            checkIn: row[2],
+            checkOut: row[3],
+            hours: row[4],
+            status: row[5],
+            reqStatus: row[6],
+            notes: row[7] || ""
         });
-        
-        const result = await response.json();
-        console.log("Upload Result:", result);
-    } catch (err) {
-        console.error("Upload failed:", err);
     }
+
+    console.log(`Ready to upload ${records.length} records...`);
+
+    // The endpoint expects stringified records, maybe in chunks if it's too large
+    // Google Apps Script has a payload limit, so let's chunk it by 50 records
+    const chunkSize = 50;
+    const APP_URL = "https://script.google.com/macros/s/AKfycbwi24io7fKY7nizjIutPBpQvZHBx1O28_hu91QVcdF7PLFqTJ48dNJqFPdbqRuGDKI3Uw/exec"; 
+
+    for (let i = 0; i < records.length; i += chunkSize) {
+        const chunk = records.slice(i, i + chunkSize);
+        console.log(`Uploading chunk ${i / chunkSize + 1} of ${Math.ceil(records.length / chunkSize)}...`);
+        
+        const params = new URLSearchParams();
+        params.append('action', 'addBulkAttendance');
+        params.append('records', JSON.stringify(chunk));
+
+        try {
+            const response = await fetch(APP_URL, {
+                method: 'POST',
+                body: params
+            });
+            const result = await response.json();
+            if (result.success) {
+                console.log(`Chunk ${i / chunkSize + 1} uploaded successfully!`);
+            } else {
+                console.error(`Error from server for chunk ${i / chunkSize + 1}:`, result.error);
+            }
+        } catch (e) {
+            console.error(`Failed to upload chunk ${i / chunkSize + 1}:`, e.message);
+        }
+    }
+    console.log("Upload process completed.");
 }
 
 uploadData();

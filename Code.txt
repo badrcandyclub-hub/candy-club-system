@@ -1714,6 +1714,32 @@ function doPost(e) {
       return ContentService.createTextOutput(JSON.stringify({success: true, message: "تمت إضافة الإجازة"})).setMimeType(ContentService.MimeType.JSON);
     }
 
+    // ⭐ HR: إضافة بيانات مجمعة (رفع من الإكسيل)
+    // ============================================================
+    if (action === "addBulkAttendance") {
+      var attSheet = ss.getSheetByName("📅 سجل الحضور");
+      if (!attSheet) return ContentService.createTextOutput(JSON.stringify({success: false, error: "شيت الحضور غير موجود"})).setMimeType(ContentService.MimeType.JSON);
+      
+      var recordsStr = e.parameter.records;
+      if (!recordsStr) return ContentService.createTextOutput(JSON.stringify({success: false, error: "لا توجد بيانات"})).setMimeType(ContentService.MimeType.JSON);
+      
+      try {
+        var records = JSON.parse(recordsStr);
+        for (var i = 0; i < records.length; i++) {
+          var rec = records[i];
+          attSheet.appendRow([rec.empName, "'" + rec.date, rec.checkIn, rec.checkOut, rec.hours, rec.status, rec.reqStatus, rec.notes]);
+          var bg = "#ffffff";
+          if (rec.status === "إجازة مدفوعة") bg = "#e3f2fd";
+          else if (rec.status === "غائب" || rec.status === "إجازة بدون مرتب") bg = "#ffebee";
+          else if (rec.status === "حاضر") bg = "#e8f5e9";
+          attSheet.getRange(attSheet.getLastRow(), 1, 1, 8).setBackground(bg);
+        }
+        return ContentService.createTextOutput(JSON.stringify({success: true, message: "تم رفع البيانات بنجاح"})).setMimeType(ContentService.MimeType.JSON);
+      } catch (err) {
+        return ContentService.createTextOutput(JSON.stringify({success: false, error: "حدث خطأ أثناء قراءة البيانات"})).setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+
     // ============================================================
     // ⭐ HR: تعديل بيانات الحضور (للمدير) - Admin Edit Attendance
     // ============================================================
