@@ -1,5 +1,4 @@
 const xlsx = require('xlsx');
-const fetch = require('node-fetch'); // Requires node-fetch or native fetch in Node 18+
 
 async function uploadData() {
     const workbook = xlsx.readFile('d:\\candy-club-system\\ملف حضور شهر 7\\Combined_July.xlsx');
