@@ -8837,6 +8837,8 @@ function loadMyAttendance() {
             let thMins = Math.round((totalHours - thHours) * 60);
             if (thMins === 60) { thHours++; thMins = 0; }
             let formattedTotalHours = thHours + ":" + thMins.toString().padStart(2, '0');
+            
+            let absences = myRecords.filter(r => r.status === 'غائب').length;
 
             // Update top stat cards
             let el = document.getElementById('hrMonthDays');
@@ -8868,7 +8870,11 @@ function loadMyAttendance() {
                     </div>
                     <div style="background:linear-gradient(135deg,#fce4ec,#f8bbd0); border-radius:12px; padding:14px; text-align:center; border:1px solid #f48fb1;">
                         <div style="font-size:1.6rem; font-weight:900; color:#880e4f;">${unpaidLeaves}</div>
-                        <div style="font-size:0.78rem; color:#c62828; font-weight:bold;">📋 إجازات بدون راتب</div>
+                        <div style="font-size:0.78rem; color:#c62828; font-weight:bold;">📋 بدون راتب</div>
+                    </div>
+                    <div style="background:linear-gradient(135deg,#ffebee,#ffcdd2); border-radius:12px; padding:14px; text-align:center; border:1px solid #ef9a9a;">
+                        <div style="font-size:1.6rem; font-weight:900; color:#b71c1c;">${absences}</div>
+                        <div style="font-size:0.78rem; color:#c62828; font-weight:bold;">❌ غياب</div>
                     </div>
                 `;
                 bannerEl.style.display = 'grid';
@@ -9063,6 +9069,68 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
             html += '<th style="color:white;padding:12px 10px;text-align:center;font-size:0.85rem;">الحالة</th>';
             html += '<th style="color:white;padding:12px 10px;text-align:center;font-size:0.85rem;">تعديل</th>';
             html += '</tr></thead><tbody>';
+
+            let adminPresentDays = 0;
+            let adminPaidLeaves = 0;
+            let adminUnpaidLeaves = 0;
+            let adminAbsences = 0;
+            let adminTotalHours = 0;
+            
+            records.forEach(r => {
+                if (r.status === 'حاضر') adminPresentDays++;
+                if (r.status === 'غائب') adminAbsences++;
+                if (r.status === 'إجازة مدفوعة' && r.requestStatus !== 'بانتظار الموافقة' && r.requestStatus !== '❌ مرفوضة') adminPaidLeaves++;
+                if (r.status === 'إجازة بدون مرتب' && r.requestStatus !== 'بانتظار الموافقة' && r.requestStatus !== '❌ مرفوضة') adminUnpaidLeaves++;
+                
+                let hStr = String(r.hours || '').trim();
+                let h = 0;
+                if (hStr && hStr !== '-' && hStr !== '0' && hStr !== 'undefined') {
+                    let parts = hStr.split('ساعة');
+                    if (parts[0] && parts[0].includes(':')) {
+                        let timeParts = parts[0].split(':');
+                        h += parseFloat(timeParts[0]) || 0;
+                        h += (parseFloat(timeParts[1]) || 0) / 60;
+                    } else {
+                        let hMatch = hStr.match(/(\d+(?:\.\d+)?)\s*ساعة/);
+                        let mMatch = hStr.match(/(\d+(?:\.\d+)?)\s*دقيقة/);
+                        if (hMatch) h += parseFloat(hMatch[1]);
+                        else if (!isNaN(parseFloat(hStr))) h += parseFloat(hStr);
+                        if (mMatch) h += parseFloat(mMatch[1]) / 60;
+                    }
+                }
+                if (!isNaN(h)) adminTotalHours += h;
+            });
+            
+            let tHrs = Math.floor(adminTotalHours);
+            let tMins = Math.round((adminTotalHours - tHrs) * 60);
+            if (tMins === 60) { tHrs++; tMins = 0; }
+            let formattedTotalHours = `${tHrs}:${String(tMins).padStart(2,'0')}`;
+
+            let bannerHtml = `
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px; margin-bottom:15px;">
+                    <div style="background:linear-gradient(135deg,#e8f5e9,#c8e6c9); border-radius:12px; padding:14px; text-align:center; border:1px solid #a5d6a7;">
+                        <div style="font-size:1.6rem; font-weight:900; color:#1b5e20;">${adminPresentDays}</div>
+                        <div style="font-size:0.78rem; color:#2e7d32; font-weight:bold;">📅 أيام حضور</div>
+                    </div>
+                    <div style="background:linear-gradient(135deg,#e3f2fd,#bbdefb); border-radius:12px; padding:14px; text-align:center; border:1px solid #90caf9;">
+                        <div style="font-size:1.6rem; font-weight:900; color:#0d47a1;">${formattedTotalHours}</div>
+                        <div style="font-size:0.78rem; color:#1565c0; font-weight:bold;">⏱️ إجمالي الساعات</div>
+                    </div>
+                    <div style="background:linear-gradient(135deg,#fff3e0,#ffe0b2); border-radius:12px; padding:14px; text-align:center; border:1px solid #ffcc80;">
+                        <div style="font-size:1.6rem; font-weight:900; color:#e65100;">${adminPaidLeaves}</div>
+                        <div style="font-size:0.78rem; color:#ef6c00; font-weight:bold;">🏖️ إجازات مدفوعة</div>
+                    </div>
+                    <div style="background:linear-gradient(135deg,#fce4ec,#f8bbd0); border-radius:12px; padding:14px; text-align:center; border:1px solid #f48fb1;">
+                        <div style="font-size:1.6rem; font-weight:900; color:#880e4f;">${adminUnpaidLeaves}</div>
+                        <div style="font-size:0.78rem; color:#c62828; font-weight:bold;">📋 بدون راتب</div>
+                    </div>
+                    <div style="background:linear-gradient(135deg,#ffebee,#ffcdd2); border-radius:12px; padding:14px; text-align:center; border:1px solid #ef9a9a;">
+                        <div style="font-size:1.6rem; font-weight:900; color:#b71c1c;">${adminAbsences}</div>
+                        <div style="font-size:0.78rem; color:#c62828; font-weight:bold;">❌ غياب</div>
+                    </div>
+                </div>
+            `;
+            html = bannerHtml + html;
 
             let singleEmpTotalHours = 0;
             
