@@ -9496,6 +9496,11 @@ window.calcEditHours = function() {
     preview.style.display = 'none';
 };
 
+window.loadAdminAttendance = function() {
+    if(typeof loadAdminDailyAttendance === 'function') loadAdminDailyAttendance();
+    if(typeof loadAdminMonthlyAttendance === 'function') loadAdminMonthlyAttendance();
+};
+
 window.saveAttendanceEdit = function() {
     let btn = document.getElementById('editAttSaveBtn');
     let originalHtml = btn ? btn.innerHTML : '';
@@ -9999,3 +10004,29 @@ function loadPendingLeaves() {
         pendingDiv.innerHTML = '<p style="text-align:center; color:red;">خطأ في التحميل</p>';
     });
 }
+
+window.cleanDuplicates = function() {
+    let btn = document.getElementById('btnCleanDuplicates');
+    if (!btn) return;
+    let original = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التنظيف...';
+    btn.disabled = true;
+    let formData = new URLSearchParams();
+    formData.append('action', 'removeDuplicates');
+    fetch(GOOGLE_SHEETS_URL, {method:'POST', body:formData})
+    .then(r=>r.json())
+    .then(d=>{
+        if(d.success) {
+            showToast('تم تنظيف ' + d.deleted + ' سجل مكرر بنجاح!', 'success');
+            if(typeof loadAdminDailyAttendance === 'function') loadAdminDailyAttendance();
+            if(typeof loadAdminMonthlyAttendance === 'function') loadAdminMonthlyAttendance();
+        } else {
+            showToast(d.error || 'حدث خطأ', 'error');
+        }
+    })
+    .catch(e=>showToast('خطأ في الاتصال', 'error'))
+    .finally(()=>{
+        btn.innerHTML = original;
+        btn.disabled = false;
+    });
+};

@@ -1806,6 +1806,32 @@ function doPost(e) {
       }
       return ContentService.createTextOutput(JSON.stringify({success: false, error: "لم يتم العثور على السجل"})).setMimeType(ContentService.MimeType.JSON);
     }
+    
+    if (action === "removeDuplicates") {
+      var attSheet = ss.getSheetByName("📅 سجل الحضور");
+      if (!attSheet) return ContentService.createTextOutput(JSON.stringify({success: false, error: "Sheet not found"})).setMimeType(ContentService.MimeType.JSON);
+      
+      var data = attSheet.getDataRange().getValues();
+      var seen = {};
+      var rowsToDelete = [];
+      
+      for (var a = data.length - 1; a >= 1; a--) {
+        var emp = data[a][0].toString().trim();
+        var dStr = "";
+        try { dStr = Utilities.formatDate(new Date(data[a][1]), "Africa/Cairo", "yyyy-MM-dd"); } catch(ex) { dStr = data[a][1].toString().replace("'",""); }
+        var key = emp + "_" + dStr;
+        if (seen[key]) {
+          rowsToDelete.push(a + 1);
+        } else {
+          seen[key] = true;
+        }
+      }
+      
+      for (var i = 0; i < rowsToDelete.length; i++) {
+        attSheet.deleteRow(rowsToDelete[i]);
+      }
+      return ContentService.createTextOutput(JSON.stringify({success: true, deleted: rowsToDelete.length})).setMimeType(ContentService.MimeType.JSON);
+    }
     if (action === "fixAmPmData") {
       var attSheet = ss.getSheetByName("📅 سجل الحضور");
       if (!attSheet) return ContentService.createTextOutput(JSON.stringify({success: false, error: "Sheet not found"})).setMimeType(ContentService.MimeType.JSON);
