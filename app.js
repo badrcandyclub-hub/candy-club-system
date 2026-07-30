@@ -9101,10 +9101,10 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
                 if (!isNaN(h)) adminTotalHours += h;
             });
             
-            let tHrs = Math.floor(adminTotalHours);
-            let tMins = Math.round((adminTotalHours - tHrs) * 60);
-            if (tMins === 60) { tHrs++; tMins = 0; }
-            let formattedTotalHours = `${tHrs}:${String(tMins).padStart(2,'0')}`;
+            let adminTHrs = Math.floor(adminTotalHours);
+            let adminTMins = Math.round((adminTotalHours - adminTHrs) * 60);
+            if (adminTMins === 60) { adminTHrs++; adminTMins = 0; }
+            let formattedTotalHours = `${adminTHrs}:${String(adminTMins).padStart(2,'0')}`;
 
             let bannerHtml = `
                 <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px; margin-bottom:15px;">
