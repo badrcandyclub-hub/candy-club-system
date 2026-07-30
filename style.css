@@ -184,6 +184,133 @@ h1, h2, h3, h4, h5 {
     box-shadow: var(--shadow);
 }
 
+.login-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Cairo', sans-serif;
+    background: linear-gradient(135deg, #f8fafc 0%, #f4f6f8 50%, #eef2ff 100%);
+    overflow: hidden;
+}
+
+.login-screen::before,
+.login-screen::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(40px);
+    opacity: 0.7;
+    pointer-events: none;
+    animation: loginFloat 12s ease-in-out infinite;
+}
+
+.login-screen::before {
+    width: 280px;
+    height: 280px;
+    background: rgba(233, 30, 140, 0.16);
+    top: -80px;
+    right: -70px;
+}
+
+.login-screen::after {
+    width: 320px;
+    height: 320px;
+    background: rgba(99, 102, 241, 0.14);
+    bottom: -100px;
+    left: -90px;
+    animation-delay: -6s;
+}
+
+.login-card {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 40px 30px;
+    border-radius: 20px;
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    position: relative;
+    backdrop-filter: blur(16px);
+    animation: loginFadeIn 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.login-card.login-card-error {
+    animation: loginShake 0.45s ease both;
+}
+
+.login-form {
+    text-align: right;
+}
+
+.login-input {
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease, background-color 0.25s ease;
+}
+
+.login-input:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 4px rgba(233, 30, 140, 0.14), 0 10px 24px rgba(15, 23, 42, 0.08);
+    transform: translateY(-1px);
+    background: #ffffff;
+}
+
+.login-btn {
+    min-height: 50px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.login-btn[disabled] {
+    opacity: 0.85;
+    transform: none;
+    box-shadow: 0 4px 12px rgba(26, 35, 126, 0.25);
+}
+
+.login-eye {
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.login-eye:hover {
+    transform: translateY(-50%) scale(1.08);
+}
+
+.login-eye-active {
+    color: var(--primary-dark) !important;
+}
+
+.login-error {
+    transition: all 0.25s ease;
+}
+
+@keyframes loginFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes loginShake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-6px); }
+    80% { transform: translateX(6px); }
+}
+
+@keyframes loginFloat {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+    50% { transform: translate3d(20px, -25px, 0) scale(1.05); }
+}
+
 .interactive-btn:active {
     transform: translateY(1px);
     box-shadow: var(--shadow-sm);

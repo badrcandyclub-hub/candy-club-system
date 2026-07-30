@@ -23,8 +23,10 @@
 
 <body>
     <!-- ⭐ V16: Login Screen -->
-    <div id="login-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background-color:#f4f6f8; z-index:99999; display:flex; justify-content:center; align-items:center; font-family: 'Cairo', sans-serif;">
-        <div style="background-color:#ffffff; padding:40px 30px; border-radius:16px; box-shadow:0 10px 25px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; width:90%; max-width:400px; text-align:center; position:relative;">
+    <div id="login-screen" class="login-screen">
+        <div class="login-bg-glow login-bg-glow-1"></div>
+        <div class="login-bg-glow login-bg-glow-2"></div>
+        <div id="login-card" class="login-card">
             
             <div style="margin-bottom: 30px;">
                 <div style="background: linear-gradient(135deg, #1a237e, #3949ab); width: 70px; height: 70px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin: 0 auto 15px auto; box-shadow: 0 4px 15px rgba(26, 35, 126, 0.3);">
@@ -34,24 +36,24 @@
                 <p style="color:#64748b; margin:5px 0 0 0; font-size: 0.95rem; font-weight: 600;">نظام متكامل لإدارة المركز</p>
             </div>
             
-            <form id="loginForm" onsubmit="handleLogin(event)" style="text-align: right;">
+            <form id="loginForm" onsubmit="handleLogin(event)" class="login-form" style="text-align: right;">
                 <div style="margin-bottom: 15px;">
                     <label style="color:#334155; font-size:0.9rem; margin-bottom:8px; display:block; font-weight:bold;">البريد الإلكتروني (المدير)</label>
-                    <input type="text" id="login-username" placeholder="اسم المستخدم" required style="width:100%; padding:14px 15px; border:1px solid #cbd5e1; border-radius:10px; background:#f8fafc; color:#1e293b; font-family:inherit; text-align: right; box-sizing: border-box; font-size: 1rem; outline: none; transition: border-color 0.3s;" onfocus="this.style.borderColor='#1a237e'" onblur="this.style.borderColor='#cbd5e1'">
+                    <input type="text" id="login-username" class="login-input" autocomplete="username" placeholder="اسم المستخدم" required style="width:100%; padding:14px 15px; border:1px solid #cbd5e1; border-radius:10px; background:#f8fafc; color:#1e293b; font-family:inherit; text-align: right; box-sizing: border-box; font-size: 1rem; outline: none; transition: border-color 0.3s, box-shadow 0.3s, transform 0.2s;">
                 </div>
                 
                 <div style="margin-bottom: 25px;">
                     <label style="color:#334155; font-size:0.9rem; margin-bottom:8px; display:block; font-weight:bold;">كلمة المرور</label>
                     <div style="position: relative;">
-                        <input type="password" id="login-password" placeholder="كلمة المرور" required style="width:100%; padding:14px 15px; padding-left: 45px; border:1px solid #cbd5e1; border-radius:10px; background:#f8fafc; color:#1e293b; font-family:inherit; text-align: right; box-sizing: border-box; font-size: 1rem; outline: none; transition: border-color 0.3s;" onfocus="this.style.borderColor='#1a237e'" onblur="this.style.borderColor='#cbd5e1'">
-                        <i class="fa-solid fa-eye" id="togglePasswordBtn" onclick="const p = document.getElementById('login-password'); p.type = p.type === 'password' ? 'text' : 'password'; this.classList.toggle('fa-eye-slash');" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #64748b; cursor: pointer; font-size: 1.1rem;"></i>
+                        <input type="password" id="login-password" class="login-input" autocomplete="current-password" placeholder="كلمة المرور" required style="width:100%; padding:14px 15px; padding-left: 45px; border:1px solid #cbd5e1; border-radius:10px; background:#f8fafc; color:#1e293b; font-family:inherit; text-align: right; box-sizing: border-box; font-size: 1rem; outline: none; transition: border-color 0.3s, box-shadow 0.3s, transform 0.2s;">
+                        <i class="fa-solid fa-eye login-eye" id="togglePasswordBtn" onclick="const p = document.getElementById('login-password'); const isHidden = p.type === 'password'; p.type = isHidden ? 'text' : 'password'; this.classList.toggle('fa-eye-slash'); this.classList.toggle('login-eye-active'); this.title = isHidden ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور';" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #64748b; cursor: pointer; font-size: 1.1rem;"></i>
                     </div>
                 </div>
                 
-                <button type="submit" id="login-btn" class="interactive-btn" style="width:100%; padding:14px; background: linear-gradient(135deg, #1a237e, #3949ab); color:white; border:none; border-radius:10px; font-size:1.1rem; font-weight:bold; font-family:inherit; cursor:pointer; box-shadow: 0 4px 12px rgba(26, 35, 126, 0.3); transition: transform 0.2s, box-shadow 0.2s;">تسجيل الدخول</button>
+                <button type="submit" id="login-btn" class="interactive-btn login-btn" style="width:100%; padding:14px; background: linear-gradient(135deg, #1a237e, #3949ab); color:white; border:none; border-radius:10px; font-size:1.1rem; font-weight:bold; font-family:inherit; cursor:pointer; box-shadow: 0 4px 12px rgba(26, 35, 126, 0.3); transition: transform 0.2s, box-shadow 0.2s;">تسجيل الدخول</button>
             </form>
             
-            <div id="login-error" style="color:#ef4444; margin-top:15px; font-size:0.95rem; display:none; background: #fee2e2; border: 1px solid #fca5a5; padding: 12px; border-radius: 8px;"></div>
+            <div id="login-error" class="login-error" style="color:#ef4444; margin-top:15px; font-size:0.95rem; display:none; background: #fee2e2; border: 1px solid #fca5a5; padding: 12px; border-radius: 8px;"></div>
             
             <div style="margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
                 <a href="index.html" style="color:#64748b; text-decoration: none; font-size: 0.95rem; font-weight: bold; transition: color 0.3s;" onmouseover="this.style.color='#1a237e'" onmouseout="this.style.color='#64748b'">
