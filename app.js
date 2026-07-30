@@ -9368,8 +9368,7 @@ window.openEditAttendanceModal = function(employee, date, checkIn, checkOut, sta
     let hoursEl = document.getElementById('editAttManualHours');
     if (hoursEl) {
         if (hoursStr) {
-            let hMatch = hoursStr.match(/(\d+(?:\.\d+)?)/);
-            hoursEl.value = hMatch ? hMatch[1] : '';
+            hoursEl.value = hoursStr.replace(' ساعة', '').trim();
         } else {
             hoursEl.value = '';
         }
@@ -9477,8 +9476,8 @@ window.saveAttendanceEdit = function() {
     let checkOutVal = document.getElementById('editAttCheckOut').value;
     let status = document.getElementById('editAttStatus').value;
     let notes = document.getElementById('editAttNotes').value;
-    let manualHours = document.getElementById('editAttManualHours').value;
-
+    let manualHoursRaw = document.getElementById('editAttManualHours').value || '';
+    let manualHours = manualHoursRaw.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).trim();
     let formData = new URLSearchParams();
     formData.append('action', 'editAttendance');
     formData.append('employeeName', _editAttData.employee);
@@ -9500,10 +9499,9 @@ window.saveAttendanceEdit = function() {
                 showToast(data.error || 'حدث خطأ', 'error');
             }
         })
-        .catch(() => {
-            showToast('✅ تم الحفظ', 'success');
-            closeEditAttendanceModal();
-            loadAdminAttendance();
+        .catch((err) => {
+            console.error('Edit error:', err);
+            showToast('حدث خطأ في الاتصال أثناء التعديل', 'error');
         })
         .finally(() => {
             if (btn) { btn.innerHTML = originalHtml; btn.disabled = false; }
