@@ -43,7 +43,6 @@ function formatHours(val) {
 }
 
 let combinedData = [];
-// Headers
 combinedData.push(['الموظف', 'التاريخ', 'الحضور', 'الانصراف', 'الساعات', 'الحالة', 'حالة الطلب', 'ملاحظات']);
 
 files.forEach(file => {
@@ -56,17 +55,22 @@ files.forEach(file => {
         if (data[2] && data[2][4]) empName = data[2][4].toString().trim();
         else empName = file.replace('.xlsx', '').replace(/^\d+-/, '').trim();
         
+        // --- NAME CORRECTIONS ---
+        if (empName === "بدر") empName = "بدر علاء";
+        if (empName === "اموله" || empName === "أمولة") empName = "امل";
+        if (empName === "هدى") empName = "هدى";
+        if (empName === "يارا") empName = "يارا";
+        
         for (let i = 0; i < data.length; i++) {
             if (data[i] && data[i][4] && data[i][4].match(/^\d{1,2}\/\d{1,2}\/\d{2,4}$/)) {
-                let dateStr = data[i][4]; // e.g. 7/1/26
-                // convert to 2026-07-01
+                let dateStr = data[i][4]; 
                 let parts = dateStr.split('/');
                 let month = parts[0].padStart(2, '0');
                 let day = parts[1].padStart(2, '0');
                 let year = parts[2].length === 2 ? `20${parts[2]}` : parts[2];
                 let formattedDate = `${year}-${month}-${day}`;
                 
-                if (day === '31') continue; // User requested to skip day 31
+                if (day === '31') continue; 
                 
                 let checkIn = data[i][6];
                 let checkOut = data[i][7];
@@ -78,12 +82,14 @@ files.forEach(file => {
                 let outHours = formatHours(hours);
                 
                 let status = "حاضر";
-                let reqStatus = "✅ تمت الموافقة";
+                // Only put Approved for Leaves
+                let reqStatus = "";
                 
                 if (outCheckIn === "-" && outCheckOut === "-") {
                     let hNum = parseFloat(hours) || 0;
                     if (hNum > 0) {
                         status = "إجازة مدفوعة";
+                        reqStatus = "✅ تمت الموافقة";
                     } else {
                         status = "غائب";
                         outHours = "0 ساعة";
@@ -104,4 +110,4 @@ xlsx.utils.book_append_sheet(outWorkbook, outSheet, "سجل الحضور");
 const outPath = 'd:\\candy-club-system\\ملف حضور شهر 7\\Combined_July.xlsx';
 xlsx.writeFile(outWorkbook, outPath);
 
-console.log(`Successfully created combined file at: ${outPath}`);
+console.log(`Successfully created corrected combined file at: ${outPath}`);
