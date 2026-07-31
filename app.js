@@ -4977,6 +4977,52 @@ if (expirySortSelect) {
     });
 }
 
+function normalizeCalendarDate(value) {
+    if (value === null || value === undefined || value === '') return null;
+    const raw = String(value).trim();
+    if (!raw) return null;
+
+    const isoMatch = raw.match(/^\d{4}-\d{2}-\d{2}$/);
+    if (isoMatch) return raw;
+
+    const compactMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (compactMatch) {
+        return `${compactMatch[1]}-${compactMatch[2]}-${compactMatch[3]}`;
+    }
+
+    const parsed = new Date(raw);
+    if (!isNaN(parsed.getTime())) {
+        const year = parsed.getFullYear();
+        const month = String(parsed.getMonth() + 1).padStart(2, '0');
+        const day = String(parsed.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    return null;
+}
+
+function getCalendarMonthKey(value) {
+    const normalized = normalizeCalendarDate(value);
+    if (!normalized) return null;
+    const match = normalized.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!match) return null;
+    return `${match[1]}-${match[2]}`;
+}
+
+function getCalendarDateKey(value) {
+    const normalized = normalizeCalendarDate(value);
+    if (!normalized) return null;
+    const match = normalized.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!match) return null;
+    return `${match[1]}-${match[2]}-${match[3]}`;
+}
+
+function getSortDateValue(value) {
+    const normalized = normalizeCalendarDate(value);
+    if (!normalized) return Number.NEGATIVE_INFINITY;
+    return new Date(`${normalized}T12:00:00`).getTime();
+}
+
 const exportCurrentListBtn = document.getElementById('exportCurrentListBtn');
 if (exportCurrentListBtn) {
     exportCurrentListBtn.addEventListener('click', () => {
@@ -5010,17 +5056,9 @@ if (btnExportMonth) {
 
         let filtered = expiryData.filter(item => {
             if (!item.expiryDate) return false;
-            let d = new Date(item.expiryDate);
-            if (!isNaN(d.getTime())) {
-                let localStr = d.toLocaleDateString('en-CA').substring(0, 7);
-                return localStr === monthVal;
-            }
-            return item.expiryDate.startsWith(monthVal);
-        }).sort((a, b) => {
-            let dA = new Date(a.expiryDate);
-            let dB = new Date(b.expiryDate);
-            return dA.getTime() - dB.getTime();
-        });
+            const monthKey = getCalendarMonthKey(item.expiryDate);
+            return monthKey === monthVal;
+        }).sort((a, b) => getSortDateValue(a.expiryDate) - getSortDateValue(b.expiryDate));
 
         setBtnLoading(btnExportMonth, true, "تصدير...");
         generateExcel(filtered, 'شهر_' + monthVal).then(() => {
@@ -5041,17 +5079,9 @@ if (btnExportMonthPDF) {
 
         let filtered = expiryData.filter(item => {
             if (!item.expiryDate) return false;
-            let d = new Date(item.expiryDate);
-            if (!isNaN(d.getTime())) {
-                let localStr = d.toLocaleDateString('en-CA').substring(0, 7);
-                return localStr === monthVal;
-            }
-            return item.expiryDate.startsWith(monthVal);
-        }).sort((a, b) => {
-            let dA = new Date(a.expiryDate);
-            let dB = new Date(b.expiryDate);
-            return dA.getTime() - dB.getTime();
-        });
+            const monthKey = getCalendarMonthKey(item.expiryDate);
+            return monthKey === monthVal;
+        }).sort((a, b) => getSortDateValue(a.expiryDate) - getSortDateValue(b.expiryDate));
 
         if (filtered.length === 0) {
             showToast("لا توجد بيانات انتهاء في هذا الشهر", "warning");
@@ -5073,13 +5103,8 @@ if (btnExportDate) {
 
         let filtered = expiryData.filter(item => {
             if (!item.regDate) return false;
-            // Parse the date to avoid timezone shift issues (e.g. 19T22:00:00Z matching 19 instead of 20)
-            let d = new Date(item.regDate);
-            if (!isNaN(d.getTime())) {
-                let localStr = d.toLocaleDateString('en-CA'); // Gets YYYY-MM-DD in local time
-                return localStr === dateVal;
-            }
-            return item.regDate.includes(dateVal);
+            const dateKey = getCalendarDateKey(item.regDate);
+            return dateKey === dateVal;
         });
 
         setBtnLoading(btnExportDate, true, "تصدير...");
@@ -5100,12 +5125,8 @@ if (btnExportDatePDF) {
 
         let filtered = expiryData.filter(item => {
             if (!item.regDate) return false;
-            let d = new Date(item.regDate);
-            if (!isNaN(d.getTime())) {
-                let localStr = d.toLocaleDateString('en-CA');
-                return localStr === dateVal;
-            }
-            return item.regDate.includes(dateVal);
+            const dateKey = getCalendarDateKey(item.regDate);
+            return dateKey === dateVal;
         });
 
         if (filtered.length === 0) {
