@@ -1,4 +1,4 @@
-// ==========================================
+﻿// ==========================================
 // <i class=\'fa-solid fa-globe\'></i> العقل المدبر - سيستم كاندي كلوب (النسخة V16.0 - الشاملة والمحصنة)
 // ==========================================
 
@@ -7373,7 +7373,7 @@ window.searchDriverOrder = async function() {
             </div>
             
             <div class="meta-row" style="margin-top:3px;">
-                <span><i class="fa-solid fa-truck-ramp-box" style="color:#000; margin-left:4px;"></i><b>مُسلم:</b> ${senderName || '---'}</span>
+                <span><i class="fa-solid fa-truck-ramp-box" style="color:#000; margin-left:4px;"></i><b>اسم الراسل:</b> ${senderName || '---'}</span>
             </div>
             
             <table>
@@ -8531,7 +8531,7 @@ function printInventoryReceipt(logId, from, to, items, notes, senderName, regNam
             </div>
             
             <div class="meta-row" style="margin-top:3px;">
-                <span><i class="fa-solid fa-truck-ramp-box" style="color:#000; margin-left:4px;"></i><b>مُسلم:</b> ${senderName || '---'}</span>
+                <span><i class="fa-solid fa-truck-ramp-box" style="color:#000; margin-left:4px;"></i><b>اسم الراسل:</b> ${senderName || '---'}</span>
             </div>
             
             <table>
@@ -10041,3 +10041,4 @@ window.cleanDuplicates = function() {
         btn.disabled = false;
     });
 };
+
