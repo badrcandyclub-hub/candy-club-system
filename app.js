@@ -1,4 +1,4 @@
-﻿// ==========================================
+// ==========================================
 // <i class=\'fa-solid fa-globe\'></i> العقل المدبر - سيستم كاندي كلوب (النسخة V16.0 - الشاملة والمحصنة)
 // ==========================================
 
@@ -8396,6 +8396,10 @@ window.reprintInvLog = function(logId) {
             <div class="info-row">
                 <span><i class="fa-solid fa-boxes-packing" style="color:#000; margin-left:4px;"></i><b>من:</b> ${log.from}</span>
                 <span><i class="fa-solid fa-location-dot" style="color:#000; margin-left:4px;"></i><b>إلى:</b> ${log.to}</span>
+            </div>
+            
+            <div class="info-row" style="margin-top:3px;">
+                <span><i class="fa-solid fa-truck-ramp-box" style="color:#000; margin-left:4px;"></i><b>اسم الراسل:</b> ${log.regName || '---'}</span>
             </div>
             
             <table>
