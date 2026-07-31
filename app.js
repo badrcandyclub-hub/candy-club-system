@@ -4632,37 +4632,96 @@ window.saveExpiryOffer = function (id, status, origVal, offerVal) {
 };
 
 // 3. Status Control (دورة حياة العرض)
+window.customQtyConfirm = function (message, currentQty, onConfirm) {
+    const overlay = document.createElement('div');
+    overlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px);";
+    const modal = document.createElement('div');
+    modal.style = "background: white; padding: 25px; border-radius: 15px; text-align: center; max-width: 400px; width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.2);";
+    modal.innerHTML = `
+        <h3 style="color: var(--primary); margin-top: 0;">تأكيد الإجراء</h3>
+        <p style="font-size: 1.1rem; color: #333; margin-bottom: 15px;">${message}</p>
+        <p style="font-size: 0.95rem; color: #666; margin-bottom: 10px;">الكمية الحالية: ${currentQty}</p>
+        <input type="number" id="promptSoldQty" value="${currentQty}" min="1" max="${currentQty}" placeholder="الكمية المباعة" style="width: 100%; padding: 10px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ccc;">
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button id="btnConfirmYes" class="interactive-btn" style="background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1;">تأكيد البيع <i class=\'fa-solid fa-check\'></i></button>
+            <button id="btnConfirmNo" class="interactive-btn" style="background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1;">إلغاء <i class=\'fa-solid fa-xmark\'></i></button>
+        </div>
+    `;
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    document.getElementById('btnConfirmYes').onclick = () => {
+        let val = parseFloat(document.getElementById('promptSoldQty').value);
+        if (isNaN(val) || val <= 0 || val > currentQty) {
+            showToast("الكمية المدخلة غير صحيحة!", "error");
+            return;
+        }
+        document.body.removeChild(overlay);
+        onConfirm(val);
+    };
+    document.getElementById('btnConfirmNo').onclick = () => {
+        document.body.removeChild(overlay);
+    };
+};
+
 window.changeExpiryStatus = function (id, newStatus) {
     let msg = "";
-    if (newStatus === 'في عرض') msg = "هل تريد تفعيل العرض وجعل السطر فسفوري؟ 🔥";
-    else if (newStatus === 'مش في عرض') msg = "هل تريد إيقاف العرض وإعادته للحالة الطبيعية؟";
-    else if (newStatus === 'Deleted') msg = "تحذير: سيتم مسح المنتج بالكامل من النظام ولن يظهر مرة أخرى. هل أنت متأكد من إتمام البيع؟ <i class=\'fa-solid fa-xmark\'></i>️";
+    if (newStatus === 'في عرض') {
+        msg = "هل تريد تفعيل العرض وجعل السطر فسفوري؟ 🔥";
+        customConfirm(msg, () => { executeStatusUpdate(id, newStatus); });
+    } else if (newStatus === 'مش في عرض') {
+        msg = "هل تريد إيقاف العرض وإعادته للحالة الطبيعية؟";
+        customConfirm(msg, () => { executeStatusUpdate(id, newStatus); });
+    } else if (newStatus === 'Deleted') {
+        msg = "يرجى تحديد الكمية المباعة ليتم خصمها (أو بيع الكل لحذفه)";
+        let item = expiryData.find(i => i.id == id);
+        let currentQty = item ? parseFloat(item.qty) || 1 : 1;
+        window.customQtyConfirm(msg, currentQty, (soldQty) => {
+            executeStatusUpdate(id, newStatus, soldQty);
+        });
+    }
+};
 
-    customConfirm(msg, () => {
-        showToast("جاري التحديث...", "warning");
+function executeStatusUpdate(id, newStatus, soldQty = null) {
+    showToast("جاري التحديث...", "warning");
 
-        let formData = new URLSearchParams();
-        formData.append('action', 'updateExpiryStatus');
-        formData.append('id', id);
-        formData.append('status', newStatus);
+    let formData = new URLSearchParams();
+    formData.append('action', 'updateExpiryStatus');
+    formData.append('id', id);
+    formData.append('status', newStatus);
+    if (soldQty !== null) {
+        formData.append('soldQty', soldQty);
+    }
 
-        fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
-            .then(() => {
-                showToast("<i class=\'fa-solid fa-check\'></i> تم تحديث الحالة بنجاح", "success");
-                let item = expiryData.find(i => i.id == id);
-                if (item) {
+    fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
+        .then(() => {
+            showToast("<i class=\'fa-solid fa-check\'></i> تم تحديث الحالة بنجاح", "success");
+            let item = expiryData.find(i => i.id == id);
+            if (item) {
+                if (newStatus === 'Deleted' && soldQty !== null) {
+                    if (soldQty < item.qty) {
+                        item.qty -= soldQty;
+                    } else {
+                        item.status = newStatus;
+                    }
+                } else {
                     item.status = newStatus;
                 }
-                renderExpiryDashboard();
-                updateCatalogWithOffers();
-                if (document.getElementById('expiryDetailsSection').style.display === 'block') {
+            }
+            renderExpiryDashboard();
+            updateCatalogWithOffers();
+            if (document.getElementById('expiryDetailsSection').style.display === 'block') {
+                if (newStatus === 'Deleted') {
                     closeExpiryDetails();
+                } else {
+                    // Update details view to reflect new status without closing
+                    showExpiryDetails(expiryCurrentCategory, false);
                 }
-            }).catch(() => {
-                showToast("<i class=\'fa-solid fa-xmark\'></i> خطأ في الاتصال بالإنترنت", "error");
-            });
-    });
-};
+            }
+        }).catch(() => {
+            showToast("<i class=\'fa-solid fa-xmark\'></i> خطأ في الاتصال بالإنترنت", "error");
+        });
+}
 
 function updateCatalogWithOffers() {
     if (!catalogData || catalogData.length === 0) return;

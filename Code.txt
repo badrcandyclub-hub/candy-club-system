@@ -1446,6 +1446,9 @@ function doPost(e) {
           if (expData[i][0] == targetName && (!targetDate || expData[i][2].toString() == targetDate.toString())) {
             // ⭐ الأرشفة: عند الضغط على "تم البيع" (التي ترسل 'Deleted')
             if (newStatus === "Deleted") {
+               var currentQty = parseFloat(expData[i][1]) || 0;
+               var soldQty = e.parameter.soldQty ? parseFloat(e.parameter.soldQty) : currentQty;
+               
                var archiveSheet = ss.getSheetByName("🗄️ أرشيف المبيعات");
                if (!archiveSheet) {
                   archiveSheet = ss.insertSheet("🗄️ أرشيف المبيعات");
@@ -1455,10 +1458,17 @@ function doPost(e) {
                        .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
                }
                var rowToArchive = expData[i].slice(0, 12);
+               rowToArchive[1] = soldQty;
                rowToArchive[10] = "تم البيع";
                rowToArchive.push(Utilities.formatDate(new Date(), "Africa/Cairo", "yyyy-MM-dd hh:mm a"));
                archiveSheet.appendRow(rowToArchive);
-               expirySheet.deleteRow(i + 1);
+               
+               if (soldQty >= currentQty) {
+                   expirySheet.deleteRow(i + 1);
+               } else {
+                   var remainingQty = currentQty - soldQty;
+                   expirySheet.getRange(i + 1, 2).setValue(remainingQty);
+               }
                productName = targetName;
                break;
             }
