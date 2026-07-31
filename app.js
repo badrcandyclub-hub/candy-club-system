@@ -7374,7 +7374,6 @@ window.searchDriverOrder = async function() {
             
             <div class="meta-row" style="margin-top:3px;">
                 <span><i class="fa-solid fa-truck-ramp-box" style="color:#000; margin-left:4px;"></i><b>مُسلم:</b> ${senderName || '---'}</span>
-                <span><i class="fa-solid fa-user-pen" style="color:#000; margin-left:4px;"></i><b>سُجل بواسطة:</b> ${regName}</span>
             </div>
             
             <table>
@@ -7395,7 +7394,6 @@ window.searchDriverOrder = async function() {
             </div>` : ''}
             
             <div class="footer">
-                سُجل بواسطة: ${regName}<br>
                 Candy Club System
             </div>
             
@@ -7879,9 +7877,6 @@ window.reprintInvLog = function(logId) {
             <div class="info-row">
                 <span><i class="fa-solid fa-boxes-packing" style="color:#000; margin-left:4px;"></i><b>من:</b> ${log.from}</span>
                 <span><i class="fa-solid fa-location-dot" style="color:#000; margin-left:4px;"></i><b>إلى:</b> ${log.to}</span>
-            </div>
-            <div class="info-row">
-                <span><i class="fa-solid fa-user-pen" style="color:#000; margin-left:4px;"></i><b>المسجل:</b> ${log.regName}</span>
             </div>
             
             <table>
@@ -8402,9 +8397,6 @@ window.reprintInvLog = function(logId) {
                 <span><i class="fa-solid fa-boxes-packing" style="color:#000; margin-left:4px;"></i><b>من:</b> ${log.from}</span>
                 <span><i class="fa-solid fa-location-dot" style="color:#000; margin-left:4px;"></i><b>إلى:</b> ${log.to}</span>
             </div>
-            <div class="info-row">
-                <span><i class="fa-solid fa-user-pen" style="color:#000; margin-left:4px;"></i><b>المسجل:</b> ${log.regName}</span>
-            </div>
             
             <table>
                 <thead>
@@ -8540,7 +8532,6 @@ function printInventoryReceipt(logId, from, to, items, notes, senderName, regNam
             
             <div class="meta-row" style="margin-top:3px;">
                 <span><i class="fa-solid fa-truck-ramp-box" style="color:#000; margin-left:4px;"></i><b>مُسلم:</b> ${senderName || '---'}</span>
-                <span><i class="fa-solid fa-user-pen" style="color:#000; margin-left:4px;"></i><b>سُجل بواسطة:</b> ${regName}</span>
             </div>
             
             <table>
@@ -8561,7 +8552,6 @@ function printInventoryReceipt(logId, from, to, items, notes, senderName, regNam
             </div>` : ''}
             
             <div class="footer">
-                سُجل بواسطة: ${regName}<br>
                 Candy Club System
             </div>
             
