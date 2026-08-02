@@ -4418,7 +4418,6 @@ window.showExpiryDetails = function (category, resetPage = true) {
                 ${pricesHtml}
                 <div class="expiry-item-actions" style="flex-wrap: wrap; gap: 5px;">
                     <button class="btn-activate-offer interactive-btn" style="background: ${offerBtnColor}; flex: 1;" onclick="${item.status === 'في عرض' ? `changeExpiryStatus('${item.id}', '${offerBtnAction}')` : `promptNewOffer('${item.id}')`}">${offerBtnText}</button>
-                    <button class="btn-close-item interactive-btn" style="flex: 1;" onclick="changeExpiryStatus('${item.id}', 'Deleted')">تم البيع <i class=\'fa-solid fa-xmark\'></i>️</button>
                 </div>
             `;
             fragment.appendChild(itemDiv);
