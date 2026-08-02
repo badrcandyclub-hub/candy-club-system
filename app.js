@@ -8907,30 +8907,33 @@ function loadMyAttendance() {
             let paidLeaves = 0;
             let unpaidLeaves = 0;
             myRecords.forEach(r => {
-                let hStr = r.hours ? r.hours.toString() : "0";
-                let h = 0;
-                
-                if (hStr.includes(':')) {
-                    let parts = hStr.match(/(\d+):(\d+)/);
-                    if (parts) {
-                        h = parseInt(parts[1], 10) + parseInt(parts[2], 10) / 60;
-                    }
-                } else {
-                    let hMatch = hStr.match(/(\d+(?:\.\d+)?)\s*ساعة/);
-                    let mMatch = hStr.match(/(\d+)\s*دقيقة/);
+                let isPendingOrRejected = r.requestStatus === 'بانتظار الموافقة' || r.requestStatus === '❌ مرفوضة' || r.status === 'إجازة بدون مرتب' || r.status === 'إجازة مرفوضة';
+                if (!isPendingOrRejected) {
+                    let hStr = r.hours ? r.hours.toString() : "0";
+                    let h = 0;
                     
-                    if (hMatch) {
-                        h += parseFloat(hMatch[1]);
-                    } else if (!isNaN(parseFloat(hStr))) {
-                        h += parseFloat(hStr);
+                    if (hStr.includes(':')) {
+                        let parts = hStr.match(/(\d+):(\d+)/);
+                        if (parts) {
+                            h = parseInt(parts[1], 10) + parseInt(parts[2], 10) / 60;
+                        }
+                    } else {
+                        let hMatch = hStr.match(/(\d+(?:\.\d+)?)\s*ساعة/);
+                        let mMatch = hStr.match(/(\d+)\s*دقيقة/);
+                        
+                        if (hMatch) {
+                            h += parseFloat(hMatch[1]);
+                        } else if (!isNaN(parseFloat(hStr))) {
+                            h += parseFloat(hStr);
+                        }
+                        
+                        if (mMatch) {
+                            h += parseFloat(mMatch[1]) / 60;
+                        }
                     }
                     
-                    if (mMatch) {
-                        h += parseFloat(mMatch[1]) / 60;
-                    }
+                    if (!isNaN(h)) totalHours += h;
                 }
-                
-                if (!isNaN(h)) totalHours += h;
                 if (r.status === 'إجازة مدفوعة' && r.requestStatus !== 'بانتظار الموافقة' && r.requestStatus !== '❌ مرفوضة') paidLeaves++;
                 if (r.status === 'إجازة بدون مرتب' && r.requestStatus !== 'بانتظار الموافقة' && r.requestStatus !== '❌ مرفوضة') unpaidLeaves++;
             });
@@ -9200,23 +9203,26 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
                     if (r.status === 'إجازة مدفوعة' && r.requestStatus !== 'بانتظار الموافقة' && r.requestStatus !== '❌ مرفوضة') adminPaidLeaves++;
                     if (r.status === 'إجازة بدون مرتب' && r.requestStatus !== 'بانتظار الموافقة' && r.requestStatus !== '❌ مرفوضة') adminUnpaidLeaves++;
                     
-                    let hStr = String(r.hours || '').trim();
-                    let h = 0;
-                    if (hStr && hStr !== '-' && hStr !== '0' && hStr !== 'undefined') {
-                        let parts = hStr.split('ساعة');
-                        if (parts[0] && parts[0].includes(':')) {
-                            let timeParts = parts[0].split(':');
-                            h += parseFloat(timeParts[0]) || 0;
-                            h += (parseFloat(timeParts[1]) || 0) / 60;
-                        } else {
-                            let hMatch = hStr.match(/(\d+(?:\.\d+)?)\s*ساعة/);
-                            let mMatch = hStr.match(/(\d+(?:\.\d+)?)\s*دقيقة/);
-                            if (hMatch) h += parseFloat(hMatch[1]);
-                            else if (!isNaN(parseFloat(hStr))) h += parseFloat(hStr);
-                            if (mMatch) h += parseFloat(mMatch[1]) / 60;
+                    let isPendingOrRejected = r.requestStatus === 'بانتظار الموافقة' || r.requestStatus === '❌ مرفوضة' || r.status === 'إجازة بدون مرتب' || r.status === 'إجازة مرفوضة';
+                    if (!isPendingOrRejected) {
+                        let hStr = String(r.hours || '').trim();
+                        let h = 0;
+                        if (hStr && hStr !== '-' && hStr !== '0' && hStr !== 'undefined') {
+                            let parts = hStr.split('ساعة');
+                            if (parts[0] && parts[0].includes(':')) {
+                                let timeParts = parts[0].split(':');
+                                h += parseFloat(timeParts[0]) || 0;
+                                h += (parseFloat(timeParts[1]) || 0) / 60;
+                            } else {
+                                let hMatch = hStr.match(/(\d+(?:\.\d+)?)\s*ساعة/);
+                                let mMatch = hStr.match(/(\d+(?:\.\d+)?)\s*دقيقة/);
+                                if (hMatch) h += parseFloat(hMatch[1]);
+                                else if (!isNaN(parseFloat(hStr))) h += parseFloat(hStr);
+                                if (mMatch) h += parseFloat(mMatch[1]) / 60;
+                            }
                         }
+                        if (!isNaN(h)) adminTotalHours += h;
                     }
-                    if (!isNaN(h)) adminTotalHours += h;
                 } else if (lDate <= today) {
                     adminAbsences++;
                 }
@@ -9274,23 +9280,26 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
                     }
                     let safeNotes = (r.notes || '').replace(/'/g, "\\'");
                     
-                    let hStr = String(r.hours || '').trim();
-                    let h = 0;
-                    if (hStr && hStr !== '-' && hStr !== '0' && hStr !== 'undefined') {
-                        let parts = hStr.split('ساعة');
-                        if (parts[0] && parts[0].includes(':')) {
-                            let timeParts = parts[0].split(':');
-                            h += parseFloat(timeParts[0]) || 0;
-                            h += (parseFloat(timeParts[1]) || 0) / 60;
-                        } else {
-                            let hMatch = hStr.match(/(\d+(?:\.\d+)?)\s*ساعة/);
-                            let mMatch = hStr.match(/(\d+(?:\.\d+)?)\s*دقيقة/);
-                            if (hMatch) h += parseFloat(hMatch[1]);
-                            else if (!isNaN(parseFloat(hStr))) h += parseFloat(hStr);
-                            if (mMatch) h += parseFloat(mMatch[1]) / 60;
+                    let isPendingOrRejected = r.requestStatus === 'بانتظار الموافقة' || r.requestStatus === '❌ مرفوضة' || r.status === 'إجازة بدون مرتب' || r.status === 'إجازة مرفوضة';
+                    if (!isPendingOrRejected) {
+                        let hStr = String(r.hours || '').trim();
+                        let h = 0;
+                        if (hStr && hStr !== '-' && hStr !== '0' && hStr !== 'undefined') {
+                            let parts = hStr.split('ساعة');
+                            if (parts[0] && parts[0].includes(':')) {
+                                let timeParts = parts[0].split(':');
+                                h += parseFloat(timeParts[0]) || 0;
+                                h += (parseFloat(timeParts[1]) || 0) / 60;
+                            } else {
+                                let hMatch = hStr.match(/(\d+(?:\.\d+)?)\s*ساعة/);
+                                let mMatch = hStr.match(/(\d+(?:\.\d+)?)\s*دقيقة/);
+                                if (hMatch) h += parseFloat(hMatch[1]);
+                                else if (!isNaN(parseFloat(hStr))) h += parseFloat(hStr);
+                                if (mMatch) h += parseFloat(mMatch[1]) / 60;
+                            }
                         }
+                        if (!isNaN(h)) singleEmpTotalHours += h;
                     }
-                    if (!isNaN(h)) singleEmpTotalHours += h;
 
                     let actualBg = isToday && r.status !== 'إجازة مدفوعة' ? '#e8f5e9' : bgRow;
                     html += `<tr style="background:${actualBg}; border-bottom:1px solid #eee; ${rowBorder} transition:background 0.15s;" onmouseover="this.style.background='#e3f2fd'" onmouseout="this.style.background='${actualBg}'">`;
@@ -9808,23 +9817,26 @@ function exportAttendancePDF() {
                             bgRow = '#fffde7';
                         }
                         
-                        let hStr = String(r.hours || '').trim();
-                        let h = 0;
-                        if (hStr && hStr !== '-' && hStr !== '0' && hStr !== 'undefined') {
-                            let parts = hStr.split('ساعة');
-                            if (parts[0] && parts[0].includes(':')) {
-                                let timeParts = parts[0].split(':');
-                                h += parseFloat(timeParts[0]) || 0;
-                                h += (parseFloat(timeParts[1]) || 0) / 60;
-                            } else {
-                                let hMatch = hStr.match(/(\d+(?:\.\d+)?)\s*ساعة/);
-                                let mMatch = hStr.match(/(\d+(?:\.\d+)?)\s*دقيقة/);
-                                if (hMatch) h += parseFloat(hMatch[1]);
-                                else if (!isNaN(parseFloat(hStr))) h += parseFloat(hStr);
-                                if (mMatch) h += parseFloat(mMatch[1]) / 60;
+                        let isPendingOrRejected = r.requestStatus === 'بانتظار الموافقة' || r.requestStatus === '❌ مرفوضة' || r.status === 'إجازة بدون مرتب' || r.status === 'إجازة مرفوضة';
+                        if (!isPendingOrRejected) {
+                            let hStr = String(r.hours || '').trim();
+                            let h = 0;
+                            if (hStr && hStr !== '-' && hStr !== '0' && hStr !== 'undefined') {
+                                let parts = hStr.split('ساعة');
+                                if (parts[0] && parts[0].includes(':')) {
+                                    let timeParts = parts[0].split(':');
+                                    h += parseFloat(timeParts[0]) || 0;
+                                    h += (parseFloat(timeParts[1]) || 0) / 60;
+                                } else {
+                                    let hMatch = hStr.match(/(\d+(?:\.\d+)?)\s*ساعة/);
+                                    let mMatch = hStr.match(/(\d+(?:\.\d+)?)\s*دقيقة/);
+                                    if (hMatch) h += parseFloat(hMatch[1]);
+                                    else if (!isNaN(parseFloat(hStr))) h += parseFloat(hStr);
+                                    if (mMatch) h += parseFloat(mMatch[1]) / 60;
+                                }
                             }
+                            if (!isNaN(h)) singleEmpTotalHours += h;
                         }
-                        if (!isNaN(h)) singleEmpTotalHours += h;
 
                         html += `<tr style="background:${bgRow};">`;
                         html += `<td style="padding:12px; border-bottom:1px solid #eee;">${dateStr}<br><span style="font-size:0.8rem; color:#757575;">${dayName}</span></td>`;
@@ -9869,24 +9881,27 @@ function exportAttendancePDF() {
                         employeeTotals[r.employee] = 0;
                     }
                     
-                    let hStr = String(r.hours || '').trim();
-                    let h = 0;
-                    if (hStr && hStr !== '-' && hStr !== '0' && hStr !== 'undefined') {
-                        let parts = hStr.split('ساعة');
-                        if (parts[0] && parts[0].includes(':')) {
-                            let timeParts = parts[0].split(':');
-                            h += parseFloat(timeParts[0]) || 0;
-                            h += (parseFloat(timeParts[1]) || 0) / 60;
-                        } else {
-                            let hMatch = hStr.match(/(\d+(?:\.\d+)?)\s*ساعة/);
-                            let mMatch = hStr.match(/(\d+(?:\.\d+)?)\s*دقيقة/);
-                            if (hMatch) h += parseFloat(hMatch[1]);
-                            else if (!isNaN(parseFloat(hStr))) h += parseFloat(hStr);
-                            if (mMatch) h += parseFloat(mMatch[1]) / 60;
+                    let isPendingOrRejected = r.requestStatus === 'بانتظار الموافقة' || r.requestStatus === '❌ مرفوضة' || r.status === 'إجازة بدون مرتب' || r.status === 'إجازة مرفوضة';
+                    if (!isPendingOrRejected) {
+                        let hStr = String(r.hours || '').trim();
+                        let h = 0;
+                        if (hStr && hStr !== '-' && hStr !== '0' && hStr !== 'undefined') {
+                            let parts = hStr.split('ساعة');
+                            if (parts[0] && parts[0].includes(':')) {
+                                let timeParts = parts[0].split(':');
+                                h += parseFloat(timeParts[0]) || 0;
+                                h += (parseFloat(timeParts[1]) || 0) / 60;
+                            } else {
+                                let hMatch = hStr.match(/(\d+(?:\.\d+)?)\s*ساعة/);
+                                let mMatch = hStr.match(/(\d+(?:\.\d+)?)\s*دقيقة/);
+                                if (hMatch) h += parseFloat(hMatch[1]);
+                                else if (!isNaN(parseFloat(hStr))) h += parseFloat(hStr);
+                                if (mMatch) h += parseFloat(mMatch[1]) / 60;
+                            }
                         }
-                    }
-                    if (!isNaN(h)) {
-                        employeeTotals[r.employee] += h;
+                        if (!isNaN(h)) {
+                            employeeTotals[r.employee] += h;
+                        }
                     }
                 });
 

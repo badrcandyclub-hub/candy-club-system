@@ -1670,7 +1670,7 @@ function doPost(e) {
         }
       }
       
-      var hoursCredit = leaveType === "إجازة مدفوعة" ? "8 ساعة" : "0";
+      var hoursCredit = "0";
       attSheet.appendRow([empName, "'" + leaveDate, "-", "-", hoursCredit, leaveType, "بانتظار الموافقة", notes]);
       return ContentService.createTextOutput(JSON.stringify({success: true, message: "تم إرسال طلب الإجازة"})).setMimeType(ContentService.MimeType.JSON);
     }
@@ -1692,8 +1692,11 @@ function doPost(e) {
         try { existDate = Utilities.formatDate(new Date(attData[a][1]), "Africa/Cairo", "yyyy-MM-dd"); } catch(ex) { existDate = attData[a][1].toString().replace("'",""); }
         if (attData[a][0].toString().trim() === empName && existDate === leaveDate) {
           if (decision === "approve") {
+            var leaveType = attData[a][5] || "";
+            var approvedHours = leaveType === "إجازة مدفوعة" ? "8 ساعة" : "0";
+            attSheet.getRange(a + 1, 5).setValue(approvedHours);
             attSheet.getRange(a + 1, 7).setValue("✅ تمت الموافقة");
-            attSheet.getRange(a + 1, 1, 1, 8).setBackground(attData[a][5] === "إجازة مدفوعة" ? "#e3f2fd" : "#fff3e0");
+            attSheet.getRange(a + 1, 1, 1, 8).setBackground(leaveType === "إجازة مدفوعة" ? "#e3f2fd" : "#fff3e0");
           } else {
             attSheet.getRange(a + 1, 5).setValue("0");
             attSheet.getRange(a + 1, 6).setValue("إجازة مرفوضة");
