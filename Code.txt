@@ -1641,10 +1641,8 @@ function doPost(e) {
       var outTime = Utilities.formatDate(new Date(), "Africa/Cairo", "hh:mm a");
       
       var attData = attSheet.getDataRange().getValues();
-      for (var a = 1; a < attData.length; a++) {
-        var existDate = "";
-        try { existDate = Utilities.formatDate(new Date(attData[a][1]), "Africa/Cairo", "yyyy-MM-dd"); } catch(ex) { existDate = attData[a][1].toString().replace("'",""); }
-        if (attData[a][0].toString().trim() === empName && existDate === attDate && attData[a][5] === "حاضر" && !attData[a][3]) {
+      for (var a = attData.length - 1; a >= 1; a--) {
+        if (attData[a][0].toString().trim() === empName && attData[a][5] === "حاضر" && (!attData[a][3] || attData[a][3] === "-")) {
           attSheet.getRange(a + 1, 4).setValue(outTime);
           
           // حساب الساعات

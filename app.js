@@ -8996,19 +8996,21 @@ function loadMyAttendance() {
                 bannerEl.style.display = 'grid';
             }
 
-            // Check today's status
-            let today = new Date().toLocaleDateString('en-CA');
-            let todayRec = myRecords.find(r => r.date === today);
-            if (todayRec) {
-                if (todayRec.checkOut && todayRec.checkOut !== '-' && todayRec.checkOut !== '') {
+            // Check open shift status
+            let openRec = myRecords.slice().reverse().find(r => r.status === 'حاضر' && (!r.checkOut || r.checkOut === '-' || r.checkOut === ''));
+            
+            if (openRec) {
+                hrTodayStatus = 'checkedIn';
+            } else {
+                let today = new Date().toLocaleDateString('en-CA');
+                let todayRec = myRecords.find(r => r.date === today);
+                if (todayRec && todayRec.checkOut && todayRec.checkOut !== '-' && todayRec.checkOut !== '') {
                     hrTodayStatus = 'checkedOut';
                     let hEl = document.getElementById('hrTodayHours');
                     if (hEl) hEl.innerText = formatHoursDisplay(todayRec.hours);
-                } else if (todayRec.status === 'حاضر') {
-                    hrTodayStatus = 'checkedIn';
+                } else {
+                    hrTodayStatus = null;
                 }
-            } else {
-                hrTodayStatus = null;
             }
             updateHrButtons();
         })
