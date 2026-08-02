@@ -471,13 +471,24 @@ function buildMonthlyReport(ordersData, targetMonth) {
 // ⭐ دالة مساعدة للبحث عن شيت الاستلامات بغض النظر عن الإيموجي أو المسافات
 function getExpirySheet(ss) {
   var sheets = ss.getSheets();
+  // ابحث أولاً عن شيت يحتوي على كلمة "استلام" 
   for (var i = 0; i < sheets.length; i++) {
     var sName = sheets[i].getName();
     var cleanName = sName.replace(/أ/g, "ا").replace(/إ/g, "ا").replace(/آ/g, "ا").replace(/\s/g, "");
-    if (cleanName.indexOf("استلام") !== -1 || cleanName.indexOf("صلاحيات") !== -1) {
+    if (cleanName.indexOf("استلام") !== -1 && cleanName.indexOf("ارشيف") === -1) {
       return sheets[i];
     }
   }
+  // إذا لم يجد، ابحث عن كلمة "صلاحيات" كبديل
+  for (var i = 0; i < sheets.length; i++) {
+    var sName = sheets[i].getName();
+    var cleanName = sName.replace(/أ/g, "ا").replace(/إ/g, "ا").replace(/آ/g, "ا").replace(/\s/g, "");
+    if (cleanName.indexOf("صلاحيات") !== -1 && cleanName.indexOf("ارشيف") === -1) {
+      return sheets[i];
+    }
+  }
+  return null;
+}
   return null;
 }
 
