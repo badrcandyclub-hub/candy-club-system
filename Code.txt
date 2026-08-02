@@ -7,7 +7,7 @@ function onOpen() {
   var ui = SpreadsheetApp.getUi();
   ui.createMenu('🍬 إدارة كاندي كلوب')
       .addItem('🔄 بناء وتحديث النظام الشامل', 'setupCandyClubUX')
-      .addItem('✨ إنشاء أذونات المخازن وأرشيف المبيعات', 'createMissingSheets')
+      .addItem('✨ إنشاء أذونات المخازن', 'createMissingSheets')
       .addItem('⚡ تفعيل المزامنة الأوتوماتيكية في الخلفية', 'setupAutomaticSync')
       .addItem('▶️ تشغيل المزامنة فوراً الآن', 'runSyncNow')
       .addToUi();
@@ -18,19 +18,7 @@ function createMissingSheets() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var headerFont = "Cairo";
 
-  // 1. أرشيف المبيعات
-  var archiveSheet = ss.getSheetByName("🗄️ أرشيف المبيعات");
-  if (!archiveSheet) {
-      archiveSheet = ss.insertSheet("🗄️ أرشيف المبيعات");
-      var archiveHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "اسم المسجل", "تاريخ التسجيل", "المستلم", "ملاحظات", "السعر الأساسي", "سعر العرض", "الحالة", "الباركود", "تاريخ البيع/الأرشفة"];
-      archiveSheet.getRange(1, 1, 1, archiveHeaders.length).setValues([archiveHeaders])
-           .setBackground("#2c3e50").setFontColor("white").setFontFamily(headerFont).setFontSize(14).setFontWeight("bold")
-           .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
-      archiveSheet.setRowHeight(1, 45);
-      archiveSheet.setFrozenRows(1);
-  }
-
-  // 2. أذونات المخازن (الجديد)
+  // 1. أذونات المخازن (الجديد)
   var invSheet = ss.getSheetByName("📦 أذونات المخازن");
   if (!invSheet) {
       invSheet = ss.insertSheet("📦 أذونات المخازن");
@@ -45,7 +33,7 @@ function createMissingSheets() {
   }
 
   try {
-    SpreadsheetApp.getUi().alert("✅ تم إنشاء وتحديث الشيتات بنجاح! يمكنك الآن استخدام أرشيف المبيعات وأذونات المخازن.");
+    SpreadsheetApp.getUi().alert("✅ تم إنشاء وتحديث الشيتات بنجاح! يمكنك الآن استخدام أذونات المخازن.");
   } catch (e) {
     Logger.log("UI Alert skipped: " + e.message);
   }
@@ -277,20 +265,6 @@ function setupCandyClubUX() {
   expirySheet.setFrozenRows(1);
   expirySheet.setColumnWidth(1, 120);
   expirySheet.setColumnWidth(2, 220);
-
-  // ============================================================
-  // 9. أرشيف المبيعات
-  // ============================================================
-  var archiveSheet = ss.getSheetByName("🗄️ أرشيف المبيعات");
-  if (!archiveSheet) {
-      archiveSheet = ss.insertSheet("🗄️ أرشيف المبيعات");
-      var archiveHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "اسم المسجل", "تاريخ التسجيل", "المستلم", "ملاحظات", "السعر الأساسي", "سعر العرض", "الحالة", "الباركود", "تاريخ البيع/الأرشفة"];
-      archiveSheet.getRange(1, 1, 1, archiveHeaders.length).setValues([archiveHeaders])
-           .setBackground("#2c3e50").setFontColor("white").setFontFamily(headerFont).setFontSize(14).setFontWeight("bold")
-           .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
-      archiveSheet.setRowHeight(1, 45);
-      archiveSheet.setFrozenRows(1);
-  }
 
   // ============================================================
   // 10. شيت المستخدمين (نظام تسجيل الدخول والصلاحيات)
@@ -1460,35 +1434,6 @@ function doPost(e) {
 
         for (var i = 1; i < expData.length; i++) {
           if (expData[i][0] == targetName && (!targetDate || expData[i][2].toString() == targetDate.toString())) {
-            // ⭐ الأرشفة: عند الضغط على "تم البيع" (التي ترسل 'Deleted')
-            if (newStatus === "Deleted") {
-               var currentQty = parseFloat(expData[i][1]) || 0;
-               var soldQty = e.parameter.soldQty ? parseFloat(e.parameter.soldQty) : currentQty;
-               
-               var archiveSheet = ss.getSheetByName("🗄️ أرشيف المبيعات");
-               if (!archiveSheet) {
-                  archiveSheet = ss.insertSheet("🗄️ أرشيف المبيعات");
-                  var archiveHeaders = ["اسم المنتج", "الكمية", "تاريخ الانتهاء", "المكان / المورد", "اسم المسجل", "تاريخ التسجيل", "المستلم", "ملاحظات", "السعر الأساسي", "سعر العرض", "الحالة", "الباركود", "تاريخ البيع/الأرشفة"];
-                  archiveSheet.getRange(1, 1, 1, archiveHeaders.length).setValues([archiveHeaders])
-                       .setBackground("#2c3e50").setFontColor("white").setFontFamily("Cairo").setFontSize(14).setFontWeight("bold")
-                       .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
-               }
-               var rowToArchive = expData[i].slice(0, 12);
-               rowToArchive[1] = soldQty;
-               rowToArchive[10] = "تم البيع";
-               rowToArchive.push(Utilities.formatDate(new Date(), "Africa/Cairo", "yyyy-MM-dd hh:mm a"));
-               archiveSheet.appendRow(rowToArchive);
-               
-               if (soldQty >= currentQty) {
-                   expirySheet.deleteRow(i + 1);
-               } else {
-                   var remainingQty = currentQty - soldQty;
-                   expirySheet.getRange(i + 1, 2).setValue(remainingQty);
-               }
-               productName = targetName;
-               break;
-            }
-
             expirySheet.getRange(i + 1, 11).setValue(newStatus); // Status is now col 11
             productName = expData[i][0];
             
