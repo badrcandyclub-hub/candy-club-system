@@ -8,6 +8,7 @@ function onOpen() {
   ui.createMenu('🍬 إدارة كاندي كلوب')
       .addItem('🔄 بناء وتحديث النظام الشامل', 'setupCandyClubUX')
       .addItem('✨ إنشاء أذونات المخازن وأرشيف المبيعات', 'createMissingSheets')
+      .addItem('⚡ تفعيل المزامنة الأوتوماتيكية في الخلفية', 'setupAutomaticSync')
       .addToUi();
 }
 
@@ -1053,6 +1054,11 @@ function doPost(e) {
     var action = e.parameter.action;
     var sSheet = ss.getSheetByName("⚙️ الإعدادات والشحن");
 
+    if (action === "syncFirebaseInventory") {
+      var result = syncFirebaseInventory(ss);
+      return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+    }
+
     if (action === "bulkUploadAttendance") {
       var attSheet = ss.getSheetByName("📅 سجل الحضور");
       if (!attSheet) return ContentService.createTextOutput(JSON.stringify({success: false, error: "شيت الحضور غير موجود"})).setMimeType(ContentService.MimeType.JSON);
@@ -2037,4 +2043,220 @@ function analyzeVIPs() {
   });
   
   return vipList;
+}
+
+// ============================================================
+// ⭐ V18: نظام المزامنة الذكية مع Firebase (الاستلامات والمرتجعات)
+// ============================================================
+
+function syncFirebaseInventory(ss) {
+  var expirySheet = getExpirySheet(ss);
+  if (!expirySheet) return { success: false, error: "شيت الاستلامات والصلاحيات غير موجود" };
+  
+  var expData = expirySheet.getDataRange().getValues();
+  if (expData.length < 2) return { success: false, error: "لا توجد بيانات كافية في شيت الصلاحيات" };
+  
+  var headers = expData[0];
+  var findIdx = function(aliases) {
+    for (var j = 0; j < aliases.length; j++) {
+      var idx = headers.indexOf(aliases[j]);
+      if (idx !== -1) return idx;
+    }
+    return -1;
+  };
+  
+  var idxName = findIdx(["اسم المنتج", "اسم الصنف", "الاسم"]);
+  var idxQty = findIdx(["الكمية"]);
+  var idxExp = findIdx(["تاريخ الانتهاء", "تاريخ الصلاحية"]);
+  var idxBarcode = findIdx(["الباركود"]);
+  
+  if (idxQty === -1 || idxBarcode === -1) return { success: false, error: "الأعمدة الأساسية (الكمية، الباركود) غير موجودة" };
+  
+  // 1. Fetch Firebase Data
+  var fbUrl = "https://candyclubsync-default-rtdb.firebaseio.com/products.json";
+  var fbResponse;
+  try {
+    fbResponse = UrlFetchApp.fetch(fbUrl, { muteHttpExceptions: true });
+    if (fbResponse.getResponseCode() !== 200) {
+      return { success: false, error: "فشل الاتصال بقاعدة بيانات الفايربيز" };
+    }
+  } catch (e) {
+    return { success: false, error: e.toString() };
+  }
+  
+  var fbDataRaw = JSON.parse(fbResponse.getContentText());
+  var fbMap = {}; // Barcode -> total stock
+  var items = Array.isArray(fbDataRaw) ? fbDataRaw : Object.values(fbDataRaw);
+  
+  for (var i = 0; i < items.length; i++) {
+    var item = items[i];
+    if (item && item.Barcode) {
+      var bcode = String(item.Barcode).trim();
+      var stock = parseFloat(item.Stock) || 0;
+      fbMap[bcode] = stock;
+    }
+  }
+  
+  // 2. Aggregate Google Sheet Data
+  var gsMap = {}; // Barcode -> { totalQty: sum, rows: [] }
+  for (var i = 1; i < expData.length; i++) {
+    var row = expData[i];
+    var bcode = String(row[idxBarcode] || "").trim();
+    if (!bcode) continue; // Skip items without barcode
+    
+    var qty = parseFloat(row[idxQty]) || 0;
+    if (!gsMap[bcode]) {
+      gsMap[bcode] = { totalQty: 0, rows: [] };
+    }
+    
+    var expDateStr = idxExp !== -1 ? row[idxExp] : "";
+    var expDateObj = new Date(expDateStr);
+    if (isNaN(expDateObj.getTime())) expDateObj = new Date(8640000000000000); 
+    
+    gsMap[bcode].totalQty += qty;
+    gsMap[bcode].rows.push({ rowIndex: i, date: expDateObj, qty: qty, name: row[idxName] });
+  }
+  
+  // 3. Compare and Adjust
+  var changesCount = 0;
+  var discrepancies = [];
+  
+  for (var bcode in gsMap) {
+    var gsTotal = gsMap[bcode].totalQty;
+    var fbTotal = fbMap.hasOwnProperty(bcode) ? fbMap[bcode] : null;
+    
+    if (fbTotal === null) continue; // Not in Firebase, maybe deleted or new
+    
+    var diff = gsTotal - fbTotal;
+    
+    if (diff > 0) {
+      // Sold! We need to deduct 'diff' from GS
+      var qtyToDeduct = diff;
+      var rows = gsMap[bcode].rows;
+      // FIFO: sort by date ascending
+      rows.sort(function(a, b) { return a.date.getTime() - b.date.getTime(); });
+      
+      for (var m = 0; m < rows.length; m++) {
+        if (qtyToDeduct <= 0) break;
+        var r = rows[m];
+        if (r.qty > 0) {
+          if (r.qty >= qtyToDeduct) {
+            expData[r.rowIndex][idxQty] = r.qty - qtyToDeduct;
+            qtyToDeduct = 0;
+          } else {
+            qtyToDeduct -= r.qty;
+            expData[r.rowIndex][idxQty] = 0;
+          }
+          changesCount++;
+        }
+      }
+      if (qtyToDeduct > 0) {
+        discrepancies.push("المنتج " + rows[0].name + " ناقص في الشيت بمقدار " + qtyToDeduct);
+      }
+    } else if (diff < 0) {
+      // Returned or added to FB! We need to add Math.abs(diff) to GS
+      var qtyToAdd = Math.abs(diff);
+      var rows = gsMap[bcode].rows;
+      
+      if (rows.length > 0) {
+        // Find nearest expiry date (sort ascending) and add it there
+        rows.sort(function(a, b) { return a.date.getTime() - b.date.getTime(); });
+        var targetRowIndex = rows[0].rowIndex;
+        var currentQty = parseFloat(expData[targetRowIndex][idxQty]) || 0;
+        expData[targetRowIndex][idxQty] = currentQty + qtyToAdd;
+        changesCount++;
+      }
+    }
+  }
+  
+  // 4. Archive empty rows and apply changes
+  if (changesCount > 0) {
+    var newExpData = [expData[0]];
+    for (var i = 1; i < expData.length; i++) {
+      var qStr = expData[i][idxQty];
+      var q = parseFloat(qStr);
+      if (qStr === "" || isNaN(q) || q > 0) {
+        newExpData.push(expData[i]);
+      } else {
+        archiveExpiryRow(ss, expData[i], headers);
+      }
+    }
+    
+    expirySheet.clearContents();
+    if (newExpData.length > 0) {
+      expirySheet.getRange(1, 1, newExpData.length, newExpData[0].length).setValues(newExpData);
+    }
+    
+    if (discrepancies.length > 0) {
+      logAlert(ss, "⚠️ نقص في الصلاحيات أثناء المزامنة", discrepancies.join(" | "));
+    }
+    
+    return { success: true, message: "تم تحديث " + changesCount + " منتج بنجاح" };
+  } else {
+    return { success: true, message: "البيانات متطابقة، لا توجد مبيعات أو مرتجعات جديدة لتسويتها" };
+  }
+}
+
+function archiveExpiryRow(ss, rowData, headers) {
+  var archSheet = ss.getSheetByName("ارشيف الصلاحيات");
+  if (!archSheet) {
+    archSheet = ss.insertSheet("ارشيف الصلاحيات");
+    archSheet.appendRow(headers);
+  }
+  archSheet.appendRow(rowData);
+}
+
+function logAlert(ss, type, msg) {
+  var alertSheet = ss.getSheetByName("تنبيهات النظام");
+  if (!alertSheet) {
+    alertSheet = ss.insertSheet("تنبيهات النظام");
+    alertSheet.appendRow(["التاريخ", "النوع", "الرسالة"]);
+  }
+  var t = Utilities.formatDate(new Date(), "Africa/Cairo", "yyyy-MM-dd hh:mm a");
+  alertSheet.appendRow([t, type, msg]);
+}
+
+// ============================================================
+// ⭐ التفعيل التلقائي للمزامنة
+// ============================================================
+function setupAutomaticSync() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var triggers = ScriptApp.getProjectTriggers();
+  var exists = false;
+  
+  for (var i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === 'autoSyncTriggerHandler') {
+      exists = true;
+      break;
+    }
+  }
+  
+  if (!exists) {
+    // تفعيل المزامنة كل ساعة واحدة
+    ScriptApp.newTrigger('autoSyncTriggerHandler')
+      .timeBased()
+      .everyHours(1)
+      .create();
+    SpreadsheetApp.getUi().alert("تم تفعيل المزامنة الأوتوماتيكية بنجاح! السكريبت هيشتغل لوحده كل ساعة يقارن الفايربيز ويظبط شيت الصلاحيات.");
+  } else {
+    SpreadsheetApp.getUi().alert("المزامنة الأوتوماتيكية مفعلة بالفعل مسبقاً.");
+  }
+}
+
+function autoSyncTriggerHandler() {
+  var lock = LockService.getScriptLock();
+  // الانتظار 30 ثانية لتجنب التزامن المتضارب
+  if (lock.tryLock(30000)) {
+    try {
+      var ss = SpreadsheetApp.getActiveSpreadsheet();
+      var result = syncFirebaseInventory(ss);
+      if (result.success && result.message && result.message.indexOf("تحديث 0") === -1 && result.message.indexOf("متطابقة") === -1) {
+        // يمكن حفظ سجل بنجاح المزامنة هنا إذا أردت
+      }
+    } catch(e) {
+      logAlert(SpreadsheetApp.getActiveSpreadsheet(), "خطأ في المزامنة التلقائية", e.toString());
+    } finally {
+      lock.releaseLock();
+    }
+  }
 }
