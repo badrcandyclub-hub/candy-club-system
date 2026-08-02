@@ -9,6 +9,7 @@ function onOpen() {
       .addItem('🔄 بناء وتحديث النظام الشامل', 'setupCandyClubUX')
       .addItem('✨ إنشاء أذونات المخازن وأرشيف المبيعات', 'createMissingSheets')
       .addItem('⚡ تفعيل المزامنة الأوتوماتيكية في الخلفية', 'setupAutomaticSync')
+      .addItem('▶️ تشغيل المزامنة فوراً الآن', 'runSyncNow')
       .addToUi();
 }
 
@@ -2240,6 +2241,17 @@ function setupAutomaticSync() {
     SpreadsheetApp.getUi().alert("تم تفعيل المزامنة الأوتوماتيكية بنجاح! السكريبت هيشتغل لوحده كل ساعة يقارن الفايربيز ويظبط شيت الصلاحيات.");
   } else {
     SpreadsheetApp.getUi().alert("المزامنة الأوتوماتيكية مفعلة بالفعل مسبقاً.");
+  }
+}
+
+function runSyncNow() {
+  var ui = SpreadsheetApp.getUi();
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  try {
+    var result = syncFirebaseInventory(ss);
+    ui.alert(result.success ? "النتيجة: " + result.message : "خطأ: " + result.error);
+  } catch (e) {
+    ui.alert("حدث خطأ غير متوقع: " + e.toString());
   }
 }
 
