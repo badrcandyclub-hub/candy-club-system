@@ -10230,3 +10230,170 @@ window.cleanDuplicates = function() {
     });
 };
 
+// ============================================================
+// ⭐ نظام النواقص الذكية
+// ============================================================
+let currentShortages = [];
+
+window.loadShortagesDashboard = function() {
+    let container = document.getElementById('shortagesListContainer');
+    let createBtn = document.getElementById('createShortagesTransferBtn');
+    if (!container) return;
+    
+    container.innerHTML = '<div style="text-align:center; padding:30px;"><i class="fa-solid fa-spinner fa-spin fa-2x" style="color:#c0392b;"></i><br><br>جاري جلب النواقص وحالات التجهيز...</div>';
+    createBtn.style.display = 'none';
+
+    // 1. Filter Firebase for stock <= 1
+    let firebaseShortages = window.barcodeCatalogData ? window.barcodeCatalogData.filter(p => p.stock <= 1) : [];
+    
+    if (firebaseShortages.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:30px; color:#27ae60;"><i class="fa-solid fa-check-circle fa-2x"></i><br><br>لا توجد أي نواقص حالياً، الأرصدة ممتازة!</div>';
+        return;
+    }
+
+    // 2. Fetch Status from GAS
+    let formData = new URLSearchParams();
+    formData.append("action", "getShortagesStatus");
+    
+    fetch(GOOGLE_SHEETS_URL, { method: "POST", body: formData })
+        .then(r => r.json())
+        .then(statuses => {
+            currentShortages = firebaseShortages.map(fb => {
+                let s = statuses.find(x => x.productName === fb.name);
+                return {
+                    name: fb.name,
+                    stock: fb.stock,
+                    barcode: fb.barcode,
+                    status: s ? s.status : 'مطلوب',
+                    date: s ? s.date : '',
+                    by: s ? s.by : ''
+                };
+            });
+            renderShortagesDashboard();
+        })
+        .catch(err => {
+            console.error(err);
+            // Fallback
+            currentShortages = firebaseShortages.map(fb => ({
+                name: fb.name,
+                stock: fb.stock,
+                barcode: fb.barcode,
+                status: 'مطلوب',
+                date: '',
+                by: ''
+            }));
+            renderShortagesDashboard();
+        });
+};
+
+function renderShortagesDashboard() {
+    let container = document.getElementById('shortagesListContainer');
+    let createBtn = document.getElementById('createShortagesTransferBtn');
+    
+    if (currentShortages.length === 0) {
+        container.innerHTML = '<p class="empty-msg">لا توجد نواقص!</p>';
+        createBtn.style.display = 'none';
+        return;
+    }
+
+    createBtn.style.display = 'flex';
+    let html = '';
+    
+    currentShortages.forEach((s, idx) => {
+        let statusBadge = '';
+        let actionBtn = '';
+        
+        if (s.status === 'مطلوب') {
+            statusBadge = '<span style="background:#fce4e4; color:#c0392b; padding:4px 8px; border-radius:12px; font-size:0.8rem; font-weight:bold;"><i class="fa-solid fa-circle-exclamation"></i> مطلوب</span>';
+            actionBtn = `<button class="btn-outline interactive-btn" onclick="updateShortage('${s.name}', 'جاري التجهيز', ${idx})" style="padding: 5px 10px; font-size:0.85rem;"><i class="fa-solid fa-box"></i> أنا هجهزها</button>`;
+        } else if (s.status === 'جاري التجهيز') {
+            statusBadge = `<span style="background:#fff3cd; color:#856404; padding:4px 8px; border-radius:12px; font-size:0.8rem; font-weight:bold;"><i class="fa-solid fa-spinner fa-spin"></i> جاري التجهيز (بواسطة ${s.by})</span>`;
+            actionBtn = `<button class="btn-outline interactive-btn" onclick="updateShortage('${s.name}', 'مطلوب', ${idx})" style="padding: 5px 10px; font-size:0.85rem; color:#e74c3c; border-color:#e74c3c;"><i class="fa-solid fa-xmark"></i> إلغاء التجهيز</button>`;
+        } else if (s.status === 'في الطريق') {
+            statusBadge = `<span style="background:#d4edda; color:#155724; padding:4px 8px; border-radius:12px; font-size:0.8rem; font-weight:bold;"><i class="fa-solid fa-truck"></i> في الطريق (بواسطة ${s.by})</span>`;
+        }
+
+        html += `
+            <div style="background:#fff; border:1px solid #eee; border-radius:10px; padding:12px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <input type="checkbox" class="shortage-checkbox" data-idx="${idx}" style="transform: scale(1.3); cursor:pointer;">
+                    <div>
+                        <div style="font-weight:bold; color:#2c3e50; font-size:1rem;">${s.name}</div>
+                        <div style="font-size:0.8rem; color:#7f8c8d; margin-top:4px;">
+                            الرصيد في الفرع: <strong style="color:#c0392b;">${s.stock}</strong> 
+                            ${s.barcode ? `| باركود: ${s.barcode}` : ''}
+                        </div>
+                    </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    ${statusBadge}
+                    ${actionBtn}
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+window.updateShortage = function(productName, newStatus, idx) {
+    if (!window.currentUser) { showToast('يجب تسجيل الدخول أولاً', 'error'); return; }
+    
+    // Optimistic update
+    currentShortages[idx].status = newStatus;
+    currentShortages[idx].by = newStatus === 'مطلوب' ? '' : window.currentUser.displayName;
+    renderShortagesDashboard();
+    
+    let formData = new URLSearchParams();
+    formData.append("action", "updateShortageStatus");
+    formData.append("productName", productName);
+    formData.append("status", newStatus);
+    formData.append("byUser", newStatus === 'مطلوب' ? '' : window.currentUser.displayName);
+    
+    fetch(GOOGLE_SHEETS_URL, { method: "POST", body: formData }).catch(e => console.error(e));
+};
+
+window.createTransferFromShortages = function() {
+    let checkedBoxes = document.querySelectorAll('.shortage-checkbox:checked');
+    if (checkedBoxes.length === 0) {
+        showToast('برجاء تحديد منتج واحد على الأقل', 'warning');
+        return;
+    }
+    
+    // Open Inventory Transfer tab automatically!
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    let invBtn = document.querySelector('.nav-item[data-target="inventory-tab"]');
+    if (invBtn) invBtn.classList.add('active');
+    
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    let invPane = document.getElementById('inventory-tab');
+    if (invPane) invPane.classList.add('active');
+    
+    // Add selected items to inventory draft
+    checkedBoxes.forEach(cb => {
+        let item = currentShortages[cb.dataset.idx];
+        let existing = window.invItems.find(i => i.name === item.name);
+        if (!existing) {
+            window.invItems.push({ name: item.name, qty: 10, barcode: item.barcode || '' }); // Default 10 qty
+        }
+        // update status to in-transit
+        window.updateShortage(item.name, 'في الطريق', cb.dataset.idx);
+    });
+    
+    if (typeof renderInvItems === 'function') renderInvItems();
+    showToast('تم تحويل النواقص لإذن المخازن! (الكمية الافتراضية 10)', 'success');
+    
+    if (document.getElementById('app-sidebar')) document.getElementById('app-sidebar').classList.remove("open");
+    if (document.getElementById('sidebar-overlay')) document.getElementById('sidebar-overlay').classList.remove("active");
+};
+
+// Add listener to load shortages when tab is clicked
+document.addEventListener("DOMContentLoaded", () => {
+    let shortagesBtn = document.querySelector('.shortages-nav-btn');
+    if (shortagesBtn) {
+        shortagesBtn.addEventListener('click', () => {
+            loadShortagesDashboard();
+        });
+    }
+});
+
