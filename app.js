@@ -10432,11 +10432,6 @@ function renderShortagesDashboard() {
     
     container.innerHTML = html;
 }
-    formData.append("status", newStatus);
-    formData.append("byUser", newStatus === 'مطلوب' ? '' : window.currentUser.displayName);
-    
-    fetch(GOOGLE_SHEETS_URL, { method: "POST", body: formData }).catch(e => console.error(e));
-};
 
 window.createTransferFromShortages = function() {
     if (selectedShortages.size === 0) {
