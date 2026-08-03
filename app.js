@@ -10231,7 +10231,7 @@ window.cleanDuplicates = function() {
 };
 
 // ============================================================
-// ⭐ نظام النواقص الذكية
+// ⭐ نظام نواقص الفرع
 // ============================================================
 let currentShortages = [];
 let filteredShortages = [];
@@ -10278,7 +10278,33 @@ function applyShortagesFilterAndRender() {
         filteredShortages = currentShortages.filter(p => p.stock >= 6 && p.stock <= 10);
     }
     
+    updateShortagesDashboardCounts();
     renderShortagesDashboard();
+}
+
+function updateShortagesDashboardCounts() {
+    let c0 = 0, c1 = 0, c3 = 0, c5 = 0, c10 = 0;
+    currentShortages.forEach(p => {
+        if (p.stock <= 0) c0++;
+        else if (p.stock === 1) c1++;
+        else if (p.stock >= 2 && p.stock <= 3) c3++;
+        else if (p.stock >= 4 && p.stock <= 5) c5++;
+        else if (p.stock >= 6 && p.stock <= 10) c10++;
+    });
+
+    let elAll = document.getElementById('shrtCountAll');
+    let el0 = document.getElementById('shrtCount0');
+    let el1 = document.getElementById('shrtCount1');
+    let el3 = document.getElementById('shrtCount3');
+    let el5 = document.getElementById('shrtCount5');
+    let el10 = document.getElementById('shrtCount10');
+    
+    if(elAll) elAll.innerText = currentShortages.length;
+    if(el0) el0.innerText = c0;
+    if(el1) el1.innerText = c1;
+    if(el3) el3.innerText = c3;
+    if(el5) el5.innerText = c5;
+    if(el10) el10.innerText = c10;
 }
 
 window.loadShortagesDashboard = function() {

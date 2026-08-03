@@ -32,10 +32,10 @@ function createMissingSheets() {
       invSheet.setColumnWidth(6, 400); // column for products
   }
 
-  // 2. نواقص الفرع الذكية
-  var shortagesSheet = ss.getSheetByName("🚚 نواقص الفرع الذكية");
+  // 2. نواقص الفرع
+  var shortagesSheet = ss.getSheetByName("🚚 نواقص الفرع");
   if (!shortagesSheet) {
-      shortagesSheet = ss.insertSheet("🚚 نواقص الفرع الذكية");
+      shortagesSheet = ss.insertSheet("🚚 نواقص الفرع");
       var shortHeaders = ["اسم المنتج", "حالة التجهيز", "تاريخ الطلب", "بواسطة"];
       shortagesSheet.getRange(1, 1, 1, shortHeaders.length).setValues([shortHeaders])
            .setBackground("#c0392b").setFontColor("white").setFontFamily(headerFont).setFontSize(14).setFontWeight("bold")
@@ -240,11 +240,11 @@ function setupCandyClubUX() {
   }
 
   // ============================================================
-  // نواقص الفرع الذكية
+  // نواقص الفرع
   // ============================================================
-  var shortagesSheet = ss.getSheetByName("🚚 نواقص الفرع الذكية");
+  var shortagesSheet = ss.getSheetByName("🚚 نواقص الفرع");
   if (!shortagesSheet) {
-      shortagesSheet = ss.insertSheet("🚚 نواقص الفرع الذكية");
+      shortagesSheet = ss.insertSheet("🚚 نواقص الفرع");
       var shortHeaders = ["اسم المنتج", "حالة التجهيز", "تاريخ الطلب", "بواسطة"];
       shortagesSheet.getRange(1, 1, 1, shortHeaders.length).setValues([shortHeaders])
            .setBackground("#c0392b").setFontColor("white").setFontFamily(headerFont).setFontSize(14).setFontWeight("bold")
@@ -1502,7 +1502,7 @@ function doPost(e) {
 
     // ⭐ نظام النواقص الذكي
     else if (action === "getShortagesStatus") {
-      var shortSheet = ss.getSheetByName("🚚 نواقص الفرع الذكية");
+      var shortSheet = ss.getSheetByName("🚚 نواقص الفرع");
       if (!shortSheet) return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
       var data = shortSheet.getDataRange().getValues();
       var statuses = [];
@@ -1517,7 +1517,7 @@ function doPost(e) {
       return ContentService.createTextOutput(JSON.stringify(statuses)).setMimeType(ContentService.MimeType.JSON);
     }
     else if (action === "updateShortageStatus") {
-      var shortSheet = ss.getSheetByName("🚚 نواقص الفرع الذكية");
+      var shortSheet = ss.getSheetByName("🚚 نواقص الفرع");
       if (!shortSheet) return ContentService.createTextOutput("error: no sheet");
       var pName = e.parameter.productName;
       var newStatus = e.parameter.status;
