@@ -449,14 +449,26 @@
                     </div>
                 </div>
 
-                <!-- أزرار الإجراءات السريعة -->
-                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                    <button type="button" id="createShortagesTransferBtn" class="btn-save interactive-btn" style="flex: 1; display: none;" onclick="createTransferFromShortages()">
-                        <i class="fa-solid fa-file-export"></i> إنشاء إذن مخازن بالمحدد
-                    </button>
-                    <button type="button" class="btn-outline interactive-btn" style="padding: 10px;" onclick="loadShortagesDashboard()">
-                        <i class="fa-solid fa-rotate-right"></i> تحديث
-                    </button>
+                <!-- أزرار الإجراءات السريعة والترتيب -->
+                <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 200px; display: flex; gap: 10px;">
+                        <button type="button" id="createShortagesTransferBtn" class="btn-save interactive-btn" style="flex: 1; display: none;" onclick="createTransferFromShortages()">
+                            <i class="fa-solid fa-file-export"></i> إنشاء إذن مخازن
+                        </button>
+                        <button type="button" class="btn-outline interactive-btn" style="padding: 10px;" onclick="loadShortagesDashboard()">
+                            <i class="fa-solid fa-rotate-right"></i> تحديث
+                        </button>
+                    </div>
+                    
+                    <div style="flex: 1; min-width: 200px; position: relative;">
+                        <i class="fa-solid fa-arrow-down-a-z" style="position: absolute; right: 12px; top: 12px; color: #7f8c8d;"></i>
+                        <select onchange="changeShortagesSort(this.value)" style="width: 100%; padding: 10px 35px 10px 10px; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; font-size: 0.95rem; background: #fff; cursor: pointer; color: #2c3e50; appearance: none;">
+                            <option value="stock-asc">الترتيب: الكمية (الأقل أولاً)</option>
+                            <option value="stock-desc">الترتيب: الكمية (الأكثر أولاً)</option>
+                            <option value="name-asc">الترتيب: أبجدياً</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down" style="position: absolute; left: 12px; top: 14px; color: #7f8c8d; font-size: 0.8rem; pointer-events: none;"></i>
+                    </div>
                 </div>
 
                 <div id="shortagesListContainer" class="data-list-container" style="max-height: 400px; overflow-y: auto;">

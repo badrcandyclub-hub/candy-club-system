@@ -10238,8 +10238,15 @@ let filteredShortages = [];
 let shortagesPage = 1;
 const SHORTAGES_PER_PAGE = 50;
 let currentShortagesCategory = '0'; // Default to "0" instead of "all"
+let currentShortagesSort = 'stock-asc'; // Default sorting
 let selectedShortages = new Set(); // store selected names
 let isShortagesLoading = false;
+
+window.changeShortagesSort = function(sortVal) {
+    currentShortagesSort = sortVal;
+    shortagesPage = 1;
+    applyShortagesFilterAndRender();
+};
 
 window.changeShortagesCategory = function(cat) {
     currentShortagesCategory = cat;
@@ -10280,6 +10287,15 @@ function applyShortagesFilterAndRender() {
         filteredShortages = currentShortages.filter(p => p.stock >= 4 && p.stock <= 5);
     } else if (cat === '10') {
         filteredShortages = currentShortages.filter(p => p.stock >= 6); // 6 or more
+    }
+    
+    // Sort logic
+    if (currentShortagesSort === 'stock-asc') {
+        filteredShortages.sort((a, b) => a.stock - b.stock);
+    } else if (currentShortagesSort === 'stock-desc') {
+        filteredShortages.sort((a, b) => b.stock - a.stock);
+    } else if (currentShortagesSort === 'name-asc') {
+        filteredShortages.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
     }
     
     updateShortagesDashboardCounts();
@@ -10350,41 +10366,14 @@ window.loadShortagesDashboard = function() {
         return;
     }
 
-    // Fetch Status from GAS
-    let formData = new URLSearchParams();
-    formData.append("action", "getShortagesStatus");
-    
-    fetch(GOOGLE_SHEETS_URL, { method: "POST", body: formData })
-        .then(r => r.json())
-        .then(statuses => {
-            currentShortages = firebaseShortages.map(fb => {
-                let s = statuses.find(x => x.productName === fb.name);
-                return {
-                    name: fb.name,
-                    stock: fb.stock,
-                    barcode: fb.barcode,
-                    status: s ? s.status : 'مطلوب',
-                    date: s ? s.date : '',
-                    by: s ? s.by : ''
-                };
-            });
-            isShortagesLoading = false;
-            applyShortagesFilterAndRender();
-        })
-        .catch(err => {
-            console.error(err);
-            // Fallback
-            currentShortages = firebaseShortages.map(fb => ({
-                name: fb.name,
-                stock: fb.stock,
-                barcode: fb.barcode,
-                status: 'مطلوب',
-                date: '',
-                by: ''
-            }));
-            isShortagesLoading = false;
-            applyShortagesFilterAndRender();
-        });
+    currentShortages = firebaseShortages.map(fb => ({
+        name: fb.name,
+        stock: fb.stock,
+        barcode: fb.barcode,
+        // Removed status tracking
+    }));
+    isShortagesLoading = false;
+    applyShortagesFilterAndRender();
 };
 
 // Global toggle logic for preserving selection across pages
@@ -10423,19 +10412,6 @@ function renderShortagesDashboard() {
     let pageItems = filteredShortages.slice(startIndex, endIndex);
 
     pageItems.forEach((s) => {
-        let statusBadge = '';
-        let actionBtn = '';
-        
-        if (s.status === 'مطلوب') {
-            statusBadge = '<span style="background:#fce4e4; color:#c0392b; padding:4px 8px; border-radius:12px; font-size:0.8rem; font-weight:bold;"><i class="fa-solid fa-circle-exclamation"></i> مطلوب</span>';
-            actionBtn = `<button class="btn-outline interactive-btn" onclick="updateShortage('${s.name.replace(/'/g, "\\'")}', 'جاري التجهيز')" style="padding: 5px 10px; font-size:0.85rem;"><i class="fa-solid fa-box"></i> أنا هجهزها</button>`;
-        } else if (s.status === 'جاري التجهيز') {
-            statusBadge = `<span style="background:#fff3cd; color:#856404; padding:4px 8px; border-radius:12px; font-size:0.8rem; font-weight:bold;"><i class="fa-solid fa-spinner fa-spin"></i> جاري التجهيز (بواسطة ${s.by})</span>`;
-            actionBtn = `<button class="btn-outline interactive-btn" onclick="updateShortage('${s.name.replace(/'/g, "\\'")}', 'مطلوب')" style="padding: 5px 10px; font-size:0.85rem; color:#e74c3c; border-color:#e74c3c;"><i class="fa-solid fa-xmark"></i> إلغاء التجهيز</button>`;
-        } else if (s.status === 'في الطريق') {
-            statusBadge = `<span style="background:#d4edda; color:#155724; padding:4px 8px; border-radius:12px; font-size:0.8rem; font-weight:bold;"><i class="fa-solid fa-truck"></i> في الطريق (بواسطة ${s.by})</span>`;
-        }
-        
         let isChecked = selectedShortages.has(s.name) ? 'checked' : '';
 
         html += `
@@ -10450,31 +10426,12 @@ function renderShortagesDashboard() {
                         </div>
                     </div>
                 </div>
-                <div style="display:flex; align-items:center; gap:10px;">
-                    ${statusBadge}
-                    ${actionBtn}
-                </div>
             </div>
         `;
     });
     
     container.innerHTML = html;
 }
-
-window.updateShortage = function(productName, newStatus) {
-    if (!window.currentUser) { showToast('يجب تسجيل الدخول أولاً', 'error'); return; }
-    
-    // Optimistic update
-    let item = currentShortages.find(i => i.name === productName);
-    if(item) {
-        item.status = newStatus;
-        item.by = newStatus === 'مطلوب' ? '' : window.currentUser.displayName;
-    }
-    applyShortagesFilterAndRender();
-    
-    let formData = new URLSearchParams();
-    formData.append("action", "updateShortageStatus");
-    formData.append("productName", productName);
     formData.append("status", newStatus);
     formData.append("byUser", newStatus === 'مطلوب' ? '' : window.currentUser.displayName);
     
