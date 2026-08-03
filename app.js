@@ -8664,6 +8664,93 @@ let hrIsInRange = false;
 let hrTodayStatus = null; // null, 'checkedIn', 'checkedOut'
 let hrDataLoaded = false;
 
+const SoundFX = {
+    ctx: null,
+    init() {
+        if (!this.ctx) {
+            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+    },
+    play(type) {
+        try {
+            if (!this.ctx) this.init();
+            if (this.ctx.state === 'suspended') this.ctx.resume();
+            
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            const now = this.ctx.currentTime;
+            
+            if (type === 'checkIn') {
+                // Two rising tones (Welcome/Positive)
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(440, now);
+                osc.frequency.exponentialRampToValueAtTime(880, now + 0.15);
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(0.5, now + 0.05);
+                gain.gain.linearRampToValueAtTime(0, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+                
+                setTimeout(() => {
+                    if (!this.ctx) return;
+                    const osc2 = this.ctx.createOscillator();
+                    const gain2 = this.ctx.createGain();
+                    osc2.connect(gain2);
+                    gain2.connect(this.ctx.destination);
+                    osc2.type = 'sine';
+                    osc2.frequency.setValueAtTime(880, this.ctx.currentTime);
+                    osc2.frequency.exponentialRampToValueAtTime(1200, this.ctx.currentTime + 0.15);
+                    gain2.gain.setValueAtTime(0, this.ctx.currentTime);
+                    gain2.gain.linearRampToValueAtTime(0.5, this.ctx.currentTime + 0.05);
+                    gain2.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.3);
+                    osc2.start(this.ctx.currentTime);
+                    osc2.stop(this.ctx.currentTime + 0.3);
+                }, 150);
+            } else if (type === 'checkOut') {
+                // Two falling tones (Goodbye/Completion)
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, now);
+                osc.frequency.exponentialRampToValueAtTime(440, now + 0.15);
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(0.5, now + 0.05);
+                gain.gain.linearRampToValueAtTime(0, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+                
+                setTimeout(() => {
+                    if (!this.ctx) return;
+                    const osc2 = this.ctx.createOscillator();
+                    const gain2 = this.ctx.createGain();
+                    osc2.connect(gain2);
+                    gain2.connect(this.ctx.destination);
+                    osc2.type = 'sine';
+                    osc2.frequency.setValueAtTime(440, this.ctx.currentTime);
+                    osc2.frequency.exponentialRampToValueAtTime(220, this.ctx.currentTime + 0.15);
+                    gain2.gain.setValueAtTime(0, this.ctx.currentTime);
+                    gain2.gain.linearRampToValueAtTime(0.5, this.ctx.currentTime + 0.05);
+                    gain2.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.3);
+                    osc2.start(this.ctx.currentTime);
+                    osc2.stop(this.ctx.currentTime + 0.3);
+                }, 150);
+            } else if (type === 'pop') {
+                // Short pop for generic interaction
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(0.3, now + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            }
+        } catch (e) {
+            console.error('Audio play error', e);
+        }
+    }
+};
+
 // Haversine formula
 function getDistanceFromBranch(lat, lng) {
     const R = 6371000;
@@ -8769,6 +8856,7 @@ function handleCheckIn() {
             try {
                 let data = JSON.parse(txt);
                 if (data.success) {
+                    SoundFX.play('checkIn');
                     showToast('✅ تم تسجيل الحضور: ' + data.time, 'success');
                     hrTodayStatus = 'checkedIn';
                     updateHrButtons();
@@ -8777,6 +8865,7 @@ function handleCheckIn() {
                     showToast(data.error || 'حدث خطأ', 'error');
                 }
             } catch(e) {
+                SoundFX.play('checkIn');
                 showToast('تم تسجيل الحضور بنجاح', 'success');
                 hrTodayStatus = 'checkedIn';
                 updateHrButtons();
@@ -8784,6 +8873,7 @@ function handleCheckIn() {
             }
         })
         .catch(() => {
+            SoundFX.play('checkIn');
             showToast('تم تسجيل الحضور بنجاح', 'success');
             hrTodayStatus = 'checkedIn';
             updateHrButtons();
@@ -8813,6 +8903,7 @@ function handleCheckOut() {
             try {
                 let data = JSON.parse(txt);
                 if (data.success) {
+                    SoundFX.play('checkOut');
                     showToast('✅ تم تسجيل الانصراف: ' + data.time + ' (' + data.hours + ' ساعة)', 'success');
                     hrTodayStatus = 'checkedOut';
                     document.getElementById('hrTodayHours').innerText = data.hours;
@@ -8822,12 +8913,14 @@ function handleCheckOut() {
                     showToast(data.error || 'حدث خطأ', 'error');
                 }
             } catch(e) {
+                SoundFX.play('checkOut');
                 showToast('تم تسجيل الانصراف بنجاح', 'success');
                 hrTodayStatus = 'checkedOut';
                 updateHrButtons();
             }
         })
         .catch(() => {
+            SoundFX.play('checkOut');
             showToast('تم تسجيل الانصراف بنجاح', 'success');
             hrTodayStatus = 'checkedOut';
             updateHrButtons();
