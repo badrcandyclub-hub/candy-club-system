@@ -344,9 +344,19 @@
                 
                 <div style="background: #fdf2f2; border: 1px solid #f8d7da; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                     <p style="margin: 0; color: #721c24; font-size: 0.95rem; line-height: 1.5;">
-                        <i class="fa-solid fa-circle-info"></i> هذه اللوحة تكتشف تلقائياً المنتجات التي وصل رصيدها إلى <strong>قطعة واحدة أو أقل</strong>. 
-                        يمكن لمسؤول المخزن تجهيزها، ثم إرسالها في إذن حركة مخازن بضغطة زر واحدة لمنع التكرار وتوفير الوقت.
+                        <i class="fa-solid fa-circle-info"></i> هذه اللوحة تكتشف تلقائياً المنتجات التي وصلت أرصدتها إلى <strong>10 قطع أو أقل</strong>. 
+                        يمكنك فلترة المنتجات حسب الرصيد من الأزرار بالأسفل، وتجهيزها لإرسالها في إذن حركة مخازن لمنع التكرار.
                     </p>
+                </div>
+
+                <!-- فلاتر الأرصدة -->
+                <div style="display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px;" class="shortages-filters">
+                    <button type="button" class="btn-outline interactive-btn short-filter-btn active" data-filter="all" style="padding: 6px 12px; font-size: 0.9rem; white-space: nowrap;" onclick="changeShortagesCategory('all')">الكل (حتى 10)</button>
+                    <button type="button" class="btn-outline interactive-btn short-filter-btn" data-filter="0" style="padding: 6px 12px; font-size: 0.9rem; white-space: nowrap;" onclick="changeShortagesCategory('0')">نفد (0)</button>
+                    <button type="button" class="btn-outline interactive-btn short-filter-btn" data-filter="1" style="padding: 6px 12px; font-size: 0.9rem; white-space: nowrap;" onclick="changeShortagesCategory('1')">قطعة واحدة</button>
+                    <button type="button" class="btn-outline interactive-btn short-filter-btn" data-filter="3" style="padding: 6px 12px; font-size: 0.9rem; white-space: nowrap;" onclick="changeShortagesCategory('3')">حتى 3 قطع</button>
+                    <button type="button" class="btn-outline interactive-btn short-filter-btn" data-filter="5" style="padding: 6px 12px; font-size: 0.9rem; white-space: nowrap;" onclick="changeShortagesCategory('5')">حتى 5 قطع</button>
+                    <button type="button" class="btn-outline interactive-btn short-filter-btn" data-filter="10" style="padding: 6px 12px; font-size: 0.9rem; white-space: nowrap;" onclick="changeShortagesCategory('10')">حتى 10 قطع</button>
                 </div>
 
                 <!-- أزرار الإجراءات السريعة -->
@@ -361,6 +371,13 @@
 
                 <div id="shortagesListContainer" class="data-list-container" style="max-height: 400px; overflow-y: auto;">
                     <p class="empty-msg">جاري اكتشاف النواقص...</p>
+                </div>
+                
+                <!-- نظام تقسيم الصفحات -->
+                <div id="shortagesPagination" style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 15px; display: none;">
+                    <button type="button" class="btn-outline interactive-btn" onclick="changeShortagesPage(-1)" id="shortagesPrevBtn"><i class="fa-solid fa-chevron-right"></i> السابق</button>
+                    <span id="shortagesPageInfo" style="font-weight: bold; color: #2c3e50;">صفحة 1</span>
+                    <button type="button" class="btn-outline interactive-btn" onclick="changeShortagesPage(1)" id="shortagesNextBtn">التالي <i class="fa-solid fa-chevron-left"></i></button>
                 </div>
             </div>
         </section>

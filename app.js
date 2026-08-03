@@ -10234,6 +10234,52 @@ window.cleanDuplicates = function() {
 // ⭐ نظام النواقص الذكية
 // ============================================================
 let currentShortages = [];
+let filteredShortages = [];
+let shortagesPage = 1;
+const SHORTAGES_PER_PAGE = 50;
+let currentShortagesCategory = 'all';
+let selectedShortages = new Set(); // store selected names
+
+window.changeShortagesCategory = function(cat) {
+    currentShortagesCategory = cat;
+    
+    // Update active button UI
+    document.querySelectorAll('.short-filter-btn').forEach(btn => {
+        if (btn.dataset.filter === cat) btn.classList.add('active');
+        else btn.classList.remove('active');
+    });
+
+    shortagesPage = 1; // reset to first page on category change
+    applyShortagesFilterAndRender();
+};
+
+window.changeShortagesPage = function(delta) {
+    let totalPages = Math.ceil(filteredShortages.length / SHORTAGES_PER_PAGE);
+    let newPage = shortagesPage + delta;
+    if (newPage > 0 && newPage <= totalPages) {
+        shortagesPage = newPage;
+        renderShortagesDashboard();
+    }
+};
+
+function applyShortagesFilterAndRender() {
+    let cat = currentShortagesCategory;
+    if (cat === 'all') {
+        filteredShortages = currentShortages.filter(p => p.stock <= 10);
+    } else if (cat === '0') {
+        filteredShortages = currentShortages.filter(p => p.stock <= 0);
+    } else if (cat === '1') {
+        filteredShortages = currentShortages.filter(p => p.stock === 1);
+    } else if (cat === '3') {
+        filteredShortages = currentShortages.filter(p => p.stock >= 2 && p.stock <= 3);
+    } else if (cat === '5') {
+        filteredShortages = currentShortages.filter(p => p.stock >= 4 && p.stock <= 5);
+    } else if (cat === '10') {
+        filteredShortages = currentShortages.filter(p => p.stock >= 6 && p.stock <= 10);
+    }
+    
+    renderShortagesDashboard();
+}
 
 window.loadShortagesDashboard = function() {
     let container = document.getElementById('shortagesListContainer');
@@ -10242,6 +10288,8 @@ window.loadShortagesDashboard = function() {
     
     container.innerHTML = '<div style="text-align:center; padding:30px;"><i class="fa-solid fa-spinner fa-spin fa-2x" style="color:#c0392b;"></i><br><br>جاري جلب النواقص وحالات التجهيز...</div>';
     createBtn.style.display = 'none';
+    let paginationUI = document.getElementById('shortagesPagination');
+    if(paginationUI) paginationUI.style.display = 'none';
 
     // Check if Firebase is still loading
     if (!barcodeCatalogData || barcodeCatalogData.length === 0) {
@@ -10256,15 +10304,15 @@ window.loadShortagesDashboard = function() {
     
     let catalog = barcodeCatalogData || [];
 
-    // 1. Filter Firebase for stock <= 1
-    let firebaseShortages = catalog.filter(p => p.stock <= 1);
+    // Filter Firebase for stock <= 10 (since 10 is our max category)
+    let firebaseShortages = catalog.filter(p => p.stock <= 10);
     
     if (firebaseShortages.length === 0) {
-        container.innerHTML = '<div style="text-align:center; padding:30px; color:#27ae60;"><i class="fa-solid fa-check-circle fa-2x"></i><br><br>لا توجد أي نواقص حالياً، الأرصدة ممتازة!</div>';
+        container.innerHTML = '<div style="text-align:center; padding:30px; color:#27ae60;"><i class="fa-solid fa-check-circle fa-2x"></i><br><br>لا توجد أي نواقص حالياً (حتى 10 قطع)، الأرصدة ممتازة!</div>';
         return;
     }
 
-    // 2. Fetch Status from GAS
+    // Fetch Status from GAS
     let formData = new URLSearchParams();
     formData.append("action", "getShortagesStatus");
     
@@ -10282,7 +10330,7 @@ window.loadShortagesDashboard = function() {
                     by: s ? s.by : ''
                 };
             });
-            renderShortagesDashboard();
+            applyShortagesFilterAndRender();
         })
         .catch(err => {
             console.error(err);
@@ -10295,41 +10343,65 @@ window.loadShortagesDashboard = function() {
                 date: '',
                 by: ''
             }));
-            renderShortagesDashboard();
+            applyShortagesFilterAndRender();
         });
+};
+
+// Global toggle logic for preserving selection across pages
+window.toggleShortageSelection = function(productName, isChecked) {
+    if (isChecked) selectedShortages.add(productName);
+    else selectedShortages.delete(productName);
 };
 
 function renderShortagesDashboard() {
     let container = document.getElementById('shortagesListContainer');
     let createBtn = document.getElementById('createShortagesTransferBtn');
+    let pagination = document.getElementById('shortagesPagination');
     
-    if (currentShortages.length === 0) {
-        container.innerHTML = '<p class="empty-msg">لا توجد نواقص!</p>';
+    if (filteredShortages.length === 0) {
+        container.innerHTML = '<p class="empty-msg">لا توجد منتجات في هذه الفئة!</p>';
         createBtn.style.display = 'none';
+        if(pagination) pagination.style.display = 'none';
         return;
     }
 
     createBtn.style.display = 'flex';
     let html = '';
     
-    currentShortages.forEach((s, idx) => {
+    let totalPages = Math.ceil(filteredShortages.length / SHORTAGES_PER_PAGE);
+    if (totalPages > 1) {
+        if(pagination) pagination.style.display = 'flex';
+        document.getElementById('shortagesPageInfo').innerText = `صفحة ${shortagesPage} من ${totalPages}`;
+        document.getElementById('shortagesPrevBtn').disabled = shortagesPage === 1;
+        document.getElementById('shortagesNextBtn').disabled = shortagesPage === totalPages;
+    } else {
+        if(pagination) pagination.style.display = 'none';
+    }
+
+    let startIndex = (shortagesPage - 1) * SHORTAGES_PER_PAGE;
+    let endIndex = Math.min(startIndex + SHORTAGES_PER_PAGE, filteredShortages.length);
+    let pageItems = filteredShortages.slice(startIndex, endIndex);
+
+    pageItems.forEach((s) => {
         let statusBadge = '';
         let actionBtn = '';
         
         if (s.status === 'مطلوب') {
             statusBadge = '<span style="background:#fce4e4; color:#c0392b; padding:4px 8px; border-radius:12px; font-size:0.8rem; font-weight:bold;"><i class="fa-solid fa-circle-exclamation"></i> مطلوب</span>';
-            actionBtn = `<button class="btn-outline interactive-btn" onclick="updateShortage('${s.name}', 'جاري التجهيز', ${idx})" style="padding: 5px 10px; font-size:0.85rem;"><i class="fa-solid fa-box"></i> أنا هجهزها</button>`;
+            actionBtn = `<button class="btn-outline interactive-btn" onclick="updateShortage('${s.name.replace(/'/g, "\\'")}', 'جاري التجهيز')" style="padding: 5px 10px; font-size:0.85rem;"><i class="fa-solid fa-box"></i> أنا هجهزها</button>`;
         } else if (s.status === 'جاري التجهيز') {
             statusBadge = `<span style="background:#fff3cd; color:#856404; padding:4px 8px; border-radius:12px; font-size:0.8rem; font-weight:bold;"><i class="fa-solid fa-spinner fa-spin"></i> جاري التجهيز (بواسطة ${s.by})</span>`;
-            actionBtn = `<button class="btn-outline interactive-btn" onclick="updateShortage('${s.name}', 'مطلوب', ${idx})" style="padding: 5px 10px; font-size:0.85rem; color:#e74c3c; border-color:#e74c3c;"><i class="fa-solid fa-xmark"></i> إلغاء التجهيز</button>`;
+            actionBtn = `<button class="btn-outline interactive-btn" onclick="updateShortage('${s.name.replace(/'/g, "\\'")}', 'مطلوب')" style="padding: 5px 10px; font-size:0.85rem; color:#e74c3c; border-color:#e74c3c;"><i class="fa-solid fa-xmark"></i> إلغاء التجهيز</button>`;
         } else if (s.status === 'في الطريق') {
             statusBadge = `<span style="background:#d4edda; color:#155724; padding:4px 8px; border-radius:12px; font-size:0.8rem; font-weight:bold;"><i class="fa-solid fa-truck"></i> في الطريق (بواسطة ${s.by})</span>`;
         }
+        
+        let isChecked = selectedShortages.has(s.name) ? 'checked' : '';
 
         html += `
             <div style="background:#fff; border:1px solid #eee; border-radius:10px; padding:12px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                 <div style="display:flex; align-items:center; gap:12px;">
-                    <input type="checkbox" class="shortage-checkbox" data-idx="${idx}" style="transform: scale(1.3); cursor:pointer;">
+                    <input type="checkbox" class="shortage-checkbox" data-name="${s.name}" onchange="toggleShortageSelection('${s.name.replace(/'/g, "\\'")}', this.checked)" ${isChecked} style="transform: scale(1.3); cursor:pointer;">
                     <div>
                         <div style="font-weight:bold; color:#2c3e50; font-size:1rem;">${s.name}</div>
                         <div style="font-size:0.8rem; color:#7f8c8d; margin-top:4px;">
@@ -10349,13 +10421,16 @@ function renderShortagesDashboard() {
     container.innerHTML = html;
 }
 
-window.updateShortage = function(productName, newStatus, idx) {
+window.updateShortage = function(productName, newStatus) {
     if (!window.currentUser) { showToast('يجب تسجيل الدخول أولاً', 'error'); return; }
     
     // Optimistic update
-    currentShortages[idx].status = newStatus;
-    currentShortages[idx].by = newStatus === 'مطلوب' ? '' : window.currentUser.displayName;
-    renderShortagesDashboard();
+    let item = currentShortages.find(i => i.name === productName);
+    if(item) {
+        item.status = newStatus;
+        item.by = newStatus === 'مطلوب' ? '' : window.currentUser.displayName;
+    }
+    applyShortagesFilterAndRender();
     
     let formData = new URLSearchParams();
     formData.append("action", "updateShortageStatus");
@@ -10367,31 +10442,34 @@ window.updateShortage = function(productName, newStatus, idx) {
 };
 
 window.createTransferFromShortages = function() {
-    let checkedBoxes = document.querySelectorAll('.shortage-checkbox:checked');
-    if (checkedBoxes.length === 0) {
+    if (selectedShortages.size === 0) {
         showToast('برجاء تحديد منتج واحد على الأقل', 'warning');
         return;
     }
     
     // Open Inventory Transfer tab automatically!
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-    let invBtn = document.querySelector('.nav-item[data-target="inventory-tab"]');
+    let invBtn = document.querySelector('.nav-item[data-target="inventory-transfers-tab"]');
     if (invBtn) invBtn.classList.add('active');
     
     document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-    let invPane = document.getElementById('inventory-tab');
+    let invPane = document.getElementById('inventory-transfers-tab');
     if (invPane) invPane.classList.add('active');
     
     // Add selected items to inventory draft
-    checkedBoxes.forEach(cb => {
-        let item = currentShortages[cb.dataset.idx];
-        let existing = window.invItems.find(i => i.name === item.name);
-        if (!existing) {
-            window.invItems.push({ name: item.name, qty: 10, barcode: item.barcode || '' }); // Default 10 qty
+    selectedShortages.forEach(pName => {
+        let item = currentShortages.find(i => i.name === pName);
+        if (item) {
+            let existing = window.invItems.find(i => i.name === item.name);
+            if (!existing) {
+                window.invItems.push({ name: item.name, qty: 10, barcode: item.barcode || '' }); // Default 10 qty
+            }
+            // update status to in-transit
+            window.updateShortage(item.name, 'في الطريق');
         }
-        // update status to in-transit
-        window.updateShortage(item.name, 'في الطريق', cb.dataset.idx);
     });
+    
+    selectedShortages.clear(); // Clear selections after transfer
     
     if (typeof renderInvItems === 'function') renderInvItems();
     showToast('تم تحويل النواقص لإذن المخازن! (الكمية الافتراضية 10)', 'success');
