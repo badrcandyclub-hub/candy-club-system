@@ -10237,7 +10237,7 @@ let currentShortages = [];
 let filteredShortages = [];
 let shortagesPage = 1;
 const SHORTAGES_PER_PAGE = 50;
-let currentShortagesCategory = 'all';
+let currentShortagesCategory = '0'; // Default to "0" instead of "all"
 let selectedShortages = new Set(); // store selected names
 
 window.changeShortagesCategory = function(cat) {
@@ -10292,14 +10292,12 @@ function updateShortagesDashboardCounts() {
         else if (p.stock >= 6 && p.stock <= 10) c10++;
     });
 
-    let elAll = document.getElementById('shrtCountAll');
     let el0 = document.getElementById('shrtCount0');
     let el1 = document.getElementById('shrtCount1');
     let el3 = document.getElementById('shrtCount3');
     let el5 = document.getElementById('shrtCount5');
     let el10 = document.getElementById('shrtCount10');
     
-    if(elAll) elAll.innerText = currentShortages.length;
     if(el0) el0.innerText = c0;
     if(el1) el1.innerText = c1;
     if(el3) el3.innerText = c3;

@@ -342,62 +342,101 @@
             <div class="section-card" style="border-right: 4px solid #c0392b;">
                 <h3 class="section-title" style="color: #c0392b;"><i class="fa-solid fa-triangle-exclamation"></i> نواقص الفرع</h3>
                 
-                <div style="background: #fdf2f2; border: 1px solid #f8d7da; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                    <p style="margin: 0; color: #721c24; font-size: 0.95rem; line-height: 1.5;">
-                        <i class="fa-solid fa-circle-info"></i> هذه اللوحة تكتشف تلقائياً المنتجات التي وصلت أرصدتها إلى <strong>10 قطع أو أقل</strong>. 
-                        يمكنك فلترة المنتجات حسب الرصيد من الأزرار بالأسفل، وتجهيزها لإرسالها في إذن حركة مخازن لمنع التكرار.
-                    </p>
-                </div>
-
-                <!-- فلاتر الأرصدة (نظام البطاقات) -->
-                <div class="traffic-light-grid shortages-filters" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                <!-- فلاتر الأرصدة (Premium Pill Design) -->
+                <style>
+                    .premium-filter-container {
+                        display: flex;
+                        gap: 15px;
+                        margin-bottom: 25px;
+                        overflow-x: auto;
+                        padding: 10px 5px;
+                        scrollbar-width: none; /* Firefox */
+                    }
+                    .premium-filter-container::-webkit-scrollbar {
+                        display: none; /* Chrome/Safari/Edge */
+                    }
+                    .premium-pill {
+                        flex: 0 0 auto;
+                        display: flex;
+                        align-items: center;
+                        background: rgba(255, 255, 255, 0.7);
+                        backdrop-filter: blur(10px);
+                        border: 1px solid rgba(255, 255, 255, 0.5);
+                        border-radius: 30px;
+                        padding: 8px 16px;
+                        cursor: pointer;
+                        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+                        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+                        position: relative;
+                        overflow: hidden;
+                        color: #2c3e50;
+                    }
+                    .premium-pill:hover {
+                        transform: translateY(-3px);
+                        box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+                        background: #ffffff;
+                    }
+                    .premium-pill.active {
+                        border-color: transparent;
+                    }
+                    /* Specific Colors */
+                    .pill-0.active { background: linear-gradient(135deg, #c0392b, #e74c3c); color: white; box-shadow: 0 4px 15px rgba(192, 57, 43, 0.4); }
+                    .pill-1.active { background: linear-gradient(135deg, #e67e22, #d35400); color: white; box-shadow: 0 4px 15px rgba(230, 126, 34, 0.4); }
+                    .pill-3.active { background: linear-gradient(135deg, #f39c12, #f1c40f); color: white; box-shadow: 0 4px 15px rgba(243, 156, 18, 0.4); }
+                    .pill-5.active { background: linear-gradient(135deg, #3498db, #2980b9); color: white; box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4); }
+                    .pill-10.active { background: linear-gradient(135deg, #2ecc71, #27ae60); color: white; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4); }
                     
-                    <div class="traffic-card traffic-total short-filter-btn active" data-filter="all" onclick="changeShortagesCategory('all')" style="cursor: pointer; background: linear-gradient(135deg, #1e3c72, #2a5298); border: none; box-shadow: 0 4px 10px rgba(30, 60, 114, 0.3);">
-                        <div class="traffic-header">
-                            <h3 style="color: #ffffff;"><i class="fa-solid fa-boxes-stacked"></i> إجمالي النواقص</h3>
-                            <span class="subtitle" style="color: #d1d8e0; font-weight: bold;">كل ما هو 10 قطع فأقل</span>
-                        </div>
-                        <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #ffffff;" id="shrtCountAll">0</h2>
+                    .pill-icon {
+                        font-size: 1.2rem;
+                        margin-left: 10px;
+                        opacity: 0.8;
+                    }
+                    .pill-text {
+                        font-weight: bold;
+                        font-size: 0.95rem;
+                        margin-left: 15px;
+                    }
+                    .pill-count {
+                        background: rgba(0,0,0,0.08);
+                        padding: 3px 12px;
+                        border-radius: 20px;
+                        font-weight: 900;
+                        font-size: 1.1rem;
+                    }
+                    .premium-pill.active .pill-count {
+                        background: rgba(255,255,255,0.25);
+                    }
+                </style>
+
+                <div class="premium-filter-container shortages-filters">
+                    <div class="premium-pill pill-0 short-filter-btn active" data-filter="0" onclick="changeShortagesCategory('0')">
+                        <i class="fa-solid fa-skull-crossbones pill-icon"></i>
+                        <span class="pill-text">نفد تماماً (0)</span>
+                        <span class="pill-count" id="shrtCount0">0</span>
                     </div>
 
-                    <div class="traffic-card traffic-darkred short-filter-btn" data-filter="0" onclick="changeShortagesCategory('0')" style="cursor: pointer; background: linear-gradient(135deg, #8b0000, #c0392b); border: none; box-shadow: 0 4px 10px rgba(139, 0, 0, 0.3);">
-                        <div class="traffic-header">
-                            <h3 style="color: #ffffff;"><i class="fa-solid fa-skull-crossbones"></i> نفد تماماً</h3>
-                            <span class="subtitle" style="color: #fffaf0; font-weight: bold;">0 قطع</span>
-                        </div>
-                        <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #ffffff;" id="shrtCount0">0</h2>
+                    <div class="premium-pill pill-1 short-filter-btn" data-filter="1" onclick="changeShortagesCategory('1')">
+                        <i class="fa-solid fa-circle-exclamation pill-icon"></i>
+                        <span class="pill-text">قطعة واحدة</span>
+                        <span class="pill-count" id="shrtCount1">0</span>
                     </div>
 
-                    <div class="traffic-card traffic-red short-filter-btn" data-filter="1" onclick="changeShortagesCategory('1')" style="cursor: pointer;">
-                        <div class="traffic-header">
-                            <h3><i class="fa-solid fa-circle-exclamation"></i> قطعة واحدة</h3>
-                            <span class="subtitle">حرج جداً</span>
-                        </div>
-                        <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #c0392b;" id="shrtCount1">0</h2>
+                    <div class="premium-pill pill-3 short-filter-btn" data-filter="3" onclick="changeShortagesCategory('3')">
+                        <i class="fa-solid fa-triangle-exclamation pill-icon"></i>
+                        <span class="pill-text">حتى 3 قطع</span>
+                        <span class="pill-count" id="shrtCount3">0</span>
                     </div>
 
-                    <div class="traffic-card traffic-orange short-filter-btn" data-filter="3" onclick="changeShortagesCategory('3')" style="cursor: pointer;">
-                        <div class="traffic-header">
-                            <h3><i class="fa-solid fa-triangle-exclamation"></i> حتى 3 قطع</h3>
-                            <span class="subtitle">تنبيه سريع</span>
-                        </div>
-                        <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #e67e22;" id="shrtCount3">0</h2>
+                    <div class="premium-pill pill-5 short-filter-btn" data-filter="5" onclick="changeShortagesCategory('5')">
+                        <i class="fa-solid fa-eye pill-icon"></i>
+                        <span class="pill-text">حتى 5 قطع</span>
+                        <span class="pill-count" id="shrtCount5">0</span>
                     </div>
 
-                    <div class="traffic-card traffic-yellow short-filter-btn" data-filter="5" onclick="changeShortagesCategory('5')" style="cursor: pointer;">
-                        <div class="traffic-header">
-                            <h3><i class="fa-solid fa-eye"></i> حتى 5 قطع</h3>
-                            <span class="subtitle">انتباه ومراقبة</span>
-                        </div>
-                        <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #f1c40f;" id="shrtCount5">0</h2>
-                    </div>
-
-                    <div class="traffic-card traffic-green short-filter-btn" data-filter="10" onclick="changeShortagesCategory('10')" style="cursor: pointer;">
-                        <div class="traffic-header">
-                            <h3><i class="fa-solid fa-shield-halved"></i> حتى 10 قطع</h3>
-                            <span class="subtitle">مخزون قليل</span>
-                        </div>
-                        <h2 style="text-align:center; font-size: 2.5rem; margin: 10px 0; color: #27ae60;" id="shrtCount10">0</h2>
+                    <div class="premium-pill pill-10 short-filter-btn" data-filter="10" onclick="changeShortagesCategory('10')">
+                        <i class="fa-solid fa-shield-halved pill-icon"></i>
+                        <span class="pill-text">حتى 10 قطع</span>
+                        <span class="pill-count" id="shrtCount10">0</span>
                     </div>
                 </div>
 
