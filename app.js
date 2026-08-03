@@ -10244,7 +10244,7 @@ window.loadShortagesDashboard = function() {
     createBtn.style.display = 'none';
 
     // Check if Firebase is still loading
-    if (!window.barcodeCatalogData || window.barcodeCatalogData.length === 0) {
+    if (!barcodeCatalogData || barcodeCatalogData.length === 0) {
         if (!window.shortagesRetryCount) window.shortagesRetryCount = 0;
         if (window.shortagesRetryCount < 5) {
             window.shortagesRetryCount++;
@@ -10254,7 +10254,7 @@ window.loadShortagesDashboard = function() {
     }
     window.shortagesRetryCount = 0; // reset
     
-    let catalog = window.barcodeCatalogData || [];
+    let catalog = barcodeCatalogData || [];
 
     // 1. Filter Firebase for stock <= 1
     let firebaseShortages = catalog.filter(p => p.stock <= 1);
