@@ -1480,7 +1480,21 @@ function doPost(e) {
               .setBackground("#e67e22").setFontColor("white").setFontFamily("Cairo").setFontSize(14).setFontWeight("bold")
               .setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
       }
-      var logId = e.parameter.logId;
+      var lastRow = invSheet.getLastRow();
+      var currentCount = 1;
+      if (lastRow > 1) {
+          var lastIdStr = invSheet.getRange(lastRow, 1).getValue().toString();
+          var match = lastIdStr.match(/\d+/);
+          if (match) {
+              currentCount = parseInt(match[0], 10) + 1;
+          }
+      }
+      var idStr = "";
+      var tempCount = currentCount.toString();
+      for (var i = tempCount.length; i < 6; i++) { idStr += "0"; }
+      idStr += tempCount;
+      var logId = "TRX-" + idStr;
+      
       var from = e.parameter.from;
       var to = e.parameter.to;
       var regName = e.parameter.regName;
