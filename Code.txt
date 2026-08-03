@@ -2130,8 +2130,6 @@ function syncFirebaseInventory(ss) {
       var q = parseFloat(qStr);
       if (qStr === "" || isNaN(q) || q > 0) {
         newExpData.push(expData[i]);
-      } else {
-        archiveExpiryRow(ss, expData[i], headers);
       }
     }
     
@@ -2140,33 +2138,10 @@ function syncFirebaseInventory(ss) {
       expirySheet.getRange(1, 1, newExpData.length, newExpData[0].length).setValues(newExpData);
     }
     
-    if (discrepancies.length > 0) {
-      logAlert(ss, "⚠️ نقص في الصلاحيات أثناء المزامنة", discrepancies.join(" | "));
-    }
-    
     return { success: true, message: "تم تحديث " + changesCount + " منتج بنجاح" };
   } else {
     return { success: true, message: "البيانات متطابقة، لا توجد مبيعات أو مرتجعات جديدة لتسويتها" };
   }
-}
-
-function archiveExpiryRow(ss, rowData, headers) {
-  var archSheet = ss.getSheetByName("ارشيف الصلاحيات");
-  if (!archSheet) {
-    archSheet = ss.insertSheet("ارشيف الصلاحيات");
-    archSheet.appendRow(headers);
-  }
-  archSheet.appendRow(rowData);
-}
-
-function logAlert(ss, type, msg) {
-  var alertSheet = ss.getSheetByName("تنبيهات النظام");
-  if (!alertSheet) {
-    alertSheet = ss.insertSheet("تنبيهات النظام");
-    alertSheet.appendRow(["التاريخ", "النوع", "الرسالة"]);
-  }
-  var t = Utilities.formatDate(new Date(), "Africa/Cairo", "yyyy-MM-dd hh:mm a");
-  alertSheet.appendRow([t, type, msg]);
 }
 
 // ============================================================
@@ -2218,7 +2193,7 @@ function autoSyncTriggerHandler() {
         // يمكن حفظ سجل بنجاح المزامنة هنا إذا أردت
       }
     } catch(e) {
-      logAlert(SpreadsheetApp.getActiveSpreadsheet(), "خطأ في المزامنة التلقائية", e.toString());
+      // تم إزالة سجل التنبيهات
     } finally {
       lock.releaseLock();
     }
