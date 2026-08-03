@@ -10269,7 +10269,7 @@ window.changeShortagesPage = function(delta) {
 function applyShortagesFilterAndRender() {
     let cat = currentShortagesCategory;
     if (cat === 'all') {
-        filteredShortages = currentShortages.filter(p => p.stock <= 10);
+        filteredShortages = currentShortages; // all
     } else if (cat === '0') {
         filteredShortages = currentShortages.filter(p => p.stock <= 0);
     } else if (cat === '1') {
@@ -10279,7 +10279,7 @@ function applyShortagesFilterAndRender() {
     } else if (cat === '5') {
         filteredShortages = currentShortages.filter(p => p.stock >= 4 && p.stock <= 5);
     } else if (cat === '10') {
-        filteredShortages = currentShortages.filter(p => p.stock >= 6 && p.stock <= 10);
+        filteredShortages = currentShortages.filter(p => p.stock >= 6); // 6 or more
     }
     
     updateShortagesDashboardCounts();
@@ -10293,7 +10293,7 @@ function updateShortagesDashboardCounts() {
         else if (p.stock === 1) c1++;
         else if (p.stock >= 2 && p.stock <= 3) c3++;
         else if (p.stock >= 4 && p.stock <= 5) c5++;
-        else if (p.stock >= 6 && p.stock <= 10) c10++;
+        else if (p.stock >= 6) c10++; // 6 or more
     });
 
     let el0 = document.getElementById('shrtCount0');
@@ -10339,14 +10339,14 @@ window.loadShortagesDashboard = function() {
     
     let catalog = barcodeCatalogData || [];
 
-    // Filter Firebase for stock <= 10 (since 10 is our max category)
-    let firebaseShortages = catalog.filter(p => p.stock <= 10);
+    // Filter Firebase for stock (include everything now since category 10 is '6 or more')
+    let firebaseShortages = catalog; // Load all items to support '6 or more'
     
     if (firebaseShortages.length === 0) {
         currentShortages = [];
         isShortagesLoading = false;
         applyShortagesFilterAndRender();
-        container.innerHTML = '<div style="text-align:center; padding:30px; color:#27ae60;"><i class="fa-solid fa-check-circle fa-2x"></i><br><br>لا توجد أي نواقص حالياً (حتى 10 قطع)، الأرصدة ممتازة!</div>';
+        container.innerHTML = '<div style="text-align:center; padding:30px; color:#27ae60;"><i class="fa-solid fa-check-circle fa-2x"></i><br><br>لا توجد أي نواقص حالياً، الأرصدة ممتازة!</div>';
         return;
     }
 
