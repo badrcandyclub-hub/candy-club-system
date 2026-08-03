@@ -8662,6 +8662,7 @@ const HR_RADIUS_METERS = 100; // Geofencing radius
 let hrGpsWatchId = null;
 let hrIsInRange = false;
 let hrTodayStatus = null; // null, 'checkedIn', 'checkedOut'
+let hrDataLoaded = false;
 
 // Haversine formula
 function getDistanceFromBranch(lat, lng) {
@@ -8721,7 +8722,19 @@ function initHrGps() {
 function updateHrButtons() {
     let checkInBtn = document.getElementById('checkInBtn');
     let checkOutBtn = document.getElementById('checkOutBtn');
+    let loadingEl = document.getElementById('hrButtonsLoading');
+    let containerEl = document.getElementById('hrButtonsContainer');
+    
     if (!checkInBtn || !checkOutBtn) return;
+
+    if (!hrDataLoaded) {
+        if (loadingEl) loadingEl.style.display = 'flex';
+        if (containerEl) containerEl.style.display = 'none';
+        return;
+    } else {
+        if (loadingEl) loadingEl.style.display = 'none';
+        if (containerEl) containerEl.style.display = 'flex';
+    }
 
     if (hrTodayStatus === 'checkedIn') {
         checkInBtn.style.display = 'none';
@@ -9012,9 +9025,12 @@ function loadMyAttendance() {
                     hrTodayStatus = null;
                 }
             }
+            hrDataLoaded = true;
             updateHrButtons();
         })
         .catch(err => {
+            hrDataLoaded = true;
+            updateHrButtons();
             if (loadingEl) loadingEl.style.display = 'none';
             console.error('HR load error:', err);
         });

@@ -1417,7 +1417,10 @@
 
                 <!-- Employee View: Check-in/out buttons -->
                 <div id="hrEmployeeView">
-                    <div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+                    <div id="hrButtonsLoading" style="display: flex; gap: 12px; margin-bottom: 20px; align-items: center; color: #666;">
+                        <i class="fa-solid fa-spinner fa-spin" style="font-size: 1.2rem; color: #00897b;"></i> <span style="font-weight: bold;">جاري مزامنة بيانات الحضور...</span>
+                    </div>
+                    <div id="hrButtonsContainer" style="display: none; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
                         <button id="checkInBtn" class="hr-action-btn hr-checkin-btn interactive-btn" onclick="handleCheckIn()" disabled>
                             <i class="fa-solid fa-right-to-bracket"></i> تسجيل حضور
                         </button>
