@@ -8639,7 +8639,7 @@ loadDataFromServer = function(customDate = null) {
     if (currentUser) {
         let perms = currentUser.permissions.split(",");
         let isFull = currentUser.permissions === "ALL";
-        if (isFull || perms.includes("catalog") || perms.includes("create") || perms.includes("pricetags") || perms.includes("inventory")) {
+        if (isFull || perms.includes("catalog") || perms.includes("create") || perms.includes("pricetags") || perms.includes("inventory") || perms.includes("shortages")) {
             if(typeof fetchCatalogFromFirebase === 'function') {
                 fetchCatalogFromFirebase();
             }
@@ -10243,8 +10243,21 @@ window.loadShortagesDashboard = function() {
     container.innerHTML = '<div style="text-align:center; padding:30px;"><i class="fa-solid fa-spinner fa-spin fa-2x" style="color:#c0392b;"></i><br><br>جاري جلب النواقص وحالات التجهيز...</div>';
     createBtn.style.display = 'none';
 
+    // Check if Firebase is still loading
+    if (!window.barcodeCatalogData || window.barcodeCatalogData.length === 0) {
+        if (!window.shortagesRetryCount) window.shortagesRetryCount = 0;
+        if (window.shortagesRetryCount < 5) {
+            window.shortagesRetryCount++;
+            setTimeout(window.loadShortagesDashboard, 1500);
+            return;
+        }
+    }
+    window.shortagesRetryCount = 0; // reset
+    
+    let catalog = window.barcodeCatalogData || [];
+
     // 1. Filter Firebase for stock <= 1
-    let firebaseShortages = window.barcodeCatalogData ? window.barcodeCatalogData.filter(p => p.stock <= 1) : [];
+    let firebaseShortages = catalog.filter(p => p.stock <= 1);
     
     if (firebaseShortages.length === 0) {
         container.innerHTML = '<div style="text-align:center; padding:30px; color:#27ae60;"><i class="fa-solid fa-check-circle fa-2x"></i><br><br>لا توجد أي نواقص حالياً، الأرصدة ممتازة!</div>';
