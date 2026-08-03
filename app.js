@@ -10239,6 +10239,7 @@ let shortagesPage = 1;
 const SHORTAGES_PER_PAGE = 50;
 let currentShortagesCategory = '0'; // Default to "0" instead of "all"
 let selectedShortages = new Set(); // store selected names
+let isShortagesLoading = false;
 
 window.changeShortagesCategory = function(cat) {
     currentShortagesCategory = cat;
@@ -10250,7 +10251,10 @@ window.changeShortagesCategory = function(cat) {
     });
 
     shortagesPage = 1; // reset to first page on category change
-    applyShortagesFilterAndRender();
+    
+    if (!isShortagesLoading) {
+        applyShortagesFilterAndRender();
+    }
 };
 
 window.changeShortagesPage = function(delta) {
@@ -10310,6 +10314,7 @@ window.loadShortagesDashboard = function() {
     let createBtn = document.getElementById('createShortagesTransferBtn');
     if (!container) return;
     
+    isShortagesLoading = true;
     container.innerHTML = '<div style="text-align:center; padding:30px;"><i class="fa-solid fa-spinner fa-spin fa-2x" style="color:#c0392b;"></i><br><br>جاري جلب النواقص وحالات التجهيز...</div>';
     createBtn.style.display = 'none';
     let paginationUI = document.getElementById('shortagesPagination');
@@ -10318,9 +10323,15 @@ window.loadShortagesDashboard = function() {
     // Check if Firebase is still loading
     if (!barcodeCatalogData || barcodeCatalogData.length === 0) {
         if (!window.shortagesRetryCount) window.shortagesRetryCount = 0;
-        if (window.shortagesRetryCount < 5) {
+        if (window.shortagesRetryCount < 15) { // increased to 15 retries (approx 22 seconds)
             window.shortagesRetryCount++;
             setTimeout(window.loadShortagesDashboard, 1500);
+            return;
+        } else {
+            // Give up
+            isShortagesLoading = false;
+            window.shortagesRetryCount = 0;
+            container.innerHTML = '<div style="text-align:center; padding:30px; color:#c0392b;"><i class="fa-solid fa-triangle-exclamation fa-2x"></i><br><br>تعذر جلب البيانات من قاعدة البيانات. يرجى التأكد من اتصال الإنترنت ثم الضغط على تحديث.</div>';
             return;
         }
     }
@@ -10332,6 +10343,9 @@ window.loadShortagesDashboard = function() {
     let firebaseShortages = catalog.filter(p => p.stock <= 10);
     
     if (firebaseShortages.length === 0) {
+        currentShortages = [];
+        isShortagesLoading = false;
+        applyShortagesFilterAndRender();
         container.innerHTML = '<div style="text-align:center; padding:30px; color:#27ae60;"><i class="fa-solid fa-check-circle fa-2x"></i><br><br>لا توجد أي نواقص حالياً (حتى 10 قطع)، الأرصدة ممتازة!</div>';
         return;
     }
@@ -10354,6 +10368,7 @@ window.loadShortagesDashboard = function() {
                     by: s ? s.by : ''
                 };
             });
+            isShortagesLoading = false;
             applyShortagesFilterAndRender();
         })
         .catch(err => {
@@ -10367,6 +10382,7 @@ window.loadShortagesDashboard = function() {
                 date: '',
                 by: ''
             }));
+            isShortagesLoading = false;
             applyShortagesFilterAndRender();
         });
 };
