@@ -133,6 +133,7 @@ function setBtnLoading(btn, isLoading, originalText = "") {
 // ==========================================
 // 2. التبديل بين الشاشات والنوافذ المنبثقة
 // ==========================================
+window.isMainDataLoaded = false;
 document.querySelectorAll('.nav-item').forEach(btn => {
     btn.addEventListener('click', (e) => {
         if (btn.classList.contains('locked-nav-item')) {
@@ -150,6 +151,16 @@ document.querySelectorAll('.nav-item').forEach(btn => {
         let targetId = btn.getAttribute('data-target');
         let targetElement = document.getElementById(targetId);
         if (targetElement) targetElement.classList.add('active');
+        
+        // ⭐ التحميل الذكي (Lazy Loading) - لا تحمل النظام بالكامل لو شاشات الموظفين
+        let isHrScreen = ['hr-tab', 'hr-admin-tab', 'users-tab'].includes(targetId);
+        if (!isHrScreen && !window.isMainDataLoaded) {
+            window.isMainDataLoaded = true; // نمنع التكرار
+            if (typeof loadDataFromServer === 'function') {
+                showToast("جاري تحميل بيانات النظام الرئيسية... ⚡", "warning");
+                loadDataFromServer();
+            }
+        }
         
         // ⭐ V16: تحميل المستخدمين إذا تم فتح التاب
         if (targetId === 'users-tab') {
@@ -7677,7 +7688,7 @@ function checkSession() {
             
             document.getElementById('login-screen').style.display = 'none';
             applyPermissions();
-            if (typeof loadDataFromServer === 'function') loadDataFromServer();
+            // تمت إزالة التحميل التلقائي لتفعيل الـ Lazy Loading
             if (typeof updateSuspendedCount === 'function') updateSuspendedCount();
         } catch (e) {
             console.error("Invalid session", e);
@@ -7713,7 +7724,7 @@ function handleLogin(user, pass, btn, err) {
                 localStorage.setItem('cc_user', JSON.stringify(currentUser));
                 document.getElementById('login-screen').style.display = 'none';
                 applyPermissions();
-                loadDataFromServer();
+                // تمت إزالة التحميل التلقائي لتفعيل الـ Lazy Loading
                 if (typeof updateSuspendedCount === 'function') updateSuspendedCount();
                 showToast(`أهلاً بك يا ${currentUser.displayName}`);
             } else {
@@ -8039,7 +8050,7 @@ function checkSession() {
             
             document.getElementById('login-screen').style.display = 'none';
             applyPermissions();
-            if (typeof loadDataFromServer === 'function') loadDataFromServer();
+            // تمت إزالة التحميل التلقائي لتفعيل الـ Lazy Loading
             if (typeof updateSuspendedCount === 'function') updateSuspendedCount();
         } catch (e) {
             console.error("Invalid session", e);
@@ -8090,7 +8101,7 @@ window.handleLogin = function(e) {
                 localStorage.setItem('cc_user', JSON.stringify(currentUser));
                 document.getElementById('login-screen').style.display = 'none';
                 applyPermissions();
-                loadDataFromServer();
+                // تمت إزالة التحميل التلقائي لتفعيل الـ Lazy Loading
                 if (typeof updateSuspendedCount === 'function') updateSuspendedCount();
                 showToast(`أهلاً بك يا ${currentUser.displayName}`);
             } else {
