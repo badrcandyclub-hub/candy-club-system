@@ -135,11 +135,11 @@ function setBtnLoading(btn, isLoading, originalText = "") {
 // ==========================================
 // ⭐ V16.2: تعريف وحدات النظام (Modules)
 window.MODULE_GROUPS = {
-    'orders': { tabs: ['create-tab', 'catalog-tab', 'shipping-tab', 'history-tab', 'financials-tab', 'suspended-tab'], req: 'orders,customers,shipping,catalog,financials,shortages,drafts,users' },
-    'marketing': { tabs: ['customers-tab', 'whatsapp-campaign-tab'], req: 'customers,users,orders' },
-    'products': { tabs: ['price-tags-tab', 'shortages-tab', 'expiry-tab', 'inventory-transfers-tab'], req: 'catalog,drafts,users' },
-    'hr': { tabs: ['hr-tab', 'hr-admin-tab'], req: 'attendance,users' },
-    'admin': { tabs: ['reports-tab', 'moderators-tab', 'users-tab'], req: 'orders,users,customers,shipping,financials,shortages' }
+    'orders': { name: 'إدارة الأوردرات', icon: 'fa-solid fa-box fa-bounce', tabs: ['create-tab', 'catalog-tab', 'shipping-tab', 'history-tab', 'financials-tab', 'suspended-tab'], req: 'orders,customers,shipping,catalog,financials,shortages,drafts,users' },
+    'marketing': { name: 'العملاء والتسويق', icon: 'fa-solid fa-users-viewfinder fa-fade', tabs: ['customers-tab', 'whatsapp-campaign-tab'], req: 'customers,users,orders' },
+    'products': { name: 'المنتجات', icon: 'fa-solid fa-tags fa-beat', tabs: ['price-tags-tab', 'shortages-tab', 'expiry-tab', 'inventory-transfers-tab'], req: 'catalog,drafts,users' },
+    'hr': { name: 'شئون الموظفين', icon: 'fa-solid fa-id-card-clip fa-flip', tabs: ['hr-tab', 'hr-admin-tab'], req: 'attendance,users' },
+    'admin': { name: 'الإدارة والتقارير', icon: 'fa-solid fa-chart-pie fa-spin', tabs: ['reports-tab', 'moderators-tab', 'users-tab'], req: 'orders,users,customers,shipping,financials,shortages' }
 };
 
 window.currentActiveModuleGroup = null;
@@ -172,7 +172,19 @@ document.querySelectorAll('.nav-item').forEach(btn => {
             window.currentActiveModuleGroup = newModuleGroup;
             
             let overlay = document.getElementById('module-loading-overlay');
-            if (overlay) overlay.style.display = 'flex';
+            let loadingText = document.getElementById('module-loading-text');
+            let loadingIcon = document.getElementById('module-loading-icon');
+            
+            if (overlay && loadingText && loadingIcon) {
+                let modData = window.MODULE_GROUPS[newModuleGroup];
+                loadingText.innerText = `جاري تحميل ${modData.name}...`;
+                loadingIcon.className = modData.icon;
+                // لون أيقونة مختلف لكل قسم
+                let colors = { 'orders': '#E91E8C', 'marketing': '#1565C0', 'products': '#e67e22', 'hr': '#00897b', 'admin': '#795548' };
+                loadingIcon.style.color = colors[newModuleGroup] || 'var(--primary)';
+                
+                overlay.style.display = 'flex';
+            }
             
             // جلب البيانات الخاصة بالقسم الجديد فقط
             if (typeof loadDataFromServer === 'function') {
