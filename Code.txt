@@ -1717,6 +1717,33 @@ function doPost(e) {
       var hoursCredit = "0";
       attSheet.appendRow([empName, "'" + leaveDate, "-", "-", hoursCredit, leaveType, "بانتظار الموافقة", notes]);
       
+      // حساب الإحصائيات (رصيد الإجازات وساعات العمل)
+      var leaveMonth = leaveDate.substring(0, 7);
+      var paidUsed = 0, unpaidUsed = 0, totalMin = 0;
+      for (var i = 1; i < attData.length; i++) {
+        if (attData[i][0].toString().trim() === empName) {
+           var recDate = "";
+           try { recDate = Utilities.formatDate(new Date(attData[i][1]), "Africa/Cairo", "yyyy-MM"); } catch(e) { recDate = attData[i][1].toString().substring(0, 7); }
+           if (recDate === leaveMonth) {
+              var status = attData[i][5] || "", reqStatus = attData[i][6] || "";
+              if (status === "إجازة مدفوعة" && reqStatus === "✅ تمت الموافقة") paidUsed++;
+              if (status === "إجازة بدون مرتب" && reqStatus === "✅ تمت الموافقة") unpaidUsed++;
+              var hStr = (attData[i][4] || "").toString();
+              var hMatch = hStr.match(/(\d+(?:\.\d+)?)\s*ساعة/);
+              var mMatch = hStr.match(/(\d+(?:\.\d+)?)\s*دقيقة/);
+              if (hMatch) totalMin += parseFloat(hMatch[1]) * 60;
+              if (mMatch) totalMin += parseFloat(mMatch[1]);
+           }
+        }
+      }
+      var paidRemaining = 4 - paidUsed;
+      var fHours = Math.floor(totalMin / 60);
+      var fMins = Math.round(totalMin % 60);
+      var statsText = "\n\n📊 **إحصائيات الموظف هذا الشهر:**\n" +
+                      "🔹 الرصيد المتبقي للإجازات المدفوعة: " + paidRemaining + " أيام\n" +
+                      "🔹 الإجازات بدون مرتب المستخدمة: " + unpaidUsed + " أيام\n" +
+                      "🔹 إجمالي ساعات العمل: " + fHours + " ساعة و " + fMins + " دقيقة";
+      
       // إرسال إيميل للمديرين
       try {
         var usersSheet = ss.getSheetByName("👥 المستخدمين");
@@ -1729,7 +1756,7 @@ function doPost(e) {
                MailApp.sendEmail({
                  to: adminEmail,
                  subject: "🛎️ طلب إجازة جديد من " + empName,
-                 body: "مرحباً،\n\nلقد قام الموظف (" + empName + ") بتقديم طلب " + leaveType + " ليوم " + leaveDate + ".\n\nبرجاء مراجعة لوحة الإدارة (قسم الحضور والانصراف) للموافقة أو الرفض.\n\nشكراً،\nنظام كاندي كلوب"
+                 body: "مرحباً الإدارة الكريمة، 👑\n\nلقد قام الموظف (" + empName + ") 👤 بتقديم طلب " + leaveType + " 🏖️ ليوم " + leaveDate + " 📅.\n" + statsText + "\n\nبرجاء مراجعة لوحة الإدارة للموافقة أو الرفض. ✅❌\n\nنظام كاندي كلوب 🍬"
                });
             }
           }
@@ -1770,16 +1797,45 @@ function doPost(e) {
           
           // إرسال إيميل للموظف
           try {
+            // حساب الإحصائيات (رصيد الإجازات وساعات العمل)
+            var leaveMonth = leaveDate.substring(0, 7);
+            var paidUsed = 0, unpaidUsed = 0, totalMin = 0;
+            // يجب إعادة جلب البيانات هنا لأننا قمنا بتحديثها (الموافقة أو الرفض)
+            var currentAttData = attSheet.getDataRange().getValues();
+            for (var i = 1; i < currentAttData.length; i++) {
+              if (currentAttData[i][0].toString().trim() === empName) {
+                 var recDate = "";
+                 try { recDate = Utilities.formatDate(new Date(currentAttData[i][1]), "Africa/Cairo", "yyyy-MM"); } catch(e) { recDate = currentAttData[i][1].toString().substring(0, 7); }
+                 if (recDate === leaveMonth) {
+                    var status = currentAttData[i][5] || "", reqStatus = currentAttData[i][6] || "";
+                    if (status === "إجازة مدفوعة" && reqStatus === "✅ تمت الموافقة") paidUsed++;
+                    if (status === "إجازة بدون مرتب" && reqStatus === "✅ تمت الموافقة") unpaidUsed++;
+                    var hStr = (currentAttData[i][4] || "").toString();
+                    var hMatch = hStr.match(/(\d+(?:\.\d+)?)\s*ساعة/);
+                    var mMatch = hStr.match(/(\d+(?:\.\d+)?)\s*دقيقة/);
+                    if (hMatch) totalMin += parseFloat(hMatch[1]) * 60;
+                    if (mMatch) totalMin += parseFloat(mMatch[1]);
+                 }
+              }
+            }
+            var paidRemaining = 4 - paidUsed;
+            var fHours = Math.floor(totalMin / 60);
+            var fMins = Math.round(totalMin % 60);
+            var statsText = "\n\n📊 **إحصائياتك هذا الشهر:**\n" +
+                            "🔹 رصيدك المتبقي للإجازات المدفوعة: " + paidRemaining + " أيام\n" +
+                            "🔹 إجازات بدون مرتب تم استخدامها: " + unpaidUsed + " أيام\n" +
+                            "🔹 إجمالي ساعات عملك: " + fHours + " ساعة و " + fMins + " دقيقة";
+            
             var usersSheet = ss.getSheetByName("👥 المستخدمين");
             var usersData = usersSheet.getDataRange().getValues();
             for (var u = 1; u < usersData.length; u++) {
               if (usersData[u][2].toString().trim() === empName) {
                 var empEmail = usersData[u][0].toString().trim();
                 if (empEmail.indexOf("@") !== -1) {
-                   var subject = decision === "approve" ? "🎉 تمت الموافقة على إجازتك" : "❌ تم رفض إجازتك";
+                   var subject = decision === "approve" ? "🎉 تمت الموافقة على إجازتك!" : "❌ تم رفض إجازتك";
                    var body = decision === "approve" ? 
-                     "مرحباً " + empName + "،\n\nلقد قام المدير بالموافقة على طلب الإجازة الخاص بك ليوم " + leaveDate + ".\n\nنتمنى لك وقتاً ممتعاً!\nنظام كاندي كلوب" :
-                     "مرحباً " + empName + "،\n\nنأسف لإبلاغك بأنه قد تم رفض طلب الإجازة الخاص بك ليوم " + leaveDate + ".\n\nبرجاء مراجعة المدير لمزيد من التفاصيل.\n\nنظام كاندي كلوب";
+                     "مرحباً " + empName + "، 🥳\n\nلقد قام المدير بالموافقة على طلب الإجازة الخاص بك ليوم " + leaveDate + " 📅.\n" + statsText + "\n\nنتمنى لك وقتاً ممتعاً وإجازة سعيدة! 🏖️\n\nنظام كاندي كلوب 🍬" :
+                     "مرحباً " + empName + "، 😔\n\nنأسف لإبلاغك بأنه قد تم رفض طلب الإجازة الخاص بك ليوم " + leaveDate + " 📅.\n" + statsText + "\n\nبرجاء مراجعة الإدارة لمزيد من التفاصيل. 🏢\n\nنظام كاندي كلوب 🍬";
                    
                    MailApp.sendEmail({
                      to: empEmail,
