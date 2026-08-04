@@ -833,7 +833,7 @@ function doGet(e) {
 
   var response = { 
     alex: [], govs: [], couriers: [], products: [], moderators: [],
-    catalog: [], outOfStock: [], customers: [], users: [],
+    catalog: [], outOfStock: [], customers: [], users: [], expiries: [],
     todayOrders: 0, todaySales: 0, monthSales: 0,
     completedMonthCount: 0, completedTodayCount: 0,
     history: [], pendingOrders: [], financials: [],
@@ -922,6 +922,58 @@ function doGet(e) {
           permissions: uData[i][3], status: uData[i][4],
           lastLogin: uData[i][5] instanceof Date ? Utilities.formatDate(uData[i][5], "Africa/Cairo", "yyyy-MM-dd hh:mm a") : uData[i][5]
         });
+      }
+    }
+  }
+
+  // ⭐ صلاحيات المنتجات (Expiries)
+  if (needs('expiries')) {
+    var expirySheet = getExpirySheet(ss);
+    if (expirySheet) {
+      var expData = expirySheet.getDataRange().getValues();
+      if (expData.length > 0) {
+        var headers = expData[0];
+        var findIdx = function(aliases) {
+          for (var j = 0; j < aliases.length; j++) {
+            var idx = headers.indexOf(aliases[j]);
+            if (idx !== -1) return idx;
+          }
+          return -1;
+        };
+
+        var idxName = findIdx(["اسم المنتج", "اسم الصنف", "الاسم"]);
+        var idxQty = findIdx(["الكمية"]);
+        var idxExp = findIdx(["تاريخ الانتهاء", "تاريخ الصلاحية"]);
+        var idxLoc = findIdx(["المكان / المورد", "مكان التخزين", "المكان"]);
+        var idxRegName = findIdx(["اسم المسجل"]);
+        var idxRegDate = findIdx(["تاريخ التسجيل", "تاريخ الادخال"]);
+        var idxReceiver = findIdx(["المستلم", "اسم المستلم"]);
+        var idxNotes = findIdx(["ملاحظات"]);
+        var idxOrig = findIdx(["السعر الأساسي", "السعر الأصلي"]);
+        var idxOffer = findIdx(["سعر العرض"]);
+        var idxStatus = findIdx(["الحالة"]);
+        var idxBarcode = findIdx(["الباركود"]);
+
+        for (var i = 1; i < expData.length; i++) {
+          var row = expData[i];
+          if (idxName !== -1 && row[idxName]) {
+            response.expiries.push({
+              id: row[idxName] + '|' + (idxQty !== -1 ? row[idxQty] : '') + '|' + (idxExp !== -1 ? row[idxExp] : ''),
+              name: row[idxName] || "",
+              qty: idxQty !== -1 ? row[idxQty] : "",
+              expiryDate: idxExp !== -1 ? row[idxExp] : "",
+              location: idxLoc !== -1 ? row[idxLoc] : "",
+              registrarName: idxRegName !== -1 ? row[idxRegName] : "",
+              regDate: idxRegDate !== -1 ? row[idxRegDate] : "",
+              receiver: idxReceiver !== -1 ? row[idxReceiver] : "",
+              notes: idxNotes !== -1 ? row[idxNotes] : "",
+              originalPrice: idxOrig !== -1 ? row[idxOrig] : "",
+              offerPrice: idxOffer !== -1 ? row[idxOffer] : "",
+              status: idxStatus !== -1 ? row[idxStatus] : "",
+              barcode: idxBarcode !== -1 ? (row[idxBarcode] || "") : ""
+            });
+          }
+        }
       }
     }
   }

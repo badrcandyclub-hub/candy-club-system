@@ -137,7 +137,7 @@ function setBtnLoading(btn, isLoading, originalText = "") {
 window.MODULE_GROUPS = {
     'orders': { name: 'إدارة الأوردرات', icon: 'fa-solid fa-box fa-bounce', tabs: ['create-tab', 'catalog-tab', 'shipping-tab', 'history-tab', 'financials-tab', 'suspended-tab'], req: 'orders,customers,shipping,catalog,financials,shortages,drafts,users' },
     'marketing': { name: 'العملاء والتسويق', icon: 'fa-solid fa-users-viewfinder fa-fade', tabs: ['customers-tab', 'whatsapp-campaign-tab'], req: 'customers,users,orders' },
-    'products': { name: 'المنتجات', icon: 'fa-solid fa-tags fa-beat', tabs: ['price-tags-tab', 'shortages-tab', 'expiry-tab', 'inventory-transfers-tab'], req: 'catalog,drafts,users' },
+    'products': { name: 'المنتجات', icon: 'fa-solid fa-tags fa-beat', tabs: ['price-tags-tab', 'shortages-tab', 'expiry-tab', 'inventory-transfers-tab'], req: 'catalog,drafts,users,expiries' },
     'hr': { name: 'شئون الموظفين', icon: 'fa-solid fa-id-card-clip fa-flip', tabs: ['hr-tab', 'hr-admin-tab'], req: 'attendance,users' },
     'admin': { name: 'الإدارة والتقارير', icon: 'fa-solid fa-chart-pie fa-spin', tabs: ['reports-tab', 'moderators-tab', 'users-tab'], req: 'orders,users,customers,shipping,financials,shortages' }
 };
@@ -223,9 +223,6 @@ document.querySelectorAll('.nav-item').forEach(btn => {
 
         // Load expiry data every time the tab is opened, with a custom loading screen
         if (btn.getAttribute('data-target') === 'expiry-tab') {
-            const expiryBody = document.querySelector('#expiry-tab');
-            if (expiryBody) expiryBody.classList.add('skeleton-mode');
-            
             loadExpiryData(); // Fetch fresh data every time
             
             // Set default reg date to today if empty
@@ -521,6 +518,35 @@ function loadDataFromServer(customDate = null) {
             window.driversList = data.couriers || [];
             window.usersData = data.users || []; // ⭐ V16.3: تعيين بيانات المستخدمين من الحمولة الرئيسية
             if (typeof loadUsersList === 'function') loadUsersList();
+            
+            // ⭐ V16.4: تعيين بيانات الصلاحيات (Expiries) من الحمولة الرئيسية
+            window.expiriesData = data.expiries || [];
+            if (typeof renderExpiryDashboard === 'function') {
+                // Populate expiryData array used by the module
+                expiryData = Array.isArray(window.expiriesData) ? window.expiriesData : [];
+                // Process batchId from regDate if needed
+                expiryData = expiryData.map(item => {
+                    if (item.regDate && typeof item.regDate === 'string' && item.regDate.includes("||")) {
+                        let parts = item.regDate.split("||");
+                        item.batchId = parts[1];
+                        let d = new Date(parseInt(parts[1]));
+                        if (!isNaN(d.getTime())) {
+                            let hours = d.getHours();
+                            let minutes = d.getMinutes();
+                            let ampm = hours >= 12 ? 'PM' : 'AM';
+                            hours = hours % 12;
+                            hours = hours ? hours : 12; // the hour '0' should be '12'
+                            minutes = minutes < 10 ? '0' + minutes : minutes;
+                            let strTime = hours + ':' + minutes + ' ' + ampm;
+                            item.regDate = parts[0].trim() + " " + strTime;
+                        } else {
+                            item.regDate = parts[0].trim();
+                        }
+                    }
+                    return item;
+                });
+                renderExpiryDashboard();
+            }
 
             if (typeof renderFinancials === 'function') renderFinancials(window.financialsData);
 
@@ -3716,54 +3742,30 @@ if (refreshExpiryBtn) {
 }
 
 function loadExpiryData() {
-    const btn = document.getElementById('refreshExpiryBtn');
-    if (btn) {
-        btn.dataset.origText = btn.innerText;
-        btn.innerHTML = "جاري التحميل <i class=\'fa-solid fa-hourglass-half\'></i>...";
-        btn.style.opacity = "0.7";
-        btn.style.pointerEvents = "none";
+    // V16.5: استخدام البيانات المحملة مسبقاً بدلاً من استدعاء السيرفر
+    if (window.expiriesData && window.expiriesData.length > 0) {
+        expiryData = Array.isArray(window.expiriesData) ? window.expiriesData : [];
+        
+        // <i class='fa-solid fa-star'></i> سحب الباركود للمنتجات القديمة من الفايربيز أو إذا كان العمود غير موجود في الإكسيل
+        if (barcodeCatalogData && barcodeCatalogData.length > 0) {
+            const fbMap = new Map();
+            barcodeCatalogData.forEach(p => fbMap.set(String(p.name).trim().toLowerCase(), p));
+            
+            expiryData.forEach(exp => {
+                if (exp.name) {
+                    let fb = fbMap.get(String(exp.name).trim().toLowerCase());
+                    if (fb && (!exp.barcode || String(exp.barcode).trim() === '')) {
+                        exp.barcode = fb.barcode;
+                    }
+                }
+            });
+        }
+    } else {
+        expiryData = [];
     }
 
-    // Lazy load the expiries from Google Sheets
-    fetch(`${GOOGLE_SHEETS_URL}?action=getExpiries`)
-        .then(res => res.json())
-        .then(data => {
-            if (btn) {
-                btn.innerText = btn.dataset.origText;
-                btn.style.opacity = "1";
-                btn.style.pointerEvents = "auto";
-            }
-            // Assuming data is an array of objects: { id, name, qty, expiryDate, location, receiver, notes, status }
-            expiryData = Array.isArray(data) ? data : (data.expiries || []);
-            
-            // <i class=\'fa-solid fa-star\'></i> سحب الباركود للمنتجات القديمة من الفايربيز أو إذا كان العمود غير موجود في الإكسيل
-            if (barcodeCatalogData && barcodeCatalogData.length > 0) {
-                const fbMap = new Map();
-                barcodeCatalogData.forEach(p => fbMap.set(String(p.name).trim().toLowerCase(), p));
-                
-                expiryData.forEach(exp => {
-                    if (exp.name) {
-                        let fb = fbMap.get(String(exp.name).trim().toLowerCase());
-                        if (fb && (!exp.barcode || String(exp.barcode).trim() === '')) {
-                            exp.barcode = fb.barcode;
-                        }
-                    }
-                });
-            }
-
-            renderExpiryDashboard();
-            updateCatalogWithOffers(); // To highlight items on offer in the main cashier view
-        })
-        .catch(err => {
-            if (btn) {
-                btn.innerText = btn.dataset.origText;
-                btn.style.opacity = "1";
-                btn.style.pointerEvents = "auto";
-            }
-            showToast("<i class=\'fa-solid fa-xmark\'></i> حدث خطأ في تحميل الصلاحيات. يرجى مراجعة إعدادات Google Sheets", "error");
-            // Also call render to clear the "loading" or show empty states
-            renderExpiryDashboard();
-        });
+    renderExpiryDashboard();
+    updateCatalogWithOffers(); // To highlight items on offer in the main cashier view
 }
 
 let barcodeImageUpload = document.getElementById('barcodeImageUpload');
@@ -3922,73 +3924,7 @@ if (addToCartBtn) {
 let expiryData = [];
 
 // Fetch data only when modal opens (Lazy Loading)
-window.openExpiryDashboard = function () {
-    document.getElementById('expiryDashboardModal').style.display = 'flex';
-    loadExpiryData();
-};
 
-function loadExpiryData() {
-    const btn = document.getElementById('openExpiryBtn');
-    if (btn) {
-        btn.dataset.origText = btn.innerText;
-        btn.innerHTML = "جاري التحميل <i class=\'fa-solid fa-hourglass-half\'></i>...";
-        btn.style.opacity = "0.7";
-        btn.style.pointerEvents = "none";
-    }
-    
-    const expiryBody = document.querySelector('#expiry-tab');
-    if (expiryBody) expiryBody.classList.add('skeleton-mode');
-
-    // Lazy load the expiries from Google Sheets
-    fetch(`${GOOGLE_SHEETS_URL}?action=getExpiries`)
-        .then(res => res.json())
-        .then(data => {
-            if (btn) {
-                btn.innerText = btn.dataset.origText;
-                btn.style.opacity = "1";
-                btn.style.pointerEvents = "auto";
-            }
-            let rawData = Array.isArray(data) ? data : (data.expiries || []);
-            // Extract batchId from overloaded regDate if present and restore the time!
-            expiryData = rawData.map(item => {
-                if (item.regDate && typeof item.regDate === 'string' && item.regDate.includes("||")) {
-                    let parts = item.regDate.split("||");
-                    let datePart = parts[0].trim();
-                    let timestampPart = parts[1];
-                    item.batchId = timestampPart;
-                    
-                    // Convert the timestamp back into a readable time string (AM/PM) so it groups correctly
-                    let d = new Date(parseInt(timestampPart));
-                    if (!isNaN(d.getTime())) {
-                        let tStr = d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-                        item.regDate = datePart + " " + tStr;
-                    } else {
-                        item.regDate = datePart;
-                    }
-                }
-                return item;
-            });
-
-            renderExpiryDashboard();
-            updateCatalogWithOffers(); // To highlight items on offer in the main cashier view
-            
-            const expiryBody = document.querySelector('#expiry-tab');
-            if (expiryBody) expiryBody.classList.remove('skeleton-mode');
-        })
-        .catch(err => {
-            if (btn) {
-                btn.innerText = btn.dataset.origText;
-                btn.style.opacity = "1";
-                btn.style.pointerEvents = "auto";
-            }
-            showToast("<i class=\'fa-solid fa-xmark\'></i> حدث خطأ في تحميل الصلاحيات. يرجى مراجعة إعدادات Google Sheets", "error");
-            // Also call render to clear the "loading" or show empty states
-            renderExpiryDashboard();
-            
-            const expiryBody = document.querySelector('#expiry-tab');
-            if (expiryBody) expiryBody.classList.remove('skeleton-mode');
-        });
-}
 
 
 let ledgerCart = [];
