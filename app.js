@@ -7169,6 +7169,39 @@ window.searchDriverOrder = async function() {
     
     let invItems = [];
     
+    // الأوفلاين كاش: حفظ واسترجاع الاستلامات
+    function saveInvToCache() {
+        let from = document.getElementById('invFrom') ? document.getElementById('invFrom').value : '';
+        let to = document.getElementById('invTo') ? document.getElementById('invTo').value : '';
+        let notes = document.getElementById('invNotes') ? document.getElementById('invNotes').value : '';
+        let draft = { invItems, from, to, notes };
+        localStorage.setItem('pending_receipt_draft', JSON.stringify(draft));
+    }
+
+    window.loadInvFromCache = function() {
+        try {
+            let draftStr = localStorage.getItem('pending_receipt_draft');
+            if (draftStr) {
+                let draft = JSON.parse(draftStr);
+                if (draft.invItems && draft.invItems.length > 0) {
+                    invItems = draft.invItems;
+                    if(document.getElementById('invFrom')) document.getElementById('invFrom').value = draft.from || '';
+                    if(document.getElementById('invTo')) document.getElementById('invTo').value = draft.to || '';
+                    if(document.getElementById('invNotes')) document.getElementById('invNotes').value = draft.notes || '';
+                    renderInvItems();
+                }
+            }
+        } catch(e) {}
+    };
+    
+    // استدعاء الدالة فوراً عند تحميل الصفحة لاسترجاع الكاش
+    window.loadInvFromCache();
+
+    // حفظ تلقائي عند الكتابة في الحقول
+    if(document.getElementById('invFrom')) document.getElementById('invFrom').addEventListener('input', saveInvToCache);
+    if(document.getElementById('invTo')) document.getElementById('invTo').addEventListener('input', saveInvToCache);
+    if(document.getElementById('invNotes')) document.getElementById('invNotes').addEventListener('input', saveInvToCache);
+    
     if (searchInvBarcodeBtn) {
         searchInvBarcodeBtn.addEventListener('click', () => {
             let val = invProdBarcode.value.trim().toLowerCase();
@@ -7231,6 +7264,7 @@ window.searchDriverOrder = async function() {
 
     function renderInvItems() {
         if (!invItemsList) return;
+        saveInvToCache(); // حفظ تلقائي للكاش
         invItemsList.innerHTML = '';
         invItems.forEach((item, index) => {
             let tr = document.createElement('tr');
@@ -7298,6 +7332,12 @@ window.searchDriverOrder = async function() {
             formData.append("items", itemsStr);
             formData.append("notes", notes);
 
+            // فحص الاتصال بالإنترنت قبل الإرسال 📡
+            if (!navigator.onLine) {
+                showToast("⚠️ لا يوجد اتصال بالإنترنت! الاستلام محفوظ مؤقتاً في المتصفح.", "error");
+                return;
+            }
+
             setBtnLoading(savePrintInvBtn, true);
 
             fetch(GOOGLE_SHEETS_URL, {
@@ -7306,6 +7346,9 @@ window.searchDriverOrder = async function() {
                 body: formData
             }).then(() => {
                 try { localStorage.setItem('invCounter', currentCount); } catch(e) {}
+                // نجاح الإرسال: نقوم بمسح الكاش لأنه تم الحفظ في السيرفر ✅
+                localStorage.removeItem('pending_receipt_draft');
+                
                 setBtnLoading(savePrintInvBtn, false);
                 showToast("تم حفظ الإذن بنجاح!", "success");
                 
@@ -7323,7 +7366,8 @@ window.searchDriverOrder = async function() {
                 document.getElementById('invNotes').value = '';
             }).catch(err => {
                 setBtnLoading(savePrintInvBtn, false);
-                showToast("خطأ في الاتصال بالسيرفر", "error");
+                // فشل الإرسال رغم وجود اتصال: لا نقوم بمسح الكاش 🛡️
+                showToast("⚠️ خطأ في الاتصال بالسيرفر! بيانات الاستلام محفوظة لحين إعادة المحاولة.", "error");
             });
         });
     }
