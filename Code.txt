@@ -2235,25 +2235,21 @@ function syncFirebaseInventory(ss) {
 function setupAutomaticSync() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var triggers = ScriptApp.getProjectTriggers();
-  var exists = false;
   
+  // مسح أي تريجر قديم عشان لو عايزين نحدث الوقت
   for (var i = 0; i < triggers.length; i++) {
     if (triggers[i].getHandlerFunction() === 'autoSyncTriggerHandler') {
-      exists = true;
-      break;
+      ScriptApp.deleteTrigger(triggers[i]);
     }
   }
   
-  if (!exists) {
-    // تفعيل المزامنة كل ساعة واحدة
-    ScriptApp.newTrigger('autoSyncTriggerHandler')
-      .timeBased()
-      .everyHours(1)
-      .create();
-    SpreadsheetApp.getUi().alert("تم تفعيل المزامنة الأوتوماتيكية بنجاح! السكريبت هيشتغل لوحده كل ساعة يقارن الفايربيز ويظبط شيت الصلاحيات.");
-  } else {
-    SpreadsheetApp.getUi().alert("المزامنة الأوتوماتيكية مفعلة بالفعل مسبقاً.");
-  }
+  // تفعيل المزامنة كل 48 ساعة (يومين)
+  ScriptApp.newTrigger('autoSyncTriggerHandler')
+    .timeBased()
+    .everyDays(2)
+    .create();
+    
+  SpreadsheetApp.getUi().alert("تم تفعيل المزامنة الأوتوماتيكية بنجاح! السكريبت هيشتغل لوحده كل 48 ساعة يقارن الفايربيز ويظبط شيت الصلاحيات.");
 }
 
 function runSyncNow() {
