@@ -478,7 +478,8 @@ function loadDataFromServer(customDate = null) {
     
     // ⭐ V16: إرسال الصلاحيات للباك إند
     let permsParam = currentUser ? `&permissions=${encodeURIComponent(currentUser.permissions)}` : "";
-    let modsParam = window.currentActiveModuleGroup ? `&modules=${encodeURIComponent(window.currentActiveModuleGroup)}` : "";
+    let reqString = window.currentActiveModuleGroup && window.MODULE_GROUPS[window.currentActiveModuleGroup] ? window.MODULE_GROUPS[window.currentActiveModuleGroup].req : window.currentActiveModuleGroup;
+    let modsParam = reqString ? `&modules=${encodeURIComponent(reqString)}` : "";
     
     fetch(`${GOOGLE_SHEETS_URL}?date=${fetchDate}${permsParam}${modsParam}`)
         .then(res => res.json())
