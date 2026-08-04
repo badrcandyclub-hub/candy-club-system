@@ -825,6 +825,11 @@ function doGet(e) {
   var currentMonth = filterDate.substring(0, 7);
 
   var isMonthlyReportRequest = filterDate.endsWith("-01");
+  
+  // ⭐ V16.2: التحميل المقسم (Modular Loading)
+  var reqModules = e.parameter.modules ? e.parameter.modules.split(',') : [];
+  var loadAll = reqModules.length === 0;
+  function needs(mod) { return loadAll || reqModules.indexOf(mod) !== -1; }
 
   var response = { 
     alex: [], govs: [], couriers: [], products: [], moderators: [],
@@ -837,7 +842,7 @@ function doGet(e) {
   };
 
   // ⭐ قراءة الطلبات المعلقة
-  if (draftsSheet && draftsSheet.getLastRow() > 1) {
+  if (needs('drafts') && draftsSheet && draftsSheet.getLastRow() > 1) {
     var draftsData = draftsSheet.getDataRange().getValues();
     for (var i = 1; i < draftsData.length; i++) {
       if (draftsData[i][0]) {
@@ -850,7 +855,7 @@ function doGet(e) {
   }
 
   // ⭐ الحسابات المالية
-  if (finSheet) {
+  if (needs('financials') && finSheet) {
     var finData = finSheet.getDataRange().getValues();
     for (var i = 1; i < finData.length; i++) {
       if (finData[i][0]) {
@@ -864,7 +869,7 @@ function doGet(e) {
 
   // ⭐ العملاء - يُرسلون فقط إذا لم يكن طلب Lazy منفصل
   // (الـ Lazy fetch يمر من action=getCustomers)
-  if (customerSheet && !isMonthlyReportRequest) {
+  if (needs('customers') && customerSheet && !isMonthlyReportRequest) {
     var custData = customerSheet.getDataRange().getValues();
     for (var i = 1; i < custData.length; i++) {
       if (custData[i][0]) {
@@ -877,7 +882,7 @@ function doGet(e) {
   }
 
   // ⭐ الكتالوج
-  if (catalogSheet) {
+  if (needs('catalog') && catalogSheet) {
     var cData = catalogSheet.getDataRange().getValues();
     for (var i = 1; i < cData.length; i++) {
       if (cData[i][0]) {
@@ -887,7 +892,7 @@ function doGet(e) {
   }
 
   // ⭐ النواقص
-  if (oosSheet) {
+  if (needs('shortages') && oosSheet) {
     var oosData = oosSheet.getDataRange().getValues();
     for (var i = 1; i < oosData.length; i++) {
       if (oosData[i][0]) {
@@ -897,7 +902,7 @@ function doGet(e) {
   }
 
   // ⭐ الإعدادات والشحن والمناديب والمودريتور
-  if (settingsSheet) {
+  if (needs('shipping') && settingsSheet) {
     var sData = settingsSheet.getDataRange().getValues();
     for (var i = 1; i < sData.length; i++) {
       if (sData[i][0])  response.alex.push({ name: sData[i][0], price: sData[i][1], type: sData[i][2], duration: sData[i][3] });
@@ -910,7 +915,7 @@ function doGet(e) {
   // ============================================================
   // ⭐ V15.1: المنطق الرئيسي لقراءة الطلبات
   // ============================================================
-  if (ordersSheet) {
+  if (needs('orders') && ordersSheet) {
     var data = ordersSheet.getDataRange().getValues();
     var uniqueProducts = {};
 

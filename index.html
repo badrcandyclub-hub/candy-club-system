@@ -22,7 +22,14 @@
 </head>
 
 <body>
-    <!-- ⭐ V16: Login Screen -->
+    <!-- ⭐ Modular Loading Overlay -->
+    <div id="module-loading-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:99999; flex-direction:column; justify-content:center; align-items:center;">
+        <i class="fa-solid fa-cookie-bite fa-spin" style="font-size: 5rem; color: var(--primary); margin-bottom: 20px;"></i>
+        <h2 style="color: var(--text-dark); margin:0; font-family: 'Cairo', sans-serif;">جاري تجهيز بيانات القسم...</h2>
+        <p style="color: var(--text-muted); font-size: 1rem; margin-top: 10px;">التحميل الذكي (Modular Load) - يرجى الانتظار ⚡</p>
+    </div>
+
+    <!-- Login Screen -->
     <div id="login-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background-color:#fdf2f8; z-index:99999; display:flex; justify-content:center; align-items:center; font-family: 'Cairo', sans-serif;">
         <div style="background-color:#ffffff; padding:40px 30px; border-radius:16px; box-shadow:0 10px 25px rgba(233, 30, 99, 0.1); border: 1px solid #fbcfe8; width:90%; max-width:400px; text-align:center; position:relative;">
             

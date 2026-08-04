@@ -133,7 +133,17 @@ function setBtnLoading(btn, isLoading, originalText = "") {
 // ==========================================
 // 2. التبديل بين الشاشات والنوافذ المنبثقة
 // ==========================================
-window.isMainDataLoaded = false;
+// ⭐ V16.2: تعريف وحدات النظام (Modules)
+window.MODULE_GROUPS = {
+    'orders': { tabs: ['orders-dashboard-tab', 'create-tab', 'suspended-tab'], req: 'orders,customers,shipping,catalog,financials,shortages,drafts,users' },
+    'marketing': { tabs: ['customers-tab'], req: 'customers,users,orders' },
+    'products': { tabs: ['catalog-tab', 'inventory-transfers-tab'], req: 'catalog,drafts,users' },
+    'hr': { tabs: ['hr-tab', 'hr-admin-tab', 'users-tab'], req: 'attendance,users' },
+    'admin': { tabs: ['admin-stats-tab', 'financials-tab', 'shortages-tab'], req: 'orders,users,customers,shipping,financials,shortages' }
+};
+
+window.currentActiveModuleGroup = null;
+
 document.querySelectorAll('.nav-item').forEach(btn => {
     btn.addEventListener('click', (e) => {
         if (btn.classList.contains('locked-nav-item')) {
@@ -145,22 +155,40 @@ document.querySelectorAll('.nav-item').forEach(btn => {
             }
             return false;
         }
+        
+        let targetId = btn.getAttribute('data-target');
+        
+        // ⭐ تحديد القسم الجديد
+        let newModuleGroup = null;
+        for (let group in window.MODULE_GROUPS) {
+            if (window.MODULE_GROUPS[group].tabs.includes(targetId)) {
+                newModuleGroup = group;
+                break;
+            }
+        }
+        
+        // إذا كان هناك انتقال لقسم جديد تماماً، نظهر شاشة التحميل
+        if (newModuleGroup && newModuleGroup !== window.currentActiveModuleGroup) {
+            window.currentActiveModuleGroup = newModuleGroup;
+            
+            // إظهار شاشة التحميل الكبيرة فقط إذا لم يكن HR (لأن الـ HR لا يحتاج تحميل السيرفر الرئيسي)
+            // بناءً على طلبك أن شؤون الموظفين لا تحتاج فاير بيز ولا تحميل ثقيل
+            if (newModuleGroup !== 'hr') {
+                let overlay = document.getElementById('module-loading-overlay');
+                if (overlay) overlay.style.display = 'flex';
+                
+                // جلب البيانات الخاصة بالقسم الجديد فقط
+                if (typeof loadDataFromServer === 'function') {
+                    loadDataFromServer();
+                }
+            }
+        }
+
         document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-pane').forEach(c => c.classList.remove('active'));
         btn.classList.add('active');
-        let targetId = btn.getAttribute('data-target');
         let targetElement = document.getElementById(targetId);
         if (targetElement) targetElement.classList.add('active');
-        
-        // ⭐ التحميل الذكي (Lazy Loading) - لا تحمل النظام بالكامل لو شاشات الموظفين
-        let isHrScreen = ['hr-tab', 'hr-admin-tab', 'users-tab'].includes(targetId);
-        if (!isHrScreen && !window.isMainDataLoaded) {
-            window.isMainDataLoaded = true; // نمنع التكرار
-            if (typeof loadDataFromServer === 'function') {
-                showToast("جاري تحميل بيانات النظام الرئيسية... ⚡", "warning");
-                loadDataFromServer();
-            }
-        }
         
         // ⭐ V16: تحميل المستخدمين إذا تم فتح التاب
         if (targetId === 'users-tab') {
@@ -445,8 +473,9 @@ function loadDataFromServer(customDate = null) {
     
     // ⭐ V16: إرسال الصلاحيات للباك إند
     let permsParam = currentUser ? `&permissions=${encodeURIComponent(currentUser.permissions)}` : "";
+    let modsParam = window.currentActiveModuleGroup ? `&modules=${encodeURIComponent(window.currentActiveModuleGroup)}` : "";
     
-    fetch(`${GOOGLE_SHEETS_URL}?date=${fetchDate}${permsParam}`)
+    fetch(`${GOOGLE_SHEETS_URL}?date=${fetchDate}${permsParam}${modsParam}`)
         .then(res => res.json())
         .then(data => {
             if (syncStatus) { syncStatus.innerText = "متصل"; syncStatus.style.color = "#00C853"; }
@@ -657,7 +686,12 @@ function loadDataFromServer(customDate = null) {
             checkBookingAlerts();
             if (typeof renderModeratorsDashboard === 'function') renderModeratorsDashboard();
 
+            let overlay = document.getElementById('module-loading-overlay');
+            if (overlay) overlay.style.display = 'none';
+
         }).catch(err => {
+            let overlay = document.getElementById('module-loading-overlay');
+            if (overlay) overlay.style.display = 'none';
             if (syncStatus) { syncStatus.innerText = "خطأ اتصال"; syncStatus.style.color = "red"; }
         });
 }
