@@ -486,10 +486,13 @@ function loadDataFromServer(customDate = null) {
         .then(data => {
             if (syncStatus) { syncStatus.innerText = "متصل"; syncStatus.style.color = "#00C853"; }
 
-            // <i class=\'fa-solid fa-star\'></i> Play sound on new order arrival
+            // <i class='fa-solid fa-star'></i> Play sound on new order arrival
             if (window.isFirstLoad === undefined) {
                 window.isFirstLoad = false;
                 window.lastFilterDate = currentFilterDate;
+                if (currentUser) {
+                    showToast(`أهلاً بك يا ${currentUser.displayName}`);
+                }
             } else {
                 if (window.lastFilterDate === currentFilterDate) {
                     let oldHistoryIds = (window.orderHistoryData || []).map(o => o.id);
@@ -8032,7 +8035,6 @@ function checkSession() {
             applyPermissions();
             // تمت إزالة التحميل التلقائي لتفعيل الـ Lazy Loading
             if (typeof updateSuspendedCount === 'function') updateSuspendedCount();
-            showToast(`أهلاً بك يا ${currentUser.displayName}`);
         } catch (e) {
             console.error("Invalid session", e);
             showLogin();
