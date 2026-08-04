@@ -8032,6 +8032,7 @@ function checkSession() {
             applyPermissions();
             // تمت إزالة التحميل التلقائي لتفعيل الـ Lazy Loading
             if (typeof updateSuspendedCount === 'function') updateSuspendedCount();
+            showToast(`أهلاً بك يا ${currentUser.displayName}`);
         } catch (e) {
             console.error("Invalid session", e);
             showLogin();
