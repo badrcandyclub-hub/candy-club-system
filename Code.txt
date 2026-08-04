@@ -1716,6 +1716,26 @@ function doPost(e) {
       
       var hoursCredit = "0";
       attSheet.appendRow([empName, "'" + leaveDate, "-", "-", hoursCredit, leaveType, "بانتظار الموافقة", notes]);
+      
+      // إرسال إيميل للمديرين
+      try {
+        var usersSheet = ss.getSheetByName("👥 المستخدمين");
+        var usersData = usersSheet.getDataRange().getValues();
+        for (var u = 1; u < usersData.length; u++) {
+          var perms = (usersData[u][3] || "").toString().toUpperCase();
+          if (perms.indexOf("ALL") !== -1) {
+            var adminEmail = usersData[u][0].toString().trim();
+            if (adminEmail.indexOf("@") !== -1) {
+               MailApp.sendEmail({
+                 to: adminEmail,
+                 subject: "🛎️ طلب إجازة جديد من " + empName,
+                 body: "مرحباً،\n\nلقد قام الموظف (" + empName + ") بتقديم طلب " + leaveType + " ليوم " + leaveDate + ".\n\nبرجاء مراجعة لوحة الإدارة (قسم الحضور والانصراف) للموافقة أو الرفض.\n\nشكراً،\nنظام كاندي كلوب"
+               });
+            }
+          }
+        }
+      } catch(ex) {}
+      
       return ContentService.createTextOutput(JSON.stringify({success: true, message: "تم إرسال طلب الإجازة"})).setMimeType(ContentService.MimeType.JSON);
     }
 
@@ -1747,6 +1767,31 @@ function doPost(e) {
             attSheet.getRange(a + 1, 7).setValue("❌ مرفوضة");
             attSheet.getRange(a + 1, 1, 1, 8).setBackground("#ffebee");
           }
+          
+          // إرسال إيميل للموظف
+          try {
+            var usersSheet = ss.getSheetByName("👥 المستخدمين");
+            var usersData = usersSheet.getDataRange().getValues();
+            for (var u = 1; u < usersData.length; u++) {
+              if (usersData[u][2].toString().trim() === empName) {
+                var empEmail = usersData[u][0].toString().trim();
+                if (empEmail.indexOf("@") !== -1) {
+                   var subject = decision === "approve" ? "🎉 تمت الموافقة على إجازتك" : "❌ تم رفض إجازتك";
+                   var body = decision === "approve" ? 
+                     "مرحباً " + empName + "،\n\nلقد قام المدير بالموافقة على طلب الإجازة الخاص بك ليوم " + leaveDate + ".\n\nنتمنى لك وقتاً ممتعاً!\nنظام كاندي كلوب" :
+                     "مرحباً " + empName + "،\n\nنأسف لإبلاغك بأنه قد تم رفض طلب الإجازة الخاص بك ليوم " + leaveDate + ".\n\nبرجاء مراجعة المدير لمزيد من التفاصيل.\n\nنظام كاندي كلوب";
+                   
+                   MailApp.sendEmail({
+                     to: empEmail,
+                     subject: subject,
+                     body: body
+                   });
+                }
+                break; // لقينا الموظف خلاص
+              }
+            }
+          } catch(ex) {}
+          
           return ContentService.createTextOutput(JSON.stringify({success: true, message: decision === "approve" ? "تمت الموافقة" : "تم الرفض"})).setMimeType(ContentService.MimeType.JSON);
         }
       }
