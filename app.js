@@ -135,11 +135,11 @@ function setBtnLoading(btn, isLoading, originalText = "") {
 // ==========================================
 // ⭐ V16.2: تعريف وحدات النظام (Modules)
 window.MODULE_GROUPS = {
-    'orders': { tabs: ['orders-dashboard-tab', 'create-tab', 'suspended-tab'], req: 'orders,customers,shipping,catalog,financials,shortages,drafts,users' },
-    'marketing': { tabs: ['customers-tab'], req: 'customers,users,orders' },
-    'products': { tabs: ['catalog-tab', 'inventory-transfers-tab'], req: 'catalog,drafts,users' },
-    'hr': { tabs: ['hr-tab', 'hr-admin-tab', 'users-tab'], req: 'attendance,users' },
-    'admin': { tabs: ['admin-stats-tab', 'financials-tab', 'shortages-tab'], req: 'orders,users,customers,shipping,financials,shortages' }
+    'orders': { tabs: ['create-tab', 'catalog-tab', 'shipping-tab', 'history-tab', 'financials-tab', 'suspended-tab'], req: 'orders,customers,shipping,catalog,financials,shortages,drafts,users' },
+    'marketing': { tabs: ['customers-tab', 'whatsapp-campaign-tab'], req: 'customers,users,orders' },
+    'products': { tabs: ['price-tags-tab', 'shortages-tab', 'expiry-tab', 'inventory-transfers-tab'], req: 'catalog,drafts,users' },
+    'hr': { tabs: ['hr-tab', 'hr-admin-tab'], req: 'attendance,users' },
+    'admin': { tabs: ['reports-tab', 'moderators-tab', 'users-tab'], req: 'orders,users,customers,shipping,financials,shortages' }
 };
 
 window.currentActiveModuleGroup = null;
