@@ -171,16 +171,12 @@ document.querySelectorAll('.nav-item').forEach(btn => {
         if (newModuleGroup && newModuleGroup !== window.currentActiveModuleGroup) {
             window.currentActiveModuleGroup = newModuleGroup;
             
-            // إظهار شاشة التحميل الكبيرة فقط إذا لم يكن HR (لأن الـ HR لا يحتاج تحميل السيرفر الرئيسي)
-            // بناءً على طلبك أن شؤون الموظفين لا تحتاج فاير بيز ولا تحميل ثقيل
-            if (newModuleGroup !== 'hr') {
-                let overlay = document.getElementById('module-loading-overlay');
-                if (overlay) overlay.style.display = 'flex';
-                
-                // جلب البيانات الخاصة بالقسم الجديد فقط
-                if (typeof loadDataFromServer === 'function') {
-                    loadDataFromServer();
-                }
+            let overlay = document.getElementById('module-loading-overlay');
+            if (overlay) overlay.style.display = 'flex';
+            
+            // جلب البيانات الخاصة بالقسم الجديد فقط
+            if (typeof loadDataFromServer === 'function') {
+                loadDataFromServer();
             }
         }
 
