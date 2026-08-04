@@ -1750,7 +1750,8 @@ function doPost(e) {
         var usersData = usersSheet.getDataRange().getValues();
         for (var u = 1; u < usersData.length; u++) {
           var perms = (usersData[u][3] || "").toString().toUpperCase();
-          if (perms.indexOf("ALL") !== -1) {
+          // الإيميل هيروح لأي حد عنده صلاحية ALL أو ADMIN أو HR
+          if (perms.indexOf("ALL") !== -1 || perms.indexOf("ADMIN") !== -1 || perms.indexOf("HR") !== -1) {
             var adminEmail = usersData[u][0].toString().trim();
             if (adminEmail.indexOf("@") !== -1) {
                MailApp.sendEmail({
