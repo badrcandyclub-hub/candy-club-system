@@ -833,7 +833,7 @@ function doGet(e) {
 
   var response = { 
     alex: [], govs: [], couriers: [], products: [], moderators: [],
-    catalog: [], outOfStock: [], customers: [],
+    catalog: [], outOfStock: [], customers: [], users: [],
     todayOrders: 0, todaySales: 0, monthSales: 0,
     completedMonthCount: 0, completedTodayCount: 0,
     history: [], pendingOrders: [], financials: [],
@@ -909,6 +909,20 @@ function doGet(e) {
       if (sData[i][6])  response.govs.push({ name: sData[i][6], price: sData[i][7], type: sData[i][8], duration: sData[i][9] });
       if (sData[i][12]) response.couriers.push({ name: sData[i][12], phone: sData[i][13].toString() });
       if (sData[i][18]) response.moderators.push(sData[i][18].toString());
+    }
+  }
+
+  // ⭐ المستخدمين والصلاحيات
+  if (needs('users') && usersSheet) {
+    var uData = usersSheet.getDataRange().getValues();
+    for (var i = 1; i < uData.length; i++) {
+      if (uData[i][0]) {
+        response.users.push({
+          username: uData[i][0], displayName: uData[i][2],
+          permissions: uData[i][3], status: uData[i][4],
+          lastLogin: uData[i][5] instanceof Date ? Utilities.formatDate(uData[i][5], "Africa/Cairo", "yyyy-MM-dd hh:mm a") : uData[i][5]
+        });
+      }
     }
   }
 

@@ -517,9 +517,10 @@ function loadDataFromServer(customDate = null) {
             updateSuspendedCount(); // <i class=\'fa-solid fa-star\'></i> V14.2: تحديث العداد من السيرفر بعد كل تحميل
             window.financialsData = data.financials || [];
             window.uncollectedOrdersData = data.uncollectedOrders || [];
-            // <i class=\'fa-solid fa-star\'></i> V15.1: تخزين بيانات العملاء فقط بدون عرضها تلقائياً (Lazy)
             window.customersData = data.customers || [];
             window.driversList = data.couriers || [];
+            window.usersData = data.users || []; // ⭐ V16.3: تعيين بيانات المستخدمين من الحمولة الرئيسية
+            if (typeof loadUsersList === 'function') loadUsersList();
 
             if (typeof renderFinancials === 'function') renderFinancials(window.financialsData);
 
@@ -8341,43 +8342,44 @@ window.handleUserSubmit = function(e) {
 window.loadUsersList = function() {
     let tbody = document.getElementById('usersTbody');
     if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:20px;">جاري تحميل المستخدمين...</td></tr>';
     
-    fetch(`${GOOGLE_SHEETS_URL}?action=getUsers`)
-        .then(res => res.json())
-        .then(data => {
-            if (data.users && data.users.length > 0) {
-                tbody.innerHTML = '';
-                data.users.forEach(u => {
-                    let permsBadge = u.permissions === "ALL" 
-                        ? `<span style="background:#1a237e; color:white; padding:2px 8px; border-radius:12px; font-size:0.8rem;">كل الصلاحيات</span>` 
-                        : u.permissions.split(",").map(p => `<span style="background:#e2e8f0; color:#475569; padding:2px 8px; border-radius:12px; font-size:0.8rem; margin:2px; display:inline-block;">${p}</span>`).join("");
-                        
-                    let statusBadge = u.status === "نشط"
-                        ? `<span style="color:#059669; font-weight:bold;"><i class="fa-solid fa-check-circle"></i> نشط</span>`
-                        : `<span style="color:#dc2626; font-weight:bold;"><i class="fa-solid fa-ban"></i> موقوف</span>`;
-                        
-                    let tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td style="font-weight:bold;">${u.username}</td>
-                        <td>${u.displayName}</td>
-                        <td style="line-height:1.5;">${permsBadge}</td>
-                        <td>${statusBadge}</td>
-                        <td dir="ltr" style="font-size:0.9rem;">${u.lastLogin || '-'}</td>
-                        <td>
-                            <button class="interactive-btn" onclick="openEditUserModal('${u.username}', '${u.displayName}', '${u.permissions}', '${u.status}', '${u.password}')" style="background:none; border:none; color:#3b82f6; cursor:pointer; font-size:1.1rem; margin:0 5px;" title="تعديل"><i class="fa-solid fa-pen-to-square"></i></button>
-                            ${u.username !== "admin" ? `<button class="interactive-btn" onclick="deleteUser('${u.username}')" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:1.1rem; margin:0 5px;" title="حذف"><i class="fa-solid fa-trash"></i></button>` : ''}
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            } else {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:20px;">لا يوجد مستخدمين.</td></tr>';
-            }
-        })
-        .catch(e => {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#ef4444; padding:20px;">فشل تحميل المستخدمين.</td></tr>';
-        });
+    // استخدام البيانات المحملة مسبقاً بدلاً من تحميل جديد لتفادي الضغط على السيرفر
+    let renderUsers = (users) => {
+        if (users && users.length > 0) {
+            tbody.innerHTML = '';
+            users.forEach(u => {
+                let permsBadge = u.permissions === "ALL" 
+                    ? `<span style="background:#1a237e; color:white; padding:2px 8px; border-radius:12px; font-size:0.8rem;">كل الصلاحيات</span>` 
+                    : u.permissions.split(",").map(p => `<span style="background:#e2e8f0; color:#475569; padding:2px 8px; border-radius:12px; font-size:0.8rem; margin:2px; display:inline-block;">${p}</span>`).join("");
+                    
+                let statusBadge = u.status === "نشط"
+                    ? `<span style="color:#059669; font-weight:bold;"><i class="fa-solid fa-check-circle"></i> نشط</span>`
+                    : `<span style="color:#dc2626; font-weight:bold;"><i class="fa-solid fa-ban"></i> موقوف</span>`;
+                    
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight:bold;">${u.username}</td>
+                    <td>${u.displayName}</td>
+                    <td style="line-height:1.5;">${permsBadge}</td>
+                    <td>${statusBadge}</td>
+                    <td dir="ltr" style="font-size:0.9rem;">${u.lastLogin || '-'}</td>
+                    <td>
+                        <button class="interactive-btn" onclick="openEditUserModal('${u.username}', '${u.displayName}', '${u.permissions}', '${u.status}', '${u.password}')" style="background:none; border:none; color:#3b82f6; cursor:pointer; font-size:1.1rem; margin:0 5px;" title="تعديل"><i class="fa-solid fa-pen-to-square"></i></button>
+                        ${u.username !== "admin" ? `<button class="interactive-btn" onclick="deleteUser('${u.username}')" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:1.1rem; margin:0 5px;" title="حذف"><i class="fa-solid fa-trash"></i></button>` : ''}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } else {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:20px;">لا يوجد مستخدمين.</td></tr>';
+        }
+    };
+
+    if (window.usersData && window.usersData.length > 0) {
+        renderUsers(window.usersData);
+    } else {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:20px;">لا يوجد مستخدمين أو يتم التحميل...</td></tr>';
+    }
 };
 
 window.deleteUser = function(username) {
@@ -9920,6 +9922,25 @@ function loadAdminMonthlyAttendance() {
         });
 }
 
+function populateHrEmployeeDropdowns() {
+    let users = window.usersData || [];
+    ['hrAdminMonthlyEmployeeFilter', 'adminLeaveEmployee'].forEach(id => {
+        let sel = document.getElementById(id);
+        if (!sel) return;
+        let firstOpt = id === 'hrAdminMonthlyEmployeeFilter' ? '<option value="">كل الموظفين</option>' : '<option value="">اختر موظف</option>';
+        sel.innerHTML = firstOpt;
+        
+        users.forEach(u => {
+            if (u.status === "نشط") {
+                let opt = document.createElement('option');
+                opt.value = u.username;
+                opt.textContent = u.displayName || u.username;
+                sel.appendChild(opt);
+            }
+        });
+    });
+}
+
 function handleAdminAddLeave() {
     let emp = document.getElementById('adminLeaveEmployee');
     let date = document.getElementById('adminLeaveDate');
@@ -10236,25 +10257,7 @@ function initHrAdminTab() {
     loadPendingLeaves();
 }
 
-function populateHrEmployeeDropdowns() {
-    fetch(GOOGLE_SHEETS_URL + '?action=getUsers')
-        .then(r => r.json())
-        .then(data => {
-            let users = data.users || [];
-            ['hrAdminMonthlyEmployeeFilter', 'adminLeaveEmployee'].forEach(id => {
-                let sel = document.getElementById(id);
-                if (!sel) return;
-                let firstOpt = id === 'hrAdminMonthlyEmployeeFilter' ? '<option value="">كل الموظفين</option>' : '<option value="">اختر موظف</option>';
-                sel.innerHTML = firstOpt;
-                users.forEach(u => {
-                    if (u.status === 'نشط') {
-                        sel.innerHTML += '<option value="' + u.displayName + '">' + u.displayName + '</option>';
-                    }
-                });
-            });
-        })
-        .catch(err => console.error('Error fetching users:', err));
-}
+
 
 // Listen for HR tabs activation
 document.addEventListener('click', function(e) {
