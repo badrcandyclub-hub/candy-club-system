@@ -10414,19 +10414,34 @@ function renderShortagesDashboard() {
     pageItems.forEach((s) => {
         let isChecked = selectedShortages.has(s.name) ? 'checked' : '';
 
+        // Added custom box icon or generic icon based on stock
+        let stockIcon = s.stock <= 0 ? 'fa-skull-crossbones' : (s.stock === 1 ? 'fa-circle-exclamation' : 'fa-box-open');
+        let stockColor = s.stock <= 0 ? '#e74c3c' : (s.stock === 1 ? '#e67e22' : '#27ae60');
+
         html += `
-            <div style="background:#fff; border:1px solid #eee; border-radius:10px; padding:12px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <input type="checkbox" class="shortage-checkbox" data-name="${s.name}" onchange="toggleShortageSelection('${s.name.replace(/'/g, "\\'")}', this.checked)" ${isChecked} style="transform: scale(1.3); cursor:pointer;">
-                    <div>
-                        <div style="font-weight:bold; color:#2c3e50; font-size:1rem;">${s.name}</div>
-                        <div style="font-size:0.8rem; color:#7f8c8d; margin-top:4px;">
-                            الرصيد في الفرع: <strong style="color:#c0392b;">${s.stock}</strong> 
-                            ${s.barcode ? `| باركود: ${s.barcode}` : ''}
+            <label class="shortage-card-modern" style="cursor: pointer; display: flex; width: 100%; margin-bottom: 12px; box-sizing: border-box;">
+                <div style="display:flex; align-items:center; gap:15px; width: 100%;">
+                    <!-- Custom Checkbox -->
+                    <div class="custom-cb-container">
+                        <input type="checkbox" class="custom-cb-input shortage-checkbox" data-name="${s.name}" onchange="toggleShortageSelection('${s.name.replace(/'/g, "\\'")}', this.checked)" ${isChecked}>
+                        <span class="custom-cb-mark"></span>
+                    </div>
+                    
+                    <!-- Product Info -->
+                    <div style="flex-grow: 1; display: flex; align-items: center; gap: 12px;">
+                        <div style="background-color: #f1f5f9; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: ${stockColor};">
+                            <i class="fa-solid ${stockIcon} fa-lg"></i>
+                        </div>
+                        <div>
+                            <div style="font-weight:bold; color:#1e293b; font-size:1.05rem; margin-bottom: 3px;">${s.name}</div>
+                            <div style="font-size:0.85rem; color:#64748b; display: flex; align-items: center; gap: 10px;">
+                                <span><i class="fa-solid fa-layer-group" style="font-size: 0.75rem; margin-left: 3px;"></i> الرصيد: <strong style="color:${stockColor}; font-size:0.95rem;">${s.stock}</strong></span>
+                                ${s.barcode ? `<span style="border-right: 1px solid #cbd5e1; padding-right: 10px;"><i class="fa-solid fa-barcode" style="font-size: 0.75rem; margin-left: 3px;"></i> ${s.barcode}</span>` : ''}
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </label>
         `;
     });
     

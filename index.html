@@ -344,6 +344,100 @@
                 
                 <!-- فلاتر الأرصدة (Premium Pill Design) -->
                 <style>
+                    /* Custom Checkbox */
+                    .custom-cb-container {
+                        display: inline-flex;
+                        align-items: center;
+                        cursor: pointer;
+                        position: relative;
+                        padding: 5px;
+                    }
+                    .custom-cb-input {
+                        position: absolute;
+                        opacity: 0;
+                        cursor: pointer;
+                        height: 0;
+                        width: 0;
+                    }
+                    .custom-cb-mark {
+                        height: 26px;
+                        width: 26px;
+                        background-color: #f8f9fa;
+                        border: 2px solid #ced4da;
+                        border-radius: 8px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        transition: all 0.2s ease-in-out;
+                        box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+                    }
+                    .custom-cb-container:hover .custom-cb-input ~ .custom-cb-mark {
+                        border-color: var(--primary);
+                        background-color: #e9ecef;
+                    }
+                    .custom-cb-input:checked ~ .custom-cb-mark {
+                        background-color: var(--primary);
+                        border-color: var(--primary);
+                        box-shadow: 0 3px 8px rgba(39, 174, 96, 0.3);
+                    }
+                    .custom-cb-mark::after {
+                        content: '\f00c';
+                        font-family: 'Font Awesome 6 Free';
+                        font-weight: 900;
+                        color: white;
+                        font-size: 14px;
+                        display: none;
+                    }
+                    .custom-cb-input:checked ~ .custom-cb-mark::after {
+                        display: block;
+                        animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                    }
+                    @keyframes popIn {
+                        0% { transform: scale(0); }
+                        100% { transform: scale(1); }
+                    }
+
+                    /* Shortage Card */
+                    .shortage-card-modern {
+                        background: #fff;
+                        border: 1px solid #e2e8f0;
+                        border-radius: 12px;
+                        padding: 16px;
+                        margin-bottom: 12px;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        flex-wrap: wrap;
+                        gap: 15px;
+                        transition: all 0.3s ease;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+                        position: relative;
+                        overflow: hidden;
+                    }
+                    .shortage-card-modern:hover {
+                        box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+                        transform: translateY(-2px);
+                        border-color: #cbd5e1;
+                    }
+                    .shortage-card-modern::before {
+                        content: '';
+                        position: absolute;
+                        right: 0;
+                        top: 0;
+                        bottom: 0;
+                        width: 4px;
+                        background: var(--primary);
+                        opacity: 0;
+                        transition: opacity 0.3s ease;
+                    }
+                    .shortage-card-modern:has(.custom-cb-input:checked) {
+                        background-color: #f8fafc;
+                        border-color: var(--primary);
+                    }
+                    .shortage-card-modern:has(.custom-cb-input:checked)::before {
+                        opacity: 1;
+                    }
+
                     .premium-filter-container {
                         display: grid;
                         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -2257,10 +2351,10 @@
         </div>
     </div>
 
-        <div style="text-align: center; color: var(--text-muted); font-size: 12px; margin-bottom: 10px; margin-top: 10px; opacity: 0.7;">الإصدار: v31.8</div>
+        <div style="text-align: center; color: var(--text-muted); font-size: 12px; margin-bottom: 10px; margin-top: 10px; opacity: 0.7;">الإصدار: v31.9</div>
     </div>
     <!-- Custom Script -->
-    <script src="app.js?v=31.8" charset="UTF-8" defer></script>
+    <script src="app.js?v=31.9" charset="UTF-8" defer></script>
 </body>
 
 <!-- ====================================== -->
