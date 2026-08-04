@@ -8174,7 +8174,7 @@ function applyPermissions() {
     
     if (firstUnlockedBtn) {
         // Trigger a real DOM click so all the initialization logic runs perfectly
-        setTimeout(() => firstUnlockedBtn.click(), 100);
+        firstUnlockedBtn.click();
     } else {
         // Fallback if somehow they have NO permissions at all
         let loginScreen = document.getElementById('login-screen');
