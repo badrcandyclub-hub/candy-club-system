@@ -500,9 +500,9 @@ async function handleSupabaseRequest(url, options) {
             case 'editAttendance':
                 const { data: existAtt } = await supabase.from('attendance').select('*').eq('employee_name', params.employeeName).eq('date', params.date);
                 if (existAtt && existAtt.length > 0) {
-                    await supabase.from('attendance').update({ check_in: params.checkIn, check_out: params.checkOut, hours: params.hours }).eq('id', existAtt[0].id);
+                    await supabase.from('attendance').update({ check_in: params.checkIn, check_out: params.checkOut, hours: params.hours, status: params.status, notes: params.notes }).eq('id', existAtt[0].id);
                 } else {
-                    await supabase.from('attendance').insert([{ employee_name: params.employeeName, date: params.date, check_in: params.checkIn, check_out: params.checkOut, hours: params.hours, status: 'حاضر' }]);
+                    await supabase.from('attendance').insert([{ employee_name: params.employeeName, date: params.date, check_in: params.checkIn, check_out: params.checkOut, hours: params.hours, status: params.status || 'حاضر', notes: params.notes }]);
                 }
                 responseData = { success: true };
                 break;
@@ -10730,6 +10730,9 @@ window.saveAttendanceEdit = function() {
     let manualHours = manualHoursRaw.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).trim();
     let engDate = _editAttData.date.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
     
+    let calculatedHours = (document.getElementById('editAttHoursText').innerText || '').trim();
+    let finalHours = manualHours ? manualHours : calculatedHours;
+
     let formData = new URLSearchParams();
     formData.append('action', 'editAttendance');
     formData.append('employeeName', _editAttData.employee);
@@ -10738,7 +10741,7 @@ window.saveAttendanceEdit = function() {
     formData.append('checkOut', checkOutVal);
     formData.append('status', status);
     formData.append('notes', notes);
-    formData.append('hoursOverride', manualHours);
+    formData.append('hours', finalHours);
 
     fetch(GOOGLE_SHEETS_URL, { method: 'POST', body: formData })
         .then(r => r.json())
