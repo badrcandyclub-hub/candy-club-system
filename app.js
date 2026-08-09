@@ -449,7 +449,7 @@ async function handleSupabaseRequest(url, options) {
                 responseData = { success: true, message: "تم تسجيل الحضور بنجاح" };
                 break;
             case 'checkOut':
-                let { data: existOut } = await supabase.from('attendance').select('*').eq('employee_name', params.employeeName).eq('date', params.date).eq('status', 'حاضر');
+                let { data: existOut } = await supabase.from('attendance').select('*').eq('employee_name', params.employeeName).eq('status', 'حاضر').order('id', { ascending: false }).limit(1);
                 if (existOut && existOut.length > 0) {
                     let checkInTime = existOut[0].check_in;
                     let checkOutTime = new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute:'2-digit' });
