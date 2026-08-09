@@ -455,29 +455,32 @@ async function handleSupabaseRequest(url, options) {
                     let checkOutTime = new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute:'2-digit' });
                     
                     // Calculate hours difference
-                    let diffHours = 0;
+                    let hoursStr = "0 ساعة";
                     try {
-                        const [inTime, inPeriod] = checkInTime.split(' ');
-                        const [outTime, outPeriod] = checkOutTime.split(' ');
-                        let [inH, inM] = inTime.split(':').map(Number);
-                        let [outH, outM] = outTime.split(':').map(Number);
+                        let ih = 0, im = 0, oh = 0, om = 0;
+                        let inMatch = checkInTime.match(/([a-zA-Z]+)?\s*(\d+):(\d+)\s*([a-zA-Z]+)?/i);
+                        let outMatch = checkOutTime.match(/([a-zA-Z]+)?\s*(\d+):(\d+)\s*([a-zA-Z]+)?/i);
                         
-                        if (inPeriod.toLowerCase() === 'pm' && inH !== 12) inH += 12;
-                        if (inPeriod.toLowerCase() === 'am' && inH === 12) inH = 0;
-                        if (outPeriod.toLowerCase() === 'pm' && outH !== 12) outH += 12;
-                        if (outPeriod.toLowerCase() === 'am' && outH === 12) outH = 0;
-                        
-                        let inTotalMins = inH * 60 + inM;
-                        let outTotalMins = outH * 60 + outM;
-                        if (outTotalMins < inTotalMins) outTotalMins += 24 * 60; // crossed midnight
-                        
-                        let diffMins = outTotalMins - inTotalMins;
-                        diffHours = (diffMins / 60).toFixed(1);
+                        if (inMatch && outMatch) {
+                            ih = parseInt(inMatch[2]); im = parseInt(inMatch[3]);
+                            let inPeriod = (inMatch[1] || inMatch[4] || '').toLowerCase();
+                            if (inPeriod === 'pm' && ih !== 12) ih += 12;
+                            if (inPeriod === 'am' && ih === 12) ih = 0;
+
+                            oh = parseInt(outMatch[2]); om = parseInt(outMatch[3]);
+                            let outPeriod = (outMatch[1] || outMatch[4] || '').toLowerCase();
+                            if (outPeriod === 'pm' && oh !== 12) oh += 12;
+                            if (outPeriod === 'am' && oh === 12) oh = 0;
+
+                            let totalMin = (oh * 60 + om) - (ih * 60 + im);
+                            if (totalMin < 0) totalMin += 24 * 60;
+                            let h = Math.floor(totalMin / 60);
+                            let min = totalMin % 60;
+                            hoursStr = h + ' ساعة' + (min > 0 ? ' و ' + min + ' دقيقة' : '');
+                        }
                     } catch(e) {
-                        diffHours = 0;
+                        console.error('Checkout calc error:', e);
                     }
-                    
-                    let hoursStr = diffHours + ' ساعة';
 
                     await supabase.from('attendance').update({ check_out: checkOutTime, hours: hoursStr }).eq('id', existOut[0].id);
                     responseData = { success: true, message: "تم تسجيل الانصراف بنجاح" };
