@@ -7,15 +7,18 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Candy Club</title>
-    <link rel="icon" type="image/png" href="favicon.png?v=6">
-    <link rel="apple-touch-icon" href="favicon.png?v=6">
+    <title>Candy Club System</title>
+    <link rel="icon" type="image/png" href="favicon.png?v=8">
+    <link rel="apple-touch-icon" href="favicon.png?v=8">
     <link rel="manifest" href="app-manifest.json?v=999">
     <link rel="stylesheet" href="style.css?v=25.0">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap"
         rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    
+    <!-- Supabase JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -24,39 +27,37 @@
 <body>
     <!-- ⭐ V16: Login Screen -->
     <div id="login-screen" class="login-screen">
-        <div class="login-bg-glow login-bg-glow-1"></div>
-        <div class="login-bg-glow login-bg-glow-2"></div>
         <div id="login-card" class="login-card">
             
             <div style="margin-bottom: 30px;">
-                <div style="background: linear-gradient(135deg, #1a237e, #3949ab); width: 70px; height: 70px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin: 0 auto 15px auto; box-shadow: 0 4px 15px rgba(26, 35, 126, 0.3);">
+                <div style="background: linear-gradient(135deg, var(--secondary), var(--secondary-light)); width: 70px; height: 70px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin: 0 auto 15px auto; box-shadow: var(--shadow-blue);">
                     <i class="fa-solid fa-user-tie" style="font-size: 30px; color: white;"></i>
                 </div>
-                <h1 style="color:#1a237e; margin:0; font-size: 1.8rem; font-weight: 800;">لوحة التحكم</h1>
-                <p style="color:#64748b; margin:5px 0 0 0; font-size: 0.95rem; font-weight: 600;">نظام متكامل لإدارة المركز</p>
+                <h1 style="color:var(--secondary); margin:0; font-size: 1.8rem; font-weight: 800;">لوحة التحكم</h1>
+                <p style="color:var(--text-muted); margin:5px 0 0 0; font-size: 0.95rem; font-weight: 600;">نظام متكامل لإدارة المركز</p>
             </div>
             
             <form id="loginForm" onsubmit="handleLogin(event)" class="login-form" style="text-align: right;">
                 <div style="margin-bottom: 15px;">
-                    <label style="color:#334155; font-size:0.9rem; margin-bottom:8px; display:block; font-weight:bold;">البريد الإلكتروني (المدير)</label>
-                    <input type="text" id="login-username" class="login-input" autocomplete="username" placeholder="اسم المستخدم" required style="width:100%; padding:14px 15px; border:1px solid #cbd5e1; border-radius:10px; background:#f8fafc; color:#1e293b; font-family:inherit; text-align: right; box-sizing: border-box; font-size: 1rem; outline: none; transition: border-color 0.3s, box-shadow 0.3s, transform 0.2s;">
+                    <label style="color:var(--text-main); font-size:0.9rem; margin-bottom:8px; display:block; font-weight:bold;">البريد الإلكتروني (المدير)</label>
+                    <input type="text" id="login-username" class="login-input" autocomplete="username" placeholder="اسم المستخدم" required style="width:100%; padding:14px 15px; border:1px solid var(--border); border-radius:10px; background:var(--bg); color:var(--text-main); font-family:inherit; text-align: right; box-sizing: border-box; font-size: 1rem; outline: none;">
                 </div>
                 
                 <div style="margin-bottom: 25px;">
-                    <label style="color:#334155; font-size:0.9rem; margin-bottom:8px; display:block; font-weight:bold;">كلمة المرور</label>
+                    <label style="color:var(--text-main); font-size:0.9rem; margin-bottom:8px; display:block; font-weight:bold;">كلمة المرور</label>
                     <div style="position: relative;">
-                        <input type="password" id="login-password" class="login-input" autocomplete="current-password" placeholder="كلمة المرور" required style="width:100%; padding:14px 15px; padding-left: 45px; border:1px solid #cbd5e1; border-radius:10px; background:#f8fafc; color:#1e293b; font-family:inherit; text-align: right; box-sizing: border-box; font-size: 1rem; outline: none; transition: border-color 0.3s, box-shadow 0.3s, transform 0.2s;">
-                        <i class="fa-solid fa-eye login-eye" id="togglePasswordBtn" onclick="const p = document.getElementById('login-password'); const isHidden = p.type === 'password'; p.type = isHidden ? 'text' : 'password'; this.classList.toggle('fa-eye-slash'); this.classList.toggle('login-eye-active'); this.title = isHidden ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور';" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #64748b; cursor: pointer; font-size: 1.1rem;"></i>
+                        <input type="password" id="login-password" class="login-input" autocomplete="current-password" placeholder="كلمة المرور" required style="width:100%; padding:14px 15px; padding-left: 45px; border:1px solid var(--border); border-radius:10px; background:var(--bg); color:var(--text-main); font-family:inherit; text-align: right; box-sizing: border-box; font-size: 1rem; outline: none;">
+                        <i class="fa-solid fa-eye login-eye" id="togglePasswordBtn" onclick="const p = document.getElementById('login-password'); const isHidden = p.type === 'password'; p.type = isHidden ? 'text' : 'password'; this.classList.toggle('fa-eye-slash'); this.classList.toggle('login-eye-active'); this.title = isHidden ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور';" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted); cursor: pointer; font-size: 1.1rem;"></i>
                     </div>
                 </div>
                 
-                <button type="submit" id="login-btn" class="interactive-btn login-btn" style="width:100%; padding:14px; background: linear-gradient(135deg, #1a237e, #3949ab); color:white; border:none; border-radius:10px; font-size:1.1rem; font-weight:bold; font-family:inherit; cursor:pointer; box-shadow: 0 4px 12px rgba(26, 35, 126, 0.3); transition: transform 0.2s, box-shadow 0.2s;">تسجيل الدخول</button>
+                <button type="submit" id="login-btn" class="interactive-btn login-btn" style="width:100%; padding:14px; background: linear-gradient(135deg, var(--secondary), var(--secondary-light)); color:white; border:none; border-radius:10px; font-size:1.1rem; font-weight:bold; font-family:inherit; cursor:pointer; box-shadow: var(--shadow-blue); transition: transform 0.2s, box-shadow 0.2s;">تسجيل الدخول</button>
             </form>
             
-            <div id="login-error" class="login-error" style="color:#ef4444; margin-top:15px; font-size:0.95rem; display:none; background: #fee2e2; border: 1px solid #fca5a5; padding: 12px; border-radius: 8px;"></div>
+            <div id="login-error" class="login-error" style="color:var(--danger); margin-top:15px; font-size:0.95rem; display:none; background: var(--danger-light); border: 1px solid #fca5a5; padding: 12px; border-radius: 8px;"></div>
             
-            <div style="margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
-                <a href="index.html" style="color:#64748b; text-decoration: none; font-size: 0.95rem; font-weight: bold; transition: color 0.3s;" onmouseover="this.style.color='#1a237e'" onmouseout="this.style.color='#64748b'">
+            <div style="margin-top: 25px; border-top: 1px solid var(--border); padding-top: 15px;">
+                <a href="index.html" style="color:var(--text-muted); text-decoration: none; font-size: 0.95rem; font-weight: bold; transition: color 0.3s;" onmouseover="this.style.color='var(--secondary)'" onmouseout="this.style.color='var(--text-muted)'">
                     <i class="fa-solid fa-arrow-left" style="margin-right: 5px;"></i> الدخول كموظف
                 </a>
             </div>
@@ -73,10 +74,9 @@
             <button id="menuToggleBtn" class="interactive-btn" style="background: none; color: var(--primary); border: none; font-size: 1.8rem; padding: 0; cursor: pointer; display: flex; align-items: center; justify-content: center;">☰</button>
         </div>
 
-        <!-- Center -->
         <div class="logo-container" style="flex: 1; text-align: center; justify-content: center; gap: 8px;">
-            <span class="logo-text">CANDY CLUB</span>
-            <span class="logo-sub">نظام الإدارة V15.0</span>
+            <span class="logo-text">Candy Club System</span>
+            <span class="logo-sub">V1.0</span>
         </div>
 
         <!-- Left Side (RTL) -->
@@ -119,10 +119,10 @@
                 <form id="orderForm" onsubmit="event.preventDefault();">
                     <label>المنصة:</label>
                     <select id="platform" required>
-                        <option value="واتساب">واتساب</option>
-                        <option value="فيسبوك">فيسبوك</option>
-                        <option value="إنستجرام">إنستجرام</option>
-                        <option value="تيك توك">تيك توك</option>
+                        <option value="واتساب">🟢 واتساب</option>
+                        <option value="فيسبوك">🔵 فيسبوك</option>
+                        <option value="إنستجرام">🟣 إنستجرام</option>
+                        <option value="تيك توك">⚫ تيك توك</option>
                     </select>
 
                     <label>اسم العميل:</label>
@@ -726,7 +726,7 @@
 
             <!-- SECTION: Create -->
             <div id="invCreateSection">
-                <div id="invFormContainer" class="glass-card" style="margin-bottom: 20px; transition: all 0.3s ease;">
+                <div id="invFormContainer" style="background: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; transition: all 0.3s ease;">
                     <h3 style="color: var(--primary); margin-bottom: 15px; font-size: 1.2rem;"><i class="fa-solid fa-file-invoice"></i> إنشاء إذن جديد</h3>
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
@@ -802,23 +802,23 @@
             <div id="invArchiveSection" style="display: none;">
                 <!-- Dashboard Cards -->
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
-                    <div class="glass-card interactive-btn" onclick="openInvStatsModal('months')" style="text-align: center; padding: 15px; border-top: 4px solid #3498db; cursor: pointer;">
+                    <div class="interactive-btn" onclick="openInvStatsModal('months')" style="background: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; padding: 20px; border-top: 4px solid #3498db; cursor: pointer;">
                         <h4 style="margin: 0 0 10px 0; color: #7f8c8d;"><i class="fa-solid fa-file-lines"></i> إجمالي الأذونات</h4>
                         <div id="invDashTotal" style="font-size: 24px; font-weight: bold; color: #2c3e50;">-</div>
                         <div id="invDashMonthTotal" style="font-size: 14px; color: #7f8c8d; margin-top: 5px;">أذونات هذا الشهر: -</div>
                         <div style="font-size: 12px; color: #95a5a6; margin-top: 5px;"><i class="fa-solid fa-hand-pointer"></i> عرض الشهور</div>
                     </div>
-                    <div class="glass-card interactive-btn" onclick="openInvStatsModal('sender')" style="text-align: center; padding: 15px; border-top: 4px solid #2ecc71; cursor: pointer;">
+                    <div class="interactive-btn" onclick="openInvStatsModal('sender')" style="background: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; padding: 20px; border-top: 4px solid #2ecc71; cursor: pointer;">
                         <h4 style="margin: 0 0 10px 0; color: #7f8c8d;"><i class="fa-solid fa-truck-arrow-right"></i> أعلى جهة إرسال</h4>
                         <div id="invDashTopSender" style="font-size: 18px; font-weight: bold; color: #2c3e50;">-</div>
                         <div style="font-size: 12px; color: #95a5a6; margin-top: 5px;"><i class="fa-solid fa-hand-pointer"></i> عرض القائمة</div>
                     </div>
-                    <div class="glass-card interactive-btn" onclick="openInvStatsModal('receiver')" style="text-align: center; padding: 15px; border-top: 4px solid #e67e22; cursor: pointer;">
+                    <div class="interactive-btn" onclick="openInvStatsModal('receiver')" style="background: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; padding: 20px; border-top: 4px solid #e67e22; cursor: pointer;">
                         <h4 style="margin: 0 0 10px 0; color: #7f8c8d;"><i class="fa-solid fa-building-circle-check"></i> أعلى جهة استلام</h4>
                         <div id="invDashTopReceiver" style="font-size: 18px; font-weight: bold; color: #2c3e50;">-</div>
                         <div style="font-size: 12px; color: #95a5a6; margin-top: 5px;"><i class="fa-solid fa-hand-pointer"></i> عرض القائمة</div>
                     </div>
-                    <div class="glass-card interactive-btn" onclick="openInvStatsModal('product')" style="text-align: center; padding: 15px; border-top: 4px solid #9b59b6; cursor: pointer;">
+                    <div class="interactive-btn" onclick="openInvStatsModal('product')" style="background: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; padding: 20px; border-top: 4px solid #9b59b6; cursor: pointer;">
                         <h4 style="margin: 0 0 10px 0; color: #7f8c8d;"><i class="fa-solid fa-box-open"></i> أكثر منتج تحويلاً</h4>
                         <div id="invDashTopProduct" style="font-size: 18px; font-weight: bold; color: #2c3e50;">-</div>
                         <div style="font-size: 12px; color: #95a5a6; margin-top: 5px;"><i class="fa-solid fa-hand-pointer"></i> عرض القائمة</div>
@@ -826,7 +826,7 @@
                 </div>
 
                 <!-- Archive Table & Search -->
-                <div class="glass-card">
+                <div style="background: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 20px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
                         <h3 style="margin: 0; color: var(--primary);"><i class="fa-solid fa-clock-rotate-left"></i> سجل الأذونات السابقة</h3>
                         <button id="refreshInvArchiveBtn" class="interactive-btn" style="background: var(--secondary); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">
@@ -922,6 +922,9 @@
                     <button id="openLedgerBtn" class="interactive-btn"
                         style="background: linear-gradient(135deg, #8e44ad, #2980b9); color: white; border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold; flex: 1 1 200px; max-width: 100%;"><i class="fa-solid fa-plus"></i>
                         تسجيل استلام بضاعة</button>
+                    <button id="runSyncBtn" class="interactive-btn" onclick="window.runSyncNow && window.runSyncNow()"
+                        style="background: linear-gradient(135deg, #d35400, #c0392b); color: white; border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold; flex: 1 1 200px; max-width: 100%;"><i class="fa-solid fa-rotate"></i>
+                        مزامنة المخزون مع Firebase</button>
                 </div>
 
                 <div class="expiry-body">
@@ -1413,9 +1416,6 @@
                     <button class="nav-item" data-target="users-tab" style="color: #e91e63;">
                         <span class="icon"><i class="fa-solid fa-user-shield"></i></span><span class="label">إدارة المستخدمين</span>
                     </button>
-                    <button id="openGoogleSheetBtn" class="nav-item" style="color: #2e7d32; cursor: pointer; border: none; background: transparent; width: 100%; text-align: right; display: flex; align-items: center; font-family: inherit; font-size: 1rem; margin-top: 5px;">
-                        <span class="icon"><i class="fa-solid fa-file-excel"></i></span><span class="label">فتح قاعدة البيانات</span>
-                    </button>
                 </div>
             </div>
             <!-- زر تسجيل الخروج -->
@@ -1607,38 +1607,7 @@
         </div>
     </div>
 
-    <!-- ⭐ مودال الباسورد لحماية الإكسيل -->
-    <div id="excelPasswordModal" class="modal-overlay">
-        <div class="modal-content excel-password-modal">
-            <div class="password-modal-header">
-                <div class="lock-icon-container">
-                    <span class="lock-icon"><i class="fa-solid fa-lock"></i></span>
-                </div>
-                <h3 style="margin: 0; color: var(--text-dark); font-size: 1.2rem;">منطقة محمية</h3>
-                <p style="margin: 5px 0 0; font-size: 0.85rem; color: #888;">يرجى إدخال كلمة المرور للوصول إلى قاعدة
-                    البيانات</p>
-            </div>
-
-            <div class="password-input-container">
-                <div style="position: relative;">
-                    <input type="password" id="excelPasswordInput" placeholder="أدخل كلمة المرور" autocomplete="off"
-                        class="password-field">
-                    <button type="button" id="togglePasswordVisibility" class="toggle-password-btn"
-                        title="إظهار/إخفاء"><i class="fa-solid fa-eye"></i></button>
-                </div>
-                <p id="passwordError"
-                    style="color: #e74c3c; font-size: 0.8rem; margin: 5px 0 0; display: none; text-align: center;"><i class="fa-solid fa-xmark"></i>
-                    كلمة المرور غير صحيحة</p>
-            </div>
-
-            <div class="modal-actions" style="margin-top: 15px;">
-                <button id="closeExcelPasswordModal" class="btn-cancel">إلغاء</button>
-                <button id="confirmExcelPassword" class="btn-confirm"
-                    style="background: linear-gradient(135deg, #2e7d32, #43a047); color: white;">فتح <i class="fa-solid fa-lock-open"></i></button>
-            </div>
-        </div>
-    </div>
-
+    
     <datalist id="smartProductsList"></datalist>
 
     <!-- مودال الماسح الضوئي (Scanner Modal) -->
@@ -1919,8 +1888,10 @@
         </div>
     </div>
 
-        <div style="text-align: center; color: var(--text-muted); font-size: 12px; margin-bottom: 10px; margin-top: 10px; opacity: 0.7;">الإصدار: v29.0</div>
-    <script src="app.js?v=28.0" charset="UTF-8" defer></script>
+        <div style="text-align: center; color: var(--text-muted); font-size: 12px; margin-bottom: 10px; margin-top: 10px; opacity: 0.7;">الإصدار: V1.0</div>
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js?v=44.0" charset="UTF-8" defer></script>
 </body>
 
 <!-- Inventory Stats Modal -->

@@ -7,21 +7,50 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Candy Club</title>
-    <link rel="icon" type="image/png" href="favicon.png?v=6">
-    <link rel="apple-touch-icon" href="favicon.png?v=6">
+    <title>Candy Club System</title>
+    <link rel="icon" type="image/png" href="favicon.png?v=8">
+    <link rel="apple-touch-icon" href="favicon.png?v=8">
     <link rel="manifest" href="app-manifest.json?v=999">
     <link rel="stylesheet" href="style.css?v=25.0">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap"
         rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    
+    <!-- Supabase JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        #debug-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; z-index: 999999;
+            background: rgba(255, 0, 0, 0.9); color: white; padding: 10px;
+            font-size: 14px; font-family: monospace; text-align: left; direction: ltr;
+            max-height: 50vh; overflow-y: auto; display: none;
+        }
+    </style>
+    <script>
+        window.onerror = function(msg, url, line, col, error) {
+            var debug = document.getElementById('debug-overlay');
+            if(debug) {
+                debug.style.display = 'block';
+                debug.innerHTML += '<br/>ERROR: ' + msg + ' at ' + url + ':' + line + ':' + col;
+            }
+            return false;
+        };
+        window.addEventListener('unhandledrejection', function(event) {
+            var debug = document.getElementById('debug-overlay');
+            if(debug) {
+                debug.style.display = 'block';
+                debug.innerHTML += '<br/>UNHANDLED PROMISE: ' + (event.reason && event.reason.message ? event.reason.message : event.reason);
+            }
+        });
+    </script>
 </head>
 
 <body>
+    <div id="debug-overlay"></div>
     <!-- ⭐ Modular Loading Overlay -->
     <div id="module-loading-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); z-index:99999; flex-direction:column; justify-content:center; align-items:center;">
         <i id="module-loading-icon" class="fa-solid fa-circle-notch fa-spin" style="font-size: 5rem; color: var(--primary); margin-bottom: 20px;"></i>
@@ -30,35 +59,35 @@
     </div>
 
     <!-- Login Screen -->
-    <div id="login-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background-color:#fdf2f8; z-index:99999; display:flex; justify-content:center; align-items:center; font-family: 'Cairo', sans-serif;">
-        <div style="background-color:#ffffff; padding:40px 30px; border-radius:16px; box-shadow:0 10px 25px rgba(233, 30, 99, 0.1); border: 1px solid #fbcfe8; width:90%; max-width:400px; text-align:center; position:relative;">
-            
+    <div id="login-screen" class="login-screen">
+        <div class="login-card">
+
             <div style="margin-bottom: 30px;">
-                <h1 style="color:#e91e63; margin:0; font-size: 1.8rem; font-weight: 800;">بوابة الموظفين</h1>
-                <p style="color:#64748b; margin:5px 0 0 0; font-size: 0.95rem; font-weight: 600;">تسجيل الحضور والعمليات اليومية</p>
+                <h1 style="color:var(--primary); margin:0; font-size: 1.8rem; font-weight: 800;">بوابة الموظفين</h1>
+                <p style="color:var(--text-muted); margin:5px 0 0 0; font-size: 0.95rem; font-weight: 600;">تسجيل الحضور والعمليات اليومية</p>
             </div>
             
-            <form id="loginForm" onsubmit="handleLogin(event)" style="text-align: right;">
+            <form id="loginForm" onsubmit="handleLogin(event)" class="login-form">
                 <div style="margin-bottom: 15px;">
-                    <label style="color:#334155; font-size:0.9rem; margin-bottom:8px; display:block; font-weight:bold;">اسم المستخدم</label>
-                    <input type="text" id="login-username" placeholder="اسم المستخدم" required style="width:100%; padding:14px 15px; border:1px solid #fbcfe8; border-radius:10px; background:#fffbfd; color:#1e293b; font-family:inherit; text-align: right; box-sizing: border-box; font-size: 1rem; outline: none; transition: border-color 0.3s;" onfocus="this.style.borderColor='#e91e63'" onblur="this.style.borderColor='#fbcfe8'">
+                    <label style="color:var(--text-main); font-size:0.9rem; margin-bottom:8px; display:block; font-weight:bold;">اسم المستخدم</label>
+                    <input type="text" id="login-username" class="login-input" placeholder="اسم المستخدم" required style="width:100%; padding:14px 15px; border:1px solid var(--border); border-radius:10px; background:var(--bg); color:var(--text-main); font-family:inherit; text-align: right; box-sizing: border-box; font-size: 1rem; outline: none;">
                 </div>
                 
                 <div style="margin-bottom: 25px;">
-                    <label style="color:#334155; font-size:0.9rem; margin-bottom:8px; display:block; font-weight:bold;">كلمة المرور</label>
+                    <label style="color:var(--text-main); font-size:0.9rem; margin-bottom:8px; display:block; font-weight:bold;">كلمة المرور</label>
                     <div style="position: relative;">
-                        <input type="password" id="login-password" placeholder="كلمة المرور" required style="width:100%; padding:14px 15px; padding-left: 45px; border:1px solid #fbcfe8; border-radius:10px; background:#fffbfd; color:#1e293b; font-family:inherit; text-align: right; box-sizing: border-box; font-size: 1rem; outline: none; transition: border-color 0.3s;" onfocus="this.style.borderColor='#e91e63'" onblur="this.style.borderColor='#fbcfe8'">
-                        <i class="fa-solid fa-eye" id="togglePasswordBtn" onclick="const p = document.getElementById('login-password'); p.type = p.type === 'password' ? 'text' : 'password'; this.classList.toggle('fa-eye-slash');" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #64748b; cursor: pointer; font-size: 1.1rem;"></i>
+                        <input type="password" id="login-password" class="login-input" placeholder="كلمة المرور" required style="width:100%; padding:14px 15px; padding-left: 45px; border:1px solid var(--border); border-radius:10px; background:var(--bg); color:var(--text-main); font-family:inherit; text-align: right; box-sizing: border-box; font-size: 1rem; outline: none;">
+                        <i class="fa-solid fa-eye login-eye" id="togglePasswordBtn" onclick="const p = document.getElementById('login-password'); p.type = p.type === 'password' ? 'text' : 'password'; this.classList.toggle('login-eye-active'); this.classList.toggle('fa-eye-slash');" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted); cursor: pointer; font-size: 1.1rem;"></i>
                     </div>
                 </div>
                 
-                <button type="submit" id="login-btn" class="interactive-btn" style="width:100%; padding:14px; background: linear-gradient(135deg, #e91e63, #c2185b); color:white; border:none; border-radius:10px; font-size:1.1rem; font-weight:bold; font-family:inherit; cursor:pointer; box-shadow: 0 4px 12px rgba(233, 30, 99, 0.3); transition: transform 0.2s, box-shadow 0.2s;">تسجيل الدخول</button>
+                <button type="submit" id="login-btn" class="interactive-btn login-btn" style="width:100%; padding:14px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color:white; border:none; border-radius:10px; font-size:1.1rem; font-weight:bold; font-family:inherit; cursor:pointer; box-shadow: var(--shadow-pink); transition: transform 0.2s, box-shadow 0.2s;">تسجيل الدخول</button>
             </form>
             
-            <div id="login-error" style="color:#ef4444; margin-top:15px; font-size:0.95rem; display:none; background: #fee2e2; border: 1px solid #fca5a5; padding: 12px; border-radius: 8px;"></div>
+            <div id="login-error" class="login-error" style="color:var(--danger); margin-top:15px; font-size:0.95rem; display:none; background: var(--danger-light); border: 1px solid #fca5a5; padding: 12px; border-radius: 8px;"></div>
             
-            <div style="margin-top: 25px; border-top: 1px solid #fbcfe8; padding-top: 15px;">
-                <a href="admin.html" style="color:#64748b; text-decoration: none; font-size: 0.95rem; font-weight: bold; transition: color 0.3s;" onmouseover="this.style.color='#e91e63'" onmouseout="this.style.color='#64748b'">
+            <div style="margin-top: 25px; border-top: 1px solid var(--border); padding-top: 15px;">
+                <a href="admin.html" style="color:var(--text-muted); text-decoration: none; font-size: 0.95rem; font-weight: bold; transition: color 0.3s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">
                     الرجوع للمدير <i class="fa-solid fa-arrow-right" style="margin-left: 5px;"></i>
                 </a>
             </div>
@@ -75,10 +104,9 @@
             <button id="menuToggleBtn" class="interactive-btn" style="background: none; color: var(--primary); border: none; font-size: 1.8rem; padding: 0; cursor: pointer; display: flex; align-items: center; justify-content: center;">☰</button>
         </div>
 
-        <!-- Center -->
         <div class="logo-container" style="flex: 1; text-align: center; justify-content: center; gap: 8px;">
-            <span class="logo-text">CANDY CLUB</span>
-            <span class="logo-sub">نظام الإدارة V15.0</span>
+            <span class="logo-text">Candy Club System</span>
+            <span class="logo-sub">V1.0</span>
         </div>
 
         <!-- Left Side (RTL) -->
@@ -106,12 +134,28 @@
 
                 <form id="orderForm" onsubmit="event.preventDefault();">
                     <label>المنصة:</label>
-                    <select id="platform" required>
-                        <option value="واتساب">واتساب</option>
-                        <option value="فيسبوك">فيسبوك</option>
-                        <option value="إنستجرام">إنستجرام</option>
-                        <option value="تيك توك">تيك توك</option>
-                    </select>
+                    <input type="hidden" id="platform" value="واتساب" onchange="if(window.syncPlatformUI) window.syncPlatformUI(this.value)">
+                    <div class="custom-platform-select" id="customPlatformSelect">
+                        <div class="platform-selected" id="platformSelected" onclick="togglePlatformDropdown()">
+                            <i id="platformIcon" class="fa-brands fa-whatsapp platform-icon" style="color:#25D366"></i>
+                            <span id="platformText" class="platform-text">واتساب</span>
+                            <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
+                        </div>
+                        <div class="platform-options" id="platformOptions">
+                            <div class="platform-option" onclick="selectPlatform('واتساب', 'fa-whatsapp', '#25D366')">
+                                <i class="fa-brands fa-whatsapp" style="color:#25D366"></i> واتساب
+                            </div>
+                            <div class="platform-option" onclick="selectPlatform('فيسبوك', 'fa-facebook', '#1877F2')">
+                                <i class="fa-brands fa-facebook" style="color:#1877F2"></i> فيسبوك
+                            </div>
+                            <div class="platform-option" onclick="selectPlatform('إنستجرام', 'fa-instagram', '#E1306C')">
+                                <i class="fa-brands fa-instagram" style="color:#E1306C"></i> إنستجرام
+                            </div>
+                            <div class="platform-option" onclick="selectPlatform('تيك توك', 'fa-tiktok', '#000000')">
+                                <i class="fa-brands fa-tiktok" style="color:#000000"></i> تيك توك
+                            </div>
+                        </div>
+                    </div>
 
                     <label>اسم العميل:</label>
                     <input type="text" id="customerName" placeholder="الاسم الثلاثي" required>
@@ -906,8 +950,8 @@
 
         <!-- ⭐ قسم قاعدة العملاء (Dashboard) -->
         <section id="customers-tab" class="tab-pane">
-            <div class="section-card" style="background: transparent; box-shadow: none; padding: 0;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div class="section-card">
+                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px; margin-bottom: 25px;">
                     <h2 style="color: var(--text-dark); margin: 0; display: flex; align-items: center; gap: 10px;">
                         <i class="fa-solid fa-users-viewfinder" style="color: var(--primary);"></i> قاعدة العملاء
                     </h2>
@@ -986,7 +1030,7 @@
 
             <!-- SECTION: Create -->
             <div id="invCreateSection">
-                <div id="invFormContainer" class="glass-card" style="margin-bottom: 20px; transition: all 0.3s ease;">
+                <div id="invFormContainer" style="background: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; transition: all 0.3s ease;">
                     <h3 style="color: var(--primary); margin-bottom: 15px; font-size: 1.2rem;"><i class="fa-solid fa-file-invoice"></i> إنشاء إذن جديد</h3>
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
@@ -1062,23 +1106,23 @@
             <div id="invArchiveSection" style="display: none;">
                 <!-- Dashboard Cards -->
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
-                    <div class="glass-card interactive-btn" onclick="openInvStatsModal('months')" style="text-align: center; padding: 15px; border-top: 4px solid #3498db; cursor: pointer;">
+                    <div class="interactive-btn" onclick="openInvStatsModal('months')" style="background: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; padding: 20px; border-top: 4px solid #3498db; cursor: pointer;">
                         <h4 style="margin: 0 0 10px 0; color: #7f8c8d;"><i class="fa-solid fa-file-lines"></i> إجمالي الأذونات</h4>
                         <div id="invDashTotal" style="font-size: 24px; font-weight: bold; color: #2c3e50;">-</div>
                         <div id="invDashMonthTotal" style="font-size: 14px; color: #7f8c8d; margin-top: 5px;">أذونات هذا الشهر: -</div>
                         <div style="font-size: 12px; color: #95a5a6; margin-top: 5px;"><i class="fa-solid fa-hand-pointer"></i> عرض الشهور</div>
                     </div>
-                    <div class="glass-card interactive-btn" onclick="openInvStatsModal('sender')" style="text-align: center; padding: 15px; border-top: 4px solid #2ecc71; cursor: pointer;">
+                    <div class="interactive-btn" onclick="openInvStatsModal('sender')" style="background: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; padding: 20px; border-top: 4px solid #2ecc71; cursor: pointer;">
                         <h4 style="margin: 0 0 10px 0; color: #7f8c8d;"><i class="fa-solid fa-truck-arrow-right"></i> أعلى جهة إرسال</h4>
                         <div id="invDashTopSender" style="font-size: 18px; font-weight: bold; color: #2c3e50;">-</div>
                         <div style="font-size: 12px; color: #95a5a6; margin-top: 5px;"><i class="fa-solid fa-hand-pointer"></i> عرض القائمة</div>
                     </div>
-                    <div class="glass-card interactive-btn" onclick="openInvStatsModal('receiver')" style="text-align: center; padding: 15px; border-top: 4px solid #e67e22; cursor: pointer;">
+                    <div class="interactive-btn" onclick="openInvStatsModal('receiver')" style="background: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; padding: 20px; border-top: 4px solid #e67e22; cursor: pointer;">
                         <h4 style="margin: 0 0 10px 0; color: #7f8c8d;"><i class="fa-solid fa-building-circle-check"></i> أعلى جهة استلام</h4>
                         <div id="invDashTopReceiver" style="font-size: 18px; font-weight: bold; color: #2c3e50;">-</div>
                         <div style="font-size: 12px; color: #95a5a6; margin-top: 5px;"><i class="fa-solid fa-hand-pointer"></i> عرض القائمة</div>
                     </div>
-                    <div class="glass-card interactive-btn" onclick="openInvStatsModal('product')" style="text-align: center; padding: 15px; border-top: 4px solid #9b59b6; cursor: pointer;">
+                    <div class="interactive-btn" onclick="openInvStatsModal('product')" style="background: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; padding: 20px; border-top: 4px solid #9b59b6; cursor: pointer;">
                         <h4 style="margin: 0 0 10px 0; color: #7f8c8d;"><i class="fa-solid fa-box-open"></i> أكثر منتج تحويلاً</h4>
                         <div id="invDashTopProduct" style="font-size: 18px; font-weight: bold; color: #2c3e50;">-</div>
                         <div style="font-size: 12px; color: #95a5a6; margin-top: 5px;"><i class="fa-solid fa-hand-pointer"></i> عرض القائمة</div>
@@ -1086,16 +1130,15 @@
                 </div>
 
                 <!-- Archive Table & Search -->
-                <div class="glass-card">
+                <div style="background: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 20px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
                         <h3 style="margin: 0; color: var(--primary);"><i class="fa-solid fa-clock-rotate-left"></i> سجل الأذونات السابقة</h3>
-                        <button id="refreshInvArchiveBtn" class="interactive-btn" style="background: var(--secondary); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">
-                            <i class="fa-solid fa-rotate-right"></i> تحديث السجل
-                        </button>
+
                     </div>
-                    <div style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <div style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
                         <input type="text" id="invSearchInput" class="input-field" placeholder="أدخل رقم الإذن للبحث..." style="margin-bottom: 0; flex: 2; min-width: 200px;">
-                        <input type="date" id="invSearchDate" class="input-field" style="margin-bottom: 0; flex: 1; min-width: 150px;">
+                        <input type="month" id="invSearchDate" class="input-field" style="margin-bottom: 0; flex: 1; min-width: 150px;">
+                        <button onclick="filterAndRenderArchive()" class="interactive-btn" style="padding: 10px 20px; border: none; border-radius: 8px; background: var(--primary); color: white; cursor: pointer; font-weight: bold;"><i class="fa-solid fa-search"></i> بحث</button>
                     </div>
                     <div class="table-container" style="max-height: 500px; overflow-y: auto;">
                         <table>
@@ -1110,7 +1153,6 @@
                                 </tr>
                             </thead>
                             <tbody id="invArchiveTableBody">
-                                <tr><td colspan="6" style="text-align:center;">جاري تحميل البيانات...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -2358,112 +2400,142 @@
         </div>
     </div>
 
-        <div style="text-align: center; color: var(--text-muted); font-size: 12px; margin-bottom: 10px; margin-top: 10px; opacity: 0.7;">الإصدار: v31.9</div>
+        <div style="text-align: center; color: var(--text-muted); font-size: 12px; margin-bottom: 10px; margin-top: 10px; opacity: 0.7;">الإصدار: V1.0</div>
     </div>
     <!-- Custom Script -->
-    <script src="app.js?v=31.9" charset="UTF-8" defer></script>
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js?v=44.3" charset="UTF-8" defer></script>
+    <script src="update_notice.js" defer></script>
 </body>
 
 <!-- ====================================== -->
 <!-- 🖊️ Admin Edit Attendance Modal        -->
 <!-- ====================================== -->
-<div id="editAttendanceModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.55); backdrop-filter:blur(6px); z-index:999999; align-items:center; justify-content:center;">
-    <div style="background:#fff; border-radius:20px; padding:28px; width:92%; max-width:440px; box-shadow:0 20px 60px rgba(0,0,0,0.3); position:relative; animation:fadeIn 0.2s ease;">
+<div id="editAttendanceModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.6); backdrop-filter:blur(6px); z-index:999999; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:20px; padding:32px; width:95%; max-width:850px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); position:relative; animation:fadeIn 0.2s ease;">
         
         <!-- Close -->
-        <button onclick="closeEditAttendanceModal()" style="position:absolute; top:14px; left:14px; background:#f5f5f5; border:none; border-radius:50%; width:34px; height:34px; font-size:1.1rem; cursor:pointer; color:#555; display:flex; align-items:center; justify-content:center;">
+        <button onclick="closeEditAttendanceModal()" style="position:absolute; top:16px; left:16px; background:#f1f5f9; border:none; border-radius:50%; width:36px; height:36px; font-size:1.1rem; cursor:pointer; color:#64748b; display:flex; align-items:center; justify-content:center; transition: all 0.2s;" onmouseover="this.style.background='#fee2e2'; this.style.color='#ef4444';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#64748b';">
             <i class="fa-solid fa-xmark"></i>
         </button>
 
         <!-- Header -->
-        <div style="text-align:center; margin-bottom:20px;">
-            <div style="background:linear-gradient(135deg,#1565c0,#1a237e); width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 12px; box-shadow:0 4px 15px rgba(21,101,192,0.4);">
-                <i class="fa-solid fa-pen-to-square" style="color:white; font-size:1.5rem;"></i>
+        <div style="text-align:center; margin-bottom:28px; border-bottom: 2px solid #f1f5f9; padding-bottom: 20px;">
+            <div style="background:linear-gradient(135deg,#2563eb,#1e40af); width:60px; height:60px; border-radius:16px; display:flex; align-items:center; justify-content:center; margin:0 auto 12px; box-shadow:0 10px 25px -5px rgba(37,99,235,0.4); transform: rotate(-5deg);">
+                <i class="fa-solid fa-pen-to-square" style="color:white; font-size:1.6rem; transform: rotate(5deg);"></i>
             </div>
-            <h3 style="margin:0; color:#1a237e; font-size:1.15rem;">تعديل سجل الحضور</h3>
-            <p id="editAttModalSubtitle" style="margin:4px 0 0; color:#666; font-size:0.85rem;"></p>
+            <h3 style="margin:0; color:#0f172a; font-size:1.4rem; font-weight:800;">تعديل سجل الحضور</h3>
+            <p id="editAttModalSubtitle" style="margin:8px 0 0; color:#64748b; font-size:0.95rem; font-weight:500;"></p>
         </div>
 
         <!-- Form -->
-        <div style="display:flex; flex-direction:column; gap:16px;">
+        <div style="display:flex; flex-direction:column; gap:24px;">
             
-            <!-- CheckIn Time -->
-            <div>
-                <label style="display:block; font-size:0.85rem; font-weight:bold; color:#2e7d32; margin-bottom:6px;">
-                    <i class="fa-solid fa-right-to-bracket"></i> وقت الحضور
-                </label>
-                <input type="text" id="editAttCheckIn" 
-                    style="width:100%; padding:12px; border:2px solid #e0e0e0; border-radius:10px; font-size:1.1rem; font-family:inherit; box-sizing:border-box; transition:border-color 0.2s;"
-                    onfocus="this.style.borderColor='#2e7d32'"
-                    onblur="this.style.borderColor='#e0e0e0'"
-                    onchange="calcEditHours()"
-                    placeholder="مثال: 10:00 AM">
-            </div>
-
-            <!-- CheckOut Time -->
-            <div>
-                <label style="display:block; font-size:0.85rem; font-weight:bold; color:#c62828; margin-bottom:6px;">
-                    <i class="fa-solid fa-right-from-bracket"></i> وقت الانصراف
-                </label>
-                <input type="text" id="editAttCheckOut" 
-                    style="width:100%; padding:12px; border:2px solid #e0e0e0; border-radius:10px; font-size:1.1rem; font-family:inherit; box-sizing:border-box; transition:border-color 0.2s;"
-                    onfocus="this.style.borderColor='#c62828'"
-                    onblur="this.style.borderColor='#e0e0e0'"
-                    onchange="calcEditHours()"
-                    placeholder="مثال: 05:00 PM">
-            </div>
-
-            <!-- Auto-calculated Hours -->
-            <div id="editAttHoursPreview" style="background:linear-gradient(135deg,#e8f5e9,#c8e6c9); border-radius:10px; padding:12px 16px; display:none; align-items:center; gap:10px;">
-                <i class="fa-solid fa-clock" style="color:#2e7d32; font-size:1.2rem;"></i>
+            <!-- Row 1: CheckIn, CheckOut, Status -->
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:20px; background:#f8fafc; padding:20px; border-radius:16px; border:1px solid #e2e8f0;">
+                <!-- CheckIn Time -->
                 <div>
-                    <div style="font-size:0.75rem; color:#388e3c;">إجمالي الساعات المحسوبة</div>
-                    <div id="editAttHoursText" style="font-size:1.2rem; font-weight:bold; color:#1b5e20;"></div>
+                    <label style="display:flex; align-items:center; gap:8px; font-size:0.9rem; font-weight:700; color:#059669; margin-bottom:8px;">
+                        <i class="fa-solid fa-right-to-bracket"></i> وقت الحضور
+                    </label>
+                    <input type="text" id="editAttCheckIn" 
+                        style="width:100%; padding:12px 16px; border:2px solid #e2e8f0; border-radius:12px; font-size:1.1rem; font-family:inherit; box-sizing:border-box; transition:all 0.2s; background:#fff; color:#334155; font-weight:600;"
+                        onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 4px rgba(16,185,129,0.1)';"
+                        onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none';"
+                        onchange="calcEditHours()"
+                        placeholder="مثال: 10:00 AM">
+                </div>
+
+                <!-- CheckOut Time -->
+                <div>
+                    <label style="display:flex; align-items:center; gap:8px; font-size:0.9rem; font-weight:700; color:#dc2626; margin-bottom:8px;">
+                        <i class="fa-solid fa-right-from-bracket"></i> وقت الانصراف
+                    </label>
+                    <input type="text" id="editAttCheckOut" 
+                        style="width:100%; padding:12px 16px; border:2px solid #e2e8f0; border-radius:12px; font-size:1.1rem; font-family:inherit; box-sizing:border-box; transition:all 0.2s; background:#fff; color:#334155; font-weight:600;"
+                        onfocus="this.style.borderColor='#ef4444'; this.style.boxShadow='0 0 0 4px rgba(239,68,68,0.1)';"
+                        onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none';"
+                        onchange="calcEditHours()"
+                        placeholder="مثال: 05:00 PM">
+                </div>
+
+                <!-- Status -->
+                <div>
+                    <label style="display:flex; align-items:center; gap:8px; font-size:0.9rem; font-weight:700; color:#334155; margin-bottom:8px;">
+                        <i class="fa-solid fa-tag"></i> الحالة
+                    </label>
+                    <div style="position:relative;">
+                        <select id="editAttStatus" onchange="handleEditStatusChange()" style="width:100%; padding:12px 16px; border:2px solid #e2e8f0; border-radius:12px; font-size:1.1rem; font-family:inherit; box-sizing:border-box; outline:none; transition:all 0.2s; background:#fff; color:#334155; font-weight:600; appearance:none; cursor:pointer;" onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 4px rgba(59,130,246,0.1)';" onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none';">
+                            <option value="حاضر">✅ حاضر</option>
+                            <option value="إجازة مدفوعة">🏖️ إجازة مدفوعة</option>
+                            <option value="إجازة بدون مرتب">📋 إجازة بدون مرتب</option>
+                            <option value="غائب">❌ غائب</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down" style="position:absolute; left:16px; top:50%; transform:translateY(-50%); color:#94a3b8; pointer-events:none;"></i>
+                    </div>
                 </div>
             </div>
 
-            <!-- Status -->
-            <div>
-                <label style="display:block; font-size:0.85rem; font-weight:bold; color:#546e7a; margin-bottom:6px;">
-                    <i class="fa-solid fa-tag"></i> الحالة
-                </label>
-                <select id="editAttStatus" onchange="handleEditStatusChange()" style="width:100%; padding:12px; border:2px solid #e0e0e0; border-radius:10px; font-size:1rem; font-family:inherit; box-sizing:border-box;">
-                    <option value="حاضر">✅ حاضر</option>
-                    <option value="إجازة مدفوعة">🏖️ إجازة مدفوعة</option>
-                    <option value="إجازة بدون مرتب">📋 إجازة بدون مرتب</option>
-                    <option value="غائب">❌ غائب</option>
-                </select>
-            </div>
+            <!-- Row 2: Auto-calculated Hours and Manual Override -->
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:20px;">
+                <!-- Auto-calculated Hours -->
+                <div id="editAttHoursPreview" style="background:linear-gradient(135deg,#ecfdf5,#d1fae5); border-radius:16px; padding:20px; display:none; align-items:center; gap:16px; border:1px solid #10b981; box-shadow:inset 0 2px 4px rgba(255,255,255,0.5);">
+                    <div style="background:#fff; width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 6px -1px rgba(16,185,129,0.1);">
+                        <i class="fa-solid fa-clock" style="color:#059669; font-size:1.6rem;"></i>
+                    </div>
+                    <div>
+                        <div style="font-size:0.85rem; color:#047857; font-weight:700; margin-bottom:4px;">إجمالي الساعات المحسوبة (المستحقة)</div>
+                        <div id="editAttHoursText" style="font-size:1.6rem; font-weight:800; color:#064e3b; letter-spacing:0.5px;"></div>
+                    </div>
+                </div>
 
-            <!-- Manual Hours Override -->
-            <div>
-                <label style="display:block; font-size:0.85rem; font-weight:bold; color:#ff9800; margin-bottom:6px;">
-                    <i class="fa-solid fa-stopwatch"></i> ساعات العمل (تعديل يدوي - اختياري)
-                </label>
-                <input type="text" id="editAttManualHours" placeholder="مثال: 12:45" 
-                    style="width:100%; padding:12px; border:2px solid #e0e0e0; border-radius:10px; font-size:1rem; font-family:inherit; box-sizing:border-box;">
+                <!-- Manual Hours Override -->
+                <div style="background:#fffbeb; padding:20px; border-radius:16px; border:1px dashed #f59e0b;">
+                    <label style="display:flex; align-items:center; gap:8px; font-size:0.9rem; font-weight:700; color:#d97706; margin-bottom:12px;">
+                        <i class="fa-solid fa-stopwatch"></i> ساعات العمل (تعديل يدوي - للمدير)
+                    </label>
+                    
+                    <div style="display:flex; align-items:center; justify-content:center; background:#fff; border:2px solid #fcd34d; border-radius:12px; padding:8px 16px; transition:all 0.2s; box-shadow:0 2px 4px rgba(245,158,11,0.05);" onfocus-within="this.style.borderColor='#f59e0b'; this.style.boxShadow='0 0 0 4px rgba(245,158,11,0.1)';">
+                        <div style="display:flex; flex-direction:column; align-items:center;">
+                            <span style="font-size:0.7rem; color:#d97706; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">ساعات</span>
+                            <input type="number" id="editAttManualHours_h" placeholder="00" min="0" max="99" 
+                                oninput="updateHiddenManualHours()"
+                                style="width:50px; padding:4px; border:none; font-size:1.5rem; font-weight:800; color:#92400e; text-align:center; outline:none; background:transparent; font-family:monospace;">
+                        </div>
+                        <span style="font-size:1.8rem; font-weight:800; color:#f59e0b; margin:15px 8px 0 8px; animation:blink 2s infinite;">:</span>
+                        <div style="display:flex; flex-direction:column; align-items:center;">
+                            <span style="font-size:0.7rem; color:#d97706; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">دقائق</span>
+                            <input type="number" id="editAttManualHours_m" placeholder="00" min="0" max="59" 
+                                oninput="updateHiddenManualHours()"
+                                style="width:50px; padding:4px; border:none; font-size:1.5rem; font-weight:800; color:#92400e; text-align:center; outline:none; background:transparent; font-family:monospace;">
+                        </div>
+                    </div>
+                    <input type="hidden" id="editAttManualHours">
+                </div>
             </div>
 
             <!-- Notes -->
             <div>
-                <label style="display:block; font-size:0.85rem; font-weight:bold; color:#546e7a; margin-bottom:6px;">
+                <label style="display:flex; align-items:center; gap:8px; font-size:0.9rem; font-weight:700; color:#475569; margin-bottom:8px;">
                     <i class="fa-solid fa-note-sticky"></i> ملاحظات
                 </label>
-                <input type="text" id="editAttNotes" placeholder="ملاحظات اختيارية..." 
-                    style="width:100%; padding:12px; border:2px solid #e0e0e0; border-radius:10px; font-size:1rem; font-family:inherit; box-sizing:border-box;">
+                <input type="text" id="editAttNotes" placeholder="أضف أي ملاحظات إضافية هنا..." 
+                    style="width:100%; padding:14px 16px; border:2px solid #e2e8f0; border-radius:12px; font-size:1.1rem; font-family:inherit; box-sizing:border-box; outline:none; transition:all 0.2s; color:#334155;"
+                    onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 4px rgba(59,130,246,0.1)';" onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none';">
             </div>
+        </div>
 
-            <!-- Buttons -->
-            <div style="display:flex; gap:10px; margin-top:4px;">
-                <button id="editAttSaveBtn" onclick="saveAttendanceEdit()" 
-                    style="flex:1; background:linear-gradient(135deg,#1565c0,#1a237e); color:white; border:none; padding:14px; border-radius:12px; font-size:1rem; font-weight:bold; cursor:pointer; font-family:inherit; display:flex; align-items:center; justify-content:center; gap:8px; transition:opacity 0.2s;">
-                    <i class="fa-solid fa-floppy-disk"></i> حفظ التعديلات
-                </button>
-                <button onclick="closeEditAttendanceModal()" 
-                    style="padding:14px 20px; background:#f5f5f5; color:#333; border:none; border-radius:12px; font-size:1rem; cursor:pointer; font-family:inherit;">
-                    إلغاء
-                </button>
-            </div>
+        <!-- Buttons -->
+        <div style="display:flex; gap:16px; margin-top:32px; padding-top:24px; border-top:2px solid #f1f5f9;">
+            <button id="editAttSaveBtn" onclick="saveAttendanceEdit()" 
+                style="flex:2; background:linear-gradient(135deg,#2563eb,#1d4ed8); color:white; border:none; padding:16px; border-radius:14px; font-size:1.2rem; font-weight:800; cursor:pointer; font-family:inherit; display:flex; align-items:center; justify-content:center; gap:10px; transition:all 0.3s; box-shadow:0 10px 20px -5px rgba(37,99,235,0.4);" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 15px 25px -5px rgba(37,99,235,0.5)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 10px 20px -5px rgba(37,99,235,0.4)';">
+                <i class="fa-solid fa-floppy-disk"></i> حفظ التعديلات
+            </button>
+            <button onclick="closeEditAttendanceModal()" 
+                style="flex:1; padding:16px; background:#f1f5f9; color:#475569; border:none; border-radius:14px; font-size:1.1rem; font-weight:700; cursor:pointer; font-family:inherit; transition:all 0.2s;" onmouseover="this.style.background='#e2e8f0'; this.style.color='#334155';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#475569';">
+                إلغاء
+            </button>
         </div>
     </div>
 </div>
@@ -2478,7 +2550,7 @@
         </div>
     </div>
 </div>
-</body>
 
+</body>
 </html>
 

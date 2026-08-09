@@ -1,6 +1,6 @@
 {
-  "name": "Candy Club",
-  "short_name": "Candy Club",
+  "name": "Candy Club System",
+  "short_name": "Candy Club System",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",
