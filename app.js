@@ -451,8 +451,35 @@ async function handleSupabaseRequest(url, options) {
             case 'checkOut':
                 let { data: existOut } = await supabase.from('attendance').select('*').eq('employee_name', params.employeeName).eq('date', params.date).eq('status', 'حاضر');
                 if (existOut && existOut.length > 0) {
+                    let checkInTime = existOut[0].check_in;
                     let checkOutTime = new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute:'2-digit' });
-                    await supabase.from('attendance').update({ check_out: checkOutTime, hours: '8 ساعات' }).eq('id', existOut[0].id);
+                    
+                    // Calculate hours difference
+                    let diffHours = 0;
+                    try {
+                        const [inTime, inPeriod] = checkInTime.split(' ');
+                        const [outTime, outPeriod] = checkOutTime.split(' ');
+                        let [inH, inM] = inTime.split(':').map(Number);
+                        let [outH, outM] = outTime.split(':').map(Number);
+                        
+                        if (inPeriod.toLowerCase() === 'pm' && inH !== 12) inH += 12;
+                        if (inPeriod.toLowerCase() === 'am' && inH === 12) inH = 0;
+                        if (outPeriod.toLowerCase() === 'pm' && outH !== 12) outH += 12;
+                        if (outPeriod.toLowerCase() === 'am' && outH === 12) outH = 0;
+                        
+                        let inTotalMins = inH * 60 + inM;
+                        let outTotalMins = outH * 60 + outM;
+                        if (outTotalMins < inTotalMins) outTotalMins += 24 * 60; // crossed midnight
+                        
+                        let diffMins = outTotalMins - inTotalMins;
+                        diffHours = (diffMins / 60).toFixed(1);
+                    } catch(e) {
+                        diffHours = 0;
+                    }
+                    
+                    let hoursStr = diffHours + ' ساعة';
+
+                    await supabase.from('attendance').update({ check_out: checkOutTime, hours: hoursStr }).eq('id', existOut[0].id);
                     responseData = { success: true, message: "تم تسجيل الانصراف بنجاح" };
                 } else {
                     return createJsonResponse({ success: false, error: "لم يتم العثور على سجل حضور مفتوح" });
