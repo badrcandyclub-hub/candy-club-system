@@ -432,7 +432,12 @@ async function handleSupabaseRequest(url, options) {
                 responseData = { success: true };
                 break;
             case 'deleteOutOfStock':
-                await supabase.from('out_of_stock').delete().eq('product', params.product).ilike('phone', '%' + params.phone + '%');
+                if (params.id) {
+                    await supabase.from('out_of_stock').delete().eq('id', params.id);
+                } else {
+                    await supabase.from('out_of_stock').delete().eq('product', params.product).ilike('phone', '%' + params.phone + '%');
+                }
+                break;
             case 'addInventoryLog':
                 await supabase.from('inventory_logs').insert([{ from_location: params.from, to_location: params.to, reg_name: params.regName, items: params.items, notes: params.notes, timestamp: new Date().toLocaleString() }]);
                 break;
@@ -1336,7 +1341,7 @@ async function loadDataFromServer(customDate = null) {
 
         // Out of stock
         oosData = (rawOOS || []).map(o => ({
-            customer: o.customer_name, phone: o.phone, product: o.product, reason: o.reason, date: o.created_at
+            id: o.id, customer: o.customer_name, phone: o.phone, product: o.product, reason: o.reason || o.purpose, date: o.created_at || o.date
         }));
         renderOutOfStock(oosData);
 
@@ -10002,10 +10007,8 @@ function loadMyAttendance() {
             if (el) el.innerText = presentDays;
             el = document.getElementById('hrTotalHoursMonth');
             if (el) el.innerText = formattedTotalHours;
-            if (data.leaveBalance) {
-                el = document.getElementById('hrLeaveBalance');
-                if (el) el.innerText = Math.max(0, 4 - data.leaveBalance.paidUsed);
-            }
+            el = document.getElementById('hrLeaveBalance');
+            if (el) el.innerText = Math.max(0, 4 - paidLeaves);
 
             // Render monthly summary banner
             if (bannerEl) {
