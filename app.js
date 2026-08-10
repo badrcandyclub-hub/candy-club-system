@@ -393,7 +393,7 @@ async function handleSupabaseRequest(url, options) {
                 await supabase.from('out_of_stock').insert([{ customer_name: params.customer, phone: params.phone, product: params.product, reason: params.reason }]);
                 break;
             case 'deleteShipping':
-                await supabase.from('settings_shipping').delete().eq('zone', params.name);
+                await supabase.from('settings_shipping').delete().eq('zone_name', params.name);
                 responseData = { success: true };
                 break;
             case 'deleteDriver':
@@ -532,11 +532,11 @@ async function handleSupabaseRequest(url, options) {
                 await supabase.from('users').delete().eq('username', params.user);
                 break;
             case 'addShipping':
-                await supabase.from('settings_shipping').insert([{ zone: params.name, price: params.price, delivery_type: params.deliveryType, duration: params.duration, zone_type: params.zoneType }]);
+                await supabase.from('settings_shipping').insert([{ zone_name: params.name, price: params.price, delivery_type: params.deliveryType, duration: params.duration, zone_type: params.zoneType }]);
                 responseData = { success: true };
                 break;
             case 'editShipping':
-                await supabase.from('settings_shipping').update({ price: params.price, duration: params.duration }).eq('zone', params.name);
+                await supabase.from('settings_shipping').update({ price: params.price, duration: params.duration }).eq('zone_name', params.name);
                 responseData = { success: true };
                 break;
             case 'addDriver':
