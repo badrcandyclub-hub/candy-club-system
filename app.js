@@ -11570,14 +11570,25 @@ async function getGlobalSyncTime() {
             .select('*')
             .eq('zone_name', '_SYNC_TIMER_')
             .eq('zone_type', 'system')
-            .single();
-        if (data && data.price) return parseInt(data.price);
-    } catch(e) { }
+            .maybeSingle();
+        if (data) {
+            let ts = 0;
+            if (data.delivery_type && !isNaN(parseInt(data.delivery_type))) {
+                ts = parseInt(data.delivery_type);
+            } else if (data.price && !isNaN(parseInt(data.price))) {
+                ts = parseInt(data.price);
+            }
+            if (ts > 0) return ts;
+        }
+    } catch(e) {
+        console.error("Error reading global sync time:", e);
+    }
     return 0; // fallback
 }
 
 async function updateGlobalSyncTime() {
-    const now = new Date().getTime();
+    const now = Date.now();
+    const nowStr = now.toString();
     try {
         const { data } = await supabase.from('settings_shipping')
             .select('id')
@@ -11585,16 +11596,20 @@ async function updateGlobalSyncTime() {
             .eq('zone_type', 'system');
             
         if (data && data.length > 0) {
-            await supabase.from('settings_shipping').update({ price: now }).eq('id', data[0].id);
+            await supabase.from('settings_shipping')
+                .update({ price: now, delivery_type: nowStr })
+                .eq('id', data[0].id);
         } else {
             await supabase.from('settings_shipping').insert([{ 
                 zone_name: '_SYNC_TIMER_', 
                 zone_type: 'system', 
                 price: now,
-                delivery_type: 'system'
+                delivery_type: nowStr
             }]);
         }
-    } catch(e) { console.error("Global timer update error", e); }
+    } catch(e) { 
+        console.error("Global timer update error", e); 
+    }
     return now;
 }
 
@@ -11604,11 +11619,24 @@ async function setupFirebaseSync() {
     // 48 hours in milliseconds
     const SYNC_INTERVAL = 48 * 60 * 60 * 1000;
     
-    // Fetch initial global time
-    currentGlobalLastSync = await getGlobalSyncTime();
+    // Fetch initial global time from DB
+    let dbTime = await getGlobalSyncTime();
     
-    if (currentGlobalLastSync === 0) {
-        currentGlobalLastSync = await updateGlobalSyncTime(); // initialize if it doesn't exist
+    if (dbTime > 0) {
+        currentGlobalLastSync = dbTime;
+        localStorage.setItem('cc_last_global_sync', dbTime.toString());
+    } else {
+        // Fallback to local storage if DB read failed or returned 0
+        const localSaved = localStorage.getItem('cc_last_global_sync');
+        if (localSaved && !isNaN(parseInt(localSaved))) {
+            currentGlobalLastSync = parseInt(localSaved);
+        } else {
+            // Only if DB has no record AND localStorage has no record, initialize once
+            currentGlobalLastSync = await updateGlobalSyncTime();
+            if (currentGlobalLastSync > 0) {
+                localStorage.setItem('cc_last_global_sync', currentGlobalLastSync.toString());
+            }
+        }
     }
 
     // Function to execute the sync
@@ -11619,50 +11647,51 @@ async function setupFirebaseSync() {
         try {
             const r = await fetch(GOOGLE_SHEETS_URL, { method: 'POST', body: formData });
             const data = await r.json();
-            if (data.success && data.message && !data.message.includes("تحديث 0") && !data.message.includes("متطابقة")) {
+            if (data.success) {
                 console.log("Auto-Sync Success:", data.message);
                 currentGlobalLastSync = await updateGlobalSyncTime();
-            } else if (!data.success) {
-                console.error("Auto-Sync Error:", data.error);
+                if (currentGlobalLastSync > 0) {
+                    localStorage.setItem('cc_last_global_sync', currentGlobalLastSync.toString());
+                }
             } else {
-                currentGlobalLastSync = await updateGlobalSyncTime(); // update time even if 0 updates
+                console.error("Auto-Sync Error:", data.error);
             }
         } catch(err) {
             console.error("Auto-Sync fetch error:", err);
         }
     };
 
-    const now = new Date().getTime();
-    if ((now - currentGlobalLastSync) > SYNC_INTERVAL) {
-        // Run immediately if it's been more than 48 hours
+    const now = Date.now();
+    if (currentGlobalLastSync > 0 && (now - currentGlobalLastSync) >= SYNC_INTERVAL) {
+        // Run immediately if it's been 48 hours or more
         executeSync();
     }
 
-    // Set interval to check every hour to see if 48 hours have passed
+    // Periodically fetch from DB every 30 seconds so all devices stay in sync
     setInterval(async () => {
-        const dbTime = await getGlobalSyncTime(); // re-fetch to see if another user synced
-        if (dbTime > currentGlobalLastSync) currentGlobalLastSync = dbTime;
+        const freshDbTime = await getGlobalSyncTime();
+        if (freshDbTime > 0 && freshDbTime !== currentGlobalLastSync) {
+            currentGlobalLastSync = freshDbTime;
+            localStorage.setItem('cc_last_global_sync', freshDbTime.toString());
+        }
         
-        const currentTime = new Date().getTime();
-        if ((currentTime - currentGlobalLastSync) > SYNC_INTERVAL) {
+        const currentTime = Date.now();
+        if (currentGlobalLastSync > 0 && (currentTime - currentGlobalLastSync) >= SYNC_INTERVAL) {
             executeSync();
         }
-    }, 60 * 60 * 1000); // Check every hour
-    
-    // Periodically fetch from DB every 1 minute so timer is updated if someone else synced
-    setInterval(async () => {
-        const dbTime = await getGlobalSyncTime();
-        if (dbTime > 0) currentGlobalLastSync = dbTime;
-    }, 60 * 1000);
+    }, 30 * 1000); // Check every 30 seconds
 
     // Timer display logic
     const updateTimerDisplay = () => {
         const timerEls = document.querySelectorAll('#sync-timer-countdown');
         if (!timerEls.length) return;
         
-        if (currentGlobalLastSync === 0) return; // Still loading
+        if (currentGlobalLastSync === 0) {
+            timerEls.forEach(el => { el.innerText = 'جاري التحميل...'; });
+            return;
+        }
         
-        const currentTime = new Date().getTime();
+        const currentTime = Date.now();
         const timePassed = currentTime - currentGlobalLastSync;
         const timeLeft = SYNC_INTERVAL - timePassed;
         
@@ -11710,6 +11739,9 @@ window.runSyncNow = async function() {
         if (data.success) {
             showToast(data.message, 'success');
             currentGlobalLastSync = await updateGlobalSyncTime();
+            if (currentGlobalLastSync > 0) {
+                localStorage.setItem('cc_last_global_sync', currentGlobalLastSync.toString());
+            }
         } else {
             showToast(data.error || 'حدث خطأ في المزامنة', 'error');
         }
