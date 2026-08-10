@@ -2869,16 +2869,14 @@ body.dark-mode .btn-settle {
     }
     .header-actions {
         display: flex !important;
-        flex-direction: column !important;
-        align-items: flex-end !important;
-        justify-content: center !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
         gap: 4px !important;
         width: auto !important;
     }
     .status-indicator {
         display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
         gap: 5px !important;
         width: auto !important;
     }
@@ -4404,3 +4402,5 @@ body.dark-mode .batch-child-row {
 .platform-option:hover { background: #f8f9fa; }
 .platform-option i { font-size: 1.3rem; margin-left: 12px; }
 @keyframes dropFadeIn { from { opacity: 0; transform: scaleY(0.9); } to { opacity: 1; transform: scaleY(1); } }
+
+@media (max-width: 500px) { .welcome-text { display: none !important; } }
