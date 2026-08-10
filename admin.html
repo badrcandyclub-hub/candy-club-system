@@ -11,7 +11,7 @@
     <link rel="icon" type="image/png" href="favicon.png?v=8">
     <link rel="apple-touch-icon" href="favicon.png?v=8">
     <link rel="manifest" href="app-manifest.json?v=999">
-    <link rel="stylesheet" href="style.css?v=52.0">
+    <link rel="stylesheet" href="style.css?v=54.0">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap"
         rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -925,6 +925,9 @@
                     <button id="runSyncBtn" class="interactive-btn" onclick="window.runSyncNow && window.runSyncNow()"
                         style="background: linear-gradient(135deg, #d35400, #c0392b); color: white; border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold; flex: 1 1 200px; max-width: 100%;"><i class="fa-solid fa-rotate"></i>
                         مزامنة المخزون مع Firebase</button>
+                    <div id="sync-timer-container" style="flex: 1 1 100%; text-align: center; background: rgba(0,0,0,0.05); border: 1px dashed var(--primary); padding: 10px; border-radius: 10px; font-weight: bold; color: var(--text-main); font-size: 0.95rem;">
+                        <i class="fa-solid fa-clock" style="color: var(--primary);"></i> المزامنة التلقائية مع الكاشير بعد: <span id="sync-timer-countdown" style="color: var(--primary); font-size: 1.1rem;">--:--:--</span>
+                    </div>
                 </div>
 
                 <div class="expiry-body">
@@ -1891,7 +1894,7 @@
         <div style="text-align: center; color: var(--text-muted); font-size: 12px; margin-bottom: 10px; margin-top: 10px; opacity: 0.7;">الإصدار: V1.0</div>
     <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js?v=20.0" charset="UTF-8" defer></script>
+    <script src="app.js?v=23.0" charset="UTF-8" defer></script>
 </body>
 
 <!-- Inventory Stats Modal -->

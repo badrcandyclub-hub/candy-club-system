@@ -8640,7 +8640,7 @@ function checkSession() {
     }
 }
 
-function handleLogin(user, pass, btn, err) {
+function deprecatedHandleLogin(user, pass, btn, err) {
     setBtnLoading(btn, true, "جاري الدخول...");
     
     (async () => {
@@ -9016,12 +9016,8 @@ window.handleLogin = function(e) {
                     return;
                 }
                 
-                if (!isAdminPage && data.permissions === "ALL") {
-                    err.innerText = "عذراً، هذا الحساب مخصص للوحة الإدارة فقط. يرجى الدخول بحساب موظف.";
-                    err.style.display = 'block';
-                    return;
-                }
-
+                // Note: ALL users can login to index.html regardless of roles now
+                
                 currentUser = {
                     username: data.username,
                     displayName: data.displayName,
@@ -11601,6 +11597,45 @@ function setupFirebaseSync() {
             localStorage.setItem('lastFirebaseSyncTime', currentTime.toString());
         }
     }, 60 * 60 * 1000); // Check every hour
+
+    // Timer display logic
+    const updateTimerDisplay = () => {
+        const timerEls = document.querySelectorAll('#sync-timer-countdown');
+        if (!timerEls.length) return;
+        
+        const currentLastSync = parseInt(localStorage.getItem('lastFirebaseSyncTime') || new Date().getTime().toString());
+        const currentTime = new Date().getTime();
+        const timePassed = currentTime - currentLastSync;
+        const timeLeft = SYNC_INTERVAL - timePassed;
+        
+        if (timeLeft <= 0) {
+            timerEls.forEach(el => {
+                el.innerText = 'الآن';
+                el.style.color = 'var(--danger)';
+            });
+            return;
+        }
+        
+        const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+        const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+        
+        const formatted = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        
+        timerEls.forEach(el => {
+            el.innerText = formatted;
+            if (hours < 2) {
+                el.style.color = 'var(--danger)';
+            } else if (hours < 12) {
+                el.style.color = 'var(--warning)';
+            } else {
+                el.style.color = 'var(--primary)';
+            }
+        });
+    };
+
+    setInterval(updateTimerDisplay, 1000);
+    updateTimerDisplay();
 }
 
 // Add global function for manual trigger if needed

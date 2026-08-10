@@ -2865,15 +2865,36 @@ body.dark-mode .btn-settle {
         flex-wrap: wrap !important;
         justify-content: center !important;
         gap: 5px !important;
-        width: 100% !important;
+    .app-header {
+        flex-wrap: wrap !important;
+        height: auto !important;
+        padding-top: 10px !important;
+        padding-bottom: 10px !important;
+        justify-content: space-between !important;
+    }
+    .header-right {
+        order: 1;
+    }
+    .logo-container {
+        order: 2;
+        flex: 1 !important;
     }
     .header-actions {
+        order: 3;
+        width: 100% !important;
+        margin-top: 10px !important;
         display: flex !important;
         flex-direction: row !important;
+        justify-content: center !important;
         align-items: center !important;
-        justify-content: flex-end !important;
-        gap: 4px !important;
-        width: auto !important;
+        gap: 10px !important;
+    }
+    .header-controls, .status-container {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        gap: 5px !important;
+        width: 100% !important;
     }
     .status-indicator {
         display: flex !important;
@@ -2881,8 +2902,8 @@ body.dark-mode .btn-settle {
         width: auto !important;
     }
     .header-controls button, .status-container button, .header-actions button, .status-indicator button {
-        font-size: 11px !important;
-        padding: 4px 6px !important;
+        font-size: 12px !important;
+        padding: 6px 10px !important;
     }
     #sync-status {
         font-size: 11px !important;
