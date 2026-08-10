@@ -122,10 +122,6 @@
 
     <main class="app-content">
 
-        <!-- ⭐ عداد المزامنة التنازلي -->
-        <div id="sync-timer-container" style="display:flex; justify-content:center; align-items:center; background: rgba(0,0,0,0.05); border: 1px dashed var(--primary); padding: 10px; border-radius: 8px; margin-bottom: 15px; font-weight: bold; color: var(--text-main); font-size: 0.95rem;">
-            <div><i class="fa-solid fa-clock" style="color: var(--primary); margin-left: 5px;"></i> المزامنة مع الكاشير بعد: <span id="sync-timer-countdown" style="color: var(--primary); font-size: 1.1rem; display: inline-block; min-width: 65px; text-align: left;" dir="ltr">--:--:--</span></div>
-        </div>
 
         <!-- ⭐ منبه الحجوزات القريبة -->
         <div id="booking-alert-banner"
@@ -1229,6 +1225,12 @@
                     <button id="openLedgerBtn" class="interactive-btn"
                         style="background: linear-gradient(135deg, #8e44ad, #2980b9); color: white; border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold; flex: 1 1 200px; max-width: 100%;"><i class="fa-solid fa-plus"></i>
                         تسجيل استلام بضاعة</button>
+                </div>
+
+                <!-- ⭐ عداد المزامنة التنازلي (تم نقله هنا بناءً على طلب العميل) -->
+                <div id="sync-timer-container" style="display:flex; flex-direction:column; justify-content:center; align-items:center; background: rgba(0,0,0,0.05); border: 1px dashed var(--primary); padding: 10px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+                    <div style="font-weight: bold; color: var(--text-main); font-size: 1rem;"><i class="fa-solid fa-clock" style="color: var(--primary); margin-left: 5px;"></i> المزامنة التلقائية مع الكاشير بعد: <span id="sync-timer-countdown" style="color: var(--primary); font-size: 1.1rem; display: inline-block; min-width: 65px;" dir="ltr">--:--:--</span></div>
+                    <div style="font-size: 0.8rem; color: #666; margin-top: 5px; font-weight: normal;"><i class="fa-solid fa-circle-info"></i> ملحوظة: يقوم النظام بمزامنة المخزون والبيانات مع الكاشير كل 48 ساعة لضمان تطابق الأرصدة.</div>
                 </div>
 
                 <div class="expiry-body">
