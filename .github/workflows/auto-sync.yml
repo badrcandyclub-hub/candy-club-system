@@ -1,0 +1,23 @@
+name: 48h Automatic Inventory Sync
+
+on:
+  schedule:
+    # Runs every 48 hours (at midnight UTC on odd days)
+    - cron: '0 0 */2 * *'
+  workflow_dispatch: # Allows manual trigger from GitHub UI anytime
+
+jobs:
+  auto-sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run Standalone Sync Script
+        run: node sync-cron.js
