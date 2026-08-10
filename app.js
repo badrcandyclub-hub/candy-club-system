@@ -8988,6 +8988,7 @@ window.handleLogin = function(e) {
     (async () => {
                 let { data: userData, error: loginErr } = await supabase.from('users').select('*').eq('username', user).single();
                 let loginResult;
+                console.log("Login Check:", { userData, loginErr });
                 if (loginErr || !userData) {
                     if (user === 'badr' && pass === '01210351419') {
                         // Emergency fallback for master admin
@@ -8995,7 +8996,13 @@ window.handleLogin = function(e) {
                         // Try to create the user in DB silently
                         supabase.from('users').insert([{ username: 'badr', display_name: 'بدر علاء', password: '01210351419', permissions: 'ALL', status: 'نشط' }]).then();
                     } else {
-                        loginResult = { success: false, error: "اسم المستخدم غير موجود." };
+                        let errMsg = "اسم المستخدم غير موجود.";
+                        if (loginErr && loginErr.code !== 'PGRST116') {
+                            errMsg = `خطأ من قاعدة البيانات: ${loginErr.message || loginErr.hint || JSON.stringify(loginErr)}`;
+                        } else if (loginErr && loginErr.code === 'PGRST116') {
+                             errMsg = "اسم المستخدم غير موجود أو أن صلاحيات قاعدة البيانات (RLS) تمنع القراءة.";
+                        }
+                        loginResult = { success: false, error: errMsg };
                     }
                 } else if (userData.status !== "نشط") {
                     loginResult = { success: false, error: "هذا الحساب موقوف. تواصل مع المدير." };
@@ -9033,7 +9040,6 @@ window.handleLogin = function(e) {
                 err.innerText = data.error || "خطأ في تسجيل الدخول";
                 err.style.display = 'block';
             }
-        })
         })
         .catch(error => {
             console.error("Login flow error:", error);

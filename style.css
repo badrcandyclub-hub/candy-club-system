@@ -2861,13 +2861,12 @@ body.dark-mode .btn-settle {
 
 @media (max-width: 768px) {
     .app-header {
-        flex-wrap: wrap !important;
-        height: auto !important;
-        padding-top: 10px !important;
-        padding-bottom: 10px !important;
+        flex-wrap: nowrap !important;
+        height: var(--header-height) !important;
+        padding: 0 10px !important;
         justify-content: space-between !important;
         align-items: center !important;
-        gap: 10px !important;
+        gap: 5px !important;
     }
     .header-right {
         order: 1;
@@ -2878,6 +2877,14 @@ body.dark-mode .btn-settle {
         flex: 1 !important;
         text-align: center;
         justify-content: center !important;
+        overflow: hidden;
+    }
+    .logo-text {
+        font-size: 1rem !important;
+        white-space: nowrap;
+    }
+    .logo-sub {
+        display: none !important;
     }
     .header-actions {
         order: 3;
@@ -2886,35 +2893,28 @@ body.dark-mode .btn-settle {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
-        justify-content: flex-end !important;
-        align-items: center !important;
-        gap: 8px !important;
-        min-width: unset !important;
-    }
-    .header-controls, .status-container {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
         justify-content: center !important;
+        align-items: center !important;
         gap: 5px !important;
+        padding-top: 0 !important;
+        border-top: none !important;
     }
     .status-indicator {
         display: flex !important;
         flex-direction: row !important;
         align-items: center !important;
         justify-content: center !important;
-        gap: 5px !important;
+        gap: 2px !important;
         width: auto !important;
-        padding: 4px 8px !important;
-    }
-    .header-controls button, .status-container button, .header-actions button, .status-indicator button {
-        font-size: 11px !important;
-        padding: 6px 10px !important;
+        padding: 4px 6px !important;
+        background: transparent !important;
+        border-radius: 10px !important;
     }
     .btn-suspended {
         font-size: 11px !important;
-        padding: 6px 10px !important;
+        padding: 4px 8px !important;
         white-space: nowrap !important;
+        border-radius: 10px !important;
     }
     #sync-status {
         display: none !important;
