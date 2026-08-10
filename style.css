@@ -2867,12 +2867,27 @@ body.dark-mode .btn-settle {
         gap: 5px !important;
         width: 100% !important;
     }
+    .header-actions {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-end !important;
+        justify-content: center !important;
+        gap: 4px !important;
+        width: auto !important;
+    }
+    .status-indicator {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 5px !important;
+        width: auto !important;
+    }
     .header-controls button, .status-container button, .header-actions button, .status-indicator button {
-        font-size: 12px !important;
-        padding: 5px 8px !important;
+        font-size: 11px !important;
+        padding: 4px 6px !important;
     }
     #sync-status {
-        font-size: 12px !important;
+        font-size: 11px !important;
     }
 }
 
