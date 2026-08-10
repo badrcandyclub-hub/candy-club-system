@@ -397,14 +397,14 @@ async function handleSupabaseRequest(url, options) {
                 responseData = { success: true };
                 break;
             case 'deleteDriver':
-                await supabase.from('settings_drivers').delete().eq('driver_name', params.name);
+                await supabase.from('couriers').delete().eq('name', params.name);
                 responseData = { success: true };
                 break;
             case 'deleteModerator':
-                await supabase.from('users').delete().eq('username', params.name);
+                await supabase.from('moderators').delete().eq('name', params.name);
                 responseData = { success: true };
                 break;
-            case 'addModerator':
+            case 'addUser':
                 await supabase.from('users').insert([{ username: params.user, display_name: params.user, password: params.pass, permissions: params.perms, status: 'نشط' }]);
                 responseData = { success: true };
                 break;
@@ -540,11 +540,11 @@ async function handleSupabaseRequest(url, options) {
                 responseData = { success: true };
                 break;
             case 'addDriver':
-                await supabase.from('settings_drivers').insert([{ driver_name: params.name, phone: params.phone }]);
+                await supabase.from('couriers').insert([{ name: params.name, phone: params.phone }]);
                 responseData = { success: true };
                 break;
             case 'editDriver':
-                await supabase.from('settings_drivers').update({ phone: params.phone }).eq('driver_name', params.name);
+                await supabase.from('couriers').update({ phone: params.phone }).eq('name', params.name);
                 responseData = { success: true };
                 break;
             case 'addExpiry':
@@ -1767,31 +1767,27 @@ window.updateGovernoratesDropdown = function () {
     let type = document.getElementById('deliveryType') ? document.getElementById('deliveryType').value : 'normal';
 
     let currentVal = govSelect.value;
-    govSelect.innerHTML = '<option value="">اختر من القائمة</option>';
+    let html = '<option value="">اختر من القائمة</option>';
 
     if (type === 'gov_shipping') {
         if (data.govs && data.govs.length > 0) {
-            let optgroup = document.createElement('optgroup'); 
-            optgroup.label = "\uf48b المحافظات";
-            optgroup.style.fontFamily = "'Font Awesome 6 Free', 'Cairo', sans-serif";
-            optgroup.style.fontWeight = "900";
+            html += `<optgroup label="&#xf48b; المحافظات" style="font-family: 'Font Awesome 6 Free', 'Cairo', sans-serif; font-weight: 900;">`;
             data.govs.forEach(z => {
-                optgroup.innerHTML += `<option value="${z.name}">${z.name} (${z.price} ج)</option>`;
+                html += `<option value="${z.name}">${z.name} (${z.price} ج)</option>`;
             });
-            govSelect.appendChild(optgroup);
+            html += `</optgroup>`;
         }
     } else {
         if (data.alex && data.alex.length > 0) {
-            let optgroup = document.createElement('optgroup'); 
-            optgroup.label = "\uf0c1 مناطق الإسكندرية";
-            optgroup.style.fontFamily = "'Font Awesome 6 Free', 'Cairo', sans-serif";
-            optgroup.style.fontWeight = "900";
+            html += `<optgroup label="&#xf0c1; مناطق الإسكندرية" style="font-family: 'Font Awesome 6 Free', 'Cairo', sans-serif; font-weight: 900;">`;
             data.alex.forEach(z => {
-                optgroup.innerHTML += `<option value="${z.name}">${z.name} (${z.price} ج)</option>`;
+                html += `<option value="${z.name}">${z.name} (${z.price} ج)</option>`;
             });
-            govSelect.appendChild(optgroup);
+            html += `</optgroup>`;
         }
     }
+    
+    govSelect.innerHTML = html;
 
     if (Array.from(govSelect.options).some(opt => opt.value === currentVal)) {
         govSelect.value = currentVal;

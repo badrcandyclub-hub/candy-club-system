@@ -251,34 +251,6 @@ h1, h2, h3, h4, h5 {
     transform: scale(1.1) rotate(-5deg);
 }
 
-.login-screen::before,
-.login-screen::after {
-    content: '';
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(50px);
-    opacity: 0.6;
-    pointer-events: none;
-    animation: loginFloat 15s ease-in-out infinite alternate;
-}
-
-.login-screen::before {
-    width: 350px;
-    height: 350px;
-    background: var(--primary-glow);
-    top: -100px;
-    right: -100px;
-}
-
-.login-screen::after {
-    width: 400px;
-    height: 400px;
-    background: var(--secondary-glow);
-    bottom: -150px;
-    left: -150px;
-    animation-delay: -7s;
-}
-
 .login-card {
     background: var(--card);
     padding: 45px 35px;
@@ -2255,10 +2227,10 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
         width: auto;
         justify-content: flex-end;
     }
-    .logo-container { width: auto; justify-content: center; }
+    .logo-container { width: auto; justify-content: center; flex-direction: column; gap: 2px; }
     .header-right { min-width: unset !important; }
-    .logo-text { font-size: 1.3rem; }
-    /* .logo-sub { display: none; } */
+    .logo-text { font-size: 1.1rem; white-space: nowrap; }
+    .logo-sub { font-size: 0.75rem; white-space: nowrap; }
     .section-card { padding: 16px 12px; margin-bottom: 15px; border-radius: 12px; }
     .stats-row { flex-wrap: wrap; }
 
