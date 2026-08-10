@@ -2860,53 +2860,67 @@ body.dark-mode .btn-settle {
 }
 
 @media (max-width: 768px) {
-    .header-controls, .status-container, .header-actions, .status-indicator {
-        display: flex !important;
-        flex-wrap: wrap !important;
-        justify-content: center !important;
-        gap: 5px !important;
     .app-header {
         flex-wrap: wrap !important;
         height: auto !important;
         padding-top: 10px !important;
         padding-bottom: 10px !important;
         justify-content: space-between !important;
+        align-items: center !important;
+        gap: 10px !important;
     }
     .header-right {
         order: 1;
+        width: auto !important;
     }
     .logo-container {
         order: 2;
         flex: 1 !important;
+        text-align: center;
+        justify-content: center !important;
     }
     .header-actions {
         order: 3;
-        width: 100% !important;
-        margin-top: 10px !important;
+        width: auto !important;
+        margin-top: 0 !important;
         display: flex !important;
         flex-direction: row !important;
-        justify-content: center !important;
+        flex-wrap: nowrap !important;
+        justify-content: flex-end !important;
         align-items: center !important;
-        gap: 10px !important;
+        gap: 8px !important;
+        min-width: unset !important;
     }
     .header-controls, .status-container {
         display: flex !important;
-        flex-wrap: wrap !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
         justify-content: center !important;
         gap: 5px !important;
-        width: 100% !important;
     }
     .status-indicator {
         display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: center !important;
         gap: 5px !important;
         width: auto !important;
+        padding: 4px 8px !important;
     }
     .header-controls button, .status-container button, .header-actions button, .status-indicator button {
-        font-size: 12px !important;
+        font-size: 11px !important;
         padding: 6px 10px !important;
     }
-    #sync-status {
+    .btn-suspended {
         font-size: 11px !important;
+        padding: 6px 10px !important;
+        white-space: nowrap !important;
+    }
+    #sync-status {
+        display: none !important;
+    }
+    .toast-container {
+        top: calc(var(--header-height) + 10px) !important;
     }
 }
 

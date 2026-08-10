@@ -8977,7 +8977,7 @@ function showLogin() {
 
 window.handleLogin = function(e) {
     e.preventDefault();
-    const user = document.getElementById('login-username').value;
+    const user = document.getElementById('login-username').value.trim();
     const pass = document.getElementById('login-password').value;
     const btn = document.getElementById('login-btn');
     const err = document.getElementById('login-error');
@@ -9034,8 +9034,10 @@ window.handleLogin = function(e) {
                 err.style.display = 'block';
             }
         })
+        })
         .catch(error => {
-            err.innerText = "فشل الاتصال بالسيرفر";
+            console.error("Login flow error:", error);
+            err.innerText = error.message ? `خطأ داخلي: ${error.message}` : "فشل الاتصال بالسيرفر";
             err.style.display = 'block';
         })
         .finally(() => {
@@ -11554,58 +11556,108 @@ function sendEmailNotification(to_name, subject, message) {
 
 
 // ============================================================
-// Firebase 48h Sync Logic
+// Firebase 48h Sync Logic (Global Sync Timer)
 // ============================================================
-function setupFirebaseSync() {
+async function getGlobalSyncTime() {
+    try {
+        const { data, error } = await supabase.from('settings_shipping')
+            .select('*')
+            .eq('zone_name', '_SYNC_TIMER_')
+            .eq('zone_type', 'system')
+            .single();
+        if (data && data.price) return parseInt(data.price);
+    } catch(e) { }
+    return 0; // fallback
+}
+
+async function updateGlobalSyncTime() {
+    const now = new Date().getTime();
+    try {
+        const { data } = await supabase.from('settings_shipping')
+            .select('id')
+            .eq('zone_name', '_SYNC_TIMER_')
+            .eq('zone_type', 'system');
+            
+        if (data && data.length > 0) {
+            await supabase.from('settings_shipping').update({ price: now }).eq('id', data[0].id);
+        } else {
+            await supabase.from('settings_shipping').insert([{ 
+                zone_name: '_SYNC_TIMER_', 
+                zone_type: 'system', 
+                price: now,
+                delivery_type: 'system'
+            }]);
+        }
+    } catch(e) { console.error("Global timer update error", e); }
+    return now;
+}
+
+let currentGlobalLastSync = 0; // Store in memory for immediate UI updates
+
+async function setupFirebaseSync() {
     // 48 hours in milliseconds
     const SYNC_INTERVAL = 48 * 60 * 60 * 1000;
     
+    // Fetch initial global time
+    currentGlobalLastSync = await getGlobalSyncTime();
+    
+    if (currentGlobalLastSync === 0) {
+        currentGlobalLastSync = await updateGlobalSyncTime(); // initialize if it doesn't exist
+    }
+
     // Function to execute the sync
-    const executeSync = () => {
+    const executeSync = async () => {
         let formData = new URLSearchParams();
         formData.append('action', 'syncFirebaseInventory');
         
-        fetch(GOOGLE_SHEETS_URL, { method: 'POST', body: formData })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success && data.message && !data.message.includes("تحديث 0") && !data.message.includes("متطابقة")) {
-                    console.log("Auto-Sync Success:", data.message);
-                } else if (!data.success) {
-                    console.error("Auto-Sync Error:", data.error);
-                }
-            })
-            .catch(err => console.error("Auto-Sync fetch error:", err));
+        try {
+            const r = await fetch(GOOGLE_SHEETS_URL, { method: 'POST', body: formData });
+            const data = await r.json();
+            if (data.success && data.message && !data.message.includes("تحديث 0") && !data.message.includes("متطابقة")) {
+                console.log("Auto-Sync Success:", data.message);
+                currentGlobalLastSync = await updateGlobalSyncTime();
+            } else if (!data.success) {
+                console.error("Auto-Sync Error:", data.error);
+            } else {
+                currentGlobalLastSync = await updateGlobalSyncTime(); // update time even if 0 updates
+            }
+        } catch(err) {
+            console.error("Auto-Sync fetch error:", err);
+        }
     };
 
-    // Store the last sync time in localStorage
-    const lastSyncStr = localStorage.getItem('lastFirebaseSyncTime');
     const now = new Date().getTime();
-    
-    if (!lastSyncStr || (now - parseInt(lastSyncStr)) > SYNC_INTERVAL) {
-        // Run immediately if it's been more than 48 hours or never run
+    if ((now - currentGlobalLastSync) > SYNC_INTERVAL) {
+        // Run immediately if it's been more than 48 hours
         executeSync();
-        localStorage.setItem('lastFirebaseSyncTime', now.toString());
     }
 
     // Set interval to check every hour to see if 48 hours have passed
-    setInterval(() => {
-        const currentLastSync = parseInt(localStorage.getItem('lastFirebaseSyncTime') || '0');
-        const currentTime = new Date().getTime();
+    setInterval(async () => {
+        const dbTime = await getGlobalSyncTime(); // re-fetch to see if another user synced
+        if (dbTime > currentGlobalLastSync) currentGlobalLastSync = dbTime;
         
-        if ((currentTime - currentLastSync) > SYNC_INTERVAL) {
+        const currentTime = new Date().getTime();
+        if ((currentTime - currentGlobalLastSync) > SYNC_INTERVAL) {
             executeSync();
-            localStorage.setItem('lastFirebaseSyncTime', currentTime.toString());
         }
     }, 60 * 60 * 1000); // Check every hour
+    
+    // Periodically fetch from DB every 1 minute so timer is updated if someone else synced
+    setInterval(async () => {
+        const dbTime = await getGlobalSyncTime();
+        if (dbTime > 0) currentGlobalLastSync = dbTime;
+    }, 60 * 1000);
 
     // Timer display logic
     const updateTimerDisplay = () => {
         const timerEls = document.querySelectorAll('#sync-timer-countdown');
         if (!timerEls.length) return;
         
-        const currentLastSync = parseInt(localStorage.getItem('lastFirebaseSyncTime') || new Date().getTime().toString());
+        if (currentGlobalLastSync === 0) return; // Still loading
+        
         const currentTime = new Date().getTime();
-        const timePassed = currentTime - currentLastSync;
+        const timePassed = currentTime - currentGlobalLastSync;
         const timeLeft = SYNC_INTERVAL - timePassed;
         
         if (timeLeft <= 0) {
@@ -11639,26 +11691,26 @@ function setupFirebaseSync() {
 }
 
 // Add global function for manual trigger if needed
-window.runSyncNow = function() {
+window.runSyncNow = async function() {
     let formData = new URLSearchParams();
     formData.append('action', 'syncFirebaseInventory');
     
     showToast('جاري بدء المزامنة مع Firebase...', 'info');
     
-    fetch(GOOGLE_SHEETS_URL, { method: 'POST', body: formData })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                showToast(data.message, 'success');
-                localStorage.setItem('lastFirebaseSyncTime', new Date().getTime().toString());
-            } else {
-                showToast(data.error || 'حدث خطأ في المزامنة', 'error');
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            showToast('حدث خطأ في الاتصال', 'error');
-        });
+    try {
+        const r = await fetch(GOOGLE_SHEETS_URL, { method: 'POST', body: formData });
+        const data = await r.json();
+        
+        if (data.success) {
+            showToast(data.message, 'success');
+            currentGlobalLastSync = await updateGlobalSyncTime();
+        } else {
+            showToast(data.error || 'حدث خطأ في المزامنة', 'error');
+        }
+    } catch(err) {
+        console.error(err);
+        showToast('حدث خطأ في الاتصال', 'error');
+    }
 };
 
 window.togglePlatformDropdown = function() {
