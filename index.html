@@ -2446,12 +2446,18 @@
                     <label style="display:flex; align-items:center; gap:8px; font-size:0.9rem; font-weight:700; color:#059669; margin-bottom:8px;">
                         <i class="fa-solid fa-right-to-bracket"></i> وقت الحضور
                     </label>
-                    <input type="text" id="editAttCheckIn" 
-                        style="width:100%; padding:12px 16px; border:2px solid #e2e8f0; border-radius:12px; font-size:1.1rem; font-family:inherit; box-sizing:border-box; transition:all 0.2s; background:#fff; color:#334155; font-weight:600;"
-                        onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 4px rgba(16,185,129,0.1)';"
-                        onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none';"
-                        onchange="calcEditHours()"
-                        placeholder="مثال: 10:00 AM">
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <div style="display:flex; flex-direction:column; gap:6px;">
+                            <button type="button" id="editAttCheckInAm" onclick="toggleAttendancePeriod('CheckIn','AM')" data-target="CheckIn" data-period="AM" style="min-width:52px; padding:8px 10px; border-radius:10px; border:1px solid #fcd34d; background:#fff7d6; color:#b45309; font-weight:800; cursor:pointer; font-family:inherit; box-shadow:0 2px 4px rgba(245,158,11,0.08);">AM</button>
+                            <button type="button" id="editAttCheckInPm" onclick="toggleAttendancePeriod('CheckIn','PM')" data-target="CheckIn" data-period="PM" style="min-width:52px; padding:8px 10px; border-radius:10px; border:1px solid #1f2937; background:#e2e8f0; color:#1f2937; font-weight:800; cursor:pointer; font-family:inherit; box-shadow:0 2px 4px rgba(15,23,42,0.08);">PM</button>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px; flex:1; background:#fff; border:2px solid #e2e8f0; border-radius:12px; padding:8px 12px; transition:all 0.2s;" onfocus-within="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 4px rgba(16,185,129,0.1)';" onfocusout="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none';">
+                            <input type="number" id="editAttCheckInHour" min="0" max="12" step="1" value="10" oninput="syncAttendanceEditorValue('CheckIn')" style="width:46px; padding:6px 2px; border:none; background:transparent; font-size:1.1rem; font-weight:700; color:#334155; text-align:center; font-family:inherit; outline:none;">
+                            <span style="font-size:1.5rem; font-weight:800; color:#10b981;">:</span>
+                            <input type="number" id="editAttCheckInMinute" min="0" max="59" step="1" value="00" oninput="syncAttendanceEditorValue('CheckIn')" style="width:46px; padding:6px 2px; border:none; background:transparent; font-size:1.1rem; font-weight:700; color:#334155; text-align:center; font-family:inherit; outline:none;">
+                        </div>
+                    </div>
+                    <input type="hidden" id="editAttCheckIn" value="10:00 AM">
                 </div>
 
                 <!-- CheckOut Time -->
@@ -2459,12 +2465,18 @@
                     <label style="display:flex; align-items:center; gap:8px; font-size:0.9rem; font-weight:700; color:#dc2626; margin-bottom:8px;">
                         <i class="fa-solid fa-right-from-bracket"></i> وقت الانصراف
                     </label>
-                    <input type="text" id="editAttCheckOut" 
-                        style="width:100%; padding:12px 16px; border:2px solid #e2e8f0; border-radius:12px; font-size:1.1rem; font-family:inherit; box-sizing:border-box; transition:all 0.2s; background:#fff; color:#334155; font-weight:600;"
-                        onfocus="this.style.borderColor='#ef4444'; this.style.boxShadow='0 0 0 4px rgba(239,68,68,0.1)';"
-                        onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none';"
-                        onchange="calcEditHours()"
-                        placeholder="مثال: 05:00 PM">
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <div style="display:flex; flex-direction:column; gap:6px;">
+                            <button type="button" id="editAttCheckOutAm" onclick="toggleAttendancePeriod('CheckOut','AM')" data-target="CheckOut" data-period="AM" style="min-width:52px; padding:8px 10px; border-radius:10px; border:1px solid #fcd34d; background:#fff7d6; color:#b45309; font-weight:800; cursor:pointer; font-family:inherit; box-shadow:0 2px 4px rgba(245,158,11,0.08);">AM</button>
+                            <button type="button" id="editAttCheckOutPm" onclick="toggleAttendancePeriod('CheckOut','PM')" data-target="CheckOut" data-period="PM" style="min-width:52px; padding:8px 10px; border-radius:10px; border:1px solid #1f2937; background:#e2e8f0; color:#1f2937; font-weight:800; cursor:pointer; font-family:inherit; box-shadow:0 2px 4px rgba(15,23,42,0.08);">PM</button>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px; flex:1; background:#fff; border:2px solid #e2e8f0; border-radius:12px; padding:8px 12px; transition:all 0.2s;" onfocus-within="this.style.borderColor='#ef4444'; this.style.boxShadow='0 0 0 4px rgba(239,68,68,0.1)';" onfocusout="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none';">
+                            <input type="number" id="editAttCheckOutHour" min="0" max="12" step="1" value="05" oninput="syncAttendanceEditorValue('CheckOut')" style="width:46px; padding:6px 2px; border:none; background:transparent; font-size:1.1rem; font-weight:700; color:#334155; text-align:center; font-family:inherit; outline:none;">
+                            <span style="font-size:1.5rem; font-weight:800; color:#ef4444;">:</span>
+                            <input type="number" id="editAttCheckOutMinute" min="0" max="59" step="1" value="00" oninput="syncAttendanceEditorValue('CheckOut')" style="width:46px; padding:6px 2px; border:none; background:transparent; font-size:1.1rem; font-weight:700; color:#334155; text-align:center; font-family:inherit; outline:none;">
+                        </div>
+                    </div>
+                    <input type="hidden" id="editAttCheckOut" value="05:00 PM">
                 </div>
 
                 <!-- Status -->

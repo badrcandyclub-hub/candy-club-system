@@ -10576,6 +10576,108 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
 // ============================================================
 let _editAttData = {}; // Store current edit data
 
+function parseAttendanceTimeValue(rawValue, fallbackPeriod = 'AM') {
+    let value = String(rawValue || '').trim();
+    if (!value || value === '-' || value === '—') {
+        return { hour: 0, minute: 0, period: fallbackPeriod };
+    }
+
+    value = value.replace(/\s*ص\s*/gi, ' AM ').replace(/\s*م\s*/gi, ' PM ');
+    value = value.replace(/\s+/g, ' ');
+
+    let period = fallbackPeriod;
+    let match = value.match(/^(AM|PM)\s*[:\-]?\s*(\d{1,2})\s*[:\.]\s*(\d{1,2})$/i);
+    if (match) {
+        period = match[1].toUpperCase();
+        return { hour: parseInt(match[2], 10) || 0, minute: parseInt(match[3], 10) || 0, period };
+    }
+
+    match = value.match(/^(\d{1,2})\s*[:\.]\s*(\d{1,2})\s*(AM|PM)?$/i);
+    if (match) {
+        let hour = parseInt(match[1], 10) || 0;
+        let minute = parseInt(match[2], 10) || 0;
+        period = (match[3] || fallbackPeriod).toUpperCase();
+        return { hour, minute, period };
+    }
+
+    match = value.match(/^(AM|PM)\s*[:\-]?\s*(\d{1,2})$/i);
+    if (match) {
+        period = match[1].toUpperCase();
+        return { hour: parseInt(match[2], 10) || 0, minute: 0, period };
+    }
+
+    return { hour: 0, minute: 0, period };
+}
+
+function serializeAttendanceTimeValue(hour, minute, period) {
+    let h = Math.max(0, Math.min(12, Number(hour) || 0));
+    let m = Math.max(0, Math.min(59, Number(minute) || 0));
+    let p = (period || 'AM').toUpperCase();
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')} ${p}`;
+}
+
+function setAttendanceTimeEditor(targetKey, rawValue) {
+    let parsed = parseAttendanceTimeValue(rawValue, 'PM');
+    let hourInput = document.getElementById(`editAtt${targetKey}Hour`);
+    let minuteInput = document.getElementById(`editAtt${targetKey}Minute`);
+    let hiddenInput = document.getElementById(`editAtt${targetKey}`);
+    let amBtn = document.getElementById(`editAtt${targetKey}Am`);
+    let pmBtn = document.getElementById(`editAtt${targetKey}Pm`);
+
+    if (hourInput) hourInput.value = String(Math.max(0, Math.min(12, parsed.hour))).padStart(2, '0');
+    if (minuteInput) minuteInput.value = String(Math.max(0, Math.min(59, parsed.minute))).padStart(2, '0');
+    if (hiddenInput) hiddenInput.value = serializeAttendanceTimeValue(parsed.hour, parsed.minute, parsed.period);
+
+    if (amBtn && pmBtn) {
+        let isAm = parsed.period === 'AM';
+        amBtn.classList.toggle('active', isAm);
+        pmBtn.classList.toggle('active', !isAm);
+        amBtn.style.background = isAm ? '#fff7d6' : '#e2e8f0';
+        amBtn.style.borderColor = isAm ? '#f59e0b' : '#cbd5e1';
+        amBtn.style.color = isAm ? '#b45309' : '#475569';
+        amBtn.style.boxShadow = isAm ? '0 0 0 4px rgba(245,158,11,0.12)' : 'none';
+
+        pmBtn.style.background = !isAm ? '#1f2937' : '#e2e8f0';
+        pmBtn.style.borderColor = !isAm ? '#1f2937' : '#cbd5e1';
+        pmBtn.style.color = !isAm ? '#f8fafc' : '#475569';
+        pmBtn.style.boxShadow = !isAm ? '0 0 0 4px rgba(31,41,55,0.12)' : 'none';
+    }
+}
+
+window.toggleAttendancePeriod = function(targetKey, period) {
+    let hourInput = document.getElementById(`editAtt${targetKey}Hour`);
+    let minuteInput = document.getElementById(`editAtt${targetKey}Minute`);
+    let hiddenInput = document.getElementById(`editAtt${targetKey}`);
+
+    let hour = Number(hourInput ? hourInput.value : 0) || 0;
+    let minute = Number(minuteInput ? minuteInput.value : 0) || 0;
+
+    if (hiddenInput) hiddenInput.value = serializeAttendanceTimeValue(hour, minute, period);
+    setAttendanceTimeEditor(targetKey, hiddenInput ? hiddenInput.value : `${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')} ${period}`);
+    calcEditHours();
+};
+
+window.syncAttendanceEditorValue = function(targetKey) {
+    let hourInput = document.getElementById(`editAtt${targetKey}Hour`);
+    let minuteInput = document.getElementById(`editAtt${targetKey}Minute`);
+    let hiddenInput = document.getElementById(`editAtt${targetKey}`);
+    let amBtn = document.getElementById(`editAtt${targetKey}Am`);
+    let pmBtn = document.getElementById(`editAtt${targetKey}Pm`);
+
+    let hour = Number(hourInput ? hourInput.value : 0) || 0;
+    let minute = Number(minuteInput ? minuteInput.value : 0) || 0;
+    if (hour > 12) hour = 12;
+    if (hour < 0) hour = 0;
+    if (minute > 59) minute = 59;
+    if (minute < 0) minute = 0;
+    if (hourInput) hourInput.value = String(hour).padStart(2, '0');
+    if (minuteInput) minuteInput.value = String(minute).padStart(2, '0');
+
+    let currentPeriod = amBtn && amBtn.classList.contains('active') ? 'AM' : 'PM';
+    if (hiddenInput) hiddenInput.value = serializeAttendanceTimeValue(hour, minute, currentPeriod);
+    calcEditHours();
+};
+
 window.openEditAttendanceModal = function(employee, date, checkIn, checkOut, status, notes, hoursStr) {
     _editAttData = { employee, date };
 
@@ -10586,9 +10688,8 @@ window.openEditAttendanceModal = function(employee, date, checkIn, checkOut, sta
     let sub = document.getElementById('editAttModalSubtitle');
     if (sub) sub.textContent = `${employee} — ${date}`;
 
-    // We no longer convert to 24h since inputs are text and can accept any string like 10:00 AM
-    document.getElementById('editAttCheckIn').value = (!checkIn || checkIn === '-') ? '' : checkIn;
-    document.getElementById('editAttCheckOut').value = (!checkOut || checkOut === '-') ? '' : checkOut;
+    setAttendanceTimeEditor('CheckIn', checkIn || '');
+    setAttendanceTimeEditor('CheckOut', checkOut || '');
     
     let notesEl = document.getElementById('editAttNotes');
     if (notesEl) notesEl.value = notes || '';
@@ -10657,19 +10758,17 @@ window.updateHiddenManualHours = function() {
 
 window.handleEditStatusChange = function() {
     let status = document.getElementById('editAttStatus').value;
-    let inInput = document.getElementById('editAttCheckIn');
-    let outInput = document.getElementById('editAttCheckOut');
     let preview = document.getElementById('editAttHoursPreview');
     let text = document.getElementById('editAttHoursText');
     
     if (status === 'غائب' || status === 'إجازة بدون مرتب') {
-        inInput.value = '00:00';
-        outInput.value = '00:00';
+        setAttendanceTimeEditor('CheckIn', '00:00 AM');
+        setAttendanceTimeEditor('CheckOut', '00:00 AM');
         if (text) text.textContent = '0 ساعة';
         if (preview) preview.style.display = 'flex';
     } else if (status === 'إجازة مدفوعة') {
-        inInput.value = '00:00';
-        outInput.value = '00:00';
+        setAttendanceTimeEditor('CheckIn', '00:00 AM');
+        setAttendanceTimeEditor('CheckOut', '00:00 AM');
         if (text) text.textContent = '8 ساعة';
         if (preview) preview.style.display = 'flex';
     } else {
@@ -10699,29 +10798,28 @@ window.calcEditHours = function() {
 
     if (inVal && outVal) {
         try {
-            let ih = 0, im = 0, oh = 0, om = 0;
-            let inMatch = inVal.match(/(\d+):(\d+)/);
-            let outMatch = outVal.match(/(\d+):(\d+)/);
+            let inParsed = parseAttendanceTimeValue(inVal, 'AM');
+            let outParsed = parseAttendanceTimeValue(outVal, 'PM');
+
+            let ih = Number(inParsed.hour) || 0;
+            let im = Number(inParsed.minute) || 0;
+            let oh = Number(outParsed.hour) || 0;
+            let om = Number(outParsed.minute) || 0;
+
+            if (inParsed.period === 'PM' && ih !== 12) ih += 12;
+            if (inParsed.period === 'AM' && ih === 12) ih = 0;
+            if (outParsed.period === 'PM' && oh !== 12) oh += 12;
+            if (outParsed.period === 'AM' && oh === 12) oh = 0;
+
+            let totalMin = (oh * 60 + om) - (ih * 60 + im);
+            if (totalMin < 0) totalMin += 24 * 60;
+            let h = Math.floor(totalMin / 60);
+            let min = totalMin % 60;
             
-            if (inMatch && outMatch) {
-                ih = parseInt(inMatch[1]); im = parseInt(inMatch[2]);
-                if (inVal.toLowerCase().includes('pm') && ih !== 12) ih += 12;
-                if (inVal.toLowerCase().includes('am') && ih === 12) ih = 0;
-
-                oh = parseInt(outMatch[1]); om = parseInt(outMatch[2]);
-                if (outVal.toLowerCase().includes('pm') && oh !== 12) oh += 12;
-                if (outVal.toLowerCase().includes('am') && oh === 12) oh = 0;
-
-                let totalMin = (oh * 60 + om) - (ih * 60 + im);
-                if (totalMin < 0) totalMin += 24 * 60;
-                let h = Math.floor(totalMin / 60);
-                let min = totalMin % 60;
-                
-                if (!isNaN(h) && !isNaN(min)) {
-                    text.textContent = h + ' ساعة' + (min > 0 ? ' و ' + min + ' دقيقة' : '');
-                    preview.style.display = 'flex';
-                    return;
-                }
+            if (!isNaN(h) && !isNaN(min)) {
+                text.textContent = h + ' ساعة' + (min > 0 ? ' و ' + min + ' دقيقة' : '');
+                preview.style.display = 'flex';
+                return;
             }
         } catch(e) {}
     }
