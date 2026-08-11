@@ -444,7 +444,7 @@ async function handleSupabaseRequest(url, options) {
             case 'checkIn':
                 let { data: existIn } = await supabase.from('attendance').select('*').eq('employee_name', params.employeeName).eq('date', params.date).eq('status', 'حاضر');
                 if (existIn && existIn.length > 0) return createJsonResponse({ success: false, error: "أنت مسجل حضور بالفعل اليوم" });
-                let checkInTime = new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute:'2-digit' });
+                let checkInTime = window.getSyncedDate().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute:'2-digit' });
                 await supabase.from('attendance').insert([{ employee_name: params.employeeName, date: params.date, check_in: checkInTime, status: 'حاضر' }]);
                 responseData = { success: true, message: "تم تسجيل الحضور بنجاح", time: checkInTime };
                 break;
@@ -452,7 +452,7 @@ async function handleSupabaseRequest(url, options) {
                 let { data: existOut } = await supabase.from('attendance').select('*').eq('employee_name', params.employeeName).eq('status', 'حاضر').order('id', { ascending: false }).limit(1);
                 if (existOut && existOut.length > 0) {
                     let checkInTime = existOut[0].check_in;
-                    let checkOutTime = new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute:'2-digit' });
+                    let checkOutTime = window.getSyncedDate().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute:'2-digit' });
                     
                     // Calculate hours difference
                     let hoursStr = "0 ساعة";
