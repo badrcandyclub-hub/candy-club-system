@@ -11432,7 +11432,6 @@ let shortagesPage = 1;
 const SHORTAGES_PER_PAGE = 50;
 let currentShortagesCategory = '0'; // Default to "0" instead of "all"
 let currentShortagesSort = 'stock-asc'; // Default sorting
-let selectedShortages = new Set(); // store selected names
 let isShortagesLoading = false;
 
 window.changeShortagesSort = function(sortVal) {
@@ -11569,25 +11568,16 @@ window.loadShortagesDashboard = function() {
     applyShortagesFilterAndRender();
 };
 
-// Global toggle logic for preserving selection across pages
-window.toggleShortageSelection = function(productName, isChecked) {
-    if (isChecked) selectedShortages.add(productName);
-    else selectedShortages.delete(productName);
-};
-
 function renderShortagesDashboard() {
     let container = document.getElementById('shortagesListContainer');
-    let createBtn = document.getElementById('createShortagesTransferBtn');
     let pagination = document.getElementById('shortagesPagination');
     
     if (filteredShortages.length === 0) {
         container.innerHTML = '<p class="empty-msg">لا توجد منتجات في هذه الفئة!</p>';
-        createBtn.style.display = 'none';
         if(pagination) pagination.style.display = 'none';
         return;
     }
 
-    createBtn.style.display = 'flex';
     let html = '';
     
     let totalPages = Math.ceil(filteredShortages.length / SHORTAGES_PER_PAGE);
@@ -11605,8 +11595,6 @@ function renderShortagesDashboard() {
     let pageItems = filteredShortages.slice(startIndex, endIndex);
 
     pageItems.forEach((s) => {
-        let isChecked = selectedShortages.has(s.name) ? 'checked' : '';
-
         // Added custom box icon or generic icon based on stock
         let stockIcon = s.stock <= 0 ? 'fa-skull-crossbones' : (s.stock === 1 ? 'fa-circle-exclamation' : 'fa-box-open');
         let stockColor = s.stock <= 0 ? '#e74c3c' : (s.stock === 1 ? '#e67e22' : '#27ae60');
@@ -11614,11 +11602,6 @@ function renderShortagesDashboard() {
         html += `
             <label class="shortage-card-modern" style="cursor: pointer; display: flex; width: 100%; margin-bottom: 12px; box-sizing: border-box;">
                 <div style="display:flex; align-items:center; gap:15px; width: 100%;">
-                    <!-- Custom Checkbox -->
-                    <div class="custom-cb-container">
-                        <input type="checkbox" class="custom-cb-input shortage-checkbox" data-name="${s.name}" onchange="toggleShortageSelection('${s.name.replace(/'/g, "\\'")}', this.checked)" ${isChecked}>
-                        <span class="custom-cb-mark"></span>
-                    </div>
                     
                     <!-- Product Info -->
                     <div style="flex-grow: 1; display: flex; align-items: center; gap: 12px;">
@@ -11640,43 +11623,6 @@ function renderShortagesDashboard() {
     
     container.innerHTML = html;
 }
-
-window.createTransferFromShortages = function() {
-    if (selectedShortages.size === 0) {
-        showToast('برجاء تحديد منتج واحد على الأقل', 'warning');
-        return;
-    }
-    
-    // Open Inventory Transfer tab automatically!
-    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-    let invBtn = document.querySelector('.nav-item[data-target="inventory-transfers-tab"]');
-    if (invBtn) invBtn.classList.add('active');
-    
-    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-    let invPane = document.getElementById('inventory-transfers-tab');
-    if (invPane) invPane.classList.add('active');
-    
-    // Add selected items to inventory draft
-    selectedShortages.forEach(pName => {
-        let item = currentShortages.find(i => i.name === pName);
-        if (item) {
-            let existing = window.invItems.find(i => i.name === item.name);
-            if (!existing) {
-                window.invItems.push({ name: item.name, qty: 10, barcode: item.barcode || '' }); // Default 10 qty
-            }
-            // update status to in-transit
-            window.updateShortage(item.name, 'في الطريق');
-        }
-    });
-    
-    selectedShortages.clear(); // Clear selections after transfer
-    
-    if (typeof renderInvItems === 'function') renderInvItems();
-    showToast('تم تحويل النواقص لإذن المخازن! (الكمية الافتراضية 10)', 'success');
-    
-    if (document.getElementById('app-sidebar')) document.getElementById('app-sidebar').classList.remove("open");
-    if (document.getElementById('sidebar-overlay')) document.getElementById('sidebar-overlay').classList.remove("active");
-};
 
 // Add listener to load shortages when tab is clicked
 document.addEventListener("DOMContentLoaded", () => {
