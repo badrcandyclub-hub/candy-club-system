@@ -1174,12 +1174,38 @@ window.onload = () => {
     let quickRefreshBtn = document.getElementById('quickRefreshBtn');
     if (quickRefreshBtn) quickRefreshBtn.addEventListener('click', () => {
         showToast("جاري تحديث البيانات...", "warning");
+        window.supabaseStaticCache = {}; // Invalidate cache manually
         loadDataFromServer();
     });
 
     // ⭐ V16: تحقق من الجلسة بدلاً من التحميل المباشر
     checkSession();
 };
+
+window.supabaseStaticCache = {};
+const CACHE_RULES = {
+    'users': 60 * 60 * 1000,
+    'settings_shipping': 60 * 60 * 1000,
+    'couriers': 60 * 60 * 1000,
+    'moderators': 60 * 60 * 1000,
+    'catalog': 2 * 60 * 1000 
+};
+
+async function fetchCachedSupabaseTable(tableName, queryBuilder) {
+    let now = Date.now();
+    let cacheInfo = window.supabaseStaticCache[tableName];
+    let expiry = CACHE_RULES[tableName] || 0;
+    
+    if (expiry > 0 && cacheInfo && (now - cacheInfo.timestamp < expiry)) {
+        return { data: cacheInfo.data, error: cacheInfo.error };
+    }
+    
+    const result = await fetchAllSupabaseRows(queryBuilder);
+    if (!result.error) {
+        window.supabaseStaticCache[tableName] = { data: result.data, error: result.error, timestamp: now };
+    }
+    return result;
+}
 
 async function loadDataFromServer(customDate = null) {
     const syncStatus = document.getElementById('sync-status');
@@ -1215,11 +1241,11 @@ async function loadDataFromServer(customDate = null) {
         ] = await Promise.all([
             fetchAllSupabaseRows(supabase.from('orders').select('*').order('created_at', { ascending: true })),
             fetchAllSupabaseRows(supabase.from('customers').select('*').order('created_at', { ascending: true })),
-            fetchAllSupabaseRows(supabase.from('catalog').select('*').order('created_at', { ascending: true })),
-            fetchAllSupabaseRows(supabase.from('users').select('*').order('created_at', { ascending: true })),
-            fetchAllSupabaseRows(supabase.from('settings_shipping').select('*')),
-            fetchAllSupabaseRows(supabase.from('couriers').select('*')),
-            fetchAllSupabaseRows(supabase.from('moderators').select('*')),
+            fetchCachedSupabaseTable('catalog', supabase.from('catalog').select('*').order('created_at', { ascending: true })),
+            fetchCachedSupabaseTable('users', supabase.from('users').select('*').order('created_at', { ascending: true })),
+            fetchCachedSupabaseTable('settings_shipping', supabase.from('settings_shipping').select('*')),
+            fetchCachedSupabaseTable('couriers', supabase.from('couriers').select('*')),
+            fetchCachedSupabaseTable('moderators', supabase.from('moderators').select('*')),
             fetchAllSupabaseRows(supabase.from('out_of_stock').select('*')),
             fetchAllSupabaseRows(supabase.from('suspended_orders').select('*')),
             fetchAllSupabaseRows(supabase.from('expiries').select('*'))
