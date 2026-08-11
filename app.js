@@ -10893,6 +10893,11 @@ window.saveAttendanceEdit = function() {
 
     let checkInVal = document.getElementById('editAttCheckIn').value.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
     let checkOutVal = document.getElementById('editAttCheckOut').value.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+    
+    if (checkOutVal === "00:00 AM" || checkOutVal === "00:00 PM") {
+        checkOutVal = "-";
+    }
+
     let status = document.getElementById('editAttStatus').value;
     let notes = document.getElementById('editAttNotes').value;
     let manualHoursRaw = document.getElementById('editAttManualHours').value || '';
