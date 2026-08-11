@@ -2497,13 +2497,13 @@
                         <i class="fa-solid fa-tag"></i> الحالة
                     </label>
                     <div style="position:relative;">
-                        <select id="editAttStatus" onchange="handleEditStatusChange()" style="width:100%; padding:12px 16px; border:2px solid #e2e8f0; border-radius:12px; font-size:1.1rem; font-family:inherit; box-sizing:border-box; outline:none; transition:all 0.2s; background:#fff; color:#334155; font-weight:600; appearance:none; cursor:pointer;" onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 4px rgba(59,130,246,0.1)';" onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none';">
+                        <select id="editAttStatus" onchange="handleEditStatusChange()" style="width:100%; padding:12px 16px; border:2px solid #10b981; border-radius:12px; font-size:1.1rem; font-family:inherit; box-sizing:border-box; outline:none; transition:all 0.2s; background:#ecfdf5; color:#065f46; font-weight:600; appearance:none; cursor:pointer; box-shadow:0 0 0 4px rgba(16,185,129,0.08);" onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 4px rgba(16,185,129,0.12)';" onblur="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 4px rgba(16,185,129,0.08)';">
                             <option value="حاضر">✅ حاضر</option>
                             <option value="إجازة مدفوعة">🏖️ إجازة مدفوعة</option>
                             <option value="إجازة بدون مرتب">📋 إجازة بدون مرتب</option>
                             <option value="غائب">❌ غائب</option>
                         </select>
-                        <i class="fa-solid fa-chevron-down" style="position:absolute; left:16px; top:50%; transform:translateY(-50%); color:#94a3b8; pointer-events:none;"></i>
+                        <i class="fa-solid fa-chevron-down" style="position:absolute; left:16px; top:50%; transform:translateY(-50%); color:#047857; pointer-events:none;"></i>
                     </div>
                 </div>
             </div>
@@ -2522,22 +2522,22 @@
                 </div>
 
                 <!-- Manual Hours Override -->
-                <div style="background:#fffbeb; padding:15px; border-radius:16px; border:1px dashed #f59e0b;">
+                <div style="background:#fff7ed; padding:15px; border-radius:16px; border:1px dashed #f59e0b;">
                     <label style="display:flex; align-items:center; gap:8px; font-size:0.9rem; font-weight:700; color:#d97706; margin-bottom:12px;">
                         <i class="fa-solid fa-stopwatch"></i> ساعات العمل (تعديل يدوي - للمدير)
                     </label>
                     
                     <div style="display:flex; align-items:center; justify-content:center; background:#fff; border:2px solid #fcd34d; border-radius:12px; padding:8px 16px; transition:all 0.2s; box-shadow:0 2px 4px rgba(245,158,11,0.05);" onfocus-within="this.style.borderColor='#f59e0b'; this.style.boxShadow='0 0 0 4px rgba(245,158,11,0.1)';">
                         <div style="display:flex; flex-direction:column; align-items:center;">
-                            <span style="font-size:0.7rem; color:#d97706; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">ساعات</span>
-                            <input type="number" id="editAttManualHours_h" placeholder="00" min="0" max="99" 
+                            <span style="font-size:0.7rem; color:#d97706; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">HOUR</span>
+                            <input type="number" id="editAttManualHours_h" placeholder="00" min="0" max="99" inputmode="numeric" pattern="[0-9]*"
                                 oninput="updateHiddenManualHours()"
                                 style="width:50px; padding:4px; border:none; font-size:1.5rem; font-weight:800; color:#92400e; text-align:center; outline:none; background:transparent; font-family:monospace;">
                         </div>
                         <span style="font-size:1.8rem; font-weight:800; color:#f59e0b; margin:15px 8px 0 8px; animation:blink 2s infinite;">:</span>
                         <div style="display:flex; flex-direction:column; align-items:center;">
-                            <span style="font-size:0.7rem; color:#d97706; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">دقائق</span>
-                            <input type="number" id="editAttManualHours_m" placeholder="00" min="0" max="59" 
+                            <span style="font-size:0.7rem; color:#d97706; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">MIN</span>
+                            <input type="number" id="editAttManualHours_m" placeholder="00" min="0" max="59" inputmode="numeric" pattern="[0-9]*"
                                 oninput="updateHiddenManualHours()"
                                 style="width:50px; padding:4px; border:none; font-size:1.5rem; font-weight:800; color:#92400e; text-align:center; outline:none; background:transparent; font-family:monospace;">
                         </div>

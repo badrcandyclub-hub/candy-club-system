@@ -10616,6 +10616,55 @@ function serializeAttendanceTimeValue(hour, minute, period) {
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')} ${p}`;
 }
 
+function toLatinDigits(value) {
+    if (value === null || value === undefined) return '';
+    return String(value).replace(/[٠-٩]/g, ch => '٠١٢٣٤٥٦٧٨٩'.indexOf(ch).toString());
+}
+
+function applyAttendanceStatusTheme(status) {
+    const statusEl = document.getElementById('editAttStatus');
+    const checkInBox = document.getElementById('editAttCheckInBox');
+    const checkOutBox = document.getElementById('editAttCheckOutBox');
+    const preview = document.getElementById('editAttHoursPreview');
+    const manualWrap = document.getElementById('editAttManualHours_h')?.closest('div[style*="border-radius:12px"]') || null;
+
+    const palette = {
+        'حاضر': { bg: '#ecfdf5', border: '#10b981', accent: '#047857', previewBg: 'linear-gradient(135deg,#ecfdf5,#d1fae5)', previewBorder: '#10b981', selectBg: '#ecfdf5', selectText: '#065f46' },
+        'غائب': { bg: '#fef2f2', border: '#ef4444', accent: '#991b1b', previewBg: 'linear-gradient(135deg,#fef2f2,#fee2e2)', previewBorder: '#ef4444', selectBg: '#fef2f2', selectText: '#991b1b' },
+        'إجازة مدفوعة': { bg: '#fff7ed', border: '#f59e0b', accent: '#9a5d00', previewBg: 'linear-gradient(135deg,#fff7ed,#fef3c7)', previewBorder: '#f59e0b', selectBg: '#fff7ed', selectText: '#92400e' },
+        'إجازة بدون مرتب': { bg: '#f5f3ff', border: '#8b5cf6', accent: '#5b21b6', previewBg: 'linear-gradient(135deg,#f5f3ff,#ede9fe)', previewBorder: '#8b5cf6', selectBg: '#f5f3ff', selectText: '#5b21b6' }
+    };
+
+    const theme = palette[status] || palette['حاضر'];
+
+    if (checkInBox) {
+        checkInBox.style.background = theme.bg;
+        checkInBox.style.borderColor = theme.border;
+        checkInBox.style.boxShadow = `0 0 0 4px ${theme.border}1A`;
+    }
+    if (checkOutBox) {
+        checkOutBox.style.background = theme.bg;
+        checkOutBox.style.borderColor = theme.border;
+        checkOutBox.style.boxShadow = `0 0 0 4px ${theme.border}1A`;
+    }
+    if (preview) {
+        preview.style.background = theme.previewBg;
+        preview.style.borderColor = theme.previewBorder;
+        preview.style.boxShadow = 'inset 0 2px 4px rgba(255,255,255,0.5)';
+    }
+    if (statusEl) {
+        statusEl.style.background = theme.selectBg;
+        statusEl.style.borderColor = theme.border;
+        statusEl.style.color = theme.selectText;
+        statusEl.style.boxShadow = `0 0 0 4px ${theme.border}1A`;
+    }
+    if (manualWrap) {
+        manualWrap.style.background = theme.bg;
+        manualWrap.style.borderColor = theme.border;
+        manualWrap.style.boxShadow = `0 0 0 4px ${theme.border}1A`;
+    }
+}
+
 function setAttendanceTimeEditor(targetKey, rawValue) {
     let parsed = parseAttendanceTimeValue(rawValue, 'PM');
     let hourInput = document.getElementById(`editAtt${targetKey}Hour`);
@@ -10624,8 +10673,8 @@ function setAttendanceTimeEditor(targetKey, rawValue) {
     let amBtn = document.getElementById(`editAtt${targetKey}Am`);
     let pmBtn = document.getElementById(`editAtt${targetKey}Pm`);
 
-    if (hourInput) hourInput.value = String(Math.max(0, Math.min(12, parsed.hour))).padStart(2, '0');
-    if (minuteInput) minuteInput.value = String(Math.max(0, Math.min(59, parsed.minute))).padStart(2, '0');
+    if (hourInput) hourInput.value = toLatinDigits(String(Math.max(0, Math.min(12, parsed.hour))).padStart(2, '0'));
+    if (minuteInput) minuteInput.value = toLatinDigits(String(Math.max(0, Math.min(59, parsed.minute))).padStart(2, '0'));
     if (hiddenInput) hiddenInput.value = serializeAttendanceTimeValue(parsed.hour, parsed.minute, parsed.period);
 
     if (amBtn && pmBtn) {
@@ -10664,14 +10713,16 @@ window.syncAttendanceEditorValue = function(targetKey) {
     let amBtn = document.getElementById(`editAtt${targetKey}Am`);
     let pmBtn = document.getElementById(`editAtt${targetKey}Pm`);
 
-    let hour = Number(hourInput ? hourInput.value : 0) || 0;
-    let minute = Number(minuteInput ? minuteInput.value : 0) || 0;
+    let rawHour = toLatinDigits(hourInput ? hourInput.value : '0');
+    let rawMinute = toLatinDigits(minuteInput ? minuteInput.value : '0');
+    let hour = Number(rawHour) || 0;
+    let minute = Number(rawMinute) || 0;
     if (hour > 12) hour = 12;
     if (hour < 0) hour = 0;
     if (minute > 59) minute = 59;
     if (minute < 0) minute = 0;
-    if (hourInput) hourInput.value = String(hour).padStart(2, '0');
-    if (minuteInput) minuteInput.value = String(minute).padStart(2, '0');
+    if (hourInput) hourInput.value = toLatinDigits(String(hour).padStart(2, '0'));
+    if (minuteInput) minuteInput.value = toLatinDigits(String(minute).padStart(2, '0'));
 
     let currentPeriod = amBtn && amBtn.classList.contains('active') ? 'AM' : 'PM';
     if (hiddenInput) hiddenInput.value = serializeAttendanceTimeValue(hour, minute, currentPeriod);
@@ -10743,23 +10794,26 @@ window.updateHiddenManualHours = function() {
     let hoursEl = document.getElementById('editAttManualHours');
     
     if (hInput && mInput && hoursEl) {
-        let h = hInput.value.trim();
-        let m = mInput.value.trim();
+        let h = toLatinDigits((hInput.value || '').trim());
+        let m = toLatinDigits((mInput.value || '').trim());
         
         if (h === '' && m === '') {
             hoursEl.value = '';
         } else {
-            h = h ? h.padStart(2, '0') : '00';
-            m = m ? m.padStart(2, '0') : '00';
+            h = h ? Number(h).toString().padStart(2, '0') : '00';
+            m = m ? Number(m).toString().padStart(2, '0') : '00';
             hoursEl.value = `${h}:${m}`;
         }
     }
 };
 
 window.handleEditStatusChange = function() {
-    let status = document.getElementById('editAttStatus').value;
+    let statusEl = document.getElementById('editAttStatus');
+    let status = statusEl ? statusEl.value : '';
     let preview = document.getElementById('editAttHoursPreview');
     let text = document.getElementById('editAttHoursText');
+
+    applyAttendanceStatusTheme(status);
     
     if (status === 'غائب' || status === 'إجازة بدون مرتب') {
         setAttendanceTimeEditor('CheckIn', '00:00 AM');
