@@ -2586,10 +2586,20 @@
     <div style="width: 100%; background: #ffffff; border-radius: 24px 24px 0 0; position: relative; padding: 20px; box-shadow: 0 -10px 25px rgba(0,0,0,0.15); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
         
         <!-- Header -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <button type="button" onclick="closeCustomDatePicker()" style="background:none; border:none; color:#64748b; font-size:1.1rem; font-weight:700; cursor:pointer;">إلغاء</button>
-            <h3 style="margin:0; font-size:1.2rem; color:#1e293b; font-weight:800;">اختر التاريخ</h3>
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <h3 style="margin:0; font-size:1.2rem; color:#1e293b; font-weight:800;">اختر التاريخ</h3>
+                <span id="datePickerRemaining" style="font-size:0.85rem; font-weight:700; padding:2px 8px; border-radius:12px; margin-top:4px; background:#f1f5f9; color:#64748b;">-</span>
+            </div>
             <button type="button" onclick="confirmCustomDate()" style="background:none; border:none; color:#3b82f6; font-size:1.1rem; font-weight:800; cursor:pointer;">تأكيد</button>
+        </div>
+
+        <!-- Column Headers -->
+        <div style="display:flex; justify-content:space-between; margin-bottom:5px; padding:0 10px;">
+            <div style="flex:1; text-align:center; font-size:0.9rem; font-weight:800; color:#3b82f6;">اليوم</div>
+            <div style="flex:1; text-align:center; font-size:0.9rem; font-weight:800; color:#10b981;">الشهر</div>
+            <div style="flex:1; text-align:center; font-size:0.9rem; font-weight:800; color:#8b5cf6;">السنة</div>
         </div>
 
         <!-- Picker Wheels Container -->

@@ -12040,6 +12040,7 @@ window.openCustomDatePicker = function(targetId) {
         setWheelValue('year', d.getFullYear());
         
         lastSelectedIndices = { day: -1, month: -1, year: -1 };
+        updateRemainingDaysUI();
     }, 50);
 };
 
@@ -12095,6 +12096,56 @@ window.updateWheelHighlight = function(container, type) {
             item.classList.remove('selected');
         }
     });
+
+    // Update the remaining days indicator
+    clearTimeout(window.remainingDaysTimer);
+    window.remainingDaysTimer = setTimeout(updateRemainingDaysUI, 50);
+};
+
+window.updateRemainingDaysUI = function() {
+    let y = getWheelValue('year');
+    let m = getWheelValue('month');
+    let d = getWheelValue('day');
+    if (!y || !m || !d) return;
+    
+    let lastDay = new Date(parseInt(y), parseInt(m), 0).getDate();
+    let finalD = parseInt(d) > lastDay ? lastDay.toString().padStart(2, '0') : d.toString().padStart(2, '0');
+    
+    let selectedDate = new Date(`${y}-${m}-${finalD}`);
+    let today = new Date();
+    today.setHours(0,0,0,0);
+    selectedDate.setHours(0,0,0,0);
+    
+    let diffTime = selectedDate - today;
+    let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    let badge = document.getElementById('datePickerRemaining');
+    if (!badge) return;
+    
+    if (diffDays < 0) {
+        badge.innerText = `منتهي الصلاحية منذ ${Math.abs(diffDays)} يوم`;
+        badge.style.background = '#fee2e2';
+        badge.style.color = '#ef4444';
+    } else if (diffDays === 0) {
+        badge.innerText = 'ينتهي اليوم';
+        badge.style.background = '#fef9c3';
+        badge.style.color = '#eab308';
+    } else {
+        badge.innerText = `متبقي ${diffDays} يوم`;
+        if (diffDays <= 7) {
+            badge.style.background = '#fee2e2';
+            badge.style.color = '#ef4444';
+        } else if (diffDays <= 30) {
+            badge.style.background = '#ffedd5';
+            badge.style.color = '#f97316';
+        } else if (diffDays > 180) { // More than 6 months
+            badge.style.background = '#dcfce7';
+            badge.style.color = '#22c55e';
+        } else {
+            badge.style.background = '#e0f2fe';
+            badge.style.color = '#0284c7';
+        }
+    }
 };
 
 window.confirmCustomDate = function() {
