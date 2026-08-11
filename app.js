@@ -75,6 +75,27 @@ async function fetchAllSupabaseRows(queryBuilder) {
     return { data: allData, error: null };
 }
 
+// 🛡️ Secure Delete Wrapper
+window.secureDelete = async function(tableName, matchColumn, matchValue) {
+    let user = null;
+    try { user = JSON.parse(localStorage.getItem('cc_user')); } catch (e) {}
+    let pass = sessionStorage.getItem('cc_pass');
+    
+    if (!user || user.permissions !== 'ALL' || !pass) {
+        if (typeof showToast === 'function') showToast("ليس لديك صلاحية الحذف", "error");
+        return { error: "Unauthorized" };
+    }
+    
+    const { data, error } = await supabase.rpc('secure_delete_record', {
+        p_table: tableName,
+        p_column: matchColumn,
+        p_value: String(matchValue),
+        p_user: user.username,
+        p_pass: pass
+    });
+    return { data, error };
+};
+
 window.fetch = async function(url, options) {
     // Intercept Google Sheets calls
     if (typeof url === 'string' && (url.includes('DISABLED - MIGRATED TO SUPABASE') || url.includes('script.google.com'))) {
@@ -425,15 +446,15 @@ async function handleSupabaseRequest(url, options) {
                 await supabase.from('out_of_stock').insert([{ customer_name: params.customer, phone: params.phone, product: params.product, reason: params.reason }]);
                 break;
             case 'deleteShipping':
-                await supabase.from('settings_shipping').delete().eq('zone_name', params.name);
+                await window.secureDelete('settings_shipping', 'zone_name', params.name);
                 responseData = { success: true };
                 break;
             case 'deleteDriver':
-                await supabase.from('couriers').delete().eq('name', params.name);
+                await window.secureDelete('couriers', 'name', params.name);
                 responseData = { success: true };
                 break;
             case 'deleteModerator':
-                await supabase.from('moderators').delete().eq('name', params.name);
+                await window.secureDelete('moderators', 'name', params.name);
                 responseData = { success: true };
                 break;
             case 'addUser':
@@ -441,7 +462,7 @@ async function handleSupabaseRequest(url, options) {
                 responseData = { success: true };
                 break;
             case 'deleteProduct':
-                await supabase.from('catalog').delete().eq('product_name', params.name);
+                await window.secureDelete('catalog', 'product_name', params.name);
                 responseData = { success: true };
                 break;
             case 'updateCatalog':
@@ -561,7 +582,7 @@ async function handleSupabaseRequest(url, options) {
                 break;
             
             case 'deleteUser':
-                await supabase.from('users').delete().eq('username', params.user);
+                await window.secureDelete('users', 'username', params.user);
                 break;
             case 'addShipping':
                 await supabase.from('settings_shipping').insert([{ zone_name: params.name, price: params.price, delivery_type: params.deliveryType, duration: params.duration, zone_type: params.zoneType }]);
@@ -715,10 +736,12 @@ async function handleSupabaseRequest(url, options) {
                         }
                     }
 
-                    // 5. Delete empty rows
-                    await supabase.from('expiries').delete().eq('qty', 0);
-
-                    responseData = { success: true, message: changesCount > 0 ? 'تم تحديث ' + changesCount + ' منتج بنجاح' : 'البيانات متطابقة، لا توجد مبيعات أو مرتجعات جديدة لتسويتها' };
+                    if (changesCount > 0) {
+                        await window.secureDelete('expiries', 'qty', '0');
+                        responseData = { success: true, message: 'تم تحديث ' + changesCount + ' منتج بنجاح' };
+                    } else {
+                        responseData = { success: true, message: 'البيانات متطابقة' };
+                    }
                 } catch (fbErr) {
                     responseData = { success: false, error: 'فشل الاتصال بقاعدة بيانات الفايربيز: ' + fbErr.message };
                 }
@@ -1458,7 +1481,7 @@ async function loadDataFromServer(customDate = null) {
                         </div>
                         <div class="zone-actions">
                             <button type="button" class="btn-outline interactive-btn" onclick="editZoneUI('${z.zone_name}', '${z.price}', '${z.delivery_type}', '${z.duration}')"><span class="btn-text-mobile-hide">تعديل</span> <i class='fa-solid fa-pencil'></i></button>
-                            <button type="button" class="btn-danger interactive-btn" onclick="deleteItem('deleteShipping', '${z.zone_name}', '${zoneType}')"><span class="btn-text-mobile-hide">حذف</span> <i class='fa-solid fa-xmark'></i></button>
+                            <button type="button" class="btn-danger interactive-btn" onclick="deleteItem('deleteZone', '${z.zone_name}')"><span class="btn-text-mobile-hide">حذف</span> <i class='fa-solid fa-xmark'></i></button>
                         </div>
                     </div>`;
             }
@@ -2188,7 +2211,7 @@ window.printHistoryOrder = function (orderId) {
     let sellerP = document.getElementById('print-seller-name');
     if (sellerP) sellerP.innerText = `الكاشير: ${order.seller || 'غير محدد'}`;
 
-    let isGovShipping = oTypeStr === 'gov_shipping' || oTypeStr.includes('محافظات') || dTypeStr === 'gov_shipping' || oTypeStr.includes('شحن');
+    let isGovShipping = oTypeStr === 'gov_shipping' || oTypeStr.includes('محافظات') || dTypeStr === 'gov_shipping';
     if (isGovShipping) {
         document.body.classList.add('print-gov-shipping', 'shipping-mode');
     } else {
@@ -2972,13 +2995,13 @@ window.deleteItem = async function (action, name, zoneType = '') {
         showToast("<i class='fa-solid fa-hourglass-half'></i> جاري الحذف...", "warning");
         try {
             if (action === 'deleteShipping') {
-                await supabase.from('settings_shipping').delete().eq('zone_name', name).eq('zone_type', zoneType);
+                await window.secureDelete('settings_shipping', 'zone_name', name);
             } else if (action === 'deleteDriver') {
-                await supabase.from('couriers').delete().eq('name', name);
+                await window.secureDelete('couriers', 'name', name);
             } else if (action === 'deleteModerator') {
-                await supabase.from('moderators').delete().eq('name', name);
+                await window.secureDelete('moderators', 'name', name);
             } else if (action === 'deleteProduct') {
-                await supabase.from('catalog').delete().eq('product_name', name);
+                await window.secureDelete('catalog', 'product_name', name);
             }
             showToast("<i class='fa-solid fa-check'></i> تم الحذف بنجاح!", "success");
             loadDataFromServer();
@@ -8844,6 +8867,7 @@ function deprecatedHandleLogin(user, pass, btn, err) {
                     permissions: data.permissions
                 };
                 localStorage.setItem('cc_user', JSON.stringify(currentUser));
+                sessionStorage.setItem('cc_pass', pass); // 🛡️ Save pass securely for RPC deletes
                 document.getElementById('login-screen').style.display = 'none';
                 applyPermissions();
                 // تمت إزالة التحميل التلقائي لتفعيل الـ Lazy Loading
@@ -9193,6 +9217,7 @@ window.handleLogin = function(e) {
                     permissions: data.permissions
                 };
                 localStorage.setItem('cc_user', JSON.stringify(currentUser));
+                sessionStorage.setItem('cc_pass', pass); // 🛡️ Save pass securely for RPC deletes
                 document.getElementById('login-screen').style.display = 'none';
                 applyPermissions();
                 // تمت إزالة التحميل التلقائي لتفعيل الـ Lazy Loading
