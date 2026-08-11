@@ -446,7 +446,7 @@ async function handleSupabaseRequest(url, options) {
                 if (existIn && existIn.length > 0) return createJsonResponse({ success: false, error: "أنت مسجل حضور بالفعل اليوم" });
                 let checkInTime = new Date().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute:'2-digit' });
                 await supabase.from('attendance').insert([{ employee_name: params.employeeName, date: params.date, check_in: checkInTime, status: 'حاضر' }]);
-                responseData = { success: true, message: "تم تسجيل الحضور بنجاح" };
+                responseData = { success: true, message: "تم تسجيل الحضور بنجاح", time: checkInTime };
                 break;
             case 'checkOut':
                 let { data: existOut } = await supabase.from('attendance').select('*').eq('employee_name', params.employeeName).eq('status', 'حاضر').order('id', { ascending: false }).limit(1);
@@ -483,7 +483,7 @@ async function handleSupabaseRequest(url, options) {
                     }
 
                     await supabase.from('attendance').update({ check_out: checkOutTime, hours: hoursStr }).eq('id', existOut[0].id);
-                    responseData = { success: true, message: "تم تسجيل الانصراف بنجاح" };
+                    responseData = { success: true, message: "تم تسجيل الانصراف بنجاح", time: checkOutTime, hours: hoursStr };
                 } else {
                     return createJsonResponse({ success: false, error: "لم يتم العثور على سجل حضور مفتوح" });
                 }
