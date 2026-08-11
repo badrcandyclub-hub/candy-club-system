@@ -6692,41 +6692,113 @@ function generatePDFReceipt(filteredData, dateVal) {
         <html dir="rtl" lang="ar">
         <head>
             <title>بيان استلام بضاعة - ${dateVal}</title>
-            <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+            <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+            <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
             <style>
                 * { box-sizing: border-box; }
                 body { 
                     font-family: 'Cairo', sans-serif; 
-                    color: #333; 
+                    color: #1e293b; 
                     background: #fff; 
                     direction: rtl; 
                     width: 210mm; /* A4 width */
                     margin: 0 auto; 
                     padding: 15mm; 
-                    box-shadow: 0 0 10px rgba(0,0,0,0.1);
                 }
-                .header { display: flex; flex-direction: column; align-items: center; border-bottom: 3px solid #E91E8C; padding-bottom: 20px; margin-bottom: 20px; }
-                .logo-container { display: flex; align-items: center; gap: 15px; direction: ltr; margin-bottom: 10px; }
-                .logo-img { height: 70px; object-fit: contain; }
-                .logo-text { font-size: 36px; font-weight: 900; color: #E91E8C; letter-spacing: 2px; margin: 0; }
-                .logo-text span { background: #E91E8C; color: white; padding: 5px 15px; border-radius: 8px; font-size: 24px; vertical-align: middle; }
-                .title { font-size: 22px; font-weight: bold; color: #2c3e50; }
-                .info-section { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 15px; gap: 20px; }
-                .info-box { background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0; flex: 1; }
-                .info-label { font-weight: bold; color: #7f8c8d; display: inline-block; width: 100px; }
-                table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 13px; }
+                .header { 
+                    display: flex; 
+                    justify-content: space-between; 
+                    align-items: center; 
+                    border-bottom: 3px solid #f1f5f9; 
+                    padding-bottom: 20px; 
+                    margin-bottom: 25px; 
+                }
+                .logo-container { text-align: right; }
+                .logo-img { height: 85px; object-fit: contain; }
+                
+                .title-container {
+                    text-align: left;
+                }
+                .title-badge { 
+                    display: inline-block;
+                    background: #fdf2f8; 
+                    color: #E91E8C;
+                    font-size: 24px; 
+                    font-weight: 900; 
+                    padding: 10px 25px;
+                    border-radius: 12px;
+                    border: 1px solid #fbcfe8;
+                }
+                
+                .info-section { 
+                    display: flex; 
+                    gap: 15px; 
+                    margin-bottom: 25px; 
+                }
+                .info-card { 
+                    flex: 1;
+                    background: #ffffff; 
+                    padding: 18px; 
+                    border-radius: 12px; 
+                    border: 1px solid #e2e8f0; 
+                    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+                }
+                .info-row {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 12px;
+                    font-size: 15px;
+                }
+                .info-row:last-child { margin-bottom: 0; }
+                .info-label { color: #64748b; font-weight: bold; }
+                .info-value { color: #0f172a; font-weight: 900; }
+                
+                table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 14px; }
                 thead { display: table-header-group; }
                 tr { page-break-inside: avoid; }
-                th { background: #E91E8C; color: white; padding: 10px; text-align: right; border: 1px solid #ddd; }
-                td { padding: 8px; border: 1px solid #ddd; vertical-align: middle; }
-                tr:nth-child(even) { background-color: #f9f9f9; }
-                .signatures { display: flex; justify-content: space-between; margin-top: 40px; padding: 0 50px; page-break-inside: avoid; }
-                .sig-box { text-align: center; width: 200px; }
-                .sig-line { width: 100%; border-bottom: 1px dashed #333; margin-top: 40px; }
-                .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #7f8c8d; border-top: 1px solid #eee; padding-top: 15px; page-break-inside: avoid; }
+                th { 
+                    background: #1e293b; 
+                    color: #f8fafc; 
+                    padding: 12px; 
+                    text-align: right; 
+                    border: 1px solid #334155; 
+                    border-top: 4px solid #E91E8C;
+                }
+                td { padding: 12px; border: 1px solid #e2e8f0; vertical-align: middle; }
+                tr:nth-child(even) { background-color: #f8fafc; }
+                
+                .qty-cell {
+                    font-size: 1.2em;
+                    font-weight: 900;
+                    color: #059669;
+                    text-align: center;
+                    background: #ecfdf5;
+                }
+                
+                .barcode-container {
+                    text-align: center;
+                }
+                .barcode-text {
+                    font-size: 12px;
+                    font-weight: bold;
+                    letter-spacing: 1px;
+                    color: #475569;
+                    margin-top: 4px;
+                }
+
+                .footer { 
+                    text-align: center; 
+                    margin-top: 40px; 
+                    font-size: 13px; 
+                    color: #94a3b8; 
+                    border-top: 1px dashed #cbd5e1; 
+                    padding-top: 20px; 
+                    page-break-inside: avoid; 
+                }
                 @media print {
                     @page { size: A4 portrait; margin: 15mm; }
                     body { padding: 0; width: 100%; box-shadow: none; margin: 0; }
+                    .info-card { box-shadow: none; border: 1px solid #cbd5e1; }
                 }
             </style>
         </head>
@@ -6734,46 +6806,71 @@ function generatePDFReceipt(filteredData, dateVal) {
             <div class="header">
                 <div class="logo-container">
                     <img src="${logoUrl}" alt="Logo" class="logo-img">
-                    <h1 class="logo-text">Candy <span>Club</span></h1>
                 </div>
-                <div class="title">بيان استلام بضاعة</div>
+                <div class="title-container">
+                    <div class="title-badge">بيان استلام بضاعة</div>
+                </div>
             </div>
             
             <div class="info-section">
-                <div class="info-box">
-                    <div><span class="info-label">تاريخ التسجيل:</span> <span style="font-weight:bold; color:#E91E8C;">${dateVal}</span></div>
-                    <div style="margin-top: 10px;"><span class="info-label">اسم المستلم:</span> <strong>${receiver}</strong></div>
+                <div class="info-card">
+                    <div class="info-row">
+                        <span class="info-label"><i class="fa-regular fa-calendar" style="margin-left: 5px;"></i> تاريخ التسجيل:</span>
+                        <span class="info-value" style="color: #E91E8C;">${dateVal}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label"><i class="fa-regular fa-user" style="margin-left: 5px;"></i> اسم المستلم:</span>
+                        <span class="info-value">${receiver}</span>
+                    </div>
                 </div>
-                <div class="info-box">
-                    <div style="margin-top: 10px;"><span class="info-label">إجمالي الأصناف:</span> <strong>${filteredData.length}</strong></div>
+                <div class="info-card" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                    <span class="info-label" style="margin-bottom: 8px;">إجمالي الأصناف</span>
+                    <span class="info-value" style="font-size: 32px; color: #E91E8C; line-height: 1;">${filteredData.length}</span>
                 </div>
             </div>
 
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 5%;">م</th>
+                        <th style="width: 5%; text-align: center;">م</th>
                         <th style="width: 30%;">اسم المنتج</th>
-                        <th style="width: 15%;">الباركود</th>
-                        <th style="width: 10%;">العدد</th>
+                        <th style="width: 20%; text-align: center;">الباركود</th>
+                        <th style="width: 10%; text-align: center;">العدد</th>
                         <th style="width: 15%;">تاريخ الانتهاء</th>
                         <th style="width: 15%;">المكان</th>
-                        <th style="width: 10%;">ملاحظات</th>
+                        <th style="width: 5%;">ملاحظات</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${filteredData.map((item, index) => {
                         let expDate = new Date(item.expiryDate);
                         let formattedExp = isNaN(expDate.getTime()) ? item.expiryDate : expDate.toLocaleDateString('ar-EG');
+                        
+                        let barcodeHtml = '-';
+                        if (item.barcode && item.barcode.trim() !== '') {
+                            barcodeHtml = `
+                                <div class="barcode-container">
+                                    <svg class="barcode"
+                                        jsbarcode-value="${item.barcode}"
+                                        jsbarcode-height="35"
+                                        jsbarcode-width="1.5"
+                                        jsbarcode-displayvalue="false"
+                                        jsbarcode-margin="0">
+                                    </svg>
+                                    <div class="barcode-text">${item.barcode}</div>
+                                </div>
+                            `;
+                        }
+
                         return `
                         <tr>
-                            <td>${index + 1}</td>
-                            <td style="font-weight: bold;">${item.name || '-'}</td>
-                            <td dir="ltr" style="text-align: right;">${item.barcode || '-'}</td>
-                            <td style="font-weight: bold; text-align: center; color: #27ae60; font-size: 1.1em;">${item.qty || '-'}</td>
-                            <td dir="ltr" style="text-align: right;">${formattedExp || '-'}</td>
-                            <td>${item.location || '-'}</td>
-                            <td>${item.notes || '-'}</td>
+                            <td style="text-align: center; font-weight: bold; color: #64748b;">${index + 1}</td>
+                            <td style="font-weight: 900; font-size: 15px;">${item.name || '-'}</td>
+                            <td dir="ltr" style="text-align: center;">${barcodeHtml}</td>
+                            <td class="qty-cell">${item.qty || '-'}</td>
+                            <td dir="ltr" style="text-align: right; color: #475569;">${formattedExp || '-'}</td>
+                            <td style="color: #475569;">${item.location || '-'}</td>
+                            <td style="color: #94a3b8; font-size: 12px;">${item.notes || '-'}</td>
                         </tr>
                         `;
                     }).join('')}
@@ -6786,11 +6883,15 @@ function generatePDFReceipt(filteredData, dateVal) {
             
             <script>
                 window.onload = function() {
-                    // Slight delay to ensure fonts load
+                    try {
+                        JsBarcode(".barcode").init();
+                    } catch(e) {
+                        console.error("Barcode rendering failed", e);
+                    }
+                    
                     setTimeout(function() {
                         window.print();
-                        // Optional: close after printing, but better leave it open for user to review
-                    }, 500);
+                    }, 800);
                 }
             </script>
         </body>
