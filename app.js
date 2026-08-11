@@ -6804,8 +6804,12 @@ function generatePDFReceipt(filteredData, dateVal) {
         </head>
         <body>
             <div class="header">
-                <div class="logo-container">
+                <div class="logo-container" style="display: flex; align-items: center; gap: 15px; direction: ltr;">
                     <img src="${logoUrl}" alt="Logo" class="logo-img">
+                    <div style="text-align: left;">
+                        <div style="font-weight: 900; font-size: 22px; color: #1e293b; letter-spacing: 1px; line-height: 1.2;">Candy Club</div>
+                        <div style="font-size: 13px; color: #64748b; font-weight: 700; letter-spacing: 0.5px;">Store Management</div>
+                    </div>
                 </div>
                 <div class="title-container">
                     <div class="title-badge">بيان استلام بضاعة</div>
