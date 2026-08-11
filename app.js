@@ -439,7 +439,7 @@ async function handleSupabaseRequest(url, options) {
                 }
                 break;
             case 'addInventoryLog':
-                await supabase.from('inventory_logs').insert([{ from_location: params.from, to_location: params.to, reg_name: params.regName, items: params.items, notes: params.notes, timestamp: new Date().toLocaleString() }]);
+                await supabase.from('inventory_logs').insert([{ log_id: params.logId, from_location: params.from, to_location: params.to, reg_name: params.regName, items: params.items, notes: params.notes, timestamp: new Date().toLocaleString() }]);
                 break;
             case 'checkIn':
                 let { data: existIn } = await supabase.from('attendance').select('*').eq('employee_name', params.employeeName).eq('date', params.date).eq('status', 'حاضر');
