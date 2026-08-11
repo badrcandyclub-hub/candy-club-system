@@ -4439,3 +4439,46 @@ body.dark-mode .batch-child-row {
 @keyframes dropFadeIn { from { opacity: 0; transform: scaleY(0.9); } to { opacity: 1; transform: scaleY(1); } }
 
 @media (max-width: 500px) { .welcome-text { display: none !important; } }
+
+/* Custom Date Picker Wheel Styles */
+.wheel-column {
+    flex: 1;
+    height: 100%;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* IE and Edge */
+    text-align: center;
+    position: relative;
+}
+.wheel-column::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+}
+.wheel-item {
+    height: 40px;
+    line-height: 40px;
+    scroll-snap-align: center;
+    font-size: 1.1rem;
+    color: #94a3b8;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    user-select: none;
+    font-weight: 600;
+}
+.wheel-item.selected {
+    color: #1e293b;
+    font-size: 1.4rem;
+    font-weight: 800;
+}
+body.dark-mode .wheel-item {
+    color: #64748b;
+}
+body.dark-mode .wheel-item.selected {
+    color: #f8fafc;
+}
+body.dark-mode .wheel-picker-container {
+    background: #0f172a;
+}
+.wheel-spacer {
+    height: 80px; /* Half of container height (100px) minus half of item height (20px) */
+}

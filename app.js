@@ -11962,3 +11962,151 @@ window.syncPlatformUI = function(value) {
     }
 };
 
+/* ==========================================
+   Custom Wheel Date Picker Logic
+   ========================================== */
+let customDatePickerTarget = null;
+let wheelAudioCtx = null;
+let lastSelectedIndices = { day: -1, month: -1, year: -1 };
+
+window.playTickSound = function() {
+    try {
+        if (!wheelAudioCtx) {
+            wheelAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (wheelAudioCtx.state === 'suspended') wheelAudioCtx.resume();
+        const osc = wheelAudioCtx.createOscillator();
+        const gainNode = wheelAudioCtx.createGain();
+        osc.type = 'sine';
+        // A very short, crisp tick sound
+        osc.frequency.setValueAtTime(800, wheelAudioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(10, wheelAudioCtx.currentTime + 0.05);
+        gainNode.gain.setValueAtTime(0.5, wheelAudioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, wheelAudioCtx.currentTime + 0.05);
+        osc.connect(gainNode);
+        gainNode.connect(wheelAudioCtx.destination);
+        osc.start();
+        osc.stop(wheelAudioCtx.currentTime + 0.05);
+    } catch (e) { console.warn('Audio tick failed:', e); }
+};
+
+window.triggerHaptic = function() {
+    if (navigator.vibrate) {
+        navigator.vibrate([10]); // Short vibration
+    }
+};
+
+window.buildWheelItems = function(type, start, end, currentValue) {
+    const container = document.getElementById('wheel' + type.charAt(0).toUpperCase() + type.slice(1));
+    if (!container) return;
+    container.innerHTML = '<div class="wheel-spacer"></div>';
+    
+    for (let i = start; i <= end; i++) {
+        let val = (type === 'year') ? i.toString() : i.toString().padStart(2, '0');
+        let div = document.createElement('div');
+        div.className = 'wheel-item';
+        div.dataset.value = val;
+        div.innerText = val;
+        div.onclick = function() {
+            const itemHeight = 40;
+            const idx = Array.from(container.querySelectorAll('.wheel-item')).indexOf(this);
+            container.scrollTo({ top: idx * itemHeight, behavior: 'smooth' });
+        };
+        container.appendChild(div);
+    }
+    
+    container.innerHTML += '<div class="wheel-spacer"></div>';
+};
+
+window.openCustomDatePicker = function(targetId) {
+    customDatePickerTarget = document.getElementById(targetId);
+    let modal = document.getElementById('customDatePickerModal');
+    if(modal) modal.style.display = 'flex';
+    
+    let d = new Date();
+    if (customDatePickerTarget && customDatePickerTarget.value) {
+        let parsed = new Date(customDatePickerTarget.value);
+        if (!isNaN(parsed)) d = parsed;
+    }
+    
+    let currentYear = new Date().getFullYear();
+    buildWheelItems('day', 1, 31);
+    buildWheelItems('month', 1, 12);
+    buildWheelItems('year', currentYear - 5, currentYear + 10);
+    
+    setTimeout(() => {
+        setWheelValue('day', d.getDate());
+        setWheelValue('month', d.getMonth() + 1);
+        setWheelValue('year', d.getFullYear());
+        
+        lastSelectedIndices = { day: -1, month: -1, year: -1 };
+    }, 50);
+};
+
+window.closeCustomDatePicker = function() {
+    let modal = document.getElementById('customDatePickerModal');
+    if(modal) modal.style.display = 'none';
+};
+
+window.setWheelValue = function(type, val) {
+    val = (type === 'year') ? val.toString() : val.toString().padStart(2, '0');
+    const container = document.getElementById('wheel' + type.charAt(0).toUpperCase() + type.slice(1));
+    if(!container) return;
+    const items = Array.from(container.querySelectorAll('.wheel-item'));
+    const idx = items.findIndex(item => item.dataset.value === val);
+    if (idx !== -1) {
+        const itemHeight = 40;
+        container.scrollTop = idx * itemHeight;
+        updateWheelHighlight(container, type);
+    }
+};
+
+window.getWheelValue = function(type) {
+    const container = document.getElementById('wheel' + type.charAt(0).toUpperCase() + type.slice(1));
+    const itemHeight = 40;
+    const idx = Math.round(container.scrollTop / itemHeight);
+    const items = container.querySelectorAll('.wheel-item');
+    if (items[idx]) return items[idx].dataset.value;
+    return (type === 'year') ? new Date().getFullYear().toString() : '01';
+};
+
+window.handleWheelScroll = function(element, type) {
+    updateWheelHighlight(element, type);
+};
+
+window.updateWheelHighlight = function(container, type) {
+    const itemHeight = 40;
+    const scrollIdx = Math.round(container.scrollTop / itemHeight);
+    const items = container.querySelectorAll('.wheel-item');
+    
+    if (lastSelectedIndices[type] !== scrollIdx && lastSelectedIndices[type] !== -1) {
+        playTickSound();
+        triggerHaptic();
+    }
+    
+    if (lastSelectedIndices[type] !== -1 || items.length > 0) {
+       lastSelectedIndices[type] = scrollIdx;
+    }
+
+    items.forEach((item, i) => {
+        if (i === scrollIdx) {
+            item.classList.add('selected');
+        } else {
+            item.classList.remove('selected');
+        }
+    });
+};
+
+window.confirmCustomDate = function() {
+    if (customDatePickerTarget) {
+        const y = getWheelValue('year');
+        const m = getWheelValue('month');
+        const d = getWheelValue('day');
+        
+        let lastDay = new Date(parseInt(y), parseInt(m), 0).getDate();
+        let finalD = parseInt(d) > lastDay ? lastDay.toString().padStart(2, '0') : d.toString().padStart(2, '0');
+        
+        customDatePickerTarget.value = `${y}-${m}-${finalD}`;
+    }
+    closeCustomDatePicker();
+};
