@@ -18,6 +18,21 @@ window.getSyncedDate = function() {
     return new Date(Date.now() + window.serverTimeOffset);
 };
 // ==========================================
+// 🔴 Global Error Handler to Prevent Silent Failures
+// ==========================================
+window.addEventListener('unhandledrejection', function(event) {
+    console.error("Unhandled Promise Rejection:", event.reason);
+    if (!navigator.onLine || (event.reason && event.reason.message && event.reason.message.includes('Failed to fetch'))) {
+        if (typeof showToast === 'function') showToast("عفواً، لا يوجد اتصال بالإنترنت أو السيرفر لا يستجيب.", "error");
+    } else {
+        if (typeof showToast === 'function') showToast("حدث خطأ في النظام، يرجى المحاولة مرة أخرى.", "error");
+    }
+});
+window.addEventListener('error', function(event) {
+    console.error("Global Error Caught:", event.error);
+    if (typeof showToast === 'function') showToast("خطأ غير متوقع: " + (event.message || "يرجى تحديث الصفحة"), "error");
+});
+// ==========================================
 
 const GOOGLE_SHEETS_URL = "DISABLED - MIGRATED TO SUPABASE";
 // ==========================================
