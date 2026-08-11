@@ -11519,12 +11519,10 @@ function updateShortagesDashboardCounts() {
 
 window.loadShortagesDashboard = function() {
     let container = document.getElementById('shortagesListContainer');
-    let createBtn = document.getElementById('createShortagesTransferBtn');
     if (!container) return;
     
     isShortagesLoading = true;
     container.innerHTML = '<div style="text-align:center; padding:30px;"><i class="fa-solid fa-spinner fa-spin fa-2x" style="color:#c0392b;"></i><br><br>جاري جلب النواقص وحالات التجهيز...</div>';
-    createBtn.style.display = 'none';
     let paginationUI = document.getElementById('shortagesPagination');
     if(paginationUI) paginationUI.style.display = 'none';
 
