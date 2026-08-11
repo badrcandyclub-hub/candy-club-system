@@ -1,5 +1,22 @@
 // ==========================================
-// <i class=\'fa-solid fa-globe\'></i> العقل المدبر - سيستم كاندي كلوب (النسخة V16.0 - الشاملة والمحصنة)
+// <i class='fa-solid fa-globe'></i> نظام كاندي كلوب - إدارة المخازن والمبيعات (الإصدار V16.0 - ربط مباشر بالسيرفر)
+// ==========================================
+
+window.serverTimeOffset = 0;
+(async function syncTime() {
+    try {
+        let res = await fetch('https://worldtimeapi.org/api/timezone/Africa/Cairo');
+        let data = await res.json();
+        let serverTime = new Date(data.datetime).getTime();
+        window.serverTimeOffset = serverTime - Date.now();
+        console.log("Time synced! Offset:", window.serverTimeOffset);
+    } catch(e) {
+        console.error("Time sync failed:", e);
+    }
+})();
+window.getSyncedDate = function() {
+    return new Date(Date.now() + window.serverTimeOffset);
+};
 // ==========================================
 
 const GOOGLE_SHEETS_URL = "DISABLED - MIGRATED TO SUPABASE";
