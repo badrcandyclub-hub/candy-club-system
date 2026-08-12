@@ -9,49 +9,49 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const popupHtml = `
             <div id="candy-update-popup" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.75); z-index: 999999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px); animation: fadeInPopup 0.4s ease; font-family: 'Tajawal', sans-serif;">
-                <div style="background: #ffffff; border-radius: 24px; padding: 35px 25px 25px; width: 90%; max-width: 520px; box-shadow: 0 25px 60px rgba(0,0,0,0.3); text-align: center; position: relative; border: 1px solid rgba(255,255,255,0.5); animation: popInUpdate 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;">
+                <div style="background: #ffffff; border-radius: 20px; padding: 25px 20px 20px; width: 90%; max-width: 500px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); text-align: center; position: relative; border: 1px solid rgba(255,255,255,0.5); animation: popInUpdate 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;">
                     
                     <!-- لوجو كاندي كلاب بدل الصاروخ -->
-                    <img src="favicon.png" alt="Candy Club Logo" style="width: 120px; height: 120px; border-radius: 50%; display: block; margin: -90px auto 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); border: 6px solid white; background: white; object-fit: cover;">
+                    <img src="favicon.png" alt="Candy Club Logo" style="width: 90px; height: 90px; border-radius: 50%; display: block; margin: -65px auto 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.15); border: 5px solid white; background: white; object-fit: cover;">
                     
-                    <h2 style="color: #1a237e; margin-top: 0; font-size: 1.7rem; font-weight: 900; margin-bottom: 8px; animation: slideDownText 0.5s ease forwards; opacity: 0; animation-delay: 0.1s;">
+                    <h2 style="color: #1a237e; margin-top: 0; font-size: 1.5rem; font-weight: 900; margin-bottom: 5px; animation: slideDownText 0.5s ease forwards; opacity: 0; animation-delay: 0.1s;">
                         تحديث جديد وشامل
                     </h2>
                     
-                    <p style="color: #666; font-size: 1.05rem; line-height: 1.5; margin-bottom: 25px; font-weight: 600; animation: slideDownText 0.5s ease forwards; opacity: 0; animation-delay: 0.2s;">
+                    <p style="color: #666; font-size: 0.95rem; line-height: 1.5; margin-bottom: 20px; font-weight: 600; animation: slideDownText 0.5s ease forwards; opacity: 0; animation-delay: 0.2s;">
                         أهلاً بك في النسخة الأحدث والأذكى من نظام Candy Club
                     </p>
                     
                     <!-- كروت المميزات الأربعة -->
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 35px; text-align: right; direction: rtl;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 25px; text-align: right; direction: rtl;">
                         
                         <!-- كارت 1 -->
-                        <div class="update-card" style="background: linear-gradient(145deg, #FFF0F5, #ffffff); border-radius: 12px; padding: 15px; border-right: 5px solid #E91E63; box-shadow: 0 4px 15px rgba(233, 30, 99, 0.08); animation-delay: 0.3s;">
-                            <h4 style="margin: 0 0 8px 0; color: #E91E63; font-size: 1.05rem;"><i class="fa-solid fa-bolt" style="margin-left: 5px; animation: wiggle 2s infinite;"></i>أسرع بـ 8.5 مرات</h4>
-                            <p style="margin: 0; font-size: 0.85rem; color: #555; line-height: 1.5;">أداء خيالي وسرعة استجابة فورية للعمليات</p>
+                        <div class="update-card" style="background: linear-gradient(145deg, #FFF0F5, #ffffff); border-radius: 10px; padding: 12px; border-right: 5px solid #E91E63; box-shadow: 0 3px 10px rgba(233, 30, 99, 0.08); animation-delay: 0.3s;">
+                            <h4 style="margin: 0 0 6px 0; color: #E91E63; font-size: 0.95rem;"><i class="fa-solid fa-bolt" style="margin-left: 5px; animation: wiggle 2s infinite;"></i>أسرع بـ 8.5 مرات</h4>
+                            <p style="margin: 0; font-size: 0.8rem; color: #555; line-height: 1.4;">أداء خيالي وسرعة استجابة فورية للعمليات</p>
                         </div>
                         
                         <!-- كارت 2 -->
-                        <div class="update-card" style="background: linear-gradient(145deg, #E8F5E9, #ffffff); border-radius: 12px; padding: 15px; border-right: 5px solid #4CAF50; box-shadow: 0 4px 15px rgba(76, 175, 80, 0.08); animation-delay: 0.4s;">
-                            <h4 style="margin: 0 0 8px 0; color: #4CAF50; font-size: 1.05rem;"><i class="fa-solid fa-box-open" style="margin-left: 5px; animation: bounceIcon 2s infinite;"></i>ميزة النواقص</h4>
-                            <p style="margin: 0; font-size: 0.85rem; color: #555; line-height: 1.5;">إضافة خانة جديدة لتسجيل ومتابعة النواقص</p>
+                        <div class="update-card" style="background: linear-gradient(145deg, #E8F5E9, #ffffff); border-radius: 10px; padding: 12px; border-right: 5px solid #4CAF50; box-shadow: 0 3px 10px rgba(76, 175, 80, 0.08); animation-delay: 0.4s;">
+                            <h4 style="margin: 0 0 6px 0; color: #4CAF50; font-size: 0.95rem;"><i class="fa-solid fa-box-open" style="margin-left: 5px; animation: bounceIcon 2s infinite;"></i>ميزة النواقص</h4>
+                            <p style="margin: 0; font-size: 0.8rem; color: #555; line-height: 1.4;">إضافة خانة جديدة لتسجيل ومتابعة النواقص</p>
                         </div>
                         
                         <!-- كارت 3 -->
-                        <div class="update-card" style="background: linear-gradient(145deg, #E3F2FD, #ffffff); border-radius: 12px; padding: 15px; border-right: 5px solid #2196F3; box-shadow: 0 4px 15px rgba(33, 150, 243, 0.08); animation-delay: 0.5s;">
-                            <h4 style="margin: 0 0 8px 0; color: #1976D2; font-size: 1.05rem;"><i class="fa-solid fa-palette" style="margin-left: 5px; animation: spinPulse 3s infinite;"></i>تحسينات الديزاين</h4>
-                            <p style="margin: 0; font-size: 0.85rem; color: #555; line-height: 1.5;">واجهة أريح للعين وهوية بصرية ولوجو جديد</p>
+                        <div class="update-card" style="background: linear-gradient(145deg, #E3F2FD, #ffffff); border-radius: 10px; padding: 12px; border-right: 5px solid #2196F3; box-shadow: 0 3px 10px rgba(33, 150, 243, 0.08); animation-delay: 0.5s;">
+                            <h4 style="margin: 0 0 6px 0; color: #1976D2; font-size: 0.95rem;"><i class="fa-solid fa-palette" style="margin-left: 5px; animation: spinPulse 3s infinite;"></i>تحسينات الديزاين</h4>
+                            <p style="margin: 0; font-size: 0.8rem; color: #555; line-height: 1.4;">واجهة أريح للعين وهوية بصرية ولوجو جديد</p>
                         </div>
                         
                         <!-- كارت 4 -->
-                        <div class="update-card" style="background: linear-gradient(145deg, #FFF8E1, #ffffff); border-radius: 12px; padding: 15px; border-right: 5px solid #FFC107; box-shadow: 0 4px 15px rgba(255, 193, 7, 0.08); animation-delay: 0.6s;">
-                            <h4 style="margin: 0 0 8px 0; color: #F57F17; font-size: 1.05rem;"><i class="fa-solid fa-bug-slash" style="margin-left: 5px; animation: shakeIcon 2.5s infinite;"></i>حل الأخطاء</h4>
-                            <p style="margin: 0; font-size: 0.85rem; color: #555; line-height: 1.5;">معالجة شاملة لكل المشاكل السابقة</p>
+                        <div class="update-card" style="background: linear-gradient(145deg, #FFF8E1, #ffffff); border-radius: 10px; padding: 12px; border-right: 5px solid #FFC107; box-shadow: 0 3px 10px rgba(255, 193, 7, 0.08); animation-delay: 0.6s;">
+                            <h4 style="margin: 0 0 6px 0; color: #F57F17; font-size: 0.95rem;"><i class="fa-solid fa-bug-slash" style="margin-left: 5px; animation: shakeIcon 2.5s infinite;"></i>حل الأخطاء</h4>
+                            <p style="margin: 0; font-size: 0.8rem; color: #555; line-height: 1.4;">معالجة شاملة لكل المشاكل السابقة</p>
                         </div>
 
                     </div>
                     
-                    <button id="close-update-btn" style="position: relative; overflow: hidden; background: linear-gradient(135deg, #1a237e, #3949ab); color: white; border: none; padding: 15px 45px; font-size: 1.15rem; border-radius: 30px; font-weight: bold; cursor: pointer; transition: all 0.3s; box-shadow: 0 8px 25px rgba(26, 35, 126, 0.4); font-family: 'Tajawal', sans-serif; animation: slideUpFade 0.5s ease forwards; opacity: 0; animation-delay: 0.7s;">
+                    <button id="close-update-btn" style="position: relative; overflow: hidden; background: linear-gradient(135deg, #1a237e, #3949ab); color: white; border: none; padding: 12px 35px; font-size: 1.05rem; border-radius: 30px; font-weight: bold; cursor: pointer; transition: all 0.3s; box-shadow: 0 8px 25px rgba(26, 35, 126, 0.4); font-family: 'Tajawal', sans-serif; animation: slideUpFade 0.5s ease forwards; opacity: 0; animation-delay: 0.7s;">
                         <span style="position: relative; z-index: 2;">متابعة لصفحة العمل</span>
                         <div class="btn-shine"></div>
                     </button>
