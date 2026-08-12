@@ -9,21 +9,21 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const popupHtml = `
             <div id="candy-update-popup" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.75); z-index: 999999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px); animation: fadeInPopup 0.4s ease; font-family: 'Tajawal', sans-serif;">
-                <div style="background: #ffffff; border-radius: 20px; padding: 25px 20px 20px; width: 90%; max-width: 500px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); text-align: center; position: relative; border: 1px solid rgba(255,255,255,0.5); animation: popInUpdate 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;">
+                <div style="background: #ffffff; border-radius: 20px; padding: 20px 15px 15px; width: 92%; max-width: 500px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); text-align: center; position: relative; border: 1px solid rgba(255,255,255,0.5); animation: popInUpdate 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;">
                     
                     <!-- لوجو كاندي كلاب بدل الصاروخ -->
-                    <img src="favicon.png" alt="Candy Club Logo" style="width: 90px; height: 90px; border-radius: 50%; display: block; margin: -65px auto 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.15); border: 5px solid white; background: white; object-fit: cover;">
+                    <img src="favicon.png" alt="Candy Club Logo" style="width: 80px; height: 80px; border-radius: 18px; display: block; margin: -55px auto 10px; box-shadow: 0 8px 20px rgba(0,0,0,0.15); border: 4px solid white; background: white; object-fit: cover;">
                     
-                    <h2 style="color: #1a237e; margin-top: 0; font-size: 1.5rem; font-weight: 900; margin-bottom: 5px; animation: slideDownText 0.5s ease forwards; opacity: 0; animation-delay: 0.1s;">
+                    <h2 style="color: #1a237e; margin-top: 0; font-size: 1.4rem; font-weight: 900; margin-bottom: 5px; animation: slideDownText 0.5s ease forwards; opacity: 0; animation-delay: 0.1s;">
                         تحديث جديد وشامل
                     </h2>
                     
-                    <p style="color: #666; font-size: 0.95rem; line-height: 1.5; margin-bottom: 20px; font-weight: 600; animation: slideDownText 0.5s ease forwards; opacity: 0; animation-delay: 0.2s;">
+                    <p style="color: #666; font-size: 0.9rem; line-height: 1.4; margin-bottom: 15px; font-weight: 600; animation: slideDownText 0.5s ease forwards; opacity: 0; animation-delay: 0.2s;">
                         أهلاً بك في النسخة الأحدث والأذكى من نظام Candy Club
                     </p>
                     
                     <!-- كروت المميزات الأربعة -->
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 25px; text-align: right; direction: rtl;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; text-align: right; direction: rtl;">
                         
                         <!-- كارت 1 -->
                         <div class="update-card" style="background: linear-gradient(145deg, #FFF0F5, #ffffff); border-radius: 10px; padding: 12px; border-right: 5px solid #E91E63; box-shadow: 0 3px 10px rgba(233, 30, 99, 0.08); animation-delay: 0.3s;">
