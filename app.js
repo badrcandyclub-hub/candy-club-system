@@ -8478,7 +8478,7 @@ window.searchDriverOrder = async function() {
     }
 
     if (savePrintInvBtn) {
-        savePrintInvBtn.addEventListener('click', () => {
+        savePrintInvBtn.addEventListener('click', async () => {
             let from = document.getElementById('invFrom').value.trim();
             let to = document.getElementById('invTo').value.trim();
             let notes = document.getElementById('invNotes').value.trim();
@@ -8495,40 +8495,6 @@ window.searchDriverOrder = async function() {
             let senderName = document.getElementById('invSenderName') ? document.getElementById('invSenderName').value.trim() : "";
             let regName = localStorage.getItem('cashierName') || "المدير";
 
-            // Dynamically calculate Sequential ID based on server data
-            let currentCount = 1;
-            if (window.invLogsData) {
-                if (window.invLogsData.length > 0) {
-                    let maxId = 0;
-                    window.invLogsData.forEach(log => {
-                        let numMatch = String(log.logId).match(/\d+/);
-                        if (numMatch) {
-                            let num = parseInt(numMatch[0]);
-                            if (num > maxId) maxId = num;
-                        }
-                    });
-                    currentCount = maxId + 1;
-                } else {
-                    currentCount = 1; // Sheet is completely empty!
-                }
-            } else {
-                try { currentCount = parseInt(localStorage.getItem('invCounter') || "0") + 1; } catch(e) { currentCount = 1; }
-            }
-
-            let idStr = String(currentCount).padStart(6, '0');
-            let logId = `TRX-${idStr}`;
-
-            let itemsStr = invItems.map(i => `${i.name} (${i.qty})${i.barcode ? ' [باركود: ' + i.barcode + ']' : ''}`).join(" | ");
-
-            let formData = new URLSearchParams();
-            formData.append("action", "addInventoryLog");
-            formData.append("logId", logId);
-            formData.append("from", from);
-            formData.append("to", to);
-            formData.append("regName", senderName ? senderName : regName);
-            formData.append("items", itemsStr);
-            formData.append("notes", notes);
-
             // فحص الاتصال بالإنترنت قبل الإرسال 📡
             if (!navigator.onLine) {
                 showToast("⚠️ لا يوجد اتصال بالإنترنت! الاستلام محفوظ مؤقتاً في المتصفح.", "error");
@@ -8537,11 +8503,44 @@ window.searchDriverOrder = async function() {
 
             setBtnLoading(savePrintInvBtn, true);
 
-            fetch(GOOGLE_SHEETS_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: formData
-            }).then(() => {
+            try {
+                // استخراج أعلى ID من قاعدة البيانات مباشرة لضمان التسلسل الصحيح
+                const { data: latestLogs, error: fetchErr } = await supabase
+                    .from('inventory_logs')
+                    .select('log_id')
+                    .ilike('log_id', 'TRX-%')
+                    .order('created_at', { ascending: false });
+
+                let maxId = 0;
+                if (latestLogs && latestLogs.length > 0) {
+                    latestLogs.forEach(log => {
+                        let numMatch = String(log.log_id).match(/\d+/);
+                        if (numMatch) {
+                            let num = parseInt(numMatch[0]);
+                            if (num > maxId) maxId = num;
+                        }
+                    });
+                }
+                
+                let currentCount = maxId + 1;
+                let idStr = String(currentCount).padStart(6, '0');
+                let logId = `TRX-${idStr}`;
+
+                let itemsStr = invItems.map(i => `${i.name} (${i.qty})${i.barcode ? ' [باركود: ' + i.barcode + ']' : ''}`).join(" | ");
+
+                // إرسال البيانات مباشرة إلى Supabase بدلاً من الاعتماد على الفيتش القديم
+                const { error: insertErr } = await supabase.from('inventory_logs').insert([{ 
+                    log_id: logId, 
+                    from_location: from, 
+                    to_location: to, 
+                    reg_name: senderName ? senderName : regName, 
+                    items: itemsStr, 
+                    notes: notes, 
+                    timestamp: new Date().toLocaleString() 
+                }]);
+
+                if (insertErr) throw insertErr;
+
                 try { localStorage.setItem('invCounter', currentCount); } catch(e) {}
                 // نجاح الإرسال: نقوم بمسح الكاش لأنه تم الحفظ في السيرفر ✅
                 localStorage.removeItem('pending_receipt_draft');
@@ -8561,11 +8560,12 @@ window.searchDriverOrder = async function() {
                 document.getElementById('invFrom').value = '';
                 document.getElementById('invTo').value = '';
                 document.getElementById('invNotes').value = '';
-            }).catch(err => {
+            } catch (err) {
+                console.error("Error saving inventory log:", err);
                 setBtnLoading(savePrintInvBtn, false);
                 // فشل الإرسال رغم وجود اتصال: لا نقوم بمسح الكاش 🛡️
                 showToast("⚠️ خطأ في الاتصال بالسيرفر! بيانات الاستلام محفوظة لحين إعادة المحاولة.", "error");
-            });
+            }
         });
     }
 
