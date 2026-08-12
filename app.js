@@ -2582,6 +2582,13 @@ if (document.getElementById('depositAmount')) document.getElementById('depositAm
 
 // <i class=\'fa-solid fa-star\'></i> منع اختراق الكيبورد بـ readonly و disabled
 const paymentMethod = document.getElementById('paymentMethod');
+if (paymentMethod) {
+    paymentMethod.addEventListener('change', function() {
+        this.classList.remove('payment-cash', 'payment-instapay');
+        if (this.value === 'كاش') this.classList.add('payment-cash');
+        else if (this.value === 'إنستا باي / محفظة') this.classList.add('payment-instapay');
+    });
+}
 const confirmPaymentBtn = document.getElementById('confirmPaymentBtn');
 let isPaymentConfirmed = false;
 const upperFields = ['platform', 'customerName', 'customerPhone', 'phone2', 'deliveryType', 'specialDateInput', 'governorate', 'address'];
@@ -2756,7 +2763,7 @@ function resetForm() {
     if (productsContainer) { productsContainer.innerHTML = ''; addProductRow(); }
     isPaymentConfirmed = false;
     if (confirmPaymentBtn) { confirmPaymentBtn.classList.remove('confirmed'); confirmPaymentBtn.innerHTML = "تأكيد ✔️"; }
-    if (paymentMethod) { paymentMethod.classList.remove('locked-field'); paymentMethod.disabled = false; }
+    if (paymentMethod) { paymentMethod.classList.remove('locked-field', 'payment-cash', 'payment-instapay'); paymentMethod.disabled = false; }
     toggleGlobalLock(false);
     if (deliveryTypeSelect) deliveryTypeSelect.dispatchEvent(new Event('change'));
     if (phoneStatus) phoneStatus.innerHTML = "<i class=\'fa-solid fa-magnifying-glass\'></i>";

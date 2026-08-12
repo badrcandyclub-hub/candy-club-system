@@ -4482,3 +4482,4 @@ body.dark-mode .wheel-picker-container {
 .wheel-spacer {
     height: 80px; /* Half of container height (100px) minus half of item height (20px) */
 }
+`n/* Payment Method Colors */`n.payment-cash { background-color: rgba(37, 211, 102, 0.1) !important; border: 2px solid #25D366 !important; color: #128C7E !important; font-weight: bold; box-shadow: 0 0 10px rgba(37, 211, 102, 0.2); }`n.payment-instapay { background-color: rgba(156, 39, 176, 0.1) !important; border: 2px solid #9C27B0 !important; color: #7B1FA2 !important; font-weight: bold; box-shadow: 0 0 10px rgba(156, 39, 176, 0.2); }
