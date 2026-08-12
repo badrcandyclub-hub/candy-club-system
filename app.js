@@ -1283,7 +1283,10 @@ async function loadDataFromServer(customDate = null) {
     try {
         // Fetch all data in parallel
         const [
-            { data: rawOrders, error: e1 },
+            { data: rawHistory, error: eh1 },
+            { data: rawPending, error: eh2 },
+            { data: rawShipped, error: eh3 },
+            { data: rawUncollected, error: eh4 },
             { data: rawCustomers, error: e2 },
             { data: rawCatalog, error: e3 },
             { data: rawUsers, error: e4 },
@@ -1294,7 +1297,10 @@ async function loadDataFromServer(customDate = null) {
             { data: rawSuspended, error: e9 },
             { data: rawExpiries, error: e10 }
         ] = await Promise.all([
-            fetchAllSupabaseRows(supabase.from('orders').select('*').order('created_at', { ascending: true })),
+            supabase.from('orders').select('*').eq('order_date', fetchDate).order('created_at', { ascending: false }).range(0, 49),
+            fetchAllSupabaseRows(supabase.from('orders').select('*').eq('status', 'قيد التجهيز')),
+            fetchAllSupabaseRows(supabase.from('orders').select('*').eq('status', 'في الشحن')),
+            fetchAllSupabaseRows(supabase.from('orders').select('*').eq('status', 'تم التوصيل')),
             fetchAllSupabaseRows(supabase.from('customers').select('*').order('created_at', { ascending: true })),
             fetchCachedSupabaseTable('catalog', supabase.from('catalog').select('*').order('created_at', { ascending: true })),
             fetchCachedSupabaseTable('users', supabase.from('users').select('*').order('created_at', { ascending: true })),
@@ -1306,39 +1312,53 @@ async function loadDataFromServer(customDate = null) {
             fetchAllSupabaseRows(supabase.from('expiries').select('*'))
         ]);
 
-        for (const err of [e1, e2, e3, e4, e5, e6, e7, e8, e9, e10]) {
+        for (const err of [eh1, eh2, eh3, eh4, e2, e3, e4, e5, e6, e7, e8, e9, e10]) {
             if (err) throw err;
         }
 
+        // Combine orders efficiently
+        let allOrdersMap = new Map();
+        if (rawHistory) rawHistory.forEach(o => allOrdersMap.set(o.order_id, o));
+        if (rawPending) rawPending.forEach(o => allOrdersMap.set(o.order_id, o));
+        if (rawShipped) rawShipped.forEach(o => allOrdersMap.set(o.order_id, o));
+        if (rawUncollected) rawUncollected.forEach(o => allOrdersMap.set(o.order_id, o));
+        
+        let rawOrders = Array.from(allOrdersMap.values());
+
+        // Extract mapping to a reusable helper
+        window.mapOrderRowToLocal = function(o) {
+            return {
+                id: o.order_id,
+                date: o.order_date,
+                time: o.order_time,
+                platform: o.platform,
+                name: o.customer_name,
+                gov: o.governorate,
+                address: o.address,
+                phone: o.phone,
+                phone2: o.alt_phone || "",
+                orderType: o.delivery_type,
+                paymentMethod: o.payment_method || "",
+                payment: o.payment_method || "",
+                driver: o.driver_name || "",
+                deliveryDate: o.delivery_date || "",
+                reservationDate: o.delivery_date || "",
+                products: o.products || "",
+                subtotal: o.products_total,
+                discount: o.discount,
+                shipping: o.shipping_cost,
+                total: parseFloat(o.final_total) || 0,
+                status: o.status,
+                notes: o.notes,
+                seller: o.moderator_name || "",
+                moderator: o.moderator_name || "",
+                deposit: o.deposit || 0,
+                remaining: o.remaining || o.final_total
+            };
+        };
+
         // Transform orders
-        let allOrders = (rawOrders || []).map(o => ({
-            id: o.order_id,
-            date: o.order_date,
-            time: o.order_time,
-            platform: o.platform,
-            name: o.customer_name,
-            gov: o.governorate,
-            address: o.address,
-            phone: o.phone,
-            phone2: o.alt_phone || "",
-            orderType: o.delivery_type,
-            paymentMethod: o.payment_method || "",
-            payment: o.payment_method || "",
-            driver: o.driver_name || "",
-            deliveryDate: o.delivery_date || "",
-            reservationDate: o.delivery_date || "",
-            products: o.products || "",
-            subtotal: o.products_total,
-            discount: o.discount,
-            shipping: o.shipping_cost,
-            total: parseFloat(o.final_total) || 0,
-            status: o.status,
-            notes: o.notes,
-            seller: o.moderator_name || "",
-            moderator: o.moderator_name || "",
-            deposit: o.deposit || 0,
-            remaining: o.remaining || o.final_total
-        }));
+        let allOrders = (rawOrders || []).map(window.mapOrderRowToLocal);
 
         // History for selected date
         let historyOrders = allOrders.filter(o => o.date === fetchDate);
@@ -2023,7 +2043,7 @@ function renderHistoryList(orders, isLoadMore = false) {
     if (endIndex < currentOrdersList.length) {
         let btn = document.createElement('button');
         btn.id = 'loadMoreHistoryBtn';
-        btn.innerText = '⬇️ عرض المزيد';
+        btn.innerText = '⬇️ عرض المزيد (محلي)';
         btn.className = 'interactive-btn btn-outline';
         btn.style.width = '100%';
         btn.style.marginTop = '15px';
@@ -2032,6 +2052,54 @@ function renderHistoryList(orders, isLoadMore = false) {
             renderHistoryList(currentOrdersList, true);
         };
         container.appendChild(btn);
+    } else if (currentOrdersList.length >= 50 && (currentOrdersList.length % 50 === 0)) {
+        // Server-side Load More Button
+        let serverBtn = document.createElement('button');
+        serverBtn.id = 'loadMoreFromServerBtn';
+        serverBtn.innerText = '☁️ جلب المزيد من السيرفر';
+        serverBtn.className = 'interactive-btn btn-search';
+        serverBtn.style.width = '100%';
+        serverBtn.style.marginTop = '15px';
+        serverBtn.onclick = () => {
+            serverBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الجلب...';
+            serverBtn.disabled = true;
+            let currentOffset = currentOrdersList.length;
+            
+            if (currentOrdersList === window.searchResultsCache) {
+                let keyword = document.getElementById('orderSearchInput').value.trim().toLowerCase();
+                let searchKeyword = `%${keyword}%`;
+                supabase.from('orders').select('*')
+                    .or(`order_id.ilike.${searchKeyword},customer_name.ilike.${searchKeyword},phone.ilike.${searchKeyword}`)
+                    .range(currentOffset, currentOffset + 49)
+                    .then(({data, error}) => appendServerData(data, error));
+            } else {
+                supabase.from('orders').select('*')
+                    .eq('order_date', window.lastFilterDate || currentFilterDate)
+                    .order('created_at', { ascending: false })
+                    .range(currentOffset, currentOffset + 49)
+                    .then(({data, error}) => appendServerData(data, error));
+            }
+            
+            function appendServerData(data, error) {
+                if (error || !data || data.length === 0) {
+                    serverBtn.innerText = '✅ لا توجد فواتير أخرى';
+                    return;
+                }
+                let mappedData = data.map(window.mapOrderRowToLocal);
+                // Append to global lists based on context
+                if (currentOrdersList === window.searchResultsCache) {
+                    window.searchResultsCache = window.searchResultsCache.concat(mappedData);
+                    currentOrdersList = window.searchResultsCache;
+                } else {
+                    window.orderHistoryData = window.orderHistoryData.concat(mappedData);
+                    currentOrdersList = window.orderHistoryData;
+                }
+                // Refresh local pagination
+                currentHistoryPage++;
+                renderHistoryList(currentOrdersList, true);
+            }
+        };
+        container.appendChild(serverBtn);
     }
 }
 
@@ -2250,17 +2318,20 @@ if (searchBtn && orderSearchInput) {
             let container = document.getElementById('historyListContainer');
             container.innerHTML = '<p class="empty-msg">جاري البحث الشامل في قاعدة البيانات... <i class=\'fa-solid fa-hourglass-half\'></i></p>';
 
-            fetch(`${GOOGLE_SHEETS_URL}?action=globalSearch&query=${encodeURIComponent(keyword)}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.length === 0) container.innerHTML = '<p class="empty-msg">لم يتم العثور على أوردرات مطابقة.</p>';
-                    else {
-                        window.searchResultsCache = data;
-                        renderHistoryList(data);
+            let searchKeyword = `%${keyword}%`;
+            supabase.from('orders').select('*')
+                .or(`order_id.ilike.${searchKeyword},customer_name.ilike.${searchKeyword},phone.ilike.${searchKeyword}`)
+                .then(({ data, error }) => {
+                    if (error || !data || data.length === 0) {
+                        container.innerHTML = '<p class="empty-msg">لم يتم العثور على أوردرات مطابقة.</p>';
+                    } else {
+                        let mappedData = data.map(window.mapOrderRowToLocal);
+                        window.searchResultsCache = mappedData;
+                        renderHistoryList(mappedData);
                     }
                 })
                 .catch(() => {
-                    container.innerHTML = '<p class="empty-msg"><i class=\'fa-solid fa-xmark\'></i> حدث خطأ في الاتصال بالإنترنت.</p>';
+                    container.innerHTML = '<p class="empty-msg"><i class=\'fa-solid fa-xmark\'></i> حدث خطأ في الاتصال بالسيرفر.</p>';
                 });
         }
     });
