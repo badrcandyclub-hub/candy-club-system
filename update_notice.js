@@ -12,10 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div style="background: #ffffff; border-radius: 24px; padding: 35px 25px 25px; width: 90%; max-width: 520px; box-shadow: 0 25px 60px rgba(0,0,0,0.3); text-align: center; position: relative; border: 1px solid rgba(255,255,255,0.5); animation: popInUpdate 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;">
                     
                     <!-- لوجو كاندي كلاب بدل الصاروخ -->
-                    <div style="position: relative; display: inline-block; margin: -75px auto 20px;">
-                        <div style="position: absolute; top: -5px; left: -5px; right: -5px; bottom: -5px; background: linear-gradient(45deg, #FF1493, #00BCD4, #FFC107); border-radius: 50%; z-index: -1; animation: spinGradient 4s linear infinite;"></div>
-                        <img src="favicon.png" alt="Candy Club Logo" style="width: 85px; height: 85px; border-radius: 50%; display: block; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 4px solid white; background: white; object-fit: cover; animation: floatLogo 3s ease-in-out infinite;">
-                    </div>
+                    <img src="favicon.png" alt="Candy Club Logo" style="width: 120px; height: 120px; border-radius: 50%; display: block; margin: -90px auto 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); border: 6px solid white; background: white; object-fit: cover;">
                     
                     <h2 style="color: #1a237e; margin-top: 0; font-size: 1.7rem; font-weight: 900; margin-bottom: 8px; animation: slideDownText 0.5s ease forwards; opacity: 0; animation-delay: 0.1s;">
                         تحديث جديد وشامل
