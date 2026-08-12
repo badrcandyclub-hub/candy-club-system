@@ -4560,7 +4560,7 @@ function processBarcodeAction(val) {
         const invProdBarcode = document.getElementById('invProdBarcode');
         
         if (val && barcodeCatalogData) {
-            const found = barcodeCatalogData.find(p => String(p.barcode).trim() === val);
+            const found = barcodeCatalogData.find(p => String(p.barcode).split(',').map(b=>b.trim().toLowerCase()).includes(val.toLowerCase()));
             if (found) {
                 if (invProdName) invProdName.value = found.name;
                 if (invProdBarcode) invProdBarcode.value = val;
@@ -4582,7 +4582,7 @@ function processBarcodeAction(val) {
         const ledgerProdBarcode = document.getElementById('ledgerProdBarcode');
         
         if (val && barcodeCatalogData) {
-            const found = barcodeCatalogData.find(p => String(p.barcode).trim() === val);
+            const found = barcodeCatalogData.find(p => String(p.barcode).split(',').map(b=>b.trim().toLowerCase()).includes(val.toLowerCase()));
             if (found) {
                 if (ledgerProdName) ledgerProdName.value = found.name;
                 if (ledgerProdQty) ledgerProdQty.value = found.stock ? Number(found.stock) : 0;
@@ -4623,7 +4623,7 @@ function onScanFailure(error) {
 let currentScannedProduct = null;
 
 function handleBarcodeMatch(barcodeValue) {
-    let matchedProduct = barcodeCatalogData.find(p => String(p.barcode).trim() === String(barcodeValue).trim());
+    let matchedProduct = barcodeCatalogData.find(p => String(p.barcode).split(',').map(b=>b.trim().toLowerCase()).includes(String(barcodeValue).trim().toLowerCase()));
 
     if (matchedProduct) {
         currentScannedProduct = matchedProduct;
@@ -8410,7 +8410,7 @@ window.searchDriverOrder = async function() {
         searchInvBarcodeBtn.addEventListener('click', () => {
             let val = invProdBarcode.value.trim().toLowerCase();
             if(!val) return;
-            let exactMatch = barcodeCatalogData.find(p => p.barcode && String(p.barcode).toLowerCase() === val);
+            let exactMatch = barcodeCatalogData.find(p => p.barcode && String(p.barcode).split(',').map(b=>b.trim().toLowerCase()).includes(val));
             if (exactMatch) {
                 invProdName.value = exactMatch.name;
                 invProdBarcode.value = '';
