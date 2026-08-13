@@ -5,12 +5,27 @@
 
 // SETTINGS - Edit only here
 window.CANDY_EMAIL_CONFIG = {
-    RESEND_API_KEY: 're_3gF2SSfX_Hse2fijLMS64Pmo4KW8kca3j',
-    MANAGER_EMAIL:  'manager@example.com',   // <-- غير ده لإيميلك
-    MANAGER_NAME:   'مدير كاندي كلاب',
-    FROM_EMAIL:     'onboarding@resend.dev',
-    FROM_NAME:      'Candy Club System',
+    // We will fetch the API key from Supabase to prevent GitHub from revoking it!
+    RESEND_API_KEY: '',
+    FROM_EMAIL: 'onboarding@resend.dev',
+    FROM_NAME: 'Candy Club System',
+    MANAGER_EMAIL: 'manager@example.com',
+    MANAGER_NAME: 'Candy Club Manager'
 };
+
+// Fetch the API key dynamically from Supabase
+(async function initEmailService() {
+    if (typeof supabase !== 'undefined') {
+        try {
+            const { data } = await supabase.from('settings_shipping')
+                .select('*').eq('zone_name', '_RESEND_KEY_').eq('zone_type', 'system').maybeSingle();
+            if (data && data.delivery_type) {
+                window.CANDY_EMAIL_CONFIG.RESEND_API_KEY = data.delivery_type;
+                console.log('Email service initialized successfully.');
+            }
+        } catch(e) { console.error('Failed to init email service:', e); }
+    }
+})();
 
 // Core send function — single recipient
 window.sendResendEmail = async function({ to_email, to_name, subject, html_body }) {
