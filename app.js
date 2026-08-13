@@ -1411,7 +1411,6 @@ async function loadDataFromServer(customDate = null) {
             };
         });
 
-        // Users
         window.usersData = (rawUsers || []).map(u => ({
             username: u.username, password: u.password, displayName: u.display_name,
             permissions: u.permissions, status: u.status, lastLogin: u.last_login
@@ -4088,6 +4087,7 @@ if (addCatalogBtn) {
         setBtnLoading(addCatalogBtn, true);
         window.pushCatalogUpdate(n, p, false, 0);
         showToast("<i class=\'fa-solid fa-check\'></i> تم إضافة المنتج", "success");
+
         setTimeout(() => {
             document.getElementById('newCatalogName').value = '';
             document.getElementById('newCatalogPrice').value = '';
@@ -9449,50 +9449,43 @@ window.openEditUserModal = function(username, displayName, permsStr, status, pas
 
 
 
-window.handleUserSubmit = function(e) {
+window.handleUserSubmit = async function(e) {
     e.preventDefault();
     const mode = document.getElementById('user-mode').value;
-    const username = document.getElementById('u-username').value;
-    const displayName = document.getElementById('u-displayname').value;
+    const username = document.getElementById('u-username').value.trim();
+    const displayName = document.getElementById('u-displayname').value.trim();
     const password = document.getElementById('u-password').value;
-    const status = document.getElementById('u-status') ? document.getElementById('u-status').value : "نشط";
+    const status = document.getElementById('u-status') ? document.getElementById('u-status').value : 'نشط';
     
     let perms = [];
-    document.querySelectorAll('input[name="u-perms"]:checked').forEach(c => {
-        perms.push(c.value);
-    });
-    
-    if (perms.length === 0) {
-        showToast("يجب اختيار صلاحية واحدة على الأقل", "error");
-        return;
-    }
+    document.querySelectorAll('input[name="u-perms"]:checked').forEach(c => { perms.push(c.value); });
+    if (perms.length === 0) { showToast('يجب اختيار صلاحية واحدة على الأقل', 'error'); return; }
     
     const submitBtn = e.target.querySelector('button[type="submit"]');
-    setBtnLoading(submitBtn, true, "جاري الحفظ...");
+    setBtnLoading(submitBtn, true, 'جاري الحفظ...');
     
-    let formData = new FormData();
-    formData.append("action", mode === 'add' ? 'addUser' : 'updateUser');
-    formData.append("username", username);
-    formData.append("displayName", displayName);
-    formData.append("permissions", perms.join(","));
-    if (mode === 'add' || password !== "") formData.append("password", password);
-    if (mode === 'edit') formData.append("newPassword", password); 
-    if (mode === 'edit') formData.append("status", status);
-    
-    fetch(GOOGLE_SHEETS_URL, { method: "POST", body: formData })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                showToast(mode === 'add' ? "تمت إضافة المستخدم بنجاح" : "تم تعديل المستخدم بنجاح");
-                document.getElementById('userModal').style.display = 'none';
-                window.loadUsersList();
-            } else {
-                showToast(data.error || "حدث خطأ أثناء الحفظ", "error");
-            }
-        })
-        .catch(e => showToast("فشل الاتصال بالسيرفر", "error"))
-        .finally(() => setBtnLoading(submitBtn, false));
+    try {
+        if (mode === 'add') {
+            const { data: exist } = await supabase.from('users').select('username').eq('username', username);
+            if (exist && exist.length > 0) { showToast('اسم المستخدم موجود بالفعل', 'error'); setBtnLoading(submitBtn, false); return; }
+            await supabase.from('users').insert([{ username, display_name: displayName, password, permissions: perms.join(','), status: 'نشط' }]);
+        } else {
+            let updates = { display_name: displayName, permissions: perms.join(','), status };
+            if (password !== '') updates.password = password;
+            await supabase.from('users').update(updates).eq('username', username);
+        }
+        showToast(mode === 'add' ? 'تمت إضافة المستخدم بنجاح' : 'تم تعديل المستخدم بنجاح', 'success');
+        document.getElementById('userModal').style.display = 'none';
+        // Refresh usersData
+        const { data: fresh } = await supabase.from('users').select('*').order('created_at', { ascending: true });
+        window.usersData = (fresh || []).map(u => ({ username: u.username, password: u.password, displayName: u.display_name, permissions: u.permissions, status: u.status, lastLogin: u.last_login }));
+        window.loadUsersList();
+    } catch(err) {
+        showToast('حدث خطأ: ' + (err.message || ''), 'error');
+    }
+    setBtnLoading(submitBtn, false);
 };
+
 
 window.loadUsersList = function() {
     let tbody = document.getElementById('usersTbody');
@@ -10190,33 +10183,33 @@ function handleLeaveRequest() {
         btn.disabled = true;
     }
 
-    let formData = new URLSearchParams();
-    formData.append('action', 'requestLeave');
-    formData.append('employeeName', currentUser.displayName);
-    formData.append('date', date.value);
-    formData.append('leaveType', type.value);
-    formData.append('notes', notes.value || '');
-
-    fetch(GOOGLE_SHEETS_URL, { method: 'POST', body: formData })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                showToast('✅ تم إرسال طلب الإجازة بنجاح', 'success');
-                sendEmailNotification('HR Admin', 'طلب إجازة جديد', 'قدم ' + currentUser.displayName + ' طلب إجازة بتاريخ ' + date.value);
-                date.value = '';
-                notes.value = '';
-                loadMyAttendance();
-            } else {
-                showToast(data.error || 'حدث خطأ أثناء الإرسال', 'error');
+    // Save directly to Supabase attendance
+    supabase.from('attendance').insert([{
+        employee_name: currentUser.displayName,
+        date: date.value,
+        status: type.value,
+        request_status: 'بانتظار الموافقة',
+        notes: notes.value || ''
+    }]).then(({ error }) => {
+        if (!error) {
+            showToast('✅ تم إرسال طلب الإجازة بنجاح', 'success');
+            // Send email to manager
+            if (typeof window.sendLeaveRequestEmail === 'function') {
+                window.sendLeaveRequestEmail(
+                    currentUser.displayName,
+                    type.value,
+                    date.value,
+                    notes.value || ''
+                );
             }
-        })
-        .catch(() => showToast('حدث خطأ في الاتصال', 'error'))
-        .finally(() => {
-            if(btn) {
-                btn.innerHTML = originalHtml;
-                btn.disabled = false;
-            }
-        });
+            date.value = '';
+            notes.value = '';
+            loadMyAttendance();
+        } else {
+            showToast('حدث خطأ أثناء الإرسال: ' + (error.message || ''), 'error');
+        }
+        if(btn) { btn.innerHTML = originalHtml; btn.disabled = false; }
+    });
 }
 
 function loadMyAttendance() {
@@ -11226,6 +11219,9 @@ window.handleLeaveDecision = function(employee, date, decision, btnElement = nul
             if (data.success) {
                 showToast(decision === 'approve' ? '✅ تمت الموافقة' : '❌ تم الرفض', 'success');
                 sendEmailNotification(employee, 'رد على طلب الإجازة', 'تم ' + (decision === 'approve' ? 'الموافقة على' : 'رفض') + ' إجازتك بتاريخ ' + date);
+                if (typeof window.sendLeaveDecisionEmail === 'function') {
+                    window.sendLeaveDecisionEmail(employee, decision, date);
+                }
                 if(typeof loadPendingLeaves === 'function') loadPendingLeaves();
                 if(typeof loadAdminAttendance === 'function') loadAdminAttendance();
                 loadMyAttendance();
@@ -11902,28 +11898,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 // ============================================================
-// Email Notifications (EmailJS Stub)
+// Email Notifications — Powered by email_service.js + Resend
 // ============================================================
 function sendEmailNotification(to_name, subject, message) {
-    // Requires EmailJS to be included in index.html
-    // <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-    // emailjs.init("YOUR_PUBLIC_KEY");
-    
-    if (typeof emailjs === 'undefined') {
-        console.warn('EmailJS not loaded. Stub email:', {to_name, subject, message});
-        return;
-    }
-    
-    /*
-    emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", {
-        to_name: to_name,
-        subject: subject,
-        message: message
-    }).then(
-        function (response) { console.log("Email sent!", response.status, response.text); },
-        function (error) { console.error("Email failed...", error); }
-    );
-    */
+    // Legacy stub - now handled by email_service.js
+    // New functions: sendLeaveRequestEmail, sendLeaveDecisionEmail, sendStockAlertEmail, sendNewProductEmail
+    console.log('[Email]', subject, '->', to_name, '|', message);
 }
 
 
