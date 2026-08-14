@@ -6993,7 +6993,7 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
             </script>
         </body>
         </html>
-    \`;
+    `;
 
     printWindow.document.write(html);
     printWindow.document.close();
