@@ -10193,15 +10193,7 @@ function handleLeaveRequest() {
     }]).then(({ error }) => {
         if (!error) {
             showToast('✅ تم إرسال طلب الإجازة بنجاح', 'success');
-            // Send email to manager
-            if (typeof window.sendLeaveRequestEmail === 'function') {
-                window.sendLeaveRequestEmail(
-                    currentUser.displayName,
-                    type.value,
-                    date.value,
-                    notes.value || ''
-                );
-            }
+
             date.value = '';
             notes.value = '';
             loadMyAttendance();
@@ -11218,10 +11210,7 @@ window.handleLeaveDecision = function(employee, date, decision, btnElement = nul
         .then(data => {
             if (data.success) {
                 showToast(decision === 'approve' ? '✅ تمت الموافقة' : '❌ تم الرفض', 'success');
-                sendEmailNotification(employee, 'رد على طلب الإجازة', 'تم ' + (decision === 'approve' ? 'الموافقة على' : 'رفض') + ' إجازتك بتاريخ ' + date);
-                if (typeof window.sendLeaveDecisionEmail === 'function') {
-                    window.sendLeaveDecisionEmail(employee, decision, date);
-                }
+
                 if(typeof loadPendingLeaves === 'function') loadPendingLeaves();
                 if(typeof loadAdminAttendance === 'function') loadAdminAttendance();
                 loadMyAttendance();
@@ -11897,14 +11886,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-// ============================================================
-// Email Notifications — Powered by email_service.js + Resend
-// ============================================================
-function sendEmailNotification(to_name, subject, message) {
-    // Legacy stub - now handled by email_service.js
-    // New functions: sendLeaveRequestEmail, sendLeaveDecisionEmail, sendStockAlertEmail, sendNewProductEmail
-    console.log('[Email]', subject, '->', to_name, '|', message);
-}
 
 
 // ============================================================
