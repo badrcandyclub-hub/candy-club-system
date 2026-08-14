@@ -1299,7 +1299,8 @@ async function loadDataFromServer(customDate = null) {
             { data: rawModerators, error: e7 },
             { data: rawOOS, error: e8 },
             { data: rawSuspended, error: e9 },
-            { data: rawExpiries, error: e10 }
+            { data: rawExpiries, error: e10 },
+            { data: rawSettled, error: e11 }
         ] = await Promise.all([
             supabase.from('orders').select('*').eq('order_date', fetchDate).order('created_at', { ascending: false }).range(0, 49),
             fetchAllSupabaseRows(supabase.from('orders').select('*').eq('status', 'قيد التجهيز')),
@@ -1313,10 +1314,11 @@ async function loadDataFromServer(customDate = null) {
             fetchCachedSupabaseTable('moderators', supabase.from('moderators').select('*')),
             fetchAllSupabaseRows(supabase.from('out_of_stock').select('*')),
             fetchAllSupabaseRows(supabase.from('suspended_orders').select('*')),
-            fetchAllSupabaseRows(supabase.from('expiries').select('*'))
+            fetchAllSupabaseRows(supabase.from('expiries').select('*')),
+            fetchAllSupabaseRows(supabase.from('orders').select('driver_name,shipping_cost,order_date,status').eq('status', 'تم التوصيل ومُحاسب'))
         ]);
 
-        for (const err of [eh1, eh2, eh3, eh4, e2, e3, e4, e5, e6, e7, e8, e9, e10]) {
+        for (const err of [eh1, eh2, eh3, eh4, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11]) {
             if (err) throw err;
         }
 
@@ -1615,7 +1617,8 @@ async function loadDataFromServer(customDate = null) {
             if (o.status === "في الشحن") finMap[o.driver].inTransit++;
 
             // Stats include all delivered orders (settled or not)
-            if (o.status === "تم التوصيل" || o.status === "تم التوصيل ومُحاسب") {
+            // Settled orders are processed separately below to avoid double counting
+            if (o.status === "تم التوصيل") {
                 let orderProfit = parseFloat(o.shipping) || 0;
                 driverStatsMap[o.driver].totalProfit += orderProfit;
                 driverStatsMap[o.driver].totalCount++;
@@ -1626,6 +1629,24 @@ async function loadDataFromServer(customDate = null) {
                 }
             }
         });
+        
+        // Add rawSettled stats
+        if (rawSettled) {
+            rawSettled.forEach(o => {
+                let driver = o.driver_name;
+                if (!driver) return;
+                if (!driverStatsMap[driver]) driverStatsMap[driver] = { monthProfit: 0, monthOrderCount: 0, totalProfit: 0, totalCount: 0 };
+                
+                let orderProfit = parseFloat(o.shipping_cost) || 0;
+                driverStatsMap[driver].totalProfit += orderProfit;
+                driverStatsMap[driver].totalCount++;
+                
+                if (o.order_date && o.order_date.substring(0, 7) === currentMonth) {
+                    driverStatsMap[driver].monthProfit += orderProfit;
+                    driverStatsMap[driver].monthOrderCount++;
+                }
+            });
+        }
         Object.values(finMap).forEach(f => {
             f.netDue = f.cashCollected - f.shippingFees;
             f.statusText = f.netDue > 0 ? "مطلوب تحصيل" : "لا توجد مديونية";
