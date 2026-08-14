@@ -60,7 +60,15 @@ window.sendStockAlertEmail = async function(productName, currentStock, location)
     if (!managers || managers.length === 0) {
         managers = [{ email: window.CANDY_EMAIL_CONFIG.ADMIN_EMAIL, name: 'Admin' }];
     }
-    const msg = `تنبيه نقص مخزون!\nالمنتج: ${productName}\nالكمية الحالية: ${currentStock}\nالمكان: ${location || 'غير محدد'}\nيرجى تعويض النواقص في أسرع وقت.`;
+    const msg = `<div dir="rtl" style="font-family: Arial, sans-serif; background-color: #fff3f3; padding: 20px; border-radius: 10px; border: 2px solid #ff9800; max-width: 600px; margin: auto;">
+        <h2 style="color: #ff9800; text-align: center;">⚠️ تنبيه نقص مخزون!</h2>
+        <div style="background-color: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <p style="font-size: 16px;"><strong>📦 المنتج:</strong> ${productName}</p>
+            <p style="font-size: 16px;"><strong>🔢 الكمية الحالية:</strong> <span style="color: red; font-weight: bold;">${currentStock}</span></p>
+            <p style="font-size: 16px;"><strong>📍 المكان:</strong> ${location || 'غير محدد'}</p>
+        </div>
+        <p style="text-align: center; margin-top: 15px; color: #666; font-size: 14px;">يرجى تعويض النواقص في أسرع وقت لضمان سير العمل.</p>
+    </div>`;
     for (const m of managers) {
         await window.sendEmailJS({ to_email: m.email, to_name: m.name, subject: 'تنبيه نواقص - ' + productName, message: msg });
     }
@@ -72,7 +80,14 @@ window.sendExpiryAlertEmail = async function(productName, expiryDate) {
     if (!managers || managers.length === 0) {
         managers = [{ email: window.CANDY_EMAIL_CONFIG.ADMIN_EMAIL, name: 'Admin' }];
     }
-    const msg = `تنبيه صلاحية!\nالمنتج: ${productName}\nتاريخ الانتهاء: ${expiryDate}\nيرجى مراجعة المنتج.`;
+    const msg = `<div dir="rtl" style="font-family: Arial, sans-serif; background-color: #fff3f3; padding: 20px; border-radius: 10px; border: 2px solid #f44336; max-width: 600px; margin: auto;">
+        <h2 style="color: #f44336; text-align: center;">🚨 تنبيه صلاحية قريبة!</h2>
+        <div style="background-color: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <p style="font-size: 16px;"><strong>📦 المنتج:</strong> ${productName}</p>
+            <p style="font-size: 16px;"><strong>⏳ تاريخ الانتهاء:</strong> <span style="color: red; font-weight: bold;">${expiryDate}</span></p>
+        </div>
+        <p style="text-align: center; margin-top: 15px; color: #666; font-size: 14px;">يرجى مراجعة المنتج واتخاذ اللازم فوراً.</p>
+    </div>`;
     for (const m of managers) {
         await window.sendEmailJS({ to_email: m.email, to_name: m.name, subject: 'تنبيه صلاحية قريبة - ' + productName, message: msg });
     }
@@ -84,7 +99,16 @@ window.sendLeaveRequestEmail = async function(employeeName, leaveType, leaveDate
     if (!managers || managers.length === 0) {
         managers = [{ email: window.CANDY_EMAIL_CONFIG.ADMIN_EMAIL, name: 'HR Admin' }];
     }
-    const msg = `طلب إجازة جديد!\n\nالموظف: ${employeeName}\nنوع الإجازة: ${leaveType}\nتاريخ الإجازة: ${leaveDate}\nملاحظات: ${notes || 'لا يوجد'}\n\nيرجى مراجعة الطلب في النظام.`;
+    const msg = `<div dir="rtl" style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px; border-radius: 10px; border: 2px solid #e91e63; max-width: 600px; margin: auto;">
+        <h2 style="color: #e91e63; text-align: center;">🏖️ طلب إجازة جديد</h2>
+        <div style="background-color: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <p style="font-size: 16px;"><strong>👤 الموظف:</strong> ${employeeName}</p>
+            <p style="font-size: 16px;"><strong>📋 نوع الإجازة:</strong> ${leaveType}</p>
+            <p style="font-size: 16px;"><strong>📅 تاريخ الإجازة:</strong> ${leaveDate}</p>
+            <p style="font-size: 16px;"><strong>📝 ملاحظات:</strong> ${notes || 'لا يوجد'}</p>
+        </div>
+        <p style="text-align: center; margin-top: 15px; color: #666; font-size: 14px;">يرجى مراجعة الطلب في النظام لاتخاذ القرار.</p>
+    </div>`;
     for (const m of managers) {
         await window.sendEmailJS({ to_email: m.email, to_name: m.name, subject: 'طلب إجازة جديد - ' + employeeName, message: msg });
     }
@@ -106,7 +130,16 @@ window.sendLeaveDecisionEmail = async function(employeeName, decision, leaveDate
     }
     const approved = decision === 'approve';
     const statusText = approved ? 'مقبولة ✅' : 'مرفوضة ❌';
-    const msg = `مرحباً ${employeeName}،\n\nتم الرد على طلب إجازتك بتاريخ ${leaveDate}.\n\nحالة الطلب: ${statusText}\nملاحظة المدير: ${managerNote || 'لا يوجد'}\n\n${approved ? 'إجازة سعيدة!' : 'يرجى التواصل مع الإدارة لمزيد من التفاصيل.'}`;
+    const msg = `<div dir="rtl" style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px; border-radius: 10px; border: 2px solid ${approved ? '#4CAF50' : '#f44336'}; max-width: 600px; margin: auto;">
+        <h2 style="color: ${approved ? '#4CAF50' : '#f44336'}; text-align: center;">${approved ? '✅ تمت الموافقة على إجازتك' : '❌ عذراً، تم رفض إجازتك'}</h2>
+        <div style="background-color: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <p style="font-size: 16px;">مرحباً <strong>${employeeName}</strong>،</p>
+            <p style="font-size: 16px;">تم الرد على طلب إجازتك بتاريخ <strong>${leaveDate}</strong>.</p>
+            <p style="font-size: 16px;"><strong>حالة الطلب:</strong> <span style="color: ${approved ? '#4CAF50' : '#f44336'}; font-weight: bold;">${statusText}</span></p>
+            <p style="font-size: 16px;"><strong>💬 ملاحظة الإدارة:</strong> ${managerNote || 'لا يوجد'}</p>
+        </div>
+        <p style="text-align: center; margin-top: 15px; font-weight: bold; font-size: 16px;">${approved ? '🏖️ إجازة سعيدة!' : 'يرجى التواصل مع الإدارة لمزيد من التفاصيل.'}</p>
+    </div>`;
     
     await window.sendEmailJS({
         to_email: empEmail,
