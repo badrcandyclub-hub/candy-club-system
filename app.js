@@ -686,8 +686,7 @@ async function handleSupabaseRequest(url, options) {
                     const fbMap = {};
                     fbItems.forEach(item => {
                         if (item && item.Barcode) {
-                            let normalizedBarcode = String(item.Barcode).trim().replace(/^0+/, '');
-                            fbMap[normalizedBarcode] = parseFloat(item.Stock) || 0;
+                            fbMap[String(item.Barcode).trim()] = parseFloat(item.Stock) || 0;
                         }
                     });
 
@@ -701,7 +700,7 @@ async function handleSupabaseRequest(url, options) {
                     // 3. Aggregate by barcode
                     const gsMap = {};
                     gsData.forEach(row => {
-                        const bcode = String(row.barcode || '').trim().replace(/^0+/, '');
+                        const bcode = String(row.barcode || '').trim();
                         if (!bcode) return;
                         const qty = parseFloat(row.qty) || 0;
                         if (!gsMap[bcode]) gsMap[bcode] = { totalQty: 0, rows: [] };
@@ -4606,8 +4605,7 @@ function processBarcodeAction(val) {
         const invProdBarcode = document.getElementById('invProdBarcode');
         
         if (val && barcodeCatalogData) {
-            let searchVal = val.toLowerCase().replace(/^0+/, '');
-            const found = barcodeCatalogData.find(p => String(p.barcode).split(',').map(b=>b.trim().toLowerCase().replace(/^0+/, '')).includes(searchVal));
+            const found = barcodeCatalogData.find(p => String(p.barcode).split(',').map(b=>b.trim().toLowerCase()).includes(val.toLowerCase()));
             if (found) {
                 if (invProdName) invProdName.value = found.name;
                 if (invProdBarcode) invProdBarcode.value = val;
@@ -4629,8 +4627,7 @@ function processBarcodeAction(val) {
         const ledgerProdBarcode = document.getElementById('ledgerProdBarcode');
         
         if (val && barcodeCatalogData) {
-            let searchVal = val.toLowerCase().replace(/^0+/, '');
-            const found = barcodeCatalogData.find(p => String(p.barcode).split(',').map(b=>b.trim().toLowerCase().replace(/^0+/, '')).includes(searchVal));
+            const found = barcodeCatalogData.find(p => String(p.barcode).split(',').map(b=>b.trim().toLowerCase()).includes(val.toLowerCase()));
             if (found) {
                 if (ledgerProdName) ledgerProdName.value = found.name;
                 if (ledgerProdQty) ledgerProdQty.value = found.stock ? Number(found.stock) : 0;
@@ -4671,8 +4668,7 @@ function onScanFailure(error) {
 let currentScannedProduct = null;
 
 function handleBarcodeMatch(barcodeValue) {
-    let searchVal = String(barcodeValue).trim().toLowerCase().replace(/^0+/, '');
-    let matchedProduct = barcodeCatalogData.find(p => String(p.barcode).split(',').map(b=>b.trim().toLowerCase().replace(/^0+/, '')).includes(searchVal));
+    let matchedProduct = barcodeCatalogData.find(p => String(p.barcode).split(',').map(b=>b.trim().toLowerCase()).includes(String(barcodeValue).trim().toLowerCase()));
 
     if (matchedProduct) {
         currentScannedProduct = matchedProduct;
@@ -8595,9 +8591,9 @@ window.searchDriverOrder = async function() {
     
     if (searchInvBarcodeBtn) {
         searchInvBarcodeBtn.addEventListener('click', () => {
-            let val = invProdBarcode.value.trim().toLowerCase().replace(/^0+/, '');
+            let val = invProdBarcode.value.trim().toLowerCase();
             if(!val) return;
-            let exactMatch = barcodeCatalogData.find(p => p.barcode && String(p.barcode).split(',').map(b=>b.trim().toLowerCase().replace(/^0+/, '')).includes(val));
+            let exactMatch = barcodeCatalogData.find(p => p.barcode && String(p.barcode).split(',').map(b=>b.trim().toLowerCase()).includes(val));
             if (exactMatch) {
                 invProdName.value = exactMatch.name;
                 invProdBarcode.value = '';
