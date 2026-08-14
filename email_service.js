@@ -5,7 +5,8 @@
 window.CANDY_EMAIL_CONFIG = {
     PUBLIC_KEY: 'F0ac0mnX_vGMKUaQX',
     SERVICE_ID: 'service_ntb2n7n',
-    TEMPLATE_ID: 'template_8ph9b99'
+    TEMPLATE_ID: 'template_8ph9b99',
+    ADMIN_EMAIL: 'badr.candyclub@gmail.com'
 };
 
 // Initialize EmailJS
@@ -55,7 +56,10 @@ window.sendEmailJS = async function({ to_email, to_name, subject, message }) {
 
 // 1. Stock alert (0 or 1 piece) — sent to 'shortages'
 window.sendStockAlertEmail = async function(productName, currentStock, location) {
-    const managers = window.getEmailsByPermission('shortages');
+    let managers = window.getEmailsByPermission('shortages');
+    if (!managers || managers.length === 0) {
+        managers = [{ email: window.CANDY_EMAIL_CONFIG.ADMIN_EMAIL, name: 'Admin' }];
+    }
     const msg = `تنبيه نقص مخزون!\nالمنتج: ${productName}\nالكمية الحالية: ${currentStock}\nالمكان: ${location || 'غير محدد'}\nيرجى تعويض النواقص في أسرع وقت.`;
     for (const m of managers) {
         await window.sendEmailJS({ to_email: m.email, to_name: m.name, subject: 'تنبيه نواقص - ' + productName, message: msg });
@@ -64,7 +68,10 @@ window.sendStockAlertEmail = async function(productName, currentStock, location)
 
 // 2. Expiry alert — sent to 'expiry'
 window.sendExpiryAlertEmail = async function(productName, expiryDate) {
-    const managers = window.getEmailsByPermission('expiry');
+    let managers = window.getEmailsByPermission('expiry');
+    if (!managers || managers.length === 0) {
+        managers = [{ email: window.CANDY_EMAIL_CONFIG.ADMIN_EMAIL, name: 'Admin' }];
+    }
     const msg = `تنبيه صلاحية!\nالمنتج: ${productName}\nتاريخ الانتهاء: ${expiryDate}\nيرجى مراجعة المنتج.`;
     for (const m of managers) {
         await window.sendEmailJS({ to_email: m.email, to_name: m.name, subject: 'تنبيه صلاحية قريبة - ' + productName, message: msg });
@@ -73,7 +80,10 @@ window.sendExpiryAlertEmail = async function(productName, expiryDate) {
 
 // 3. Leave Request — sent to 'hr-admin'
 window.sendLeaveRequestEmail = async function(employeeName, leaveType, leaveDate, notes) {
-    const managers = window.getEmailsByPermission('hr-admin');
+    let managers = window.getEmailsByPermission('hr-admin');
+    if (!managers || managers.length === 0) {
+        managers = [{ email: window.CANDY_EMAIL_CONFIG.ADMIN_EMAIL, name: 'HR Admin' }];
+    }
     const msg = `طلب إجازة جديد!\n\nالموظف: ${employeeName}\nنوع الإجازة: ${leaveType}\nتاريخ الإجازة: ${leaveDate}\nملاحظات: ${notes || 'لا يوجد'}\n\nيرجى مراجعة الطلب في النظام.`;
     for (const m of managers) {
         await window.sendEmailJS({ to_email: m.email, to_name: m.name, subject: 'طلب إجازة جديد - ' + employeeName, message: msg });
