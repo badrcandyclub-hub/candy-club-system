@@ -546,7 +546,11 @@ async function handleSupabaseRequest(url, options) {
                 responseData = { success: true, message: "تم إرسال طلب الإجازة" };
                 break;
             case 'manageLeave':
-                await supabase.from('attendance').update({ request_status: params.decision === 'approve' ? '✅ تمت الموافقة' : '❌ مرفوضة' }).eq('employee_name', params.employeeName).eq('date', params.date);
+                let updateData = { request_status: params.decision === 'approve' ? '✅ تمت الموافقة' : '❌ مرفوضة' };
+                if (params.decision === 'approve') {
+                    updateData.hours = '8:00';
+                }
+                await supabase.from('attendance').update(updateData).eq('employee_name', params.employeeName).eq('date', params.date);
                 break;
             case 'bulkUploadAttendance':
                 const attItems = JSON.parse(params.dataStr || "[]");
