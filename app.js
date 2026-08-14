@@ -6776,6 +6776,20 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
         return;
     }
 
+    // Group items by barcode (and name if no barcode)
+    let grouped = {};
+    filteredData.forEach(item => {
+        let key = item.barcode && String(item.barcode).trim() !== '' ? String(item.barcode).trim() : String(item.name).trim();
+        if (!key) key = "unknown";
+        
+        if (!grouped[key]) {
+            grouped[key] = { ...item, qty: parseFloat(item.qty) || 0 };
+        } else {
+            grouped[key].qty += parseFloat(item.qty) || 0;
+        }
+    });
+    let finalData = Object.values(grouped);
+
     let baseUrl = window.location.href.split('?')[0].replace(/[^/]*$/, '');
     let logoUrl = baseUrl + 'favicon.png';
 
@@ -6783,96 +6797,203 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
         <html dir="rtl" lang="ar">
         <head>
             <title>تقرير انتهاء الصلاحية - شهر ${monthVal}</title>
-            <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+            <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+            <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
             <style>
                 * { box-sizing: border-box; }
                 body { 
                     font-family: 'Cairo', sans-serif; 
-                    color: #333; 
+                    color: #1e293b; 
                     background: #fff; 
                     direction: rtl; 
                     width: 210mm; /* A4 width */
                     margin: 0 auto; 
                     padding: 15mm; 
                 }
-                .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #E91E8C; padding-bottom: 20px; margin-bottom: 30px; }
-                .logo-container { display: flex; align-items: center; gap: 15px; direction: ltr; }
-                .logo-img { height: 70px; object-fit: contain; }
-                .logo-text { font-size: 36px; font-weight: 900; color: #E91E8C; letter-spacing: 2px; margin: 0; }
-                .logo-text span { background: #E91E8C; color: white; padding: 5px 15px; border-radius: 8px; font-size: 24px; vertical-align: middle; }
-                .title-box { text-align: left; }
-                .title { font-size: 22px; font-weight: bold; color: #2c3e50; margin: 0; margin-bottom: 5px; }
-                .subtitle { font-size: 16px; color: #7f8c8d; margin: 0; }
+                .header { 
+                    display: flex; 
+                    justify-content: space-between; 
+                    align-items: center; 
+                    border-bottom: 3px solid #f1f5f9; 
+                    padding-bottom: 20px; 
+                    margin-bottom: 25px; 
+                }
+                .logo-container { text-align: right; }
+                .logo-img { height: 85px; object-fit: contain; }
+                
+                .title-container {
+                    text-align: left;
+                }
+                .title-badge { 
+                    display: inline-block;
+                    background: #fdf2f8; 
+                    color: #E91E8C;
+                    font-size: 24px; 
+                    font-weight: 900; 
+                    padding: 10px 25px;
+                    border-radius: 12px;
+                    border: 1px solid #fbcfe8;
+                }
+                
+                .info-section { 
+                    display: flex; 
+                    gap: 15px; 
+                    margin-bottom: 25px; 
+                }
+                .info-card { 
+                    flex: 1;
+                    background: #ffffff; 
+                    padding: 18px; 
+                    border-radius: 12px; 
+                    border: 1px solid #e2e8f0; 
+                    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+                }
+                .info-row {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 12px;
+                    font-size: 15px;
+                }
+                .info-row:last-child { margin-bottom: 0; }
+                .info-label { color: #64748b; font-weight: bold; }
+                .info-value { color: #0f172a; font-weight: 900; }
+                
                 table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 14px; }
-                th, td { border: 1px solid #e0e0e0; padding: 12px; text-align: right; }
-                th { background: #E91E8C; color: white; font-weight: bold; font-size: 15px; }
-                tr:nth-child(even) { background-color: #fafafa; }
-                .footer { text-align: center; margin-top: 40px; font-size: 12px; color: #999; border-top: 1px solid #eee; padding-top: 20px; }
+                thead { display: table-header-group; }
+                tr { page-break-inside: avoid; }
+                th { 
+                    background: #1e293b; 
+                    color: #f8fafc; 
+                    padding: 12px; 
+                    text-align: right; 
+                    border: 1px solid #334155; 
+                    border-top: 4px solid #E91E8C;
+                }
+                td { padding: 12px; border: 1px solid #e2e8f0; vertical-align: middle; }
+                tr:nth-child(even) { background-color: #f8fafc; }
+                
+                .qty-cell {
+                    font-size: 1.2em;
+                    font-weight: 900;
+                    color: #059669;
+                    text-align: center;
+                    background: #ecfdf5;
+                }
+                
+                .barcode-container {
+                    text-align: center;
+                }
+                .barcode-text {
+                    font-size: 12px;
+                    font-weight: bold;
+                    letter-spacing: 1px;
+                    color: #475569;
+                    margin-top: 4px;
+                }
+
+                .footer { 
+                    text-align: center; 
+                    margin-top: 40px; 
+                    font-size: 13px; 
+                    color: #94a3b8; 
+                    border-top: 1px dashed #cbd5e1; 
+                    padding-top: 20px; 
+                    page-break-inside: avoid; 
+                }
                 @media print {
-                    body { box-shadow: none; padding: 0; margin: 0; width: auto; }
-                    button { display: none; }
+                    @page { size: A4 portrait; margin: 15mm; }
+                    body { padding: 0; width: 100%; box-shadow: none; margin: 0; }
+                    .info-card { box-shadow: none; border: 1px solid #cbd5e1; }
                 }
             </style>
         </head>
         <body>
             <div class="header">
-                <div class="logo-container">
+                <div class="logo-container" style="display: flex; align-items: center; gap: 15px; direction: ltr;">
                     <img src="${logoUrl}" alt="Logo" class="logo-img">
-                    <h1 class="logo-text">Candy <span>Club</span></h1>
+                    <div style="text-align: left;">
+                        <div style="font-weight: 900; font-size: 26px; color: #1e293b; letter-spacing: 1px; line-height: 1.2;">Candy Club</div>
+                    </div>
                 </div>
-                <div class="title-box">
-                    <h2 class="title">تقرير انتهاء الصلاحية</h2>
-                    <p class="subtitle">منتجات تنتهي في شهر: <strong dir="ltr">${monthVal}</strong></p>
-                    <p class="subtitle" style="font-size: 13px; margin-top: 5px;">تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')} - ${new Date().toLocaleTimeString('ar-EG')}</p>
+                <div class="title-container">
+                    <div class="title-badge">تقرير صلاحيات المنتجات</div>
                 </div>
             </div>
             
+            <div class="info-section">
+                <div class="info-card" style="display: flex; align-items: center; justify-content: center;">
+                    <div class="info-row" style="justify-content: center; font-size: 18px; margin: 0;">
+                        <span class="info-label" style="font-size: 22px;">شهر الانتهاء:</span>
+                        <span class="info-value" style="color: #E91E8C; margin-right: 15px; font-size: 22px;" dir="ltr">${monthVal}</span>
+                    </div>
+                </div>
+                <div class="info-card" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                    <span class="info-label" style="margin-bottom: 8px;">إجمالي الأصناف المجمعة</span>
+                    <span class="info-value" style="font-size: 32px; color: #E91E8C; line-height: 1;">${finalData.length}</span>
+                </div>
+            </div>
+
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 50px;">م</th>
-                        <th>اسم المنتج</th>
-                        <th>الباركود</th>
-                        <th style="width: 100px;">الكمية</th>
-                        <th style="width: 120px;">تاريخ الانتهاء</th>
+                        <th style="width: 5%; text-align: center;">م</th>
+                        <th style="width: 40%;">اسم المنتج</th>
+                        <th style="width: 25%; text-align: center;">الباركود</th>
+                        <th style="width: 15%; text-align: center;">العدد الكلي</th>
+                        <th style="width: 15%; text-align: right;">شهر الانتهاء</th>
                     </tr>
                 </thead>
                 <tbody>
-    `;
+                    ${finalData.map((item, index) => {
+                        let barcodeHtml = '-';
+                        if (item.barcode && item.barcode.trim() !== '') {
+                            barcodeHtml = \`
+                                <div class="barcode-container">
+                                    <svg class="barcode"
+                                        jsbarcode-value="\${item.barcode}"
+                                        jsbarcode-height="35"
+                                        jsbarcode-width="1.5"
+                                        jsbarcode-displayvalue="false"
+                                        jsbarcode-margin="0">
+                                    </svg>
+                                    <div class="barcode-text">\${item.barcode}</div>
+                                </div>
+                            \`;
+                        }
 
-    filteredData.forEach((item, index) => {
-        let name = item.name || 'غير محدد';
-        let barcode = item.barcode || '--';
-        let qty = item.qty || 0;
-        let expiry = item.expiryDate ? String(item.expiryDate).split('T')[0] : '--';
-        
-        html += `
-            <tr>
-                <td>${index + 1}</td>
-                <td style="font-weight: bold; color: #2c3e50;">${name}</td>
-                <td style="font-family: monospace; font-size: 15px; letter-spacing: 1px;">${barcode}</td>
-                <td><span style="background: #f1f2f6; padding: 3px 8px; border-radius: 4px; font-weight: bold;">${qty}</span></td>
-                <td style="color: #e74c3c; font-weight: bold;">${expiry}</td>
-            </tr>
-        `;
-    });
-
-    html += `
+                        return \`
+                        <tr>
+                            <td style="text-align: center; font-weight: bold; color: #64748b;">\${index + 1}</td>
+                            <td style="font-weight: 900; font-size: 15px;">\${item.name || '-'}</td>
+                            <td dir="ltr" style="text-align: center;">\${barcodeHtml}</td>
+                            <td class="qty-cell">\${item.qty || '-'}</td>
+                            <td dir="ltr" style="text-align: right; color: #475569; font-weight: bold;">\${monthVal}</td>
+                        </tr>
+                        \`;
+                    }).join('')}
                 </tbody>
             </table>
             
             <div class="footer">
-                <p>تم استخراج هذا التقرير من نظام Candy Club</p>
+                تم استخراج هذا التقرير آلياً من نظام Candy Club
             </div>
             
             <script>
                 window.onload = function() {
-                    window.print();
-                };
+                    try {
+                        JsBarcode(".barcode").init();
+                    } catch(e) {
+                        console.error("Barcode rendering failed", e);
+                    }
+                    
+                    setTimeout(function() {
+                        window.print();
+                    }, 800);
+                }
             </script>
         </body>
         </html>
-    `;
+    \`;
 
     printWindow.document.write(html);
     printWindow.document.close();
