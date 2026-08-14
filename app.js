@@ -6947,29 +6947,29 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
                     ${finalData.map((item, index) => {
                         let barcodeHtml = '-';
                         if (item.barcode && item.barcode.trim() !== '') {
-                            barcodeHtml = \`
+                            barcodeHtml = `
                                 <div class="barcode-container">
                                     <svg class="barcode"
-                                        jsbarcode-value="\${item.barcode}"
+                                        jsbarcode-value="${item.barcode}"
                                         jsbarcode-height="35"
                                         jsbarcode-width="1.5"
                                         jsbarcode-displayvalue="false"
                                         jsbarcode-margin="0">
                                     </svg>
-                                    <div class="barcode-text">\${item.barcode}</div>
+                                    <div class="barcode-text">${item.barcode}</div>
                                 </div>
-                            \`;
+                            `;
                         }
 
-                        return \`
+                        return `
                         <tr>
-                            <td style="text-align: center; font-weight: bold; color: #64748b;">\${index + 1}</td>
-                            <td style="font-weight: 900; font-size: 15px;">\${item.name || '-'}</td>
-                            <td dir="ltr" style="text-align: center;">\${barcodeHtml}</td>
-                            <td class="qty-cell">\${item.qty || '-'}</td>
-                            <td dir="ltr" style="text-align: right; color: #475569; font-weight: bold;">\${monthVal}</td>
+                            <td style="text-align: center; font-weight: bold; color: #64748b;">${index + 1}</td>
+                            <td style="font-weight: 900; font-size: 15px;">${item.name || '-'}</td>
+                            <td dir="ltr" style="text-align: center;">${barcodeHtml}</td>
+                            <td class="qty-cell">${item.qty || '-'}</td>
+                            <td dir="ltr" style="text-align: right; color: #475569; font-weight: bold;">${monthVal}</td>
                         </tr>
-                        \`;
+                        `;
                     }).join('')}
                 </tbody>
             </table>
