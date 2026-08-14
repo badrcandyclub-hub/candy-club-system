@@ -1632,7 +1632,7 @@ async function loadDataFromServer(customDate = null) {
             window.financialsData.push(f);
         });
         
-        window.latestServerData = { ...window.latestServerData, history: historyOrders, pendingOrders, financials: window.financialsData, driverStats: driverStatsMap };
+        window.latestServerData = { ...window.latestServerData, history: historyOrders, pendingOrders, shippedOrders, uncollectedOrders, financials: window.financialsData, driverStats: driverStatsMap };
         if (typeof renderFinancials === 'function') renderFinancials(window.financialsData);
 
         buildMonthFilterOptions();
