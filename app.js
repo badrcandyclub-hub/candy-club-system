@@ -10193,7 +10193,9 @@ function handleLeaveRequest() {
     }]).then(({ error }) => {
         if (!error) {
             showToast('✅ تم إرسال طلب الإجازة بنجاح', 'success');
-
+            if (typeof window.sendLeaveRequestEmail === 'function') {
+                window.sendLeaveRequestEmail(currentUser.displayName, type.value, date.value, notes.value || '');
+            }
             date.value = '';
             notes.value = '';
             loadMyAttendance();
@@ -11210,7 +11212,9 @@ window.handleLeaveDecision = function(employee, date, decision, btnElement = nul
         .then(data => {
             if (data.success) {
                 showToast(decision === 'approve' ? '✅ تمت الموافقة' : '❌ تم الرفض', 'success');
-
+                if (typeof window.sendLeaveDecisionEmail === 'function') {
+                    window.sendLeaveDecisionEmail(employee, decision, date);
+                }
                 if(typeof loadPendingLeaves === 'function') loadPendingLeaves();
                 if(typeof loadAdminAttendance === 'function') loadAdminAttendance();
                 loadMyAttendance();
