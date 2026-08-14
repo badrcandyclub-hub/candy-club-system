@@ -10172,6 +10172,56 @@ function handleCheckOut() {
         });
 }
 
+window.calculateStatsAndSendEmail = async function(employeeName, emailFunc, ...extraArgs) {
+    let remainingLeaves = 'غير محدد';
+    let hoursWorked = 'غير محدد';
+    try {
+        let currentDate = new Date();
+        let currentMonth = (currentDate.getMonth() + 1).toString().padStart(2, '0');
+        let currentYear = currentDate.getFullYear();
+        let monthPrefix = `${currentYear}-${currentMonth}-`;
+        
+        const { data: attData } = await supabase.from('attendance')
+            .select('status, hours, request_status')
+            .eq('employee_name', employeeName)
+            .like('date', monthPrefix + '%');
+            
+        let leavesTaken = 0;
+        let totalMins = 0;
+        
+        if (attData) {
+            attData.forEach(r => {
+                if (r.status === 'إجازة مدفوعة' && r.request_status === '✅ تمت الموافقة') {
+                    leavesTaken++;
+                }
+                if (r.hours && typeof r.hours === 'string') {
+                    if (r.hours.includes(':')) {
+                        let parts = r.hours.split(':');
+                        let h = parseInt(parts[0]);
+                        let m = parseInt(parts[1]);
+                        if(!isNaN(h)) totalMins += h * 60 + (isNaN(m) ? 0 : m);
+                    } else if (r.hours.includes('ساعة')) {
+                        let hMatch = r.hours.match(/(\d+)\s*ساعة/);
+                        let mMatch = r.hours.match(/(\d+)\s*دقيقة/);
+                        if (hMatch) totalMins += parseInt(hMatch[1]) * 60;
+                        if (mMatch) totalMins += parseInt(mMatch[1]);
+                    }
+                }
+            });
+        }
+        remainingLeaves = Math.max(0, 4 - leavesTaken);
+        let h = Math.floor(totalMins / 60);
+        let m = totalMins % 60;
+        hoursWorked = h + ' ساعة' + (m > 0 ? ' و ' + m + ' دقيقة' : '');
+    } catch(e) {
+        console.error('Error calculating stats', e);
+    }
+    
+    if (typeof emailFunc === 'function') {
+        emailFunc(...extraArgs, remainingLeaves, hoursWorked);
+    }
+};
+
 function handleLeaveRequest() {
     if (!currentUser) return;
     let date = document.getElementById('leaveDate');
@@ -10198,7 +10248,7 @@ function handleLeaveRequest() {
         if (!error) {
             showToast('✅ تم إرسال طلب الإجازة بنجاح', 'success');
             if (typeof window.sendLeaveRequestEmail === 'function') {
-                window.sendLeaveRequestEmail(currentUser.displayName, type.value, date.value, notes.value || '');
+                window.calculateStatsAndSendEmail(currentUser.displayName, window.sendLeaveRequestEmail, currentUser.displayName, type.value, date.value, notes.value || '');
             }
             date.value = '';
             notes.value = '';
@@ -11217,7 +11267,7 @@ window.handleLeaveDecision = function(employee, date, decision, btnElement = nul
             if (data.success) {
                 showToast(decision === 'approve' ? '✅ تمت الموافقة' : '❌ تم الرفض', 'success');
                 if (typeof window.sendLeaveDecisionEmail === 'function') {
-                    window.sendLeaveDecisionEmail(employee, decision, date);
+                    window.calculateStatsAndSendEmail(employee, window.sendLeaveDecisionEmail, employee, decision, date, '');
                 }
                 if(typeof loadPendingLeaves === 'function') loadPendingLeaves();
                 if(typeof loadAdminAttendance === 'function') loadAdminAttendance();

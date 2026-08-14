@@ -94,18 +94,23 @@ window.sendExpiryAlertEmail = async function(productName, expiryDate) {
 };
 
 // 3. Leave Request — sent to 'hr-admin'
-window.sendLeaveRequestEmail = async function(employeeName, leaveType, leaveDate, notes) {
+window.sendLeaveRequestEmail = async function(employeeName, leaveType, leaveDate, notes, remainingLeaves = 'غير محدد', hoursWorked = 'غير محدد') {
     let managers = window.getEmailsByPermission('hr-admin');
     if (!managers || managers.length === 0) {
         managers = [{ email: window.CANDY_EMAIL_CONFIG.ADMIN_EMAIL, name: 'HR Admin' }];
     }
     const msg = `<div dir="rtl" style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px; border-radius: 10px; border: 2px solid #e91e63; max-width: 600px; margin: auto;">
         <h2 style="color: #e91e63; text-align: center;">🏖️ طلب إجازة جديد</h2>
-        <div style="background-color: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        <div style="background-color: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 15px;">
             <p style="font-size: 16px;"><strong>👤 الموظف:</strong> ${employeeName}</p>
             <p style="font-size: 16px;"><strong>📋 نوع الإجازة:</strong> ${leaveType}</p>
             <p style="font-size: 16px;"><strong>📅 تاريخ الإجازة:</strong> ${leaveDate}</p>
             <p style="font-size: 16px;"><strong>📝 ملاحظات:</strong> ${notes || 'لا يوجد'}</p>
+        </div>
+        <div style="background-color: #fff0f5; padding: 15px; border-radius: 8px; border-right: 4px solid #e91e63;">
+            <h3 style="color: #e91e63; margin-top: 0; font-size: 16px;">📊 إحصائيات الموظف (الشهر الحالي):</h3>
+            <p style="font-size: 15px; margin: 5px 0;"><strong>🎁 الإجازات المتبقية:</strong> ${remainingLeaves} من أصل 4</p>
+            <p style="font-size: 15px; margin: 5px 0;"><strong>⏱️ ساعات العمل الفعّالة:</strong> ${hoursWorked}</p>
         </div>
         <p style="text-align: center; margin-top: 15px; color: #666; font-size: 14px;">يرجى مراجعة الطلب في النظام لاتخاذ القرار.</p>
     </div>`;
@@ -115,7 +120,7 @@ window.sendLeaveRequestEmail = async function(employeeName, leaveType, leaveDate
 };
 
 // 4. Leave decision — sent to employee
-window.sendLeaveDecisionEmail = async function(employeeName, decision, leaveDate, managerNote) {
+window.sendLeaveDecisionEmail = async function(employeeName, decision, leaveDate, managerNote, remainingLeaves = 'غير محدد', hoursWorked = 'غير محدد') {
     // Look up employee email from usersData
     let empEmail = '';
     if (window.usersData) {
@@ -132,11 +137,16 @@ window.sendLeaveDecisionEmail = async function(employeeName, decision, leaveDate
     const statusText = approved ? 'مقبولة ✅' : 'مرفوضة ❌';
     const msg = `<div dir="rtl" style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px; border-radius: 10px; border: 2px solid ${approved ? '#4CAF50' : '#f44336'}; max-width: 600px; margin: auto;">
         <h2 style="color: ${approved ? '#4CAF50' : '#f44336'}; text-align: center;">${approved ? '✅ تمت الموافقة على إجازتك' : '❌ عذراً، تم رفض إجازتك'}</h2>
-        <div style="background-color: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        <div style="background-color: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 15px;">
             <p style="font-size: 16px;">مرحباً <strong>${employeeName}</strong>،</p>
             <p style="font-size: 16px;">تم الرد على طلب إجازتك بتاريخ <strong>${leaveDate}</strong>.</p>
             <p style="font-size: 16px;"><strong>حالة الطلب:</strong> <span style="color: ${approved ? '#4CAF50' : '#f44336'}; font-weight: bold;">${statusText}</span></p>
             <p style="font-size: 16px;"><strong>💬 ملاحظة الإدارة:</strong> ${managerNote || 'لا يوجد'}</p>
+        </div>
+        <div style="background-color: #f0f8ff; padding: 15px; border-radius: 8px; border-right: 4px solid #2196F3;">
+            <h3 style="color: #2196F3; margin-top: 0; font-size: 16px;">📊 ملخص أداءك (الشهر الحالي):</h3>
+            <p style="font-size: 15px; margin: 5px 0;"><strong>🎁 رصيد إجازاتك المتبقي:</strong> ${remainingLeaves} من أصل 4</p>
+            <p style="font-size: 15px; margin: 5px 0;"><strong>⏱️ ساعات عملك الفعّالة:</strong> ${hoursWorked}</p>
         </div>
         <p style="text-align: center; margin-top: 15px; font-weight: bold; font-size: 16px;">${approved ? '🏖️ إجازة سعيدة!' : 'يرجى التواصل مع الإدارة لمزيد من التفاصيل.'}</p>
     </div>`;
