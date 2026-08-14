@@ -576,7 +576,7 @@ async function handleSupabaseRequest(url, options) {
                 break;
             case 'settleOrder':
                 await supabase.from('orders').update({
-                    status: 'مغلق',
+                    status: 'تم التوصيل ومُحاسب',
                     final_total: params.finalTotal,
                     products_total: params.productsTotal,
                     discount: params.discount,
