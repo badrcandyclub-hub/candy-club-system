@@ -1647,6 +1647,26 @@ async function loadDataFromServer(customDate = null) {
                 }
             });
         }
+        
+        // Add legacy stats to restore missing driver names from before Supabase migration
+        const legacyStats = {
+            'محمود': { totalProfit: 2425, totalCount: 43, monthProfit_2026_08: 0, monthCount_2026_08: 0 },
+            'عمرو النوبي': { totalProfit: 1625, totalCount: 23, monthProfit_2026_08: 40, monthCount_2026_08: 1 },
+            'الحلواني': { totalProfit: 1130, totalCount: 18, monthProfit_2026_08: 0, monthCount_2026_08: 0 },
+            'شركة الشحن (المحافظات)': { totalProfit: 1000, totalCount: 5, monthProfit_2026_08: 200, monthCount_2026_08: 1 },
+            'رضا': { totalProfit: 5835, totalCount: 95, monthProfit_2026_08: 600, monthCount_2026_08: 9 }
+        };
+        
+        Object.keys(legacyStats).forEach(driver => {
+            if (!driverStatsMap[driver]) driverStatsMap[driver] = { monthProfit: 0, monthOrderCount: 0, totalProfit: 0, totalCount: 0 };
+            driverStatsMap[driver].totalProfit += legacyStats[driver].totalProfit;
+            driverStatsMap[driver].totalCount += legacyStats[driver].totalCount;
+            if (currentMonth === '2026-08') {
+                driverStatsMap[driver].monthProfit += legacyStats[driver].monthProfit_2026_08;
+                driverStatsMap[driver].monthOrderCount += legacyStats[driver].monthCount_2026_08;
+            }
+        });
+
         Object.values(finMap).forEach(f => {
             f.netDue = f.cashCollected - f.shippingFees;
             f.statusText = f.netDue > 0 ? "مطلوب تحصيل" : "لا توجد مديونية";
