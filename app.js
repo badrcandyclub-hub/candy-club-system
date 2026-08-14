@@ -6776,19 +6776,31 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
         return;
     }
 
-    // Group items by barcode (and name if no barcode)
+    // Group items by barcode and EXACT expiry date (to sort by day)
     let grouped = {};
     filteredData.forEach(item => {
-        let key = item.barcode && String(item.barcode).trim() !== '' ? String(item.barcode).trim() : String(item.name).trim();
-        if (!key) key = "unknown";
+        let expDateRaw = item.expiryDate ? String(item.expiryDate).split('T')[0] : 'غير محدد';
+        let idKey = item.barcode && String(item.barcode).trim() !== '' ? String(item.barcode).trim() : String(item.name).trim();
+        if (!idKey) idKey = "unknown";
+        
+        let key = idKey + "_" + expDateRaw;
         
         if (!grouped[key]) {
-            grouped[key] = { ...item, qty: parseFloat(item.qty) || 0 };
+            grouped[key] = { ...item, qty: parseFloat(item.qty) || 0, formattedExp: expDateRaw };
         } else {
             grouped[key].qty += parseFloat(item.qty) || 0;
         }
     });
     let finalData = Object.values(grouped);
+    
+    // Sort by expiry date ascending
+    finalData.sort((a, b) => {
+        let dateA = new Date(a.formattedExp);
+        let dateB = new Date(b.formattedExp);
+        if (isNaN(dateA.getTime())) return 1;
+        if (isNaN(dateB.getTime())) return -1;
+        return dateA - dateB;
+    });
 
     let baseUrl = window.location.href.split('?')[0].replace(/[^/]*$/, '');
     let logoUrl = baseUrl + 'favicon.png';
@@ -6940,7 +6952,7 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
                         <th style="width: 40%;">اسم المنتج</th>
                         <th style="width: 25%; text-align: center;">الباركود</th>
                         <th style="width: 15%; text-align: center;">العدد الكلي</th>
-                        <th style="width: 15%; text-align: right;">شهر الانتهاء</th>
+                        <th style="width: 15%; text-align: right;">يوم الانتهاء</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -6967,7 +6979,7 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
                             <td style="font-weight: 900; font-size: 15px;">${item.name || '-'}</td>
                             <td dir="ltr" style="text-align: center;">${barcodeHtml}</td>
                             <td class="qty-cell">${item.qty || '-'}</td>
-                            <td dir="ltr" style="text-align: right; color: #475569; font-weight: bold;">${monthVal}</td>
+                            <td dir="ltr" style="text-align: right; color: #475569; font-weight: bold;">${item.formattedExp}</td>
                         </tr>
                         `;
                     }).join('')}
