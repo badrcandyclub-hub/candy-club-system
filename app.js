@@ -11689,7 +11689,7 @@ function loadPendingLeaves() {
             let html = '';
             pending.forEach(p => {
                 html += '<div class="hr-pending-item" style="background:#fff3e0; border:1px solid #ffb74d; border-radius:8px; padding:12px; margin-bottom:10px;">';
-                html += '<div style="margin-bottom:8px;"><strong>' + p.employee + '</strong> - ' + p.date + ' <span class="hr-badge" style="background:#ff9800; color:white; padding:2px 8px; border-radius:12px; font-size:0.8rem;">' + p.status + '</span></div>';
+                html += '<div style="margin-bottom:8px;"><strong>' + p.employee + '</strong> - ' + p.date + ' <span class="hr-badge" style="background:#ff9800; color:white; padding:2px 8px; border-radius:12px; font-size:0.8rem;">' + p.type + '</span></div>';
                 if (p.notes) html += '<div style="font-size:0.85rem; color:#666; margin-bottom:8px;"><i class="fa-solid fa-note-sticky"></i> ' + p.notes + '</div>';
                 html += '<div style="display:flex; gap:8px;">';
                 html += '<button class="interactive-btn" onclick="handleLeaveDecision(\'' + p.employee + '\', \'' + p.date + '\', \'approve\')" style="background:#2e7d32; color:white; border:none; padding:6px 16px; border-radius:6px; cursor:pointer; flex:1;"><i class="fa-solid fa-check"></i> موافقة</button>';
