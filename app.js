@@ -6958,17 +6958,22 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
                 <tbody>
                     ${finalData.map((item, index) => {
                         let barcodeHtml = '-';
-                        if (item.barcode && item.barcode.trim() !== '') {
+                        let bCode = item.barcode ? String(item.barcode).trim() : '';
+                        if (bCode !== '') {
+                            // Fix for dropped leading zeros (e.g. from Excel numeric parsing)
+                            if (/^\d+$/.test(bCode) && (bCode.length === 11 || bCode.length === 7)) {
+                                bCode = '0' + bCode;
+                            }
                             barcodeHtml = `
                                 <div class="barcode-container">
                                     <svg class="barcode"
-                                        jsbarcode-value="${item.barcode}"
+                                        jsbarcode-value="${bCode}"
                                         jsbarcode-height="35"
                                         jsbarcode-width="1.5"
                                         jsbarcode-displayvalue="false"
                                         jsbarcode-margin="0">
                                     </svg>
-                                    <div class="barcode-text">${item.barcode}</div>
+                                    <div class="barcode-text">${bCode}</div>
                                 </div>
                             `;
                         }
