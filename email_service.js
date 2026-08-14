@@ -5,7 +5,7 @@
 window.CANDY_EMAIL_CONFIG = {
     PUBLIC_KEY: 'F0ac0mnX_vGMKUaQX',
     SERVICE_ID: 'service_ntb2n7n',
-    TEMPLATE_ID: 'avx8srh'
+    TEMPLATE_ID: 'template_8ph9b99'
 };
 
 // Initialize EmailJS
