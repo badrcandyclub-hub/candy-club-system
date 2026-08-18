@@ -805,7 +805,10 @@ window.formatTimeInput = function(input) {
 function formatHoursDisplay(hStr) {
     if (!hStr || hStr === '-') return '-';
     hStr = String(hStr).trim();
-    if (hStr.includes(':')) return hStr.replace('ساعة', '').trim();
+    if (hStr.includes(':')) {
+        let p = hStr.replace('ساعة', '').trim().split(':');
+        return String(parseInt(p[0]||0)).padStart(2, '0') + ':' + String(parseInt(p[1]||0)).padStart(2, '0');
+    }
     
     let h = 0;
     let hMatch = hStr.match(/(\d+(?:\.\d+)?)\s*ساعة/);
@@ -827,7 +830,7 @@ function formatHoursDisplay(hStr) {
     let tMins = Math.round((h - tHrs) * 60);
     if (tMins === 60) { tHrs++; tMins = 0; }
     
-    return tHrs + ":" + String(tMins).padStart(2, '0');
+    return String(tHrs).padStart(2, '0') + ":" + String(tMins).padStart(2, '0');
 }
 
 
@@ -10802,7 +10805,7 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
                 html += `<td style="padding:10px; text-align:center; font-size:0.85rem; color:#546e7a;">${r.date}</td>`;
                 html += `<td style="padding:10px; text-align:center; font-weight:bold; color:#2e7d32; font-size:0.85rem;">${r.checkIn || '-'}</td>`;
                 html += `<td style="padding:10px; text-align:center; font-weight:bold; color:#c62828; font-size:0.85rem;">${r.checkOut || '-'}</td>`;
-                html += `<td style="padding:10px; text-align:center; font-weight:900; color:#1a237e; font-size:0.9rem;">${r.hours || '-'}</td>`;
+                html += `<td style="padding:10px; text-align:center; font-weight:900; color:#1a237e; font-size:0.9rem;">${formatHoursDisplay(r.hours)}</td>`;
                 html += `<td style="padding:10px; text-align:center;"><span style="background:${color}20; color:${color}; padding:4px 10px; border-radius:20px; font-size:0.78rem; font-weight:bold; white-space:nowrap;">${r.status}</span></td>`;
                 html += `<td style="padding:10px; text-align:center;"><button class="interactive-btn" onclick="openEditAttendanceModal('${empName}','${r.date}','${r.checkIn||''}','${r.checkOut||''}','${r.status||''}','${safeNotes}','${r.hours||''}')" style="background:linear-gradient(135deg,#ff9800,#ef6c00); color:white; border:none; padding:7px 12px; border-radius:8px; cursor:pointer; font-size:0.8rem; display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-pen"></i></button></td>`;
                 html += '</tr>';
@@ -10863,19 +10866,7 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
                     let safeNotes = (r.notes || '').replace(/'/g, "\\'");
                     let empName = (r.employee || '').replace(/'/g, "\\'");
                     
-                    let displayHours = r.hours || '-';
-                    if (displayHours !== '-' && !displayHours.toString().includes(':')) {
-                        let numMatch = displayHours.toString().match(/(\d+(?:\.\d+)?)/);
-                        if (numMatch) {
-                            let num = parseFloat(numMatch[1]);
-                            if (!isNaN(num)) {
-                                let h = Math.floor(num);
-                                let m = Math.round((num - h) * 60);
-                                if (m === 60) { h++; m = 0; }
-                                displayHours = `${h}:${String(m).padStart(2,'0')}`;
-                            }
-                        }
-                    }
+                    let displayHours = formatHoursDisplay(r.hours);
                     
                     html += `<tr class="admin-monthly-row page-${pageNum} table-row-hover" style="background:${bgRow}; border-bottom:1px solid #e9ecef; ${rowBorder} ${displayStyle}">`;
                     html += `<td style="padding:10px; text-align:center; font-weight:bold; font-size:0.85rem;">${r.employee}</td>`;
@@ -11029,19 +11020,7 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
                     }
                     let safeNotes = (r.notes || '').replace(/'/g, "\\'");
                     
-                    let displayHours = r.hours || '-';
-                    if (displayHours !== '-' && !displayHours.toString().includes(':')) {
-                        let numMatch = displayHours.toString().match(/(\d+(?:\.\d+)?)/);
-                        if (numMatch) {
-                            let num = parseFloat(numMatch[1]);
-                            if (!isNaN(num)) {
-                                let h = Math.floor(num);
-                                let m = Math.round((num - h) * 60);
-                                if (m === 60) { h++; m = 0; }
-                                displayHours = `${h}:${String(m).padStart(2,'0')}`;
-                            }
-                        }
-                    }
+                    let displayHours = formatHoursDisplay(r.hours);
                     
                     let isPendingOrRejected = r.requestStatus === 'بانتظار الموافقة' || r.requestStatus === '❌ مرفوضة' || r.status === 'إجازة بدون مرتب' || r.status === 'إجازة مرفوضة';
                     if (!isPendingOrRejected) {
@@ -11103,7 +11082,7 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
             html += '<tfoot>';
             html += `<tr style="background:#e3f2fd; border-top:2px solid #1565c0;">`;
             html += `<td colspan="4" style="padding:15px; text-align:left; font-weight:bold; font-size:1.1rem; color:#1565c0;">إجمالي ساعات العمل خلال الشهر:</td>`;
-            html += `<td colspan="3" style="padding:15px; text-align:right; font-weight:900; color:#1a237e; font-size:1.2rem;" dir="ltr">${finalHoursStr} ساعة</td>`;
+            html += `<td colspan="3" style="padding:15px; text-align:right; font-weight:900; color:#1a237e; font-size:1.2rem;" dir="ltr">${finalHoursStr}</td>`;
             html += `</tr>`;
             html += '</tfoot></table></div>';
         }
@@ -11849,7 +11828,7 @@ function exportAttendancePDF() {
                 html += '<tfoot>';
                 html += `<tr style="background:#e3f2fd; border-top:2px solid #1565c0;">`;
                 html += `<td colspan="3" style="padding:15px; text-align:left; font-weight:bold; font-size:1.2rem; color:#1565c0;">إجمالي الساعات:</td>`;
-                html += `<td colspan="2" style="padding:15px; text-align:right; font-weight:900; color:#1a237e; font-size:1.3rem;" dir="ltr">${finalHoursStr} ساعة</td>`;
+                html += `<td colspan="2" style="padding:15px; text-align:right; font-weight:900; color:#1a237e; font-size:1.3rem;" dir="ltr">${finalHoursStr}</td>`;
                 html += `</tr>`;
                 html += '</tfoot></table>';
                 
