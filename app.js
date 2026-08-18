@@ -3287,8 +3287,8 @@ function renderShippingRoom(history) {
     const resContainer = document.getElementById('reservationsContainer');
 
     if (pendingContainer && resContainer) {
-        const pendingOrders = window.pendingOrdersData.filter(o => o.orderType !== 'استلام من الفرع' && (!o.orderType || !o.orderType.includes('حجز') || o.status === 'قيد التجهيز' || o.status === 'في الشحن'));
-        const resOrders = window.pendingOrdersData.filter(o => o.orderType && o.orderType.includes('حجز') && o.status !== 'قيد التجهيز' && o.status !== 'في الشحن' && o.status !== 'تم التوصيل ومُحاسب');
+        const pendingOrders = window.pendingOrdersData.filter(o => o.orderType !== 'استلام من الفرع' && (!o.orderType || !o.orderType.includes('حجز')));
+        const resOrders = window.pendingOrdersData.filter(o => o.orderType && o.orderType.includes('حجز'));
 
         // <i class=\'fa-solid fa-star\'></i> Update Reservations Badge
         const resBadge = document.getElementById('reservationsCountBadge');
