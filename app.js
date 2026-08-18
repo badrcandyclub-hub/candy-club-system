@@ -6819,9 +6819,9 @@ function generateCategoryPDF(filteredData, categoryName) {
                         document.querySelectorAll('tbody tr').forEach(tr => {
                             let cell0 = tr.cells[0];
                             let cell1 = tr.cells[1];
-                            let text0 = cell0 ? cell0.textContent.replace(/[\u00A0\u200B\n\r\t ]/g, '') : '';
-                            let text1 = cell1 ? cell1.textContent.replace(/[\u00A0\u200B\n\r\t ]/g, '') : '';
-                            if (text0 === '' || text1 === '' || text1 === '-') {
+                            let t0 = cell0 ? cell0.innerText.trim() : '';
+                            let t1 = cell1 ? cell1.innerText.trim() : '';
+                            if (t0 === '' || t1 === '' || t1 === '-') {
                                 tr.remove();
                             }
                         });
@@ -7089,9 +7089,9 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
                         document.querySelectorAll('tbody tr').forEach(tr => {
                             let cell0 = tr.cells[0];
                             let cell1 = tr.cells[1];
-                            let text0 = cell0 ? cell0.textContent.replace(/[\u00A0\u200B\n\r\t ]/g, '') : '';
-                            let text1 = cell1 ? cell1.textContent.replace(/[\u00A0\u200B\n\r\t ]/g, '') : '';
-                            if (text0 === '' || text1 === '' || text1 === '-') {
+                            let t0 = cell0 ? cell0.innerText.trim() : '';
+                            let t1 = cell1 ? cell1.innerText.trim() : '';
+                            if (t0 === '' || t1 === '' || t1 === '-') {
                                 tr.remove();
                             }
                         });
@@ -7343,9 +7343,9 @@ function generatePDFReceipt(filteredData, dateVal) {
                         document.querySelectorAll('tbody tr').forEach(tr => {
                             let cell0 = tr.cells[0];
                             let cell1 = tr.cells[1];
-                            let text0 = cell0 ? cell0.textContent.replace(/[\u00A0\u200B\n\r\t ]/g, '') : '';
-                            let text1 = cell1 ? cell1.textContent.replace(/[\u00A0\u200B\n\r\t ]/g, '') : '';
-                            if (text0 === '' || text1 === '' || text1 === '-') {
+                            let t0 = cell0 ? cell0.innerText.trim() : '';
+                            let t1 = cell1 ? cell1.innerText.trim() : '';
+                            if (t0 === '' || t1 === '' || t1 === '-') {
                                 tr.remove();
                             }
                         });
