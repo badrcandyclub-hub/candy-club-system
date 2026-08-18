@@ -6371,7 +6371,7 @@ if (btnExportDatePDF) {
 
         // Group by exact time (natural batchId)
         let batches = {};
-        let legacyBatch = [];
+        let legacyBatches = {};
         filtered.forEach(item => {
             let rDate = item.regDate || "";
             
@@ -6390,9 +6390,18 @@ if (btnExportDatePDF) {
                 if (!batches[rDate]) batches[rDate] = [];
                 batches[rDate].push(item);
             } else {
-                legacyBatch.push(item);
+                let receiverKey = item.receiver ? `legacy_${item.receiver}` : 'legacy_غير محدد';
+                if (!legacyBatches[receiverKey]) legacyBatches[receiverKey] = [];
+                legacyBatches[receiverKey].push(item);
             }
         });
+
+        // Merge legacyBatches into normal batches
+        Object.keys(legacyBatches).forEach(k => {
+            batches[k] = legacyBatches[k];
+        });
+
+        let legacyBatch = []; // keep empty to disable the old legacy UI block
 
         let batchKeys = Object.keys(batches);
         
@@ -6425,6 +6434,8 @@ function showBatchSelectionModal(batches, legacyBatch, dateVal) {
             // fallback if it has a colon but no AM/PM
             let parts = bId.split(" ");
             timeStr = parts.length > 1 ? parts.slice(1).join(" ") : bId;
+        } else if (bId.startsWith('legacy_')) {
+            timeStr = "(بدون وقت)";
         }
 
         let receiver = items[0].receiver || 'غير محدد';
