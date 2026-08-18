@@ -8489,7 +8489,7 @@ window.printSelectedPriceTags = function(overrideSize = null) {
 };
 
 // --- Moderators Dashboard Logic ---
-window.renderModeratorsDashboard = function() {
+window.renderModeratorsDashboard = async function() {
     const container = document.getElementById('moderatorsDashboardContainer');
     if (!container) return;
     
@@ -8509,42 +8509,50 @@ window.renderModeratorsDashboard = function() {
     }
     const currentMonthPrefix = monthFilterInput ? monthFilterInput.value : (now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0'));
     
-    // Fetch stats from frontend data
-    const allOrders = window.allOrdersData || window.orderHistoryData || [];
-    allOrders.forEach(o => {
-        if (o.status === "مرتجع") return;
-        let mod = o.seller || o.moderator_name || o.moderator || o.added_by;
-        if (!mod) mod = "غير محدد";
+    container.innerHTML = '<div style="text-align:center; padding: 50px;"><i class="fa-solid fa-spinner fa-spin fa-3x" style="color:#8e24aa;"></i><p style="margin-top:15px; color:#546e7a; font-weight:bold;">جاري حساب الإحصائيات من السيرفر...</p></div>';
+
+    try {
+        const { data: allOrders, error } = await fetchAllSupabaseRows(
+            supabase.from('orders')
+            .select('moderator_name, final_total, order_date')
+            .neq('status', 'مرتجع')
+        );
+
+        if (error) throw error;
+
+        allOrders.forEach(o => {
+            let mod = o.moderator_name;
+            if (!mod) mod = "غير محدد";
+            
+            let displayName = mod;
+            const isRegistered = window.allModeratorsList && window.allModeratorsList.includes(mod);
+            if (!isRegistered && mod !== "غير محدد") {
+                displayName = mod + " (محذوف)";
+            }
+            
+            if (!modsData[displayName]) {
+                modsData[displayName] = { name: displayName, totalCount: 0, monthCount: 0, totalSales: 0, monthSales: 0 };
+            }
+            
+            modsData[displayName].totalCount++;
+            modsData[displayName].totalSales += parseFloat(o.final_total) || 0;
+            
+            if (o.order_date && o.order_date.startsWith(currentMonthPrefix)) {
+                modsData[displayName].monthCount++;
+                modsData[displayName].monthSales += parseFloat(o.final_total) || 0;
+            }
+        });
         
-        let displayName = mod;
-        const isRegistered = window.allModeratorsList && window.allModeratorsList.includes(mod);
-        if (!isRegistered && mod !== "غير محدد") {
-            displayName = mod + " (محذوف)";
+        const modsArray = Object.values(modsData).sort((a, b) => b.monthSales - a.monthSales);
+        
+        if (modsArray.length === 0) {
+            container.innerHTML = '<p class="empty-msg">لا توجد بيانات للمودريتور حتى الآن.</p>';
+            return;
         }
         
-        if (!modsData[displayName]) {
-            modsData[displayName] = { name: displayName, totalCount: 0, monthCount: 0, totalSales: 0, monthSales: 0 };
-        }
-        
-        modsData[displayName].totalCount++;
-        modsData[displayName].totalSales += parseFloat(o.total || o.final_total) || 0;
-        
-        if (o.date && o.date.startsWith(currentMonthPrefix)) {
-            modsData[displayName].monthCount++;
-            modsData[displayName].monthSales += parseFloat(o.total || o.final_total) || 0;
-        }
-    });
-    
-    const modsArray = Object.values(modsData).sort((a, b) => b.monthSales - a.monthSales);
-    
-    if (modsArray.length === 0) {
-        container.innerHTML = '<p class="empty-msg">لا توجد بيانات للمودريتور حتى الآن.</p>';
-        return;
-    }
-    
-    let html = '';
-    modsArray.forEach(m => {
-        html += `
+        let html = '';
+        modsArray.forEach(m => {
+            html += `
             <div class="report-card" style="background: #fff; padding: 20px; border-radius: 15px; border: 1px solid var(--border); box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; margin-bottom: 15px;">
                     <h3 style="margin: 0; color: #8e24aa; font-size: 1.3rem;"><i class='fa-solid fa-user-tie'></i> ${m.name}</h3>
@@ -8567,12 +8575,15 @@ window.renderModeratorsDashboard = function() {
                         <div style="font-size: 1.2rem; font-weight: 900; color: #8e44ad;">${m.totalCount} <span style="font-size:0.7rem;">أوردر</span></div>
                     </div>
                 </div>
-            </div>
-        `;
-    });
-    
-    container.innerHTML = html;
-};
+            </div>`;
+        });
+        container.innerHTML = html;
+        
+    } catch (err) {
+        console.error("Error fetching stats:", err);
+        container.innerHTML = '<p class="empty-msg" style="color:red; font-weight:bold;">حدث خطأ أثناء جلب إحصائيات المبيعات. يرجى التأكد من اتصالك بالإنترنت والمحاولة مجدداً.</p>';
+    }
+}
 
 // --- Sidebar Accordion Logic ---
 document.addEventListener('DOMContentLoaded', () => {
