@@ -6796,7 +6796,7 @@ function generateCategoryPDF(filteredData, categoryName) {
         
         html += `
             <tr>
-                <td class="no-edit">${index + 1}</td>
+                <td>${index + 1}</td>
                 <td style="font-weight: bold; color: #2c3e50;">${name}</td>
                 <td class="no-edit" style="font-family: monospace; font-size: 15px; letter-spacing: 1px;">${barcode}</td>
                 <td><span style="background: #f1f2f6; padding: 3px 8px; border-radius: 4px; font-weight: bold;">${qty}</span></td>
@@ -6815,7 +6815,15 @@ function generateCategoryPDF(filteredData, categoryName) {
             
             <script>
                 window.onload = function() {
-                    // Removed auto-print so user can edit before printing
+                    window.onbeforeprint = function() {
+                        document.querySelectorAll('tbody tr').forEach(tr => {
+                            let cell0 = tr.cells[0];
+                            let cell1 = tr.cells[1];
+                            if ((cell0 && cell0.innerText.trim() === '') || (cell1 && (cell1.innerText.trim() === '' || cell1.innerText.trim() === '-'))) {
+                                tr.remove();
+                            }
+                        });
+                    };
                 };
             </script>
         </body>
@@ -7052,7 +7060,7 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
 
                         return `
                         <tr>
-                            <td class="no-edit" style="text-align: center; font-weight: bold; color: #64748b;">${index + 1}</td>
+                            <td style="text-align: center; font-weight: bold; color: #64748b;">${index + 1}</td>
                             <td style="font-weight: 900; font-size: 15px;">${item.name || '-'}</td>
                             <td class="no-edit" dir="ltr" style="text-align: center;">${barcodeHtml}</td>
                             <td class="qty-cell">${item.qty || '-'}</td>
@@ -7075,9 +7083,15 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
                         console.error("Barcode rendering failed", e);
                     }
                     
-                    setTimeout(function() {
-                        // Removed auto-print so user can edit before printing
-                    }, 800);
+                    window.onbeforeprint = function() {
+                        document.querySelectorAll('tbody tr').forEach(tr => {
+                            let cell0 = tr.cells[0];
+                            let cell1 = tr.cells[1];
+                            if ((cell0 && cell0.innerText.trim() === '') || (cell1 && (cell1.innerText.trim() === '' || cell1.innerText.trim() === '-'))) {
+                                tr.remove();
+                            }
+                        });
+                    };
                 }
             </script>
         </body>
@@ -7296,7 +7310,7 @@ function generatePDFReceipt(filteredData, dateVal) {
 
                         return `
                         <tr>
-                            <td class="no-edit" style="text-align: center; font-weight: bold; color: #64748b;">${index + 1}</td>
+                            <td style="text-align: center; font-weight: bold; color: #64748b;">${index + 1}</td>
                             <td style="font-weight: 900; font-size: 15px;">${item.name || '-'}</td>
                             <td class="no-edit" dir="ltr" style="text-align: center;">${barcodeHtml}</td>
                             <td class="qty-cell">${item.qty || '-'}</td>
@@ -7321,9 +7335,15 @@ function generatePDFReceipt(filteredData, dateVal) {
                         console.error("Barcode rendering failed", e);
                     }
                     
-                    setTimeout(function() {
-                        window.print();
-                    }, 800);
+                    window.onbeforeprint = function() {
+                        document.querySelectorAll('tbody tr').forEach(tr => {
+                            let cell0 = tr.cells[0];
+                            let cell1 = tr.cells[1];
+                            if ((cell0 && cell0.innerText.trim() === '') || (cell1 && (cell1.innerText.trim() === '' || cell1.innerText.trim() === '-'))) {
+                                tr.remove();
+                            }
+                        });
+                    };
                 }
             </script>
         </body>
