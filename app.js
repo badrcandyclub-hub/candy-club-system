@@ -6834,6 +6834,11 @@ function generateCategoryPDF(filteredData, categoryName) {
                             let t0 = cell0 ? cell0.innerText.trim() : '';
                             if (t0 === '') {
                                 tr.remove();
+                                let countEl = document.getElementById('totalItemsCount');
+                                if (countEl) {
+                                    let c = parseInt(countEl.innerText);
+                                    if (!isNaN(c)) countEl.innerText = c - 1;
+                                }
                             }
                         }
                     });
@@ -7034,7 +7039,7 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
                 </div>
                 <div class="info-card" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
                     <span class="info-label" style="margin-bottom: 8px;">إجمالي الأصناف المجمعة</span>
-                    <span class="info-value" style="font-size: 32px; color: #E91E8C; line-height: 1;">${finalData.length}</span>
+                    <span id="totalItemsCount" class="info-value" style="font-size: 32px; color: #E91E8C; line-height: 1;">${finalData.length}</span>
                 </div>
             </div>
 
@@ -7115,6 +7120,11 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
                             let t0 = cell0 ? cell0.innerText.trim() : '';
                             if (t0 === '') {
                                 tr.remove();
+                                let countEl = document.getElementById('totalItemsCount');
+                                if (countEl) {
+                                    let c = parseInt(countEl.innerText);
+                                    if (!isNaN(c)) countEl.innerText = c - 1;
+                                }
                             }
                         }
                     });
@@ -7297,7 +7307,7 @@ function generatePDFReceipt(filteredData, dateVal) {
                 </div>
                 <div class="info-card" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
                     <span class="info-label" style="margin-bottom: 8px;">إجمالي الأصناف</span>
-                    <span class="info-value" style="font-size: 32px; color: #E91E8C; line-height: 1;">${filteredData.length}</span>
+                    <span id="totalItemsCount" class="info-value" style="font-size: 32px; color: #E91E8C; line-height: 1;">${filteredData.length}</span>
                 </div>
             </div>
 
@@ -7380,6 +7390,11 @@ function generatePDFReceipt(filteredData, dateVal) {
                             let t0 = cell0 ? cell0.innerText.trim() : '';
                             if (t0 === '') {
                                 tr.remove();
+                                let countEl = document.getElementById('totalItemsCount');
+                                if (countEl) {
+                                    let c = parseInt(countEl.innerText);
+                                    if (!isNaN(c)) countEl.innerText = c - 1;
+                                }
                             }
                         }
                     });
