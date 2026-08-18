@@ -183,6 +183,22 @@ async function handleSupabaseRequest(url, options) {
                     responseData = { success: false, error: insErr.message };
                 } else {
                     responseData = { success: true, orderId: newOrderId, message: 'تم الإضافة بنجاح', data: inserted[0] };
+                    // Add customer to customers table if they don't exist
+                    if (params.phone1) {
+                        try {
+                            const { data: existingCust } = await supabase.from('customers').select('id').eq('phone', params.phone1).limit(1);
+                            if (!existingCust || existingCust.length === 0) {
+                                await supabase.from('customers').insert([{ 
+                                    customer_name: params.customerName || 'بدون اسم', 
+                                    phone: params.phone1, 
+                                    governorate: params.gov || '', 
+                                    address: params.address || '', 
+                                    orders_count: 0, 
+                                    total_paid: 0 
+                                }]);
+                            }
+                        } catch(e) {}
+                    }
                 }
                 break;
             }
@@ -1408,13 +1424,28 @@ async function loadDataFromServer(customDate = null) {
             }
         });
 
+        let existingCustPhones = new Set();
         window.customersData = (rawCustomers || []).map(c => {
             let p = String(c.phone).trim();
+            existingCustPhones.add(p);
             let st = custStats[p] || { count: 0, total: 0, lastDate: '' };
             return {
                 name: c.customer_name, phone: c.phone, gov: c.governorate,
                 address: c.address, count: st.count || 0, total: st.total || 0, lastDate: st.lastDate || c.last_order_date
             };
+        });
+
+        // Add any customers from orders that are not in the customers table
+        (rawOrders || []).forEach(o => {
+            let p = String(o.phone).trim();
+            if (p && !existingCustPhones.has(p)) {
+                existingCustPhones.add(p);
+                let st = custStats[p] || { count: 0, total: 0, lastDate: '' };
+                window.customersData.push({
+                    name: o.customer_name || 'بدون اسم', phone: p, gov: o.governorate || '',
+                    address: o.address || '', count: st.count || 0, total: st.total || 0, lastDate: st.lastDate || o.order_date
+                });
+            }
         });
 
         window.usersData = (rawUsers || []).map(u => ({
@@ -3424,10 +3455,10 @@ if (loadDriverOrdersBtn && shippedContainer) {
 
         shippedContainer.innerHTML = '<p class="empty-msg"><i class=\'fa-solid fa-hourglass-half\'></i> جاري تحميل عهدة المندوب...</p>';
 
-        // <i class=\'fa-solid fa-star\'></i> Fix: استخدام shippedOrders المرسلة من الإكسيل مباشرة
+        // <i class=\'fa-solid fa-star\'></i> Fix: استخدام shippedOrdersData من Supabase
         let shippedOrders = [];
-        if (window.latestServerData && window.latestServerData.shippedOrders) {
-            shippedOrders = window.latestServerData.shippedOrders.filter(o => o.driver === driver);
+        if (window.shippedOrdersData) {
+            shippedOrders = window.shippedOrdersData.filter(o => o.driver === driver);
         }
 
         if (shippedOrders.length === 0) {
