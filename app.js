@@ -6826,6 +6826,17 @@ function generateCategoryPDF(filteredData, categoryName) {
                             }
                         });
                     };
+                    
+                    document.querySelector('tbody').addEventListener('input', function(e) {
+                        if (e.target.tagName === 'TD') {
+                            let tr = e.target.parentElement;
+                            let cell0 = tr.cells[0];
+                            let t0 = cell0 ? cell0.innerText.trim() : '';
+                            if (t0 === '') {
+                                tr.remove();
+                            }
+                        }
+                    });
                 };
             </script>
         </body>
@@ -7096,6 +7107,17 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
                             }
                         });
                     };
+                    
+                    document.querySelector('tbody').addEventListener('input', function(e) {
+                        if (e.target.tagName === 'TD') {
+                            let tr = e.target.parentElement;
+                            let cell0 = tr.cells[0];
+                            let t0 = cell0 ? cell0.innerText.trim() : '';
+                            if (t0 === '') {
+                                tr.remove();
+                            }
+                        }
+                    });
                 }
             </script>
         </body>
@@ -7350,6 +7372,17 @@ function generatePDFReceipt(filteredData, dateVal) {
                             }
                         });
                     };
+                    
+                    document.querySelector('tbody').addEventListener('input', function(e) {
+                        if (e.target.tagName === 'TD') {
+                            let tr = e.target.parentElement;
+                            let cell0 = tr.cells[0];
+                            let t0 = cell0 ? cell0.innerText.trim() : '';
+                            if (t0 === '') {
+                                tr.remove();
+                            }
+                        }
+                    });
                 }
             </script>
         </body>
