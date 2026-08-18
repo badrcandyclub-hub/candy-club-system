@@ -6760,8 +6760,8 @@ function generateCategoryPDF(filteredData, categoryName) {
             </style>
             <div class="edit-controls no-print">
                 <p>وضع التعديل الحر للطباعة (لن يؤثر على قاعدة البيانات الأساسية)</p>
-                <button class="btn-edit" onclick="document.querySelectorAll('td').forEach(td => td.contentEditable = td.contentEditable === 'true' ? 'false' : 'true'); this.innerHTML = this.innerHTML.includes('تفعيل') ? 'إلغاء وضع التعديل' : 'تفعيل وضع التعديل';">تفعيل وضع التعديل</button>
-                <button class="btn-print" onclick="window.print()">🖨️ طباعة الآن</button>
+                <button class="btn-edit" onclick="document.querySelectorAll('td:not(.no-edit)').forEach(td => td.contentEditable = td.contentEditable === 'true' ? 'false' : 'true'); this.innerHTML = this.innerHTML.includes('تفعيل') ? 'إلغاء وضع التعديل' : 'تفعيل وضع التعديل';">تفعيل وضع التعديل</button>
+                <button class="btn-print" onclick="document.querySelectorAll('tbody tr').forEach(tr => { if(!tr.cells[1] || tr.cells[1].innerText.trim() === '' || tr.cells[1].innerText.trim() === '-') tr.remove(); }); window.print()">🖨️ طباعة الآن</button>
             </div>
             <div class="header">
                 <div class="logo-container">
@@ -6796,9 +6796,9 @@ function generateCategoryPDF(filteredData, categoryName) {
         
         html += `
             <tr>
-                <td>${index + 1}</td>
+                <td class="no-edit">${index + 1}</td>
                 <td style="font-weight: bold; color: #2c3e50;">${name}</td>
-                <td style="font-family: monospace; font-size: 15px; letter-spacing: 1px;">${barcode}</td>
+                <td class="no-edit" style="font-family: monospace; font-size: 15px; letter-spacing: 1px;">${barcode}</td>
                 <td><span style="background: #f1f2f6; padding: 3px 8px; border-radius: 4px; font-weight: bold;">${qty}</span></td>
                 <td style="color: #e74c3c; font-weight: bold;">${expiry}</td>
             </tr>
@@ -6989,8 +6989,8 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
             </style>
             <div class="edit-controls no-print">
                 <p>وضع التعديل الحر للطباعة (لن يؤثر على قاعدة البيانات الأساسية)</p>
-                <button class="btn-edit" onclick="document.querySelectorAll('td').forEach(td => td.contentEditable = td.contentEditable === 'true' ? 'false' : 'true'); this.innerHTML = this.innerHTML.includes('تفعيل') ? 'إلغاء وضع التعديل' : 'تفعيل وضع التعديل';">تفعيل وضع التعديل</button>
-                <button class="btn-print" onclick="window.print()">🖨️ طباعة الآن</button>
+                <button class="btn-edit" onclick="document.querySelectorAll('td:not(.no-edit)').forEach(td => td.contentEditable = td.contentEditable === 'true' ? 'false' : 'true'); this.innerHTML = this.innerHTML.includes('تفعيل') ? 'إلغاء وضع التعديل' : 'تفعيل وضع التعديل';">تفعيل وضع التعديل</button>
+                <button class="btn-print" onclick="document.querySelectorAll('tbody tr').forEach(tr => { if(!tr.cells[1] || tr.cells[1].innerText.trim() === '' || tr.cells[1].innerText.trim() === '-') tr.remove(); }); window.print()">🖨️ طباعة الآن</button>
             </div>
             <div class="header">
                 <div class="logo-container" style="display: flex; align-items: center; gap: 15px; direction: ltr;">
@@ -7052,9 +7052,9 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
 
                         return `
                         <tr>
-                            <td style="text-align: center; font-weight: bold; color: #64748b;">${index + 1}</td>
+                            <td class="no-edit" style="text-align: center; font-weight: bold; color: #64748b;">${index + 1}</td>
                             <td style="font-weight: 900; font-size: 15px;">${item.name || '-'}</td>
-                            <td dir="ltr" style="text-align: center;">${barcodeHtml}</td>
+                            <td class="no-edit" dir="ltr" style="text-align: center;">${barcodeHtml}</td>
                             <td class="qty-cell">${item.qty || '-'}</td>
                             <td dir="ltr" style="text-align: right; color: #475569; font-weight: bold;">${item.formattedExp}</td>
                         </tr>
@@ -7229,8 +7229,8 @@ function generatePDFReceipt(filteredData, dateVal) {
             </style>
             <div class="edit-controls no-print">
                 <p>وضع التعديل الحر للطباعة (لن يؤثر على قاعدة البيانات الأساسية)</p>
-                <button class="btn-edit" onclick="document.querySelectorAll('td').forEach(td => td.contentEditable = td.contentEditable === 'true' ? 'false' : 'true'); this.innerHTML = this.innerHTML.includes('تفعيل') ? 'إلغاء وضع التعديل' : 'تفعيل وضع التعديل';">تفعيل وضع التعديل</button>
-                <button class="btn-print" onclick="window.print()">🖨️ طباعة الآن</button>
+                <button class="btn-edit" onclick="document.querySelectorAll('td:not(.no-edit)').forEach(td => td.contentEditable = td.contentEditable === 'true' ? 'false' : 'true'); this.innerHTML = this.innerHTML.includes('تفعيل') ? 'إلغاء وضع التعديل' : 'تفعيل وضع التعديل';">تفعيل وضع التعديل</button>
+                <button class="btn-print" onclick="document.querySelectorAll('tbody tr').forEach(tr => { if(!tr.cells[1] || tr.cells[1].innerText.trim() === '' || tr.cells[1].innerText.trim() === '-') tr.remove(); }); window.print()">🖨️ طباعة الآن</button>
             </div>
             <div class="header">
                 <div class="logo-container" style="display: flex; align-items: center; gap: 15px; direction: ltr;">
@@ -7296,9 +7296,9 @@ function generatePDFReceipt(filteredData, dateVal) {
 
                         return `
                         <tr>
-                            <td style="text-align: center; font-weight: bold; color: #64748b;">${index + 1}</td>
+                            <td class="no-edit" style="text-align: center; font-weight: bold; color: #64748b;">${index + 1}</td>
                             <td style="font-weight: 900; font-size: 15px;">${item.name || '-'}</td>
-                            <td dir="ltr" style="text-align: center;">${barcodeHtml}</td>
+                            <td class="no-edit" dir="ltr" style="text-align: center;">${barcodeHtml}</td>
                             <td class="qty-cell">${item.qty || '-'}</td>
                             <td dir="ltr" style="text-align: right; color: #475569;">${formattedExp || '-'}</td>
                             <td style="color: #475569;">${item.location || '-'}</td>
