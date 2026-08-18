@@ -6761,7 +6761,7 @@ function generateCategoryPDF(filteredData, categoryName) {
             <div class="edit-controls no-print">
                 <p>وضع التعديل الحر للطباعة (لن يؤثر على قاعدة البيانات الأساسية)</p>
                 <button class="btn-edit" onclick="document.querySelectorAll('td:not(.no-edit)').forEach(td => td.contentEditable = td.contentEditable === 'true' ? 'false' : 'true'); this.innerHTML = this.innerHTML.includes('تفعيل') ? 'إلغاء وضع التعديل' : 'تفعيل وضع التعديل';">تفعيل وضع التعديل</button>
-                <button class="btn-print" onclick="document.querySelectorAll('tbody tr').forEach(tr => { if(!tr.cells[1] || tr.cells[1].innerText.trim() === '' || tr.cells[1].innerText.trim() === '-') tr.remove(); }); window.print()">🖨️ طباعة الآن</button>
+                <button class="btn-print" onclick="window.print()">🖨️ طباعة الآن</button>
             </div>
             <div class="header">
                 <div class="logo-container">
@@ -6819,7 +6819,9 @@ function generateCategoryPDF(filteredData, categoryName) {
                         document.querySelectorAll('tbody tr').forEach(tr => {
                             let cell0 = tr.cells[0];
                             let cell1 = tr.cells[1];
-                            if ((cell0 && cell0.innerText.trim() === '') || (cell1 && (cell1.innerText.trim() === '' || cell1.innerText.trim() === '-'))) {
+                            let text0 = cell0 ? cell0.textContent.replace(/[\u00A0\u200B\n\r\t ]/g, '') : '';
+                            let text1 = cell1 ? cell1.textContent.replace(/[\u00A0\u200B\n\r\t ]/g, '') : '';
+                            if (text0 === '' || text1 === '' || text1 === '-') {
                                 tr.remove();
                             }
                         });
@@ -6998,7 +7000,7 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
             <div class="edit-controls no-print">
                 <p>وضع التعديل الحر للطباعة (لن يؤثر على قاعدة البيانات الأساسية)</p>
                 <button class="btn-edit" onclick="document.querySelectorAll('td:not(.no-edit)').forEach(td => td.contentEditable = td.contentEditable === 'true' ? 'false' : 'true'); this.innerHTML = this.innerHTML.includes('تفعيل') ? 'إلغاء وضع التعديل' : 'تفعيل وضع التعديل';">تفعيل وضع التعديل</button>
-                <button class="btn-print" onclick="document.querySelectorAll('tbody tr').forEach(tr => { if(!tr.cells[1] || tr.cells[1].innerText.trim() === '' || tr.cells[1].innerText.trim() === '-') tr.remove(); }); window.print()">🖨️ طباعة الآن</button>
+                <button class="btn-print" onclick="window.print()">🖨️ طباعة الآن</button>
             </div>
             <div class="header">
                 <div class="logo-container" style="display: flex; align-items: center; gap: 15px; direction: ltr;">
@@ -7087,7 +7089,9 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
                         document.querySelectorAll('tbody tr').forEach(tr => {
                             let cell0 = tr.cells[0];
                             let cell1 = tr.cells[1];
-                            if ((cell0 && cell0.innerText.trim() === '') || (cell1 && (cell1.innerText.trim() === '' || cell1.innerText.trim() === '-'))) {
+                            let text0 = cell0 ? cell0.textContent.replace(/[\u00A0\u200B\n\r\t ]/g, '') : '';
+                            let text1 = cell1 ? cell1.textContent.replace(/[\u00A0\u200B\n\r\t ]/g, '') : '';
+                            if (text0 === '' || text1 === '' || text1 === '-') {
                                 tr.remove();
                             }
                         });
@@ -7244,7 +7248,7 @@ function generatePDFReceipt(filteredData, dateVal) {
             <div class="edit-controls no-print">
                 <p>وضع التعديل الحر للطباعة (لن يؤثر على قاعدة البيانات الأساسية)</p>
                 <button class="btn-edit" onclick="document.querySelectorAll('td:not(.no-edit)').forEach(td => td.contentEditable = td.contentEditable === 'true' ? 'false' : 'true'); this.innerHTML = this.innerHTML.includes('تفعيل') ? 'إلغاء وضع التعديل' : 'تفعيل وضع التعديل';">تفعيل وضع التعديل</button>
-                <button class="btn-print" onclick="document.querySelectorAll('tbody tr').forEach(tr => { if(!tr.cells[1] || tr.cells[1].innerText.trim() === '' || tr.cells[1].innerText.trim() === '-') tr.remove(); }); window.print()">🖨️ طباعة الآن</button>
+                <button class="btn-print" onclick="window.print()">🖨️ طباعة الآن</button>
             </div>
             <div class="header">
                 <div class="logo-container" style="display: flex; align-items: center; gap: 15px; direction: ltr;">
@@ -7339,7 +7343,9 @@ function generatePDFReceipt(filteredData, dateVal) {
                         document.querySelectorAll('tbody tr').forEach(tr => {
                             let cell0 = tr.cells[0];
                             let cell1 = tr.cells[1];
-                            if ((cell0 && cell0.innerText.trim() === '') || (cell1 && (cell1.innerText.trim() === '' || cell1.innerText.trim() === '-'))) {
+                            let text0 = cell0 ? cell0.textContent.replace(/[\u00A0\u200B\n\r\t ]/g, '') : '';
+                            let text1 = cell1 ? cell1.textContent.replace(/[\u00A0\u200B\n\r\t ]/g, '') : '';
+                            if (text0 === '' || text1 === '' || text1 === '-') {
                                 tr.remove();
                             }
                         });
