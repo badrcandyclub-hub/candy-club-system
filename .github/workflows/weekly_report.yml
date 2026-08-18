@@ -1,0 +1,24 @@
+name: Weekly Report Automation
+
+on:
+  schedule:
+    # Runs every Friday at 21:00 UTC (11:59 PM Cairo Time depending on DST, usually approx Friday night)
+    - cron: '59 20 * * 5'
+  workflow_dispatch:
+    # Allows manual triggering from the GitHub Actions UI
+
+jobs:
+  send-report:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Run Weekly Report Script
+        run: node backend-jobs/send_weekly_report.js
