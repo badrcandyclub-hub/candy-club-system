@@ -6748,6 +6748,21 @@ function generateCategoryPDF(filteredData, categoryName) {
             </style>
         </head>
         <body>
+            <style>
+                @media print { .edit-controls { display: none !important; } }
+                .edit-controls { text-align: center; margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px dashed #cbd5e1; direction: rtl; }
+                .edit-controls p { margin-top: 0; margin-bottom: 15px; color: #334155; font-weight: bold; font-family: 'Cairo', sans-serif; }
+                .btn-edit { background: #3b82f6; color: white; border: none; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-family: 'Cairo'; margin: 0 5px; font-weight: bold; transition: 0.2s; }
+                .btn-edit:hover { background: #2563eb; }
+                .btn-print { background: #10b981; color: white; border: none; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-family: 'Cairo'; margin: 0 5px; font-weight: bold; transition: 0.2s; }
+                .btn-print:hover { background: #059669; }
+                td[contenteditable="true"] { background-color: #fef9c3; outline: 1px dashed #eab308; }
+            </style>
+            <div class="edit-controls no-print">
+                <p>وضع التعديل الحر للطباعة (لن يؤثر على قاعدة البيانات الأساسية)</p>
+                <button class="btn-edit" onclick="document.querySelectorAll('td').forEach(td => td.contentEditable = td.contentEditable === 'true' ? 'false' : 'true'); this.innerHTML = this.innerHTML.includes('تفعيل') ? 'إلغاء وضع التعديل' : 'تفعيل وضع التعديل';">تفعيل وضع التعديل</button>
+                <button class="btn-print" onclick="window.print()">🖨️ طباعة الآن</button>
+            </div>
             <div class="header">
                 <div class="logo-container">
                     <img src="${logoUrl}" alt="Logo" class="logo-img">
@@ -6800,7 +6815,7 @@ function generateCategoryPDF(filteredData, categoryName) {
             
             <script>
                 window.onload = function() {
-                    window.print();
+                    // Removed auto-print so user can edit before printing
                 };
             </script>
         </body>
@@ -6962,6 +6977,21 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
             </style>
         </head>
         <body>
+            <style>
+                @media print { .edit-controls { display: none !important; } }
+                .edit-controls { text-align: center; margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px dashed #cbd5e1; direction: rtl; }
+                .edit-controls p { margin-top: 0; margin-bottom: 15px; color: #334155; font-weight: bold; font-family: 'Cairo', sans-serif; }
+                .btn-edit { background: #3b82f6; color: white; border: none; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-family: 'Cairo'; margin: 0 5px; font-weight: bold; transition: 0.2s; }
+                .btn-edit:hover { background: #2563eb; }
+                .btn-print { background: #10b981; color: white; border: none; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-family: 'Cairo'; margin: 0 5px; font-weight: bold; transition: 0.2s; }
+                .btn-print:hover { background: #059669; }
+                td[contenteditable="true"] { background-color: #fef9c3; outline: 1px dashed #eab308; }
+            </style>
+            <div class="edit-controls no-print">
+                <p>وضع التعديل الحر للطباعة (لن يؤثر على قاعدة البيانات الأساسية)</p>
+                <button class="btn-edit" onclick="document.querySelectorAll('td').forEach(td => td.contentEditable = td.contentEditable === 'true' ? 'false' : 'true'); this.innerHTML = this.innerHTML.includes('تفعيل') ? 'إلغاء وضع التعديل' : 'تفعيل وضع التعديل';">تفعيل وضع التعديل</button>
+                <button class="btn-print" onclick="window.print()">🖨️ طباعة الآن</button>
+            </div>
             <div class="header">
                 <div class="logo-container" style="display: flex; align-items: center; gap: 15px; direction: ltr;">
                     <img src="${logoUrl}" alt="Logo" class="logo-img">
@@ -7046,7 +7076,7 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
                     }
                     
                     setTimeout(function() {
-                        window.print();
+                        // Removed auto-print so user can edit before printing
                     }, 800);
                 }
             </script>
@@ -7187,6 +7217,21 @@ function generatePDFReceipt(filteredData, dateVal) {
             </style>
         </head>
         <body>
+            <style>
+                @media print { .edit-controls { display: none !important; } }
+                .edit-controls { text-align: center; margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px dashed #cbd5e1; direction: rtl; }
+                .edit-controls p { margin-top: 0; margin-bottom: 15px; color: #334155; font-weight: bold; font-family: 'Cairo', sans-serif; }
+                .btn-edit { background: #3b82f6; color: white; border: none; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-family: 'Cairo'; margin: 0 5px; font-weight: bold; transition: 0.2s; }
+                .btn-edit:hover { background: #2563eb; }
+                .btn-print { background: #10b981; color: white; border: none; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-family: 'Cairo'; margin: 0 5px; font-weight: bold; transition: 0.2s; }
+                .btn-print:hover { background: #059669; }
+                td[contenteditable="true"] { background-color: #fef9c3; outline: 1px dashed #eab308; }
+            </style>
+            <div class="edit-controls no-print">
+                <p>وضع التعديل الحر للطباعة (لن يؤثر على قاعدة البيانات الأساسية)</p>
+                <button class="btn-edit" onclick="document.querySelectorAll('td').forEach(td => td.contentEditable = td.contentEditable === 'true' ? 'false' : 'true'); this.innerHTML = this.innerHTML.includes('تفعيل') ? 'إلغاء وضع التعديل' : 'تفعيل وضع التعديل';">تفعيل وضع التعديل</button>
+                <button class="btn-print" onclick="window.print()">🖨️ طباعة الآن</button>
+            </div>
             <div class="header">
                 <div class="logo-container" style="display: flex; align-items: center; gap: 15px; direction: ltr;">
                     <img src="${logoUrl}" alt="Logo" class="logo-img">
