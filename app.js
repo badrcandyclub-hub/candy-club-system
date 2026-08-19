@@ -4636,7 +4636,6 @@ function processBarcodeAction(val) {
     if (currentScannerMode === 'inventory') {
         const invProdName = document.getElementById('invProdName');
         const invProdQty = document.getElementById('invProdQty');
-    const invProdExpiry = document.getElementById('invProdExpiry');
         const invProdBarcode = document.getElementById('invProdBarcode');
         const invProdExpiry = document.getElementById('invProdExpiry');
         
