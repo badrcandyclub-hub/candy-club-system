@@ -4647,6 +4647,16 @@ function processBarcodeAction(val) {
                     if (expMatch && expMatch.expiryDate) {
                         let d = new Date(expMatch.expiryDate);
                         if (!isNaN(d.getTime())) invProdExpiry.value = d.toLocaleDateString('en-CA');
+                    } else if (val) {
+                        supabase.from('expiries').select('expiry_date').eq('barcode', val).order('expiry_date', { ascending: true }).limit(1)
+                        .then((res) => {
+                            if (res && res.data && res.data.length > 0 && res.data[0].expiry_date) {
+                                let d = new Date(res.data[0].expiry_date);
+                                if (!isNaN(d.getTime())) invProdExpiry.value = d.toLocaleDateString('en-CA');
+                            } else {
+                                invProdExpiry.value = '';
+                            }
+                        }).catch(e => { console.error(e); invProdExpiry.value = ''; });
                     } else {
                         invProdExpiry.value = '';
                     }
@@ -9480,14 +9490,15 @@ window.reprintInvLog = function(logId) {
         if (log.items) {
             let parts = log.items.split("|");
             itemsArr = parts.map(p => {
-                let match = p.trim().match(/(.*?)\s+\((\d+)\)(?:\s*\[باركود:\s*(.*?)\])?/);
+                let match = p.trim().match(/(.*?)\s+\((\d+)\)(?:\s*\[باركود:\s*(.*?)\])?(?:\s*\[صلاحية:\s*(.*?)\])?/);
                 if (match) {
                     let name = match[1].trim();
                     let qty = match[2];
                     let barcode = match[3] ? match[3].replace(']', '').trim() : '';
-                    return { name, qty, barcode };
+                    let expiry = match[4] ? match[4].replace(']', '').trim() : '';
+                    return { name, qty, barcode, expiry };
                 }
-                return { name: p.trim(), qty: 1, barcode: '' };
+                return { name: p.trim(), qty: 1, barcode: '', expiry: '' };
             });
         }
     }
@@ -9497,7 +9508,8 @@ window.reprintInvLog = function(logId) {
             <td style="text-align: right; padding: 6px 4px; vertical-align: top;">
                 <div style="font-weight: bold; font-size: 13px; line-height: 1.3; word-break: break-word; white-space: normal; color: #000;">${item.name}</div>
                 ${item.barcode ? `<div style="font-family: monospace; font-size: 11px; font-weight: bold; color: #000; letter-spacing: 0.5px; margin-top: 2px;">${item.barcode}</div>` : ''}
-            </td>
+                    ${item.expiry ? `<div style="font-size: 11px; font-weight: bold; color: #000; margin-top: 2px;">الصلاحية: ${item.expiry}</div>` : ''}
+                </td>
             <td style="text-align: center; padding: 6px 4px; vertical-align: top; font-weight: bold; font-size: 14px; color: #000; width: 45px;">${item.qty}</td>
         </tr>
     `).join('');
@@ -10009,14 +10021,15 @@ window.reprintInvLog = function(logId) {
         if (log.items) {
             let parts = log.items.split("|");
             itemsArr = parts.map(p => {
-                let match = p.trim().match(/(.*?)\s+\((\d+)\)(?:\s*\[باركود:\s*(.*?)\])?/);
+                let match = p.trim().match(/(.*?)\s+\((\d+)\)(?:\s*\[باركود:\s*(.*?)\])?(?:\s*\[صلاحية:\s*(.*?)\])?/);
                 if (match) {
                     let name = match[1].trim();
                     let qty = match[2];
                     let barcode = match[3] ? match[3].replace(']', '').trim() : '';
-                    return { name, qty, barcode };
+                    let expiry = match[4] ? match[4].replace(']', '').trim() : '';
+                    return { name, qty, barcode, expiry };
                 }
-                return { name: p.trim(), qty: 1, barcode: '' };
+                return { name: p.trim(), qty: 1, barcode: '', expiry: '' };
             });
         }
     }
@@ -10026,7 +10039,8 @@ window.reprintInvLog = function(logId) {
             <td style="text-align: right; padding: 6px 4px; vertical-align: top;">
                 <div style="font-weight: bold; font-size: 13px; line-height: 1.3; word-break: break-word; white-space: normal; color: #000;">${item.name}</div>
                 ${item.barcode ? `<div style="font-family: monospace; font-size: 11px; font-weight: bold; color: #000; letter-spacing: 0.5px; margin-top: 2px;">${item.barcode}</div>` : ''}
-            </td>
+                    ${item.expiry ? `<div style="font-size: 11px; font-weight: bold; color: #000; margin-top: 2px;">الصلاحية: ${item.expiry}</div>` : ''}
+                </td>
             <td style="text-align: center; padding: 6px 4px; vertical-align: top; font-weight: bold; font-size: 14px; color: #000; width: 45px;">${item.qty}</td>
         </tr>
     `).join('');
@@ -10115,6 +10129,7 @@ function printInventoryReceipt(logId, from, to, items, notes, senderName, regNam
                 <td style="text-align: right; padding: 6px 4px; vertical-align: top;">
                     <div style="font-weight: bold; font-size: 13px; line-height: 1.3; word-break: break-word; white-space: normal; color: #000;">${item.name}</div>
                     ${item.barcode ? `<div style="font-family: monospace; font-size: 11px; font-weight: bold; color: #000; letter-spacing: 0.5px; margin-top: 2px;">${item.barcode}</div>` : ''}
+                    ${item.expiry ? `<div style="font-size: 11px; font-weight: bold; color: #000; margin-top: 2px;">الصلاحية: ${item.expiry}</div>` : ''}
                 </td>
                 <td style="text-align: center; padding: 6px 4px; vertical-align: top; font-weight: bold; font-size: 14px; color: #000; width: 45px;">${item.qty}</td>
             </tr>
