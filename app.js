@@ -4648,7 +4648,7 @@ function processBarcodeAction(val) {
                         let d = new Date(expMatch.expiryDate);
                         if (!isNaN(d.getTime())) invProdExpiry.value = d.toLocaleDateString('en-CA');
                     } else if (val) {
-                        supabase.from('expiries').select('expiry_date').eq('barcode', val).order('expiry_date', { ascending: true }).limit(1)
+                        supabase.from('expiries').select('expiry_date').eq('product_name', found.name).order('expiry_date', { ascending: true }).limit(1)
                         .then((res) => {
                             if (res && res.data && res.data.length > 0 && res.data[0].expiry_date) {
                                 let d = new Date(res.data[0].expiry_date);
