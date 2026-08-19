@@ -4636,11 +4636,22 @@ function processBarcodeAction(val) {
     if (currentScannerMode === 'inventory') {
         const invProdName = document.getElementById('invProdName');
         const invProdQty = document.getElementById('invProdQty');
+    const invProdExpiry = document.getElementById('invProdExpiry');
         const invProdBarcode = document.getElementById('invProdBarcode');
+        const invProdExpiry = document.getElementById('invProdExpiry');
         
         if (val && barcodeCatalogData) {
             const found = barcodeCatalogData.find(p => String(p.barcode).split(',').map(b=>b.trim().toLowerCase()).includes(val.toLowerCase()));
             if (found) {
+                if (invProdExpiry) {
+                    let expMatch = expiryData.find(e => String(e.barcode).trim() === val || String(e.name).trim() === String(found.name).trim());
+                    if (expMatch && expMatch.expiryDate) {
+                        let d = new Date(expMatch.expiryDate);
+                        if (!isNaN(d.getTime())) invProdExpiry.value = d.toLocaleDateString('en-CA');
+                    } else {
+                        invProdExpiry.value = '';
+                    }
+                }
                 if (invProdName) invProdName.value = found.name;
                 if (invProdBarcode) invProdBarcode.value = val;
                 showToast("<i class='fa-solid fa-check'></i> تم سحب المنتج", "success");
@@ -8772,6 +8783,7 @@ window.searchDriverOrder = async function() {
             if (exactMatch) {
                 invProdName.value = exactMatch.name;
                 invProdBarcode.value = '';
+            if (invProdExpiry) invProdExpiry.value = '';
             } else {
                 showToast("المنتج غير موجود بالكتالوج", "warning");
             }
@@ -8783,6 +8795,7 @@ window.searchDriverOrder = async function() {
             let name = invProdName.value.trim();
             let qty = parseInt(invProdQty.value);
             let barcode = invProdBarcode.value.trim();
+            let expiry = invProdExpiry ? invProdExpiry.value : '';
             if (!name) {
                 showToast("برجاء إدخال اسم المنتج", "warning");
                 return;
@@ -8797,7 +8810,7 @@ window.searchDriverOrder = async function() {
                 existing.qty += qty;
                 if (barcode && !existing.barcode) existing.barcode = barcode;
             } else {
-                invItems.push({ name: name, qty: qty, barcode: barcode });
+                invItems.push({ name: name, qty: qty, barcode: barcode, expiry: expiry });
             }
             
             invProdName.value = '';
@@ -8818,6 +8831,7 @@ window.searchDriverOrder = async function() {
         document.getElementById('invProdName').value = item.name;
         document.getElementById('invProdQty').value = item.qty;
         document.getElementById('invProdBarcode').value = item.barcode || "";
+        if (document.getElementById('invProdExpiry')) document.getElementById('invProdExpiry').value = item.expiry || "";
         
         invItems.splice(idx, 1);
         renderInvItems();
@@ -8891,7 +8905,7 @@ window.searchDriverOrder = async function() {
                 let idStr = String(currentCount).padStart(6, '0');
                 let logId = `TRX-${idStr}`;
 
-                let itemsStr = invItems.map(i => `${i.name} (${i.qty})${i.barcode ? ' [باركود: ' + i.barcode + ']' : ''}`).join(" | ");
+                let itemsStr = invItems.map(i => `${i.name} (${i.qty})${i.barcode ? ' [باركود: ' + i.barcode + ']' : ''}${i.expiry ? ' [صلاحية: ' + i.expiry + ']' : ''}`).join(" | ");
 
                 // إرسال البيانات مباشرة إلى Supabase بدلاً من الاعتماد على الفيتش القديم
                 const { error: insertErr } = await supabase.from('inventory_logs').insert([{ 
@@ -8948,6 +8962,7 @@ window.searchDriverOrder = async function() {
                 <td style="text-align: right; padding: 6px 4px; vertical-align: top;">
                     <div style="font-weight: bold; font-size: 13px; line-height: 1.3; word-break: break-word; white-space: normal; color: #000;">${item.name}</div>
                     ${item.barcode ? `<div style="font-family: monospace; font-size: 11px; font-weight: bold; color: #000; letter-spacing: 0.5px; margin-top: 2px;">${item.barcode}</div>` : ''}
+                    ${item.expiry ? `<div style="font-size: 11px; font-weight: bold; color: #000; margin-top: 2px;">الصلاحية: ${item.expiry}</div>` : ''}
                 </td>
                 <td style="text-align: center; padding: 6px 4px; vertical-align: top; font-weight: bold; font-size: 14px; color: #000; width: 45px;">${item.qty}</td>
             </tr>

@@ -766,6 +766,10 @@
                             <label style="display:block; margin-bottom:5px; font-weight:bold; color:var(--text-main);"><i class="fa-solid fa-cubes" style="color:var(--primary);"></i> الكمية:</label>
                             <input type="number" id="invProdQty" class="input-field" placeholder="0" min="1" style="margin-bottom:0;">
                         </div>
+                        <div>
+                            <label style="display:block; margin-bottom:5px; font-weight:bold; color:var(--text-main);"><i class="fa-solid fa-calendar-days" style="color:var(--primary);"></i> الصلاحية:</label>
+                            <input type="date" id="invProdExpiry" class="input-field" style="margin-bottom:0;">
+                        </div>
                         <div style="display: flex; align-items: flex-end;">
                             <button id="addInvItemBtn" type="button" class="btn-confirm interactive-btn" style="width: 100%; padding: 10px; font-weight: bold;"><i class="fa-solid fa-plus"></i> إضافة للإذن</button>
                         </div>
@@ -778,6 +782,7 @@
                             <tr>
                                 <th>المنتج</th>
                                 <th style="width: 100px;">الكمية</th>
+                                <th style="width: 110px;">الصلاحية</th>
                                 <th style="width: 80px;">إجراءات</th>
                             </tr>
                         </thead>
