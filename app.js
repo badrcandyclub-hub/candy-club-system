@@ -2279,8 +2279,8 @@ window.printHistoryOrder = function (orderId) {
                 let qty = match[2];
                 let total = match[3];
                 let price = parseFloat(total) / parseFloat(qty);
-                let catalogItem = window.barcodeCatalogData ? window.barcodeCatalogData.find(prod => String(prod.name).trim() === name) : null;
-                let originalPrice = catalogItem ? parseFloat(catalogItem.price) : price;
+                let catalogItem = typeof catalogData !== 'undefined' ? catalogData.find(prod => String(prod.name).trim() === name) : null;
+                let originalPrice = catalogItem && parseFloat(catalogItem.price) > 0 ? parseFloat(catalogItem.price) : price;
                 let printP = isOldGift ? "***" : price;
                 if (!isOldGift && originalPrice > price) {
                     printP = `<del style="color:#7f8c8d; font-size:10px;">${originalPrice}</del><br>${price}`;
@@ -2301,8 +2301,8 @@ window.printHistoryOrder = function (orderId) {
             let qty = lineOrItem.qty || lineOrItem.quantity || 1;
             let total = lineOrItem.total || lineOrItem.price || 0;
             let price = parseFloat(total) / parseFloat(qty);
-            let catalogItem = window.barcodeCatalogData ? window.barcodeCatalogData.find(prod => String(prod.name).trim() === name) : null;
-            let originalPrice = catalogItem ? parseFloat(catalogItem.price) : price;
+            let catalogItem = typeof catalogData !== 'undefined' ? catalogData.find(prod => String(prod.name).trim() === name) : null;
+            let originalPrice = catalogItem && parseFloat(catalogItem.price) > 0 ? parseFloat(catalogItem.price) : price;
             let printP = isOldGift ? "***" : price;
             if (!isOldGift && originalPrice > price) {
                 printP = `<del style="color:#7f8c8d; font-size:10px;">${originalPrice}</del><br>${price}`;
