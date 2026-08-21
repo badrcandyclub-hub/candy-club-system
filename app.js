@@ -1198,18 +1198,37 @@ try {
             const synced = target.dataset.historySynced === 'true';
 
             if (isActive && !synced) {
-                // modal opened programmatically - push state and mark synced
-                try { history.pushState({ modalOpen: id }, ''); } catch (e) { /* ignore */ }
+                // modal opened programmatically - push or replace state and mark synced
+                const hadOpen = !!window._openModalId && window._openModalId !== id;
+                if (hadOpen) {
+                    const prev = document.getElementById(window._openModalId);
+                    if (prev) {
+                        prev.dataset.historySynced = 'false';
+                        prev.classList.remove('active');
+                    }
+                }
+                try { 
+                    if (hadOpen) {
+                        history.replaceState({ modalOpen: id }, '');
+                    } else {
+                        history.pushState({ modalOpen: id }, '');
+                    }
+                } catch (e) { /* ignore */ }
                 target.dataset.historySynced = 'true';
                 window._openModalId = id;
             } else if (!isActive && synced) {
-                // modal closed programmatically - if history state matches, go back to pop it
+                // modal closed programmatically - only pop history if no other modal is currently active
                 target.dataset.historySynced = 'false';
-                const st = history.state || {};
-                if (st && st.modalOpen === id) {
-                    try { history.back(); } catch (e) { /* ignore */ }
+                const anyActiveModal = document.querySelector('.modal-overlay.active, .modal.active');
+                if (!anyActiveModal) {
+                    const st = history.state || {};
+                    if (st && st.modalOpen === id) {
+                        try { history.back(); } catch (e) { /* ignore */ }
+                    }
+                    if (window._openModalId === id) window._openModalId = null;
+                } else {
+                    window._openModalId = anyActiveModal.id;
                 }
-                if (window._openModalId === id) window._openModalId = null;
             }
         });
     });
@@ -2333,12 +2352,29 @@ window.printHistoryOrder = function (orderId) {
     if (document.getElementById('print-discount')) document.getElementById('print-discount').innerText = isOldGift ? "***" : (order.discount || 0);
 
     // <i class=\'fa-solid fa-star\'></i> V15.0: إخفاء سطر الشحن لطلبات استلام الفرع نهائياً
+        // <i class='fa-solid fa-star'></i> V15.0: إخفاء سطر الشحن لطلبات استلام الفرع أو إذا كان الشحن 0 نهائياً
     let printShippingRow = document.querySelector('.print-shipping-row');
-    if (isBranch) {
+    let shipVal = parseFloat(order.shipping) || 0;
+    if (isBranch || shipVal === 0) {
         if (printShippingRow) printShippingRow.style.display = 'none';
     } else {
         if (printShippingRow) printShippingRow.style.display = '';
-        if (document.getElementById('print-shipping')) document.getElementById('print-shipping').innerText = isOldGift ? "***" : (order.shipping || 0);
+        if (document.getElementById('print-shipping')) document.getElementById('print-shipping').innerText = isOldGift ? "***" : shipVal;
+    }
+
+    // طباعة الملاحظات فقط في حال وجود ملاحظات فعلية
+    let orderNotes = String(order.notes || order.customerNotes || "").trim();
+    let printNotesRow = document.querySelector('.print-notes-row');
+    let printNotesEl = document.getElementById('print-notes');
+    if (printNotesRow) {
+        let cleanNotes = orderNotes.replace(/[\s\-_]/g, '');
+        if (orderNotes && cleanNotes !== "" && orderNotes !== "لا توجد ملاحظات" && orderNotes !== "بدون ملاحظات") {
+            printNotesRow.style.display = 'block';
+            if (printNotesEl) printNotesEl.innerText = orderNotes;
+        } else {
+            printNotesRow.style.display = 'none';
+            if (printNotesEl) printNotesEl.innerText = '';
+        }
     }
 
     if (parseFloat(order.deposit) > 0 && !isOldGift) {
@@ -3105,7 +3141,32 @@ if (saveAndPrintBtn) {
 
                 if (document.getElementById('print-subtotal')) document.getElementById('print-subtotal').innerText = isGift ? "***" : (document.getElementById('productsTotal') ? document.getElementById('productsTotal').value : 0);
                 if (document.getElementById('print-discount')) document.getElementById('print-discount').innerText = isGift ? "***" : (document.getElementById('discount') ? document.getElementById('discount').value || 0 : 0);
-                if (document.getElementById('print-shipping')) document.getElementById('print-shipping').innerText = isGift ? "***" : (document.getElementById('shippingCost') ? document.getElementById('shippingCost').value : 0);
+                let printShippingRow = document.querySelector('.print-shipping-row');
+                let shipCostVal = parseFloat(document.getElementById('shippingCost') ? document.getElementById('shippingCost').value : 0) || 0;
+                let isBranchOrder = orderTypeLabel.includes("استلام من الفرع") || delType === 'branch' || shipCostVal === 0;
+                if (printShippingRow) {
+                    if (isBranchOrder) {
+                        printShippingRow.style.display = 'none';
+                    } else {
+                        printShippingRow.style.display = '';
+                        if (document.getElementById('print-shipping')) document.getElementById('print-shipping').innerText = isGift ? "***" : shipCostVal;
+                    }
+                }
+
+                // طباعة الملاحظات فقط في حال وجود ملاحظات فعلية
+                let finalNotesStr = String(finalNotes || (document.getElementById('notes') ? document.getElementById('notes').value : "")).trim();
+                let printNotesRow = document.querySelector('.print-notes-row');
+                let printNotesEl = document.getElementById('print-notes');
+                if (printNotesRow) {
+                    let cleanNotes = finalNotesStr.replace(/[\s\-_]/g, '');
+                    if (finalNotesStr && cleanNotes !== "" && finalNotesStr !== "لا توجد ملاحظات" && finalNotesStr !== "بدون ملاحظات") {
+                        printNotesRow.style.display = 'block';
+                        if (printNotesEl) printNotesEl.innerText = finalNotesStr;
+                    } else {
+                        printNotesRow.style.display = 'none';
+                        if (printNotesEl) printNotesEl.innerText = '';
+                    }
+                }
 
                 if (dep > 0 && !isGift) {
                     let depositHtml = `<p class="print-deposit-row">تم دفع عربون: <b><span id="print-deposit">${dep}</span></b></p>`;
