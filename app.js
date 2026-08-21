@@ -6578,7 +6578,7 @@ if (btnExportDatePDF) {
     });
 }
 
-function showBatchSelectionModal(batches, legacyBatch, dateVal) {
+function showBatchSelectionModal(batches, legacyBatch, pdfTitleDate) {
     const overlay = document.createElement('div');
     overlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px);";
     
@@ -6586,7 +6586,7 @@ function showBatchSelectionModal(batches, legacyBatch, dateVal) {
     modal.style = "background: var(--bg); padding: 25px; border-radius: 15px; max-width: 500px; width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid var(--border); max-height: 80vh; overflow-y: auto;";
     
     let html = `
-        <h3 style="color: var(--primary); margin-top: 0; font-family: 'Cairo', sans-serif; text-align: center;">طباعة استلامات يوم ${dateVal}</h3>
+        <h3 style="color: var(--primary); margin-top: 0; font-family: 'Cairo', sans-serif; text-align: center;">طباعة استلامات ${pdfTitleDate}</h3>
         <p style="font-size: 0.95rem; color: var(--text-main); margin-bottom: 20px; text-align: center;">الاستلامات المسجلة في هذا اليوم. يمكنك تحديد المحضر المراد طباعته أو التعديل عليه:</p>
         <div style="display: flex; flex-direction: column; gap: 10px;">
     `;
@@ -6697,7 +6697,7 @@ function showBatchSelectionModal(batches, legacyBatch, dateVal) {
         btn.addEventListener('click', function() {
             let bId = this.getAttribute('data-batch');
             let itemsToEdit = bId === 'legacy' ? legacyBatch : batches[bId];
-            showBatchEditModal(bId, itemsToEdit, dateVal);
+            showBatchEditModal(bId, itemsToEdit, pdfTitleDate);
         });
     });
 
@@ -6736,7 +6736,7 @@ function showBatchSelectionModal(batches, legacyBatch, dateVal) {
     document.getElementById('closeBatchModalBtn').onclick = () => document.body.removeChild(overlay);
 }
 
-window.showBatchEditModal = function(bId, items, dateVal) {
+window.showBatchEditModal = function(bId, items, pdfTitleDate) {
     const overlay = document.createElement('div');
     overlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10005; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px);";
     
@@ -6747,7 +6747,7 @@ window.showBatchEditModal = function(bId, items, dateVal) {
     
     let html = `
         <h3 style="color: var(--primary); margin-top: 0; font-family: 'Cairo', sans-serif; text-align: center;">
-            تعديل استلامة ${dateVal} - ${titleStr}
+            تعديل استلامة ${pdfTitleDate} - ${titleStr}
         </h3>
         <p style="font-size: 0.9rem; color: var(--text-main); text-align: center; margin-bottom: 10px;">
             تنبيه: بعد تعديل الأصناف، يُرجى إغلاق هذه النافذة ثم طباعة الاستلامة للحصول على التحديثات.
@@ -6789,7 +6789,7 @@ window.showBatchEditModal = function(bId, items, dateVal) {
     document.getElementById('closeBatchEditModalBtn').onclick = () => document.body.removeChild(overlay);
 }
 
-function showManualSelectionModal(legacyBatch, dateVal) {
+function showManualSelectionModal(legacyBatch, pdfTitleDate) {
     const overlay = document.createElement('div');
     overlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px);";
     
@@ -7306,7 +7306,7 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
     printWindow.document.close();
 }
 
-function generatePDFReceipt(filteredData, dateVal) {
+function generatePDFReceipt(filteredData, pdfTitleDate) {
     // Determine receiver name from the selected batch items
     let receivers = [...new Set(filteredData.map(item => item.receiver).filter(r => r && String(r).trim() !== ''))];
     let receiver = receivers.length > 0 ? receivers.join(' / ') : '.........................';
@@ -7323,7 +7323,7 @@ function generatePDFReceipt(filteredData, dateVal) {
     let html = `
         <html dir="rtl" lang="ar">
         <head>
-            <title>بيان استلام بضاعة - ${dateVal}</title>
+            <title>بيان استلام بضاعة - ${pdfTitleDate}</title>
             <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
             <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
             <style>
@@ -7466,7 +7466,7 @@ function generatePDFReceipt(filteredData, dateVal) {
                 <div class="info-card">
                     <div class="info-row">
                         <span class="info-label"><i class="fa-regular fa-calendar" style="margin-left: 5px;"></i> تاريخ التسجيل:</span>
-                        <span class="info-value" style="color: #E91E8C;">${dateVal}</span>
+                        <span class="info-value" style="color: #E91E8C;">${pdfTitleDate}</span>
                     </div>
                     <div class="info-row">
                         <span class="info-label"><i class="fa-regular fa-user" style="margin-left: 5px;"></i> اسم المستلم:</span>
