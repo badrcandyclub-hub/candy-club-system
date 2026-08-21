@@ -2357,9 +2357,9 @@ window.printHistoryOrder = function (orderId) {
     let printShippingRow = document.querySelector('.print-shipping-row');
     let shipVal = parseFloat(order.shipping) || 0;
     if (isBranch || shipVal === 0) {
-        if (printShippingRow) printShippingRow.style.display = 'none';
+        if (printShippingRow) printShippingRow.style.setProperty('display', 'none', 'important');
     } else {
-        if (printShippingRow) printShippingRow.style.display = '';
+        if (printShippingRow) printShippingRow.style.removeProperty('display');
         if (document.getElementById('print-shipping')) document.getElementById('print-shipping').innerText = isOldGift ? "***" : shipVal;
     }
 
@@ -3144,12 +3144,12 @@ if (saveAndPrintBtn) {
                 if (document.getElementById('print-discount')) document.getElementById('print-discount').innerText = isGift ? "***" : (document.getElementById('discount') ? document.getElementById('discount').value || 0 : 0);
                 let printShippingRow = document.querySelector('.print-shipping-row');
                 let shipCostVal = parseFloat(document.getElementById('shippingCost') ? document.getElementById('shippingCost').value : 0) || 0;
-                let isBranchOrder = orderTypeLabel.includes("استلام من الفرع") || delType === 'branch' || shipCostVal === 0;
+                let isBranchOrder = orderTypeLabel.includes("استلام") || orderTypeLabel.includes("فرع") || delType === 'branch' || shipCostVal === 0;
                 if (printShippingRow) {
                     if (isBranchOrder) {
-                        printShippingRow.style.display = 'none';
+                        printShippingRow.style.setProperty('display', 'none', 'important');
                     } else {
-                        printShippingRow.style.display = '';
+                        printShippingRow.style.removeProperty('display');
                         if (document.getElementById('print-shipping')) document.getElementById('print-shipping').innerText = isGift ? "***" : shipCostVal;
                     }
                 }
