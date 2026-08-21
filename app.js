@@ -4954,6 +4954,16 @@ function loadExpiryData() {
     // V16.5: استخدام البيانات المحملة مسبقاً بدلاً من استدعاء السيرفر
     if (window.expiriesData && window.expiriesData.length > 0) {
         expiryData = Array.isArray(window.expiriesData) ? window.expiriesData : [];
+        if(!window.expiryDataDatesSet) window.expiryDataDatesSet = new Set();
+        window.expiryDataDatesSet.clear();
+        expiryData.forEach(item => {
+            if(item.regDate) {
+                window.expiryDataDatesSet.add(getCalendarDateKey(item.regDate));
+            }
+        });
+        if(typeof expiryExportDatePicker !== 'undefined' && expiryExportDatePicker) {
+            expiryExportDatePicker.redraw();
+        }
         
         // <i class='fa-solid fa-star'></i> سحب الباركود للمنتجات القديمة من الفايربيز أو إذا كان العمود غير موجود في الإكسيل
         if (barcodeCatalogData && barcodeCatalogData.length > 0) {
@@ -6481,20 +6491,24 @@ if (btnExportMonthPDF) {
 const btnExportDate = document.getElementById('btnExportDate');
 if (btnExportDate) {
     btnExportDate.addEventListener('click', () => {
-        const dateVal = document.getElementById('exportDateInput').value; // YYYY-MM-DD
-        if (!dateVal) {
-            showToast("يرجى تحديد يوم التسجيل أولاً", "warning");
+        const dateValStr = document.getElementById('exportDateInput').value;
+        if (!dateValStr) {
+            showToast("يرجى تحديد أيام التصدير أولاً", "warning");
             return;
         }
+
+        let selectedDates = dateValStr.split(', ');
 
         let filtered = expiryData.filter(item => {
             if (!item.regDate) return false;
             const dateKey = getCalendarDateKey(item.regDate);
-            return dateKey === dateVal;
+            return selectedDates.includes(dateKey);
         });
 
+        let exportTitle = selectedDates.length <= 2 ? 'إدخالات_أيام_' + selectedDates.join('_') : 'إدخالات_أيام_متعددة';
+
         setBtnLoading(btnExportDate, true, "تصدير...");
-        generateExcel(filtered, 'إدخالات_يوم_' + dateVal).then(() => {
+        generateExcel(filtered, exportTitle).then(() => {
             setBtnLoading(btnExportDate, false);
         });
     });
@@ -6503,16 +6517,19 @@ if (btnExportDate) {
 const btnExportDatePDF = document.getElementById('btnExportDatePDF');
 if (btnExportDatePDF) {
     btnExportDatePDF.addEventListener('click', () => {
-        const dateVal = document.getElementById('exportDateInput').value; // YYYY-MM-DD
-        if (!dateVal) {
-            showToast("يرجى تحديد يوم التسجيل أولاً", "warning");
+        const dateValStr = document.getElementById('exportDateInput').value;
+        if (!dateValStr) {
+            showToast("يرجى تحديد أيام التصدير أولاً", "warning");
             return;
         }
+
+        let selectedDates = dateValStr.split(', ');
+        let pdfTitleDate = selectedDates.length <= 2 ? selectedDates.join(' و ') : `تواريخ متعددة (${selectedDates.length} أيام)`;
 
         let filtered = expiryData.filter(item => {
             if (!item.regDate) return false;
             const dateKey = getCalendarDateKey(item.regDate);
-            return dateKey === dateVal;
+            return selectedDates.includes(dateKey);
         });
 
         if (filtered.length === 0) {
@@ -6672,7 +6689,7 @@ function showBatchSelectionModal(batches, legacyBatch, dateVal) {
         let reportTitle = `استلامات مجمعة - المستلم: ${mergedReceiverName}`;
         
         // استدعاء دالة الطباعة الخاصة بالاستلامات
-        generatePDFReceipt(allItems, dateVal, reportTitle);
+        generatePDFReceipt(allItems, pdfTitleDate, reportTitle);
     });
 
     // Add event listeners for edit buttons
@@ -6705,13 +6722,13 @@ function showBatchSelectionModal(batches, legacyBatch, dateVal) {
                 let allItems = [];
                 Object.values(batches).forEach(arr => allItems = allItems.concat(arr));
                 allItems = allItems.concat(legacyBatch);
-                generatePDFReceipt(allItems, dateVal);
+                generatePDFReceipt(allItems, pdfTitleDate);
             } else if (type === 'legacy') {
-                generatePDFReceipt(legacyBatch, dateVal);
+                generatePDFReceipt(legacyBatch, pdfTitleDate);
             } else if (type === 'manual') {
-                showManualSelectionModal(legacyBatch, dateVal);
+                showManualSelectionModal(legacyBatch, pdfTitleDate);
             } else {
-                generatePDFReceipt(batches[type], dateVal);
+                generatePDFReceipt(batches[type], pdfTitleDate);
             }
         });
     });
@@ -6844,7 +6861,7 @@ function showManualSelectionModal(legacyBatch, dateVal) {
         }
         let selectedItems = selectedIndices.map(idx => legacyBatch[idx]);
         document.body.removeChild(overlay);
-        generatePDFReceipt(selectedItems, dateVal);
+        generatePDFReceipt(selectedItems, pdfTitleDate);
     });
 
     modal.querySelector('#closeManualModalBtn').addEventListener('click', () => {
@@ -12881,3 +12898,28 @@ window.confirmCustomDate = function() {
     }
     closeCustomDatePicker();
 };
+
+// Flatpickr Initialization
+window.expiryDataDatesSet = new Set();
+let expiryExportDatePicker;
+
+document.addEventListener('DOMContentLoaded', () => {
+    let dateInput = document.getElementById('exportDateInput');
+    if (dateInput && typeof flatpickr !== 'undefined') {
+        expiryExportDatePicker = flatpickr(dateInput, {
+            mode: "multiple",
+            dateFormat: "Y-m-d",
+            locale: "ar",
+            onDayCreate: function(dObj, dStr, fp, dayElem) {
+                let month = (dayElem.dateObj.getMonth() + 1).toString().padStart(2, '0');
+                let day = dayElem.dateObj.getDate().toString().padStart(2, '0');
+                let year = dayElem.dateObj.getFullYear();
+                let dateStr = year + "-" + month + "-" + day;
+                
+                if (window.expiryDataDatesSet && window.expiryDataDatesSet.has(dateStr)) {
+                    dayElem.classList.add('has-entry');
+                }
+            }
+        });
+    }
+});
