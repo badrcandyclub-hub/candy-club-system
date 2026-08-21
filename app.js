@@ -2243,7 +2243,8 @@ window.printHistoryOrder = function (orderId) {
         // <i class=\'fa-solid fa-star\'></i> V15.0: تطبيع النص - إزالة "عادي" من "توصيل منزلي عادي"
         let typeStr = (order.orderType || "أوردر توصيل").replace("توصيل منزلي عادي", "توصيل منزلي");
         let govStr = order.gov ? order.gov + " - " : "";
-        document.getElementById('receipt-type').innerHTML = isOldGift ? `${govStr}${typeStr} - <i class=\'fa-solid fa-gift\'></i> هدية` : `${govStr}${typeStr}`;
+        let orderIdText = order.id ? `<br><span style="font-size:14px; font-weight:normal; font-family: Tahoma, sans-serif;">رقم الأوردر: ${order.id}</span>` : "";
+        document.getElementById('receipt-type').innerHTML = isOldGift ? `${govStr}${typeStr} - <i class=\'fa-solid fa-gift\'></i> هدية${orderIdText}` : `${govStr}${typeStr}${orderIdText}`;
     }
     if (document.getElementById('print-date')) document.getElementById('print-date').innerText = order.date || new Date().toLocaleDateString('ar-EG');
     if (document.getElementById('print-time')) document.getElementById('print-time').innerText = order.time || '';
@@ -3097,8 +3098,9 @@ if (saveAndPrintBtn) {
         formData.append('deposit', dep);
         formData.append('remaining', rem);
 
-        fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
-            .then(() => {
+        fetch(GOOGLE_SHEETS_URL, { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then((data) => {
                 if (typeof window.hideLoading === 'function') window.hideLoading();
                 if (typeof window.playRegisterBeep === 'function') window.playRegisterBeep();
                 showToast("<i class=\'fa-solid fa-check\'></i> تم حفظ الأوردر بنجاح!", "success");
@@ -3111,7 +3113,8 @@ if (saveAndPrintBtn) {
                 }
 
                 let govStr = gov ? gov + " - " : "";
-                if (document.getElementById('receipt-type')) document.getElementById('receipt-type').innerHTML = isGift ? `${govStr}${orderTypeLabel} - <i class=\'fa-solid fa-gift\'></i> هدية` : `${govStr}${orderTypeLabel}`;
+                let genIdText = (data && data.orderId) ? `<br><span style="font-size:14px; font-weight:normal; font-family: Tahoma, sans-serif;">رقم الأوردر: ${data.orderId}</span>` : "";
+                if (document.getElementById('receipt-type')) document.getElementById('receipt-type').innerHTML = isGift ? `${govStr}${orderTypeLabel} - <i class=\'fa-solid fa-gift\'></i> هدية${genIdText}` : `${govStr}${orderTypeLabel}${genIdText}`;
 
                 let printLogo = document.getElementById('receiptLogo') || document.getElementById('print-logo');
                 if (printLogo) {
