@@ -1193,6 +1193,7 @@ try {
             if (!target.classList.contains('modal-overlay') && !target.classList.contains('modal')) return;
             const id = target.id;
             if (!id) return;
+            if (id === 'scannerModal' || id === 'scanResultModal') return;
 
             const isActive = target.classList.contains('active');
             const synced = target.dataset.historySynced === 'true';
@@ -4770,10 +4771,13 @@ function processBarcodeAction(val) {
 
 function onScanSuccess(decodedText, decodedResult) {
     stopBarcodeScanner();
-    scannerModal.dataset.historySynced = 'false';
-    scannerModal.classList.remove('active');
     
     let val = String(decodedText).trim();
+    
+    if (currentScannerMode !== 'order') {
+        closeModalWithHistory('scannerModal');
+    }
+    
     processBarcodeAction(val);
 }
 
@@ -4841,8 +4845,9 @@ if (manualSearchBtn && manualBarcodeInput) {
             return;
         }
 
-        // إغلاق النافذة وتنفيذ البحث فوراً بدون انتظار الكاميرا        scannerModal.dataset.historySynced = 'false';
-        scannerModal.classList.remove('active');
+        if (currentScannerMode !== 'order') {
+            closeModalWithHistory('scannerModal');
+        }
         processBarcodeAction(val);
         manualBarcodeInput.value = '';
 
@@ -4963,8 +4968,9 @@ if (barcodeImageUpload) {
                 tempScanner.scanFile(imageFile, false)
                     .then(decodedText => {
                         clearTimeout(emergencyTimeout);
-                        scannerModal.dataset.historySynced = 'false';
-                        scannerModal.classList.remove('active');
+                        if (currentScannerMode !== 'order') {
+                            closeModalWithHistory('scannerModal');
+                        }
                         handleBarcodeMatch(decodedText);
 
                         // إعادة ضبط كل شيء
