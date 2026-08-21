@@ -4604,19 +4604,20 @@ if (openScannerBtn) {
 if (closeScannerModalBtn) {
     closeScannerModalBtn.addEventListener('click', () => {
         stopBarcodeScanner();
-        scannerModal.classList.remove('active');
+        closeModalWithHistory('scannerModal');
     });
 }
 
 if (closeScanResultBtn) {
     closeScanResultBtn.addEventListener('click', () => {
-        scanResultModal.classList.remove('active');
+        closeModalWithHistory('scanResultModal');
     });
 }
 
 if (scanAnotherBtn) {
     scanAnotherBtn.addEventListener('click', () => {
         currentScannerMode = 'price';
+        scanResultModal.dataset.historySynced = 'false';
         scanResultModal.classList.remove('active');
         scannerModal.classList.add('active');
         startBarcodeScanner();
@@ -4769,6 +4770,7 @@ function processBarcodeAction(val) {
 
 function onScanSuccess(decodedText, decodedResult) {
     stopBarcodeScanner();
+    scannerModal.dataset.historySynced = 'false';
     scannerModal.classList.remove('active');
     
     let val = String(decodedText).trim();
@@ -4839,7 +4841,7 @@ if (manualSearchBtn && manualBarcodeInput) {
             return;
         }
 
-        // إغلاق النافذة وتنفيذ البحث فوراً بدون انتظار الكاميرا
+        // إغلاق النافذة وتنفيذ البحث فوراً بدون انتظار الكاميرا        scannerModal.dataset.historySynced = 'false';
         scannerModal.classList.remove('active');
         processBarcodeAction(val);
         manualBarcodeInput.value = '';
@@ -4961,6 +4963,7 @@ if (barcodeImageUpload) {
                 tempScanner.scanFile(imageFile, false)
                     .then(decodedText => {
                         clearTimeout(emergencyTimeout);
+                        scannerModal.dataset.historySynced = 'false';
                         scannerModal.classList.remove('active');
                         handleBarcodeMatch(decodedText);
 
@@ -5022,7 +5025,7 @@ if (addToCartBtn) {
                 if (typeof calculateTotal === 'function') calculateTotal();
                 showToast(`تمت زيادة كمية ${productName} في الفاتورة <i class=\'fa-solid fa-cart-shopping\'></i>`, "success");
 
-                scanResultModal.classList.remove('active');
+                closeModalWithHistory('scanResultModal');
                 currentScannedProduct = null;
                 return; // إنهاء الدالة فوراً
             }
@@ -5044,7 +5047,7 @@ if (addToCartBtn) {
                 showToast(`تمت إضافة ${productName} للفاتورة بنجاح <i class=\'fa-solid fa-check\'></i>`, "success");
 
                 // إغلاق النافذة
-                scanResultModal.classList.remove('active');
+                closeModalWithHistory('scanResultModal');
 
                 // التأكد من وجود صف فارغ للإدخال اليدوي
                 if (document.querySelectorAll('.product-row:not(.confirmed)').length === 0) {
