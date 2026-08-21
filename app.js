@@ -1339,7 +1339,8 @@ async function loadDataFromServer(customDate = null) {
             { data: rawOOS, error: e8 },
             { data: rawSuspended, error: e9 },
             { data: rawExpiries, error: e10 },
-            { data: rawSettled, error: e11 }
+            { data: rawSettled, error: e11 },
+            { data: rawRecentSettled, error: e12 }
         ] = await Promise.all([
             supabase.from('orders').select('*').eq('order_date', fetchDate).order('created_at', { ascending: false }).range(0, 49),
             fetchAllSupabaseRows(supabase.from('orders').select('*').eq('status', 'قيد التجهيز')),
@@ -1354,10 +1355,11 @@ async function loadDataFromServer(customDate = null) {
             fetchAllSupabaseRows(supabase.from('out_of_stock').select('*')),
             fetchAllSupabaseRows(supabase.from('suspended_orders').select('*')),
             fetchAllSupabaseRows(supabase.from('expiries').select('*')),
-            fetchAllSupabaseRows(supabase.from('orders').select('driver_name,shipping_cost,order_date,status').eq('status', 'تم التوصيل ومُحاسب'))
+            fetchAllSupabaseRows(supabase.from('orders').select('driver_name,shipping_cost,order_date,status').eq('status', 'تم التوصيل ومُحاسب')),
+            supabase.from('orders').select('*').eq('status', 'تم التوصيل ومُحاسب').order('id', { ascending: false }).range(0, 49)
         ]);
 
-        for (const err of [eh1, eh2, eh3, eh4, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11]) {
+        for (const err of [eh1, eh2, eh3, eh4, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11, e12]) {
             if (err) throw err;
         }
 
@@ -1367,6 +1369,7 @@ async function loadDataFromServer(customDate = null) {
         if (rawPending) rawPending.forEach(o => allOrdersMap.set(o.order_id, o));
         if (rawShipped) rawShipped.forEach(o => allOrdersMap.set(o.order_id, o));
         if (rawUncollected) rawUncollected.forEach(o => allOrdersMap.set(o.order_id, o));
+        if (rawRecentSettled) rawRecentSettled.forEach(o => allOrdersMap.set(o.order_id, o));
         
         let rawOrders = Array.from(allOrdersMap.values());
 
