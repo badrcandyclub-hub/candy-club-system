@@ -2278,7 +2278,12 @@ window.printHistoryOrder = function (orderId) {
                 let qty = match[2];
                 let total = match[3];
                 let price = parseFloat(total) / parseFloat(qty);
+                let catalogItem = window.barcodeCatalogData ? window.barcodeCatalogData.find(prod => String(prod.name).trim() === name) : null;
+                let originalPrice = catalogItem ? parseFloat(catalogItem.price) : price;
                 let printP = isOldGift ? "***" : price;
+                if (!isOldGift && originalPrice > price) {
+                    printP = `<del style="color:#7f8c8d; font-size:10px;">${originalPrice}</del><br>${price}`;
+                }
                 printItemsHtml += `
                     <tr>
                         <td>${name}</td>
@@ -2295,7 +2300,12 @@ window.printHistoryOrder = function (orderId) {
             let qty = lineOrItem.qty || lineOrItem.quantity || 1;
             let total = lineOrItem.total || lineOrItem.price || 0;
             let price = parseFloat(total) / parseFloat(qty);
+            let catalogItem = window.barcodeCatalogData ? window.barcodeCatalogData.find(prod => String(prod.name).trim() === name) : null;
+            let originalPrice = catalogItem ? parseFloat(catalogItem.price) : price;
             let printP = isOldGift ? "***" : price;
+            if (!isOldGift && originalPrice > price) {
+                printP = `<del style="color:#7f8c8d; font-size:10px;">${originalPrice}</del><br>${price}`;
+            }
             printItemsHtml += `
                 <tr>
                     <td>${name}</td>
@@ -2982,6 +2992,9 @@ if (saveAndPrintBtn) {
 
             let nDisplay = n;
             let printP = isGift ? "***" : finalPrice;
+            if (!isGift && oVal > 0 && p > finalPrice) {
+                printP = `<del style="color:#7f8c8d; font-size:10px;">${p}</del><br>${finalPrice}`;
+            }
             let printTotal = isGift ? "***" : rowTotal;
             printItemsHtml += `<tr><td>${nDisplay}</td><td>${printP}</td><td>${q}</td><td>${printTotal}</td></tr>`;
         });
