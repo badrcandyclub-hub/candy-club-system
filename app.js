@@ -2273,14 +2273,31 @@ window.printHistoryOrder = function (orderId) {
 
     productsArray.forEach(lineOrItem => {
         if (typeof lineOrItem === 'string' && lineOrItem.trim() !== "") {
-            let match = lineOrItem.match(/(.*) - الكمية: (\d+) \(([\d.]+)ج\)/);
+            let match = lineOrItem.match(/(.*?) - الكمية: (\d+) \(([\d.]+)ج\)(?: \[([\d.]+)\])?/);
             if (match) {
                 let name = match[1].trim();
                 let qty = match[2];
                 let total = match[3];
+                let savedOriginalPrice = match[4] ? parseFloat(match[4]) : null;
                 let price = parseFloat(total) / parseFloat(qty);
-                let catalogItem = typeof catalogData !== 'undefined' ? catalogData.find(prod => String(prod.name).trim() === name) : null;
-                let originalPrice = catalogItem && parseFloat(catalogItem.price) > 0 ? parseFloat(catalogItem.price) : price;
+                
+                let originalPrice = price;
+                if (savedOriginalPrice && savedOriginalPrice > price) {
+                    originalPrice = savedOriginalPrice;
+                } else {
+                    let safeName = String(name).trim().toLowerCase().replace(/\s+/g, '');
+                    let catalogItem = null;
+                    if (typeof catalogData !== 'undefined' && Array.isArray(catalogData)) {
+                        catalogItem = catalogData.find(prod => String(prod.name).trim().toLowerCase().replace(/\s+/g, '') === safeName);
+                    }
+                    if (!catalogItem && typeof barcodeCatalogData !== 'undefined' && Array.isArray(barcodeCatalogData)) {
+                        catalogItem = barcodeCatalogData.find(prod => String(prod.name).trim().toLowerCase().replace(/\s+/g, '') === safeName);
+                    }
+                    if (catalogItem && parseFloat(catalogItem.price) > price) {
+                        originalPrice = parseFloat(catalogItem.price);
+                    }
+                }
+                
                 let printP = isOldGift ? "***" : price;
                 if (!isOldGift && originalPrice > price) {
                     printP = `<del style="color:#7f8c8d; font-size:10px;">${originalPrice}</del><br>${price}`;
@@ -2300,9 +2317,26 @@ window.printHistoryOrder = function (orderId) {
             let name = lineOrItem.name || lineOrItem.item_name || "منتج";
             let qty = lineOrItem.qty || lineOrItem.quantity || 1;
             let total = lineOrItem.total || lineOrItem.price || 0;
+            let savedOriginalPrice = lineOrItem.originalPrice || null;
             let price = parseFloat(total) / parseFloat(qty);
-            let catalogItem = typeof catalogData !== 'undefined' ? catalogData.find(prod => String(prod.name).trim() === name) : null;
-            let originalPrice = catalogItem && parseFloat(catalogItem.price) > 0 ? parseFloat(catalogItem.price) : price;
+            
+            let originalPrice = price;
+            if (savedOriginalPrice && savedOriginalPrice > price) {
+                originalPrice = savedOriginalPrice;
+            } else {
+                let safeName = String(name).trim().toLowerCase().replace(/\s+/g, '');
+                let catalogItem = null;
+                if (typeof catalogData !== 'undefined' && Array.isArray(catalogData)) {
+                    catalogItem = catalogData.find(prod => String(prod.name).trim().toLowerCase().replace(/\s+/g, '') === safeName);
+                }
+                if (!catalogItem && typeof barcodeCatalogData !== 'undefined' && Array.isArray(barcodeCatalogData)) {
+                    catalogItem = barcodeCatalogData.find(prod => String(prod.name).trim().toLowerCase().replace(/\s+/g, '') === safeName);
+                }
+                if (catalogItem && parseFloat(catalogItem.price) > price) {
+                    originalPrice = parseFloat(catalogItem.price);
+                }
+            }
+
             let printP = isOldGift ? "***" : price;
             if (!isOldGift && originalPrice > price) {
                 printP = `<del style="color:#7f8c8d; font-size:10px;">${originalPrice}</del><br>${price}`;
@@ -2988,8 +3022,9 @@ if (saveAndPrintBtn) {
 
             let finalPrice = oVal > 0 ? oVal : p;
             let rowTotal = finalPrice * q;
-
-            productsListText += `${n} - الكمية: ${q} (${rowTotal}ج)\n`;
+            
+            let originalPriceStr = (oVal > 0 && p > finalPrice) ? ` [${p}]` : "";
+            productsListText += `${n} - الكمية: ${q} (${rowTotal}ج)${originalPriceStr}\n`;
 
             let nDisplay = n;
             let printP = isGift ? "***" : finalPrice;
