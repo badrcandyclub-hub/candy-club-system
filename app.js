@@ -6244,6 +6244,7 @@ async function generateExcel(dataToExport, reportTitle) {
         sheet1.columns = [
             { header: 'اسم المنتج', key: 'name', width: 35 },
             { header: 'الكمية', key: 'qty', width: 12 },
+            { header: 'الباركود', key: 'barcode', width: 20 },
             { header: 'تاريخ الانتهاء', key: 'date', width: 18 },
             { header: 'الأيام المتبقية', key: 'days', width: 15 },
             { header: 'المكان / المورد', key: 'loc', width: 22 },
@@ -6284,6 +6285,7 @@ async function generateExcel(dataToExport, reportTitle) {
                 origPrice: row.originalPrice || '',
                 offerPrice: row.offerPrice || '',
                 qty: row.qty || '',
+                barcode: row.barcode || '',
                 date: formattedExpDate,
                 days: daysFormatted,
                 reg: formattedRegDate,
