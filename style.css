@@ -4486,3 +4486,23 @@ body.dark-mode .wheel-picker-container {
 /* Payment Method Colors */
 .payment-cash { background-color: rgba(37, 211, 102, 0.1) !important; border: 2px solid #25D366 !important; color: #128C7E !important; font-weight: bold; box-shadow: 0 0 10px rgba(37, 211, 102, 0.2); }
 .payment-instapay { background-color: rgba(156, 39, 176, 0.1) !important; border: 2px solid #9C27B0 !important; color: #7B1FA2 !important; font-weight: bold; box-shadow: 0 0 10px rgba(156, 39, 176, 0.2); }
+
+
+/* Flatpickr Custom Styling for Expiries */
+.flatpickr-day.has-entry {
+    background-color: #e8f5e9 !important;
+    border-color: #4caf50 !important;
+    color: #2e7d32 !important;
+    font-weight: bold;
+}
+.flatpickr-day.has-entry::after {
+    content: '';
+    position: absolute;
+    bottom: 3px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #2e7d32;
+}
