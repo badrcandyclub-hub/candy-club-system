@@ -6574,7 +6574,7 @@ if (btnExportDatePDF) {
         let batchKeys = Object.keys(batches);
         
         // Always show the custom UI to select which batch to print (even for a single batch)
-        showBatchSelectionModal(batches, legacyBatch, dateVal);
+        showBatchSelectionModal(batches, legacyBatch, pdfTitleDate);
     });
 }
 
