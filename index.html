@@ -47,6 +47,10 @@
             }
         });
     </script>
+    <!-- Flatpickr -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/ar.js"></script>
 </head>
 
 <body>
@@ -1264,8 +1268,7 @@
                                     style="background: #E91E8C; color: white; border: none; padding: 8px 15px; border-radius: 8px; flex-shrink: 0; font-weight: bold;"><i class="fa-solid fa-print"></i> طباعة PDF</button>
                                 <button id="btnExportDate" class="interactive-btn"
                                     style="background: #2980b9; color: white; border: none; padding: 8px 15px; border-radius: 8px; flex-shrink: 0;"><i class="fa-solid fa-file-excel"></i> إكسيل</button>
-                                <input type="date" id="exportDateInput" dir="ltr"
-                                    style="flex: 1; min-width: 150px; padding: 8px; border-radius: 8px; border: 1px solid #ccc; margin: 0;">
+                                <input type="text" id="exportDateInput" dir="ltr" placeholder="تحديد أيام التصدير..." style="flex: 1; min-width: 150px; padding: 8px; border-radius: 8px; border: 1px solid #ccc; margin: 0; background: #fff; cursor: pointer;">
                             </div>
                         </div>
                     </div>
@@ -2412,7 +2415,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script src="email_service.js?v=5.0" defer></script>
-    <script src="app.js?v=49.5" charset="UTF-8" defer></script>
+    <script src="app.js?v=62.4" charset="UTF-8" defer></script>
     <script src="update_notice.js" defer></script>
 </body>
 
