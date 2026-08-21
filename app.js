@@ -4597,7 +4597,7 @@ let currentScannerMode = 'price';
 if (openScannerBtn) {
     openScannerBtn.addEventListener('click', () => {
         currentScannerMode = 'price';
-        scannerModal.classList.add('active');
+        openModalWithHistory('scannerModal');
         startBarcodeScanner();
     });
 }
@@ -4617,10 +4617,9 @@ if (closeScanResultBtn) {
 
 if (scanAnotherBtn) {
     scanAnotherBtn.addEventListener('click', () => {
-        currentScannerMode = 'price';
-        scanResultModal.dataset.historySynced = 'false';
-        scanResultModal.classList.remove('active');
-        scannerModal.classList.add('active');
+        currentScannerMode = 'order'; // Fix: retain order mode
+        closeModalWithHistory('scanResultModal');
+        openModalWithHistory('scannerModal');
         startBarcodeScanner();
     });
 }
@@ -4774,9 +4773,7 @@ function onScanSuccess(decodedText, decodedResult) {
     
     let val = String(decodedText).trim();
     
-    if (currentScannerMode !== 'order') {
-        closeModalWithHistory('scannerModal');
-    }
+    closeModalWithHistory('scannerModal');
     
     processBarcodeAction(val);
 }
@@ -4821,7 +4818,7 @@ function handleBarcodeMatch(barcodeValue) {
             }
         }
 
-        scanResultModal.classList.add('active');
+        openModalWithHistory('scanResultModal');
 
         let modalContent = scanResultModal.querySelector('.modal-content');
         modalContent.classList.remove('flash-success');
@@ -4845,9 +4842,7 @@ if (manualSearchBtn && manualBarcodeInput) {
             return;
         }
 
-        if (currentScannerMode !== 'order') {
-            closeModalWithHistory('scannerModal');
-        }
+        closeModalWithHistory('scannerModal');
         processBarcodeAction(val);
         manualBarcodeInput.value = '';
 
@@ -4968,9 +4963,7 @@ if (barcodeImageUpload) {
                 tempScanner.scanFile(imageFile, false)
                     .then(decodedText => {
                         clearTimeout(emergencyTimeout);
-                        if (currentScannerMode !== 'order') {
-                            closeModalWithHistory('scannerModal');
-                        }
+                        closeModalWithHistory('scannerModal');
                         handleBarcodeMatch(decodedText);
 
                         // إعادة ضبط كل شيء
@@ -5109,7 +5102,7 @@ if (startInvCameraScannerBtn) {
         }
         const scannerModal = document.getElementById('scannerModal');
         if (scannerModal) {
-            scannerModal.classList.add('active');
+            openModalWithHistory('scannerModal');
             startBarcodeScanner();
         }
     });
@@ -5123,7 +5116,7 @@ if (startLedgerCameraScannerBtn) {
         }
         const scannerModal = document.getElementById('scannerModal');
         if (scannerModal) {
-            scannerModal.classList.add('active');
+            openModalWithHistory('scannerModal');
             if (typeof startBarcodeScanner === 'function') {
                 startBarcodeScanner();
             }
@@ -5154,7 +5147,7 @@ if (startOrderCameraScannerBtn) {
         }
         const scannerModal = document.getElementById('scannerModal');
         if (scannerModal) {
-            scannerModal.classList.add('active');
+            openModalWithHistory('scannerModal');
             if (typeof startBarcodeScanner === 'function') {
                 startBarcodeScanner();
             }
