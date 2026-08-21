@@ -2042,6 +2042,17 @@ function renderHistoryList(orders, isLoadMore = false) {
     if (!isLoadMore) {
         container.innerHTML = '';
         currentHistoryPage = 1;
+        
+        let countSpan = document.getElementById('historyDayCount');
+        let searchInput = document.getElementById('orderSearchInput');
+        if (countSpan) {
+            if (searchInput && searchInput.value.trim() === "") {
+                countSpan.innerText = `عدد أوردرات اليوم: ${orders.length}`;
+                countSpan.style.display = 'inline-block';
+            } else {
+                countSpan.style.display = 'none';
+            }
+        }
         currentOrdersList = orders;
 
         if (window.pendingOrdersData && window.pendingOrdersData.length > 0 && document.getElementById('orderSearchInput').value.trim() === "") {
