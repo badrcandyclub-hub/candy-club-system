@@ -1827,14 +1827,45 @@ async function loadDataFromServer(customDate = null) {
         let driverStatsMap = {};
         allOrders.forEach(o => {
             if (!o.driver) return;
-            if (!finMap[o.driver]) finMap[o.driver] = { name: o.driver, ordersCount: 0, inTransit: 0, cashCollected: 0, shippingFees: 0, netDue: 0, statusText: "لا توجد مديونية" };
+            if (!finMap[o.driver]) finMap[o.driver] = { 
+                name: o.driver, 
+                ordersCount: 0, 
+                inTransit: 0, 
+                cashOrdersCount: 0,
+                cashCollected: 0, 
+                instaOrdersCount: 0,
+                instaTotal: 0,
+                shippingFees: 0, 
+                productsTotal: 0,
+                netDue: 0, 
+                statusText: "لا توجد مديونية" 
+            };
             if (!driverStatsMap[o.driver]) driverStatsMap[o.driver] = { monthProfit: 0, monthOrderCount: 0, totalProfit: 0, totalCount: 0 };
             
             // Only orders that are delivered but NOT settled count towards pending cash collection
             if (o.status === "تم التوصيل") {
                 finMap[o.driver].ordersCount++;
-                finMap[o.driver].cashCollected += parseFloat(o.remaining) || parseFloat(o.total) || 0;
-                finMap[o.driver].shippingFees += parseFloat(o.shipping) || 0;
+                let total = parseFloat(o.total) || 0;
+                let shipping = parseFloat(o.shipping) || 0;
+                let productCost = Math.max(0, total - shipping);
+                let rem = (o.remaining !== undefined && o.remaining !== null && o.remaining !== '') ? parseFloat(o.remaining) : total;
+
+                finMap[o.driver].shippingFees += shipping;
+                finMap[o.driver].productsTotal += productCost;
+
+                let payStr = (o.paymentMethod || o.payment || '').toLowerCase();
+                let isInsta = payStr.includes('إنستا') || payStr.includes('انستا') || payStr.includes('insta') || payStr.includes('محفظة') || payStr.includes('فودافون') || payStr.includes('فيزا');
+
+                if (isInsta) {
+                    finMap[o.driver].instaOrdersCount++;
+                    finMap[o.driver].instaTotal += total;
+                    if (rem > 0) {
+                        finMap[o.driver].cashCollected += rem;
+                    }
+                } else {
+                    finMap[o.driver].cashOrdersCount++;
+                    finMap[o.driver].cashCollected += rem;
+                }
             }
             if (o.status === "في الشحن") finMap[o.driver].inTransit++;
 
@@ -1890,8 +1921,14 @@ async function loadDataFromServer(customDate = null) {
         });
 
         Object.values(finMap).forEach(f => {
-            f.netDue = f.cashCollected - f.shippingFees;
-            f.statusText = f.netDue > 0 ? "مطلوب تحصيل" : "لا توجد مديونية";
+            f.netDue = Math.round((f.cashCollected - f.shippingFees) * 100) / 100;
+            if (f.netDue > 0) {
+                f.statusText = "مطلوب توريد من المندوب";
+            } else if (f.netDue < 0) {
+                f.statusText = "مستحق صرفه للمندوب";
+            } else {
+                f.statusText = "الحساب متصفي بالكامل";
+            }
             window.financialsData.push(f);
         });
         
@@ -1911,7 +1948,6 @@ async function loadDataFromServer(customDate = null) {
 
         let overlay = document.getElementById('module-loading-overlay');
         if (overlay) overlay.style.display = 'none';
-
         if (syncStatus) { syncStatus.innerText = "متصل"; syncStatus.style.color = "#00C853"; }
 
         if (window.isFirstLoad === undefined) {
@@ -2050,9 +2086,13 @@ function renderFinancials(finList) {
 
 // <i class=\'fa-solid fa-star\'></i> حماية تصفية الأوردر برسالة واضحة بناءً على نوع الدفع
 window.settleDriverOrder = function (orderId, btn, payMethod) {
+    let isInsta = (payMethod || '').includes('إنستا') || (payMethod || '').includes('انستا') || (payMethod || '').includes('insta') || (payMethod || '').includes('محفظة');
     let msg = `هل أنت متأكد من تسوية الأوردر (${orderId})؟`;
-    if (payMethod.includes('كاش')) msg = `هل استلمت النقدية من المندوب الخاصة بالأوردر (${orderId})؟`;
-    else msg = `هل قمت بصرف حق الشحن للمندوب عن الأوردر (${orderId}) المدفوع إلكترونياً؟`;
+    if (isInsta) {
+        msg = `هل قمت بصرف مستحقات الشحن للمندوب عن أوردر الإنستاباي (${orderId})؟`;
+    } else {
+        msg = `هل استلمت النقدية من المندوب الخاصة بالأوردر (${orderId})؟`;
+    }
 
     customConfirm(msg, () => {
         btn.innerText = "جاري...";
@@ -2064,7 +2104,7 @@ window.settleDriverOrder = function (orderId, btn, payMethod) {
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
-                showToast("<i class=\'fa-solid fa-check\'></i> تمت المحاسبة وتسوية الأوردر!", "success");
+                showToast("<i class=\'fa-solid fa-check\'></i> تمت المحاسبة وتسوية الأوردر بنجاح!", "success");
                 loadDataFromServer();
             }).catch(() => {
                 showToast("<i class=\'fa-solid fa-xmark\'></i> حدث خطأ في الاتصال", "error");
@@ -8104,7 +8144,7 @@ function playWaAssistantBeep(times = 1) {
     trigger();
 }
 
-// --- Override renderFinancials to fix broken HTML and add Checkboxes ---
+// --- Override renderFinancials with Detailed Separation of Cash vs InstaPay & Accurate Accounting ---
 function renderFinancials(finList) {
     let container = document.getElementById('financialsDisplayList');
     if (!container) return;
@@ -8119,10 +8159,21 @@ function renderFinancials(finList) {
     let allDrivers = window.driversList || [];
     let driversMap = {};
     allDrivers.forEach(d => {
-        driversMap[d.name] = { name: d.name, ordersCount: 0, cashCollected: 0, shippingFees: 0, netDue: 0, statusText: "لا توجد مديونية" };
+        driversMap[d.name] = { 
+            name: d.name, 
+            ordersCount: 0, 
+            cashOrdersCount: 0,
+            cashCollected: 0, 
+            instaOrdersCount: 0,
+            instaTotal: 0,
+            shippingFees: 0, 
+            productsTotal: 0,
+            netDue: 0, 
+            statusText: "لا توجد مديونية" 
+        };
     });
 
-    finList.forEach(f => {
+    (finList || []).forEach(f => {
         if (!driversMap[f.name]) {
             driversMap[f.name] = f;
         } else {
@@ -8139,75 +8190,213 @@ function renderFinancials(finList) {
     let totalAllDue = 0;
 
     driversArray.forEach(f => {
-        let netDue = parseFloat(f.netDue) || 0;
-        totalAllDue += netDue;
-        let isSettled = netDue === 0;
-        let statusColor = netDue > 0 ? "#27ae60" : (netDue < 0 ? "#c0392b" : "#9e9e9e");
-        let cardClass = isSettled ? "financial-row driver-card settled" : "financial-row driver-card";
-        let cardShadow = isSettled ? "none" : "0 4px 6px rgba(0,0,0,0.05)";
-        let cardOpacity = isSettled ? "0.8" : "1";
-        let cardBorderColor = isSettled ? "#e0e0e0" : "#eaeaea";
-
         let driverOrders = (window.uncollectedOrdersData || []).filter(o => o.driver === f.name);
-        let ordersHtml = '';
-        if (driverOrders.length > 0) {
-            ordersHtml = `<div style="margin-top: 10px; border-top: 1px dashed #ccc; padding-top: 10px;">
-                <strong style="font-size:0.85rem; color:var(--primary);"><i class=\'fa-solid fa-box\'></i> أوردرات معلقة (لم يتم تسويتها):</strong>`;
-            driverOrders.forEach(o => {
-                ordersHtml += `
-                    <div class="financial-order-item" style="background:#fdfdfd; padding:8px; border:1px solid #eee; border-radius:6px; margin-top:5px; display:flex; justify-content:space-between; align-items:center;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <input type="checkbox" class="financial-order-checkbox" data-order-id="${o.id}" data-payment="${o.payment}" style="width: 18px; height: 18px; cursor: pointer;">
-                            <div>
-                                <span style="font-weight:bold; color:var(--text-dark);">${o.id}</span><br>
-                                <span style="font-size:0.75rem; color:#777;">${o.payment} | إجمالي: ${o.total}ج | شحن: ${o.shipping}ج</span><br>
-                                <span style="font-size:0.85rem; font-weight:bold; color:var(--danger);">المطلوب تحصيله: ${o.remaining}ج</span>
+
+        // Compute exact numbers from active driver orders
+        let cashOrders = [];
+        let instaOrders = [];
+        let totalCashCollected = 0;
+        let totalInstaAmount = 0;
+        let totalShipping = 0;
+        let totalProducts = 0;
+
+        driverOrders.forEach(o => {
+            let total = parseFloat(o.total) || 0;
+            let shipping = parseFloat(o.shipping) || 0;
+            let productCost = Math.max(0, total - shipping);
+            let rem = (o.remaining !== undefined && o.remaining !== null && o.remaining !== '') ? parseFloat(o.remaining) : total;
+
+            totalShipping += shipping;
+            totalProducts += productCost;
+
+            let payStr = (o.paymentMethod || o.payment || '').toLowerCase();
+            let isInsta = payStr.includes('إنستا') || payStr.includes('انستا') || payStr.includes('insta') || payStr.includes('محفظة') || payStr.includes('فودافون') || payStr.includes('فيزا');
+
+            if (isInsta) {
+                instaOrders.push({ ...o, productCost, shippingFee: shipping, isInsta: true, rem });
+                totalInstaAmount += total;
+                if (rem > 0) {
+                    totalCashCollected += rem;
+                }
+            } else {
+                cashOrders.push({ ...o, productCost, shippingFee: shipping, isInsta: false, rem });
+                totalCashCollected += rem;
+            }
+        });
+
+        let netDue = Math.round((totalCashCollected - totalShipping) * 100) / 100;
+        totalAllDue += netDue;
+
+        let isSettled = driverOrders.length === 0 || netDue === 0;
+        let statusBadgeBg = '';
+        let statusBadgeColor = '';
+        let statusBorderColor = '';
+        let statusTextFull = '';
+
+        if (driverOrders.length === 0) {
+            statusBadgeBg = '#f5f5f5';
+            statusBadgeColor = '#757575';
+            statusBorderColor = '#e0e0e0';
+            statusTextFull = '✅ لا توجد أوردرات معلقة';
+        } else if (netDue > 0) {
+            statusBadgeBg = '#e8f8f0';
+            statusBadgeColor = '#2e7d32';
+            statusBorderColor = '#a5d6a7';
+            statusTextFull = `💵 مطلوب توريد من المندوب: <strong style="font-size:1.1rem; font-weight:900;">${netDue} ج.م</strong>`;
+        } else if (netDue < 0) {
+            statusBadgeBg = '#fff3e0';
+            statusBadgeColor = '#e65100';
+            statusBorderColor = '#ffcc80';
+            statusTextFull = `🛵 مستحق صرفه للمندوب (شحن إنستاباي): <strong style="font-size:1.1rem; font-weight:900;">${Math.abs(netDue)} ج.م</strong>`;
+        } else {
+            statusBadgeBg = '#e3f2fd';
+            statusBadgeColor = '#1565c0';
+            statusBorderColor = '#90caf9';
+            statusTextFull = `⚖️ الحساب متصفي بالكامل (0 ج.م)`;
+        }
+
+        let cardClass = isSettled ? "financial-row driver-card settled" : "financial-row driver-card";
+        let cardShadow = isSettled ? "0 2px 4px rgba(0,0,0,0.03)" : "0 4px 12px rgba(0,0,0,0.08)";
+        let cardOpacity = isSettled ? "0.85" : "1";
+        let cardBorderColor = isSettled ? "#e0e0e0" : "#d1d5db";
+
+        // Cash Orders HTML
+        let cashHtml = '';
+        if (cashOrders.length > 0) {
+            cashHtml = `
+                <div style="margin-top: 12px; background: #fafdfa; border: 1px solid #c8e6c9; border-radius: 10px; padding: 10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom: 1px dashed #a5d6a7; padding-bottom: 6px;">
+                        <span style="font-weight: bold; color: #2e7d32; font-size: 0.88rem;">
+                            <i class="fa-solid fa-money-bill-wave"></i> أوردرات كاش (تحصيل عند الاستلام)
+                        </span>
+                        <span style="background: #2e7d32; color: white; border-radius: 12px; padding: 2px 8px; font-size: 0.75rem; font-weight: bold;">${cashOrders.length} أوردر</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+            `;
+            cashOrders.forEach(o => {
+                let netForOrder = Math.max(0, o.rem - o.shippingFee);
+                cashHtml += `
+                    <div class="financial-order-item" style="background: #ffffff; padding: 10px; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" class="financial-order-checkbox" data-order-id="${o.id}" data-payment="${o.payment}" style="width: 18px; height: 18px; cursor: pointer;">
+                                <span style="font-weight: 900; font-size: 0.95rem; color: var(--text-dark);">${o.id}</span>
+                                <span style="background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; padding: 2px 6px; border-radius: 4px; font-size: 0.72rem; font-weight: bold;">💵 كاش</span>
                             </div>
+                            <button class="btn-settle interactive-btn" onclick="settleDriverOrder('${o.id}', this, 'كاش')" style="background: #2e7d32; color: white; border: none; padding: 5px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                                <span>تسوية</span> <i class="fa-solid fa-money-bill-check"></i>
+                            </button>
                         </div>
-                        <button class="btn-settle interactive-btn" onclick="settleDriverOrder('${o.id}', this, '${o.payment}')" style="background:var(--success); color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">تسوية <i class=\'fa-solid fa-money-bill\'></i></button>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; background: #f9fbf9; padding: 6px 8px; border-radius: 6px; font-size: 0.78rem; border: 1px solid #e8f5e9;">
+                            <div><span style="color: #666;">الأوردر:</span> <strong style="color: #333;">${o.productCost}ج</strong></div>
+                            <div><span style="color: #666;">الشحن:</span> <strong style="color: #c62828;">${o.shippingFee}ج</strong></div>
+                            <div><span style="color: #666;">الإجمالي:</span> <strong style="color: #1565c0;">${o.total}ج</strong></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 0.82rem; padding: 0 4px;">
+                            <span style="color: #d32f2f; font-weight: bold;">المطلوب من العميل: ${o.rem} ج</span>
+                            <span style="color: #2e7d32; font-weight: bold; background: #e8f5e9; padding: 2px 6px; border-radius: 4px;">الصافي للشركة: ${netForOrder} ج</span>
+                        </div>
                     </div>
                 `;
             });
-            ordersHtml += `</div>`;
+            cashHtml += `</div></div>`;
+        }
+
+        // InstaPay Orders HTML
+        let instaHtml = '';
+        if (instaOrders.length > 0) {
+            instaHtml = `
+                <div style="margin-top: 12px; background: #fdfafc; border: 1px solid #e1bee7; border-radius: 10px; padding: 10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom: 1px dashed #ce93d8; padding-bottom: 6px;">
+                        <span style="font-weight: bold; color: #7b1fa2; font-size: 0.88rem;">
+                            <i class="fa-solid fa-mobile-screen-button"></i> أوردرات إنستاباي / دفع إلكتروني
+                        </span>
+                        <span style="background: #7b1fa2; color: white; border-radius: 12px; padding: 2px 8px; font-size: 0.75rem; font-weight: bold;">${instaOrders.length} أوردر</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+            `;
+            instaOrders.forEach(o => {
+                instaHtml += `
+                    <div class="financial-order-item" style="background: #ffffff; padding: 10px; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" class="financial-order-checkbox" data-order-id="${o.id}" data-payment="${o.payment}" style="width: 18px; height: 18px; cursor: pointer;">
+                                <span style="font-weight: 900; font-size: 0.95rem; color: var(--text-dark);">${o.id}</span>
+                                <span style="background: #f3e5f5; color: #7b1fa2; border: 1px solid #ce93d8; padding: 2px 6px; border-radius: 4px; font-size: 0.72rem; font-weight: bold;">📱 إنستاباي</span>
+                            </div>
+                            <button class="btn-settle interactive-btn" onclick="settleDriverOrder('${o.id}', this, 'إنستاباي')" style="background: #7b1fa2; color: white; border: none; padding: 5px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                                <span>تسوية</span> <i class="fa-solid fa-hand-holding-dollar"></i>
+                            </button>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; background: #faf5fb; padding: 6px 8px; border-radius: 6px; font-size: 0.78rem; border: 1px solid #f3e5f5;">
+                            <div><span style="color: #666;">الأوردر (مدفوع):</span> <strong style="color: #7b1fa2;">${o.productCost}ج</strong></div>
+                            <div><span style="color: #666;">أجرة الشحن:</span> <strong style="color: #e65100;">${o.shippingFee}ج</strong></div>
+                            <div><span style="color: #666;">الإجمالي:</span> <strong style="color: #1565c0;">${o.total}ج</strong></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; font-size: 0.82rem; padding: 0 4px;">
+                            <span style="color: #7b1fa2; font-weight: bold;">مدفوع للشركة إنستاباي</span>
+                            <span style="color: #e65100; font-weight: bold; background: #fff3e0; padding: 2px 6px; border-radius: 4px;">مستحق للمندوب (شحن): ${o.shippingFee} ج</span>
+                        </div>
+                    </div>
+                `;
+            });
+            instaHtml += `</div></div>`;
         }
 
         let dStats = (window.latestServerData && window.latestServerData.driverStats) ? window.latestServerData.driverStats[f.name] || { monthProfit: 0, monthOrderCount: 0, totalProfit: 0, totalCount: 0 } : { monthProfit: 0, monthOrderCount: 0, totalProfit: 0, totalCount: 0 };
 
         let dashboardHtml = `
-            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #e3e6f0;">
-                <strong style="font-size:0.85rem; color:#7f8c8d; display:block; margin-bottom:10px;"><i class="fa-solid fa-chart-line"></i> أداء المندوب (إحصائيات):</strong>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #f8f9fc; padding: 10px; border-radius: 8px; border: 1px solid #e3e6f0;">
-                    <div style="text-align: center; border-left: 1px solid #e3e6f0; padding: 5px;">
-                        <div style="font-size: 0.75rem; color: #4e73df; font-weight: bold;">أرباح الشهر</div>
-                        <div style="font-size: 1.1rem; font-weight: bold; color: #5a5c69;">${dStats.monthProfit} <span style="font-size: 0.7rem;">ج.م</span></div>
-                        <div style="font-size: 0.7rem; color: #1cc88a; margin-top: 2px;">${dStats.monthOrderCount} أوردر</div>
+            <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed #e3e6f0;">
+                <strong style="font-size:0.82rem; color:#7f8c8d; display:block; margin-bottom:8px;"><i class="fa-solid fa-chart-line"></i> أداء المندوب (إحصائيات):</strong>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #f8f9fc; padding: 8px; border-radius: 8px; border: 1px solid #e3e6f0;">
+                    <div style="text-align: center; border-left: 1px solid #e3e6f0; padding: 4px;">
+                        <div style="font-size: 0.72rem; color: #4e73df; font-weight: bold;">أرباح الشهر</div>
+                        <div style="font-size: 1.05rem; font-weight: bold; color: #5a5c69;">${dStats.monthProfit} <span style="font-size: 0.7rem;">ج.م</span></div>
+                        <div style="font-size: 0.68rem; color: #1cc88a; margin-top: 2px;">${dStats.monthOrderCount} أوردر</div>
                     </div>
-                    <div style="text-align: center; padding: 5px;">
-                        <div style="font-size: 0.75rem; color: #f6c23e; font-weight: bold;">إجمالي الأرباح</div>
-                        <div style="font-size: 1.1rem; font-weight: bold; color: #5a5c69;">${dStats.totalProfit} <span style="font-size: 0.7rem;">ج.م</span></div>
-                        <div style="font-size: 0.7rem; color: #1cc88a; margin-top: 2px;">${dStats.totalCount} أوردر</div>
+                    <div style="text-align: center; padding: 4px;">
+                        <div style="font-size: 0.72rem; color: #f6c23e; font-weight: bold;">إجمالي الأرباح</div>
+                        <div style="font-size: 1.05rem; font-weight: bold; color: #5a5c69;">${dStats.totalProfit} <span style="font-size: 0.7rem;">ج.م</span></div>
+                        <div style="font-size: 0.68rem; color: #1cc88a; margin-top: 2px;">${dStats.totalCount} أوردر</div>
                     </div>
                 </div>
             </div>
         `;
 
         container.innerHTML += `
-            <div class="${cardClass}" style="background: #fff; padding: 15px; border-radius: 12px; border: 1px solid ${cardBorderColor}; margin-bottom: 12px; box-shadow: ${cardShadow}; opacity: ${cardOpacity}; transition: all 0.3s ease;">
-                <div class="financial-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #f0f0f0; padding-bottom:8px; margin-bottom:10px;">
+            <div class="${cardClass}" style="background: #fff; padding: 16px; border-radius: 14px; border: 1px solid ${cardBorderColor}; margin-bottom: 15px; box-shadow: ${cardShadow}; opacity: ${cardOpacity}; transition: all 0.3s ease;">
+                <!-- Header -->
+                <div class="financial-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #f0f0f0; padding-bottom:10px; margin-bottom:12px;">
                     <div>
-                        <span style="font-weight:bold; font-size:1.1rem; color:var(--text-dark);"><i class='fa-solid fa-motorcycle'></i> ${f.name}</span>
-                        <span style="font-size: 0.75rem; background:#f0f0f0; color:var(--text-dark); padding:2px 6px; border-radius:12px; margin-right: 5px; font-weight:bold;">${f.ordersCount || 0} طلب معلق</span>
+                        <span style="font-weight:900; font-size:1.15rem; color:var(--text-dark);"><i class='fa-solid fa-motorcycle' style="color:var(--primary);"></i> ${f.name}</span>
+                        <span style="font-size: 0.75rem; background:#f0f2f5; color:#555; padding:3px 8px; border-radius:12px; margin-right: 6px; font-weight:bold;">${driverOrders.length} طلب معلق</span>
                     </div>
                     <button class="btn-danger" onclick="deleteItem('deleteDriver', '${f.name}', 'couriers')" title="حذف المندوب" style="padding: 4px 8px; font-size: 0.8rem; border-radius: 6px; background: transparent; color: var(--danger); border: 1px solid var(--danger);"><i class="fa-solid fa-trash"></i></button>
                 </div>
-                <div class="financial-details" style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:10px;">
-                    <span style="background:#e8f4f8; padding:5px 10px; border-radius:6px; color:#555;">الكاش: <strong style="color:#2980b9;">${f.cashCollected || 0}</strong> ج</span>
-                    <span style="background:#f9ebea; padding:5px 10px; border-radius:6px; color:#555;">الشحن: <strong style="color:#c0392b;">${f.shippingFees || 0}</strong> ج</span>
+
+                <!-- Financial Mini Metrics Grid -->
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px;">
+                    <div style="background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 8px; padding: 8px; text-align: center;">
+                        <div style="font-size: 0.7rem; color: #2e7d32; font-weight: bold;">💵 كاش المندوب</div>
+                        <div style="font-size: 1.05rem; font-weight: 900; color: #1b5e20;">${totalCashCollected} <span style="font-size:0.65rem;">ج</span></div>
+                    </div>
+                    <div style="background: #f3e5f5; border: 1px solid #e1bee7; border-radius: 8px; padding: 8px; text-align: center;">
+                        <div style="font-size: 0.7rem; color: #7b1fa2; font-weight: bold;">📱 إنستاباي</div>
+                        <div style="font-size: 1.05rem; font-weight: 900; color: #4a148c;">${totalInstaAmount} <span style="font-size:0.65rem;">ج</span></div>
+                    </div>
+                    <div style="background: #fff3e0; border: 1px solid #ffe0b2; border-radius: 8px; padding: 8px; text-align: center;">
+                        <div style="font-size: 0.7rem; color: #e65100; font-weight: bold;">🚚 أجرة الشحن</div>
+                        <div style="font-size: 1.05rem; font-weight: 900; color: #bf360c;">${totalShipping} <span style="font-size:0.65rem;">ج</span></div>
+                    </div>
                 </div>
-                <div class="financial-status" style="background: ${statusColor}15; color: ${statusColor}; padding: 8px; border-radius: 6px; text-align:center; font-weight:bold; border: 1px dashed ${statusColor};">
-                    ${f.statusText} (${netDue} ج)
+
+                <!-- Net Due Status Banner -->
+                <div class="financial-status" style="background: ${statusBadgeBg}; color: ${statusBadgeColor}; padding: 10px; border-radius: 8px; text-align:center; font-weight:bold; border: 1px solid ${statusBorderColor}; margin-bottom: 10px; font-size: 0.92rem;">
+                    ${statusTextFull}
                 </div>
-                ${ordersHtml}
+
+                ${cashHtml}
+                ${instaHtml}
                 ${dashboardHtml}
             </div>
         `;
