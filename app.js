@@ -510,82 +510,128 @@ async function handleSupabaseRequest(url, options) {
             case 'addInventoryLog':
                 await supabase.from('inventory_logs').insert([{ log_id: params.logId, from_location: params.from, to_location: params.to, reg_name: params.regName, items: params.items, notes: params.notes, timestamp: new Date().toLocaleString() }]);
                 break;
-            case 'checkIn':
-                let { data: existIn } = await supabase.from('attendance').select('*').eq('employee_name', params.employeeName).eq('date', params.date).eq('status', 'حاضر');
-                if (existIn && existIn.length > 0) return createJsonResponse({ success: false, error: "أنت مسجل حضور بالفعل اليوم" });
-                let checkInTime = window.getSyncedDate().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute:'2-digit' });
-                await supabase.from('attendance').insert([{ employee_name: params.employeeName, date: params.date, check_in: checkInTime, status: 'حاضر' }]);
+            case 'checkIn': {
+                const empName = params.employeeName;
+                const todayDate = params.date || (window.getSyncedDate ? window.getSyncedDate() : new Date()).toLocaleDateString('en-CA', { timeZone: 'Africa/Cairo' });
+                
+                const { data: existIn, error: existErr } = await supabase.from('attendance')
+                    .select('*')
+                    .eq('employee_name', empName)
+                    .eq('date', todayDate)
+                    .eq('status', 'حاضر');
+                
+                if (existErr) {
+                    return createJsonResponse({ success: false, error: "خطأ في التحقق من الحضور: " + existErr.message });
+                }
+                if (existIn && existIn.length > 0) {
+                    return createJsonResponse({ success: false, error: "أنت مسجل حضور بالفعل اليوم" });
+                }
+
+                const checkInTime = (window.getSyncedDate ? window.getSyncedDate() : new Date()).toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute:'2-digit', timeZone: 'Africa/Cairo' });
+                const { error: insErr } = await supabase.from('attendance').insert([{ 
+                    employee_name: empName, 
+                    date: todayDate, 
+                    check_in: checkInTime, 
+                    status: 'حاضر' 
+                }]);
+
+                if (insErr) {
+                    return createJsonResponse({ success: false, error: "فشل تسجيل الحضور: " + insErr.message });
+                }
+
                 responseData = { success: true, message: "تم تسجيل الحضور بنجاح", time: checkInTime };
                 break;
-            case 'checkOut':
-                let { data: existOut } = await supabase.from('attendance').select('*').eq('employee_name', params.employeeName).eq('status', 'حاضر').order('id', { ascending: false }).limit(1);
-                if (existOut && existOut.length > 0) {
-                    let checkInTime = existOut[0].check_in;
-                    let checkOutTime = window.getSyncedDate().toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute:'2-digit' });
-                    
-                    // Calculate hours difference
-                    let hoursStr = "0 ساعة";
-                    try {
-                        let ih = 0, im = 0, oh = 0, om = 0;
-                        let inMatch = checkInTime.match(/([a-zA-Z]+)?\s*(\d+):(\d+)\s*([a-zA-Z]+)?/i);
-                        let outMatch = checkOutTime.match(/([a-zA-Z]+)?\s*(\d+):(\d+)\s*([a-zA-Z]+)?/i);
-                        
-                        if (inMatch && outMatch) {
-                            ih = parseInt(inMatch[2]); im = parseInt(inMatch[3]);
-                            let inPeriod = (inMatch[1] || inMatch[4] || '').toLowerCase();
-                            if (inPeriod === 'pm' && ih !== 12) ih += 12;
-                            if (inPeriod === 'am' && ih === 12) ih = 0;
+            }
+            case 'checkOut': {
+                const empName = params.employeeName;
+                const todayDate = params.date || (window.getSyncedDate ? window.getSyncedDate() : new Date()).toLocaleDateString('en-CA', { timeZone: 'Africa/Cairo' });
 
-                            oh = parseInt(outMatch[2]); om = parseInt(outMatch[3]);
-                            let outPeriod = (outMatch[1] || outMatch[4] || '').toLowerCase();
-                            if (outPeriod === 'pm' && oh !== 12) oh += 12;
-                            if (outPeriod === 'am' && oh === 12) oh = 0;
+                // Fetch attendance records for this employee with status 'حاضر'
+                const { data: attRecords, error: fetchErr } = await supabase.from('attendance')
+                    .select('*')
+                    .eq('employee_name', empName)
+                    .eq('status', 'حاضر')
+                    .order('date', { ascending: false });
 
-                            let totalMin = (oh * 60 + om) - (ih * 60 + im);
-                            if (totalMin < 0) totalMin += 24 * 60;
-                            let h = Math.floor(totalMin / 60);
-                            let min = totalMin % 60;
-                            hoursStr = h + ' ساعة' + (min > 0 ? ' و ' + min + ' دقيقة' : '');
-                        }
-                    } catch(e) {
-                        console.error('Checkout calc error:', e);
-                    }
+                if (fetchErr) {
+                    return createJsonResponse({ success: false, error: "خطأ في قراءة بيانات الحضور: " + fetchErr.message });
+                }
 
-                    await supabase.from('attendance').update({ check_out: checkOutTime, hours: hoursStr }).eq('id', existOut[0].id);
-                    responseData = { success: true, message: "تم تسجيل الانصراف بنجاح", time: checkOutTime, hours: hoursStr };
-                } else {
+                if (!attRecords || attRecords.length === 0) {
                     return createJsonResponse({ success: false, error: "لم يتم العثور على سجل حضور مفتوح" });
                 }
+
+                // Best matching record:
+                // 1. Open record for today (check_out is null / empty / '-')
+                let targetRecord = attRecords.find(r => r.date === todayDate && (!r.check_out || r.check_out === '-' || String(r.check_out).trim() === ''));
+                
+                // 2. Any open record for this employee (e.g. overnight shift started yesterday)
+                if (!targetRecord) {
+                    targetRecord = attRecords.find(r => !r.check_out || r.check_out === '-' || String(r.check_out).trim() === '');
+                }
+
+                // 3. Fallback: record for today
+                if (!targetRecord) {
+                    targetRecord = attRecords.find(r => r.date === todayDate);
+                }
+
+                if (!targetRecord) {
+                    return createJsonResponse({ success: false, error: "لم يتم العثور على سجل حضور مفتوح" });
+                }
+
+                const checkInTime = targetRecord.check_in;
+                const checkOutTime = (window.getSyncedDate ? window.getSyncedDate() : new Date()).toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute:'2-digit', timeZone: 'Africa/Cairo' });
+                const hoursStr = calculateAttendanceHoursString(checkInTime, checkOutTime, targetRecord.date, todayDate);
+
+                const { error: updErr } = await supabase.from('attendance')
+                    .update({ check_out: checkOutTime, hours: hoursStr })
+                    .eq('id', targetRecord.id);
+
+                if (updErr) {
+                    return createJsonResponse({ success: false, error: "فشل حفظ تسجيل الانصراف: " + updErr.message });
+                }
+
+                responseData = { success: true, message: "تم تسجيل الانصراف بنجاح", time: checkOutTime, hours: hoursStr };
                 break;
+            }
             case 'requestLeave':
                 await supabase.from('attendance').insert([{ employee_name: params.employeeName, date: params.date, status: params.leaveType, request_status: 'بانتظار الموافقة', notes: params.notes }]);
                 responseData = { success: true, message: "تم إرسال طلب الإجازة" };
                 break;
-            case 'manageLeave':
+            case 'manageLeave': {
                 let updateData = { request_status: params.decision === 'approve' ? '✅ تمت الموافقة' : '❌ مرفوضة' };
                 if (params.decision === 'approve') {
                     updateData.hours = '8:00';
                 }
-                await supabase.from('attendance').update(updateData).eq('employee_name', params.employeeName).eq('date', params.date);
+                const { error: mngErr } = await supabase.from('attendance').update(updateData).eq('employee_name', params.employeeName).eq('date', params.date);
+                if (mngErr) return createJsonResponse({ success: false, error: mngErr.message });
+                responseData = { success: true };
                 break;
+            }
             case 'bulkUploadAttendance':
                 const attItems = JSON.parse(params.dataStr || "[]");
                 const attRows = attItems.map(item => ({ employee_name: item.empName, date: item.date, check_in: item.checkIn, check_out: item.checkOut, hours: item.hours, status: item.status, notes: item.notes }));
                 await supabase.from('attendance').insert(attRows);
+                responseData = { success: true };
                 break;
-            case 'editAttendance':
+            case 'editAttendance': {
                 const { data: existAtt } = await supabase.from('attendance').select('*').eq('employee_name', params.employeeName).eq('date', params.date);
                 if (existAtt && existAtt.length > 0) {
-                    await supabase.from('attendance').update({ check_in: params.checkIn, check_out: params.checkOut, hours: params.hours, status: params.status, notes: params.notes }).eq('id', existAtt[0].id);
+                    const { error: editErr } = await supabase.from('attendance').update({ check_in: params.checkIn, check_out: params.checkOut, hours: params.hours, status: params.status, notes: params.notes }).eq('id', existAtt[0].id);
+                    if (editErr) return createJsonResponse({ success: false, error: editErr.message });
                 } else {
-                    await supabase.from('attendance').insert([{ employee_name: params.employeeName, date: params.date, check_in: params.checkIn, check_out: params.checkOut, hours: params.hours, status: params.status || 'حاضر', notes: params.notes }]);
+                    const { error: insAttErr } = await supabase.from('attendance').insert([{ employee_name: params.employeeName, date: params.date, check_in: params.checkIn, check_out: params.checkOut, hours: params.hours, status: params.status || 'حاضر', notes: params.notes }]);
+                    if (insAttErr) return createJsonResponse({ success: false, error: insAttErr.message });
                 }
                 responseData = { success: true };
                 break;
-            case 'addLeaveByAdmin':
-                await supabase.from('attendance').insert([{ employee_name: params.employeeName, date: params.date, status: params.type, notes: params.notes }]);
+            }
+            case 'addLeaveByAdmin': {
+                const { error: leaveErr } = await supabase.from('attendance').insert([{ employee_name: params.employeeName, date: params.date, status: params.type, notes: params.notes }]);
+                if (leaveErr) return createJsonResponse({ success: false, error: leaveErr.message });
                 responseData = { success: true };
                 break;
+            }
             case 'removeDuplicates':
                 // For simplicity, skip complex logic as unique constraints typically handle this, just return success
                 responseData = { success: true };
@@ -801,6 +847,47 @@ window.formatTimeInput = function(input) {
     }
     input.value = val;
 };
+
+function parseAttendanceTimeToMinutes(timeStr) {
+    if (!timeStr) return null;
+    let s = String(timeStr).trim();
+    s = s.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+    let isPM = /م|pm/i.test(s);
+    let isAM = /ص|am/i.test(s);
+    
+    let match = s.match(/(\d{1,2}):(\d{1,2})/);
+    if (!match) return null;
+    let h = parseInt(match[1], 10);
+    let m = parseInt(match[2], 10);
+    
+    if (isPM && h !== 12) h += 12;
+    if (isAM && h === 12) h = 0;
+    
+    return h * 60 + m;
+}
+
+function calculateAttendanceHoursString(inTimeStr, outTimeStr, inDate, outDate) {
+    let inMins = parseAttendanceTimeToMinutes(inTimeStr);
+    let outMins = parseAttendanceTimeToMinutes(outTimeStr);
+    if (inMins === null || outMins === null) return "0 ساعة";
+    
+    let diffMins = outMins - inMins;
+    if (inDate && outDate && inDate !== outDate) {
+        try {
+            let d1 = new Date(inDate + 'T00:00:00');
+            let d2 = new Date(outDate + 'T00:00:00');
+            let days = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+            if (days > 0) diffMins += days * 24 * 60;
+        } catch(e) {}
+    } else if (diffMins < 0) {
+        diffMins += 24 * 60;
+    }
+    
+    if (diffMins < 0) diffMins = 0;
+    let h = Math.floor(diffMins / 60);
+    let m = diffMins % 60;
+    return h + ' ساعة' + (m > 0 ? ' و ' + m + ' دقيقة' : '');
+}
 
 function formatHoursDisplay(hStr) {
     if (!hStr || hStr === '-') return '-';
@@ -10613,45 +10700,42 @@ function handleCheckIn() {
     if (!currentUser) { showToast('يرجى تسجيل الدخول أولاً', 'error'); return; }
 
     let btn = document.getElementById('checkInBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التسجيل...';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التسجيل...';
+    }
 
+    let todayDate = (window.getSyncedDate ? window.getSyncedDate() : new Date()).toLocaleDateString('en-CA', { timeZone: 'Africa/Cairo' });
     let formData = new URLSearchParams();
     formData.append('action', 'checkIn');
     formData.append('employeeName', currentUser.displayName);
-    formData.append('date', new Date().toLocaleDateString('en-CA'));
+    formData.append('date', todayDate);
 
     fetch(GOOGLE_SHEETS_URL, { method: 'POST', body: formData })
-        .then(r => r.text())
-        .then(txt => {
-            try {
-                let data = JSON.parse(txt);
-                if (data.success) {
-                    SoundFX.play('checkIn');
-                    showToast('✅ تم تسجيل الحضور: ' + data.time, 'success');
-                    hrTodayStatus = 'checkedIn';
-                    updateHrButtons();
-                    loadMyAttendance();
-                } else {
-                    showToast(data.error || 'حدث خطأ', 'error');
-                }
-            } catch(e) {
+        .then(r => r.json())
+        .then(data => {
+            if (data && data.success) {
                 SoundFX.play('checkIn');
-                showToast('تم تسجيل الحضور بنجاح', 'success');
+                showToast('✅ تم تسجيل الحضور: ' + (data.time || ''), 'success');
                 hrTodayStatus = 'checkedIn';
                 updateHrButtons();
                 loadMyAttendance();
+            } else {
+                showToast((data && data.error) ? data.error : 'حدث خطأ أثناء تسجيل الحضور', 'error');
+                loadMyAttendance();
             }
         })
-        .catch(() => {
-            SoundFX.play('checkIn');
-            showToast('تم تسجيل الحضور بنجاح', 'success');
-            hrTodayStatus = 'checkedIn';
-            updateHrButtons();
+        .catch(err => {
+            console.error('CheckIn network error:', err);
+            showToast('حدث خطأ في الاتصال بالسيرفر، يرجى المحاولة مرة أخرى', 'error');
+            loadMyAttendance();
         })
         .finally(() => {
-            btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> تسجيل حضور';
-            btn.disabled = false;
+            if (btn) {
+                btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> تسجيل حضور';
+                btn.disabled = false;
+            }
+            updateHrButtons();
         });
 }
 
@@ -10660,45 +10744,44 @@ function handleCheckOut() {
     if (!currentUser) return;
 
     let btn = document.getElementById('checkOutBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التسجيل...';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التسجيل...';
+    }
 
+    let todayDate = (window.getSyncedDate ? window.getSyncedDate() : new Date()).toLocaleDateString('en-CA', { timeZone: 'Africa/Cairo' });
     let formData = new URLSearchParams();
     formData.append('action', 'checkOut');
     formData.append('employeeName', currentUser.displayName);
-    formData.append('date', new Date().toLocaleDateString('en-CA'));
+    formData.append('date', todayDate);
 
     fetch(GOOGLE_SHEETS_URL, { method: 'POST', body: formData })
-        .then(r => r.text())
-        .then(txt => {
-            try {
-                let data = JSON.parse(txt);
-                if (data.success) {
-                    SoundFX.play('checkOut');
-                    showToast('✅ تم تسجيل الانصراف: ' + data.time + ' (' + data.hours + ' ساعة)', 'success');
-                    hrTodayStatus = 'checkedOut';
-                    document.getElementById('hrTodayHours').innerText = data.hours;
-                    updateHrButtons();
-                    loadMyAttendance();
-                } else {
-                    showToast(data.error || 'حدث خطأ', 'error');
-                }
-            } catch(e) {
+        .then(r => r.json())
+        .then(data => {
+            if (data && data.success) {
                 SoundFX.play('checkOut');
-                showToast('تم تسجيل الانصراف بنجاح', 'success');
+                showToast('✅ تم تسجيل الانصراف: ' + (data.time || '') + (data.hours ? ' (' + data.hours + ')' : ''), 'success');
                 hrTodayStatus = 'checkedOut';
+                let hEl = document.getElementById('hrTodayHours');
+                if (hEl && data.hours) hEl.innerText = formatHoursDisplay(data.hours);
                 updateHrButtons();
+                loadMyAttendance();
+            } else {
+                showToast((data && data.error) ? data.error : 'حدث خطأ أثناء تسجيل الانصراف', 'error');
+                loadMyAttendance();
             }
         })
-        .catch(() => {
-            SoundFX.play('checkOut');
-            showToast('تم تسجيل الانصراف بنجاح', 'success');
-            hrTodayStatus = 'checkedOut';
-            updateHrButtons();
+        .catch(err => {
+            console.error('CheckOut network error:', err);
+            showToast('حدث خطأ في الاتصال بالسيرفر، يرجى المحاولة مرة أخرى', 'error');
+            loadMyAttendance();
         })
         .finally(() => {
-            btn.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> تسجيل انصراف';
-            btn.disabled = false;
+            if (btn) {
+                btn.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> تسجيل انصراف';
+                btn.disabled = false;
+            }
+            updateHrButtons();
         });
 }
 
@@ -10916,21 +10999,21 @@ function loadMyAttendance() {
                 bannerEl.style.display = 'grid';
             }
 
-            // Check open shift status
-            let openRec = myRecords.slice().reverse().find(r => r.status === 'حاضر' && (!r.checkOut || r.checkOut === '-' || r.checkOut === ''));
+            // Check today's shift status
+            let today = (window.getSyncedDate ? window.getSyncedDate() : new Date()).toLocaleDateString('en-CA', { timeZone: 'Africa/Cairo' });
+            let todayRec = myRecords.find(r => r.date === today);
+            let openRec = myRecords.slice().reverse().find(r => r.status === 'حاضر' && (!r.checkOut || r.checkOut === '-' || String(r.checkOut).trim() === ''));
             
-            if (openRec) {
+            if (todayRec && todayRec.checkOut && todayRec.checkOut !== '-' && String(todayRec.checkOut).trim() !== '') {
+                hrTodayStatus = 'checkedOut';
+                let hEl = document.getElementById('hrTodayHours');
+                if (hEl) hEl.innerText = formatHoursDisplay(todayRec.hours);
+            } else if (openRec) {
+                hrTodayStatus = 'checkedIn';
+            } else if (todayRec && todayRec.status === 'حاضر') {
                 hrTodayStatus = 'checkedIn';
             } else {
-                let today = new Date().toLocaleDateString('en-CA');
-                let todayRec = myRecords.find(r => r.date === today);
-                if (todayRec && todayRec.checkOut && todayRec.checkOut !== '-' && todayRec.checkOut !== '') {
-                    hrTodayStatus = 'checkedOut';
-                    let hEl = document.getElementById('hrTodayHours');
-                    if (hEl) hEl.innerText = formatHoursDisplay(todayRec.hours);
-                } else {
-                    hrTodayStatus = null;
-                }
+                hrTodayStatus = null;
             }
             hrDataLoaded = true;
             updateHrButtons();
