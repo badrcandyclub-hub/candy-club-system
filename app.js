@@ -96,6 +96,78 @@ window.secureDelete = async function(tableName, matchColumn, matchValue) {
     return { data, error };
 };
 
+// 🔄 Recalculate & Sync Customer Stats in Supabase
+async function updateCustomerStatsInDatabase(phone, fallbackData = {}) {
+    if (!phone) return;
+    const cleanPhone = String(phone).trim();
+    if (!cleanPhone) return;
+
+    try {
+        // Fetch all orders for this customer phone
+        const { data: custOrders, error: ordErr } = await supabase.from('orders')
+            .select('customer_name,governorate,address,final_total,status,order_date')
+            .eq('phone', cleanPhone);
+
+        if (ordErr) {
+            console.error('Error fetching orders for customer sync:', ordErr);
+            return;
+        }
+
+        let ordersCount = 0;
+        let totalPaid = 0;
+        let lastOrderDate = null;
+        let custName = fallbackData.name || fallbackData.customer_name || '';
+        let custGov = fallbackData.gov || fallbackData.governorate || '';
+        let custAddress = fallbackData.address || '';
+
+        (custOrders || []).forEach(o => {
+            const isCancelledOrReturned = (o.status === 'ملغي' || o.status === 'مرتجع');
+            if (!isCancelledOrReturned) {
+                ordersCount += 1;
+                totalPaid += parseFloat(o.final_total) || 0;
+            }
+            if (o.order_date && (!lastOrderDate || o.order_date > lastOrderDate)) {
+                lastOrderDate = o.order_date;
+            }
+            if (o.customer_name && o.customer_name !== 'بدون اسم') custName = o.customer_name;
+            if (o.governorate) custGov = o.governorate;
+            if (o.address) custAddress = o.address;
+        });
+
+        totalPaid = Math.round(totalPaid * 100) / 100;
+
+        // Check if customer exists in customers table
+        const { data: existing, error: existErr } = await supabase.from('customers')
+            .select('id,customer_name,governorate,address')
+            .eq('phone', cleanPhone)
+            .limit(1);
+
+        if (existing && existing.length > 0) {
+            const currentCust = existing[0];
+            await supabase.from('customers').update({
+                orders_count: ordersCount,
+                total_paid: totalPaid,
+                last_order_date: lastOrderDate,
+                customer_name: custName || currentCust.customer_name || 'بدون اسم',
+                governorate: custGov || currentCust.governorate || '',
+                address: custAddress || currentCust.address || ''
+            }).eq('id', currentCust.id);
+        } else {
+            await supabase.from('customers').insert([{
+                customer_name: custName || 'بدون اسم',
+                phone: cleanPhone,
+                governorate: custGov || '',
+                address: custAddress || '',
+                orders_count: ordersCount,
+                total_paid: totalPaid,
+                last_order_date: lastOrderDate
+            }]);
+        }
+    } catch (e) {
+        console.error('Error syncing customer stats in DB:', e);
+    }
+}
+
 window.fetch = async function(url, options) {
     // Intercept Google Sheets calls
     if (typeof url === 'string' && (url.includes('DISABLED - MIGRATED TO SUPABASE') || url.includes('script.google.com'))) {
@@ -183,21 +255,13 @@ async function handleSupabaseRequest(url, options) {
                     responseData = { success: false, error: insErr.message };
                 } else {
                     responseData = { success: true, orderId: newOrderId, message: 'تم الإضافة بنجاح', data: inserted[0] };
-                    // Add customer to customers table if they don't exist
+                    // Sync customer stats in customers table
                     if (params.phone1) {
-                        try {
-                            const { data: existingCust } = await supabase.from('customers').select('id').eq('phone', params.phone1).limit(1);
-                            if (!existingCust || existingCust.length === 0) {
-                                await supabase.from('customers').insert([{ 
-                                    customer_name: params.customerName || 'بدون اسم', 
-                                    phone: params.phone1, 
-                                    governorate: params.gov || '', 
-                                    address: params.address || '', 
-                                    orders_count: 0, 
-                                    total_paid: 0 
-                                }]);
-                            }
-                        } catch(e) {}
+                        await updateCustomerStatsInDatabase(params.phone1, { 
+                            customer_name: params.customerName, 
+                            governorate: params.gov, 
+                            address: params.address 
+                        });
                     }
                 }
                 break;
@@ -217,6 +281,9 @@ async function handleSupabaseRequest(url, options) {
                     responseData = { success: false, error: updErr.message };
                 } else {
                     responseData = { success: true, data: updated[0] };
+                    if (updated && updated[0] && updated[0].phone) {
+                        await updateCustomerStatsInDatabase(updated[0].phone);
+                    }
                 }
                 break;
             }
@@ -273,7 +340,7 @@ async function handleSupabaseRequest(url, options) {
             }
             case 'getCustomers': {
                 const [ { data: rawCust }, { data: rawOrders } ] = await Promise.all([
-                    fetchAllSupabaseRows(supabase.from('customers').select('*')),
+                    fetchAllSupabaseRows(supabase.from('customers').select('*').order('orders_count', { ascending: false })),
                     fetchAllSupabaseRows(supabase.from('orders').select('phone, final_total, order_date, status'))
                 ]);
 
@@ -294,10 +361,16 @@ async function handleSupabaseRequest(url, options) {
 
                 responseData.customers = (rawCust || []).map(c => {
                     let p = String(c.phone).trim();
-                    let st = stats[p] || { count: 0, total: 0, lastDate: '' };
+                    let st = stats[p] || { count: c.orders_count || 0, total: c.total_paid || 0, lastDate: c.last_order_date || "" };
                     return {
-                        name: c.customer_name, phone: c.phone, gov: c.governorate, address: c.address,
-                        count: st.count || 0, total: st.total || 0, lastDate: st.lastDate || c.last_order_date || ""
+                        id: c.id,
+                        name: c.customer_name,
+                        phone: c.phone,
+                        gov: c.governorate,
+                        address: c.address,
+                        count: st.count !== undefined ? st.count : (c.orders_count || 0),
+                        total: st.total !== undefined ? Math.round(st.total * 100) / 100 : (c.total_paid || 0),
+                        lastDate: st.lastDate || c.last_order_date || ""
                     };
                 });
                 break;
@@ -430,7 +503,8 @@ async function handleSupabaseRequest(url, options) {
                 await supabase.from('moderators').insert([{ name: params.name }]);
                 break;
             case 'addCustomer':
-                await supabase.from('customers').insert([{ customer_name: params.name, phone: params.phone, governorate: params.gov, address: params.address, orders_count: 0, total_paid: 0 }]);
+                await updateCustomerStatsInDatabase(params.phone, { customer_name: params.name, governorate: params.gov, address: params.address });
+                responseData = { success: true };
                 break;
             case 'addExpiry':
                 await supabase.from('expiries').insert([{ product_name: params.name, qty: params.qty, expiry_date: params.expiryDate, location: params.location, registrar_name: params.regDate, receiver: params.receiver, notes: params.notes, original_price: params.originalPrice, offer_price: params.offerPrice, status: params.status, barcode: params.barcode }]);
@@ -636,16 +710,20 @@ async function handleSupabaseRequest(url, options) {
                 // For simplicity, skip complex logic as unique constraints typically handle this, just return success
                 responseData = { success: true };
                 break;
-            case 'settleOrder':
-                await supabase.from('orders').update({
+            case 'settleOrder': {
+                const { data: updatedOrd } = await supabase.from('orders').update({
                     status: 'تم التوصيل ومُحاسب',
                     final_total: params.finalTotal,
                     products_total: params.productsTotal,
                     discount: params.discount,
                     shipping_cost: params.shipping
-                }).eq('order_id', params.orderId);
+                }).eq('order_id', params.orderId).select('phone');
+                if (updatedOrd && updatedOrd[0] && updatedOrd[0].phone) {
+                    await updateCustomerStatsInDatabase(updatedOrd[0].phone);
+                }
                 responseData = { success: true };
                 break;
+            }
             
             case 'deleteUser':
                 await window.secureDelete('users', 'username', params.user);
