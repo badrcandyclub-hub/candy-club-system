@@ -1848,13 +1848,19 @@ async function loadDataFromServer(customDate = null) {
                 let total = parseFloat(o.total) || 0;
                 let shipping = parseFloat(o.shipping) || 0;
                 let productCost = Math.max(0, total - shipping);
-                let rem = (o.remaining !== undefined && o.remaining !== null && o.remaining !== '') ? parseFloat(o.remaining) : total;
+                let payStr = (o.paymentMethod || o.payment || '').toLowerCase();
+                let isInsta = payStr.includes('إنستا') || payStr.includes('انستا') || payStr.includes('insta') || payStr.includes('محفظة') || payStr.includes('فودافون') || payStr.includes('فيزا');
+                
+                let explicitRem = (o.remaining !== undefined && o.remaining !== null && o.remaining !== '') ? parseFloat(o.remaining) : null;
+                let rem = 0;
+                if (isInsta) {
+                    rem = explicitRem !== null ? explicitRem : 0;
+                } else {
+                    rem = explicitRem !== null ? explicitRem : total;
+                }
 
                 finMap[o.driver].shippingFees += shipping;
                 finMap[o.driver].productsTotal += productCost;
-
-                let payStr = (o.paymentMethod || o.payment || '').toLowerCase();
-                let isInsta = payStr.includes('إنستا') || payStr.includes('انستا') || payStr.includes('insta') || payStr.includes('محفظة') || payStr.includes('فودافون') || payStr.includes('فيزا');
 
                 if (isInsta) {
                     finMap[o.driver].instaOrdersCount++;
@@ -8204,13 +8210,19 @@ function renderFinancials(finList) {
             let total = parseFloat(o.total) || 0;
             let shipping = parseFloat(o.shipping) || 0;
             let productCost = Math.max(0, total - shipping);
-            let rem = (o.remaining !== undefined && o.remaining !== null && o.remaining !== '') ? parseFloat(o.remaining) : total;
+            let payStr = (o.paymentMethod || o.payment || '').toLowerCase();
+            let isInsta = payStr.includes('إنستا') || payStr.includes('انستا') || payStr.includes('insta') || payStr.includes('محفظة') || payStr.includes('فودافون') || payStr.includes('فيزا');
+            
+            let explicitRem = (o.remaining !== undefined && o.remaining !== null && o.remaining !== '') ? parseFloat(o.remaining) : null;
+            let rem = 0;
+            if (isInsta) {
+                rem = explicitRem !== null ? explicitRem : 0;
+            } else {
+                rem = explicitRem !== null ? explicitRem : total;
+            }
 
             totalShipping += shipping;
             totalProducts += productCost;
-
-            let payStr = (o.paymentMethod || o.payment || '').toLowerCase();
-            let isInsta = payStr.includes('إنستا') || payStr.includes('انستا') || payStr.includes('insta') || payStr.includes('محفظة') || payStr.includes('فودافون') || payStr.includes('فيزا');
 
             if (isInsta) {
                 instaOrders.push({ ...o, productCost, shippingFee: shipping, isInsta: true, rem });
