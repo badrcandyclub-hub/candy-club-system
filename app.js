@@ -1854,8 +1854,10 @@ async function loadDataFromServer(customDate = null) {
                 
                 let explicitRem = (o.raw_remaining !== undefined && o.raw_remaining !== null && o.raw_remaining !== '') ? parseFloat(o.raw_remaining) : null;
                 let rem = 0;
+                
+                // FORCE rem to 0 for InstaPay because the DB might have saved the full total automatically when left blank
                 if (isInsta) {
-                    rem = explicitRem !== null ? explicitRem : 0;
+                    rem = 0;
                 } else {
                     rem = explicitRem !== null ? explicitRem : total;
                 }
@@ -8216,8 +8218,10 @@ function renderFinancials(finList) {
             
             let explicitRem = (o.raw_remaining !== undefined && o.raw_remaining !== null && o.raw_remaining !== '') ? parseFloat(o.raw_remaining) : null;
             let rem = 0;
+            
+            // FORCE rem to 0 for InstaPay because the DB might have saved the full total automatically when left blank
             if (isInsta) {
-                rem = explicitRem !== null ? explicitRem : 0;
+                rem = 0;
             } else {
                 rem = explicitRem !== null ? explicitRem : total;
             }
