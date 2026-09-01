@@ -2484,24 +2484,28 @@ body.dark-mode .btn-offer-toggle.active {
 
 .financial-order-item {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    gap: 8px;
     background: var(--white);
-    padding: 8px;
+    padding: 10px 12px;
     margin-top: 8px;
-    border-radius: 6px;
-    border: 1px dashed var(--border);
+    border-radius: 8px;
+    border: 1px solid var(--border);
     font-size: 0.85rem;
+    box-sizing: border-box;
+    width: 100%;
+    overflow: hidden;
 }
 body.dark-mode .financial-order-item {
     background: #1A1D2E;
+    border-color: #2e344e;
 }
 .btn-settle {
     background: linear-gradient(135deg, var(--success), #00a040);
     color: white;
     border: none;
-    padding: 8px 14px;
-    border-radius: 8px;
+    padding: 6px 14px;
+    border-radius: 6px;
     cursor: pointer;
     font-weight: 700;
     font-size: 0.82rem;
