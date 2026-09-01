@@ -1566,7 +1566,8 @@ async function loadDataFromServer(customDate = null) {
                 seller: o.moderator_name || "",
                 moderator: o.moderator_name || "",
                 deposit: o.deposit || 0,
-                remaining: o.remaining || o.final_total
+                remaining: (o.remaining !== undefined && o.remaining !== null && o.remaining !== "") ? o.remaining : o.final_total,
+                raw_remaining: o.remaining
             };
         };
 
@@ -1851,7 +1852,7 @@ async function loadDataFromServer(customDate = null) {
                 let payStr = (o.paymentMethod || o.payment || '').toLowerCase();
                 let isInsta = payStr.includes('إنستا') || payStr.includes('انستا') || payStr.includes('insta') || payStr.includes('محفظة') || payStr.includes('فودافون') || payStr.includes('فيزا');
                 
-                let explicitRem = (o.remaining !== undefined && o.remaining !== null && o.remaining !== '') ? parseFloat(o.remaining) : null;
+                let explicitRem = (o.raw_remaining !== undefined && o.raw_remaining !== null && o.raw_remaining !== '') ? parseFloat(o.raw_remaining) : null;
                 let rem = 0;
                 if (isInsta) {
                     rem = explicitRem !== null ? explicitRem : 0;
@@ -8213,7 +8214,7 @@ function renderFinancials(finList) {
             let payStr = (o.paymentMethod || o.payment || '').toLowerCase();
             let isInsta = payStr.includes('إنستا') || payStr.includes('انستا') || payStr.includes('insta') || payStr.includes('محفظة') || payStr.includes('فودافون') || payStr.includes('فيزا');
             
-            let explicitRem = (o.remaining !== undefined && o.remaining !== null && o.remaining !== '') ? parseFloat(o.remaining) : null;
+            let explicitRem = (o.raw_remaining !== undefined && o.raw_remaining !== null && o.raw_remaining !== '') ? parseFloat(o.raw_remaining) : null;
             let rem = 0;
             if (isInsta) {
                 rem = explicitRem !== null ? explicitRem : 0;
