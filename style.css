@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=Tajawal:wght@300;400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
 
 :root {
 
@@ -4317,19 +4318,40 @@ body.hide-print-barcode .tag-barcode-container {
     opacity: 0.8;
 }
 
- . b t n - e d i t   {   b a c k g r o u n d :   r g b a ( 4 1 ,   1 2 8 ,   1 8 5 ,   0 . 1 ) ;   c o l o r :   # 2 9 8 0 b 9 ;   b o r d e r :   n o n e ;   p a d d i n g :   6 p x   1 2 p x ;   b o r d e r - r a d i u s :   8 p x ;   f o n t - s i z e :   0 . 8 5 r e m ;   c u r s o r :   p o i n t e r ;   t r a n s i t i o n :   0 . 3 s ;   } 
- . b t n - e d i t : h o v e r   {   b a c k g r o u n d :   # 2 9 8 0 b 9 ;   c o l o r :   # f f f ;   } 
- . b t n - d e l e t e   {   b a c k g r o u n d :   r g b a ( 2 3 1 ,   7 6 ,   6 0 ,   0 . 1 ) ;   c o l o r :   # e 7 4 c 3 c ;   b o r d e r :   n o n e ;   p a d d i n g :   6 p x   1 2 p x ;   b o r d e r - r a d i u s :   8 p x ;   f o n t - s i z e :   0 . 8 5 r e m ;   c u r s o r :   p o i n t e r ;   t r a n s i t i o n :   0 . 3 s ;   } 
- . b t n - d e l e t e : h o v e r   {   b a c k g r o u n d :   # e 7 4 c 3 c ;   c o l o r :   # f f f ;   } 
- 
- 
+.btn-edit {
+    background: rgba(41, 128, 185, 0.1);
+    color: #2980b9;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: 0.3s;
 }
+.btn-edit:hover {
+    background: #2980b9;
+    color: #fff;
+}
+.btn-delete {
+    background: rgba(231, 76, 60, 0.1);
+    color: #e74c3c;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.btn-delete:hover {
+    background: #e74c3c;
+    color: #fff;
+}
+
 .table-row-hover:hover { background: #e3f2fd !important; }
 
 /* --- UI/UX Premium Redesign --- */
 
 /* 1. Frosted Glass (Glassmorphism) & Holographic Hover for Traffic Cards */
-@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
 
 .traffic-card {
     backdrop-filter: blur(15px) !important;
