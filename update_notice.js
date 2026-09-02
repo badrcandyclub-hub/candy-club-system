@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const popupHtml = `
             <div id="candy-update-popup" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 999999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); animation: fadeInPopup 0.4s ease; font-family: 'Tajawal', sans-serif;">
-                <div style="background: linear-gradient(145deg, #ffffff, #fafafa); border-radius: 24px; padding: 25px 20px 20px; width: 92%; max-width: 520px; box-shadow: 0 30px 60px rgba(0,0,0,0.25); text-align: center; position: relative; border: 1px solid rgba(0,0,0,0.05); animation: popInUpdate 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;">
+                <div style="background-color: #fff0f5; background-image: url('data:image/svg+xml;utf8,<svg width=\'20\' height=\'20\' viewBox=\'0 0 20 20\' xmlns=\'http://www.w3.org/2000/svg\'><circle cx=\'2\' cy=\'2\' r=\'1.5\' fill=\'rgba(233,30,99,0.1)\'/></svg>'), radial-gradient(at 0% 0%, rgba(233,30,99,0.15) 0%, transparent 60%), radial-gradient(at 100% 100%, rgba(156,39,176,0.15) 0%, transparent 60%); border-radius: 24px; padding: 25px 20px 20px; width: 92%; max-width: 520px; box-shadow: 0 30px 60px rgba(0,0,0,0.25); text-align: center; position: relative; border: 2px solid rgba(233,30,99,0.15); animation: popInUpdate 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;">
                     
                     <!-- لوجو كاندي كلاب -->
                     <img src="favicon.png" alt="Candy Club Logo" style="width: 85px; height: 85px; border-radius: 20px; display: block; margin: -65px auto 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); border: 4px solid #ffffff; background: #fff; object-fit: cover;">
@@ -26,25 +26,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px; text-align: right; direction: rtl;">
                         
                         <!-- كارت 1: النواقص -->
-                        <div class="update-card" style="background: #FFF5F5; border-radius: 12px; padding: 15px; border-right: 4px solid #FF5252; box-shadow: 0 3px 10px rgba(255, 82, 82, 0.08); animation-delay: 0.3s;">
+                        <div class="update-card" style="background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(4px); border-radius: 12px; padding: 15px; border-right: 4px solid #FF5252; box-shadow: 0 3px 10px rgba(255, 82, 82, 0.08); animation-delay: 0.3s;">
                             <h4 style="margin: 0 0 8px 0; color: #D32F2F; font-size: 1rem; font-weight: 800;"><i class="fa-solid fa-box-open" style="margin-left: 6px; animation: dropInBox 3s ease-in-out infinite;"></i>النواقص (جربها الآن)</h4>
                             <p style="margin: 0; font-size: 0.85rem; color: #555; line-height: 1.5; font-weight: 600;">إضافة خانة جديدة مخصصة لتسجيل ومتابعة النواقص بكل سهولة ومرونة</p>
                         </div>
                         
                         <!-- كارت 2: المزامنة الذكية -->
-                        <div class="update-card" style="background: #F1F8E9; border-radius: 12px; padding: 15px; border-right: 4px solid #00E676; box-shadow: 0 3px 10px rgba(0, 230, 118, 0.08); animation-delay: 0.4s;">
+                        <div class="update-card" style="background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(4px); border-radius: 12px; padding: 15px; border-right: 4px solid #00E676; box-shadow: 0 3px 10px rgba(0, 230, 118, 0.08); animation-delay: 0.4s;">
                             <h4 style="margin: 0 0 8px 0; color: #2E7D32; font-size: 1rem; font-weight: 800;"><i class="fa-solid fa-rotate" style="margin-left: 6px; animation: slowSpin 4s linear infinite;"></i>المزامنة الذكية</h4>
                             <p style="margin: 0; font-size: 0.85rem; color: #555; line-height: 1.5; font-weight: 600;">نظام جديد يضبط أرصدتك بأثر رجعي ويصحح الأسماء المجهولة تلقائياً</p>
                         </div>
 
                         <!-- كارت 3: حل جذري للأخطاء -->
-                        <div class="update-card" style="background: #FFFDE7; border-radius: 12px; padding: 15px; border-right: 4px solid #FFD740; box-shadow: 0 3px 10px rgba(255, 215, 64, 0.08); animation-delay: 0.5s;">
+                        <div class="update-card" style="background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(4px); border-radius: 12px; padding: 15px; border-right: 4px solid #FFD740; box-shadow: 0 3px 10px rgba(255, 215, 64, 0.08); animation-delay: 0.5s;">
                             <h4 style="margin: 0 0 8px 0; color: #F57F17; font-size: 1rem; font-weight: 800;"><i class="fa-solid fa-shield-halved" style="margin-left: 6px; animation: shieldPulse 3s ease-in-out infinite;"></i>حل جذري للأخطاء</h4>
                             <p style="margin: 0; font-size: 0.85rem; color: #555; line-height: 1.5; font-weight: 600;">معالجة تامة لمشكلة تضارب الأسماء وعدم خصم المبيعات بشكل صحيح</p>
                         </div>
                         
                         <!-- كارت 4: تحسينات في الشكل -->
-                        <div class="update-card" style="background: #E1F5FE; border-radius: 12px; padding: 15px; border-right: 4px solid #40C4FF; box-shadow: 0 3px 10px rgba(64, 196, 255, 0.08); animation-delay: 0.6s;">
+                        <div class="update-card" style="background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(4px); border-radius: 12px; padding: 15px; border-right: 4px solid #40C4FF; box-shadow: 0 3px 10px rgba(64, 196, 255, 0.08); animation-delay: 0.6s;">
                             <h4 style="margin: 0 0 8px 0; color: #0277BD; font-size: 1rem; font-weight: 800;"><i class="fa-solid fa-palette" style="margin-left: 6px; animation: colorWiggle 3s ease-in-out infinite;"></i>تحسينات في الشكل</h4>
                             <p style="margin: 0; font-size: 0.85rem; color: #555; line-height: 1.5; font-weight: 600;">واجهة مريحة للعين وتجربة استخدام أسرع وأكثر استقراراً من قبل</p>
                         </div>
