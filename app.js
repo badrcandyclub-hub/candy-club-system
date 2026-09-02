@@ -10309,6 +10309,11 @@ function checkSession() {
                 localStorage.removeItem('cc_user');
                 currentUser = null;
                 showLogin();
+                let err = document.getElementById('login-error');
+                if (err) {
+                    err.innerText = "عذراً، هذا حساب موظف. هذه اللوحة مخصصة للمديرين فقط.";
+                    err.style.display = 'block';
+                }
                 return;
             }
             if (!isAdminPage && currentUser.permissions === "ALL") {
@@ -10316,6 +10321,11 @@ function checkSession() {
                 localStorage.removeItem('cc_user');
                 currentUser = null;
                 showLogin();
+                let err = document.getElementById('login-error');
+                if (err) {
+                    err.innerText = "عذراً، هذا حساب مدير. يرجى تسجيل الدخول من بوابة المدير.";
+                    err.style.display = 'block';
+                }
                 return;
             }
             
@@ -10379,12 +10389,16 @@ window.handleLogin = function(e) {
                 let isAdminPage = window.location.pathname.toLowerCase().includes('admin.html');
                 
                 if (isAdminPage && data.permissions !== "ALL") {
-                    err.innerText = "عذراً، هذه اللوحة مخصصة للمديرين فقط.";
+                    err.innerText = "عذراً، هذا حساب موظف. هذه اللوحة مخصصة للمديرين فقط.";
                     err.style.display = 'block';
                     return;
                 }
                 
-                // Note: ALL users can login to index.html regardless of roles now
+                if (!isAdminPage && data.permissions === "ALL") {
+                    err.innerText = "عذراً، هذا حساب مدير. يرجى تسجيل الدخول من بوابة المدير.";
+                    err.style.display = 'block';
+                    return;
+                }
                 
                 currentUser = {
                     username: data.username,
@@ -12410,12 +12424,17 @@ function populateHrEmployeeDropdowns() {
         let firstOpt = id === 'hrAdminMonthlyEmployeeFilter' ? '<option value="">كل الموظفين</option>' : '<option value="">اختر موظف</option>';
         sel.innerHTML = firstOpt;
         
+        let seen = new Set();
         users.forEach(u => {
-            if (u.status === "نشط") {
-                let opt = document.createElement('option');
-                opt.value = u.displayName || u.username;
-                opt.textContent = u.displayName || u.username;
-                sel.appendChild(opt);
+            if (u.status === "نشط" && u.permissions !== "ALL") {
+                let name = (u.displayName || u.username || '').trim();
+                if (name && !seen.has(name)) {
+                    seen.add(name);
+                    let opt = document.createElement('option');
+                    opt.value = name;
+                    opt.textContent = name;
+                    sel.appendChild(opt);
+                }
             }
         });
     });
