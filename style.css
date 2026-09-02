@@ -2413,6 +2413,21 @@ body.dark-mode .history-item.status-pending { background-color: rgba(255, 193, 7
 body.dark-mode .history-item.status-shipped { background-color: rgba(33, 150, 243, 0.1); }
 body.dark-mode .history-item.status-returned { background-color: rgba(244, 67, 54, 0.1); }
 
+@keyframes subtlePulse {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4); }
+    70% { transform: scale(1.02); box-shadow: 0 0 0 5px rgba(76, 175, 80, 0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+}
+.clickable-badge-pulse {
+    animation: subtlePulse 2.5s infinite;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.clickable-badge-pulse:hover {
+    transform: scale(1.05);
+    background: #c8e6c9 !important;
+}
+
 .financial-row {
     display: flex;
     flex-direction: column;

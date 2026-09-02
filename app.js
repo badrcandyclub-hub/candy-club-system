@@ -6022,7 +6022,7 @@ window.showExpiryDetails = function (category, resetPage = true) {
                         <span style="background: #f3e5f5; color: #6a1b9a; padding: 5px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; border: 1px solid #e1bee7;">
                             <i class=\'fa-solid fa-user-check\'></i> المستلم: ${item.receiver || 'غير محدد'}
                         </span>
-                        <span style="background: #e8f5e9; color: #2e7d32; padding: 5px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; border: 1px solid #c8e6c9; cursor: pointer; transition: 0.2s;" onclick="filterExpiriesByEntryDate('${item.regDate}')" title="اضغط لعرض استلامة هذا الوقت بالكامل" onmouseover="this.style.background='#c8e6c9'" onmouseout="this.style.background='#e8f5e9'">
+                        <span class="clickable-badge-pulse" style="background: #e8f5e9; color: #2e7d32; padding: 5px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; border: 1px solid #c8e6c9;" onclick="openReceiptModalByEntryDate('${item.regDate}')" title="اضغط لعرض استلامة هذا الوقت بالكامل وتعديلها">
                             <i class=\'fa-solid fa-clock-rotate-left\'></i> تسجيل: ${item.regDate || '-'}
                         </span>
                     </div>
@@ -6084,13 +6084,56 @@ window.closeExpiryDetails = function () {
     document.getElementById('expiryDetailsSection').style.display = 'none';
 };
 
-window.filterExpiriesByEntryDate = function (dateStr) {
+window.openReceiptModalByEntryDate = function (dateStr) {
     if (!dateStr || dateStr === '-') return;
-    window.currentExpiryFilterEntryDate = dateStr;
-    showExpiryDetails('ByEntryDate');
-    setTimeout(() => {
-        document.getElementById('expiryDetailsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
+    
+    let dateOnly = dateStr.split(' ')[0];
+    
+    let filtered = expiryData.filter(item => {
+        if (!item.regDate) return false;
+        return item.regDate.startsWith(dateOnly);
+    });
+    
+    if (filtered.length === 0) {
+        showToast("لا توجد بيانات مسجلة في هذا اليوم", "warning");
+        return;
+    }
+
+    let batches = {};
+    let legacyBatches = {};
+    filtered.forEach(item => {
+        let rDate = item.regDate || "";
+        if (typeof rDate === 'string' && rDate.includes("T") && rDate.endsWith("Z")) {
+            let d = new Date(rDate);
+            if (!isNaN(d.getTime())) {
+                let dStr = d.toLocaleDateString('en-CA');
+                let tStr = d.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+                rDate = dStr + " " + tStr;
+            }
+        }
+
+        if (rDate.includes(" AM") || rDate.includes(" PM") || rDate.includes(" ص") || rDate.includes(" م") || rDate.includes(":")) {
+            if (!batches[rDate]) batches[rDate] = [];
+            batches[rDate].push(item);
+        } else {
+            let receiverKey = item.receiver ? `legacy_${item.receiver}` : 'legacy_غير محدد';
+            if (!legacyBatches[receiverKey]) legacyBatches[receiverKey] = [];
+            legacyBatches[receiverKey].push(item);
+        }
+    });
+
+    Object.keys(legacyBatches).forEach(k => batches[k] = legacyBatches[k]);
+
+    let specificBatch = {};
+    if (batches[dateStr]) {
+        specificBatch[dateStr] = batches[dateStr];
+    } else {
+        specificBatch = batches; 
+    }
+
+    if (typeof showBatchSelectionModal === 'function') {
+        showBatchSelectionModal(specificBatch, [], dateOnly);
+    }
 };
 
 const searchExpiryBtn = document.getElementById('searchExpiryBtn');
