@@ -8,93 +8,88 @@ document.addEventListener('DOMContentLoaded', () => {
         if (document.getElementById('candy-update-popup')) return;
         
         const popupHtml = `
-            <div id="candy-update-popup" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.75); z-index: 999999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px); animation: fadeInPopup 0.4s ease; font-family: 'Tajawal', sans-serif;">
-                <div style="background: #ffffff; border-radius: 20px; padding: 20px 15px 15px; width: 92%; max-width: 500px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); text-align: center; position: relative; border: 1px solid rgba(255,255,255,0.5); animation: popInUpdate 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;">
+            <div id="candy-update-popup" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 999999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); animation: fadeInPopup 0.4s ease; font-family: 'Tajawal', sans-serif;">
+                <div style="background: linear-gradient(145deg, #1e1e2f, #2a2a40); border-radius: 24px; padding: 25px 20px 20px; width: 92%; max-width: 520px; box-shadow: 0 30px 60px rgba(0,0,0,0.6); text-align: center; position: relative; border: 1px solid rgba(255,255,255,0.1); animation: popInUpdate 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;">
                     
-                    <!-- لوجو كاندي كلاب بدل الصاروخ -->
-                    <img src="favicon.png" alt="Candy Club Logo" style="width: 80px; height: 80px; border-radius: 18px; display: block; margin: -55px auto 10px; box-shadow: 0 8px 20px rgba(0,0,0,0.15); border: 4px solid white; background: white; object-fit: cover;">
+                    <!-- لوجو كاندي كلاب -->
+                    <img src="favicon.png" alt="Candy Club Logo" style="width: 85px; height: 85px; border-radius: 20px; display: block; margin: -65px auto 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); border: 3px solid #2a2a40; background: #fff; object-fit: cover;">
                     
-                    <h2 style="color: #1a237e; margin-top: 0; font-size: 1.4rem; font-weight: 900; margin-bottom: 5px; animation: slideDownText 0.5s ease forwards; opacity: 0; animation-delay: 0.1s;">
-                        تحديث جديد وشامل V1.1
+                    <h2 style="color: #ffffff; margin-top: 0; font-size: 1.5rem; font-weight: 900; margin-bottom: 8px; animation: slideDownText 0.5s ease forwards; opacity: 0; animation-delay: 0.1s;">
+                        تحديث جديد وشامل <span style="color: #FFD700; background: rgba(255, 215, 0, 0.15); padding: 2px 10px; border-radius: 12px; font-size: 1.2rem; vertical-align: middle; margin-right: 5px; box-shadow: 0 0 10px rgba(255,215,0,0.2);">V1.1</span>
                     </h2>
                     
-                    <p style="color: #666; font-size: 0.9rem; line-height: 1.4; margin-bottom: 15px; font-weight: 600; animation: slideDownText 0.5s ease forwards; opacity: 0; animation-delay: 0.2s;">
-                        أهلاً بك في النسخة الأحدث والأذكى من نظام Candy Club
+                    <p style="color: #b0bec5; font-size: 0.95rem; line-height: 1.5; margin-bottom: 25px; font-weight: 600; animation: slideDownText 0.5s ease forwards; opacity: 0; animation-delay: 0.2s;">
+                        اكتشف الإضافات الجديدة التي صممناها لتسريع وتسهيل عملك
                     </p>
                     
                     <!-- كروت المميزات الأربعة -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; text-align: right; direction: rtl;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px; text-align: right; direction: rtl;">
                         
-                        <!-- كارت 1: المزامنة الذكية -->
-                        <div class="update-card" style="background: linear-gradient(145deg, #FFEBEE, #ffffff); border-radius: 10px; padding: 12px; border-right: 5px solid #F44336; box-shadow: 0 3px 10px rgba(244, 67, 54, 0.08); animation-delay: 0.3s;">
-                            <h4 style="margin: 0 0 6px 0; color: #D32F2F; font-size: 0.95rem; font-weight: 800;"><i class="fa-solid fa-rotate" style="margin-left: 5px; animation: floatLogo 3s ease-in-out infinite;"></i>المزامنة الذكية (جربها الآن)</h4>
-                            <p style="margin: 0; font-size: 0.8rem; color: #555; line-height: 1.4; font-weight: 600;">زر جديد يضبط أرصدتك بأثر رجعي ويصحح الأسماء المجهولة فوراً!</p>
+                        <!-- كارت 1: النواقص -->
+                        <div class="update-card" style="background: rgba(255, 255, 255, 0.03); border-radius: 12px; padding: 15px; border-right: 4px solid #FF5252; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05); animation-delay: 0.3s;">
+                            <h4 style="margin: 0 0 8px 0; color: #FF5252; font-size: 1rem; font-weight: 800;"><i class="fa-solid fa-box-open" style="margin-left: 6px; animation: floatLogo 3s ease-in-out infinite;"></i>النواقص (جربها الآن)</h4>
+                            <p style="margin: 0; font-size: 0.85rem; color: #cfd8dc; line-height: 1.5; font-weight: 600;">إضافة خانة جديدة مخصصة لتسجيل ومتابعة النواقص بكل سهولة ومرونة</p>
                         </div>
                         
-                        <!-- كارت 2: حل جذري للأخطاء -->
-                        <div class="update-card" style="background: linear-gradient(145deg, #FFF8E1, #ffffff); border-radius: 10px; padding: 12px; border-right: 5px solid #FFC107; box-shadow: 0 3px 10px rgba(255, 193, 7, 0.08); animation-delay: 0.4s;">
-                            <h4 style="margin: 0 0 6px 0; color: #F57F17; font-size: 0.95rem; font-weight: 800;"><i class="fa-solid fa-shield-halved" style="margin-left: 5px; animation: floatLogo 3s ease-in-out infinite; animation-delay: 0.5s;"></i>حل جذري للأخطاء</h4>
-                            <p style="margin: 0; font-size: 0.8rem; color: #555; line-height: 1.4; font-weight: 600;">معالجة تامة لمشكلة تضارب الأسماء وعدم خصم المبيعات بشكل صحيح.</p>
+                        <!-- كارت 2: المزامنة الذكية -->
+                        <div class="update-card" style="background: rgba(255, 255, 255, 0.03); border-radius: 12px; padding: 15px; border-right: 4px solid #00E676; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05); animation-delay: 0.4s;">
+                            <h4 style="margin: 0 0 8px 0; color: #00E676; font-size: 1rem; font-weight: 800;"><i class="fa-solid fa-rotate" style="margin-left: 6px; animation: floatLogo 3s ease-in-out infinite; animation-delay: 0.5s;"></i>المزامنة الذكية</h4>
+                            <p style="margin: 0; font-size: 0.85rem; color: #cfd8dc; line-height: 1.5; font-weight: 600;">نظام جديد يضبط أرصدتك بأثر رجعي ويصحح الأسماء المجهولة تلقائياً</p>
                         </div>
 
-                        <!-- كارت 3: واجهة مستخدم أذكى -->
-                        <div class="update-card" style="background: linear-gradient(145deg, #E3F2FD, #ffffff); border-radius: 10px; padding: 12px; border-right: 5px solid #2196F3; box-shadow: 0 3px 10px rgba(33, 150, 243, 0.08); animation-delay: 0.5s;">
-                            <h4 style="margin: 0 0 6px 0; color: #1976D2; font-size: 0.95rem; font-weight: 800;"><i class="fa-solid fa-wand-magic-sparkles" style="margin-left: 5px; animation: floatLogo 3s ease-in-out infinite; animation-delay: 1s;"></i>واجهة مستخدم أذكى</h4>
-                            <p style="margin: 0; font-size: 0.8rem; color: #555; line-height: 1.4; font-weight: 600;">شاشات تحميل قوية لحماية بياناتك أثناء المزامنة، وتجربة أريح للعين.</p>
+                        <!-- كارت 3: حل جذري للأخطاء -->
+                        <div class="update-card" style="background: rgba(255, 255, 255, 0.03); border-radius: 12px; padding: 15px; border-right: 4px solid #FFD740; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05); animation-delay: 0.5s;">
+                            <h4 style="margin: 0 0 8px 0; color: #FFD740; font-size: 1rem; font-weight: 800;"><i class="fa-solid fa-shield-halved" style="margin-left: 6px; animation: floatLogo 3s ease-in-out infinite; animation-delay: 1s;"></i>حل جذري للأخطاء</h4>
+                            <p style="margin: 0; font-size: 0.85rem; color: #cfd8dc; line-height: 1.5; font-weight: 600;">معالجة تامة لمشكلة تضارب الأسماء وعدم خصم المبيعات بشكل صحيح</p>
                         </div>
                         
-                        <!-- كارت 4: الاستلام المجهول -->
-                        <div class="update-card" style="background: linear-gradient(145deg, #E8F5E9, #ffffff); border-radius: 10px; padding: 12px; border-right: 5px solid #4CAF50; box-shadow: 0 3px 10px rgba(76, 175, 80, 0.08); animation-delay: 0.6s;">
-                            <h4 style="margin: 0 0 6px 0; color: #4CAF50; font-size: 0.95rem; font-weight: 800;"><i class="fa-solid fa-barcode" style="margin-left: 5px; animation: floatLogo 3s ease-in-out infinite; animation-delay: 1.5s;"></i>استلام بباركود مجهول</h4>
-                            <p style="margin: 0; font-size: 0.8rem; color: #555; line-height: 1.4; font-weight: 600;">استلم المنتجات الجديدة فوراً بالباركود، وسيتعرف عليها النظام لاحقاً.</p>
+                        <!-- كارت 4: تحسينات في الشكل -->
+                        <div class="update-card" style="background: rgba(255, 255, 255, 0.03); border-radius: 12px; padding: 15px; border-right: 4px solid #40C4FF; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05); animation-delay: 0.6s;">
+                            <h4 style="margin: 0 0 8px 0; color: #40C4FF; font-size: 1rem; font-weight: 800;"><i class="fa-solid fa-palette" style="margin-left: 6px; animation: floatLogo 3s ease-in-out infinite; animation-delay: 1.5s;"></i>تحسينات في الشكل</h4>
+                            <p style="margin: 0; font-size: 0.85rem; color: #cfd8dc; line-height: 1.5; font-weight: 600;">واجهة مريحة للعين وتجربة استخدام أسرع وأكثر استقراراً من قبل</p>
                         </div>
 
                     </div>
                     
-                    <button id="close-update-btn" style="position: relative; overflow: hidden; background: linear-gradient(135deg, #1a237e, #3949ab); color: white; border: none; padding: 12px 35px; font-size: 1.05rem; border-radius: 30px; font-weight: bold; cursor: pointer; transition: all 0.3s; box-shadow: 0 8px 25px rgba(26, 35, 126, 0.4); font-family: 'Tajawal', sans-serif; animation: slideUpFade 0.5s ease forwards; opacity: 0; animation-delay: 0.7s;">
-                        <span style="position: relative; z-index: 2;">متابعة لصفحة العمل</span>
+                    <button id="close-update-btn" style="position: relative; overflow: hidden; background: linear-gradient(135deg, #00b09b, #96c93d); color: white; border: none; padding: 14px 40px; font-size: 1.1rem; border-radius: 30px; font-weight: bold; cursor: pointer; transition: all 0.3s; box-shadow: 0 8px 25px rgba(0, 176, 155, 0.4); font-family: 'Tajawal', sans-serif; animation: slideUpFade 0.5s ease forwards; opacity: 0; animation-delay: 0.7s;">
+                        <span style="position: relative; z-index: 2;">ابدأ العمل الآن</span>
                         <div class="btn-shine"></div>
                     </button>
                 </div>
             </div>
             
             <style>
-                @keyframes fadeInPopup { from { opacity: 0; backdrop-filter: blur(0px); } to { opacity: 1; backdrop-filter: blur(8px); } }
-                @keyframes popInUpdate { 0% { transform: scale(0.8) translateY(20px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
+                @keyframes fadeInPopup { from { opacity: 0; backdrop-filter: blur(0px); } to { opacity: 1; backdrop-filter: blur(10px); } }
+                @keyframes popInUpdate { 0% { transform: scale(0.9) translateY(20px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
                 @keyframes fadeOutPopup { from { opacity: 1; } to { opacity: 0; } }
                 
                 @keyframes slideDownText { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
                 @keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
                 
-                @keyframes floatLogo { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-                @keyframes spinGradient { 100% { transform: rotate(360deg); } }
-                
-                @keyframes wiggle { 0%, 10%, 100% { transform: rotate(0deg); } 2.5% { transform: rotate(-15deg); } 7.5% { transform: rotate(15deg); } }
-                @keyframes bounceIcon { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-5px); } 60% { transform: translateY(-3px); } }
-                @keyframes spinPulse { 0% { transform: scale(1) rotate(0deg); } 50% { transform: scale(1.1) rotate(180deg); } 100% { transform: scale(1) rotate(360deg); } }
-                @keyframes shakeIcon { 0%, 100% { transform: translateX(0); } 5%, 15%, 25% { transform: translateX(-2px); } 10%, 20% { transform: translateX(2px); } }
+                @keyframes floatLogo { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
                 
                 .update-card {
                     opacity: 0;
                     animation: slideUpFade 0.5s ease forwards;
-                    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+                    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease, background 0.3s ease;
                 }
                 .update-card:hover {
-                    transform: translateY(-8px) scale(1.02);
-                    box-shadow: 0 12px 20px rgba(0,0,0,0.08) !important;
+                    transform: translateY(-5px);
+                    background: rgba(255, 255, 255, 0.08) !important;
+                    box-shadow: 0 10px 20px rgba(0,0,0,0.2) !important;
                 }
                 
                 #close-update-btn:hover { 
-                    transform: translateY(-3px) scale(1.03); 
-                    box-shadow: 0 12px 30px rgba(26, 35, 126, 0.5) !important; 
-                    background: linear-gradient(135deg, #283593, #3f51b5); 
+                    transform: translateY(-3px) scale(1.02); 
+                    box-shadow: 0 12px 30px rgba(0, 176, 155, 0.6) !important; 
+                    background: linear-gradient(135deg, #009688, #7cb342) !important; 
                 }
                 
                 .btn-shine {
                     position: absolute;
                     top: 0; left: -100%;
                     width: 50%; height: 100%;
-                    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+                    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
                     transform: skewX(-25deg);
                     animation: shineEffect 3s infinite;
                     z-index: 1;
