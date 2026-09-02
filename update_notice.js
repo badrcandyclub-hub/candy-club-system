@@ -25,28 +25,28 @@ document.addEventListener('DOMContentLoaded', () => {
                     <!-- كروت المميزات الأربعة -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; text-align: right; direction: rtl;">
                         
-                        <!-- كارت 1 -->
-                        <div class="update-card" style="background: linear-gradient(145deg, #FFF0F5, #ffffff); border-radius: 10px; padding: 12px; border-right: 5px solid #E91E63; box-shadow: 0 3px 10px rgba(233, 30, 99, 0.08); animation-delay: 0.3s;">
-                            <h4 style="margin: 0 0 6px 0; color: #E91E63; font-size: 0.95rem;"><i class="fa-solid fa-bolt" style="margin-left: 5px; animation: wiggle 2s infinite;"></i>أسرع بـ 8.5 مرات</h4>
-                            <p style="margin: 0; font-size: 0.8rem; color: #555; line-height: 1.4;">أداء خيالي وسرعة استجابة فورية للعمليات</p>
+                        <!-- كارت 1: المزامنة الذكية -->
+                        <div class="update-card" style="background: linear-gradient(145deg, #FFEBEE, #ffffff); border-radius: 10px; padding: 12px; border-right: 5px solid #F44336; box-shadow: 0 3px 10px rgba(244, 67, 54, 0.08); animation-delay: 0.3s;">
+                            <h4 style="margin: 0 0 6px 0; color: #D32F2F; font-size: 0.95rem; font-weight: 800;"><i class="fa-solid fa-rotate" style="margin-left: 5px; animation: spinPulse 3s infinite;"></i>المزامنة الذكية (جربها الآن)</h4>
+                            <p style="margin: 0; font-size: 0.8rem; color: #555; line-height: 1.4; font-weight: 600;">زر جديد يضبط أرصدتك بأثر رجعي ويصحح الأسماء المجهولة فوراً!</p>
                         </div>
                         
-                        <!-- كارت 2 -->
-                        <div class="update-card" style="background: linear-gradient(145deg, #E8F5E9, #ffffff); border-radius: 10px; padding: 12px; border-right: 5px solid #4CAF50; box-shadow: 0 3px 10px rgba(76, 175, 80, 0.08); animation-delay: 0.4s;">
-                            <h4 style="margin: 0 0 6px 0; color: #4CAF50; font-size: 0.95rem;"><i class="fa-solid fa-box-open" style="margin-left: 5px; animation: bounceIcon 2s infinite;"></i>ميزة النواقص</h4>
-                            <p style="margin: 0; font-size: 0.8rem; color: #555; line-height: 1.4;">إضافة خانة جديدة لتسجيل ومتابعة النواقص</p>
+                        <!-- كارت 2: حل جذري للأخطاء -->
+                        <div class="update-card" style="background: linear-gradient(145deg, #FFF8E1, #ffffff); border-radius: 10px; padding: 12px; border-right: 5px solid #FFC107; box-shadow: 0 3px 10px rgba(255, 193, 7, 0.08); animation-delay: 0.4s;">
+                            <h4 style="margin: 0 0 6px 0; color: #F57F17; font-size: 0.95rem; font-weight: 800;"><i class="fa-solid fa-shield-halved" style="margin-left: 5px; animation: shakeIcon 2.5s infinite;"></i>حل جذري للأخطاء</h4>
+                            <p style="margin: 0; font-size: 0.8rem; color: #555; line-height: 1.4; font-weight: 600;">معالجة تامة لمشكلة تضارب الأسماء وعدم خصم المبيعات بشكل صحيح.</p>
                         </div>
-                        
-                        <!-- كارت 3 -->
+
+                        <!-- كارت 3: واجهة مستخدم أذكى -->
                         <div class="update-card" style="background: linear-gradient(145deg, #E3F2FD, #ffffff); border-radius: 10px; padding: 12px; border-right: 5px solid #2196F3; box-shadow: 0 3px 10px rgba(33, 150, 243, 0.08); animation-delay: 0.5s;">
-                            <h4 style="margin: 0 0 6px 0; color: #1976D2; font-size: 0.95rem;"><i class="fa-solid fa-palette" style="margin-left: 5px; animation: spinPulse 3s infinite;"></i>تحسينات الديزاين</h4>
-                            <p style="margin: 0; font-size: 0.8rem; color: #555; line-height: 1.4;">واجهة أريح للعين وهوية بصرية ولوجو جديد</p>
+                            <h4 style="margin: 0 0 6px 0; color: #1976D2; font-size: 0.95rem; font-weight: 800;"><i class="fa-solid fa-wand-magic-sparkles" style="margin-left: 5px; animation: bounceIcon 2s infinite;"></i>واجهة مستخدم أذكى</h4>
+                            <p style="margin: 0; font-size: 0.8rem; color: #555; line-height: 1.4; font-weight: 600;">شاشات تحميل قوية لحماية بياناتك أثناء المزامنة، وتجربة أريح للعين.</p>
                         </div>
                         
-                        <!-- كارت 4 -->
-                        <div class="update-card" style="background: linear-gradient(145deg, #FFF8E1, #ffffff); border-radius: 10px; padding: 12px; border-right: 5px solid #FFC107; box-shadow: 0 3px 10px rgba(255, 193, 7, 0.08); animation-delay: 0.6s;">
-                            <h4 style="margin: 0 0 6px 0; color: #F57F17; font-size: 0.95rem;"><i class="fa-solid fa-bug-slash" style="margin-left: 5px; animation: shakeIcon 2.5s infinite;"></i>حل الأخطاء</h4>
-                            <p style="margin: 0; font-size: 0.8rem; color: #555; line-height: 1.4;">معالجة شاملة لكل المشاكل السابقة</p>
+                        <!-- كارت 4: الاستلام المجهول -->
+                        <div class="update-card" style="background: linear-gradient(145deg, #E8F5E9, #ffffff); border-radius: 10px; padding: 12px; border-right: 5px solid #4CAF50; box-shadow: 0 3px 10px rgba(76, 175, 80, 0.08); animation-delay: 0.6s;">
+                            <h4 style="margin: 0 0 6px 0; color: #4CAF50; font-size: 0.95rem; font-weight: 800;"><i class="fa-solid fa-barcode" style="margin-left: 5px; animation: wiggle 2s infinite;"></i>استلام بباركود مجهول</h4>
+                            <p style="margin: 0; font-size: 0.8rem; color: #555; line-height: 1.4; font-weight: 600;">استلم المنتجات الجديدة فوراً بالباركود، وسيتعرف عليها النظام لاحقاً.</p>
                         </div>
 
                     </div>
