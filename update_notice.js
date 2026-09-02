@@ -9,16 +9,16 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const popupHtml = `
             <div id="candy-update-popup" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 999999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); animation: fadeInPopup 0.4s ease; font-family: 'Tajawal', sans-serif;">
-                <div style="background: linear-gradient(145deg, #1e1e2f, #2a2a40); border-radius: 24px; padding: 25px 20px 20px; width: 92%; max-width: 520px; box-shadow: 0 30px 60px rgba(0,0,0,0.6); text-align: center; position: relative; border: 1px solid rgba(255,255,255,0.1); animation: popInUpdate 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;">
+                <div style="background: linear-gradient(145deg, #ffffff, #fafafa); border-radius: 24px; padding: 25px 20px 20px; width: 92%; max-width: 520px; box-shadow: 0 30px 60px rgba(0,0,0,0.25); text-align: center; position: relative; border: 1px solid rgba(0,0,0,0.05); animation: popInUpdate 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;">
                     
                     <!-- لوجو كاندي كلاب -->
-                    <img src="favicon.png" alt="Candy Club Logo" style="width: 85px; height: 85px; border-radius: 20px; display: block; margin: -65px auto 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); border: 3px solid #2a2a40; background: #fff; object-fit: cover;">
+                    <img src="favicon.png" alt="Candy Club Logo" style="width: 85px; height: 85px; border-radius: 20px; display: block; margin: -65px auto 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); border: 4px solid #ffffff; background: #fff; object-fit: cover;">
                     
-                    <h2 style="color: #ffffff; margin-top: 0; font-size: 1.5rem; font-weight: 900; margin-bottom: 8px; animation: slideDownText 0.5s ease forwards; opacity: 0; animation-delay: 0.1s;">
-                        تحديث جديد وشامل <span style="color: #FFD700; background: rgba(255, 215, 0, 0.15); padding: 2px 10px; border-radius: 12px; font-size: 1.2rem; vertical-align: middle; margin-right: 5px; box-shadow: 0 0 10px rgba(255,215,0,0.2);">V1.1</span>
+                    <h2 style="color: #2a2a40; margin-top: 0; font-size: 1.5rem; font-weight: 900; margin-bottom: 8px; animation: slideDownText 0.5s ease forwards; opacity: 0; animation-delay: 0.1s;">
+                        تحديث جديد وشامل <span style="color: #fff; background: linear-gradient(135deg, #FF4081, #E040FB); padding: 2px 10px; border-radius: 12px; font-size: 1.2rem; vertical-align: middle; margin-right: 5px; box-shadow: 0 4px 10px rgba(255,64,129,0.3);">V1.1</span>
                     </h2>
                     
-                    <p style="color: #b0bec5; font-size: 0.95rem; line-height: 1.5; margin-bottom: 25px; font-weight: 600; animation: slideDownText 0.5s ease forwards; opacity: 0; animation-delay: 0.2s;">
+                    <p style="color: #607d8b; font-size: 0.95rem; line-height: 1.5; margin-bottom: 25px; font-weight: 600; animation: slideDownText 0.5s ease forwards; opacity: 0; animation-delay: 0.2s;">
                         اكتشف الإضافات الجديدة التي صممناها لتسريع وتسهيل عملك
                     </p>
                     
@@ -26,32 +26,32 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px; text-align: right; direction: rtl;">
                         
                         <!-- كارت 1: النواقص -->
-                        <div class="update-card" style="background: rgba(255, 255, 255, 0.03); border-radius: 12px; padding: 15px; border-right: 4px solid #FF5252; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05); animation-delay: 0.3s;">
-                            <h4 style="margin: 0 0 8px 0; color: #FF5252; font-size: 1rem; font-weight: 800;"><i class="fa-solid fa-box-open" style="margin-left: 6px; animation: floatLogo 3s ease-in-out infinite;"></i>النواقص (جربها الآن)</h4>
-                            <p style="margin: 0; font-size: 0.85rem; color: #cfd8dc; line-height: 1.5; font-weight: 600;">إضافة خانة جديدة مخصصة لتسجيل ومتابعة النواقص بكل سهولة ومرونة</p>
+                        <div class="update-card" style="background: #FFF5F5; border-radius: 12px; padding: 15px; border-right: 4px solid #FF5252; box-shadow: 0 3px 10px rgba(255, 82, 82, 0.08); animation-delay: 0.3s;">
+                            <h4 style="margin: 0 0 8px 0; color: #D32F2F; font-size: 1rem; font-weight: 800;"><i class="fa-solid fa-box-open" style="margin-left: 6px; animation: dropInBox 3s ease-in-out infinite;"></i>النواقص (جربها الآن)</h4>
+                            <p style="margin: 0; font-size: 0.85rem; color: #555; line-height: 1.5; font-weight: 600;">إضافة خانة جديدة مخصصة لتسجيل ومتابعة النواقص بكل سهولة ومرونة</p>
                         </div>
                         
                         <!-- كارت 2: المزامنة الذكية -->
-                        <div class="update-card" style="background: rgba(255, 255, 255, 0.03); border-radius: 12px; padding: 15px; border-right: 4px solid #00E676; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05); animation-delay: 0.4s;">
-                            <h4 style="margin: 0 0 8px 0; color: #00E676; font-size: 1rem; font-weight: 800;"><i class="fa-solid fa-rotate" style="margin-left: 6px; animation: floatLogo 3s ease-in-out infinite; animation-delay: 0.5s;"></i>المزامنة الذكية</h4>
-                            <p style="margin: 0; font-size: 0.85rem; color: #cfd8dc; line-height: 1.5; font-weight: 600;">نظام جديد يضبط أرصدتك بأثر رجعي ويصحح الأسماء المجهولة تلقائياً</p>
+                        <div class="update-card" style="background: #F1F8E9; border-radius: 12px; padding: 15px; border-right: 4px solid #00E676; box-shadow: 0 3px 10px rgba(0, 230, 118, 0.08); animation-delay: 0.4s;">
+                            <h4 style="margin: 0 0 8px 0; color: #2E7D32; font-size: 1rem; font-weight: 800;"><i class="fa-solid fa-rotate" style="margin-left: 6px; animation: slowSpin 4s linear infinite;"></i>المزامنة الذكية</h4>
+                            <p style="margin: 0; font-size: 0.85rem; color: #555; line-height: 1.5; font-weight: 600;">نظام جديد يضبط أرصدتك بأثر رجعي ويصحح الأسماء المجهولة تلقائياً</p>
                         </div>
 
                         <!-- كارت 3: حل جذري للأخطاء -->
-                        <div class="update-card" style="background: rgba(255, 255, 255, 0.03); border-radius: 12px; padding: 15px; border-right: 4px solid #FFD740; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05); animation-delay: 0.5s;">
-                            <h4 style="margin: 0 0 8px 0; color: #FFD740; font-size: 1rem; font-weight: 800;"><i class="fa-solid fa-shield-halved" style="margin-left: 6px; animation: floatLogo 3s ease-in-out infinite; animation-delay: 1s;"></i>حل جذري للأخطاء</h4>
-                            <p style="margin: 0; font-size: 0.85rem; color: #cfd8dc; line-height: 1.5; font-weight: 600;">معالجة تامة لمشكلة تضارب الأسماء وعدم خصم المبيعات بشكل صحيح</p>
+                        <div class="update-card" style="background: #FFFDE7; border-radius: 12px; padding: 15px; border-right: 4px solid #FFD740; box-shadow: 0 3px 10px rgba(255, 215, 64, 0.08); animation-delay: 0.5s;">
+                            <h4 style="margin: 0 0 8px 0; color: #F57F17; font-size: 1rem; font-weight: 800;"><i class="fa-solid fa-shield-halved" style="margin-left: 6px; animation: shieldPulse 3s ease-in-out infinite;"></i>حل جذري للأخطاء</h4>
+                            <p style="margin: 0; font-size: 0.85rem; color: #555; line-height: 1.5; font-weight: 600;">معالجة تامة لمشكلة تضارب الأسماء وعدم خصم المبيعات بشكل صحيح</p>
                         </div>
                         
                         <!-- كارت 4: تحسينات في الشكل -->
-                        <div class="update-card" style="background: rgba(255, 255, 255, 0.03); border-radius: 12px; padding: 15px; border-right: 4px solid #40C4FF; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05); animation-delay: 0.6s;">
-                            <h4 style="margin: 0 0 8px 0; color: #40C4FF; font-size: 1rem; font-weight: 800;"><i class="fa-solid fa-palette" style="margin-left: 6px; animation: floatLogo 3s ease-in-out infinite; animation-delay: 1.5s;"></i>تحسينات في الشكل</h4>
-                            <p style="margin: 0; font-size: 0.85rem; color: #cfd8dc; line-height: 1.5; font-weight: 600;">واجهة مريحة للعين وتجربة استخدام أسرع وأكثر استقراراً من قبل</p>
+                        <div class="update-card" style="background: #E1F5FE; border-radius: 12px; padding: 15px; border-right: 4px solid #40C4FF; box-shadow: 0 3px 10px rgba(64, 196, 255, 0.08); animation-delay: 0.6s;">
+                            <h4 style="margin: 0 0 8px 0; color: #0277BD; font-size: 1rem; font-weight: 800;"><i class="fa-solid fa-palette" style="margin-left: 6px; animation: colorWiggle 3s ease-in-out infinite;"></i>تحسينات في الشكل</h4>
+                            <p style="margin: 0; font-size: 0.85rem; color: #555; line-height: 1.5; font-weight: 600;">واجهة مريحة للعين وتجربة استخدام أسرع وأكثر استقراراً من قبل</p>
                         </div>
 
                     </div>
                     
-                    <button id="close-update-btn" style="position: relative; overflow: hidden; background: linear-gradient(135deg, #00b09b, #96c93d); color: white; border: none; padding: 14px 40px; font-size: 1.1rem; border-radius: 30px; font-weight: bold; cursor: pointer; transition: all 0.3s; box-shadow: 0 8px 25px rgba(0, 176, 155, 0.4); font-family: 'Tajawal', sans-serif; animation: slideUpFade 0.5s ease forwards; opacity: 0; animation-delay: 0.7s;">
+                    <button id="close-update-btn" style="position: relative; overflow: hidden; background: linear-gradient(135deg, #FF4081, #E040FB); color: white; border: none; padding: 14px 40px; font-size: 1.1rem; border-radius: 30px; font-weight: bold; cursor: pointer; transition: all 0.3s; box-shadow: 0 8px 25px rgba(255, 64, 129, 0.4); font-family: 'Tajawal', sans-serif; animation: slideUpFade 0.5s ease forwards; opacity: 0; animation-delay: 0.7s;">
                         <span style="position: relative; z-index: 2;">ابدأ العمل الآن</span>
                         <div class="btn-shine"></div>
                     </button>
@@ -66,23 +66,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 @keyframes slideDownText { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
                 @keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
                 
-                @keyframes floatLogo { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+                @keyframes dropInBox { 0%, 100% { transform: translateY(0) scale(1); } 30% { transform: translateY(-6px) scale(1.05); } 50% { transform: translateY(2px) scale(0.95); } 70% { transform: translateY(0) scale(1); } }
+                @keyframes slowSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                @keyframes shieldPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.15); opacity: 0.8; } }
+                @keyframes colorWiggle { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-12deg); } 75% { transform: rotate(12deg); } }
                 
                 .update-card {
                     opacity: 0;
                     animation: slideUpFade 0.5s ease forwards;
-                    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease, background 0.3s ease;
+                    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
                 }
                 .update-card:hover {
                     transform: translateY(-5px);
-                    background: rgba(255, 255, 255, 0.08) !important;
-                    box-shadow: 0 10px 20px rgba(0,0,0,0.2) !important;
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.12) !important;
                 }
                 
                 #close-update-btn:hover { 
                     transform: translateY(-3px) scale(1.02); 
-                    box-shadow: 0 12px 30px rgba(0, 176, 155, 0.6) !important; 
-                    background: linear-gradient(135deg, #009688, #7cb342) !important; 
+                    box-shadow: 0 12px 30px rgba(224, 64, 251, 0.6) !important; 
+                    background: linear-gradient(135deg, #F50057, #D500F9) !important; 
                 }
                 
                 .btn-shine {
