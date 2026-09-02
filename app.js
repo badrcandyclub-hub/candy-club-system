@@ -2342,6 +2342,28 @@ function renderHistoryList(orders, isLoadMore = false) {
             let dateText = resDate ? `تسليم: ${resDate}` : 'حجز مسبق';
             typeBadge = `<span style="background: #c2185b; color: #fff; padding: 3px 8px; border-radius: 6px; font-size: 0.85rem; margin-right: 5px; font-weight: bold;"><i class=\'fa-regular fa-calendar\'></i> ${dateText}</span>`;
         }
+        
+        let payStr = (order.paymentMethod || order.payment || '').toLowerCase();
+        let isInsta = payStr.includes('إنستا') || payStr.includes('انستا') || payStr.includes('insta') || payStr.includes('محفظة') || payStr.includes('فودافون') || payStr.includes('فيزا');
+        let paymentBadge = isInsta 
+            ? `<span style="background: #f3e8ff; color: #7e22ce; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px; border: 1px solid #d8b4fe; display: inline-flex; align-items: center; gap: 4px;"><i class=\'fa-solid fa-mobile-screen-button\'></i> إنستاباي</span>`
+            : `<span style="background: #ecfdf5; color: #047857; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-right: 5px; border: 1px solid #a7f3d0; display: inline-flex; align-items: center; gap: 4px;"><i class=\'fa-solid fa-money-bill-wave\'></i> كاش</span>`;
+        typeBadge += paymentBadge;
+
+        let timeStr = order.time || '--';
+        try {
+            if (order.time && order.time !== '--') {
+                let parts = order.time.split(':');
+                if (parts.length >= 2) {
+                    let hour = parseInt(parts[0]);
+                    let min = parts[1];
+                    let ampm = hour >= 12 ? 'مساءً' : 'صباحاً';
+                    hour = hour % 12;
+                    if (hour === 0) hour = 12;
+                    timeStr = `${hour}:${min} ${ampm}`;
+                }
+            }
+        } catch(e) {}
 
         div.innerHTML = `
             <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 8px; align-items: center;">
@@ -2355,7 +2377,7 @@ function renderHistoryList(orders, isLoadMore = false) {
                 </div>
             </div>
             <div style="display: flex; justify-content: space-between; width: 100%; font-size: 0.9rem; color: #666; background: var(--bg-body); padding: 8px; border-radius: 6px;">
-                <span>⏰ ${order.time || '--'}</span>
+                <span>⏰ ${timeStr}</span>
                 <span><i class=\'fa-solid fa-mobile-screen\'></i> ${order.phone}${((order.phone2 || order.secondPhone || order.backupPhone || order.altPhone || order.customerPhone2 || order.otherPhone) && String(order.phone2 || order.secondPhone || order.backupPhone || order.altPhone || order.customerPhone2 || order.otherPhone).trim() !== '') ? ' | <i class=\'fa-solid fa-mobile-screen\'></i> ' + String(order.phone2 || order.secondPhone || order.backupPhone || order.altPhone || order.customerPhone2 || order.otherPhone).trim() : ''}</span>
                 <span style="font-weight:bold; color: var(--text-dark);"><i class=\'fa-solid fa-money-bill-wave\'></i> ${order.total} ج.م</span>
             </div>
