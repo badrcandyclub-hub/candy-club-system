@@ -1228,10 +1228,14 @@
                         تسجيل استلام بضاعة</button>
                 </div>
 
-                <!-- ⭐ عداد المزامنة التنازلي (تم نقله هنا بناءً على طلب العميل) -->
-                <div id="sync-timer-container" style="display:flex; flex-direction:column; justify-content:center; align-items:center; background: rgba(0,0,0,0.05); border: 1px dashed var(--primary); padding: 10px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
-                    <div style="font-weight: bold; color: var(--text-main); font-size: 1rem;"><i class="fa-solid fa-clock" style="color: var(--primary); margin-left: 5px;"></i> المزامنة التلقائية مع الكاشير بعد: <span id="sync-timer-countdown" style="color: var(--primary); font-size: 1.1rem; display: inline-block; min-width: 65px;" dir="ltr">--:--:--</span></div>
-                    <div style="font-size: 0.8rem; color: #666; margin-top: 5px; font-weight: normal;"><i class="fa-solid fa-circle-info"></i> ملحوظة: يقوم النظام بمزامنة المخزون والبيانات مع الكاشير كل 48 ساعة لضمان تطابق الأرصدة.</div>
+                <!-- ⭐ زر المزامنة اليدوية -->
+                <div id="manual-sync-container" style="display:flex; flex-direction:column; justify-content:center; align-items:center; background: #e3f2fd; border: 1px dashed #2196f3; padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
+                    <button id="manualSyncBtn" class="interactive-btn" style="background: linear-gradient(135deg, #1e88e5, #00acc1); color: white; border: none; padding: 12px 30px; border-radius: 20px; font-weight: bold; font-size: 1.1rem; cursor: pointer; box-shadow: 0 4px 10px rgba(33, 150, 243, 0.3);">
+                        <i class="fa-solid fa-rotate"></i> مزامنة المخزون مع الكاشير الآن
+                    </button>
+                    <div style="font-size: 0.85rem; color: #1565c0; margin-top: 10px; font-weight: bold;">
+                        <i class="fa-solid fa-circle-info"></i> اضغط هنا لتحديث الأرصدة والأسماء المجهولة فوراً ومطابقتها مع الكاشير.
+                    </div>
                 </div>
 
                 <div class="expiry-body">
@@ -1466,8 +1470,8 @@
                     <div class="expiry-form-grid"
                         style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
                         <div style="grid-column: span 2;">
-                            <label>اسم المنتج <span style="color:red;">*</span></label>
-                            <input type="text" id="ledgerProdName" placeholder="اسم المنتج">
+                            <label>اسم المنتج (للقراءة فقط) <span style="color:red;">*</span></label>
+                            <input type="text" id="ledgerProdName" placeholder="سيتم جلبه تلقائياً من الباركود أو بعد المزامنة" readonly style="background: #e9ecef; cursor: not-allowed; border: 1px solid #ced4da; color: #495057;">
                         </div>
                         <div>
                             <label>الكمية <span style="color:red;">*</span></label>

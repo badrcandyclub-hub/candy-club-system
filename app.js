@@ -5115,7 +5115,7 @@ function processBarcodeAction(val) {
                 if (ledgerProdName) ledgerProdName.value = '';
                 if (ledgerProdQty) ledgerProdQty.value = '';
                 if (ledgerProdBarcode) ledgerProdBarcode.value = val; 
-                showToast("<i class='fa-solid fa-triangle-exclamation'></i> الباركود (" + val + ") غير مسجل، اكتب الاسم يدوياً", "warning");
+                showToast("<i class='fa-solid fa-triangle-exclamation'></i> الباركود مسجل! سيتم تحديث الاسم تلقائياً بعد المزامنة.", "warning");
             }
         } else {
             showToast("<i class='fa-solid fa-triangle-exclamation'></i> لم يتم التعرف على النص أو الكتالوج فارغ", "error");
@@ -5547,15 +5547,24 @@ if (orderSearchBarcodeBtn) {
 const addLedgerItemBtn = document.getElementById('addLedgerItemBtn');
 if (addLedgerItemBtn) {
     addLedgerItemBtn.addEventListener('click', () => {
-        const name = document.getElementById('ledgerProdName').value;
+        let name = document.getElementById('ledgerProdName').value;
         const qty = document.getElementById('ledgerProdQty').value;
         const date = document.getElementById('ledgerProdDate').value;
         const location = document.getElementById('ledgerProdLocation').value;
         const notes = document.getElementById('ledgerProdNotes').value;
-        const barcode = document.getElementById('ledgerProdBarcode') ? document.getElementById('ledgerProdBarcode').value : '';
+        const barcode = document.getElementById('ledgerProdBarcode') ? document.getElementById('ledgerProdBarcode').value.trim() : '';
 
-        if (!name || !qty || !date) {
-            showToast("يرجى إكمال البيانات الأساسية (الاسم، الكمية، التاريخ)", "warning");
+        if (!name) {
+            if (barcode) {
+                name = 'غير محدد (بانتظار المزامنة)';
+            } else {
+                showToast("يرجى كتابة أو مسح الباركود لجلب اسم المنتج", "warning");
+                return;
+            }
+        }
+
+        if (!qty || !date) {
+            showToast("يرجى إكمال البيانات الأساسية (الكمية والتاريخ)", "warning");
             return;
         }
 
@@ -13061,115 +13070,74 @@ async function setupFirebaseSync() {
         }
     }
 
-    // Function to execute the sync
-    const executeSync = async () => {
-        let formData = new URLSearchParams();
-        formData.append('action', 'syncFirebaseInventory');
-        
-        try {
-            const r = await fetch(GOOGLE_SHEETS_URL, { method: 'POST', body: formData });
-            const data = await r.json();
-            if (data.success) {
-                console.log("Auto-Sync Success:", data.message);
-                currentGlobalLastSync = await updateGlobalSyncTime();
-                if (currentGlobalLastSync > 0) {
-                    localStorage.setItem('cc_last_global_sync', currentGlobalLastSync.toString());
-                }
-            } else {
-                console.error("Auto-Sync Error:", data.error);
-            }
-        } catch(err) {
-            console.error("Auto-Sync fetch error:", err);
-        }
-    };
-
-    const now = Date.now();
-    if (currentGlobalLastSync > 0 && (now - currentGlobalLastSync) >= SYNC_INTERVAL) {
-        // Run immediately if it's been 48 hours or more
-        executeSync();
+    const manualSyncBtn = document.getElementById('manualSyncBtn');
+    if (manualSyncBtn) {
+        manualSyncBtn.addEventListener('click', window.runSyncNow);
     }
-
-    // Periodically fetch from DB every 30 seconds so all devices stay in sync
-    setInterval(async () => {
-        const freshDbTime = await getGlobalSyncTime();
-        if (freshDbTime > 0 && freshDbTime !== currentGlobalLastSync) {
-            currentGlobalLastSync = freshDbTime;
-            localStorage.setItem('cc_last_global_sync', freshDbTime.toString());
-        }
-        
-        const currentTime = Date.now();
-        if (currentGlobalLastSync > 0 && (currentTime - currentGlobalLastSync) >= SYNC_INTERVAL) {
-            executeSync();
-        }
-    }, 30 * 1000); // Check every 30 seconds
-
-    // Timer display logic
-    const updateTimerDisplay = () => {
-        const timerEls = document.querySelectorAll('#sync-timer-countdown');
-        if (!timerEls.length) return;
-        
-        if (currentGlobalLastSync === 0) {
-            timerEls.forEach(el => { el.innerText = 'جاري التحميل...'; });
-            return;
-        }
-        
-        const currentTime = Date.now();
-        const timePassed = currentTime - currentGlobalLastSync;
-        const timeLeft = SYNC_INTERVAL - timePassed;
-        
-        if (timeLeft <= 0) {
-            timerEls.forEach(el => {
-                el.innerText = 'الآن';
-                el.style.color = 'var(--danger)';
-            });
-            return;
-        }
-        
-        const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-        const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-        
-        const formatted = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        
-        timerEls.forEach(el => {
-            el.innerText = formatted;
-            if (hours < 2) {
-                el.style.color = 'var(--danger)';
-            } else if (hours < 12) {
-                el.style.color = 'var(--warning)';
-            } else {
-                el.style.color = 'var(--primary)';
-            }
-        });
-    };
-
-    setInterval(updateTimerDisplay, 1000);
-    updateTimerDisplay();
 }
 
 // Add global function for manual trigger if needed
 window.runSyncNow = async function() {
+    const btn = document.getElementById('manualSyncBtn');
+    const originalText = btn ? btn.innerHTML : '';
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري المزامنة، يرجى الانتظار (قد يستغرق بعض الوقت)...';
+    if (btn) btn.disabled = true;
+
     let formData = new URLSearchParams();
     formData.append('action', 'syncFirebaseInventory');
     
-    showToast('جاري بدء المزامنة مع Firebase...', 'info');
+    showToast('بدأت المزامنة مع الكاشير... لا تقم بإغلاق الصفحة', 'info');
     
     try {
         const r = await fetch(GOOGLE_SHEETS_URL, { method: 'POST', body: formData });
         const data = await r.json();
         
         if (data.success) {
-            showToast(data.message, 'success');
-            currentGlobalLastSync = await updateGlobalSyncTime();
-            if (currentGlobalLastSync > 0) {
-                localStorage.setItem('cc_last_global_sync', currentGlobalLastSync.toString());
+            showToast('اكتملت المزامنة الأساسية، جاري تحديث أسماء المنتجات المجهولة...', 'info');
+            
+            // Retroactive barcode matching
+            let updatedCount = 0;
+            const { data: newCatalog } = await supabase.from('catalog').select('product_name, barcode');
+            
+            if (newCatalog) {
+                const { data: unnamedExpiries } = await fetchAllSupabaseRows(
+                    supabase.from('expiries')
+                        .select('id, barcode')
+                        .in('product_name', ['', 'غير محدد (بانتظار المزامنة)', 'غير محدد', 'غير مسجل'])
+                        .not('barcode', 'is', null)
+                        .neq('barcode', '')
+                );
+                
+                if (unnamedExpiries && unnamedExpiries.length > 0) {
+                    for (let exp of unnamedExpiries) {
+                        const catalogMatch = newCatalog.find(c => String(c.barcode).split(',').map(b=>b.trim().toLowerCase()).includes(String(exp.barcode).trim().toLowerCase()));
+                        if (catalogMatch && catalogMatch.product_name) {
+                            await supabase.from('expiries').update({ product_name: catalogMatch.product_name }).eq('id', exp.id);
+                            updatedCount++;
+                        }
+                    }
+                }
+            }
+
+            let msg = data.message || 'تمت المزامنة بنجاح!';
+            if (updatedCount > 0) msg += `<br><b>تم التعرف وتصحيح أسماء ${updatedCount} منتج بنجاح!</b>`;
+            
+            showToast(msg, 'success');
+            
+            if (typeof loadDataFromServer === 'function') {
+                loadDataFromServer();
             }
         } else {
             showToast(data.error || 'حدث خطأ في المزامنة', 'error');
         }
     } catch(err) {
         console.error(err);
-        showToast('حدث خطأ في الاتصال', 'error');
+        showToast('حدث خطأ في الاتصال بالخادم', 'error');
+    } finally {
+        if (btn) {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
     }
 };
 
