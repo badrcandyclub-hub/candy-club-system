@@ -4196,9 +4196,9 @@ window.shareToWhatsAppGroup = function (orderId) {
     if (typeof orderId === 'object') {
         order = orderId;
     } else {
-        // <i class=\'fa-solid fa-star\'></i> Fix: String() comparison to prevent type mismatch (string vs number)
         let findFn = o => String(o.id) === String(orderId);
-        order = (window.orderHistoryData || []).find(findFn) ||
+        order = (window.allOrdersData || []).find(findFn) ||
+            (window.orderHistoryData || []).find(findFn) ||
             (window.searchResultsCache || []).find(findFn) ||
             (window.pendingOrdersData || []).find(findFn) ||
             (window.suspendedOrdersData || []).find(findFn) ||
@@ -4208,12 +4208,10 @@ window.shareToWhatsAppGroup = function (orderId) {
     if (!order) {
         showToast("لم يتم العثور على الأوردر", "error");
         console.warn("shareToWhatsAppGroup: could not find orderId =", orderId, typeof orderId);
-        console.log("Available IDs in history:", (window.orderHistoryData || []).map(o => ({ id: o.id, type: typeof o.id })));
         return;
     }
     console.log("Order Data:", order);
 
-    // <i class=\'fa-solid fa-star\'></i> V14.2: إصلاح شامل لـ Keys القادمة من الإكسيل - fallback لكل حقل
     let _name = order.name || order.customerName || "";
     let _gov = order.gov || order.governorate || "";
     let _address = order.address || order.customerAddress || order.addr || "";
@@ -4225,7 +4223,39 @@ window.shareToWhatsAppGroup = function (orderId) {
     let _remaining = order.remaining !== undefined ? order.remaining : (order.total || order.finalTotal || 0);
     let _type = order.orderType || order.type || order.deliveryType || "توصيل";
 
-    let text = `*نوع الطلب:* ${_type}\n`;
+    // 1. Calculate precise daily and monthly sequence
+    let allOrders = window.allOrdersData || [];
+    let dailySequence = "1", monthlySequence = "1";
+    if (order.date && order.id) {
+        let dailyOrders = allOrders.filter(o => o.date === order.date).sort((a,b) => String(a.id).localeCompare(String(b.id)));
+        let dIdx = dailyOrders.findIndex(o => String(o.id) === String(order.id));
+        if (dIdx !== -1) dailySequence = dIdx + 1;
+
+        let orderMonth = order.date.substring(0, 7);
+        let monthlyOrders = allOrders.filter(o => o.date && o.date.substring(0, 7) === orderMonth).sort((a,b) => String(a.id).localeCompare(String(b.id)));
+        let mIdx = monthlyOrders.findIndex(o => String(o.id) === String(order.id));
+        if (mIdx !== -1) monthlySequence = mIdx + 1;
+    }
+
+    // 2. Format Time cleanly with AM/PM
+    let timeStr = order.time || new Date().toLocaleTimeString('ar-EG');
+    try {
+        if (order.time) {
+            let parts = order.time.split(':');
+            if (parts.length >= 2) {
+                let hour = parseInt(parts[0]);
+                let min = parts[1];
+                let ampm = hour >= 12 ? 'مساءً' : 'صباحاً';
+                hour = hour % 12;
+                if (hour === 0) hour = 12;
+                timeStr = `${hour}:${min} ${ampm}`;
+            }
+        }
+    } catch(e) {}
+
+    let text = `🧾 *رقم الفاتورة:* ${order.id || ''}\n`;
+    text += `*نوع الطلب:* ${_type}\n`;
+    
     if (_type.includes('حجز') || _type === 'special_date') {
         let resDate = order.reservationDate || order.expectedDate || order.bookingDate || order.specialDate || order.spDate;
         if (resDate) {
@@ -4236,12 +4266,10 @@ window.shareToWhatsAppGroup = function (orderId) {
             text += `📅 *تاريخ التسليم:* ${resDate}\n`;
         }
     }
-    text += `*تاريخ إنشاء الأوردر:* ${order.date || new Date().toLocaleDateString('ar-EG')} ⏰ ${order.time || new Date().toLocaleTimeString('ar-EG')}\n`;
     
-    let tCount = document.getElementById('todayCount') ? document.getElementById('todayCount').innerText : "0";
-    let mCount = document.getElementById('monthCount') ? document.getElementById('monthCount').innerText : "0";
-    text += `عدد اوردرات اليوم : ${tCount}\n`;
-    text += `عدد اوردرات الشهر : ${mCount}\n`;
+    text += `*تاريخ إنشاء الأوردر:* ${order.date || new Date().toLocaleDateString('ar-EG')} ⏰ ${timeStr}\n`;
+    text += `عدد اوردرات اليوم : ${dailySequence}\n`;
+    text += `عدد اوردرات الشهر : ${monthlySequence}\n`;
 
     text += `👤 *العميل:* ${_name}\n`;
     if (!_type.includes('استلام') && !_type.includes('فرع') && (_gov || _address)) {
