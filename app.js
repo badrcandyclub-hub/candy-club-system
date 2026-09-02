@@ -4213,7 +4213,7 @@ if (loadReportDataBtn) {
     });
 }
 
-window.shareToWhatsAppGroup = function (orderId) {
+window.shareToWhatsAppGroup = async function (orderId) {
     let order;
     if (typeof orderId === 'object') {
         order = orderId;
@@ -4245,18 +4245,22 @@ window.shareToWhatsAppGroup = function (orderId) {
     let _remaining = order.remaining !== undefined ? order.remaining : (order.total || order.finalTotal || 0);
     let _type = order.orderType || order.type || order.deliveryType || "توصيل";
 
-    // 1. Calculate precise daily and monthly sequence
-    let allOrders = window.allOrdersData || [];
+    // 1. Calculate precise daily and monthly sequence directly from DB
     let dailySequence = "1", monthlySequence = "1";
     if (order.date && order.id) {
-        let dailyOrders = allOrders.filter(o => o.date === order.date).sort((a,b) => String(a.id).localeCompare(String(b.id)));
-        let dIdx = dailyOrders.findIndex(o => String(o.id) === String(order.id));
-        if (dIdx !== -1) dailySequence = dIdx + 1;
-
-        let orderMonth = order.date.substring(0, 7);
-        let monthlyOrders = allOrders.filter(o => o.date && o.date.substring(0, 7) === orderMonth).sort((a,b) => String(a.id).localeCompare(String(b.id)));
-        let mIdx = monthlyOrders.findIndex(o => String(o.id) === String(order.id));
-        if (mIdx !== -1) monthlySequence = mIdx + 1;
+        try {
+            let orderMonth = order.date.substring(0, 7);
+            
+            const [dSeqRes, mSeqRes] = await Promise.all([
+                supabase.from('orders').select('*', { count: 'exact', head: true }).eq('order_date', order.date).lte('order_id', order.id),
+                supabase.from('orders').select('*', { count: 'exact', head: true }).like('order_date', orderMonth + '%').lte('order_id', order.id)
+            ]);
+            
+            if (dSeqRes && dSeqRes.count !== null) dailySequence = dSeqRes.count;
+            if (mSeqRes && mSeqRes.count !== null) monthlySequence = mSeqRes.count;
+        } catch(e) {
+            console.error('Error fetching exact sequence', e);
+        }
     }
 
     // 2. Format Time cleanly with AM/PM
