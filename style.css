@@ -4044,7 +4044,7 @@ body.hide-print-barcode .tag-barcode-container {
 
 
 /* ============================================================
-   HR Module: نظام الحضور والانصراف
+   HR Module: ┘╪╕╪د┘à ╪د┘╪ص╪╢┘ê╪▒ ┘ê╪د┘╪د┘╪╡╪▒╪د┘
    ============================================================ */
 
 /* GPS Status Card */
@@ -4317,3 +4317,246 @@ body.hide-print-barcode .tag-barcode-container {
     opacity: 0.8;
 }
 
+ . b t n - e d i t   {   b a c k g r o u n d :   r g b a ( 4 1 ,   1 2 8 ,   1 8 5 ,   0 . 1 ) ;   c o l o r :   # 2 9 8 0 b 9 ;   b o r d e r :   n o n e ;   p a d d i n g :   6 p x   1 2 p x ;   b o r d e r - r a d i u s :   8 p x ;   f o n t - s i z e :   0 . 8 5 r e m ;   c u r s o r :   p o i n t e r ;   t r a n s i t i o n :   0 . 3 s ;   } 
+ . b t n - e d i t : h o v e r   {   b a c k g r o u n d :   # 2 9 8 0 b 9 ;   c o l o r :   # f f f ;   } 
+ . b t n - d e l e t e   {   b a c k g r o u n d :   r g b a ( 2 3 1 ,   7 6 ,   6 0 ,   0 . 1 ) ;   c o l o r :   # e 7 4 c 3 c ;   b o r d e r :   n o n e ;   p a d d i n g :   6 p x   1 2 p x ;   b o r d e r - r a d i u s :   8 p x ;   f o n t - s i z e :   0 . 8 5 r e m ;   c u r s o r :   p o i n t e r ;   t r a n s i t i o n :   0 . 3 s ;   } 
+ . b t n - d e l e t e : h o v e r   {   b a c k g r o u n d :   # e 7 4 c 3 c ;   c o l o r :   # f f f ;   } 
+ 
+ 
+}
+.table-row-hover:hover { background: #e3f2fd !important; }
+
+/* --- UI/UX Premium Redesign --- */
+
+/* 1. Frosted Glass (Glassmorphism) & Holographic Hover for Traffic Cards */
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+.traffic-card {
+    backdrop-filter: blur(15px) !important;
+    -webkit-backdrop-filter: blur(15px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07) !important;
+}
+
+body.dark-mode .traffic-card {
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+/* 2. Neon Glows based on card type */
+.traffic-darkred { box-shadow: 0 8px 32px 0 rgba(139, 0, 0, 0.2), inset 0 2px 0 0 rgba(255,255,255,0.2) !important; }
+.traffic-red { box-shadow: 0 8px 32px 0 rgba(231, 76, 60, 0.2), inset 0 2px 0 0 rgba(255,255,255,0.2) !important; }
+.traffic-orange { box-shadow: 0 8px 32px 0 rgba(211, 84, 0, 0.2), inset 0 2px 0 0 rgba(255,255,255,0.2) !important; }
+.traffic-yellow { box-shadow: 0 8px 32px 0 rgba(243, 156, 18, 0.2), inset 0 2px 0 0 rgba(255,255,255,0.2) !important; }
+.traffic-green { box-shadow: 0 8px 32px 0 rgba(39, 174, 96, 0.2), inset 0 2px 0 0 rgba(255,255,255,0.2) !important; }
+.traffic-blue { box-shadow: 0 8px 32px 0 rgba(41, 128, 185, 0.2), inset 0 2px 0 0 rgba(255,255,255,0.2) !important; }
+.traffic-total { box-shadow: 0 8px 32px 0 rgba(30, 60, 114, 0.2), inset 0 2px 0 0 rgba(255,255,255,0.2) !important; }
+.traffic-offers { box-shadow: 0 8px 32px 0 rgba(243, 156, 18, 0.2), inset 0 2px 0 0 rgba(255,255,255,0.2) !important; }
+
+/* 3. Dynamic Borders & Light Reflection on Hover */
+.traffic-card:hover {
+    transform: translateY(-8px) scale(1.02) !important;
+    border-color: rgba(255, 255, 255, 0.8) !important;
+}
+.traffic-darkred:hover { box-shadow: 0 15px 40px 0 rgba(139, 0, 0, 0.4), inset 0 2px 0 0 rgba(255,255,255,0.5) !important; }
+.traffic-red:hover { box-shadow: 0 15px 40px 0 rgba(231, 76, 60, 0.4), inset 0 2px 0 0 rgba(255,255,255,0.5) !important; }
+.traffic-green:hover { box-shadow: 0 15px 40px 0 rgba(39, 174, 96, 0.4), inset 0 2px 0 0 rgba(255,255,255,0.5) !important; }
+
+/* Holographic Sheen */
+.traffic-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%; width: 50%; height: 100%;
+    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+    transform: skewX(-25deg);
+    transition: left 0.7s ease;
+    pointer-events: none;
+}
+.traffic-card:hover::before { left: 200%; }
+
+/* 4. Monospaced Digits */
+.traffic-card h2 {
+    font-family: 'Share Tech Mono', monospace, sans-serif !important;
+    font-size: 3.5rem !important;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    letter-spacing: -2px;
+}
+.traffic-header h3 {
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+}
+.traffic-card h3 i {
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+    transform: translateZ(10px);
+}
+
+/* 5. Heartbeat Pulse for Critical */
+@keyframes heartbeat {
+    0% { transform: scale(1); }
+    15% { transform: scale(1.1); text-shadow: 0 0 15px rgba(255,0,0,0.8); }
+    30% { transform: scale(1); }
+    45% { transform: scale(1.1); text-shadow: 0 0 15px rgba(255,0,0,0.8); }
+    60% { transform: scale(1); }
+}
+.traffic-darkred h2 {
+    animation: heartbeat 2s infinite ease-in-out;
+}
+
+/* 6. Custom Scrollbars */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(200, 200, 200, 0.5);
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(150, 150, 150, 0.8);
+}
+body.dark-mode ::-webkit-scrollbar-thumb {
+    background: rgba(80, 80, 80, 0.5);
+}
+
+/* 7. Liquid Active State for Sidebar */
+.nav-item .nav-link {
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    border-radius: 0 20px 20px 0;
+    margin-right: 10px;
+}
+.nav-item .nav-link.active {
+    background: linear-gradient(90deg, rgba(233, 30, 99, 0.1) 0%, transparent 100%) !important;
+    border-left: 4px solid var(--primary);
+    box-shadow: inset 10px 0 15px -10px rgba(233, 30, 99, 0.3);
+}
+
+/* Pulsing Badge for Sidebar */
+.pulsing-badge {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    background-color: #ff3b30;
+    border-radius: 50%;
+    margin-right: 8px;
+    box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7);
+    animation: pulse-red 1.5s infinite;
+}
+@keyframes pulse-red {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(255, 59, 48, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
+}
+
+/* Smart Accordion Parent Row */
+.batch-parent-row {
+    background: linear-gradient(to left, rgba(240, 248, 255, 0.8), transparent) !important;
+    border-right: 4px solid var(--primary);
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.2s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+}
+.batch-parent-row:hover {
+    background: rgba(240, 248, 255, 1) !important;
+}
+body.dark-mode .batch-parent-row {
+    background: linear-gradient(to left, rgba(30, 60, 114, 0.3), transparent) !important;
+}
+.batch-child-row {
+    background: rgba(0,0,0,0.015);
+    border-right: 2px dashed rgba(0,0,0,0.1);
+}
+body.dark-mode .batch-child-row {
+    background: rgba(255,255,255,0.015);
+    border-right: 2px dashed rgba(255,255,255,0.1);
+}
+
+
+/* Custom Platform Select Dropdown */
+.custom-platform-select { position: relative; width: 100%; margin-bottom: 15px; font-family: inherit; }
+.platform-selected { display: flex; align-items: center; padding: 12px 16px; border: 2px solid #25D366; border-radius: 12px; background: #fff; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(37, 211, 102, 0.1); }
+.platform-selected i.platform-icon { font-size: 1.5rem; margin-left: 12px; transition: all 0.3s ease; }
+.platform-selected span.platform-text { flex-grow: 1; font-weight: 600; color: #333; font-size: 1.1rem; }
+.platform-selected i.dropdown-arrow { margin-left: 0; font-size: 1rem; color: #888; transition: transform 0.3s ease; }
+.custom-platform-select.open .dropdown-arrow { transform: rotate(180deg); }
+.platform-options { position: absolute; top: 100%; right: 0; left: 0; background: #fff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-top: 8px; z-index: 999; overflow: hidden; display: none; transform-origin: top; animation: dropFadeIn 0.2s ease; border: 1px solid #eee; }
+.custom-platform-select.open .platform-options { display: block; }
+.platform-option { padding: 12px 16px; display: flex; align-items: center; cursor: pointer; transition: background 0.2s; font-weight: 500; color: #444; border-bottom: 1px solid #f5f5f5; }
+.platform-option:last-child { border-bottom: none; }
+.platform-option:hover { background: #f8f9fa; }
+.platform-option i { font-size: 1.3rem; margin-left: 12px; }
+@keyframes dropFadeIn { from { opacity: 0; transform: scaleY(0.9); } to { opacity: 1; transform: scaleY(1); } }
+
+@media (max-width: 500px) { .welcome-text { display: none !important; } }
+
+/* Custom Date Picker Wheel Styles */
+.wheel-column {
+    flex: 1;
+    height: 100%;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* IE and Edge */
+    text-align: center;
+    position: relative;
+}
+.wheel-column::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+}
+.wheel-item {
+    height: 40px;
+    line-height: 40px;
+    scroll-snap-align: center;
+    font-size: 1.1rem;
+    color: #94a3b8;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    user-select: none;
+    font-weight: 600;
+}
+.wheel-item.selected {
+    color: #1e293b;
+    font-size: 1.4rem;
+    font-weight: 800;
+}
+body.dark-mode .wheel-item {
+    color: #64748b;
+}
+body.dark-mode .wheel-item.selected {
+    color: #f8fafc;
+}
+body.dark-mode .wheel-picker-container {
+    background: #0f172a;
+}
+.wheel-spacer {
+    height: 80px; /* Half of container height (100px) minus half of item height (20px) */
+}
+
+/* Payment Method Colors */
+.payment-cash { background-color: rgba(37, 211, 102, 0.1) !important; border: 2px solid #25D366 !important; color: #128C7E !important; font-weight: bold; box-shadow: 0 0 10px rgba(37, 211, 102, 0.2); }
+.payment-instapay { background-color: rgba(156, 39, 176, 0.1) !important; border: 2px solid #9C27B0 !important; color: #7B1FA2 !important; font-weight: bold; box-shadow: 0 0 10px rgba(156, 39, 176, 0.2); }
+
+
+/* Flatpickr Custom Styling for Expiries */
+.flatpickr-day.has-entry {
+    background-color: #e8f5e9 !important;
+    border-color: #4caf50 !important;
+    color: #2e7d32 !important;
+    font-weight: bold;
+}
+.flatpickr-day.has-entry::after {
+    content: '';
+    position: absolute;
+    bottom: 3px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #2e7d32;
+}
