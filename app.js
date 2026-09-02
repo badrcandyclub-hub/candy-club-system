@@ -5816,6 +5816,12 @@ window.showExpiryDetails = function (category, resetPage = true) {
             } else if (category === 'Far' && daysRemaining > 180) {
                 matches = true;
                 title = "<i class=\'fa-brands fa-facebook\'></i> تاريخ بعيد (أكثر من 6 شهور)";
+            } else if (category === 'ByEntryDate') {
+                const targetDate = window.currentExpiryFilterEntryDate;
+                if (item.regDate === targetDate) {
+                    matches = true;
+                    title = `<i class=\'fa-solid fa-clock-rotate-left\'></i> استلامة وقت: ${targetDate}`;
+                }
             }
 
             if (matches) {
@@ -6003,9 +6009,26 @@ window.showExpiryDetails = function (category, resetPage = true) {
                     <span>الكمية: ${item.qty}</span>
                     <span style="color: ${daysColor}; font-weight: bold;">${daysText}</span>
                 </div>
-                <div style="font-size: 0.8rem; color: #7f8c8d; margin-bottom: 8px;">
-                    <i class=\'fa-regular fa-calendar-days\'></i> انتهاء: ${formattedDate} | 🏢 مكان: ${item.location || '-'} <br>
-                    <i class=\'fa-solid fa-user\'></i> المستلم: ${item.receiver || 'غير محدد'} | 📝 ملاحظات: ${item.notes || '-'}
+                <div class="expiry-item-metadata" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; background: #fff; padding: 12px; border-radius: 8px; border: 1px solid #e0e0e0; margin-top: 5px;">
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+                        <span style="background: #e3f2fd; color: #1565c0; padding: 5px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; border: 1px solid #bbdefb;">
+                            <i class=\'fa-regular fa-calendar-days\'></i> انتهاء: ${formattedDate}
+                        </span>
+                        <span style="background: #fff3e0; color: #e65100; padding: 5px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; border: 1px solid #ffe0b2;">
+                            <i class=\'fa-solid fa-location-dot\'></i> مكان: ${item.location || '-'}
+                        </span>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+                        <span style="background: #f3e5f5; color: #6a1b9a; padding: 5px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; border: 1px solid #e1bee7;">
+                            <i class=\'fa-solid fa-user-check\'></i> المستلم: ${item.receiver || 'غير محدد'}
+                        </span>
+                        <span style="background: #e8f5e9; color: #2e7d32; padding: 5px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; border: 1px solid #c8e6c9; cursor: pointer; transition: 0.2s;" onclick="filterExpiriesByEntryDate('${item.regDate}')" title="اضغط لعرض استلامة هذا الوقت بالكامل" onmouseover="this.style.background='#c8e6c9'" onmouseout="this.style.background='#e8f5e9'">
+                            <i class=\'fa-solid fa-clock-rotate-left\'></i> تسجيل: ${item.regDate || '-'}
+                        </span>
+                    </div>
+                    <div style="background: #f5f5f5; color: #424242; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; border: 1px dashed #bdbdbd;">
+                        <i class=\'fa-solid fa-note-sticky\'></i> <strong>ملاحظات:</strong> ${item.notes || '-'}
+                    </div>
                 </div>
                 ${pricesHtml}
                 <div class="expiry-item-actions" style="flex-wrap: wrap; gap: 5px;">
@@ -6059,6 +6082,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 window.closeExpiryDetails = function () {
     document.getElementById('expiryDetailsSection').style.display = 'none';
+};
+
+window.filterExpiriesByEntryDate = function (dateStr) {
+    if (!dateStr || dateStr === '-') return;
+    window.currentExpiryFilterEntryDate = dateStr;
+    showExpiryDetails('ByEntryDate');
+    setTimeout(() => {
+        document.getElementById('expiryDetailsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
 };
 
 const searchExpiryBtn = document.getElementById('searchExpiryBtn');
