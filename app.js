@@ -4250,10 +4250,14 @@ window.shareToWhatsAppGroup = async function (orderId) {
     if (order.date && order.id) {
         try {
             let orderMonth = order.date.substring(0, 7);
+            let parts = orderMonth.split('-');
+            let lastDay = new Date(parseInt(parts[0]), parseInt(parts[1]), 0).getDate();
+            let startDate = `${orderMonth}-01`;
+            let endDate = `${orderMonth}-${lastDay}`;
             
             const [dSeqRes, mSeqRes] = await Promise.all([
                 supabase.from('orders').select('*', { count: 'exact', head: true }).eq('order_date', order.date).lte('order_id', order.id),
-                supabase.from('orders').select('*', { count: 'exact', head: true }).like('order_date', orderMonth + '%').lte('order_id', order.id)
+                supabase.from('orders').select('*', { count: 'exact', head: true }).gte('order_date', startDate).lte('order_date', endDate).lte('order_id', order.id)
             ]);
             
             if (dSeqRes && dSeqRes.count !== null) dailySequence = dSeqRes.count;
