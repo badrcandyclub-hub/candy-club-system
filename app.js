@@ -2762,12 +2762,31 @@ if (searchBtn && orderSearchInput) {
 const phoneInput = document.getElementById('customerPhone');
 const phoneStatus = document.getElementById('phoneCheckStatus');
 
+// Sanitize Phone Inputs (Only 11 English digits, no spaces)
+function setupPhoneSanitizer(inputId) {
+    const el = document.getElementById(inputId);
+    if (!el) return;
+    el.addEventListener('input', function(e) {
+        let val = e.target.value;
+        const arabicNumbers = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+        for (let i = 0; i < 10; i++) {
+            val = val.replaceAll(arabicNumbers[i], i.toString());
+        }
+        val = val.replace(/\D/g, ''); 
+        if (val.length > 11) val = val.substring(0, 11);
+        e.target.value = val;
+    });
+}
+setupPhoneSanitizer('customerPhone');
+setupPhoneSanitizer('phone2');
+
+
 // <i class=\'fa-solid fa-star\'></i> إصلاح ذاكرة السمكة
 function performPhoneSearch() {
     if (!phoneInput || !phoneStatus) return;
     let phoneVal = phoneInput.value.trim().replace(/\D/g, '');
     if (phoneVal.length >= 9) {
-        phoneStatus.innerHTML = "<i class=\'fa-solid fa-hourglass-half\'></i>";
+        phoneStatus.innerHTML = "<i class=\'fa-solid fa-spinner fa-spin\'></i>";
 
         let foundCustomer = null;
         if (orderHistoryData && orderHistoryData.length > 0) foundCustomer = orderHistoryData.find(o => o.phone.toString().replace(/\D/g, '').includes(phoneVal));
@@ -2797,7 +2816,6 @@ function performPhoneSearch() {
                 reservationDate: o.delivery_date || ""
             })).reverse();
             return results; })()
-                .then(res => res.json())
                 .then(data => {
                     if (data.length > 0) fillCustomerData(data[0]);
                     else phoneStatus.innerText = "🆕";
@@ -2814,7 +2832,7 @@ function fillCustomerData(cust) {
         document.getElementById('address').value = cust.address;
     }
     phoneStatus.innerHTML = "<i class=\'fa-solid fa-check\'></i>";
-    showToast(`أهلاً بعودتك يا ${cust.name}!`, "success");
+    showToast(`تم العثور على العميل: ${cust.name}`, "success");
 }
 
 if (phoneStatus) phoneStatus.addEventListener('click', performPhoneSearch);
