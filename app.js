@@ -1243,6 +1243,9 @@ function openModalWithHistory(modalId) {
     if (!modal) return;
     if (modal.classList.contains('active')) return;
 
+    const st = history.state || {};
+    const hadOpen = (window._openModalId && window._openModalId !== modalId) || (st && !!st.modalOpen);
+
     // Close any other open modal first (skip history change for that close)
     if (window._openModalId && window._openModalId !== modalId) {
         const prev = document.getElementById(window._openModalId);
@@ -1254,10 +1257,13 @@ function openModalWithHistory(modalId) {
     window._openModalId = modalId;
 
     try {
-        history.pushState({ modalOpen: modalId }, '');
+        if (hadOpen) {
+            history.replaceState({ modalOpen: modalId }, '');
+        } else {
+            history.pushState({ modalOpen: modalId }, '');
+        }
     } catch (e) {
-        // ignore (some browsers may restrict pushState in file://)
-        console.warn('pushState failed for modal:', modalId, e);
+        console.warn('pushState/replaceState failed for modal:', modalId, e);
     }
 }
 
@@ -4837,7 +4843,12 @@ function fetchCatalogFromFirebase() {
     try {
         const cached = localStorage.getItem(FIREBASE_CACHE_KEY);
         if (cached) {
-            try { barcodeCatalogData = JSON.parse(cached); } catch(e) { barcodeCatalogData = {}; }
+            try { 
+                barcodeCatalogData = JSON.parse(cached); 
+                if (!Array.isArray(barcodeCatalogData)) barcodeCatalogData = [];
+            } catch(e) { 
+                barcodeCatalogData = []; 
+            }
             console.log("⚡ تم تحميل الكاش المحلي: ", barcodeCatalogData.length, "منتج");
             updateSmartSuggestionsFromFirebase();
         }
@@ -4991,7 +5002,7 @@ if (closeScanResultBtn) {
 if (scanAnotherBtn) {
     scanAnotherBtn.addEventListener('click', () => {
         currentScannerMode = 'order'; // Fix: retain order mode
-        closeModalWithHistory('scanResultModal');
+        closeModalWithHistory('scanResultModal', true);
         openModalWithHistory('scannerModal');
         startBarcodeScanner();
     });
@@ -5146,7 +5157,7 @@ function onScanSuccess(decodedText, decodedResult) {
     
     let val = String(decodedText).trim();
     
-    closeModalWithHistory('scannerModal');
+    closeModalWithHistory('scannerModal', true);
     
     processBarcodeAction(val);
 }
@@ -5215,7 +5226,7 @@ if (manualSearchBtn && manualBarcodeInput) {
             return;
         }
 
-        closeModalWithHistory('scannerModal');
+        closeModalWithHistory('scannerModal', true);
         processBarcodeAction(val);
         manualBarcodeInput.value = '';
 
@@ -5346,7 +5357,7 @@ if (barcodeImageUpload) {
                 tempScanner.scanFile(imageFile, false)
                     .then(decodedText => {
                         clearTimeout(emergencyTimeout);
-                        closeModalWithHistory('scannerModal');
+                        closeModalWithHistory('scannerModal', true);
                         handleBarcodeMatch(decodedText);
 
                         // إعادة ضبط كل شيء
