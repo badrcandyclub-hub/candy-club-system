@@ -2401,6 +2401,18 @@ body.dark-mode .invoice-offer-bar {
     border-right: 5px solid var(--primary); 
 }
 
+/* Dynamic Status Backgrounds */
+.history-item.status-delivered, .history-item.status-settled { background-color: #e8f5e9; }
+.history-item.status-pending { background-color: #fff8e1; }
+.history-item.status-shipped { background-color: #e3f2fd; }
+.history-item.status-returned { background-color: #ffebee; }
+
+/* Dynamic Status Backgrounds - Dark Mode */
+body.dark-mode .history-item.status-delivered, body.dark-mode .history-item.status-settled { background-color: rgba(76, 175, 80, 0.1); }
+body.dark-mode .history-item.status-pending { background-color: rgba(255, 193, 7, 0.1); }
+body.dark-mode .history-item.status-shipped { background-color: rgba(33, 150, 243, 0.1); }
+body.dark-mode .history-item.status-returned { background-color: rgba(244, 67, 54, 0.1); }
+
 .financial-row {
     display: flex;
     flex-direction: column;

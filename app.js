@@ -2318,9 +2318,16 @@ function renderHistoryList(orders, isLoadMore = false) {
 
     pageOrders.forEach(order => {
         let div = document.createElement('div');
-        div.className = 'history-item';
+        let statusClass = 'status-other';
+        if (order.status === "تم التوصيل ومُحاسب") statusClass = 'status-settled';
+        else if (order.status === "تم التوصيل") statusClass = 'status-delivered';
+        else if (order.status === "قيد التجهيز") statusClass = 'status-pending';
+        else if (order.status === "في الشحن") statusClass = 'status-shipped';
+        else if (order.status === "مرتجع") statusClass = 'status-returned';
+        
+        div.className = `history-item ${statusClass}`;
 
-        let statusColor = order.status === "تم التوصيل" ? "var(--success)" : "var(--primary)";
+        let statusColor = (order.status === "تم التوصيل" || order.status === "تم التوصيل ومُحاسب") ? "var(--success)" : "var(--primary)";
         if (order.status === "مرتجع") statusColor = "var(--danger)";
 
         div.style.borderRightColor = statusColor;
