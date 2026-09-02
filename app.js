@@ -397,13 +397,16 @@ async function handleSupabaseRequest(url, options) {
             }
             case 'getStats': {
                 const month = params.date ? params.date.substring(0, 7) : new Date().toISOString().substring(0, 7);
-                const startMonthDate = month + '-01';
-                const endMonthDate = month + '-31';
-                const { data: monthOrders } = await fetchAllSupabaseRows(
+                const [yr, mo] = month.split('-');
+                const lastDay = new Date(parseInt(yr, 10), parseInt(mo, 10), 0).getDate();
+                const startMonthDate = `${month}-01`;
+                const endMonthDate = `${month}-${String(lastDay).padStart(2, '0')}`;
+                const { data: monthOrders, error: mErr } = await fetchAllSupabaseRows(
                     supabase.from('orders').select('*')
                     .gte('order_date', startMonthDate)
                     .lte('order_date', endMonthDate)
                 );
+                if (mErr) throw mErr;
                 
                 let topProducts = {};
                 let platforms = {};
@@ -4079,6 +4082,14 @@ function renderReportForMonth(targetMonth) {
     fetch(`${GOOGLE_SHEETS_URL}?date=${fetchDate}`)
         .then(r => r.json())
         .then(data => {
+            if (!data || data.success === false) {
+                if (statusEl) statusEl.innerHTML = '<i class=\'fa-solid fa-xmark\'></i> حدث خطأ في تحميل البيانات';
+                if (topEl) topEl.innerHTML = '<p class="empty-msg"><i class=\'fa-solid fa-xmark\'></i> تعذر التحميل</p>';
+                if (pltEl) pltEl.innerHTML = '<p class="empty-msg"><i class=\'fa-solid fa-xmark\'></i> تعذر التحميل</p>';
+                let zonesEl = document.getElementById('zonesAnalyticsList');
+                if (zonesEl) zonesEl.innerHTML = '<p class="empty-msg"><i class=\'fa-solid fa-xmark\'></i> تعذر التحميل</p>';
+                return;
+            }
             let arabicMonths = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
             let [yr, mo] = targetMonth.split('-');
             if (statusEl) statusEl.innerHTML = `<i class=\'fa-solid fa-check\'></i> تم تحميل بيانات ${arabicMonths[parseInt(mo) - 1]} ${yr}`;
