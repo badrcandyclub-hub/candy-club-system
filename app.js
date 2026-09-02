@@ -13080,20 +13080,31 @@ async function setupFirebaseSync() {
 window.runSyncNow = async function() {
     const btn = document.getElementById('manualSyncBtn');
     const originalText = btn ? btn.innerHTML : '';
-    if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري المزامنة، يرجى الانتظار (قد يستغرق بعض الوقت)...';
-    if (btn) btn.disabled = true;
+    
+    const overlay = document.getElementById('syncLoadingOverlay');
+    const textEl = document.getElementById('syncLoadingText');
+    const subtextEl = document.getElementById('syncLoadingSubtext');
+    
+    if (overlay) {
+        overlay.style.display = 'flex';
+        if (textEl) textEl.innerText = 'جاري المزامنة مع الكاشير...';
+        if (subtextEl) subtextEl.innerText = 'الرجاء الانتظار وعدم الخروج من الصفحة لضمان سلامة الداتا';
+    }
+
+    if (btn) {
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري المزامنة...';
+        btn.disabled = true;
+    }
 
     let formData = new URLSearchParams();
     formData.append('action', 'syncFirebaseInventory');
-    
-    showToast('بدأت المزامنة مع الكاشير... لا تقم بإغلاق الصفحة', 'info');
     
     try {
         const r = await fetch(GOOGLE_SHEETS_URL, { method: 'POST', body: formData });
         const data = await r.json();
         
         if (data.success) {
-            showToast('اكتملت المزامنة الأساسية، جاري تحديث أسماء المنتجات المجهولة...', 'info');
+            if (textEl) textEl.innerText = 'جاري مطابقة وتحديث الأسماء المجهولة...';
             
             // Retroactive barcode matching
             let updatedCount = 0;
@@ -13138,6 +13149,7 @@ window.runSyncNow = async function() {
             btn.innerHTML = originalText;
             btn.disabled = false;
         }
+        if (overlay) overlay.style.display = 'none';
     }
 };
 
