@@ -3847,23 +3847,21 @@ body.dark-mode .app-sidebar {
 
 .offer-badge {
     position: absolute;
-    top: 0;
-    right: 0;
-    background-color: #ff0000;
+    top: -10px;
+    right: -10px;
+    background-color: #E91E8C;
     color: #fff;
     font-weight: bold;
-    padding: 16px 32px;
-    border-radius: 0 0 0 25px;
+    padding: 8px 16px;
+    border-radius: 12px;
     z-index: 20;
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-    font-size: 3.2rem;
-    border: 3px solid #ffeb3b;
-    border-top: none;
-    border-right: none;
+    font-size: 1.5rem;
+    border: 2px solid #ffeb3b;
     animation: none !important;
     transform: none !important;
 }
-.price-tag-card .offer-badge { font-size: 3.2rem; padding: 16px 32px; }
+.price-tag-card .offer-badge { font-size: 1.5rem; padding: 8px 16px; top: -10px; right: -10px; }
 
 .old-price {
     text-decoration: line-through;
