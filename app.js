@@ -518,22 +518,42 @@ async function handleSupabaseRequest(url, options) {
                 await supabase.from('expiries').insert(expRows);
                 break;
             case 'updateExpiryItemData':
-                const idParts = params.id ? params.id.split('|') : [];
+                const idParts = params.id ? String(params.id).split('|') : [];
                 const targetName = idParts[0] || params.id;
-                await supabase.from('expiries').update({ qty: params.qty, expiry_date: params.expiryDate, location: params.location, receiver: params.receiver, notes: params.notes, barcode: params.barcode }).eq('product_name', targetName);
+                let q1 = supabase.from('expiries').update({ qty: params.qty, expiry_date: params.expiryDate, location: params.location, receiver: params.receiver, notes: params.notes, barcode: params.barcode });
+                if (idParts.length >= 4 && idParts[3]) {
+                    q1 = q1.eq('id', idParts[3]);
+                } else {
+                    q1 = q1.eq('product_name', targetName);
+                    if (idParts[1]) q1 = q1.eq('quantity', idParts[1]);
+                    if (idParts[2]) q1 = q1.eq('expiry_date', idParts[2]);
+                }
+                await q1;
                 break;
             case 'updateExpiryStatus':
-                const statParts = params.id ? params.id.split('|') : [];
+                const statParts = params.id ? String(params.id).split('|') : [];
                 const tName = statParts[0] || params.id;
                 let updates = { status: params.status };
                 if (params.originalPrice) updates.original_price = params.originalPrice;
                 if (params.offerPrice) updates.offer_price = params.offerPrice;
-                await supabase.from('expiries').update(updates).eq('product_name', tName);
+                
+                let q2 = supabase.from('expiries').update(updates);
+                if (statParts.length >= 4 && statParts[3]) {
+                    q2 = q2.eq('id', statParts[3]);
+                } else {
+                    q2 = q2.eq('product_name', tName);
+                    if (statParts[1]) q2 = q2.eq('quantity', statParts[1]);
+                    if (statParts[2]) q2 = q2.eq('expiry_date', statParts[2]);
+                }
+                await q2;
+
                 // Also update catalog
                 let catUpdate = {};
                 if (params.status === 'في عرض') { catUpdate.is_offer = true; if(params.offerPrice) catUpdate.offer_price = params.offerPrice; }
                 else if (params.status === 'مش في عرض') { catUpdate.is_offer = false; catUpdate.offer_price = 0; }
-                await supabase.from('catalog').update(catUpdate).eq('product_name', tName);
+                if (tName !== 'غير محدد' && tName !== 'غير محدد (بانتظار المزامنة)') {
+                    await supabase.from('catalog').update(catUpdate).eq('product_name', tName);
+                }
                 break;
             case 'addOutOfStock':
                 await supabase.from('out_of_stock').insert([{ customer_name: params.customer, phone: params.phone, product: params.product, reason: params.reason }]);
@@ -812,7 +832,7 @@ async function handleSupabaseRequest(url, options) {
             case 'getExpiries': {
                 const { data: expData } = await fetchAllSupabaseRows(supabase.from('expiries').select('*'));
                 responseData = { expiries: (expData || []).map(e => ({
-                    id: (e.product_name || '') + '|' + (e.quantity || '') + '|' + (e.expiry_date || ''),
+                    id: (e.product_name || '') + '|' + (e.quantity || '') + '|' + (e.expiry_date || '') + (e.id ? '|' + e.id : ''),
                     name: e.product_name || '', qty: e.quantity || '', expiryDate: e.expiry_date || '',
                     location: e.location || '', registrarName: e.registrar_name || '', regDate: e.reg_date || '',
                     receiver: e.receiver || '', notes: e.notes || '', originalPrice: e.original_price || '',
