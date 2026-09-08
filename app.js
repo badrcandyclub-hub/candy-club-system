@@ -1128,6 +1128,7 @@ window.MODULE_GROUPS = {
     'marketing': { name: 'العملاء والتسويق', icon: 'fa-solid fa-users-viewfinder fa-fade', tabs: ['customers-tab', 'whatsapp-campaign-tab'], req: 'customers,users,orders' },
     'products': { name: 'المنتجات', icon: 'fa-solid fa-tags fa-beat', tabs: ['price-tags-tab', 'shortages-tab', 'expiry-tab', 'inventory-transfers-tab'], req: 'catalog,drafts,users,expiries' },
     'hr': { name: 'شئون الموظفين', icon: 'fa-solid fa-id-card-clip fa-flip', tabs: ['hr-tab', 'hr-admin-tab'], req: 'attendance,users' },
+    'gifts': { name: 'قسم الهدايا والبوكيهات', icon: 'fa-solid fa-wand-magic-sparkles', tabs: ['gifts-tab'], req: 'gifts' },
     'admin': { name: 'الإدارة والتقارير', icon: 'fa-solid fa-chart-pie fa-spin', tabs: ['reports-tab', 'moderators-tab', 'users-tab'], req: 'orders,users,customers,shipping,financials,shortages' }
 };
 
@@ -1169,7 +1170,7 @@ document.querySelectorAll('.nav-item').forEach(btn => {
                 loadingText.innerText = `جاري تحميل ${modData.name}...`;
                 loadingIcon.className = modData.icon;
                 // لون أيقونة مختلف لكل قسم
-                let colors = { 'orders': '#E91E8C', 'marketing': '#1565C0', 'products': '#e67e22', 'hr': '#00897b', 'admin': '#795548' };
+                let colors = { 'orders': '#E91E8C', 'marketing': '#1565C0', 'products': '#e67e22', 'hr': '#00897b', 'gifts': '#E91E8C', 'admin': '#795548' };
                 loadingIcon.style.color = colors[newModuleGroup] || 'var(--primary)';
                 
                 // overlay.style.display = 'flex'; // DISABLED FOR SPEED
@@ -1193,6 +1194,12 @@ document.querySelectorAll('.nav-item').forEach(btn => {
         }
         if (targetId === 'hr-tab') { if (typeof initHrTab === 'function') initHrTab(); }
         if (targetId === 'hr-admin-tab') { if (typeof initHrAdminTab === 'function') initHrAdminTab(); }
+        if (targetId === 'gifts-tab') {
+            let subtab = btn.getAttribute('data-subtab') || 'builder';
+            if (typeof window.lazyLoadGiftsModule === 'function') {
+                window.lazyLoadGiftsModule(subtab);
+            }
+        }
 
         // ⭐ V16.1: Auto load financials
         if (targetId === 'financials-tab') {
@@ -1252,6 +1259,82 @@ document.querySelectorAll('.nav-item').forEach(btn => {
         }
     });
 });
+
+// ==========================================
+// Lazy Loading for Candy Club Gifts Module
+// ==========================================
+window.giftsModuleLoaded = false;
+window.lazyLoadGiftsModule = function(subtab = 'builder') {
+    let tabPane = document.getElementById('gifts-tab');
+    if (!tabPane) return;
+
+    if (window.giftsModuleLoaded && window.GiftsApp) {
+        window.GiftsApp.switchSubTab(subtab);
+        return;
+    }
+
+    // 1. Injected gifts.css dynamically
+    if (!document.getElementById('gifts-module-css')) {
+        let link = document.createElement('link');
+        link.id = 'gifts-module-css';
+        link.rel = 'stylesheet';
+        link.href = 'gifts_module/css/gifts.css?v=' + Date.now();
+        document.head.appendChild(link);
+    }
+
+    // 2. Fetch gifts.html and inject into gifts-tab
+    fetch('gifts_module/html/gifts.html?v=' + Date.now())
+        .then(res => {
+            if (!res.ok) return fetch('gifts_module/gifts.html?v=' + Date.now());
+            return res;
+        })
+        .then(res => {
+            if (!res.ok) throw new Error("Failed to load gifts.html");
+            return res.text();
+        })
+        .then(html => {
+            tabPane.innerHTML = html;
+
+            // 3. Injected gifts.js dynamically
+            if (!document.getElementById('gifts-module-js')) {
+                let script = document.createElement('script');
+                script.id = 'gifts-module-js';
+                script.src = 'gifts_module/js/gifts.js?v=' + Date.now();
+                script.onload = function() {
+                    window.giftsModuleLoaded = true;
+                    if (window.GiftsApp && typeof window.GiftsApp.init === 'function') {
+                        window.GiftsApp.init(subtab);
+                    }
+                };
+                script.onerror = function() {
+                    // Try fallback path if needed
+                    let fallbackScript = document.createElement('script');
+                    fallbackScript.id = 'gifts-module-js-fallback';
+                    fallbackScript.src = 'gifts_module/gifts.js?v=' + Date.now();
+                    fallbackScript.onload = function() {
+                        window.giftsModuleLoaded = true;
+                        if (window.GiftsApp && typeof window.GiftsApp.init === 'function') {
+                            window.GiftsApp.init(subtab);
+                        }
+                    };
+                    fallbackScript.onerror = function() {
+                        tabPane.innerHTML = '<div style="text-align:center; padding:40px; color:#c0392b; font-weight:bold;">تعذر تحميل كود قسم الهدايا</div>';
+                    };
+                    document.body.appendChild(fallbackScript);
+                };
+                document.body.appendChild(script);
+            } else {
+                window.giftsModuleLoaded = true;
+                if (window.GiftsApp && typeof window.GiftsApp.init === 'function') {
+                    window.GiftsApp.init(subtab);
+                }
+            }
+        })
+        .catch(err => {
+            console.error("Gifts module loading error:", err);
+            tabPane.innerHTML = '<div style="text-align:center; padding:40px; color:#c0392b; font-weight:bold;">حدث خطأ أثناء تحميل واجهة قسم الهدايا</div>';
+        });
+};
 
 // Generic modal registration with History API support (mobile back button friendly)
 // When a modal opens we push a history state { modalOpen: modalId } so mobile back closes it (popstate).
