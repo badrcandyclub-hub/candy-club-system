@@ -6803,14 +6803,36 @@ window.saveEditExpiryModal = async function() {
     if (barcode) updatePayload.barcode = barcode;
     
     try {
-        const { error } = await supabase.from('expiries').update(updatePayload).eq('id', id);
+        let updateQuery = supabase.from('expiries').update(updatePayload);
+        let numericId = null;
+        if (/^\d+$/.test(String(id).trim())) {
+            numericId = parseInt(id);
+            updateQuery = updateQuery.eq('id', numericId);
+        } else {
+            // Find item in expiryData to get its real dbId
+            let foundItem = expiryData.find(i => String(i.id) === String(id));
+            if (foundItem && foundItem.dbId) {
+                numericId = foundItem.dbId;
+                updateQuery = updateQuery.eq('id', numericId);
+            } else {
+                let parts = String(id).split('|');
+                if (parts.length >= 4 && /^\d+$/.test(parts[3])) {
+                    numericId = parseInt(parts[3]);
+                    updateQuery = updateQuery.eq('id', numericId);
+                } else {
+                    updateQuery = updateQuery.eq('product_name', parts[0]).eq('expiry_date', parts[2] || date);
+                }
+            }
+        }
+        
+        const { error } = await updateQuery;
         if (error) {
             console.error("Supabase update error:", error);
             showToast("حدث خطأ أثناء التعديل في قاعدة البيانات: " + error.message, "error");
             return;
         }
         
-        showToast("<i class='fa-solid fa-check'></i> تم تعديل الاستلامة في قاعدة البيانات بنجاح", "success");
+        showToast("<i class='fa-solid fa-check'></i> تم حفظ التعديلات في السيرفر بنجاح", "success");
         closeEditExpiryModal();
         
         // Update in-memory expiryData
@@ -6823,6 +6845,20 @@ window.saveEditExpiryModal = async function() {
             item.location = location || '';
             item.notes = notes || '';
             if (barcode) item.barcode = barcode;
+        }
+        
+        // Also update window.expiriesData
+        if (Array.isArray(window.expiriesData)) {
+            let winItem = window.expiriesData.find(i => String(i.id) === String(id));
+            if (winItem) {
+                if (prodName) winItem.name = prodName;
+                winItem.qty = qty;
+                winItem.expiryDate = date;
+                winItem.receiver = receiver;
+                winItem.location = location || '';
+                winItem.notes = notes || '';
+                if (barcode) winItem.barcode = barcode;
+            }
         }
         
         // Update item in open batch edit modal live
@@ -7240,26 +7276,41 @@ if (btnExportDatePDF) {
 
 function showBatchSelectionModal(batches, legacyBatch, pdfTitleDate) {
     const overlay = document.createElement('div');
-    overlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px);";
+    overlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.75); z-index: 10000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(8px); padding: 15px; box-sizing: border-box;";
     
     const modal = document.createElement('div');
-    modal.style = "background: var(--bg); padding: 25px; border-radius: 15px; max-width: 500px; width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid var(--border); max-height: 80vh; overflow-y: auto;";
+    modal.style = "background: #ffffff; padding: 26px 28px; border-radius: 22px; max-width: 580px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border: 1px solid #e2e8f0; max-height: 85vh; display: flex; flex-direction: column; gap: 16px; direction: rtl; font-family: 'Cairo', sans-serif; position: relative;";
     
     let html = `
-        <h3 style="color: var(--primary); margin-top: 0; font-family: 'Cairo', sans-serif; text-align: center;">طباعة استلامات ${pdfTitleDate}</h3>
-        <p style="font-size: 0.95rem; color: var(--text-main); margin-bottom: 20px; text-align: center;">الاستلامات المسجلة في هذا اليوم. يمكنك تحديد المحضر المراد طباعته أو التعديل عليه:</p>
-        <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 46px; height: 46px; border-radius: 14px; background: linear-gradient(135deg, #10b981, #0284c7); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.25rem; box-shadow: 0 8px 16px rgba(16, 185, 129, 0.25);">
+                    <i class="fa-solid fa-file-invoice"></i>
+                </div>
+                <div>
+                    <h3 style="margin: 0; color: #0f172a; font-size: 1.25rem; font-weight: 800; line-height: 1.3;">
+                        طباعة استلامات ${pdfTitleDate}
+                    </h3>
+                    <div style="font-size: 0.85rem; color: #64748b; margin-top: 3px; font-weight: 600;">
+                        حدد المحضر المراد طباعته أو اضغط على القلم للتعديل عليه
+                    </div>
+                </div>
+            </div>
+            <button id="closeBatchSelectionModalTopBtn" style="background: #f1f5f9; border: none; width: 34px; height: 34px; border-radius: 50%; color: #64748b; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="إغلاق">
+                &times;
+            </button>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px; max-height: 48vh; overflow-y: auto; padding-left: 5px; padding-right: 2px;">
     `;
 
-    Object.keys(batches).forEach((bId, idx) => {
+    Object.keys(batches).forEach((bId) => {
         let items = batches[bId];
-        
         let timeStr = "غير معروف";
         let splitTime = bId.match(/(\d{1,2}:\d{2}\s*(ص|م|AM|PM))/i);
         if (splitTime && splitTime[1]) {
             timeStr = splitTime[1];
         } else if (bId.includes(":")) {
-            // fallback if it has a colon but no AM/PM
             let parts = bId.split(" ");
             timeStr = parts.length > 1 ? parts.slice(1).join(" ") : bId;
         } else if (bId.startsWith('legacy_')) {
@@ -7268,17 +7319,19 @@ function showBatchSelectionModal(batches, legacyBatch, pdfTitleDate) {
 
         let receiver = items[0].receiver || 'غير محدد';
         html += `
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <input type="checkbox" class="batch-checkbox" value="${bId}" style="width: 20px; height: 20px; cursor: pointer; flex-shrink: 0;">
-                <button class="interactive-btn batch-select-btn" data-batch="${bId}" style="flex: 1; background: var(--bg-light); color: var(--text-main); border: 1px solid var(--border); padding: 15px; border-radius: 8px; text-align: right; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s;">
-                    <div style="display: flex; flex-direction: column; gap: 5px;">
-                        <span>🕒 استلامة الساعة ${timeStr}</span>
-                        <span style="font-size: 0.85rem; color: var(--primary); font-weight: bold;"><i class='fa-solid fa-user'></i> المستلم: ${receiver}</span>
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                <input type="checkbox" class="batch-checkbox" value="${bId}" style="width: 20px; height: 20px; cursor: pointer; flex-shrink: 0; accent-color: #ec4899;">
+                <button class="interactive-btn batch-select-btn" data-batch="${bId}" style="flex: 1; background: transparent; border: none; text-align: right; display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 0;">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <span style="font-weight: 800; color: #0f172a; font-size: 0.96rem;">🕒 استلامة الساعة ${timeStr}</span>
+                        <span style="font-size: 0.82rem; color: #64748b; font-weight: 600;">
+                            <i class='fa-solid fa-user-check' style="color: #6366f1;"></i> المستلم: <strong style="color: #334155;">${receiver}</strong>
+                        </span>
                     </div>
-                    <span style="background: var(--primary); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">${items.length} أصناف</span>
+                    <span style="background: #fdf2f8; color: #db2777; border: 1px solid #fbcfe8; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 700;">${items.length} أصناف</span>
                 </button>
-                <button class="interactive-btn batch-edit-btn" data-batch="${bId}" style="background: #3498db; color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; transition: 0.2s;" title="تعديل الاستلامة">
-                    <i class="fa-solid fa-pen"></i>
+                <button class="interactive-btn batch-edit-btn" data-batch="${bId}" style="background: linear-gradient(135deg, #2563eb, #0284c7); color: white; border: none; width: 40px; height: 40px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2); transition: 0.2s;" title="تعديل محتويات هذه الاستلامة">
+                    <i class="fa-solid fa-pen-to-square"></i>
                 </button>
             </div>
         `;
@@ -7286,32 +7339,35 @@ function showBatchSelectionModal(batches, legacyBatch, pdfTitleDate) {
 
     if (legacyBatch.length > 0) {
         html += `
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <input type="checkbox" class="batch-checkbox" value="legacy" style="width: 20px; height: 20px; cursor: pointer; flex-shrink: 0;">
-                <button class="interactive-btn batch-select-btn" data-batch="legacy" style="flex: 1; background: var(--bg-light); color: var(--text-main); border: 1px solid var(--border); padding: 15px; border-radius: 8px; text-align: right; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s;">
-                    <div style="display: flex; flex-direction: column; gap: 5px;">
-                        <span><i class=\'fa-solid fa-box\'></i> استلامات مجمعة (قديمة)</span>
-                    </div>
-                    <span style="background: var(--primary); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">${legacyBatch.length} أصناف</span>
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; transition: all 0.2s;">
+                <input type="checkbox" class="batch-checkbox" value="legacy" style="width: 20px; height: 20px; cursor: pointer; flex-shrink: 0; accent-color: #ec4899;">
+                <button class="interactive-btn batch-select-btn" data-batch="legacy" style="flex: 1; background: transparent; border: none; text-align: right; display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 0;">
+                    <span style="font-weight: 800; color: #0f172a;"><i class='fa-solid fa-box'></i> استلامات مجمعة (قديمة)</span>
+                    <span style="background: #fdf2f8; color: #db2777; border: 1px solid #fbcfe8; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 700;">${legacyBatch.length} أصناف</span>
                 </button>
-                <button class="interactive-btn batch-edit-btn" data-batch="legacy" style="background: #3498db; color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; transition: 0.2s;" title="تعديل الاستلامة">
-                    <i class="fa-solid fa-pen"></i>
+                <button class="interactive-btn batch-edit-btn" data-batch="legacy" style="background: linear-gradient(135deg, #2563eb, #0284c7); color: white; border: none; width: 40px; height: 40px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="تعديل الاستلامة">
+                    <i class="fa-solid fa-pen-to-square"></i>
                 </button>
             </div>
-            <button class="interactive-btn batch-select-btn" data-batch="manual" style="background: var(--bg-light); color: #e67e22; border: 1px dashed #e67e22; padding: 15px; border-radius: 8px; text-align: right; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; margin-top: -5px;">
-                <span>✂️ تقسيم الاستلامات القديمة يدوياً (تحديد واختيار)</span>
+            <button class="interactive-btn batch-select-btn" data-batch="manual" style="background: #fff7ed; color: #ea580c; border: 1px dashed #fdba74; padding: 12px 16px; border-radius: 12px; text-align: right; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s;">
+                <span><i class="fa-solid fa-scissors"></i> تقسيم الاستلامات القديمة يدوياً (تحديد واختيار)</span>
             </button>
         `;
     }
 
     html += `
-            <button class="interactive-btn batch-select-btn" data-batch="all" style="background: #27ae60; color: white; border: none; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 10px; cursor: pointer;">
-                طباعة كل استلامات اليوم معاً <i class=\'fa-solid fa-print\'></i>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 5px; border-top: 1px solid #f1f5f9; padding-top: 15px;">
+            <button class="interactive-btn batch-select-btn" data-batch="all" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 13px 20px; border-radius: 12px; text-align: center; font-weight: 800; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);">
+                <i class='fa-solid fa-print'></i> طباعة كل استلامات اليوم معاً
             </button>
-            <button class="interactive-btn" id="mergeSelectedBatchesBtn" style="background: #9b59b6; color: white; border: none; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; cursor: pointer; display: none;">
-                دمج وطباعة الاستلامات المحددة <i class=\'fa-solid fa-layer-group\'></i>
+            <button class="interactive-btn" id="mergeSelectedBatchesBtn" style="background: linear-gradient(135deg, #8b5cf6, #6366f1); color: white; border: none; padding: 13px 20px; border-radius: 12px; text-align: center; font-weight: 800; font-size: 1rem; cursor: pointer; display: none; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);">
+                <i class='fa-solid fa-layer-group'></i> دمج وطباعة الاستلامات المحددة
             </button>
-            <button id="closeBatchModalBtn" style="background: transparent; color: var(--text-muted); border: none; padding: 10px; border-radius: 8px; text-align: center; cursor: pointer; text-decoration: underline; margin-top: 5px;">إلغاء</button>
+            <button id="closeBatchModalBtn" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 11px 20px; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 0.95rem;">
+                إغلاق
+            </button>
         </div>
     `;
 
@@ -7319,20 +7375,27 @@ function showBatchSelectionModal(batches, legacyBatch, pdfTitleDate) {
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
 
+    const closeModal = () => {
+        if (overlay.parentNode) document.body.removeChild(overlay);
+    };
+
+    document.getElementById('closeBatchModalBtn').onclick = closeModal;
+    const topCloseBtn = document.getElementById('closeBatchSelectionModalTopBtn');
+    if (topCloseBtn) topCloseBtn.onclick = closeModal;
+
     const mergeBtn = modal.querySelector('#mergeSelectedBatchesBtn');
     const checkboxes = modal.querySelectorAll('.batch-checkbox');
 
     checkboxes.forEach(cb => {
         cb.addEventListener('change', () => {
             let selectedCount = modal.querySelectorAll('.batch-checkbox:checked').length;
-            mergeBtn.style.display = selectedCount > 0 ? 'block' : 'none';
+            mergeBtn.style.display = selectedCount > 0 ? 'flex' : 'none';
         });
     });
 
     mergeBtn.addEventListener('click', () => {
         let allItems = [];
         let selectedCBs = Array.from(modal.querySelectorAll('.batch-checkbox:checked')).map(cb => cb.value);
-        
         selectedCBs.forEach(val => {
             if (val === 'legacy') {
                 allItems = allItems.concat(legacyBatch);
@@ -7340,19 +7403,13 @@ function showBatchSelectionModal(batches, legacyBatch, pdfTitleDate) {
                 allItems = allItems.concat(batches[val]);
             }
         });
-        
-        document.body.removeChild(overlay);
-        
-        // جلب أسماء المستلمين المحددين للعنوان (اختياري)
+        closeModal();
         let receivers = [...new Set(allItems.map(i => i.receiver).filter(r => r && String(r).trim() !== ''))];
         let mergedReceiverName = receivers.length > 0 ? receivers.join(' / ') : "غير محدد";
         let reportTitle = `استلامات مجمعة - المستلم: ${mergedReceiverName}`;
-        
-        // استدعاء دالة الطباعة الخاصة بالاستلامات
         generatePDFReceipt(allItems, pdfTitleDate, reportTitle);
     });
 
-    // Add event listeners for edit buttons
     modal.querySelectorAll('.batch-edit-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             let bId = this.getAttribute('data-batch');
@@ -7361,23 +7418,10 @@ function showBatchSelectionModal(batches, legacyBatch, pdfTitleDate) {
         });
     });
 
-    // Add slight hover effect to buttons since they have bg-light
     modal.querySelectorAll('.batch-select-btn').forEach(btn => {
-        btn.addEventListener('mouseover', function() {
-            if (this.getAttribute('data-batch') !== 'all' && this.getAttribute('data-batch') !== 'manual') {
-                this.style.borderColor = 'var(--primary)';
-            }
-        });
-        btn.addEventListener('mouseout', function() {
-            if (this.getAttribute('data-batch') !== 'all' && this.getAttribute('data-batch') !== 'manual') {
-                this.style.borderColor = 'var(--border)';
-            }
-        });
-
         btn.addEventListener('click', function() {
             let type = this.getAttribute('data-batch');
-            document.body.removeChild(overlay);
-            
+            closeModal();
             if (type === 'all') {
                 let allItems = [];
                 Object.values(batches).forEach(arr => allItems = allItems.concat(arr));
@@ -7392,8 +7436,6 @@ function showBatchSelectionModal(batches, legacyBatch, pdfTitleDate) {
             }
         });
     });
-
-    document.getElementById('closeBatchModalBtn').onclick = () => document.body.removeChild(overlay);
 }
 
 window.showBatchEditModal = function(bId, items, pdfTitleDate) {

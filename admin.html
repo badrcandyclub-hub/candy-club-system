@@ -1585,39 +1585,94 @@
     </div>
 
     <!-- ⭐ نافذة تعديل بيانات استلامة -->
-    <div id="editExpiryModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10010; justify-content: center; align-items: center; padding: 15px;">
-        <div class="modal-content" style="background: var(--bg); width: 100%; max-width: 500px; border-radius: 15px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 10px;">
-                <h3 style="color: var(--primary); margin: 0;"><i class="fa-solid fa-pen-to-square"></i> تعديل بيانات الاستلام</h3>
-                <span class="close-modal" onclick="closeEditExpiryModal()" style="font-size: 1.5rem; cursor: pointer; color: var(--danger);">&times;</span>
+    <div id="editExpiryModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); z-index: 10020; justify-content: center; align-items: center; padding: 15px; backdrop-filter: blur(8px); box-sizing: border-box;">
+        <div class="modal-content" style="background: #ffffff; width: 100%; max-width: 740px; border-radius: 20px; padding: 24px 28px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border: 1px solid #e2e8f0; direction: rtl; font-family: 'Cairo', sans-serif; max-height: 90vh; display: flex; flex-direction: column;">
+            
+            <!-- Modal Header -->
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 14px; margin-bottom: 18px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, #ec4899, #8b5cf6); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.15rem; box-shadow: 0 6px 14px rgba(236, 72, 153, 0.25);">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </div>
+                    <div>
+                        <h3 style="color: #0f172a; margin: 0; font-size: 1.2rem; font-weight: 800;">تعديل بيانات الصنف</h3>
+                        <span style="font-size: 0.8rem; color: #64748b; font-weight: 600;">يتم الحفظ والتحديث مباشرة في قاعدة البيانات</span>
+                    </div>
+                </div>
+                <button onclick="closeEditExpiryModal()" style="background: #f1f5f9; border: none; width: 34px; height: 34px; border-radius: 50%; color: #64748b; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="إغلاق">&times;</button>
             </div>
 
             <input type="hidden" id="editExpiryId">
 
-            <label style="text-align: right; display: block; margin-bottom: 5px; font-weight: bold; color: var(--text-dark);">اسم المنتج:</label>
-            <input type="text" id="editExpiryName" list="smartProductsList" placeholder="اسم المنتج..." style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: 1px solid var(--border);">
+            <!-- 2-Column Grid (بالعرض) -->
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; overflow-y: auto; padding: 2px;">
+                
+                <!-- Product Name: Full width (span 2) -->
+                <div style="grid-column: span 2;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 700; color: #334155; font-size: 0.88rem;">
+                        <i class="fa-solid fa-box-open" style="color: #ec4899; margin-left: 4px;"></i> اسم المنتج:
+                    </label>
+                    <input type="text" id="editExpiryName" list="smartProductsList" placeholder="اسم المنتج..." style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid #cbd5e1; background: #f8fafc; font-family: 'Cairo', sans-serif; font-size: 0.95rem; font-weight: 600; color: #0f172a; box-sizing: border-box; transition: 0.2s;">
+                </div>
 
-            <label style="text-align: right; display: block; margin-bottom: 5px; font-weight: bold; color: var(--text-dark);">الكمية:</label>
-            <input type="number" id="editExpiryQty" style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: 1px solid var(--border);">
+                <!-- Barcode -->
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: 700; color: #334155; font-size: 0.88rem;">
+                        <i class="fa-solid fa-barcode" style="color: #3b82f6; margin-left: 4px;"></i> الباركود:
+                    </label>
+                    <input type="text" id="editExpiryBarcode" dir="ltr" placeholder="الباركود..." style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid #cbd5e1; background: #f8fafc; font-family: monospace; font-size: 0.95rem; font-weight: 600; color: #0f172a; box-sizing: border-box; transition: 0.2s;">
+                </div>
 
-            <label style="text-align: right; display: block; margin-bottom: 5px; font-weight: bold; color: var(--text-dark);">تاريخ الانتهاء:</label>
-            <input type="date" id="editExpiryDate" dir="ltr" style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: 1px solid var(--border);">
+                <!-- Quantity -->
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: 700; color: #334155; font-size: 0.88rem;">
+                        <i class="fa-solid fa-cubes" style="color: #10b981; margin-left: 4px;"></i> الكمية:
+                    </label>
+                    <input type="number" id="editExpiryQty" placeholder="الكمية..." style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid #cbd5e1; background: #f8fafc; font-family: 'Cairo', sans-serif; font-size: 0.95rem; font-weight: 700; color: #059669; box-sizing: border-box; transition: 0.2s;">
+                </div>
 
-            <label style="text-align: right; display: block; margin-bottom: 5px; font-weight: bold; color: var(--text-dark);">اسم المستلم:</label>
-            <input type="text" id="editExpiryReceiver" style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: 1px solid var(--border);">
+                <!-- Expiry Date -->
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: 700; color: #334155; font-size: 0.88rem;">
+                        <i class="fa-solid fa-calendar-days" style="color: #d97706; margin-left: 4px;"></i> تاريخ الانتهاء:
+                    </label>
+                    <input type="date" id="editExpiryDate" dir="ltr" style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid #cbd5e1; background: #f8fafc; font-family: 'Cairo', sans-serif; font-size: 0.95rem; font-weight: 600; color: #0f172a; box-sizing: border-box; transition: 0.2s;">
+                </div>
 
-            <label style="text-align: right; display: block; margin-bottom: 5px; font-weight: bold; color: var(--text-dark);">الرف / المكان:</label>
-            <input type="text" id="editExpiryLocation" style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: 1px solid var(--border);">
+                <!-- Receiver -->
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: 700; color: #334155; font-size: 0.88rem;">
+                        <i class="fa-solid fa-user-check" style="color: #6366f1; margin-left: 4px;"></i> اسم المستلم:
+                    </label>
+                    <input type="text" id="editExpiryReceiver" placeholder="اسم المستلم..." style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid #cbd5e1; background: #f8fafc; font-family: 'Cairo', sans-serif; font-size: 0.95rem; font-weight: 600; color: #0f172a; box-sizing: border-box; transition: 0.2s;">
+                </div>
 
-            <label style="text-align: right; display: block; margin-bottom: 5px; font-weight: bold; color: var(--text-dark);">الملاحظات:</label>
-            <input type="text" id="editExpiryNotes" style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: 1px solid var(--border);">
+                <!-- Location -->
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: 700; color: #334155; font-size: 0.88rem;">
+                        <i class="fa-solid fa-location-dot" style="color: #ef4444; margin-left: 4px;"></i> الرف / المكان:
+                    </label>
+                    <input type="text" id="editExpiryLocation" placeholder="المكان..." style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid #cbd5e1; background: #f8fafc; font-family: 'Cairo', sans-serif; font-size: 0.95rem; font-weight: 600; color: #0f172a; box-sizing: border-box; transition: 0.2s;">
+                </div>
 
-            <label style="text-align: right; display: block; margin-bottom: 5px; font-weight: bold; color: var(--text-dark);">الباركود:</label>
-            <input type="text" id="editExpiryBarcode" dir="ltr" style="width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: 1px solid var(--border); font-family: monospace;">
+                <!-- Notes -->
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: 700; color: #334155; font-size: 0.88rem;">
+                        <i class="fa-solid fa-note-sticky" style="color: #8b5cf6; margin-left: 4px;"></i> الملاحظات:
+                    </label>
+                    <input type="text" id="editExpiryNotes" placeholder="ملاحظات اختيارية..." style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid #cbd5e1; background: #f8fafc; font-family: 'Cairo', sans-serif; font-size: 0.95rem; font-weight: 600; color: #0f172a; box-sizing: border-box; transition: 0.2s;">
+                </div>
 
-            <div class="modal-actions" style="margin-top: 20px;">
-                <button onclick="closeEditExpiryModal()" class="btn-cancel interactive-btn" style="padding: 10px 20px;">إلغاء</button>
-                <button onclick="saveEditExpiryModal()" class="btn-confirm interactive-btn" style="padding: 10px 20px; background: var(--success); color: white;">حفظ التعديلات <i class="fa-solid fa-check"></i></button>
+            </div>
+
+            <!-- Footer: Always visible on screen -->
+            <div style="display: flex; gap: 12px; margin-top: 18px; border-top: 1px solid #f1f5f9; padding-top: 14px;">
+                <button onclick="saveEditExpiryModal()" class="interactive-btn" style="flex: 2; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 800; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);">
+                    <i class="fa-solid fa-check"></i> حفظ التعديلات في السيرفر
+                </button>
+                <button onclick="closeEditExpiryModal()" class="interactive-btn" style="flex: 1; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 12px 20px; border-radius: 12px; font-weight: 700; font-size: 0.95rem; cursor: pointer;">
+                    إلغاء
+                </button>
             </div>
         </div>
     </div>
