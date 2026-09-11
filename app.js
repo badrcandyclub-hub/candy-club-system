@@ -6775,7 +6775,7 @@ window.closeEditExpiryModal = function() {
     document.getElementById('editExpiryModal').style.display = 'none';
 };
 
-window.saveEditExpiryModal = function() {
+window.saveEditExpiryModal = async function() {
     const id = document.getElementById('editExpiryId').value;
     const prodName = document.getElementById('editExpiryName') ? document.getElementById('editExpiryName').value.trim() : '';
     const qty = document.getElementById('editExpiryQty').value;
@@ -6783,57 +6783,77 @@ window.saveEditExpiryModal = function() {
     const receiver = document.getElementById('editExpiryReceiver').value;
     const location = document.getElementById('editExpiryLocation').value;
     const notes = document.getElementById('editExpiryNotes').value;
-    const barcode = document.getElementById('editExpiryBarcode') ? document.getElementById('editExpiryBarcode').value : '';
+    const barcode = document.getElementById('editExpiryBarcode') ? document.getElementById('editExpiryBarcode').value.trim() : '';
     
     if (!qty || !date || !receiver) {
         showToast("يرجى تعبئة الكمية والتاريخ واسم المستلم", "warning");
         return;
     }
     
-    showToast("جاري حفظ التعديلات...", "warning");
+    showToast("جاري حفظ التعديلات في قاعدة البيانات...", "info");
     
-    let formData = new URLSearchParams();
-    formData.append('action', 'updateExpiryItemData');
-    formData.append('id', id);
-    if (prodName) formData.append('productName', prodName);
-    formData.append('qty', qty);
-    formData.append('expiryDate', date);
-    formData.append('receiver', receiver);
-    formData.append('location', location);
-    formData.append('notes', notes);
-    formData.append('barcode', barcode);
+    const updatePayload = {
+        qty: String(qty),
+        expiry_date: date,
+        receiver: receiver,
+        location: location || '',
+        notes: notes || ''
+    };
+    if (prodName) updatePayload.product_name = prodName;
+    if (barcode) updatePayload.barcode = barcode;
     
-    fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
-        .then(() => {
-            showToast("<i class=\'fa-solid fa-check\'></i> تم تعديل الاستلامة بنجاح", "success");
-            closeEditExpiryModal();
-            
-            let item = expiryData.find(i => String(i.id) === String(id));
-            if (item) {
-                if (prodName) item.name = prodName;
-                item.qty = qty;
-                item.expiryDate = date;
-                item.receiver = receiver;
-                item.location = location;
-                item.notes = notes;
-                item.barcode = barcode;
-                
-                // CRITICAL: Update local ID so subsequent edits find the correct row in backend
-                item.id = item.name + "|" + qty + "|" + date;
-                
-                // If it was selected, remove the old id and add the new one
-                if (selectedExpiryItems.has(String(id))) {
-                    selectedExpiryItems.delete(String(id));
-                    selectedExpiryItems.add(String(item.id));
-                }
+    try {
+        const { error } = await supabase.from('expiries').update(updatePayload).eq('id', id);
+        if (error) {
+            console.error("Supabase update error:", error);
+            showToast("حدث خطأ أثناء التعديل في قاعدة البيانات: " + error.message, "error");
+            return;
+        }
+        
+        showToast("<i class='fa-solid fa-check'></i> تم تعديل الاستلامة في قاعدة البيانات بنجاح", "success");
+        closeEditExpiryModal();
+        
+        // Update in-memory expiryData
+        let item = expiryData.find(i => String(i.id) === String(id));
+        if (item) {
+            if (prodName) item.name = prodName;
+            item.qty = qty;
+            item.expiryDate = date;
+            item.receiver = receiver;
+            item.location = location || '';
+            item.notes = notes || '';
+            if (barcode) item.barcode = barcode;
+        }
+        
+        // Update item in open batch edit modal live
+        const batchCard = document.querySelector(`.batch-item-card[data-item-id="${id}"]`);
+        if (batchCard) {
+            const nameEl = batchCard.querySelector('.batch-item-name');
+            if (nameEl && prodName) nameEl.innerHTML = `<i class="fa-solid fa-box-open" style="color: #ec4899; font-size: 0.9rem;"></i> ${prodName}`;
+            const metaEl = batchCard.querySelector('.batch-item-meta');
+            if (metaEl) {
+                metaEl.innerHTML = `
+                    <span style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 700;">
+                        <i class="fa-solid fa-cubes"></i> الكمية: <strong>${qty}</strong>
+                    </span>
+                    <span style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 700;">
+                        <i class="fa-solid fa-calendar-days"></i> الانتهاء: <strong>${date}</strong>
+                    </span>
+                    <span style="background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">
+                        <i class="fa-solid fa-user-check"></i> المستلم: <strong>${receiver}</strong>
+                    </span>
+                `;
             }
-            
-            renderExpiryDashboard();
-            if (document.getElementById('expiryDetailsSection').style.display === 'block') {
-                showExpiryDetails(expiryCurrentCategory, false);
-            }
-        })
-        .catch(() => showToast("خطأ في الاتصال بالإنترنت", "error"));
+        }
+        
+        renderExpiryDashboard();
+        if (document.getElementById('expiryDetailsSection') && document.getElementById('expiryDetailsSection').style.display === 'block') {
+            showExpiryDetails(expiryCurrentCategory, false);
+        }
+    } catch(err) {
+        console.error("Error saving expiry:", err);
+        showToast("حدث خطأ غير متوقع أثناء الحفظ", "error");
+    }
 };
 
 window.printSelectedExpiry = function() {
@@ -7378,56 +7398,134 @@ function showBatchSelectionModal(batches, legacyBatch, pdfTitleDate) {
 
 window.showBatchEditModal = function(bId, items, pdfTitleDate) {
     const overlay = document.createElement('div');
-    overlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10005; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px);";
+    overlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.7); z-index: 10005; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(8px); padding: 15px; box-sizing: border-box;";
     
     const modal = document.createElement('div');
-    modal.style = "background: var(--bg); padding: 25px; border-radius: 15px; max-width: 600px; width: 95%; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid var(--border); max-height: 80vh; overflow-y: auto; display: flex; flex-direction: column; gap: 15px;";
+    modal.style = "background: #ffffff; padding: 25px 28px; border-radius: 20px; max-width: 650px; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); border: 1px solid #e2e8f0; max-height: 85vh; display: flex; flex-direction: column; gap: 16px; direction: rtl; font-family: 'Cairo', sans-serif; position: relative;";
     
-    let titleStr = bId === 'legacy' ? 'الاستلامات المجمعة (القديمة)' : `الساعة ${new Date(parseInt(bId)).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}`;
+    let timeFormatted = bId;
+    let splitTime = bId.match(/(\d{1,2}:\d{2}\s*(ص|م|AM|PM))/i);
+    if (splitTime && splitTime[1]) {
+        timeFormatted = splitTime[1];
+    } else if (bId.includes(':')) {
+        let parts = bId.split(' ');
+        timeFormatted = parts.length > 1 ? parts.slice(1).join(' ') : bId;
+    } else if (bId.startsWith('legacy_')) {
+        timeFormatted = '(بدون وقت)';
+    }
+
+    let totalQty = items.reduce((sum, it) => sum + (parseFloat(it.qty) || 0), 0);
     
     let html = `
-        <h3 style="color: var(--primary); margin-top: 0; font-family: 'Cairo', sans-serif; text-align: center;">
-            تعديل استلامة ${pdfTitleDate} - ${titleStr}
-        </h3>
-        <p style="font-size: 0.9rem; color: var(--text-main); text-align: center; margin-bottom: 10px;">
-            تنبيه: بعد تعديل الأصناف، يُرجى إغلاق هذه النافذة ثم طباعة الاستلامة للحصول على التحديثات.
-        </p>
-        <div style="display: flex; flex-direction: column; gap: 10px; max-height: 50vh; overflow-y: auto; padding-right: 5px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 46px; height: 46px; border-radius: 14px; background: linear-gradient(135deg, #ec4899, #8b5cf6); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.25rem; box-shadow: 0 8px 16px rgba(236, 72, 153, 0.25);">
+                    <i class="fa-solid fa-file-pen"></i>
+                </div>
+                <div>
+                    <h3 style="margin: 0; color: #0f172a; font-size: 1.25rem; font-weight: 800; line-height: 1.3;">
+                        تعديل استلامة ${pdfTitleDate}
+                    </h3>
+                    <div style="font-size: 0.85rem; color: #64748b; margin-top: 3px; font-weight: 600;">
+                        🕒 الساعة: <span style="color: #ec4899; font-weight: 700;">${timeFormatted}</span>
+                    </div>
+                </div>
+            </div>
+            <button id="closeBatchEditModalTopBtn" style="background: #f1f5f9; border: none; width: 34px; height: 34px; border-radius: 50%; color: #64748b; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" title="إغلاق">
+                &times;
+            </button>
+        </div>
+
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 140px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; gap: 10px;">
+                <i class="fa-solid fa-boxes-stacked" style="color: #3b82f6; font-size: 1.1rem;"></i>
+                <div>
+                    <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">عدد الأصناف</div>
+                    <div style="font-size: 1.05rem; font-weight: 800; color: #0f172a;">${items.length} أصناف</div>
+                </div>
+            </div>
+            <div style="flex: 1; min-width: 140px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; gap: 10px;">
+                <i class="fa-solid fa-layer-group" style="color: #10b981; font-size: 1.1rem;"></i>
+                <div>
+                    <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">إجمالي القطع</div>
+                    <div style="font-size: 1.05rem; font-weight: 800; color: #059669;">${totalQty} قطعة</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 10px 14px; font-size: 0.85rem; color: #1e40af; display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-circle-info" style="color: #3b82f6; font-size: 1rem;"></i>
+            <span>اضغط على زر <strong>تعديل</strong> لتحديث بيانات أي صنف فوراً في قاعدة البيانات، ثم يمكنك طباعة الاستلامة مباشرة.</span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px; max-height: 48vh; overflow-y: auto; padding-left: 5px; padding-right: 2px;">
     `;
 
     items.forEach(item => {
+        let expFormatted = item.expiryDate || 'بدون تاريخ';
+        let recFormatted = item.receiver || 'غير محدد';
         html += `
-            <div style="background: var(--bg-light); border: 1px solid var(--border); border-radius: 8px; padding: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
-                <div style="display: flex; flex-direction: column; gap: 5px; flex: 1;">
-                    <span style="font-weight: bold; color: var(--text-main);"><i class='fa-solid fa-box'></i> ${item.name}</span>
-                    <span style="font-size: 0.85rem; color: var(--text-muted);">
-                        الكمية: <strong style="color:var(--text-dark);">${item.qty}</strong> | المستلم: ${item.receiver || 'غير محدد'} | تاريخ الصلاحية: ${item.expiryDate || 'بدون'}
-                    </span>
+            <div class="batch-item-card" data-item-id="${item.id}" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                <div style="display: flex; flex-direction: column; gap: 7px; flex: 1;">
+                    <div class="batch-item-name" style="font-weight: 800; color: #0f172a; font-size: 0.98rem; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-box-open" style="color: #ec4899; font-size: 0.9rem;"></i> ${item.name || 'بدون اسم'}
+                    </div>
+                    <div class="batch-item-meta" style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+                        <span style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 700;">
+                            <i class="fa-solid fa-cubes"></i> الكمية: <strong>${item.qty}</strong>
+                        </span>
+                        <span style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 700;">
+                            <i class="fa-solid fa-calendar-days"></i> الانتهاء: <strong>${expFormatted}</strong>
+                        </span>
+                        <span style="background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">
+                            <i class="fa-solid fa-user-check"></i> المستلم: <strong>${recFormatted}</strong>
+                        </span>
+                    </div>
                 </div>
-                <button class="interactive-btn" style="background: #3498db; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;" onclick="openEditExpiryModal('${item.id}')">
-                    <i class="fa-solid fa-pen"></i> تعديل
+                <button class="interactive-btn" style="background: linear-gradient(135deg, #2563eb, #0284c7); color: white; border: none; padding: 9px 16px; border-radius: 10px; cursor: pointer; font-size: 0.9rem; font-weight: 700; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2); white-space: nowrap;" onclick="openEditExpiryModal('${item.id}')">
+                    <i class="fa-solid fa-pen-to-square"></i> تعديل
                 </button>
             </div>
         `;
     });
 
     if (items.length === 0) {
-        html += `<p style="text-align: center; color: var(--text-muted);">لا توجد أصناف في هذه الاستلامة.</p>`;
+        html += `<div style="text-align: center; color: #94a3b8; padding: 30px; font-size: 0.95rem;">لا توجد أصناف مسجلة في هذه الاستلامة.</div>`;
     }
 
     html += `
         </div>
-        <button id="closeBatchEditModalBtn" style="background: var(--text-muted); color: white; border: none; padding: 12px; border-radius: 8px; text-align: center; font-weight: bold; cursor: pointer; margin-top: 10px;">
-            إغلاق
-        </button>
+        
+        <div style="display: flex; gap: 12px; margin-top: 5px; border-top: 1px solid #f1f5f9; padding-top: 15px;">
+            <button id="printDirectBatchBtn" style="flex: 2; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 800; cursor: pointer; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);">
+                <i class="fa-solid fa-print"></i> طباعة هذه الاستلامة الآن
+            </button>
+            <button id="closeBatchEditModalBtn" style="flex: 1; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 12px 20px; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 0.95rem;">
+                إغلاق
+            </button>
+        </div>
     `;
 
     modal.innerHTML = html;
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
 
-    document.getElementById('closeBatchEditModalBtn').onclick = () => document.body.removeChild(overlay);
-}
+    const closeModal = () => {
+        if (overlay.parentNode) document.body.removeChild(overlay);
+    };
+
+    document.getElementById('closeBatchEditModalBtn').onclick = closeModal;
+    const topCloseBtn = document.getElementById('closeBatchEditModalTopBtn');
+    if (topCloseBtn) topCloseBtn.onclick = closeModal;
+
+    const printDirectBtn = document.getElementById('printDirectBatchBtn');
+    if (printDirectBtn) {
+        printDirectBtn.onclick = () => {
+            closeModal();
+            generatePDFReceipt(items, pdfTitleDate);
+        };
+    }
+};
 
 function showManualSelectionModal(legacyBatch, pdfTitleDate) {
     const overlay = document.createElement('div');
@@ -7558,7 +7656,27 @@ function generateCategoryPDF(filteredData, categoryName) {
         <body>
             <style>
                 @media print { .edit-controls { display: none !important; } }
-                .edit-controls { text-align: center; margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px dashed #cbd5e1; direction: rtl; }
+                
+                .btn-del-row {
+                    display: none;
+                    background: #ef4444;
+                    color: white;
+                    border: none;
+                    border-radius: 50%;
+                    width: 20px;
+                    height: 20px;
+                    font-size: 13px;
+                    font-weight: bold;
+                    line-height: 1;
+                    cursor: pointer;
+                    margin-left: 6px;
+                    vertical-align: middle;
+                    transition: 0.2s;
+                }
+                .btn-del-row:hover { background: #dc2626; transform: scale(1.15); }
+                body.edit-mode-active .btn-del-row { display: inline-flex; align-items: center; justify-content: center; }
+                @media print { .btn-del-row, .edit-controls, .no-print { display: none !important; } }
+.edit-controls { text-align: center; margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px dashed #cbd5e1; direction: rtl; }
                 .edit-controls p { margin-top: 0; margin-bottom: 15px; color: #334155; font-weight: bold; font-family: 'Cairo', sans-serif; }
                 .btn-edit { background: #3b82f6; color: white; border: none; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-family: 'Cairo'; margin: 0 5px; font-weight: bold; transition: 0.2s; }
                 .btn-edit:hover { background: #2563eb; }
@@ -7568,7 +7686,7 @@ function generateCategoryPDF(filteredData, categoryName) {
             </style>
             <div class="edit-controls no-print">
                 <p>وضع التعديل الحر للطباعة (لن يؤثر على قاعدة البيانات الأساسية)</p>
-                <button class="btn-edit" onclick="document.querySelectorAll('td:not(.no-edit)').forEach(td => td.contentEditable = td.contentEditable === 'true' ? 'false' : 'true'); this.innerHTML = this.innerHTML.includes('تفعيل') ? 'إلغاء وضع التعديل' : 'تفعيل وضع التعديل';">تفعيل وضع التعديل</button>
+                <button class="btn-edit" onclick="toggleEditMode(this)">تفعيل وضع التعديل</button>
                 <button class="btn-print" onclick="window.print()">🖨️ طباعة الآن</button>
             </div>
             <div class="header">
@@ -7604,7 +7722,7 @@ function generateCategoryPDF(filteredData, categoryName) {
         
         html += `
             <tr>
-                <td>${index + 1}</td>
+                <td><button class="btn-del-row no-print" onclick="deleteReportRow(this)" title="حذف هذا الصنف من التقرير">&times;</button><span class="row-num">${index + 1}</span></td>
                 <td style="font-weight: bold; color: #2c3e50;">${name}</td>
                 <td class="no-edit" style="font-family: monospace; font-size: 15px; letter-spacing: 1px;">${barcode}</td>
                 <td><span style="background: #f1f2f6; padding: 3px 8px; border-radius: 4px; font-weight: bold;">${qty}</span></td>
@@ -7813,7 +7931,27 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
         <body>
             <style>
                 @media print { .edit-controls { display: none !important; } }
-                .edit-controls { text-align: center; margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px dashed #cbd5e1; direction: rtl; }
+                
+                .btn-del-row {
+                    display: none;
+                    background: #ef4444;
+                    color: white;
+                    border: none;
+                    border-radius: 50%;
+                    width: 20px;
+                    height: 20px;
+                    font-size: 13px;
+                    font-weight: bold;
+                    line-height: 1;
+                    cursor: pointer;
+                    margin-left: 6px;
+                    vertical-align: middle;
+                    transition: 0.2s;
+                }
+                .btn-del-row:hover { background: #dc2626; transform: scale(1.15); }
+                body.edit-mode-active .btn-del-row { display: inline-flex; align-items: center; justify-content: center; }
+                @media print { .btn-del-row, .edit-controls, .no-print { display: none !important; } }
+.edit-controls { text-align: center; margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px dashed #cbd5e1; direction: rtl; }
                 .edit-controls p { margin-top: 0; margin-bottom: 15px; color: #334155; font-weight: bold; font-family: 'Cairo', sans-serif; }
                 .btn-edit { background: #3b82f6; color: white; border: none; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-family: 'Cairo'; margin: 0 5px; font-weight: bold; transition: 0.2s; }
                 .btn-edit:hover { background: #2563eb; }
@@ -7823,7 +7961,7 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
             </style>
             <div class="edit-controls no-print">
                 <p>وضع التعديل الحر للطباعة (لن يؤثر على قاعدة البيانات الأساسية)</p>
-                <button class="btn-edit" onclick="document.querySelectorAll('td:not(.no-edit)').forEach(td => td.contentEditable = td.contentEditable === 'true' ? 'false' : 'true'); this.innerHTML = this.innerHTML.includes('تفعيل') ? 'إلغاء وضع التعديل' : 'تفعيل وضع التعديل';">تفعيل وضع التعديل</button>
+                <button class="btn-edit" onclick="toggleEditMode(this)">تفعيل وضع التعديل</button>
                 <button class="btn-print" onclick="window.print()">🖨️ طباعة الآن</button>
             </div>
             <div class="header">
@@ -7886,7 +8024,7 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
 
                         return `
                         <tr>
-                            <td style="text-align: center; font-weight: bold; color: #64748b;">${index + 1}</td>
+                            <td style="text-align: center; font-weight: bold; color: #64748b;"><button class="btn-del-row no-print" onclick="deleteReportRow(this)" title="حذف هذا الصنف من التقرير">&times;</button><span class="row-num">${index + 1}</span></td>
                             <td style="font-weight: 900; font-size: 15px;">${item.name || '-'}</td>
                             <td class="no-edit" dir="ltr" style="text-align: center;">${barcodeHtml}</td>
                             <td class="qty-cell">${item.qty || '-'}</td>
@@ -8077,7 +8215,27 @@ function generatePDFReceipt(filteredData, pdfTitleDate) {
         <body>
             <style>
                 @media print { .edit-controls { display: none !important; } }
-                .edit-controls { text-align: center; margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px dashed #cbd5e1; direction: rtl; }
+                
+                .btn-del-row {
+                    display: none;
+                    background: #ef4444;
+                    color: white;
+                    border: none;
+                    border-radius: 50%;
+                    width: 20px;
+                    height: 20px;
+                    font-size: 13px;
+                    font-weight: bold;
+                    line-height: 1;
+                    cursor: pointer;
+                    margin-left: 6px;
+                    vertical-align: middle;
+                    transition: 0.2s;
+                }
+                .btn-del-row:hover { background: #dc2626; transform: scale(1.15); }
+                body.edit-mode-active .btn-del-row { display: inline-flex; align-items: center; justify-content: center; }
+                @media print { .btn-del-row, .edit-controls, .no-print { display: none !important; } }
+.edit-controls { text-align: center; margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px dashed #cbd5e1; direction: rtl; }
                 .edit-controls p { margin-top: 0; margin-bottom: 15px; color: #334155; font-weight: bold; font-family: 'Cairo', sans-serif; }
                 .btn-edit { background: #3b82f6; color: white; border: none; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-family: 'Cairo'; margin: 0 5px; font-weight: bold; transition: 0.2s; }
                 .btn-edit:hover { background: #2563eb; }
@@ -8087,7 +8245,7 @@ function generatePDFReceipt(filteredData, pdfTitleDate) {
             </style>
             <div class="edit-controls no-print">
                 <p>وضع التعديل الحر للطباعة (لن يؤثر على قاعدة البيانات الأساسية)</p>
-                <button class="btn-edit" onclick="document.querySelectorAll('td:not(.no-edit)').forEach(td => td.contentEditable = td.contentEditable === 'true' ? 'false' : 'true'); this.innerHTML = this.innerHTML.includes('تفعيل') ? 'إلغاء وضع التعديل' : 'تفعيل وضع التعديل';">تفعيل وضع التعديل</button>
+                <button class="btn-edit" onclick="toggleEditMode(this)">تفعيل وضع التعديل</button>
                 <button class="btn-print" onclick="window.print()">🖨️ طباعة الآن</button>
             </div>
             <div class="header">
@@ -8154,7 +8312,7 @@ function generatePDFReceipt(filteredData, pdfTitleDate) {
 
                         return `
                         <tr>
-                            <td style="text-align: center; font-weight: bold; color: #64748b;">${index + 1}</td>
+                            <td style="text-align: center; font-weight: bold; color: #64748b;"><button class="btn-del-row no-print" onclick="deleteReportRow(this)" title="حذف هذا الصنف من التقرير">&times;</button><span class="row-num">${index + 1}</span></td>
                             <td style="font-weight: 900; font-size: 15px;">${item.name || '-'}</td>
                             <td class="no-edit" dir="ltr" style="text-align: center;">${barcodeHtml}</td>
                             <td class="qty-cell">${item.qty || '-'}</td>
