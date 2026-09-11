@@ -520,9 +520,15 @@ async function handleSupabaseRequest(url, options) {
             case 'updateExpiryItemData':
                 const idParts = params.id ? String(params.id).split('|') : [];
                 const targetName = idParts[0] || params.id;
-                let q1 = supabase.from('expiries').update({ qty: params.qty, expiry_date: params.expiryDate, location: params.location, receiver: params.receiver, notes: params.notes, barcode: params.barcode });
+                let updateFields = { qty: params.qty, expiry_date: params.expiryDate, location: params.location, receiver: params.receiver, notes: params.notes, barcode: params.barcode };
+                if (params.productName) {
+                    updateFields.product_name = params.productName.trim();
+                }
+                let q1 = supabase.from('expiries').update(updateFields);
                 if (idParts.length >= 4 && idParts[3]) {
                     q1 = q1.eq('id', idParts[3]);
+                } else if (params.id && !params.id.includes('|')) {
+                    q1 = q1.eq('id', params.id);
                 } else {
                     q1 = q1.eq('product_name', targetName);
                     if (idParts[1]) q1 = q1.eq('quantity', idParts[1]);
@@ -846,10 +852,26 @@ async function handleSupabaseRequest(url, options) {
                     const fbResp = await fetch('https://candyclubsync-default-rtdb.firebaseio.com/products.json');
                     const fbDataRaw = await fbResp.json();
                     const fbItems = Array.isArray(fbDataRaw) ? fbDataRaw : Object.values(fbDataRaw || {});
-                    const fbMap = {};
+                    const fbStockMap = {};
+                    const fbProductMap = new Map();
+
                     fbItems.forEach(item => {
-                        if (item && item.Barcode) {
-                            fbMap[String(item.Barcode).trim()] = parseFloat(item.Stock) || 0;
+                        if (!item) return;
+                        const b = item.Barcode;
+                        const name = String(item.Name || '').trim();
+                        const stock = parseFloat(item.Stock) || 0;
+                        const price = parseFloat(item.Price) || 0;
+                        const addBarcodeEntry = (code) => {
+                            const clean = String(code || '').trim();
+                            if (clean) {
+                                fbStockMap[clean] = stock;
+                                if (name) fbProductMap.set(clean, { name, price, stock });
+                            }
+                        };
+                        if (Array.isArray(b)) {
+                            b.forEach(addBarcodeEntry);
+                        } else if (b) {
+                            addBarcodeEntry(b);
                         }
                     });
 
@@ -860,7 +882,23 @@ async function handleSupabaseRequest(url, options) {
                         break;
                     }
 
-                    // 3. Aggregate by barcode
+                    // 3. Retroactively match and update names of pending/unnamed products
+                    let namesUpdatedCount = 0;
+                    for (const row of gsData) {
+                        const bcode = String(row.barcode || '').trim();
+                        const currentName = String(row.product_name || '').trim();
+                        const isUnnamed = !currentName || currentName.includes('مزامنة') || currentName === 'غير محدد' || currentName === 'غير مسجل';
+                        if (isUnnamed && bcode && fbProductMap.has(bcode)) {
+                            const match = fbProductMap.get(bcode);
+                            if (match && match.name) {
+                                await supabase.from('expiries').update({ product_name: match.name }).eq('id', row.id);
+                                row.product_name = match.name;
+                                namesUpdatedCount++;
+                            }
+                        }
+                    }
+
+                    // 4. Aggregate by barcode for stock adjustment
                     const gsMap = {};
                     gsData.forEach(row => {
                         const bcode = String(row.barcode || '').trim();
@@ -871,11 +909,11 @@ async function handleSupabaseRequest(url, options) {
                         gsMap[bcode].rows.push({ id: row.id, qty: qty, expDate: row.expiry_date || '', name: row.product_name });
                     });
 
-                    // 4. Compare and adjust
+                    // 5. Compare and adjust quantities via FIFO
                     let changesCount = 0;
                     for (const bcode in gsMap) {
                         const gsTotal = gsMap[bcode].totalQty;
-                        const fbTotal = fbMap.hasOwnProperty(bcode) ? fbMap[bcode] : null;
+                        const fbTotal = fbStockMap.hasOwnProperty(bcode) ? fbStockMap[bcode] : null;
                         if (fbTotal === null) continue;
                         const diff = gsTotal - fbTotal;
 
@@ -905,10 +943,19 @@ async function handleSupabaseRequest(url, options) {
 
                     if (changesCount > 0) {
                         await window.secureDelete('expiries', 'qty', '0');
-                        responseData = { success: true, message: 'تم تحديث ' + changesCount + ' منتج بنجاح' };
-                    } else {
-                        responseData = { success: true, message: 'البيانات متطابقة' };
                     }
+
+                    let msgParts = [];
+                    if (namesUpdatedCount > 0) {
+                        msgParts.push(`تم التعرف وتحديث أسماء ${namesUpdatedCount} منتج`);
+                    }
+                    if (changesCount > 0) {
+                        msgParts.push(`تم تحديث أرصدة ${changesCount} منتج مع الكاشير`);
+                    }
+                    if (msgParts.length === 0) {
+                        msgParts.push('البيانات وأسماء المنتجات متطابقة تماماً مع الكاشير');
+                    }
+                    responseData = { success: true, message: msgParts.join(' ، ') };
                 } catch (fbErr) {
                     responseData = { success: false, error: 'فشل الاتصال بقاعدة بيانات الفايربيز: ' + fbErr.message };
                 }
@@ -5240,7 +5287,7 @@ function processBarcodeAction(val) {
                 if (ledgerProdName) ledgerProdName.value = '';
                 if (ledgerProdQty) ledgerProdQty.value = '';
                 if (ledgerProdBarcode) ledgerProdBarcode.value = val; 
-                showToast("<i class='fa-solid fa-triangle-exclamation'></i> الباركود مسجل! سيتم تحديث الاسم تلقائياً بعد المزامنة.", "warning");
+                showToast("<i class='fa-solid fa-triangle-exclamation'></i> تنبيه: الباركود (" + val + ") غير مسجل في الكاشير حالياً، سيتم حفظه مؤقتاً بانتظار إضافته على الكاشير والمزامنة.", "warning");
             }
         } else {
             showToast("<i class='fa-solid fa-triangle-exclamation'></i> لم يتم التعرف على النص أو الكتالوج فارغ", "error");
@@ -5256,12 +5303,16 @@ function processBarcodeAction(val) {
 }
 
 function onScanSuccess(decodedText, decodedResult) {
-    stopBarcodeScanner();
-    
     let val = String(decodedText).trim();
     
+    // التحقق لمنع مسح روابط المواقع أو أكواد QR الخاصة بالتشغيل والمصنع بالخطأ
+    if (val.startsWith('http://') || val.startsWith('https://') || val.startsWith('www.') || val.length > 40) {
+        showToast("تنبيه: تم مسح كود QR أو رابط موقع للمصنع وليس باركود الصنف التجاري. يرجى توجيه الكاميرا نحو خطوط الباركود التقليدية للمنتج.", "warning");
+        return;
+    }
+
+    stopBarcodeScanner();
     closeModalWithHistory('scannerModal', true);
-    
     processBarcodeAction(val);
 }
 
@@ -6623,6 +6674,9 @@ window.openEditExpiryModal = function(id) {
     if (!item) return;
     
     document.getElementById('editExpiryId').value = item.id;
+    if (document.getElementById('editExpiryName')) {
+        document.getElementById('editExpiryName').value = item.name || '';
+    }
     document.getElementById('editExpiryQty').value = item.qty || '';
     
     let d = new Date(item.expiryDate);
@@ -6648,6 +6702,7 @@ window.closeEditExpiryModal = function() {
 
 window.saveEditExpiryModal = function() {
     const id = document.getElementById('editExpiryId').value;
+    const prodName = document.getElementById('editExpiryName') ? document.getElementById('editExpiryName').value.trim() : '';
     const qty = document.getElementById('editExpiryQty').value;
     const date = document.getElementById('editExpiryDate').value;
     const receiver = document.getElementById('editExpiryReceiver').value;
@@ -6665,6 +6720,7 @@ window.saveEditExpiryModal = function() {
     let formData = new URLSearchParams();
     formData.append('action', 'updateExpiryItemData');
     formData.append('id', id);
+    if (prodName) formData.append('productName', prodName);
     formData.append('qty', qty);
     formData.append('expiryDate', date);
     formData.append('receiver', receiver);
@@ -6679,6 +6735,7 @@ window.saveEditExpiryModal = function() {
             
             let item = expiryData.find(i => String(i.id) === String(id));
             if (item) {
+                if (prodName) item.name = prodName;
                 item.qty = qty;
                 item.expiryDate = date;
                 item.receiver = receiver;
@@ -13250,32 +13307,48 @@ window.runSyncNow = async function() {
         if (data.success) {
             if (textEl) textEl.innerText = 'جاري مطابقة وتحديث الأسماء المجهولة...';
             
-            // Retroactive barcode matching
+            // Retroactive barcode matching with full Firebase catalog
             let updatedCount = 0;
-            const { data: newCatalog } = await supabase.from('catalog').select('product_name, barcode');
-            
-            if (newCatalog) {
+            let fullCatalog = (typeof barcodeCatalogData !== 'undefined' && barcodeCatalogData.length > 0) ? barcodeCatalogData : null;
+            if (!fullCatalog || fullCatalog.length === 0) {
+                try {
+                    const fbRes = await fetch(FIREBASE_PRODUCTS_URL);
+                    const fbJson = await fbRes.json();
+                    fullCatalog = parseFirebaseProducts(fbJson);
+                    barcodeCatalogData = fullCatalog;
+                } catch(e) {
+                    console.warn("Could not fetch Firebase catalog during sync:", e);
+                }
+            }
+
+            if (fullCatalog && fullCatalog.length > 0) {
                 const { data: unnamedExpiries } = await fetchAllSupabaseRows(
                     supabase.from('expiries')
-                        .select('id, barcode')
-                        .in('product_name', ['', 'غير محدد (بانتظار المزامنة)', 'غير محدد', 'غير مسجل'])
+                        .select('id, barcode, product_name')
                         .not('barcode', 'is', null)
                         .neq('barcode', '')
                 );
                 
                 if (unnamedExpiries && unnamedExpiries.length > 0) {
                     for (let exp of unnamedExpiries) {
-                        const catalogMatch = newCatalog.find(c => String(c.barcode).split(',').map(b=>b.trim().toLowerCase()).includes(String(exp.barcode).trim().toLowerCase()));
-                        if (catalogMatch && catalogMatch.product_name) {
-                            await supabase.from('expiries').update({ product_name: catalogMatch.product_name }).eq('id', exp.id);
-                            updatedCount++;
+                        const curName = String(exp.product_name || '').trim();
+                        const isUnnamed = !curName || curName.includes('مزامنة') || curName === 'غير محدد' || curName === 'غير مسجل';
+                        if (isUnnamed) {
+                            const cleanBc = String(exp.barcode || '').trim().toLowerCase();
+                            const catalogMatch = fullCatalog.find(c => String(c.barcode || '').split(',').map(b => b.trim().toLowerCase()).includes(cleanBc));
+                            if (catalogMatch && catalogMatch.name) {
+                                await supabase.from('expiries').update({ product_name: catalogMatch.name }).eq('id', exp.id);
+                                updatedCount++;
+                            }
                         }
                     }
                 }
             }
 
             let msg = data.message || 'تمت المزامنة بنجاح!';
-            if (updatedCount > 0) msg += `<br><b>تم التعرف وتصحيح أسماء ${updatedCount} منتج بنجاح!</b>`;
+            if (updatedCount > 0 && !msg.includes('تم التعرف')) {
+                msg += `<br><b>تم التعرف وتصحيح أسماء ${updatedCount} منتج بنجاح!</b>`;
+            }
             
             showToast(msg, 'success');
             
