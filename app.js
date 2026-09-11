@@ -883,6 +883,21 @@ async function handleSupabaseRequest(url, options) {
                         }
                     });
 
+                    // ربط الباركودات البديلة المعروفة لضمان التطابق التلقائي مع أصناف الكاشير
+                    const KNOWN_BARCODE_ALIASES = {
+                        '5011061058027': '7015661058027', // دابل ديرز جيلى بين شطه 90 جم
+                    };
+                    for (const [aliasBc, origBc] of Object.entries(KNOWN_BARCODE_ALIASES)) {
+                        if (fbProductMap.has(origBc)) {
+                            const pData = fbProductMap.get(origBc);
+                            fbProductMap.set(aliasBc, pData);
+                            fbProductMap.set(aliasBc.toLowerCase(), pData);
+                            if (fbStockMap.hasOwnProperty(origBc)) {
+                                fbStockMap[aliasBc] = fbStockMap[origBc];
+                            }
+                        }
+                    }
+
                     // 2. Fetch Supabase expiries
                     const { data: gsData } = await fetchAllSupabaseRows(supabase.from('expiries').select('*'));
                     if (!gsData || gsData.length === 0) {
@@ -5105,6 +5120,10 @@ let html5QrcodeScanner = null;
 const FIREBASE_PRODUCTS_URL = 'https://candyclubsync-default-rtdb.firebaseio.com/products.json';
 const FIREBASE_CACHE_KEY = 'candy_firebase_products_cache';
 
+const KNOWN_BARCODE_ALIASES = {
+    '5011061058027': '7015661058027', // دابل ديرز جيلى بين شطه 90 جم
+};
+
 // تحويل بيانات Firebase الخام إلى مصفوفة منتجات
 function parseFirebaseProducts(data) {
     const result = [];
@@ -5112,8 +5131,14 @@ function parseFirebaseProducts(data) {
         const items = Array.isArray(data) ? data : Object.values(data);
         items.forEach(item => {
             if (item && item.Barcode && item.Name) {
+                let rawBc = Array.isArray(item.Barcode) ? item.Barcode.join(',') : String(item.Barcode);
+                for (const [aliasBc, origBc] of Object.entries(KNOWN_BARCODE_ALIASES)) {
+                    if (rawBc.includes(origBc) && !rawBc.includes(aliasBc)) {
+                        rawBc += ',' + aliasBc;
+                    }
+                }
                 result.push({
-                    barcode: String(item.Barcode).trim(),
+                    barcode: rawBc.trim(),
                     name: String(item.Name).trim(),
                     price: Number(item.Price) || 0,
                     stock: Number(item.Stock) || 0
