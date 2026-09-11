@@ -41,6 +41,16 @@ async function updateExpiryQty(id, newQty) {
     if (!res.ok) console.error(`Failed to update expiry id ${id}: ${res.statusText}`);
 }
 
+async function updateExpiryName(id, newName) {
+    const url = `${SUPABASE_URL}/rest/v1/expiries?id=eq.${id}`;
+    const res = await fetch(url, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ product_name: newName })
+    });
+    if (!res.ok) console.error(`Failed to update expiry name id ${id}: ${res.statusText}`);
+}
+
 async function deleteZeroQtyExpiries() {
     const url = `${SUPABASE_URL}/rest/v1/expiries?qty=eq.0`;
     const res = await fetch(url, {
@@ -93,12 +103,26 @@ async function runAutoSync() {
         const fbItems = Array.isArray(fbDataRaw) ? fbDataRaw : Object.values(fbDataRaw || {});
         
         const fbMap = {};
+        const fbNameMap = {};
         fbItems.forEach(item => {
             if (item && item.Barcode) {
-                fbMap[String(item.Barcode).trim()] = parseFloat(item.Stock) || 0;
+                const stock = parseFloat(item.Stock) || 0;
+                const name = String(item.Name || '').trim();
+                const bCodes = Array.isArray(item.Barcode) ? item.Barcode : String(item.Barcode).split(',');
+                bCodes.forEach(bc => {
+                    const clean = String(bc).trim();
+                    if (clean) {
+                        fbMap[clean] = stock;
+                        fbMap[clean.toLowerCase()] = stock;
+                        if (name) {
+                            fbNameMap[clean] = name;
+                            fbNameMap[clean.toLowerCase()] = name;
+                        }
+                    }
+                });
             }
         });
-        console.log(`Fetched ${Object.keys(fbMap).length} items from Firebase.`);
+        console.log(`Fetched ${Object.keys(fbMap).length} barcodes from Firebase.`);
 
         // 2. Fetch Supabase expiries
         const gsData = await fetchAllSupabaseExpiries();
@@ -108,6 +132,31 @@ async function runAutoSync() {
             console.log('No expiries found in Supabase.');
             await updateGlobalSyncTime();
             return;
+        }
+
+        // 2.5 Match and update product names to match official catalog name
+        let namesUpdatedCount = 0;
+        for (const row of gsData) {
+            const bcode = String(row.barcode || '').trim();
+            const currentName = String(row.product_name || '').trim();
+            if (!bcode) continue;
+            let matchName = null;
+            const subBcs = bcode.split(',');
+            for (let sbc of subBcs) {
+                const cleanSub = sbc.trim();
+                if (cleanSub) {
+                    matchName = fbNameMap[cleanSub] || fbNameMap[cleanSub.toLowerCase()];
+                    if (matchName) break;
+                }
+            }
+            if (matchName && matchName.trim() && matchName.trim() !== currentName) {
+                await updateExpiryName(row.id, matchName.trim());
+                row.product_name = matchName.trim();
+                namesUpdatedCount++;
+            }
+        }
+        if (namesUpdatedCount > 0) {
+            console.log(`Updated names of ${namesUpdatedCount} items in Supabase.`);
         }
 
         // 3. Aggregate by barcode

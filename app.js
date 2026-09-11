@@ -862,10 +862,18 @@ async function handleSupabaseRequest(url, options) {
                         const stock = parseFloat(item.Stock) || 0;
                         const price = parseFloat(item.Price) || 0;
                         const addBarcodeEntry = (code) => {
-                            const clean = String(code || '').trim();
-                            if (clean) {
-                                fbStockMap[clean] = stock;
-                                if (name) fbProductMap.set(clean, { name, price, stock });
+                            if (!code) return;
+                            const parts = String(code).split(',');
+                            for (let p of parts) {
+                                const clean = p.trim();
+                                if (clean) {
+                                    fbStockMap[clean] = stock;
+                                    fbStockMap[clean.toLowerCase()] = stock;
+                                    if (name) {
+                                        fbProductMap.set(clean, { name, price, stock });
+                                        fbProductMap.set(clean.toLowerCase(), { name, price, stock });
+                                    }
+                                }
                             }
                         };
                         if (Array.isArray(b)) {
@@ -882,19 +890,27 @@ async function handleSupabaseRequest(url, options) {
                         break;
                     }
 
-                    // 3. Retroactively match and update names of pending/unnamed products
+                    // 3. Match and update names of products to official POS/Firebase catalog name
                     let namesUpdatedCount = 0;
                     for (const row of gsData) {
                         const bcode = String(row.barcode || '').trim();
                         const currentName = String(row.product_name || '').trim();
-                        const isUnnamed = !currentName || currentName.includes('مزامنة') || currentName === 'غير محدد' || currentName === 'غير مسجل';
-                        if (isUnnamed && bcode && fbProductMap.has(bcode)) {
-                            const match = fbProductMap.get(bcode);
-                            if (match && match.name) {
-                                await supabase.from('expiries').update({ product_name: match.name }).eq('id', row.id);
-                                row.product_name = match.name;
-                                namesUpdatedCount++;
+                        if (!bcode) continue;
+
+                        let match = null;
+                        const subBcodes = bcode.split(',');
+                        for (let sbc of subBcodes) {
+                            const cleanSub = sbc.trim();
+                            if (cleanSub) {
+                                match = fbProductMap.get(cleanSub) || fbProductMap.get(cleanSub.toLowerCase());
+                                if (match) break;
                             }
+                        }
+
+                        if (match && match.name && match.name.trim() && match.name.trim() !== currentName) {
+                            await supabase.from('expiries').update({ product_name: match.name.trim() }).eq('id', row.id);
+                            row.product_name = match.name.trim();
+                            namesUpdatedCount++;
                         }
                     }
 
@@ -913,7 +929,19 @@ async function handleSupabaseRequest(url, options) {
                     let changesCount = 0;
                     for (const bcode in gsMap) {
                         const gsTotal = gsMap[bcode].totalQty;
-                        const fbTotal = fbStockMap.hasOwnProperty(bcode) ? fbStockMap[bcode] : null;
+                        let fbTotal = null;
+                        if (fbStockMap.hasOwnProperty(bcode)) {
+                            fbTotal = fbStockMap[bcode];
+                        } else if (fbStockMap.hasOwnProperty(bcode.toLowerCase())) {
+                            fbTotal = fbStockMap[bcode.toLowerCase()];
+                        } else {
+                            const subBcs = bcode.split(',');
+                            for (let sbc of subBcs) {
+                                const cs = sbc.trim();
+                                if (fbStockMap.hasOwnProperty(cs)) { fbTotal = fbStockMap[cs]; break; }
+                                if (fbStockMap.hasOwnProperty(cs.toLowerCase())) { fbTotal = fbStockMap[cs.toLowerCase()]; break; }
+                            }
+                        }
                         if (fbTotal === null) continue;
                         const diff = gsTotal - fbTotal;
 
@@ -947,7 +975,7 @@ async function handleSupabaseRequest(url, options) {
 
                     let msgParts = [];
                     if (namesUpdatedCount > 0) {
-                        msgParts.push(`تم التعرف وتحديث أسماء ${namesUpdatedCount} منتج`);
+                        msgParts.push(`تم تحديث وتصحيح أسماء ${namesUpdatedCount} منتج طبقاً للكاشير`);
                     }
                     if (changesCount > 0) {
                         msgParts.push(`تم تحديث أرصدة ${changesCount} منتج مع الكاشير`);
@@ -5684,6 +5712,28 @@ if (ledgerSearchBarcodeBtn) {
             currentScannerMode = 'ledger';
         }
         processBarcodeAction(val);
+    });
+}
+
+const ledgerProdBarcodeInp = document.getElementById('ledgerProdBarcode');
+if (ledgerProdBarcodeInp) {
+    ledgerProdBarcodeInp.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (ledgerSearchBarcodeBtn) ledgerSearchBarcodeBtn.click();
+        }
+    });
+    ledgerProdBarcodeInp.addEventListener('change', () => {
+        const val = ledgerProdBarcodeInp.value.trim();
+        if (val && typeof barcodeCatalogData !== 'undefined' && barcodeCatalogData.length > 0) {
+            const found = barcodeCatalogData.find(p => String(p.barcode).split(',').map(b => b.trim().toLowerCase()).includes(val.toLowerCase()));
+            if (found && found.name) {
+                const ledgerProdName = document.getElementById('ledgerProdName');
+                if (ledgerProdName && (!ledgerProdName.value || ledgerProdName.value.includes('مزامنة') || ledgerProdName.value === 'غير مسجل')) {
+                    ledgerProdName.value = found.name;
+                }
+            }
+        }
     });
 }
 
@@ -13305,7 +13355,7 @@ window.runSyncNow = async function() {
         const data = await r.json();
         
         if (data.success) {
-            if (textEl) textEl.innerText = 'جاري مطابقة وتحديث الأسماء المجهولة...';
+            if (textEl) textEl.innerText = 'جاري مطابقة وتحديث أسماء المنتجات مع الكاشير...';
             
             // Retroactive barcode matching with full Firebase catalog
             let updatedCount = 0;
@@ -13322,32 +13372,37 @@ window.runSyncNow = async function() {
             }
 
             if (fullCatalog && fullCatalog.length > 0) {
-                const { data: unnamedExpiries } = await fetchAllSupabaseRows(
+                const { data: allExpiriesWithBarcode } = await fetchAllSupabaseRows(
                     supabase.from('expiries')
                         .select('id, barcode, product_name')
                         .not('barcode', 'is', null)
                         .neq('barcode', '')
                 );
                 
-                if (unnamedExpiries && unnamedExpiries.length > 0) {
-                    for (let exp of unnamedExpiries) {
+                if (allExpiriesWithBarcode && allExpiriesWithBarcode.length > 0) {
+                    for (let exp of allExpiriesWithBarcode) {
                         const curName = String(exp.product_name || '').trim();
-                        const isUnnamed = !curName || curName.includes('مزامنة') || curName === 'غير محدد' || curName === 'غير مسجل';
-                        if (isUnnamed) {
-                            const cleanBc = String(exp.barcode || '').trim().toLowerCase();
-                            const catalogMatch = fullCatalog.find(c => String(c.barcode || '').split(',').map(b => b.trim().toLowerCase()).includes(cleanBc));
-                            if (catalogMatch && catalogMatch.name) {
-                                await supabase.from('expiries').update({ product_name: catalogMatch.name }).eq('id', exp.id);
-                                updatedCount++;
-                            }
+                        const rawBc = String(exp.barcode || '').trim().toLowerCase();
+                        if (!rawBc) continue;
+                        const subBcs = rawBc.split(',').map(b => b.trim()).filter(Boolean);
+                        
+                        const catalogMatch = fullCatalog.find(c => {
+                            if (!c) return false;
+                            const catCodes = String(c.barcode || '').split(',').map(b => b.trim().toLowerCase());
+                            return subBcs.some(sb => catCodes.includes(sb));
+                        });
+                        
+                        if (catalogMatch && catalogMatch.name && catalogMatch.name.trim() && catalogMatch.name.trim() !== curName) {
+                            await supabase.from('expiries').update({ product_name: catalogMatch.name.trim() }).eq('id', exp.id);
+                            updatedCount++;
                         }
                     }
                 }
             }
 
-            let msg = data.message || 'تمت المزامنة بنجاح!';
-            if (updatedCount > 0 && !msg.includes('تم التعرف')) {
-                msg += `<br><b>تم التعرف وتصحيح أسماء ${updatedCount} منتج بنجاح!</b>`;
+            let msg = data.message || 'تمت المزامنة بنجاح';
+            if (updatedCount > 0 && !msg.includes('تحديث أسماء') && !msg.includes('تصحيح أسماء')) {
+                msg += `<br><b>تم تحديث وتصحيح أسماء ${updatedCount} منتج طبقاً للكاشير بنجاح</b>`;
             }
             
             showToast(msg, 'success');
