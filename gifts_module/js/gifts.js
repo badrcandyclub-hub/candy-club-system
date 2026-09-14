@@ -28,7 +28,6 @@
             },
             catalogProducts: [],
             bouquets: [],
-            templates: [],
             cameraStream: null,
             barcodeScannerInstance: null,
             isScanningBarcode: false,
@@ -202,8 +201,6 @@
                 });
             } else if (tabName === 'catalog') {
                 this.renderCustomerCatalog();
-            } else if (tabName === 'templates') {
-                this.switchSubTab('builder');
             }
         },
 
@@ -615,68 +612,119 @@
         },
 
         // 5. ماسح باركود الكاميرا المباشر (Camera Barcode Scanner)
-        toggleCameraBarcodeScanner() {
+        async toggleCameraBarcodeScanner() {
             if (this.state.isScanningBarcode) {
-                this.stopCameraBarcodeScanner();
+                await this.stopCameraBarcodeScanner();
             } else {
-                this.startCameraBarcodeScanner();
+                await this.startCameraBarcodeScanner();
             }
         },
 
         async startCameraBarcodeScanner() {
             const view = document.getElementById('gifts-barcode-scanner-view');
             const btnLabel = document.getElementById('gifts-scanner-btn-label');
+            const readerBox = document.getElementById('gifts-reader-box');
 
             if (!window.Html5Qrcode) {
                 this.showToastNotification("مكتبة الماسح الضوئي غير متوفرة حاليا، يمكنك استخدام البحث أو مسدس الباركود");
                 return;
             }
 
+            if (this.state.isScanningBarcode) return;
+
+            // إنهاء وتفريغ أي ماسح سابق بأمان
+            if (this.state.barcodeScannerInstance) {
+                await this.stopCameraBarcodeScanner();
+            }
+
+            if (readerBox) readerBox.innerHTML = '';
             if (view) view.style.display = 'block';
             if (btnLabel) btnLabel.innerText = 'إغلاق كاميرا المسح';
             this.state.isScanningBarcode = true;
 
             try {
-                this.state.barcodeScannerInstance = new window.Html5Qrcode("gifts-reader-box");
+                // تصفية صيغ الباركود التجارية الشائعة لسرعة فك التشفير وعدم التعليق
+                let formatsToSupport = undefined;
+                if (typeof window.Html5QrcodeSupportedFormats !== 'undefined') {
+                    formatsToSupport = [
+                        window.Html5QrcodeSupportedFormats.EAN_13,
+                        window.Html5QrcodeSupportedFormats.EAN_8,
+                        window.Html5QrcodeSupportedFormats.CODE_128,
+                        window.Html5QrcodeSupportedFormats.CODE_39,
+                        window.Html5QrcodeSupportedFormats.UPC_A,
+                        window.Html5QrcodeSupportedFormats.UPC_E,
+                        window.Html5QrcodeSupportedFormats.QR_CODE
+                    ];
+                }
+
+                const scanner = new window.Html5Qrcode("gifts-reader-box", formatsToSupport ? { formatsToSupport } : undefined);
+                this.state.barcodeScannerInstance = scanner;
+
                 const config = {
-                    fps: 15,
-                    qrbox: { width: 250, height: 160 },
+                    fps: 10,
+                    qrbox: { width: 260, height: 160 },
                     aspectRatio: 1.6
                 };
 
-                await this.state.barcodeScannerInstance.start(
-                    { facingMode: "environment" },
+                // اختيار الكاميرا تلقائياً: الكاميرا الخلفية للهواتف، أو كاميرا الويب المتاحة للكمبيوتر
+                let cameraConfig = { facingMode: { ideal: "environment" } };
+                try {
+                    if (window.Html5Qrcode && typeof window.Html5Qrcode.getCameras === 'function') {
+                        const cameras = await window.Html5Qrcode.getCameras();
+                        if (cameras && cameras.length > 0) {
+                            const backCamera = cameras.find(c => {
+                                const lbl = (c.label || '').toLowerCase();
+                                return lbl.includes('back') || lbl.includes('rear') || lbl.includes('environment');
+                            });
+                            cameraConfig = backCamera ? backCamera.id : cameras[0].id;
+                        }
+                    }
+                } catch (camErr) {
+                    console.warn("Camera enumeration fallback:", camErr);
+                }
+
+                await scanner.start(
+                    cameraConfig,
                     config,
                     (decodedText) => {
-                        // نجاح قراءة الباركود
                         this.stopCameraBarcodeScanner();
                         this.onBarcodeEntered(decodedText);
                     },
-                    (error) => {
-                        // أخطاء التوجيه أثناء البحث نتجاهلها
+                    () => {
+                        // تجاهل إشعارات الإطارات التي لا تحتوي على باركود
                     }
                 );
             } catch (err) {
-                console.error("Camera scanner failed:", err);
-                this.stopCameraBarcodeScanner();
+                console.error("Camera scanner start failed:", err);
+                await this.stopCameraBarcodeScanner();
                 this.showToastNotification("تعذر فتح كاميرا مسح الباركود، يمكنك استخدام مسدس الباركود أو البحث");
             }
         },
 
-        stopCameraBarcodeScanner() {
+        async stopCameraBarcodeScanner() {
             const view = document.getElementById('gifts-barcode-scanner-view');
             const btnLabel = document.getElementById('gifts-scanner-btn-label');
 
+            this.state.isScanningBarcode = false;
+            if (btnLabel) btnLabel.innerText = 'فتح كاميرا مسح الباركود';
+            if (view) view.style.display = 'none';
+
             if (this.state.barcodeScannerInstance) {
-                this.state.barcodeScannerInstance.stop().then(() => {
-                    this.state.barcodeScannerInstance.clear();
-                    this.state.barcodeScannerInstance = null;
-                }).catch(e => console.warn(e));
+                const scanner = this.state.barcodeScannerInstance;
+                this.state.barcodeScannerInstance = null;
+                try {
+                    if (scanner.isScanning) {
+                        await scanner.stop();
+                    }
+                    scanner.clear();
+                } catch (e) {
+                    console.warn("Error stopping scanner instance:", e);
+                    try { scanner.clear(); } catch (_) {}
+                }
             }
 
-            if (view) view.style.display = 'none';
-            if (btnLabel) btnLabel.innerText = 'فتح كاميرا مسح الباركود';
-            this.state.isScanningBarcode = false;
+            const readerBox = document.getElementById('gifts-reader-box');
+            if (readerBox) readerBox.innerHTML = '';
         },
 
         // صوت Beep مميز وفاخر عند مسح الباركود
@@ -933,7 +981,7 @@
                 this.state.cameraStream = stream;
                 video.srcObject = stream;
                 video.style.display = 'block';
-                video.play();
+                video.play().catch(e => console.warn('Video playback deferred:', e));
 
                 if (placeholder) placeholder.style.display = 'none';
                 if (btnOpen) btnOpen.style.display = 'none';
@@ -1400,7 +1448,7 @@
                 pagesHtml += `
                 <div class="thermal-receipt-instance" style="${pageBreakStyle}">
                     <div class="thermal-header">
-                        <div class="thermal-brand">★ CANDY CLUB ★ - قسم الهدايا</div>
+                        <div class="thermal-brand">CANDY CLUB - قسم الهدايا</div>
                         <div class="thermal-top-meta">
                             <div class="thermal-top-meta-row">
                                 <span>اسم البوكيه: <strong>${bouquet.name || 'بوكيه هدايا'}</strong></span>
@@ -2643,17 +2691,6 @@
             if (readyEl) readyEl.innerText = readyCount;
             if (soldEl) soldEl.innerText = soldCount;
             if (todayEl) todayEl.innerText = todayCreated;
-        },
-
-        getCurrentUserName() {
-            try {
-                const stored = localStorage.getItem('cc_user');
-                if (stored) {
-                    const user = JSON.parse(stored);
-                    if (user && user.displayName) return user.displayName;
-                }
-            } catch (e) {}
-            return 'الموظف';
         },
 
         showToastNotification(message) {

@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="gifts_module/css/gifts.css?v=10">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap"
         rel="stylesheet">
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" type="text/javascript" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     
     <!-- Supabase JS CDN -->
@@ -33,18 +33,34 @@
     </style>
     <script>
         window.onerror = function(msg, url, line, col, error) {
-            var debug = document.getElementById('debug-overlay');
-            if(debug) {
-                debug.style.display = 'block';
-                debug.innerHTML += '<br/>ERROR: ' + msg + ' at ' + url + ':' + line + ':' + col;
+            console.error('Window error:', msg, url, line, col, error);
+            // Ignore generic cross-origin script error and CDN noise
+            if (!msg || msg === 'Script error.' || msg === 'Script error' || !url || url.includes('unpkg.com') || url.includes('cloudflare.com')) {
+                return true;
+            }
+            var isDebug = window.location.search.includes('debug=1') || window.location.search.includes('debug=true') || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            if (isDebug) {
+                var debug = document.getElementById('debug-overlay');
+                if (debug) {
+                    debug.style.display = 'block';
+                    debug.innerHTML += '<br/>ERROR: ' + msg + ' at ' + url + ':' + line + ':' + col;
+                }
             }
             return false;
         };
         window.addEventListener('unhandledrejection', function(event) {
-            var debug = document.getElementById('debug-overlay');
-            if(debug) {
-                debug.style.display = 'block';
-                debug.innerHTML += '<br/>UNHANDLED PROMISE: ' + (event.reason && event.reason.message ? event.reason.message : event.reason);
+            var reason = event.reason && event.reason.message ? event.reason.message : String(event.reason || '');
+            console.error('Unhandled rejection:', reason);
+            if (reason.includes('Html5Qrcode') || reason.includes('MediaStream') || reason.includes('Camera') || reason.includes('Permission')) {
+                return;
+            }
+            var isDebug = window.location.search.includes('debug=1') || window.location.search.includes('debug=true') || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            if (isDebug) {
+                var debug = document.getElementById('debug-overlay');
+                if (debug) {
+                    debug.style.display = 'block';
+                    debug.innerHTML += '<br/>UNHANDLED PROMISE: ' + reason;
+                }
             }
         });
     </script>
