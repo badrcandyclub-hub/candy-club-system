@@ -193,6 +193,8 @@
                 });
             } else if (tabName === 'catalog') {
                 this.renderCustomerCatalog();
+            } else if (tabName === 'templates') {
+                this.renderTemplatesView();
             }
         },
 
@@ -2387,7 +2389,7 @@
         },
 
         async deleteTemplate(templateId) {
-            if (!confirm("هل أنت متأكد من حذف هذا القالب؟")) return;
+            if (!confirm("هل أنت متأكد من حذف هذا القالب نهائياً؟")) return;
             const sb = this.getSupabase();
             if (sb) {
                 try {
@@ -2398,9 +2400,148 @@
             }
             this.state.templates = this.state.templates.filter(t => t.id !== templateId);
             this.saveTemplatesToLocal();
+            // refresh both the modal list and the dedicated view
             this.renderTemplatesList();
+            this.renderTemplatesView();
             this.showToastNotification("تم حذف القالب بنجاح");
         },
+
+        // ── TEMPLATES MANAGEMENT VIEW ─────────────────────────────────────
+
+        // Filter query for the dedicated templates view
+        _tplViewQuery: '',
+
+        filterTemplatesView(query) {
+            this._tplViewQuery = (query || '').trim().toLowerCase();
+            this.renderTemplatesView();
+        },
+
+        renderTemplatesView() {
+            const grid     = document.getElementById('gifts-tplview-grid');
+            const countEl  = document.getElementById('gifts-tpl-count');
+            if (!grid) return;
+
+            const templates = this.state.templates || [];
+            const q = this._tplViewQuery || '';
+
+            // Update count chip
+            if (countEl) {
+                countEl.innerHTML = `<i class="fa-solid fa-layer-group"></i> ${templates.length} قالب`;
+            }
+
+            // Filter
+            let filtered = templates;
+            if (q) {
+                filtered = templates.filter(t => {
+                    const nameMatch  = (t.template_name || '').toLowerCase().includes(q);
+                    const itemsMatch = (t.items || []).some(i => (i.name || '').toLowerCase().includes(q));
+                    return nameMatch || itemsMatch;
+                });
+            }
+
+            // Empty state
+            if (filtered.length === 0) {
+                if (templates.length === 0) {
+                    grid.innerHTML = `
+                        <div class="gifts-tpl-empty" style="grid-column: 1 / -1;">
+                            <div class="gifts-empty-icon-wrap">
+                                <i class="fa-solid fa-layer-group"></i>
+                            </div>
+                            <h4>لا توجد قوالب محفوظة بعد</h4>
+                            <p>اذهب إلى تبويب التجميع، أضف أصناف، ثم اضغط <strong>"حفظ كقالب"</strong> لحفظ وصفتك.</p>
+                            <div style="margin-top: 18px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+                                <button class="gifts-btn-primary" style="padding: 10px 22px;" onclick="GiftsApp.loadStarterTemplates()">
+                                    <i class="fa-solid fa-sparkles"></i> تحميل 3 قوالب نموذجية جاهزة
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    grid.innerHTML = `
+                        <div class="gifts-tpl-empty" style="grid-column: 1 / -1;">
+                            <div class="gifts-empty-icon-wrap" style="background: #F1F5F9; color: #64748B; border-color: #CBD5E1;">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </div>
+                            <h4>لا توجد قوالب تطابق "${this.escapeHtml(q)}"</h4>
+                            <p>جرّب البحث باسم آخر أو بمكون من مكونات القالب</p>
+                            <button class="gifts-btn-outline" style="margin-top: 14px;"
+                                onclick="document.getElementById('gifts-tplview-search').value=''; GiftsApp.filterTemplatesView('');">
+                                عرض جميع القوالب
+                            </button>
+                        </div>
+                    `;
+                }
+                return;
+            }
+
+            // Render cards
+            grid.innerHTML = filtered.map((t, idx) => {
+                const items      = t.items || [];
+                const totalUnits = items.reduce((s, i) => s + (Number(i.qty) || 1), 0);
+                const estPrice   = Number(t.estimated_price || 0);
+
+                // Pills (max 6, then +N more)
+                const maxPills = 6;
+                const pillsHtml = items.slice(0, maxPills).map(i => `
+                    <span class="gifts-tpl-view-pill">
+                        <span class="pill-qty">${i.qty}×</span>
+                        <span class="pill-name">${this.escapeHtml(i.name)}</span>
+                    </span>
+                `).join('');
+                const extra = items.length - maxPills;
+                const morePill = extra > 0
+                    ? `<span class="gifts-tpl-view-pill gifts-tpl-view-pill-more">+${extra} أكثر</span>`
+                    : '';
+
+                // Color accent cycling
+                const accents = ['#BE185D','#7C3AED','#0F766E','#C2410C','#1D4ED8','#065F46'];
+                const accent  = accents[idx % accents.length];
+
+                return `
+                    <div class="gifts-tpl-view-card" style="--tpl-accent: ${accent}; animation-delay: ${idx * 0.06}s">
+                        <!-- Card header strip -->
+                        <div class="gifts-tpl-view-card-strip"></div>
+
+                        <!-- Body -->
+                        <div class="gifts-tpl-view-card-body">
+                            <div class="gifts-tpl-view-card-top">
+                                <div class="gifts-tpl-view-icon">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                </div>
+                                <div class="gifts-tpl-view-info">
+                                    <h4 class="gifts-tpl-view-name">${this.escapeHtml(t.template_name)}</h4>
+                                    <div class="gifts-tpl-view-meta">
+                                        <span><i class="fa-solid fa-boxes-stacked"></i> ${totalUnits} قطعة</span>
+                                        <span><i class="fa-solid fa-layer-group"></i> ${items.length} أصناف</span>
+                                        ${t.created_by ? `<span><i class="fa-solid fa-user"></i> ${this.escapeHtml(t.created_by)}</span>` : ''}
+                                    </div>
+                                </div>
+                                <button class="gifts-tpl-view-del-btn" title="حذف القالب" onclick="GiftsApp.deleteTemplate('${t.id}')">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+
+                            <div class="gifts-tpl-view-pills">
+                                ${pillsHtml}${morePill}
+                            </div>
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="gifts-tpl-view-card-footer">
+                            <div class="gifts-tpl-view-price">
+                                <span class="gifts-tpl-view-price-label">السعر التقديري</span>
+                                <span class="gifts-tpl-view-price-val">${estPrice.toFixed(2)} <small>ج.م</small></span>
+                            </div>
+                            <button class="gifts-tpl-view-apply-btn" onclick="GiftsApp.applyTemplate('${t.id}')">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                تطبيق في التجميع
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        },
+
 
         // 12. التقارير ولوحة الصدارة
         onReportPeriodChanged() {

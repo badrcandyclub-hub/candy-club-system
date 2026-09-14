@@ -1428,8 +1428,450 @@
 }
 
 /* ================================================================
+   5. Sub-View: Templates Management
+   ================================================================ */
+
+@keyframes gifts-tpl-card-in {
+    from { opacity: 0; transform: translateY(20px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+@keyframes gifts-tpl-orb-float {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50%       { transform: translateY(-14px) scale(1.06); }
+}
+@keyframes gifts-tpl-orb-drift {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50%       { transform: translateY(10px) rotate(180deg); }
+}
+@keyframes gifts-tpl-shimmer {
+    0%   { transform: translateX(-150%) skewX(-15deg); }
+    100% { transform: translateX(250%)  skewX(-15deg); }
+}
+
+/* === Hero === */
+.gifts-tpl-hero {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #A855F7 100%);
+    border-radius: var(--gifts-radius-lg);
+    padding: 34px 30px;
+    margin-bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    box-shadow: 0 18px 46px rgba(124, 58, 237, 0.35);
+}
+
+.gifts-tpl-hero-orb {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+}
+.gifts-tpl-hero-orb-1 {
+    width: 240px; height: 240px;
+    background: radial-gradient(circle, rgba(255,255,255,0.18) 0%, transparent 70%);
+    top: -70px; left: -50px;
+    animation: gifts-tpl-orb-float 7s ease-in-out infinite;
+}
+.gifts-tpl-hero-orb-2 {
+    width: 160px; height: 160px;
+    background: radial-gradient(circle, rgba(255,255,255,0.14) 0%, transparent 70%);
+    bottom: -40px; right: 60px;
+    animation: gifts-tpl-orb-drift 9s ease-in-out infinite;
+}
+
+.gifts-tpl-hero-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+.gifts-tpl-hero-icon {
+    width: 68px;
+    height: 68px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.22);
+    backdrop-filter: blur(8px);
+    border: 1.5px solid rgba(255, 255, 255, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.9rem;
+    color: #FFFFFF;
+    flex-shrink: 0;
+}
+
+.gifts-tpl-hero-text {
+    flex: 1;
+}
+
+.gifts-tpl-hero-title {
+    margin: 0 0 8px 0;
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: #FFFFFF;
+    line-height: 1.3;
+}
+
+.gifts-tpl-hero-sub {
+    margin: 0;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 700;
+    line-height: 1.6;
+}
+
+/* Add template button (white card) */
+.gifts-tpl-add-btn {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    background: #FFFFFF;
+    border: none;
+    border-radius: var(--gifts-radius-md);
+    padding: 16px 24px;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 900;
+    color: #5B21B6;
+    cursor: pointer;
+    overflow: hidden;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+    transition: var(--gifts-spring);
+}
+.gifts-tpl-add-btn::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(124,58,237,0.1), transparent);
+    animation: gifts-tpl-shimmer 4s infinite;
+    pointer-events: none;
+}
+.gifts-tpl-add-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+}
+.gifts-tpl-add-btn:active {
+    transform: scale(0.97);
+}
+
+/* === Toolbar === */
+.gifts-tpl-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.gifts-tpl-search-wrap {
+    flex: 1;
+    min-width: 200px;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.gifts-tpl-search-wrap > i {
+    position: absolute;
+    right: 14px;
+    color: var(--gifts-text-muted);
+    font-size: 0.9rem;
+    pointer-events: none;
+}
+
+.gifts-tpl-search-input {
+    width: 100%;
+    padding: 10px 40px 10px 16px;
+    border: 1.5px solid var(--gifts-border-pink);
+    border-radius: var(--gifts-radius-sm);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--gifts-text);
+    background: #FFFFFF;
+    outline: none;
+    transition: var(--gifts-transition);
+    box-sizing: border-box;
+}
+.gifts-tpl-search-input:focus {
+    border-color: var(--gifts-primary);
+    box-shadow: 0 0 0 3px var(--gifts-primary-soft);
+}
+.gifts-tpl-search-input::placeholder {
+    color: var(--gifts-text-muted);
+    font-weight: 600;
+}
+
+.gifts-tpl-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.gifts-tpl-count-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: linear-gradient(135deg, #EDE9FE, #DDD6FE);
+    border: 1.5px solid #C4B5FD;
+    color: #5B21B6;
+    font-size: 0.88rem;
+    font-weight: 900;
+    padding: 6px 16px;
+    border-radius: 9999px;
+    white-space: nowrap;
+}
+
+/* === Templates Grid === */
+.gifts-tpl-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 18px;
+}
+
+/* === Template Card === */
+.gifts-tpl-view-card {
+    background: #FFFFFF;
+    border-radius: var(--gifts-radius-md);
+    border: 1.5px solid #E9D5FF;
+    box-shadow: 0 2px 12px rgba(124, 58, 237, 0.08);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: var(--gifts-spring);
+    opacity: 0;
+    animation: gifts-tpl-card-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.gifts-tpl-view-card:hover {
+    transform: translateY(-5px) scale(1.012);
+    box-shadow: 0 14px 34px rgba(124, 58, 237, 0.18);
+    border-color: var(--tpl-accent, #7C3AED);
+}
+
+/* Colored accent strip at top */
+.gifts-tpl-view-card-strip {
+    height: 5px;
+    background: var(--tpl-accent, #7C3AED);
+    transition: height 0.25s;
+}
+.gifts-tpl-view-card:hover .gifts-tpl-view-card-strip {
+    height: 7px;
+}
+
+/* Card body */
+.gifts-tpl-view-card-body {
+    padding: 18px 18px 14px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.gifts-tpl-view-card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.gifts-tpl-view-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #EDE9FE, #DDD6FE);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    color: var(--tpl-accent, #7C3AED);
+    flex-shrink: 0;
+    transition: var(--gifts-transition);
+}
+.gifts-tpl-view-card:hover .gifts-tpl-view-icon {
+    background: var(--tpl-accent, #7C3AED);
+    color: #FFFFFF;
+}
+
+.gifts-tpl-view-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.gifts-tpl-view-name {
+    margin: 0 0 6px 0;
+    font-size: 1rem;
+    font-weight: 900;
+    color: var(--gifts-text);
+    line-height: 1.35;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gifts-tpl-view-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 0.77rem;
+    color: var(--gifts-text-muted);
+    font-weight: 700;
+}
+.gifts-tpl-view-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.gifts-tpl-view-meta i {
+    color: var(--tpl-accent, #7C3AED);
+    font-size: 0.72rem;
+}
+
+/* Delete button */
+.gifts-tpl-view-del-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    border: 1.5px solid #FCA5A5;
+    background: #FEF2F2;
+    color: #EF4444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+    transition: var(--gifts-spring);
+}
+.gifts-tpl-view-del-btn:hover {
+    background: #EF4444;
+    color: #FFFFFF;
+    border-color: #EF4444;
+    transform: scale(1.1);
+}
+
+/* Pills */
+.gifts-tpl-view-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.gifts-tpl-view-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: linear-gradient(135deg, #F5F3FF, #EDE9FE);
+    border: 1px solid #DDD6FE;
+    color: #5B21B6;
+    font-size: 0.77rem;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    white-space: nowrap;
+    transition: var(--gifts-transition);
+}
+.gifts-tpl-view-card:hover .gifts-tpl-view-pill {
+    background: var(--tpl-accent, #7C3AED);
+    color: #FFFFFF;
+    border-color: var(--tpl-accent, #7C3AED);
+}
+.gifts-tpl-view-pill .pill-qty {
+    opacity: 0.75;
+    font-size: 0.72rem;
+}
+
+.gifts-tpl-view-pill-more {
+    background: #F1F5F9 !important;
+    border-color: #E2E8F0 !important;
+    color: var(--gifts-text-muted) !important;
+}
+.gifts-tpl-view-card:hover .gifts-tpl-view-pill-more {
+    background: #64748B !important;
+    color: #FFFFFF !important;
+    border-color: #64748B !important;
+}
+
+/* Card footer */
+.gifts-tpl-view-card-footer {
+    padding: 14px 18px;
+    border-top: 1.5px solid #EDE9FE;
+    background: linear-gradient(135deg, #FDFCFF, #F5F3FF);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.gifts-tpl-view-price {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.gifts-tpl-view-price-label {
+    font-size: 0.74rem;
+    color: var(--gifts-text-muted);
+    font-weight: 700;
+}
+.gifts-tpl-view-price-val {
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: var(--tpl-accent, #7C3AED);
+    line-height: 1;
+}
+.gifts-tpl-view-price-val small {
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-right: 2px;
+    opacity: 0.8;
+}
+
+/* Apply button */
+.gifts-tpl-view-apply-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--tpl-accent, #7C3AED);
+    color: #FFFFFF;
+    border: none;
+    border-radius: var(--gifts-radius-sm);
+    padding: 9px 18px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 900;
+    cursor: pointer;
+    transition: var(--gifts-spring);
+    white-space: nowrap;
+}
+.gifts-tpl-view-apply-btn:hover {
+    filter: brightness(1.12);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+.gifts-tpl-view-apply-btn:active {
+    transform: scale(0.95);
+}
+
+/* Empty state for templates view */
+.gifts-tpl-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--gifts-text-muted);
+}
+
+/* ================================================================
    4. Sub-View: Customer Catalog — Luxury Redesign
    ================================================================ */
+
 
 /* === Hero Banner === */
 @keyframes gifts-catalog-orb-float {
@@ -2671,6 +3113,61 @@
         flex-direction: column;
         align-items: flex-start;
         gap: 10px;
+    }
+
+    /* === Templates View Responsive === */
+    .gifts-tpl-hero {
+        padding: 22px 16px;
+        gap: 18px;
+    }
+
+    .gifts-tpl-hero-main {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .gifts-tpl-hero-icon {
+        width: 52px;
+        height: 52px;
+        font-size: 1.5rem;
+    }
+
+    .gifts-tpl-hero-title {
+        font-size: 1.1rem;
+    }
+
+    .gifts-tpl-hero-sub {
+        font-size: 0.83rem;
+    }
+
+    .gifts-tpl-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .gifts-tpl-search-wrap {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .gifts-tpl-toolbar-actions {
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .gifts-tpl-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .gifts-tpl-view-card-footer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .gifts-tpl-view-apply-btn {
+        width: 100%;
+        justify-content: center;
     }
 }
 

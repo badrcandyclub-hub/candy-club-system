@@ -61,6 +61,11 @@
             <span class="tab-label-full">كتالوج العملاء التسويقي</span>
             <span class="tab-label-short">الكتالوج</span>
         </button>
+        <button class="gifts-subtab-btn" onclick="GiftsApp.switchSubTab('templates')">
+            <i class="fa-solid fa-layer-group"></i>
+            <span class="tab-label-full">إدارة القوالب السريعة</span>
+            <span class="tab-label-short">القوالب</span>
+        </button>
     </div>
 
     <!-- ================================================================
@@ -484,6 +489,53 @@
             <div class="gifts-catalog-grid" id="gifts-customer-catalog-grid">
                 <!-- Rendered dynamically -->
             </div>
+        </div>
+
+    </div>
+
+    <!-- ================================================================
+         SUB-VIEW 5: TEMPLATES MANAGEMENT
+         ================================================================ -->
+    <div id="gifts-view-templates" class="gifts-subview">
+
+        <!-- Templates Hero -->
+        <div class="gifts-tpl-hero">
+            <div class="gifts-tpl-hero-orb gifts-tpl-hero-orb-1"></div>
+            <div class="gifts-tpl-hero-orb gifts-tpl-hero-orb-2"></div>
+            <div class="gifts-tpl-hero-main">
+                <div class="gifts-tpl-hero-icon">
+                    <i class="fa-solid fa-layer-group"></i>
+                </div>
+                <div class="gifts-tpl-hero-text">
+                    <h3 class="gifts-tpl-hero-title">القوالب السريعة</h3>
+                    <p class="gifts-tpl-hero-sub">قوالب جاهزة لتجميع البوكيهات بسرعة — احفظ وصفة بوكيه مرة واحدة ثم طبّقها في ثانية في أي وقت</p>
+                </div>
+            </div>
+            <button class="gifts-tpl-add-btn" onclick="GiftsApp.saveAsTemplate()">
+                <i class="fa-solid fa-plus"></i>
+                <span>حفظ السلة الحالية كقالب جديد</span>
+            </button>
+        </div>
+
+        <!-- Templates Toolbar -->
+        <div class="gifts-tpl-toolbar">
+            <div class="gifts-tpl-search-wrap">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="gifts-tplview-search" class="gifts-tpl-search-input"
+                    placeholder="ابحث في القوالب بالاسم أو المكون..."
+                    oninput="GiftsApp.filterTemplatesView(this.value)">
+            </div>
+            <div class="gifts-tpl-toolbar-actions">
+                <div class="gifts-tpl-count-chip" id="gifts-tpl-count"><i class="fa-solid fa-layer-group"></i> 0 قالب</div>
+                <button class="gifts-btn-outline" onclick="GiftsApp.loadStarterTemplates()" title="تحميل قوالب نموذجية جاهزة">
+                    <i class="fa-solid fa-sparkles"></i> قوالب نموذجية
+                </button>
+            </div>
+        </div>
+
+        <!-- Templates Grid -->
+        <div class="gifts-tpl-grid" id="gifts-tplview-grid">
+            <!-- Rendered dynamically -->
         </div>
 
     </div>
