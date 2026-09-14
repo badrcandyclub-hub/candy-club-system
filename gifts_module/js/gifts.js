@@ -1515,10 +1515,10 @@
 
             if (list.length === 0) {
                 container.innerHTML = `
-                    <div class="gifts-empty-state" style="grid-column: 1 / -1; padding: 60px 20px;">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H4.5a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 109.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1114.625 7.5H12m0 0V21m-8.625-9.75h17.25" />
-                        </svg>
+                    <div class="gifts-empty-state" style="grid-column: 1 / -1; padding: 40px 20px;">
+                        <div class="gifts-empty-icon-wrap">
+                            <i class="fa-solid fa-gift"></i>
+                        </div>
                         <h4>لا توجد بوكيهات مسجلة حاليا</h4>
                         <p>يمكنك البدء بإنشاء وتجميع أول بوكيه من شاشة التجميع</p>
                     </div>
@@ -1586,7 +1586,7 @@
                                 <button type="button" class="gifts-card-btn" style="color: var(--gifts-teal);" title="تسجيل كـ مباع" onclick="GiftsApp.markBouquetSold('${b.id}')">
                                     <i class="fa-solid fa-bag-shopping"></i> بيع
                                 </button>
-                                <button type="button" class="gifts-card-btn" style="color: var(--gifts-red);" title="تفكيك وإرجاع الأصناف للمخزن" onclick="GiftsApp.disassembleBouquet('${b.id}')">
+                                <button type="button" class="gifts-card-btn" style="color: var(--gifts-amber);" title="تفكيك وإرجاع الأصناف للمخزن" onclick="GiftsApp.disassembleBouquet('${b.id}')">
                                     <i class="fa-solid fa-arrow-rotate-left"></i> تفكيك
                                 </button>
                             ` : ''}
@@ -1596,10 +1596,36 @@
                             <button type="button" class="gifts-card-btn" title="سجل حركات البوكيه" onclick="GiftsApp.openTimelineModal('${b.id}')">
                                 <i class="fa-solid fa-clock-rotate-left"></i> سجل
                             </button>
+                            <button type="button" class="gifts-card-btn" style="color: var(--gifts-red);" title="حذف البوكيه نهائياً" onclick="GiftsApp.deleteBouquet('${b.id}')">
+                                <i class="fa-solid fa-trash-can"></i> حذف
+                            </button>
                         </div>
                     </div>
                 `;
             }).join('');
+        },
+
+        async deleteBouquet(id) {
+            const bouquet = this.state.bouquets.find(b => b.id === id);
+            if (!bouquet) return;
+
+            if (!confirm(`هل أنت متأكد من حذف البوكيه "${bouquet.name}" نهائياً من النظام؟`)) {
+                return;
+            }
+
+            if (window.supabase) {
+                try {
+                    await window.supabase.from(GIFTS_TABLE).delete().eq('id', id);
+                } catch (e) {
+                    console.warn("Supabase delete bouquet error:", e);
+                }
+            }
+
+            this.state.bouquets = this.state.bouquets.filter(b => b.id !== id);
+            this.saveBouquetsToLocal();
+            this.updateHeaderStats();
+            this.renderShowcase();
+            this.showToastNotification(`تم حذف البوكيه "${bouquet.name}" بنجاح`);
         },
 
         setShowcaseFilter(filter, btnEl) {

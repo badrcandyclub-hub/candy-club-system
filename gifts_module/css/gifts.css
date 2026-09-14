@@ -1324,12 +1324,38 @@
 /* Empty States */
 .gifts-empty-state {
     text-align: center;
-    padding: 50px 20px;
+    padding: 36px 16px;
     color: var(--gifts-text-muted);
 }
 
+.gifts-empty-icon-wrap {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FFF0F6 0%, #FDF2F8 100%);
+    border: 1.5px solid var(--gifts-border-pink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 14px auto;
+    font-size: 1.75rem;
+    color: var(--gifts-primary);
+    box-shadow: 0 4px 16px rgba(233, 30, 140, 0.12);
+    animation: gifts-wand-float 3s ease-in-out infinite;
+}
+
+.gifts-empty-state svg {
+    width: 54px !important;
+    height: 54px !important;
+    max-width: 54px !important;
+    max-height: 54px !important;
+    margin: 0 auto 14px auto !important;
+    display: block !important;
+    stroke: var(--gifts-primary) !important;
+}
+
 .gifts-empty-state h4 {
-    margin: 0 0 8px 0;
+    margin: 0 0 6px 0;
     font-size: 1.25rem;
     font-weight: 900;
     color: var(--gifts-primary-dark);
@@ -1337,10 +1363,11 @@
 
 .gifts-empty-state p {
     margin: 0;
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     max-width: 380px;
     margin-inline: auto;
     font-weight: 600;
+    color: var(--gifts-text-muted);
 }
 
 /* Modals */
@@ -1469,24 +1496,15 @@
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.96);
     backdrop-filter: blur(14px);
     color: var(--gifts-text);
-    padding: 14px 22px;
+    padding: 12px 18px;
     border-top: 2px solid var(--gifts-primary-border);
     box-shadow: 0 -6px 24px rgba(233, 30, 140, 0.12);
     z-index: 1000;
     justify-content: space-between;
     align-items: center;
-}
-
-@media (max-width: 768px) {
-    .gifts-mobile-sticky-bar {
-        display: flex;
-    }
-    #gifts-tab {
-        padding-bottom: 96px;
-    }
 }
 
 .gifts-mobile-info {
@@ -1501,12 +1519,166 @@
 }
 
 .gifts-mobile-price {
-    font-size: 1.4rem;
+    font-size: 1.35rem;
     font-weight: 900;
     color: var(--gifts-primary);
+}
+
+/* ================================================================
+   Mobile & Tablet Responsive Optimizations (< 768px)
+   ================================================================ */
+@media (max-width: 768px) {
+    #gifts-tab {
+        padding: 12px 8px 96px 8px;
+    }
+
+    .gifts-header-card {
+        padding: 16px 14px;
+        gap: 12px;
+    }
+
+    .gifts-title-group h2 {
+        font-size: 1.35rem;
+    }
+
+    .gifts-title-group p {
+        font-size: 0.82rem;
+    }
+
+    .gifts-quick-stats {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+    }
+
+    .gifts-stat-chip {
+        padding: 8px 6px;
+        gap: 4px;
+        flex-direction: column;
+        text-align: center;
+        justify-content: center;
+    }
+
+    .gifts-stat-chip i {
+        font-size: 1rem !important;
+    }
+
+    .gifts-stat-chip .chip-label {
+        font-size: 0.7rem;
+    }
+
+    .gifts-stat-chip .chip-val {
+        font-size: 1.15rem;
+    }
+
+    .gifts-nav-bar {
+        padding: 4px;
+        gap: 4px;
+        border-radius: 14px;
+    }
+
+    .gifts-subtab-btn {
+        min-width: 130px;
+        padding: 10px 12px;
+        font-size: 0.82rem;
+        gap: 6px;
+    }
+
+    .gifts-builder-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .gifts-draft-card, .gifts-scanner-panel {
+        padding: 16px 12px;
+        position: static;
+    }
+
+    .gifts-scanner-hero {
+        padding: 16px 10px;
+    }
+
+    .gifts-scanner-hero-title {
+        font-size: 1.05rem;
+    }
+
+    .gifts-scanner-hero-desc {
+        font-size: 0.8rem;
+        margin-bottom: 12px;
+    }
+
+    .gifts-scanner-input {
+        padding: 12px 42px 12px 14px;
+        font-size: 0.95rem;
+    }
+
+    .gifts-scanner-input-wrap i.search-icon {
+        right: 14px;
+        font-size: 1.1rem;
+    }
+
+    .gifts-found-card {
+        padding: 16px 12px;
+    }
+
+    .gifts-found-grid {
+        padding: 12px 10px;
+        gap: 10px;
+    }
+
+    .gifts-showcase-toolbar {
+        padding: 12px 14px;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .gifts-showcase-toolbar .gifts-search-box {
+        max-width: 100% !important;
+    }
+
+    .gifts-filter-chips {
+        overflow-x: auto;
+        padding-bottom: 4px;
+        flex-wrap: nowrap;
+    }
+
+    .gifts-chip {
+        padding: 6px 14px;
+        font-size: 0.82rem;
+        white-space: nowrap;
+    }
+
+    .gifts-showcase-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .gifts-mobile-sticky-bar {
+        display: flex;
+    }
+
+    .gifts-analytics-split {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Global Active Feedback - Feel the Click on EVERYTHING */
+button:active, 
+.gifts-btn-primary:active, 
+.gifts-btn-secondary:active,
+.gifts-btn-outline:active, 
+.gifts-subtab-btn:active, 
+.gifts-chip:active,
+.gifts-stepper-btn:active, 
+.gifts-card-btn:active,
+.gifts-basket-remove:active {
+    transform: scale(0.94) !important;
+    transition: transform 0.08s ease !important;
 }
 
 /* Isolated Thermal 80mm Print Styles */
 #gifts-thermal-print-area {
     display: none !important;
 }
+
