@@ -2062,42 +2062,180 @@
 
         openTemplatesModal() {
             const modal = document.getElementById('gifts-modal-templates');
+            const searchInput = document.getElementById('gifts-template-search-input');
+            if (searchInput) searchInput.value = '';
+            this.state.templateSearchQuery = '';
+
+            this.renderTemplatesList();
+
+            if (modal) modal.classList.add('active');
+        },
+
+        filterTemplates(query) {
+            this.state.templateSearchQuery = query || '';
+            this.renderTemplatesList();
+        },
+
+        renderTemplatesList() {
             const container = document.getElementById('gifts-templates-list-body');
             if (!container) return;
 
-            const templates = this.state.templates;
-            if (templates.length === 0) {
-                container.innerHTML = `
-                    <div class="gifts-empty-state" style="padding: 24px;">
-                        <i class="fa-solid fa-layer-group" style="font-size: 2rem; color: #CBD5E1; margin-bottom: 8px;"></i>
-                        <h4>لا توجد قوالب محفوظة</h4>
-                        <p>يمكنك تجميع أصناف في شاشة التجميع ثم الضغط على "حفظ كقالب" لاستخدامه لاحقا بضغطة زر</p>
-                    </div>
-                `;
-            } else {
-                container.innerHTML = templates.map(t => {
-                    const itemsSummary = (t.items || []).map(i => `${i.qty}× ${i.name}`).join(' ، ');
-                    return `
-                        <div style="background: #FFF5F9; border: 1px solid var(--gifts-border-pink); border-radius: var(--gifts-radius-sm); padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <div style="font-weight: 900; color: var(--gifts-primary-dark); font-size: 0.95rem;">${t.template_name}</div>
-                                <div style="font-size: 0.8rem; color: var(--gifts-text-muted); margin-top: 4px;">${itemsSummary}</div>
-                                <div style="font-size: 0.82rem; font-weight: 800; color: var(--gifts-primary); margin-top: 4px;">السعر التقديري: ${Number(t.estimated_price).toFixed(2)} ج.م</div>
+            const templates = this.state.templates || [];
+            const q = (this.state.templateSearchQuery || '').trim().toLowerCase();
+
+            let filtered = templates;
+            if (q) {
+                filtered = templates.filter(t => {
+                    const nameMatch = (t.template_name || '').toLowerCase().includes(q);
+                    const itemsMatch = (t.items || []).some(i => (i.name || '').toLowerCase().includes(q));
+                    return nameMatch || itemsMatch;
+                });
+            }
+
+            if (filtered.length === 0) {
+                if (templates.length === 0) {
+                    container.innerHTML = `
+                        <div class="gifts-empty-state" style="padding: 28px 16px;">
+                            <div class="gifts-empty-icon-wrap">
+                                <i class="fa-solid fa-layer-group"></i>
                             </div>
-                            <div style="display: flex; gap: 6px;">
-                                <button type="button" class="gifts-btn-primary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="GiftsApp.applyTemplate('${t.id}')">
-                                    تطبيق القالب
-                                </button>
-                                <button type="button" class="gifts-basket-remove" title="حذف القالب" onclick="GiftsApp.deleteTemplate('${t.id}')">
-                                    <i class="fa-solid fa-trash"></i>
+                            <h4>لا توجد قوالب محفوظة حتى الآن</h4>
+                            <p>يمكنك تجميع أصناف في شاشة التجميع وحفظها كقالب، أو تحميل قوالب جاهزة مقترحة للبدء فوراً</p>
+                            <div style="margin-top: 18px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+                                <button type="button" class="gifts-btn-primary" style="padding: 10px 20px; font-size: 0.9rem;" onclick="GiftsApp.loadStarterTemplates()">
+                                    <i class="fa-solid fa-sparkles"></i> تحميل 3 قوالب نموذجية مقترحة
                                 </button>
                             </div>
                         </div>
                     `;
-                }).join('');
+                } else {
+                    container.innerHTML = `
+                        <div class="gifts-empty-state" style="padding: 24px 16px;">
+                            <div class="gifts-empty-icon-wrap" style="background: #F1F5F9; color: #64748B; border-color: #CBD5E1;">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </div>
+                            <h4>لا توجد قوالب تطابق "${this.escapeHtml(q)}"</h4>
+                            <p>جرّب البحث باسم آخر أو بمكونات الصنف</p>
+                            <button type="button" class="gifts-btn-outline" style="margin-top: 14px;" onclick="document.getElementById('gifts-template-search-input').value=''; GiftsApp.filterTemplates('');">
+                                عرض جميع القوالب
+                            </button>
+                        </div>
+                    `;
+                }
+                return;
             }
 
-            if (modal) modal.classList.add('active');
+            container.innerHTML = `
+                <div class="gifts-templates-list">
+                    ${filtered.map(t => {
+                        const items = t.items || [];
+                        const totalUnits = items.reduce((s, i) => s + (Number(i.qty) || 1), 0);
+                        const pills = items.map(i => `
+                            <span class="gifts-template-item-pill">
+                                <span class="pill-qty">${i.qty}×</span>
+                                <span class="pill-name">${i.name}</span>
+                                <span class="pill-price">${(Number(i.price) * Number(i.qty)).toFixed(0)} ج.م</span>
+                            </span>
+                        `).join('');
+
+                        return `
+                            <div class="gifts-template-card">
+                                <div class="gifts-template-card-header">
+                                    <div class="gifts-template-title-group">
+                                        <div class="gifts-template-icon-badge">
+                                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="gifts-template-name">${t.template_name}</h4>
+                                            <div class="gifts-template-meta">
+                                                <span class="gifts-template-meta-item">
+                                                    <i class="fa-solid fa-boxes-stacked"></i> ${totalUnits} قطعة (${items.length} أصناف)
+                                                </span>
+                                                ${t.created_by ? `
+                                                    <span class="gifts-template-meta-item">
+                                                        <i class="fa-solid fa-user"></i> ${t.created_by}
+                                                    </span>
+                                                ` : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="gifts-template-del-btn" title="حذف القالب نهائياً" onclick="GiftsApp.deleteTemplate('${t.id}')">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </div>
+
+                                <div class="gifts-template-items-wrap">
+                                    ${pills || '<span style="font-size: 0.8rem; color: var(--gifts-text-muted);">لا توجد مكونات</span>'}
+                                </div>
+
+                                <div class="gifts-template-footer">
+                                    <div class="gifts-template-price-box">
+                                        <span class="gifts-template-price-label">السعر الإجمالي التقديري</span>
+                                        <span class="gifts-template-price-val">${Number(t.estimated_price).toFixed(2)} <small>ج.م</small></span>
+                                    </div>
+                                    <button type="button" class="gifts-btn-primary gifts-template-apply-btn" onclick="GiftsApp.applyTemplate('${t.id}')">
+                                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                        <span>تطبيق القالب في التجميع</span>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        },
+
+        async loadStarterTemplates() {
+            const starters = [
+                {
+                    id: 'tmpl_starter_1',
+                    template_name: 'بوكيه كيندر وسعادة فاخر',
+                    items: [
+                        { id: 'item_st_1', name: 'شوكولاتة كيندر بوينو', qty: 3, price: 35 },
+                        { id: 'item_st_2', name: 'كيندر جوي أولادي', qty: 2, price: 38 },
+                        { id: 'item_st_3', name: 'تغليف وتنسيق ورد هدايا', qty: 1, price: 50 }
+                    ],
+                    estimated_price: 231,
+                    created_by: 'النظام',
+                    created_at: new Date().toISOString()
+                },
+                {
+                    id: 'tmpl_starter_2',
+                    template_name: 'بوكس سهرة مكسرات وشوكولاتة ملكي',
+                    items: [
+                        { id: 'item_st_4', name: 'بوكس كاندي كلوب خشبي فاخر', qty: 1, price: 85 },
+                        { id: 'item_st_5', name: 'مكسرات مشكلة محمصة (250 جم)', qty: 1, price: 120 },
+                        { id: 'item_st_6', name: 'شوكولاتة جالاكسي ميني مشكل', qty: 4, price: 22 }
+                    ],
+                    estimated_price: 293,
+                    created_by: 'النظام',
+                    created_at: new Date().toISOString()
+                },
+                {
+                    id: 'tmpl_starter_3',
+                    template_name: 'توزيعات العيد والمناسبات المميزة',
+                    items: [
+                        { id: 'item_st_7', name: 'أكياس هدايا ميني شيفون', qty: 10, price: 8 },
+                        { id: 'item_st_8', name: 'شوكولاتة نوتيلا بي-ريدي', qty: 5, price: 25 },
+                        { id: 'item_st_9', name: 'كارت إهداء كاندي كلوب', qty: 1, price: 15 }
+                    ],
+                    estimated_price: 220,
+                    created_by: 'النظام',
+                    created_at: new Date().toISOString()
+                }
+            ];
+
+            this.state.templates = starters;
+            this.saveTemplatesToLocal();
+            if (window.supabase) {
+                try {
+                    await window.supabase.from(GIFTS_TEMPLATES_TABLE).upsert(starters);
+                } catch (e) {
+                    console.warn("Supabase upsert starter templates:", e);
+                }
+            }
+            this.renderTemplatesList();
+            this.showToastNotification("تم تحميل 3 قوالب نموذجية مقترحة بنجاح");
         },
 
         applyTemplate(templateId) {
@@ -2128,7 +2266,7 @@
             }
             this.state.templates = this.state.templates.filter(t => t.id !== templateId);
             this.saveTemplatesToLocal();
-            this.openTemplatesModal();
+            this.renderTemplatesList();
             this.showToastNotification("تم حذف القالب بنجاح");
         },
 

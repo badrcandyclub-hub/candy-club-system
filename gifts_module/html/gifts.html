@@ -536,21 +536,30 @@
 
 <!-- 3. Templates Picker Modal -->
 <div class="gifts-modal-overlay" id="gifts-modal-templates">
-    <div class="gifts-modal">
+    <div class="gifts-modal gifts-templates-modal-box">
         <div class="gifts-modal-header">
             <h4>
-                <i class="fa-solid fa-layer-group" style="color: var(--gifts-teal);"></i>
-                القوالب السريعة المحفوظة
+                <i class="fa-solid fa-layer-group" style="color: var(--gifts-primary);"></i>
+                القوالب السريعة الجاهزة
             </h4>
             <button class="gifts-modal-close" onclick="GiftsApp.closeModal('gifts-modal-templates')">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
+        <div class="gifts-templates-topbar">
+            <div class="gifts-templates-search-wrap">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="gifts-template-search-input" class="gifts-templates-search-input" placeholder="بحث في القوالب بالاسم أو المكون..." oninput="GiftsApp.filterTemplates(this.value)">
+            </div>
+            <button type="button" class="gifts-btn-outline gifts-template-save-now-btn" onclick="GiftsApp.saveAsTemplate()" title="حفظ التجميع الحالي في السلة كقالب جديد">
+                <i class="fa-solid fa-bookmark"></i> حفظ السلة كقالب
+            </button>
+        </div>
         <div class="gifts-modal-body" id="gifts-templates-list-body">
-            <!-- List of templates -->
+            <!-- List of templates rendered dynamically -->
         </div>
         <div class="gifts-modal-footer">
-            <button class="gifts-btn-outline" onclick="GiftsApp.closeModal('gifts-modal-templates')">إغلاق</button>
+            <button class="gifts-btn-outline" onclick="GiftsApp.closeModal('gifts-modal-templates')">إغلاق النافذة</button>
         </div>
     </div>
 </div>
