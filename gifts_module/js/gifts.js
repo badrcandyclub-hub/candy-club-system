@@ -2680,43 +2680,76 @@
         // 13. كتالوج العملاء التسويقي
         renderCustomerCatalog() {
             const container = document.getElementById('gifts-customer-catalog-grid');
+            const countEl   = document.getElementById('gifts-catalog-item-count');
             if (!container) return;
 
             const readyBouquets = this.state.bouquets.filter(b => b.status === 'ready');
 
+            // Update count chip
+            if (countEl) {
+                countEl.innerHTML = `<i class="fa-solid fa-gift"></i> ${readyBouquets.length} بوكيه`;
+            }
+
             if (readyBouquets.length === 0) {
                 container.innerHTML = `
-                    <div class="gifts-empty-state" style="grid-column: 1 / -1; padding: 40px;">
-                        <i class="fa-solid fa-store-slash" style="font-size: 2.2rem; color: #CBD5E1; margin-bottom: 8px;"></i>
-                        <h4>لا توجد بوكيهات معروضة للبيع حاليا</h4>
-                        <p>قم بتجميع بوكيهات جديدة لتظهر في الكتالوج التسويقي للعملاء</p>
+                    <div class="gifts-empty-state" style="grid-column: 1 / -1; padding: 60px 20px;">
+                        <div class="gifts-empty-icon-wrap">
+                            <i class="fa-solid fa-store-slash"></i>
+                        </div>
+                        <h4>لا توجد بوكيهات معروضة للبيع حالياً</h4>
+                        <p>قم بتجميع بوكيهات جديدة من تبويب "تجميع" لتظهر تلقائياً في الكتالوج التسويقي للعملاء</p>
                     </div>
                 `;
                 return;
             }
 
-            container.innerHTML = readyBouquets.map(b => {
-                const imgHtml = b.image_url ?
-                    `<img src="${b.image_url}" class="gifts-card-img" alt="${b.name}">` :
-                    `<div class="gifts-card-img-placeholder"><i class="fa-solid fa-gift"></i></div>`;
+            container.innerHTML = readyBouquets.map((b, idx) => {
+                // Image or placeholder
+                const imgHtml = b.image_url
+                    ? `<img src="${b.image_url}" alt="${b.name}">`
+                    : `<div class="gifts-catalog-card-placeholder">
+                          <i class="fa-solid fa-gift"></i>
+                          <span>لا توجد صورة</span>
+                       </div>`;
 
-                const itemsList = (b.items || []).map(i => `<li>${i.qty}× ${i.name}</li>`).join('');
+                // Items as pills (max 5, then +N more)
+                const items = b.items || [];
+                const maxPills = 5;
+                const pillsHtml = items.slice(0, maxPills).map(i =>
+                    `<span class="gifts-catalog-item-pill">${i.qty}× ${i.name}</span>`
+                ).join('');
+                const extraCount = items.length - maxPills;
+                const morePill = extraCount > 0
+                    ? `<span class="gifts-catalog-item-pill-more">+${extraCount} أكثر</span>`
+                    : '';
+
+                const totalItems = items.reduce((s, i) => s + (i.qty || 1), 0);
 
                 return `
-                    <div class="gifts-card">
-                        <div class="gifts-card-img-wrap">
+                    <div class="gifts-catalog-card" style="animation-delay: ${idx * 0.07}s">
+                        <div class="gifts-catalog-card-img-wrap">
                             ${imgHtml}
-                            <span class="gifts-badge badge-ready">متوفر في المحل</span>
+                            <div class="gifts-catalog-ribbon">
+                                <i class="fa-solid fa-circle-check"></i>
+                                متوفر الآن
+                            </div>
                         </div>
-                        <div class="gifts-card-body">
-                            <h4 class="gifts-card-title">${b.name}</h4>
-                            <div style="font-size: 0.85rem; font-weight: 800; color: var(--gifts-primary-dark); margin-bottom: 4px;">المحتويات:</div>
-                            <ul style="margin: 0 0 12px 0; padding-right: 18px; font-size: 0.82rem; color: var(--gifts-text);">
-                                ${itemsList}
-                            </ul>
-                            <div class="gifts-card-price-row">
-                                <span style="font-size: 0.85rem; color: var(--gifts-text-muted);">السعر:</span>
-                                <span class="gifts-card-price">${Number(b.total_price).toFixed(2)} ج.م</span>
+                        <div class="gifts-catalog-card-body">
+                            <h4 class="gifts-catalog-card-name">${b.name}</h4>
+                            <div class="gifts-catalog-items-label">
+                                <i class="fa-solid fa-cubes-stacked" style="color: var(--gifts-primary); margin-left: 4px;"></i>
+                                المحتويات (${totalItems} قطعة)
+                            </div>
+                            <div class="gifts-catalog-items-pills">
+                                ${pillsHtml}
+                                ${morePill}
+                            </div>
+                        </div>
+                        <div class="gifts-catalog-card-footer">
+                            <div class="gifts-catalog-card-price-label">سعر البوكيه</div>
+                            <div>
+                                <span class="gifts-catalog-card-price">${Number(b.total_price).toFixed(2)}</span>
+                                <span class="gifts-catalog-card-price-currency">ج.م</span>
                             </div>
                         </div>
                     </div>

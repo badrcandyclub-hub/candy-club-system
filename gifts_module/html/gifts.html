@@ -429,28 +429,63 @@
          SUB-VIEW 4: CUSTOMER MARKETING CATALOG
          ================================================================ -->
     <div id="gifts-view-catalog" class="gifts-subview">
-        <div class="gifts-catalog-preview-box">
-            <div class="gifts-section-header">
-                <div>
-                    <h4>
-                        <i class="fa-solid fa-images" style="color: var(--gifts-primary);"></i>
+
+        <!-- ★ Catalog Hero Banner ★ -->
+        <div class="gifts-catalog-hero">
+            <div class="gifts-catalog-hero-orb gifts-catalog-hero-orb-1"></div>
+            <div class="gifts-catalog-hero-orb gifts-catalog-hero-orb-2"></div>
+            <div class="gifts-catalog-hero-orb gifts-catalog-hero-orb-3"></div>
+
+            <div class="gifts-catalog-hero-main">
+                <div class="gifts-catalog-hero-icon-wrap">
+                    <i class="fa-solid fa-book-open"></i>
+                </div>
+                <div class="gifts-catalog-hero-text">
+                    <h3 class="gifts-catalog-hero-title">
+                        <i class="fa-solid fa-images"></i>
                         كتالوج الهدايا التسويقي المخصص للعملاء
-                    </h4>
-                    <div style="font-size: 0.88rem; color: var(--gifts-text-muted); margin-top: 4px; font-weight: 700;">
-                        ملف PDF جاهز للعرض والمشاركة مع عملاء الواتساب يحتوي على الصور والأسعار والمحتويات
+                    </h3>
+                    <p class="gifts-catalog-hero-sub">
+                        ملف PDF جاهز للعرض والمشاركة مع عملاء الواتساب — يحتوي على الصور والأسعار والمحتويات بشكل احترافي
+                    </p>
+                    <div class="gifts-catalog-hero-badges">
+                        <span class="gifts-catalog-badge"><i class="fa-solid fa-image"></i> صور عالية الجودة</span>
+                        <span class="gifts-catalog-badge"><i class="fa-solid fa-tag"></i> أسعار محدّثة</span>
+                        <span class="gifts-catalog-badge"><i class="fa-brands fa-whatsapp"></i> جاهز للواتساب</span>
                     </div>
                 </div>
-                <button class="gifts-btn-primary" onclick="GiftsApp.exportCustomerCatalogPDF()">
-                    <i class="fa-solid fa-share-nodes"></i>
-                    <span>توليد وتحميل الكتالوج PDF للعملاء</span>
-                </button>
             </div>
 
-            <!-- Catalog Items Preview -->
-            <div class="gifts-showcase-grid" id="gifts-customer-catalog-grid" style="margin-top: 20px;">
+            <button class="gifts-catalog-export-btn" onclick="GiftsApp.exportCustomerCatalogPDF()">
+                <div class="gifts-catalog-export-btn-inner">
+                    <i class="fa-solid fa-file-pdf" style="font-size: 1.4rem;"></i>
+                    <div>
+                        <div style="font-size: 1rem; font-weight: 900;">توليد وتحميل الكتالوج PDF</div>
+                        <div style="font-size: 0.78rem; opacity: 0.85; font-weight: 700;">شارك مع عملائك فوراً</div>
+                    </div>
+                </div>
+                <i class="fa-solid fa-arrow-left" style="font-size: 1rem; opacity: 0.8;"></i>
+            </button>
+        </div>
+
+        <!-- ★ Bouquets Section ★ -->
+        <div class="gifts-catalog-section">
+            <div class="gifts-catalog-section-bar">
+                <div class="gifts-catalog-section-title">
+                    <span class="gifts-catalog-live-dot"></span>
+                    البوكيهات المتاحة الآن في المحل
+                </div>
+                <div class="gifts-catalog-count-chip" id="gifts-catalog-item-count">
+                    <i class="fa-solid fa-gift"></i>
+                    0 بوكيه
+                </div>
+            </div>
+
+            <div class="gifts-catalog-grid" id="gifts-customer-catalog-grid">
                 <!-- Rendered dynamically -->
             </div>
         </div>
+
     </div>
 
 </div>
