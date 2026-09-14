@@ -501,6 +501,7 @@
                 });
             }
 
+            this.state.lastAddedBarcode = product.barcode;
             this.onDraftChanged();
             this.renderDraftBasket();
             this.renderRecentAddedList();
@@ -608,20 +609,35 @@
             this.state.isScanningBarcode = false;
         },
 
-        // صوت Beep مميز عند مسح الباركود
+        // صوت Beep مميز وفاخر عند مسح الباركود
         playBeepSound() {
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(2750, ctx.currentTime);
-                gain.gain.setValueAtTime(0.2, ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start();
-                osc.stop(ctx.currentTime + 0.1);
+                const now = ctx.currentTime;
+                
+                // النغمة الأولى
+                const osc1 = ctx.createOscillator();
+                const gain1 = ctx.createGain();
+                osc1.type = 'sine';
+                osc1.frequency.setValueAtTime(1400, now);
+                gain1.gain.setValueAtTime(0.14, now);
+                gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                osc1.connect(gain1);
+                gain1.connect(ctx.destination);
+                osc1.start(now);
+                osc1.stop(now + 0.08);
+
+                // النغمة الثانية المرتفعة لمظهر بوتيك راقي
+                const osc2 = ctx.createOscillator();
+                const gain2 = ctx.createGain();
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(2100, now + 0.06);
+                gain2.gain.setValueAtTime(0.16, now + 0.06);
+                gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+                osc2.connect(gain2);
+                gain2.connect(ctx.destination);
+                osc2.start(now + 0.06);
+                osc2.stop(now + 0.16);
             } catch (e) {}
         },
 
@@ -712,8 +728,10 @@
                 return;
             }
 
-            container.innerHTML = items.map((item, idx) => `
-                <div class="gifts-basket-item">
+            container.innerHTML = items.map((item, idx) => {
+                const isJustAdded = this.state.lastAddedBarcode && (item.barcode === this.state.lastAddedBarcode);
+                return `
+                <div class="gifts-basket-item ${isJustAdded ? 'gifts-just-added' : ''}">
                     <div style="flex: 1; padding-left: 10px;">
                         <div class="gifts-basket-name">${item.name}</div>
                         <div class="gifts-basket-sub" style="display: flex; align-items: center; gap: 6px; margin-top: 4px; flex-wrap: wrap;">
@@ -737,7 +755,11 @@
                         </button>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
+
+            if (this.state.lastAddedBarcode) {
+                setTimeout(() => { this.state.lastAddedBarcode = null; }, 1200);
+            }
         },
 
         // الحفظ التلقائي للمسودة في LocalStorage
@@ -1001,8 +1023,9 @@
             return null;
         },
 
-        // 8. حفظ البوكيه (Supabase + LocalStorage Fallback)
+        // 8. حفظ البوكيه (Supabase + LocalStorage Fallback مع منع النقر المزدوج)
         async saveBouquet() {
+            if (this._isSaving) return;
             const draft = this.state.draft;
 
             if (!draft.name || draft.name.trim() === '') {
@@ -1015,62 +1038,82 @@
                 return;
             }
 
-            const creator = draft.creator.trim() || 'موظف الهدايا';
-            const qty = parseInt(draft.qty) || 1;
-            const totalPrice = draft.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
-            const now = new Date().toISOString();
+            const saveBtn = document.getElementById('gifts-btn-save-bouquet');
+            const saveLabel = document.getElementById('gifts-btn-save-label');
+            const saveIcon = document.getElementById('gifts-btn-save-icon');
 
-            // رفع الصورة حصريا إلى Google Drive (لا يتم حفظ Base64 في سوبا بيز مطلقا)
-            let finalImageUrl = null;
-            if (draft.photoBase64) {
-                this.showToastNotification("جاري رفع الصورة إلى Google Drive...");
-                const driveUrl = await this.uploadPhotoToGoogleDrive(draft.photoBase64, `bouquet_${Date.now()}.jpg`);
-                if (driveUrl && typeof driveUrl === 'string' && driveUrl.startsWith('http')) {
-                    finalImageUrl = driveUrl;
-                } else {
-                    this.showToastNotification("تنبيه: لم يتم حفظ رابط الصورة لتعذر الوصول إلى Google Drive");
-                }
-            }
+            this._isSaving = true;
+            if (saveBtn) saveBtn.disabled = true;
+            if (saveLabel) saveLabel.innerText = "جاري الحفظ والمزامنة...";
+            if (saveIcon) saveIcon.className = "fa-solid fa-spinner fa-spin";
 
-            const bouquetRecord = {
-                id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `bq_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
-                name: draft.name.trim(),
-                creator_name: creator,
-                color_tag: '#E91E8C',
-                quantity: qty,
-                total_price: totalPrice,
-                status: 'ready',
-                items: draft.items,
-                image_url: finalImageUrl, // رابط جوجل درايف فقط أو فارغ (ممنوع تخزين بيانات Base64)
-                timeline: [
-                    { event: 'تم إنشاء وتجميع البوكيه', by: creator, time: now },
-                    { event: `تم تسجيل كمية (${qty}) بوكيه مطابق`, by: creator, time: now }
-                ],
-                created_at: now
-            };
+            try {
+                const creator = draft.creator.trim() || 'موظف الهدايا';
+                const qty = parseInt(draft.qty) || 1;
+                const totalPrice = draft.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+                const now = new Date().toISOString();
 
-            // الحفظ في Supabase (توافق ذكي مع وجود أو حذف عمود code)
-            if (window.supabase) {
-                try {
-                    let { error } = await window.supabase.from(GIFTS_TABLE).insert([bouquetRecord]);
-                    if (error && error.code === '23502') {
-                        // في حال لم يتم حذف عمود code بعد من سوبا بيز
-                        let tempRecord = { ...bouquetRecord, code: bouquetRecord.id };
-                        await window.supabase.from(GIFTS_TABLE).insert([tempRecord]);
+                // رفع الصورة حصريا إلى Google Drive (لا يتم حفظ Base64 في سوبا بيز مطلقا)
+                let finalImageUrl = null;
+                if (draft.photoBase64) {
+                    this.showToastNotification("جاري رفع الصورة إلى Google Drive...");
+                    const driveUrl = await this.uploadPhotoToGoogleDrive(draft.photoBase64, `bouquet_${Date.now()}.jpg`);
+                    if (driveUrl && typeof driveUrl === 'string' && driveUrl.startsWith('http')) {
+                        finalImageUrl = driveUrl;
+                    } else {
+                        this.showToastNotification("تنبيه: لم يتم حفظ رابط الصورة لتعذر الوصول إلى Google Drive");
                     }
-                } catch (e) {
-                    console.warn("Supabase insert error (falling back to local):", e);
                 }
+
+                const bouquetRecord = {
+                    id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `bq_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+                    name: draft.name.trim(),
+                    creator_name: creator,
+                    color_tag: '#E91E8C',
+                    quantity: qty,
+                    total_price: totalPrice,
+                    status: 'ready',
+                    items: draft.items,
+                    image_url: finalImageUrl,
+                    timeline: [
+                        { event: 'تم إنشاء وتجميع البوكيه', by: creator, time: now },
+                        { event: `تم تسجيل كمية (${qty}) بوكيه مطابق`, by: creator, time: now }
+                    ],
+                    created_at: now
+                };
+
+                let syncedToSupabase = false;
+                if (window.supabase) {
+                    try {
+                        let { error } = await window.supabase.from(GIFTS_TABLE).insert([bouquetRecord]);
+                        if (error && error.code === '23502') {
+                            let tempRecord = { ...bouquetRecord, code: bouquetRecord.id };
+                            await window.supabase.from(GIFTS_TABLE).insert([tempRecord]);
+                        }
+                        if (!error) syncedToSupabase = true;
+                    } catch (e) {
+                        console.warn("Supabase insert error (falling back to local):", e);
+                    }
+                }
+
+                this.state.bouquets.unshift(bouquetRecord);
+                this.saveBouquetsToLocal();
+
+                const syncMsg = syncedToSupabase ? " (متزامن مع السحابة)" : " (محفوظ محليا)";
+                this.showToastNotification(`تم حفظ البوكيه "${bouquetRecord.name}" بنجاح${syncMsg}`);
+                this.clearDraft();
+                this.updateHeaderStats();
+                this.printBouquetThermalReceipt(bouquetRecord.id);
+                this.switchSubTab('showcase');
+            } catch (err) {
+                console.error("Error saving bouquet:", err);
+                this.showToastNotification("حدث خطأ أثناء حفظ البوكيه");
+            } finally {
+                this._isSaving = false;
+                if (saveBtn) saveBtn.disabled = false;
+                if (saveLabel) saveLabel.innerText = "حفظ البوكيه وعرضه في المحل";
+                if (saveIcon) saveIcon.className = "fa-solid fa-floppy-disk";
             }
-
-            this.state.bouquets.unshift(bouquetRecord);
-            this.saveBouquetsToLocal();
-
-            this.showToastNotification(`تم حفظ البوكيه "${bouquetRecord.name}" بنجاح`);
-            this.clearDraft();
-            this.updateHeaderStats();
-            this.printBouquetThermalReceipt(bouquetRecord.id);
-            this.switchSubTab('showcase');
         },
 
         async loadBouquets() {
@@ -1570,72 +1613,190 @@
             const bouquet = this.state.bouquets.find(b => b.id === id);
             if (!bouquet) return;
 
-            if (!confirm(`هل أنت متأكد من تفكيك البوكيه "${bouquet.name}" وإرجاع جميع مكوناته إلى المخزون؟`)) {
-                return;
+            const totalQty = parseInt(bouquet.quantity) || 1;
+            let disQty = 1;
+
+            if (totalQty > 1) {
+                const answer = prompt(`البوكيه متوفر منه (${totalQty}) قطع.\nكم عدد القطع المراد تفكيكها وإرجاع مكوناتها للمخزن؟ (أدخل رقماً من 1 إلى ${totalQty})`, String(totalQty));
+                if (answer === null) return;
+                const parsed = parseInt(answer);
+                if (isNaN(parsed) || parsed < 1 || parsed > totalQty) {
+                    this.showToastNotification("يرجى إدخال كمية صحيحة");
+                    return;
+                }
+                disQty = parsed;
+            } else {
+                if (!confirm(`هل أنت متأكد من تفكيك البوكيه "${bouquet.name}" وإرجاع جميع مكوناته إلى المخزون؟`)) {
+                    return;
+                }
             }
 
             const now = new Date().toISOString();
-            bouquet.status = 'disassembled';
-            bouquet.disassembled_at = now;
-            bouquet.timeline.push({
-                event: 'تم تفكيك البوكيه وإرجاع كافة المكونات إلى المخزون',
-                by: this.getCurrentUserName(),
-                time: now
-            });
+            const userName = this.getCurrentUserName();
 
-            if (window.supabase) {
-                try {
-                    await window.supabase
-                        .from(GIFTS_TABLE)
-                        .update({
-                            status: 'disassembled',
-                            disassembled_at: now,
-                            timeline: bouquet.timeline
-                        })
-                        .eq('id', id);
-                } catch (e) {
-                    console.warn("Supabase update error:", e);
+            if (disQty === totalQty) {
+                bouquet.status = 'disassembled';
+                bouquet.disassembled_at = now;
+                bouquet.timeline.push({
+                    event: `تم تفكيك كامل البوكيه (${disQty} قطعة) وإرجاع كافة المكونات إلى المخزون`,
+                    by: userName,
+                    time: now
+                });
+
+                if (window.supabase) {
+                    try {
+                        await window.supabase
+                            .from(GIFTS_TABLE)
+                            .update({
+                                status: 'disassembled',
+                                disassembled_at: now,
+                                timeline: bouquet.timeline
+                            })
+                            .eq('id', id);
+                    } catch (e) {
+                        console.warn("Supabase update error:", e);
+                    }
                 }
+            } else {
+                bouquet.quantity = totalQty - disQty;
+                bouquet.timeline.push({
+                    event: `تم تفكيك (${disQty}) بوكيه وإرجاع مكوناتها للمخزن، والمتبقي (${bouquet.quantity}) قطعة`,
+                    by: userName,
+                    time: now
+                });
+
+                if (window.supabase) {
+                    try {
+                        await window.supabase
+                            .from(GIFTS_TABLE)
+                            .update({
+                                quantity: bouquet.quantity,
+                                timeline: bouquet.timeline
+                            })
+                            .eq('id', id);
+                    } catch (e) {
+                        console.warn("Supabase update error:", e);
+                    }
+                }
+
+                const disRecord = {
+                    ...JSON.parse(JSON.stringify(bouquet)),
+                    id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `bq_dis_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+                    quantity: disQty,
+                    status: 'disassembled',
+                    disassembled_at: now,
+                    timeline: [
+                        { event: `تم تفكيك (${disQty}) قطعة تم فصلها من البوكيه وإرجاع مكوناتها للمخزن`, by: userName, time: now }
+                    ]
+                };
+
+                if (window.supabase) {
+                    try {
+                        await window.supabase.from(GIFTS_TABLE).insert([disRecord]);
+                    } catch (e) {
+                        console.warn("Supabase insert disRecord error:", e);
+                    }
+                }
+                this.state.bouquets.unshift(disRecord);
             }
 
             this.saveBouquetsToLocal();
             this.updateHeaderStats();
             this.renderShowcase();
-            this.showToastNotification(`تم تفكيك البوكيه "${bouquet.name}" وإرجاع محتوياته للمخزن`);
+            this.showToastNotification(`تم تفكيك (${disQty}) بوكيه وإرجاع محتوياته للمخزن بنجاح`);
         },
 
         async markBouquetSold(id) {
             const bouquet = this.state.bouquets.find(b => b.id === id);
             if (!bouquet) return;
 
-            const now = new Date().toISOString();
-            bouquet.status = 'sold';
-            bouquet.sold_at = now;
-            bouquet.timeline.push({
-                event: 'تم بيع البوكيه للعميل',
-                by: this.getCurrentUserName(),
-                time: now
-            });
+            const totalQty = parseInt(bouquet.quantity) || 1;
+            let soldQty = 1;
 
-            if (window.supabase) {
-                try {
-                    await window.supabase
-                        .from(GIFTS_TABLE)
-                        .update({
-                            status: 'sold',
-                            sold_at: now,
-                            timeline: bouquet.timeline
-                        })
-                        .eq('id', id);
-                } catch (e) {
-                    console.warn("Supabase update error:", e);
+            if (totalQty > 1) {
+                const answer = prompt(`البوكيه متوفر منه (${totalQty}) قطع في المحل.\nكم عدد القطع التي تم بيعها؟ (أدخل رقماً من 1 إلى ${totalQty})`, "1");
+                if (answer === null) return;
+                const parsed = parseInt(answer);
+                if (isNaN(parsed) || parsed < 1 || parsed > totalQty) {
+                    this.showToastNotification("يرجى إدخال كمية صحيحة");
+                    return;
                 }
+                soldQty = parsed;
+            }
+
+            const now = new Date().toISOString();
+            const userName = this.getCurrentUserName();
+
+            if (soldQty === totalQty) {
+                bouquet.status = 'sold';
+                bouquet.sold_at = now;
+                bouquet.timeline.push({
+                    event: `تم بيع كامل البوكيه (${soldQty} قطعة) للعميل`,
+                    by: userName,
+                    time: now
+                });
+
+                if (window.supabase) {
+                    try {
+                        await window.supabase
+                            .from(GIFTS_TABLE)
+                            .update({
+                                status: 'sold',
+                                sold_at: now,
+                                timeline: bouquet.timeline
+                            })
+                            .eq('id', id);
+                    } catch (e) {
+                        console.warn("Supabase update error:", e);
+                    }
+                }
+            } else {
+                bouquet.quantity = totalQty - soldQty;
+                bouquet.timeline.push({
+                    event: `تم بيع (${soldQty}) قطعة من البوكيه، والمتبقي (${bouquet.quantity}) قطعة`,
+                    by: userName,
+                    time: now
+                });
+
+                if (window.supabase) {
+                    try {
+                        await window.supabase
+                            .from(GIFTS_TABLE)
+                            .update({
+                                quantity: bouquet.quantity,
+                                timeline: bouquet.timeline
+                            })
+                            .eq('id', id);
+                    } catch (e) {
+                        console.warn("Supabase update error:", e);
+                    }
+                }
+
+                const soldRecord = {
+                    ...JSON.parse(JSON.stringify(bouquet)),
+                    id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `bq_sold_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+                    quantity: soldQty,
+                    status: 'sold',
+                    sold_at: now,
+                    timeline: [
+                        { event: `تم بيع (${soldQty}) قطعة تم فصلها من البوكيه الأصلي`, by: userName, time: now }
+                    ]
+                };
+
+                if (window.supabase) {
+                    try {
+                        await window.supabase.from(GIFTS_TABLE).insert([soldRecord]);
+                    } catch (e) {
+                        console.warn("Supabase insert soldRecord error:", e);
+                    }
+                }
+                this.state.bouquets.unshift(soldRecord);
             }
 
             this.saveBouquetsToLocal();
             this.updateHeaderStats();
             this.renderShowcase();
-            this.showToastNotification(`تم تسجيل بيع البوكيه "${bouquet.name}" بنجاح`);
+            this.showToastNotification(`تم تسجيل بيع (${soldQty}) بوكيه بنجاح`);
         },
 
         openCloneModal(id) {

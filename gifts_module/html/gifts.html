@@ -16,23 +16,23 @@
         </div>
         <div class="gifts-quick-stats">
             <div class="gifts-stat-chip">
-                <i class="fa-solid fa-boxes-stacked" style="color: var(--gifts-primary); font-size: 1.2rem;"></i>
+                <i class="fa-solid fa-boxes-stacked" style="color: var(--gifts-primary); font-size: 1.25rem;"></i>
                 <div>
-                    <div class="chip-label">جاهز في المحل</div>
+                    <div class="chip-label"><span class="gifts-live-dot"></span> جاهز في المحل</div>
                     <div class="chip-val" id="gifts-stat-ready">0</div>
                 </div>
             </div>
             <div class="gifts-stat-chip">
-                <i class="fa-solid fa-circle-check" style="color: var(--gifts-teal); font-size: 1.2rem;"></i>
+                <i class="fa-solid fa-circle-check" style="color: var(--gifts-teal); font-size: 1.25rem;"></i>
                 <div>
                     <div class="chip-label">إجمالي المباع</div>
                     <div class="chip-val" id="gifts-stat-sold">0</div>
                 </div>
             </div>
             <div class="gifts-stat-chip">
-                <i class="fa-solid fa-calendar-day" style="color: var(--gifts-amber); font-size: 1.2rem;"></i>
+                <i class="fa-solid fa-calendar-day" style="color: var(--gifts-amber); font-size: 1.25rem;"></i>
                 <div>
-                    <div class="chip-label">صنع اليوم</div>
+                    <div class="chip-label"><span class="gifts-live-dot amber"></span> صنع اليوم</div>
                     <div class="chip-val" id="gifts-stat-today">0</div>
                 </div>
             </div>
@@ -153,9 +153,9 @@
 
                 <!-- Draft Actions -->
                 <div class="gifts-draft-actions">
-                    <button type="button" class="gifts-btn-primary" onclick="GiftsApp.saveBouquet()">
-                        <i class="fa-solid fa-floppy-disk"></i>
-                        <span>حفظ البوكيه وعرضه في المحل</span>
+                    <button type="button" id="gifts-btn-save-bouquet" class="gifts-btn-primary" onclick="GiftsApp.saveBouquet()">
+                        <i class="fa-solid fa-floppy-disk" id="gifts-btn-save-icon"></i>
+                        <span id="gifts-btn-save-label">حفظ البوكيه وعرضه في المحل</span>
                     </button>
                     <button type="button" class="gifts-btn-secondary" onclick="GiftsApp.printDraftThermalReceipt()">
                         <i class="fa-solid fa-print"></i>
@@ -184,15 +184,16 @@
 
                 <!-- Search and Scanner Hero -->
                 <div class="gifts-scanner-hero">
-                    <div style="font-size: 1.1rem; font-weight: 900; color: var(--gifts-primary-dark); margin-bottom: 6px;">
+                    <div class="gifts-laser-scanline"></div>
+                    <div class="gifts-scanner-hero-title">
                         امسح باركود المنتج أو ابحث باسمه لإضافته فورا
                     </div>
-                    <div style="font-size: 0.88rem; color: var(--gifts-text-muted); margin-bottom: 16px;">
+                    <div class="gifts-scanner-hero-desc">
                         يمكنك استخدام مسدس الباركود مباشرة، أو كاميرا الموبايل، أو كتابة اسم الصنف
                     </div>
 
                     <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                        <button type="button" class="gifts-btn-primary" style="padding: 10px 20px; font-size: 0.92rem;" onclick="GiftsApp.toggleCameraBarcodeScanner()">
+                        <button type="button" class="gifts-btn-primary" style="padding: 11px 22px; font-size: 0.92rem;" onclick="GiftsApp.toggleCameraBarcodeScanner()">
                             <i class="fa-solid fa-camera"></i>
                             <span id="gifts-scanner-btn-label">فتح كاميرا مسح الباركود</span>
                         </button>
@@ -200,8 +201,8 @@
 
                     <!-- Search Input with Live Autocomplete -->
                     <div class="gifts-scanner-input-wrap">
-                        <i class="fa-solid fa-magnifying-glass search-icon"></i>
                         <input type="text" id="gifts-scanner-input" class="gifts-scanner-input" placeholder="اكتب اسم الصنف أو امسح الباركود بمسدس الباركود..." oninput="GiftsApp.onSearchInput(event)" onkeydown="if(event.key === 'Enter') { event.preventDefault(); GiftsApp.onBarcodeEntered(this.value); }">
+                        <i class="fa-solid fa-barcode search-icon"></i>
                         <div class="gifts-autocomplete-list" id="gifts-autocomplete-dropdown">
                             <!-- Instant suggestions -->
                         </div>
