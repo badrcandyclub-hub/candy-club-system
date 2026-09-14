@@ -205,7 +205,7 @@
             } else if (tabName === 'catalog') {
                 this.renderCustomerCatalog();
             } else if (tabName === 'templates') {
-                this.renderTemplatesView();
+                this.switchSubTab('builder');
             }
         },
 
@@ -1726,8 +1726,8 @@
                                     <i class="fa-solid fa-arrow-rotate-left"></i> تفكيك
                                 </button>
                             ` : ''}
-                            <button type="button" class="gifts-card-btn" title="نسخ وتعديل سريع" onclick="GiftsApp.openCloneModal('${b.id}')">
-                                <i class="fa-solid fa-copy"></i> تعديل
+                            <button type="button" class="gifts-card-btn" style="color: #7C3AED;" title="نسخ محتويات هذا البوكيه إلى شاشة التجميع مع تحديث الأسعار" onclick="GiftsApp.cloneToBuilder('${b.id}')">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> نسخ للتجميع
                             </button>
                             <button type="button" class="gifts-card-btn" title="سجل حركات البوكيه" onclick="GiftsApp.openTimelineModal('${b.id}')">
                                 <i class="fa-solid fa-clock-rotate-left"></i> سجل
@@ -1966,120 +1966,103 @@
             this.showToastNotification(`تم تسجيل بيع (${soldQty}) بوكيه بنجاح`);
         },
 
-        openCloneModal(id) {
+        getCurrentUserName() {
+            try {
+                const stored = localStorage.getItem('cc_user');
+                if (stored) {
+                    const user = JSON.parse(stored);
+                    if (user && user.displayName) return user.displayName;
+                }
+            } catch (e) {}
+            return this.state.draft.creator || 'المصمم';
+        },
+
+        // نسخ بوكيه بالكامل ونقل أصنافه فوراً إلى شاشة التجميع مع تحديث الأسعار بأسعار السيستم الحالية
+        cloneToBuilder(id) {
             const bouquet = this.state.bouquets.find(b => b.id === id);
-            if (!bouquet) return;
-
-            this.state.cloneTarget = JSON.parse(JSON.stringify(bouquet));
-            const modal = document.getElementById('gifts-modal-clone');
-            const nameInput = document.getElementById('gifts-clone-name');
-            const creatorInput = document.getElementById('gifts-clone-creator');
-
-            if (nameInput) nameInput.value = `نسخة من ${bouquet.name}`;
-            if (creatorInput) creatorInput.value = this.getCurrentUserName();
-
-            this.renderCloneItems();
-            if (modal) modal.classList.add('active');
-        },
-
-        renderCloneItems() {
-            const container = document.getElementById('gifts-clone-items-container');
-            const priceEl = document.getElementById('gifts-clone-total-price');
-            if (!container || !this.state.cloneTarget) return;
-
-            const items = this.state.cloneTarget.items || [];
-            let total = 0;
-            items.forEach(i => total += (i.price * i.qty));
-
-            if (priceEl) priceEl.innerText = `${total.toFixed(2)} ج.م`;
-
-            container.innerHTML = items.map((item, idx) => `
-                <div class="gifts-basket-item">
-                    <div style="flex: 1;">
-                        <div class="gifts-basket-name">${item.name}</div>
-                        <div class="gifts-basket-sub">${item.price.toFixed(2)} ج.م</div>
-                    </div>
-                    <div class="gifts-basket-actions">
-                        <button type="button" class="gifts-stepper-btn" onclick="GiftsApp.updateCloneItemQty(${idx}, -1)">-</button>
-                        <span class="gifts-stepper-val">${item.qty}</span>
-                        <button type="button" class="gifts-stepper-btn" onclick="GiftsApp.updateCloneItemQty(${idx}, 1)">+</button>
-                        <button type="button" class="gifts-basket-remove" onclick="GiftsApp.removeCloneItem(${idx})">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-        },
-
-        updateCloneItemQty(index, delta) {
-            if (!this.state.cloneTarget) return;
-            this.state.cloneTarget.items[index].qty += delta;
-            if (this.state.cloneTarget.items[index].qty <= 0) {
-                this.state.cloneTarget.items.splice(index, 1);
-            }
-            this.renderCloneItems();
-        },
-
-        removeCloneItem(index) {
-            if (!this.state.cloneTarget) return;
-            this.state.cloneTarget.items.splice(index, 1);
-            this.renderCloneItems();
-        },
-
-        async confirmCloneBouquet() {
-            const nameInput = document.getElementById('gifts-clone-name');
-            const creatorInput = document.getElementById('gifts-clone-creator');
-
-            const name = nameInput ? nameInput.value.trim() : '';
-            const creator = creatorInput ? creatorInput.value.trim() : this.getCurrentUserName();
-
-            if (!name) {
-                this.showToastNotification("يرجى كتابة اسم البوكيه الجديد");
+            if (!bouquet) {
+                this.showToastNotification("لم يتم العثور على البوكيه المطلوب");
                 return;
             }
 
-            if (!this.state.cloneTarget.items || this.state.cloneTarget.items.length === 0) {
-                this.showToastNotification("لا يمكن حفظ بوكيه فارغ من الأصناف");
+            // 1. فحص كل صنف وتحديث سعره من قائمة المنتجات الحالية بالسيستم
+            const originalItems = bouquet.items || [];
+            if (originalItems.length === 0) {
+                this.showToastNotification("هذا البوكيه لا يحتوي على أصناف لنسخها");
                 return;
             }
 
-            const totalPrice = this.state.cloneTarget.items.reduce((s, i) => s + (i.price * i.qty), 0);
-            const now = new Date().toISOString();
+            let updatedPricesCount = 0;
+            const refreshedItems = originalItems.map(item => {
+                let currentProd = null;
+                if (item.barcode) {
+                    currentProd = this.findProduct(item.barcode);
+                }
+                if (!currentProd && item.name) {
+                    currentProd = this.findProduct(item.name);
+                }
 
-            const clonedBouquet = {
-                id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `local_${Date.now()}`,
-                name: name,
-                creator_name: creator,
-                color_tag: '#E91E8C',
-                quantity: 1,
-                total_price: totalPrice,
-                status: 'ready',
-                items: this.state.cloneTarget.items,
-                image_url: this.state.cloneTarget.image_url,
-                timeline: [
-                    { event: `تم إنشاء البوكيه بالنسخ والتعديل من "${this.state.cloneTarget.name}"`, by: creator, time: now }
-                ],
-                created_at: now
+                let finalPrice = Number(item.price || 0);
+                if (currentProd && currentProd.price !== undefined && Number(currentProd.price) > 0) {
+                    const sysPrice = Number(currentProd.price);
+                    if (Math.abs(sysPrice - finalPrice) > 0.01) {
+                        updatedPricesCount++;
+                    }
+                    finalPrice = sysPrice;
+                }
+
+                return {
+                    id: (currentProd && currentProd.id) || item.id || `item_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+                    barcode: (currentProd && currentProd.barcode) || item.barcode || '',
+                    name: (currentProd && currentProd.name) || item.name || 'صنف',
+                    price: finalPrice,
+                    qty: Number(item.qty) || 1,
+                    weight: item.weight || ''
+                };
+            });
+
+            // 2. تعبئة مسودة التجميع بالبيانات المنسوخة
+            this.state.draft = {
+                name: bouquet.name ? `${bouquet.name} (تكرار)` : 'بوكيه جديد',
+                creator: this.getCurrentUserName(),
+                qty: 1,
+                colorTag: bouquet.color_tag || '#E91E8C',
+                items: refreshedItems,
+                photoBase64: null,
+                photoSizeKB: 0
             };
 
-            const sb = this.getSupabase();
-            if (sb) {
-                try {
-                    let { error } = await sb.from(GIFTS_TABLE).insert([clonedBouquet]);
-                    if (error) {
-                        console.warn("Supabase clone insert error:", error);
-                    }
-                } catch (e) {
-                    console.warn("Supabase clone error:", e);
-                }
-            }
+            // 3. حفظ المسودة محلياً لضمان عدم ضياعها
+            this.saveDraft();
 
-            this.state.bouquets.unshift(clonedBouquet);
-            this.saveBouquetsToLocal();
-            this.closeModal('gifts-modal-clone');
-            this.updateHeaderStats();
-            this.renderShowcase();
-            this.showToastNotification(`تم إنشاء البوكيه المنسوخ "${name}" بنجاح`);
+            // 4. الانتقال إلى شاشة التجميع
+            this.switchSubTab('builder');
+
+            // 5. تحديث الحقول في واجهة التجميع
+            setTimeout(() => {
+                const nameInput = document.getElementById('gifts-input-name');
+                const creatorInput = document.getElementById('gifts-input-creator');
+                const qtyInput = document.getElementById('gifts-input-qty');
+                if (nameInput) nameInput.value = this.state.draft.name;
+                if (creatorInput) creatorInput.value = this.state.draft.creator;
+                if (qtyInput) qtyInput.value = '1';
+
+                this.onDraftChanged();
+                this.renderDraftBasket();
+                this.renderRecentAddedList();
+                this.removePhoto();
+
+                // 6. إشعار بنجاح العملية
+                const priceNotice = updatedPricesCount > 0
+                    ? ` (تم تحديث أسعار ${updatedPricesCount} صنف بأسعار السيستم الحالية)`
+                    : ' (الأسعار مطابقة لأحدث أسعار بالسيستم)';
+                this.showToastNotification(`تم نسخ محتويات بوكيه "${bouquet.name}" إلى التجميع بنجاح! 🪄${priceNotice}`);
+                this.scrollToDraft();
+            }, 60);
+        },
+
+        openCloneModal(id) {
+            this.cloneToBuilder(id);
         },
 
         openTimelineModal(id) {
@@ -2897,12 +2880,17 @@
                                 ${morePill}
                             </div>
                         </div>
-                        <div class="gifts-catalog-card-footer">
-                            <div class="gifts-catalog-card-price-label">سعر البوكيه</div>
+                        <div class="gifts-catalog-card-footer" style="display: flex; justify-content: space-between; align-items: center;">
                             <div>
-                                <span class="gifts-catalog-card-price">${Number(b.total_price).toFixed(2)}</span>
-                                <span class="gifts-catalog-card-price-currency">ج.م</span>
+                                <div class="gifts-catalog-card-price-label">سعر البوكيه</div>
+                                <div>
+                                    <span class="gifts-catalog-card-price">${Number(b.total_price).toFixed(2)}</span>
+                                    <span class="gifts-catalog-card-price-currency">ج.م</span>
+                                </div>
                             </div>
+                            <button type="button" class="gifts-btn-outline" style="font-size: 0.8rem; padding: 6px 12px; border-radius: 8px;" title="نسخ هذا البوكيه لشاشة التجميع لتجهيز واحد مثله" onclick="GiftsApp.cloneToBuilder('${b.id}')">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> تجميع مثله
+                            </button>
                         </div>
                     </div>
                 `;

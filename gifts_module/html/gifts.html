@@ -61,11 +61,6 @@
             <span class="tab-label-full">كتالوج العملاء التسويقي</span>
             <span class="tab-label-short">الكتالوج</span>
         </button>
-        <button class="gifts-subtab-btn" onclick="GiftsApp.switchSubTab('templates')">
-            <i class="fa-solid fa-layer-group"></i>
-            <span class="tab-label-full">إدارة القوالب السريعة</span>
-            <span class="tab-label-short">القوالب</span>
-        </button>
     </div>
 
     <!-- ================================================================
@@ -166,14 +161,9 @@
                         <i class="fa-solid fa-floppy-disk" id="gifts-btn-save-icon"></i>
                         <span id="gifts-btn-save-label">حفظ البوكيه وعرضه في المحل</span>
                     </button>
-                    <div style="display: flex; gap: 8px; margin-top: 4px;">
-                        <button type="button" class="gifts-btn-outline" style="flex: 1;" onclick="GiftsApp.saveAsTemplate()">
-                            <i class="fa-solid fa-bookmark"></i> حفظ كقالب
-                        </button>
-                        <button type="button" class="gifts-btn-outline" style="color: var(--gifts-red);" onclick="GiftsApp.clearDraft()">
-                            <i class="fa-solid fa-arrow-rotate-right"></i> مسح السلة
-                        </button>
-                    </div>
+                    <button type="button" class="gifts-btn-outline" style="color: var(--gifts-red); width: 100%; margin-top: 6px;" onclick="GiftsApp.clearDraft()">
+                        <i class="fa-solid fa-trash-can"></i> مسح السلة وتفريغ الأصناف
+                    </button>
                 </div>
             </div>
 
@@ -493,52 +483,6 @@
 
     </div>
 
-    <!-- ================================================================
-         SUB-VIEW 5: TEMPLATES MANAGEMENT
-         ================================================================ -->
-    <div id="gifts-view-templates" class="gifts-subview">
-
-        <!-- Templates Hero -->
-        <div class="gifts-tpl-hero">
-            <div class="gifts-tpl-hero-orb gifts-tpl-hero-orb-1"></div>
-            <div class="gifts-tpl-hero-orb gifts-tpl-hero-orb-2"></div>
-            <div class="gifts-tpl-hero-main">
-                <div class="gifts-tpl-hero-icon">
-                    <i class="fa-solid fa-layer-group"></i>
-                </div>
-                <div class="gifts-tpl-hero-text">
-                    <h3 class="gifts-tpl-hero-title">القوالب السريعة</h3>
-                    <p class="gifts-tpl-hero-sub">قوالب جاهزة لتجميع البوكيهات بسرعة — احفظ وصفة بوكيه مرة واحدة ثم طبّقها في ثانية في أي وقت</p>
-                </div>
-            </div>
-            <button class="gifts-tpl-add-btn" onclick="GiftsApp.saveAsTemplate()">
-                <i class="fa-solid fa-plus"></i>
-                <span>حفظ السلة الحالية كقالب جديد</span>
-            </button>
-        </div>
-
-        <!-- Templates Toolbar -->
-        <div class="gifts-tpl-toolbar">
-            <div class="gifts-tpl-search-wrap">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="gifts-tplview-search" class="gifts-tpl-search-input"
-                    placeholder="ابحث في القوالب بالاسم أو المكون..."
-                    oninput="GiftsApp.filterTemplatesView(this.value)">
-            </div>
-            <div class="gifts-tpl-toolbar-actions">
-                <div class="gifts-tpl-count-chip" id="gifts-tpl-count"><i class="fa-solid fa-layer-group"></i> 0 قالب</div>
-                <button class="gifts-btn-outline" onclick="GiftsApp.loadStarterTemplates()" title="تحميل قوالب نموذجية جاهزة">
-                    <i class="fa-solid fa-sparkles"></i> قوالب نموذجية
-                </button>
-            </div>
-        </div>
-
-        <!-- Templates Grid -->
-        <div class="gifts-tpl-grid" id="gifts-tplview-grid">
-            <!-- Rendered dynamically -->
-        </div>
-
-    </div>
 
 </div>
 
@@ -546,46 +490,6 @@
      MODALS
      ================================================================ -->
 
-<!-- 1. Clone & Quick-Edit Modal -->
-<div class="gifts-modal-overlay" id="gifts-modal-clone">
-    <div class="gifts-modal">
-        <div class="gifts-modal-header">
-            <h4>
-                <i class="fa-solid fa-copy" style="color: var(--gifts-primary);"></i>
-                نسخ وتعديل البوكيه السريع
-            </h4>
-            <button class="gifts-modal-close" onclick="GiftsApp.closeModal('gifts-modal-clone')">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-        <div class="gifts-modal-body">
-            <div class="gifts-form-group">
-                <label>اسم البوكيه الجديد</label>
-                <input type="text" id="gifts-clone-name" class="gifts-input">
-            </div>
-            <div class="gifts-form-group">
-                <label>المسؤول عن التصميم</label>
-                <input type="text" id="gifts-clone-creator" class="gifts-input">
-            </div>
-            <div class="gifts-form-group">
-                <label>تعديل محتويات البوكيه</label>
-                <div class="gifts-basket-container" id="gifts-clone-items-container" style="max-height: 220px;">
-                    <!-- Items -->
-                </div>
-            </div>
-            <div class="gifts-totals-row" style="padding-top: 10px; border-top: 1px dashed var(--gifts-primary-border);">
-                <span>السعر الإجمالي بعد التعديل:</span>
-                <span id="gifts-clone-total-price" style="font-weight: 900; color: var(--gifts-primary);">0.00 ج.م</span>
-            </div>
-        </div>
-        <div class="gifts-modal-footer">
-            <button class="gifts-btn-outline" onclick="GiftsApp.closeModal('gifts-modal-clone')">إلغاء</button>
-            <button class="gifts-btn-primary" onclick="GiftsApp.confirmCloneBouquet()">
-                <i class="fa-solid fa-check"></i> حفظ كبوكيه جديد
-            </button>
-        </div>
-    </div>
-</div>
 
 <!-- 2. Audit Trail / Timeline Modal -->
 <div class="gifts-modal-overlay" id="gifts-modal-timeline">
@@ -614,35 +518,6 @@
     </div>
 </div>
 
-<!-- 3. Templates Picker Modal -->
-<div class="gifts-modal-overlay" id="gifts-modal-templates">
-    <div class="gifts-modal gifts-templates-modal-box">
-        <div class="gifts-modal-header">
-            <h4>
-                <i class="fa-solid fa-layer-group" style="color: var(--gifts-primary);"></i>
-                القوالب السريعة الجاهزة
-            </h4>
-            <button class="gifts-modal-close" onclick="GiftsApp.closeModal('gifts-modal-templates')">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-        <div class="gifts-templates-topbar">
-            <div class="gifts-templates-search-wrap">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="gifts-template-search-input" class="gifts-templates-search-input" placeholder="بحث في القوالب بالاسم أو المكون..." oninput="GiftsApp.filterTemplates(this.value)">
-            </div>
-            <button type="button" class="gifts-btn-outline gifts-template-save-now-btn" onclick="GiftsApp.saveAsTemplate()" title="حفظ التجميع الحالي في السلة كقالب جديد">
-                <i class="fa-solid fa-bookmark"></i> حفظ السلة كقالب
-            </button>
-        </div>
-        <div class="gifts-modal-body" id="gifts-templates-list-body">
-            <!-- List of templates rendered dynamically -->
-        </div>
-        <div class="gifts-modal-footer">
-            <button class="gifts-btn-outline" onclick="GiftsApp.closeModal('gifts-modal-templates')">إغلاق النافذة</button>
-        </div>
-    </div>
-</div>
 
 <!-- ================================================================
      HIDDEN PRINT TEMPLATE FOR 80MM THERMAL RECEIPT (JsBarcode)
