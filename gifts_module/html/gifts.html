@@ -43,19 +43,23 @@
     <div class="gifts-nav-bar">
         <button class="gifts-subtab-btn active" onclick="GiftsApp.switchSubTab('builder')">
             <i class="fa-solid fa-wand-magic-sparkles"></i>
-            <span>تجميع بوكيه جديد</span>
+            <span class="tab-label-full">تجميع بوكيه جديد</span>
+            <span class="tab-label-short">تجميع</span>
         </button>
         <button class="gifts-subtab-btn" onclick="GiftsApp.switchSubTab('showcase')">
             <i class="fa-solid fa-gift"></i>
-            <span>معرض البوكيهات والمخزون</span>
+            <span class="tab-label-full">معرض البوكيهات والمخزون</span>
+            <span class="tab-label-short">المعرض</span>
         </button>
         <button class="gifts-subtab-btn" onclick="GiftsApp.switchSubTab('analytics')">
             <i class="fa-solid fa-chart-line"></i>
-            <span>التقارير ولوحة الصدارة</span>
+            <span class="tab-label-full">التقارير ولوحة الصدارة</span>
+            <span class="tab-label-short">التقارير</span>
         </button>
         <button class="gifts-subtab-btn" onclick="GiftsApp.switchSubTab('catalog')">
             <i class="fa-solid fa-book-open"></i>
-            <span>كتالوج العملاء التسويقي</span>
+            <span class="tab-label-full">كتالوج العملاء التسويقي</span>
+            <span class="tab-label-short">الكتالوج</span>
         </button>
     </div>
 
@@ -398,7 +402,7 @@
                     </h4>
                     <span style="font-size: 0.8rem; color: var(--gifts-text-muted); font-weight: 700;">يتم التحديث فوريا</span>
                 </div>
-                <div style="overflow-x: auto;">
+                <div class="gifts-table-scroll-container">
                     <table class="gifts-data-table" id="gifts-employee-table">
                         <thead>
                             <tr>
