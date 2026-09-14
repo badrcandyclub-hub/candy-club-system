@@ -1093,7 +1093,31 @@
             return null;
         },
 
-        // 8. حفظ البوكيه (Supabase + LocalStorage Fallback مع منع النقر المزدوج)
+        // فحص وجود بوكيه مطابق في المحل (نفس الاسم ونفس الموظف الصانع ونفس الأصناف والكميات بالمللي)
+        findMatchingReadyBouquet(name, creator, items) {
+            const normName = this.normalizeArabic(name);
+            const normCreator = this.normalizeArabic(creator);
+
+            return this.state.bouquets.find(b => {
+                if (b.status !== 'ready') return false;
+                if (this.normalizeArabic(b.name) !== normName) return false;
+                if (this.normalizeArabic(b.creator_name) !== normCreator) return false;
+
+                const bItems = b.items || [];
+                if (bItems.length !== items.length) return false;
+
+                return items.every(item => {
+                    return bItems.some(bi => {
+                        const sameBarcode = item.barcode && bi.barcode && String(item.barcode).trim() === String(bi.barcode).trim();
+                        const sameName = this.normalizeArabic(item.name) === this.normalizeArabic(bi.name);
+                        const sameQty = Number(item.qty) === Number(bi.qty);
+                        return (sameBarcode || sameName) && sameQty;
+                    });
+                });
+            });
+        },
+
+        // 8. حفظ البوكيه (Supabase + LocalStorage Fallback مع منع النقر المزدوج ودمج الكمية عند التطابق)
         async saveBouquet() {
             if (this._isSaving) return;
             const draft = this.state.draft;
@@ -1135,6 +1159,60 @@
                     }
                 }
 
+                // فحص هل يوجد بوكيه جاهز في المحل مطابق 100% (نفس الاسم + نفس الأصناف والكميات + نفس الموظف)
+                const existingBouquet = this.findMatchingReadyBouquet(draft.name, creator, draft.items);
+
+                if (existingBouquet) {
+                    const oldQty = Number(existingBouquet.quantity) || 1;
+                    const newQty = oldQty + qty;
+                    existingBouquet.quantity = newQty;
+
+                    if (finalImageUrl && !existingBouquet.image_url) {
+                        existingBouquet.image_url = finalImageUrl;
+                    }
+
+                    if (!existingBouquet.timeline) existingBouquet.timeline = [];
+                    existingBouquet.timeline.push({
+                        event: `تمت إضافة (${qty}) قطع مطابقة بواسطة ${creator}، إجمالي المتوفر بالمحل (${newQty})`,
+                        by: creator,
+                        time: now
+                    });
+
+                    let syncedToSupabase = false;
+                    const sb = this.getSupabase();
+                    if (sb) {
+                        try {
+                            const { error } = await sb
+                                .from(GIFTS_TABLE)
+                                .update({
+                                    quantity: newQty,
+                                    image_url: existingBouquet.image_url,
+                                    timeline: existingBouquet.timeline
+                                })
+                                .eq('id', existingBouquet.id);
+
+                            if (!error) syncedToSupabase = true;
+                        } catch (e) {
+                            console.warn("Supabase update quantity error:", e);
+                        }
+                    }
+
+                    this.saveBouquetsToLocal();
+                    this.clearDraft();
+                    this.updateHeaderStats();
+
+                    const syncMsg = syncedToSupabase ? " (متزامن مع السحابة)" : " (محفوظ محليا)";
+                    this.showToastNotification(`تم دمج البوكيه مع نفس الموظف وزيادة الكمية إلى (${newQty}) قطع${syncMsg}`);
+
+                    const isMobileDevice = window.innerWidth < 768 || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                    if (!isMobileDevice) {
+                        this.printBouquetThermalReceipt(existingBouquet.id);
+                    }
+                    this.switchSubTab('showcase');
+                    return;
+                }
+
+                // في حال كان بوكيه جديد (أو موظف مختلف)، ينشأ سجل مستقل
                 const bouquetRecord = {
                     id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `bq_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
                     name: draft.name.trim(),
@@ -1180,7 +1258,7 @@
                 if (!isMobileDevice) {
                     this.printBouquetThermalReceipt(bouquetRecord.id);
                 } else {
-                    this.showToastNotification("تم حفظ البوكيه بنجاح. يمكنك طباعة الريسيت 80 مم من شاشة الكمبيوتر عبر المعرض");
+                    this.showToastNotification("تم حفظ البوكيه بنجاح، يمكنك طباعة الريسيت 80 مم من شاشة الكمبيوتر عبر المعرض");
                 }
                 this.switchSubTab('showcase');
             } catch (err) {
