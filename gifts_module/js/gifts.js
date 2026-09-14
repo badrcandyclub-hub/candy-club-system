@@ -1103,7 +1103,14 @@
                 this.showToastNotification(`تم حفظ البوكيه "${bouquetRecord.name}" بنجاح${syncMsg}`);
                 this.clearDraft();
                 this.updateHeaderStats();
-                this.printBouquetThermalReceipt(bouquetRecord.id);
+
+                // إذا كان الجهاز هاتف محمول، لا نفتح نافذة الطباعة تلقائياً لعدم وجود طابعة USB بالهاتف
+                const isMobileDevice = window.innerWidth < 768 || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                if (!isMobileDevice) {
+                    this.printBouquetThermalReceipt(bouquetRecord.id);
+                } else {
+                    this.showToastNotification("تم حفظ البوكيه بنجاح. يمكنك طباعة الريسيت 80 مم من شاشة الكمبيوتر عبر المعرض");
+                }
                 this.switchSubTab('showcase');
             } catch (err) {
                 console.error("Error saving bouquet:", err);
@@ -1158,7 +1165,7 @@
         },
 
         // 9. توليد وطباعة ريسيت الباركودات الحراري 80 مم المعزول تماما (تصميم فائق الدقة ومدمج واقتصادي)
-        generateThermalReceiptHtml(bouquet) {
+        generateThermalReceiptHtml(bouquet, copies = 1) {
             const createdDate = new Date(bouquet.created_at || Date.now());
             const yyyy = createdDate.getFullYear();
             const mm = String(createdDate.getMonth() + 1).padStart(2, '0');
@@ -1232,6 +1239,53 @@
                 `;
             }).join('');
 
+            const numCopies = Math.max(1, parseInt(copies) || 1);
+            let pagesHtml = '';
+
+            for (let c = 1; c <= numCopies; c++) {
+                const copyBadge = numCopies > 1 ? `<span>نسخة: <strong>[ ${c} من ${numCopies} ]</strong></span>` : '';
+                const isLast = (c === numCopies);
+                const pageBreakStyle = !isLast ? 'page-break-after: always; padding-bottom: 12px; margin-bottom: 18px; border-bottom: 2px dashed #000000;' : '';
+
+                pagesHtml += `
+                <div class="thermal-receipt-instance" style="${pageBreakStyle}">
+                    <div class="thermal-header">
+                        <div class="thermal-brand">★ CANDY CLUB ★ - قسم الهدايا</div>
+                        <div class="thermal-top-meta">
+                            <div class="thermal-top-meta-row">
+                                <span>اسم البوكيه: <strong>${bouquet.name || 'بوكيه هدايا'}</strong></span>
+                            </div>
+                            <div class="thermal-top-meta-row">
+                                <span>المصمم: <strong>${bouquet.creator_name || 'موظف الهدايا'}</strong></span>
+                                <span>تاريخ التصنيع: <strong style="font-family: monospace;">${dateStr}</strong></span>
+                            </div>
+                            <div class="thermal-top-meta-row">
+                                <span>الكمية المصنعة: <strong>${bouquet.quantity || 1} بوكيه</strong></span>
+                                ${copyBadge}
+                            </div>
+                        </div>
+                    </div>
+
+                    ${itemsHtml}
+
+                    <div class="thermal-summary-box">
+                        <div class="thermal-summary-row">
+                            <span>الأصناف: <strong>${items.length} صنف (${totalUnits} قطعة)</strong></span>
+                            <span>المجموع: <strong>${subTotalPrice.toFixed(2)} ج.م</strong></span>
+                        </div>
+                        <div class="thermal-summary-row">
+                            <span>الخصم:</span>
+                            <span>${discountAmount.toFixed(2)} ج.م</span>
+                        </div>
+                        <div class="thermal-final-total-row">
+                            <span>الإجمالي النهائي:</span>
+                            <span>${finalTotalPrice.toFixed(2)} ج.م</span>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }
+
             return `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -1259,6 +1313,11 @@
             font-size: 11px;
             line-height: 1.25;
             direction: rtl;
+        }
+        @media print {
+            .thermal-receipt-instance {
+                page-break-inside: avoid;
+            }
         }
         .thermal-header {
             text-align: center;
@@ -1373,42 +1432,14 @@
     </style>
 </head>
 <body>
-    <div class="thermal-header">
-        <div class="thermal-brand">★ CANDY CLUB ★ - قسم الهدايا</div>
-        <div class="thermal-top-meta">
-            <div class="thermal-top-meta-row">
-                <span>اسم البوكيه: <strong>${bouquet.name || 'بوكيه هدايا'}</strong></span>
-            </div>
-            <div class="thermal-top-meta-row">
-                <span>المصمم: <strong>${bouquet.creator_name || 'موظف الهدايا'}</strong></span>
-                <span>تاريخ التصنيع: <strong style="font-family: monospace;">${dateStr}</strong></span>
-            </div>
-        </div>
-    </div>
-
-    ${itemsHtml}
-
-    <div class="thermal-summary-box">
-        <div class="thermal-summary-row">
-            <span>الأصناف: <strong>${items.length} صنف (${totalUnits} قطعة)</strong></span>
-            <span>المجموع: <strong>${subTotalPrice.toFixed(2)} ج.م</strong></span>
-        </div>
-        <div class="thermal-summary-row">
-            <span>الخصم:</span>
-            <span>${discountAmount.toFixed(2)} ج.م</span>
-        </div>
-        <div class="thermal-final-total-row">
-            <span>الإجمالي النهائي:</span>
-            <span>${finalTotalPrice.toFixed(2)} ج.م</span>
-        </div>
-    </div>
+    ${pagesHtml}
 </body>
 </html>`;
         },
 
-        printThermalReceipt(bouquet) {
+        printThermalReceipt(bouquet, copies = 1) {
             if (!bouquet) return;
-            const htmlContent = this.generateThermalReceiptHtml(bouquet);
+            const htmlContent = this.generateThermalReceiptHtml(bouquet, copies);
 
             let iframe = document.getElementById('gifts-print-thermal-iframe');
             if (!iframe) {
@@ -1486,7 +1517,17 @@
                 this.showToastNotification("لم يتم العثور على بيانات البوكيه للطباعة");
                 return;
             }
-            this.printThermalReceipt(bouquet);
+
+            let copies = 1;
+            const qty = parseInt(bouquet.quantity) || 1;
+            if (qty > 1) {
+                const wantMulti = confirm(`هذا البوكيه مسجل منه (${qty}) بوكيهات متطابقة في المحل.\n\nهل ترغب في طباعة (${qty}) نسخ من الريسيت (نسخة لكل بوكيه لتثبيتها عليه)؟\n\n- اضغط "موافق" لطباعة (${qty}) نسخ\n- اضغط "إلغاء" لطباعة نسخة واحدة فقط`);
+                if (wantMulti) {
+                    copies = qty;
+                }
+            }
+
+            this.printThermalReceipt(bouquet, copies);
         },
 
         printActiveTimelineBouquet() {
