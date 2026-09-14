@@ -102,6 +102,17 @@
                 .toLowerCase();
         },
 
+        // تأمين النصوص ضد XSS عند الحقن في HTML
+        escapeHtml(text) {
+            if (text === null || text === undefined) return '';
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        },
+
         // 1. التهيئة الأولية (Init)
         async init(initialSubtab = 'builder') {
             console.log("Candy Club Gifts Module: Initializing...");
