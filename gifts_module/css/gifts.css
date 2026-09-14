@@ -362,9 +362,105 @@
     gap: 9px;
 }
 
+/* ================================================================
+   Form Group Cards — Visual Differentiation (Mobile-Friendly)
+   كل خانة تتحول لكارت مستقل بلون خفيف مختلف عشان العين مرتاحة
+   ================================================================ */
 .gifts-form-group {
-    margin-bottom: 15px;
+    margin-bottom: 14px;
+    padding: 14px 16px;
+    border-radius: var(--gifts-radius-sm);
+    border: 1.5px solid transparent;
+    transition: var(--gifts-transition);
+    position: relative;
 }
+
+/* Pink card — اسم البوكيه */
+.gifts-form-group.fg-pink {
+    background: linear-gradient(135deg, #FFF0F6 0%, #FFFAFC 100%);
+    border-color: #FBCFE8;
+}
+.gifts-form-group.fg-pink::before {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 12px;
+    bottom: 12px;
+    width: 3.5px;
+    border-radius: 0 4px 4px 0;
+    background: linear-gradient(180deg, #E91E8C, #F472B6);
+}
+
+/* Lavender card — المسؤول والكمية */
+.gifts-form-group.fg-lavender {
+    background: linear-gradient(135deg, #F5F3FF 0%, #FDFCFF 100%);
+    border-color: #DDD6FE;
+}
+.gifts-form-group.fg-lavender::before {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 12px;
+    bottom: 12px;
+    width: 3.5px;
+    border-radius: 0 4px 4px 0;
+    background: linear-gradient(180deg, #8B5CF6, #A78BFA);
+}
+
+/* Mint card — الصورة */
+.gifts-form-group.fg-mint {
+    background: linear-gradient(135deg, #F0FDFA 0%, #FAFFFE 100%);
+    border-color: #99F6E4;
+}
+.gifts-form-group.fg-mint::before {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 12px;
+    bottom: 12px;
+    width: 3.5px;
+    border-radius: 0 4px 4px 0;
+    background: linear-gradient(180deg, #0D9488, #34D399);
+}
+
+/* Amber card — الأصناف */
+.gifts-form-group.fg-amber {
+    background: linear-gradient(135deg, #FFFBEB 0%, #FFFDF5 100%);
+    border-color: #FDE68A;
+}
+.gifts-form-group.fg-amber::before {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 12px;
+    bottom: 12px;
+    width: 3.5px;
+    border-radius: 0 4px 4px 0;
+    background: linear-gradient(180deg, #D97706, #FCD34D);
+}
+
+/* Hover lift for all form group cards */
+.gifts-form-group.fg-pink:hover,
+.gifts-form-group.fg-lavender:hover,
+.gifts-form-group.fg-mint:hover,
+.gifts-form-group.fg-amber:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+}
+
+/* Inner fields inside the lavender row */
+.gifts-inner-field {
+    display: flex;
+    flex-direction: column;
+}
+.gifts-inner-label {
+    display: block;
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: var(--gifts-text);
+    margin-bottom: 7px;
+}
+
 
 .gifts-form-group label {
     display: block;

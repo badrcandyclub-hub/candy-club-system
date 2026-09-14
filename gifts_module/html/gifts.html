@@ -82,24 +82,24 @@
                 </div>
 
                 <!-- Basic Info Fields -->
-                <div class="gifts-form-group">
+                <div class="gifts-form-group fg-pink">
                     <label>اسم البوكيه أو الوصف</label>
                     <input type="text" id="gifts-input-name" class="gifts-input" placeholder="مثال: بوكيه ميكس كيت كات وشوكولاتة" oninput="GiftsApp.onDraftChanged()">
                 </div>
 
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <div class="gifts-form-group" style="flex: 2; min-width: 160px;">
-                        <label>المسؤول عن التصميم</label>
+                <div class="gifts-form-group fg-lavender" style="display: flex; gap: 10px; flex-wrap: wrap; padding-bottom: 14px;">
+                    <div class="gifts-inner-field" style="flex: 2; min-width: 160px;">
+                        <label class="gifts-inner-label">المسؤول عن التصميم</label>
                         <input type="text" id="gifts-input-creator" class="gifts-input" placeholder="اسم المصمم" oninput="GiftsApp.onDraftChanged()">
                     </div>
-                    <div class="gifts-form-group" style="flex: 1; min-width: 110px;">
-                        <label>الكمية المتطابقة</label>
+                    <div class="gifts-inner-field" style="flex: 1; min-width: 110px;">
+                        <label class="gifts-inner-label">الكمية المتطابقة</label>
                         <input type="number" id="gifts-input-qty" class="gifts-input" value="1" min="1" oninput="GiftsApp.onDraftChanged()">
                     </div>
                 </div>
 
                 <!-- Camera & Photo Capture with Canvas Compression -->
-                <div class="gifts-form-group">
+                <div class="gifts-form-group fg-mint">
                     <label>صورة البوكيه (رفع مباشر إلى Google Drive)</label>
                     <div class="gifts-camera-container" id="gifts-camera-box">
                         <video id="gifts-camera-stream" class="gifts-camera-video" playsinline></video>
@@ -130,7 +130,7 @@
                 </div>
 
                 <!-- Chosen Items Basket -->
-                <div class="gifts-form-group">
+                <div class="gifts-form-group fg-amber">
                     <label style="display: flex; justify-content: space-between;">
                         <span>الأصناف المضافة داخل البوكيه</span>
                         <span id="gifts-basket-count" style="color: var(--gifts-primary); font-weight: 900;">0 أصناف</span>
