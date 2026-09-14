@@ -295,7 +295,10 @@
                 <button class="gifts-chip" onclick="GiftsApp.setShowcaseFilter('sold', this)">تم البيع</button>
                 <button class="gifts-chip" onclick="GiftsApp.setShowcaseFilter('disassembled', this)">المفككة</button>
             </div>
-            <div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <button type="button" class="gifts-btn-outline" id="gifts-btn-refresh-showcase" style="padding: 10px 16px; font-size: 0.92rem;" onclick="GiftsApp.refreshShowcase()" title="تحديث البوكيهات من السحابة">
+                    <i class="fa-solid fa-arrows-rotate" id="gifts-refresh-icon"></i> تحديث
+                </button>
                 <button class="gifts-btn-primary" style="padding: 10px 20px; font-size: 0.92rem;" onclick="GiftsApp.switchSubTab('builder')">
                     <i class="fa-solid fa-plus"></i> تجميع بوكيه جديد
                 </button>

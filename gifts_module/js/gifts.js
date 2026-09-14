@@ -9,6 +9,8 @@
     'use strict';
 
     const GOOGLE_DRIVE_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwx-tcJs67wcNR9adRLE70meZUjpeWSVpmDGIY1qJj5owFbIfWt5Sq8y6Kd3CYr7jdb/exec';
+    const SUPABASE_URL = 'https://thqccqwdwwxitvztmigt.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_BtFyuDBE_0PcF1z8JNskuA_-04mjcpc';
     const GIFTS_TABLE = 'gifts';
     const GIFTS_TEMPLATES_TABLE = 'gifts_templates';
 
@@ -42,6 +44,52 @@
             reportPeriod: 'this_week'
         },
 
+        // مساعد الوصول المباشر والآمن لعميل Supabase
+        getSupabase() {
+            if (window.supabase && typeof window.supabase.from === 'function') {
+                return window.supabase;
+            }
+            if (window.supabase && typeof window.supabase.createClient === 'function') {
+                try {
+                    window.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                        auth: { persistSession: false, storage: { getItem: () => null, setItem: () => null, removeItem: () => null } }
+                    });
+                    return window.supabase;
+                } catch (e) {
+                    console.warn("Could not init Supabase client in gifts module:", e);
+                }
+            }
+            return null;
+        },
+
+        // الاشتراك في مزامنة Supabase Realtime الفورية بين الموبايل وأجهزة الكاشير
+        setupRealtimeSubscription() {
+            const sb = this.getSupabase();
+            if (!sb || typeof sb.channel !== 'function') return;
+            try {
+                if (this._realtimeChannel) {
+                    sb.removeChannel(this._realtimeChannel);
+                    this._realtimeChannel = null;
+                }
+                this._realtimeChannel = sb
+                    .channel('gifts-realtime-sync')
+                    .on('postgres_changes', { event: '*', schema: 'public', table: GIFTS_TABLE }, (payload) => {
+                        console.log('Gifts realtime change detected in Supabase:', payload);
+                        this.loadBouquets().then(() => {
+                            this.updateHeaderStats();
+                            if (this.state.currentSubTab === 'showcase') {
+                                this.renderShowcase();
+                            } else if (this.state.currentSubTab === 'analytics') {
+                                this.renderAnalytics();
+                            }
+                        });
+                    })
+                    .subscribe();
+            } catch (e) {
+                console.warn("Could not setup realtime subscription:", e);
+            }
+        },
+
         // معالجة النصوص العربية وإزالة التطويل والكشيدة والهمزات للبحث الدقيق
         normalizeArabic(text) {
             return String(text || '')
@@ -70,6 +118,9 @@
             // جلب البوكيهات والقوالب
             await this.loadBouquets();
             await this.loadTemplates();
+
+            // تفعيل المزامنة اللحظية عبر Supabase Realtime
+            this.setupRealtimeSubscription();
 
             // تحديث شريط الإحصائيات في الترويسة
             this.updateHeaderStats();
@@ -130,8 +181,16 @@
                 this.renderRecentAddedList();
             } else if (tabName === 'showcase') {
                 this.renderShowcase();
+                // جلب أحدث البيانات من سوبا بيز في الخلفية لضمان ظهور أي بوكيه حُفظ من الموبايل
+                this.loadBouquets().then(() => {
+                    this.renderShowcase();
+                    this.updateHeaderStats();
+                });
             } else if (tabName === 'analytics') {
                 this.renderAnalytics();
+                this.loadBouquets().then(() => {
+                    this.renderAnalytics();
+                });
             } else if (tabName === 'catalog') {
                 this.renderCustomerCatalog();
             }
@@ -1083,14 +1142,15 @@
                 };
 
                 let syncedToSupabase = false;
-                if (window.supabase) {
+                const sb = this.getSupabase();
+                if (sb) {
                     try {
-                        let { error } = await window.supabase.from(GIFTS_TABLE).insert([bouquetRecord]);
-                        if (error && error.code === '23502') {
-                            let tempRecord = { ...bouquetRecord, code: bouquetRecord.id };
-                            await window.supabase.from(GIFTS_TABLE).insert([tempRecord]);
+                        const { error } = await sb.from(GIFTS_TABLE).insert([bouquetRecord]);
+                        if (!error) {
+                            syncedToSupabase = true;
+                        } else {
+                            console.warn("Supabase insert bouquet error:", error);
                         }
-                        if (!error) syncedToSupabase = true;
                     } catch (e) {
                         console.warn("Supabase insert error (falling back to local):", e);
                     }
@@ -1125,9 +1185,10 @@
 
         async loadBouquets() {
             let loaded = false;
-            if (window.supabase) {
+            const sb = this.getSupabase();
+            if (sb) {
                 try {
-                    const { data, error } = await window.supabase
+                    const { data, error } = await sb
                         .from(GIFTS_TABLE)
                         .select('*')
                         .order('created_at', { ascending: false });
@@ -1535,6 +1596,27 @@
             this.printBouquetThermalReceipt(this.state.activeTimelineBouquetId);
         },
 
+        // تحديث المعرض يدوياً من سوبا بيز
+        async refreshShowcase() {
+            const btn = document.getElementById('gifts-btn-refresh-showcase');
+            const icon = document.getElementById('gifts-refresh-icon');
+            if (icon) icon.classList.add('fa-spin');
+            if (btn) btn.disabled = true;
+
+            try {
+                await this.loadBouquets();
+                this.updateHeaderStats();
+                this.renderShowcase();
+                this.showToastNotification("تم تحديث قائمة البوكيهات من السحابة بنجاح");
+            } catch (e) {
+                console.error("Error refreshing showcase:", e);
+                this.showToastNotification("حدث خطأ أثناء تحديث القائمة من السحابة");
+            } finally {
+                if (icon) icon.classList.remove('fa-spin');
+                if (btn) btn.disabled = false;
+            }
+        },
+
         // 10. معرض البوكيهات والمخزون
         renderShowcase() {
             const container = document.getElementById('gifts-showcase-container');
@@ -1654,9 +1736,10 @@
                 return;
             }
 
-            if (window.supabase) {
+            const sb = this.getSupabase();
+            if (sb) {
                 try {
-                    await window.supabase.from(GIFTS_TABLE).delete().eq('id', id);
+                    await sb.from(GIFTS_TABLE).delete().eq('id', id);
                 } catch (e) {
                     console.warn("Supabase delete bouquet error:", e);
                 }
@@ -1710,9 +1793,10 @@
                     time: now
                 });
 
-                if (window.supabase) {
+                const sb = this.getSupabase();
+                if (sb) {
                     try {
-                        await window.supabase
+                        await sb
                             .from(GIFTS_TABLE)
                             .update({
                                 status: 'disassembled',
@@ -1732,9 +1816,10 @@
                     time: now
                 });
 
-                if (window.supabase) {
+                const sb = this.getSupabase();
+                if (sb) {
                     try {
-                        await window.supabase
+                        await sb
                             .from(GIFTS_TABLE)
                             .update({
                                 quantity: bouquet.quantity,
@@ -1757,9 +1842,9 @@
                     ]
                 };
 
-                if (window.supabase) {
+                if (sb) {
                     try {
-                        await window.supabase.from(GIFTS_TABLE).insert([disRecord]);
+                        await sb.from(GIFTS_TABLE).insert([disRecord]);
                     } catch (e) {
                         console.warn("Supabase insert disRecord error:", e);
                     }
@@ -1803,9 +1888,10 @@
                     time: now
                 });
 
-                if (window.supabase) {
+                const sb = this.getSupabase();
+                if (sb) {
                     try {
-                        await window.supabase
+                        await sb
                             .from(GIFTS_TABLE)
                             .update({
                                 status: 'sold',
@@ -1825,9 +1911,10 @@
                     time: now
                 });
 
-                if (window.supabase) {
+                const sb = this.getSupabase();
+                if (sb) {
                     try {
-                        await window.supabase
+                        await sb
                             .from(GIFTS_TABLE)
                             .update({
                                 quantity: bouquet.quantity,
@@ -1850,9 +1937,9 @@
                     ]
                 };
 
-                if (window.supabase) {
+                if (sb) {
                     try {
-                        await window.supabase.from(GIFTS_TABLE).insert([soldRecord]);
+                        await sb.from(GIFTS_TABLE).insert([soldRecord]);
                     } catch (e) {
                         console.warn("Supabase insert soldRecord error:", e);
                     }
@@ -1962,12 +2049,12 @@
                 created_at: now
             };
 
-            if (window.supabase) {
+            const sb = this.getSupabase();
+            if (sb) {
                 try {
-                    let { error } = await window.supabase.from(GIFTS_TABLE).insert([clonedBouquet]);
-                    if (error && error.code === '23502') {
-                        let tempRecord = { ...clonedBouquet, code: clonedBouquet.id };
-                        await window.supabase.from(GIFTS_TABLE).insert([tempRecord]);
+                    let { error } = await sb.from(GIFTS_TABLE).insert([clonedBouquet]);
+                    if (error) {
+                        console.warn("Supabase clone insert error:", error);
                     }
                 } catch (e) {
                     console.warn("Supabase clone error:", e);
@@ -2046,9 +2133,10 @@
                 created_at: new Date().toISOString()
             };
 
-            if (window.supabase) {
+            const sb = this.getSupabase();
+            if (sb) {
                 try {
-                    const { error } = await window.supabase.from(GIFTS_TEMPLATES_TABLE).insert([newTemplate]);
+                    const { error } = await sb.from(GIFTS_TEMPLATES_TABLE).insert([newTemplate]);
                     if (error) {
                         console.warn("Supabase insert template error:", error);
                     }
@@ -2064,9 +2152,10 @@
 
         async loadTemplates() {
             let loaded = false;
-            if (window.supabase) {
+            const sb = this.getSupabase();
+            if (sb) {
                 try {
-                    const { data, error } = await window.supabase
+                    const { data, error } = await sb
                         .from(GIFTS_TEMPLATES_TABLE)
                         .select('*')
                         .order('created_at', { ascending: false });
@@ -2268,9 +2357,10 @@
 
             this.state.templates = starters;
             this.saveTemplatesToLocal();
-            if (window.supabase) {
+            const sb = this.getSupabase();
+            if (sb) {
                 try {
-                    await window.supabase.from(GIFTS_TEMPLATES_TABLE).upsert(starters);
+                    await sb.from(GIFTS_TEMPLATES_TABLE).upsert(starters);
                 } catch (e) {
                     console.warn("Supabase upsert starter templates:", e);
                 }
@@ -2298,9 +2388,10 @@
 
         async deleteTemplate(templateId) {
             if (!confirm("هل أنت متأكد من حذف هذا القالب؟")) return;
-            if (window.supabase) {
+            const sb = this.getSupabase();
+            if (sb) {
                 try {
-                    await window.supabase.from(GIFTS_TEMPLATES_TABLE).delete().eq('id', templateId);
+                    await sb.from(GIFTS_TEMPLATES_TABLE).delete().eq('id', templateId);
                 } catch (e) {
                     console.warn("Supabase delete template error:", e);
                 }
