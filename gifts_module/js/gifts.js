@@ -2054,7 +2054,7 @@
                 const priceNotice = updatedPricesCount > 0
                     ? ` (تم تحديث أسعار ${updatedPricesCount} صنف بأسعار السيستم الحالية)`
                     : ' (الأسعار مطابقة لأحدث أسعار بالسيستم)';
-                this.showToastNotification(`تم نسخ محتويات بوكيه "${bouquet.name}" إلى التجميع بنجاح! 🪄${priceNotice}`);
+                this.showToastNotification(`تم نسخ محتويات بوكيه "${bouquet.name}" إلى التجميع بنجاح${priceNotice}`);
                 this.scrollToDraft();
             }, 60);
         },
