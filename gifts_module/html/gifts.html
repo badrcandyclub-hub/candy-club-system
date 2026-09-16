@@ -79,9 +79,6 @@
                         <i class="fa-solid fa-wand-magic-sparkles" style="color: var(--gifts-primary);"></i>
                         بيانات وتصميم البوكيه
                     </h4>
-                    <button type="button" class="gifts-btn-outline" onclick="GiftsApp.switchSubTab('showcase')" title="تصفح المعرض للنسخ والتكرار">
-                        <i class="fa-solid fa-gift"></i> نسخ من المعرض
-                    </button>
                 </div>
 
                 <div class="gifts-form-group fg-pink">
@@ -130,7 +127,7 @@
 
                     <!-- Search Input with Live Autocomplete -->
                     <div class="gifts-scanner-input-wrap">
-                        <input type="text" id="gifts-scanner-input" class="gifts-scanner-input" placeholder="اكتب اسم الصنف أو امسح الباركود بمسدس الباركود..." oninput="GiftsApp.onSearchInput(event)" onkeydown="if(event.key === 'Enter') { event.preventDefault(); GiftsApp.onBarcodeEntered(this.value); }">
+                        <input type="text" id="gifts-scanner-input" class="gifts-scanner-input" placeholder="اكتب اسم الصنف أو امسح الباركود بمسدس الباركود..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" oninput="GiftsApp.onSearchInput(event)" onkeydown="if(event.key === 'Enter') { event.preventDefault(); GiftsApp.onBarcodeEntered(this.value); }">
                         <i class="fa-solid fa-barcode search-icon"></i>
                         <div class="gifts-autocomplete-list" id="gifts-autocomplete-dropdown">
                             <!-- Instant suggestions -->
@@ -166,7 +163,7 @@
                         <div class="gifts-found-field">
                             <label class="gifts-found-label">سعر القطعة</label>
                             <div class="gifts-found-input-wrap">
-                                <input type="number" id="gifts-found-price-input" class="gifts-found-price-input" step="any" min="0" oninput="GiftsApp.onFoundPriceChanged(this.value)" onkeydown="if(event.key === 'Enter') { event.preventDefault(); GiftsApp.confirmAddScannedProduct(); }">
+                                <input type="number" id="gifts-found-price-input" class="gifts-found-price-input" step="any" min="0" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" oninput="GiftsApp.onFoundPriceChanged(this.value)" onkeydown="if(event.key === 'Enter') { event.preventDefault(); GiftsApp.confirmAddScannedProduct(); }">
                                 <span class="gifts-currency-tag">ج.م</span>
                             </div>
                         </div>
@@ -174,7 +171,7 @@
                         <div class="gifts-found-field">
                             <label class="gifts-found-label">الوزن (جرام - اختياري)</label>
                             <div class="gifts-found-input-wrap">
-                                <input type="number" id="gifts-found-weight-input" class="gifts-found-price-input" min="0" step="1" placeholder="مثال: 100" oninput="GiftsApp.onFoundWeightChanged(this.value)" onkeydown="if(event.key === 'Enter') { event.preventDefault(); GiftsApp.confirmAddScannedProduct(); }">
+                                <input type="number" id="gifts-found-weight-input" class="gifts-found-price-input" min="0" step="1" placeholder="مثال: 100" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" oninput="GiftsApp.onFoundWeightChanged(this.value)" onkeydown="if(event.key === 'Enter') { event.preventDefault(); GiftsApp.confirmAddScannedProduct(); }">
                                 <span class="gifts-currency-tag">جم</span>
                             </div>
                         </div>

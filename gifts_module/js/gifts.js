@@ -270,53 +270,70 @@
             }
         },
 
-        // البحث الشامل عن منتج بالباركودات المتعددة أو الاسم
+        // خوارزمية تقييم وترتيب دقة البحث بالباركود والاسم مع الحفاظ الكامل على الأصفار البادئة
+        scoreProductMatch(product, queryRaw) {
+            if (!product || !queryRaw) return 0;
+            const q = String(queryRaw).trim().toLowerCase();
+            if (!q) return 0;
+
+            const qNorm = this.normalizeArabic(q);
+            const isAllZeros = /^0+$/.test(q);
+            const qNoZeros = q.replace(/^0+/, '');
+
+            // استخراج وتوحيد قائمة باركودات الصنف
+            let rawBarcodes = [];
+            if (Array.isArray(product.barcodes) && product.barcodes.length > 0) {
+                rawBarcodes = product.barcodes;
+            } else if (product.barcode) {
+                rawBarcodes = String(product.barcode).split(/[,|\s/]+/).map(b => b.trim()).filter(Boolean);
+            }
+            const barcodes = rawBarcodes.map(b => String(b).trim().toLowerCase());
+            const nameNorm = product.name ? this.normalizeArabic(product.name) : '';
+
+            // 1. التطابق التام بالباركود (بنفس الأصفار والتركيب بالضبط - كود 000001 يطابق 000001 فقط)
+            if (barcodes.some(b => b === q)) return 1000;
+
+            // 2. الباركود يبدأ بما كتبه المستخدم (مهم جدا للكاندي 000001 وما شابه عند كتابة 0000 أو 000)
+            if (barcodes.some(b => b.startsWith(q))) return 800;
+
+            // 3. الباركود يحتوي على النص المكتوب
+            if (barcodes.some(b => b.includes(q))) return 600;
+
+            // 4. تطابق تام مع الاسم المعياري
+            if (nameNorm === qNorm) return 500;
+
+            // 5. الاسم يبدأ بنص البحث
+            if (nameNorm.startsWith(qNorm)) return 400;
+
+            // 6. تطابق جميع كلمات البحث في الاسم
+            const qWords = qNorm.split(/\s+/).filter(w => w.length > 1);
+            if (qWords.length > 1 && qWords.every(w => nameNorm.includes(w))) return 350;
+
+            // 7. الاسم يحتوي على نص البحث
+            if (nameNorm.includes(qNorm)) return 300;
+
+            // 8. فحص الأصفار البادئة كحل أخير وفقط في حال لم يكن البحث عبارة عن أصفار فقط
+            if (!isAllZeros && qNoZeros && qNoZeros !== q) {
+                if (barcodes.some(b => b.replace(/^0+/, '') === qNoZeros)) return 100;
+            }
+
+            return 0;
+        },
+
+        // البحث الشامل عن منتج مع ترتيب الدقة بالأعلى تقييماً
         findProduct(query) {
             if (!query) return null;
             const rawQ = String(query).trim();
             if (!rawQ) return null;
-            const qLower = rawQ.toLowerCase();
-            const qNorm = this.normalizeArabic(rawQ);
-            const qNoZeros = qLower.replace(/^0+/, '');
 
-            // 1. تطابق دقيق في قائمة الباركودات المتعددة للصنف
-            let matched = this.state.catalogProducts.find(p => {
-                if (p.barcodes && p.barcodes.some(b => b.toLowerCase() === qLower)) return true;
-                if (qNoZeros && p.barcodes && p.barcodes.some(b => b.replace(/^0+/, '').toLowerCase() === qNoZeros)) return true;
-                return false;
-            });
-            if (matched) return matched;
+            // فرز وترتيب المنتجات حسب دقة التطابق المباشر
+            const scored = this.state.catalogProducts
+                .map(p => ({ product: p, score: this.scoreProductMatch(p, rawQ) }))
+                .filter(item => item.score > 0)
+                .sort((a, b) => b.score - a.score);
 
-            // 2. تطابق كامل مع نص الباركود الإجمالي
-            matched = this.state.catalogProducts.find(p => p.barcode && p.barcode.toLowerCase() === qLower);
-            if (matched) return matched;
-
-            // 3. تطابق دقيق مع الاسم المعياري (بدون تشكيل أو تطويل)
-            matched = this.state.catalogProducts.find(p => p.name && this.normalizeArabic(p.name) === qNorm);
-            if (matched) return matched;
-
-            // 4. احتواء الباركود
-            matched = this.state.catalogProducts.find(p => p.barcode && p.barcode.toLowerCase().includes(qLower));
-            if (matched) return matched;
-
-            // 5. احتواء الاسم المعياري
-            matched = this.state.catalogProducts.find(p => p.name && this.normalizeArabic(p.name).includes(qNorm));
-            if (matched) return matched;
-
-            // 5b. تطابق الكلمات المتعددة في الاسم (كل كلمة من كلمات البحث موجودة في الاسم)
-            const qWords = qNorm.split(/\s+/).filter(w => w.length > 1);
-            if (qWords.length > 1) {
-                matched = this.state.catalogProducts.find(p => {
-                    if (!p.name) return false;
-                    const pNorm = this.normalizeArabic(p.name);
-                    return qWords.every(w => pNorm.includes(w));
-                });
-                if (matched) return matched;
-            }
-
-            // 6. أول نتيجة من الاقتراحات النشطة
-            if (this.state.currentSearchResults && this.state.currentSearchResults.length > 0) {
-                return this.state.currentSearchResults[0];
+            if (scored.length > 0) {
+                return scored[0].product;
             }
 
             return null;
@@ -335,28 +352,18 @@
                 return;
             }
 
-            const qLower = raw.toLowerCase();
-            const qNorm = this.normalizeArabic(raw);
-            const qNoZeros = qLower.replace(/^0+/, '');
-            const qWords = qNorm.split(/\s+/).filter(w => w.length > 1);
-
-            // فحص دقيق بالاسم المعياري والباركودات المتعددة
-            const matches = this.state.catalogProducts.filter(p => {
-                if (p.name) {
-                    const pNorm = this.normalizeArabic(p.name);
-                    if (pNorm.includes(qNorm)) return true;
-                    if (qWords.length > 1 && qWords.every(w => pNorm.includes(w))) return true;
-                }
-                if (p.barcodes && p.barcodes.some(b => b.toLowerCase().includes(qLower))) return true;
-                if (qNoZeros && p.barcodes && p.barcodes.some(b => b.replace(/^0+/, '').toLowerCase() === qNoZeros)) return true;
-                if (p.barcode && p.barcode.toLowerCase().includes(qLower)) return true;
-                return false;
-            }).slice(0, 10);
+            // فحص وترتيب المنتجات حسب دقة التطابق مع إعطاء الأولوية للباركود
+            const matches = this.state.catalogProducts
+                .map(p => ({ product: p, score: this.scoreProductMatch(p, raw) }))
+                .filter(item => item.score > 0)
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 15)
+                .map(item => item.product);
 
             this.state.currentSearchResults = matches;
 
             if (matches.length === 0) {
-                dropdown.innerHTML = '<div style="padding: 12px 16px; color: var(--gifts-text-muted); font-size: 0.88rem;">لا توجد أصناف مطابقة للبحث</div>';
+                dropdown.innerHTML = '<div style="padding: 14px 18px; color: var(--gifts-text-muted); font-size: 0.9rem; font-weight: 700; text-align: center;">لا توجد أصناف مطابقة للبحث أو الباركود</div>';
                 dropdown.style.display = 'block';
                 return;
             }
@@ -364,8 +371,8 @@
             dropdown.innerHTML = matches.map((p, idx) => `
                 <div class="gifts-autocomplete-item" onclick="GiftsApp.selectFoundProductByIndex(${idx})">
                     <div style="flex: 1; padding-left: 8px;">
-                        <div class="item-title">${p.name}</div>
-                        <div class="item-meta">باركود: ${p.barcode} | متبقي بالمخزن: ${p.stock}</div>
+                        <div class="item-title">${this.escapeHtml(p.name)}</div>
+                        <div class="item-meta">الباركود: <strong style="color: var(--gifts-primary-dark); font-family: monospace;">${this.escapeHtml(p.barcode)}</strong> | متبقي: ${p.stock} قطعة</div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <span class="item-price">${p.price > 0 ? p.price.toFixed(2) + ' ج.م' : 'سعر مخصص'}</span>

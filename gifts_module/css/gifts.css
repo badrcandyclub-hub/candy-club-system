@@ -809,8 +809,9 @@
     text-align: center;
     margin-bottom: 24px;
     position: relative;
-    overflow: hidden;
+    overflow: visible !important;
     box-shadow: 0 6px 20px rgba(233, 30, 140, 0.05);
+    z-index: 30;
 }
 
 /* Laser Scanline Effect */
@@ -824,6 +825,7 @@
     box-shadow: 0 0 10px #E91E8C, 0 0 20px #E91E8C;
     animation: gifts-laser-sweep 3.5s ease-in-out infinite;
     pointer-events: none;
+    border-radius: 4px;
 }
 
 .gifts-scanner-hero-title {
@@ -844,6 +846,7 @@
     position: relative;
     max-width: 620px;
     margin: 18px auto 0;
+    z-index: 1000;
 }
 
 .gifts-scanner-input-wrap i.search-icon {
@@ -884,17 +887,16 @@
 /* Autocomplete Suggestions Dropdown */
 .gifts-autocomplete-list {
     position: absolute;
-    top: calc(100% + 6px);
+    top: calc(100% + 8px);
     left: 0;
     right: 0;
-    background: rgba(255, 255, 255, 0.98);
-    backdrop-filter: blur(14px);
-    border: 1.5px solid var(--gifts-primary-border);
+    background: #FFFFFF;
+    border: 2px solid var(--gifts-primary);
     border-radius: var(--gifts-radius-sm);
-    box-shadow: 0 16px 36px rgba(233, 30, 140, 0.16);
-    max-height: 340px;
+    box-shadow: 0 20px 48px rgba(233, 30, 140, 0.24);
+    max-height: 380px;
     overflow-y: auto;
-    z-index: 150;
+    z-index: 999999 !important;
     display: none;
     text-align: right;
     animation: gifts-card-pop 0.2s ease-out;
@@ -2950,6 +2952,9 @@
         padding: 16px 12px !important;
         width: 100% !important;
         box-sizing: border-box !important;
+        overflow: visible !important;
+        position: relative !important;
+        z-index: 30 !important;
     }
 
     .gifts-scanner-hero-title {
