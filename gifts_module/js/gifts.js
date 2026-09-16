@@ -138,6 +138,9 @@
 
             // تفعيل مستمعات الأحداث
             this.bindEvents();
+
+            // تحديث حالة زر الحفظ التفاعلي
+            this.updateSaveButtonState();
         },
 
         setDefaultCreator() {
@@ -149,6 +152,7 @@
                         this.state.draft.creator = user.displayName;
                         const input = document.getElementById('gifts-input-creator');
                         if (input) input.value = user.displayName;
+                        this.updateSaveButtonState();
                     }
                 }
             } catch (e) {
@@ -883,6 +887,7 @@
                         <div style="font-size: 0.88rem; font-weight: 700;">لم يتم اختيار أصناف بعد، امسح الباركود أو ابحث باسم الصنف للإضافة</div>
                     </div>
                 `;
+                this.updateSaveButtonState();
                 return;
             }
 
@@ -918,6 +923,7 @@
             if (this.state.lastAddedBarcode) {
                 setTimeout(() => { this.state.lastAddedBarcode = null; }, 1200);
             }
+            this.updateSaveButtonState();
         },
 
         // الحفظ التلقائي للمسودة في LocalStorage
@@ -943,6 +949,8 @@
             } catch (e) {
                 console.warn("Could not save draft to LocalStorage:", e);
             }
+
+            this.updateSaveButtonState();
         },
 
         restoreDraft() {
@@ -969,6 +977,7 @@
                         if (this.state.draft.photoBase64) {
                             this.displayCompressedPhoto(this.state.draft.photoBase64, this.state.draft.photoSizeKB);
                         }
+                        this.updateSaveButtonState();
                     }, 60);
                 }
             } catch (e) {
@@ -993,7 +1002,118 @@
             this.setDefaultCreator();
             this.renderDraftBasket();
             this.renderRecentAddedList();
+            this.updateSaveButtonState();
             this.showToastNotification("تم إفراغ المسودة وتجهيز نموذج جديد");
+        },
+
+        // فحص اكتمال بيانات المسودة (الاسم + المصمم + صنف واحد على الأقل + صورة البوكيه إلزامية)
+        checkDraftCompleteness() {
+            const draft = this.state.draft;
+            const name = (draft.name || '').trim();
+            const creator = (draft.creator || '').trim();
+            const hasItems = Array.isArray(draft.items) && draft.items.length > 0;
+            const hasPhoto = !!(draft.photoBase64 && String(draft.photoBase64).startsWith('data:image'));
+
+            const missing = [];
+            let firstMissingField = null;
+
+            if (!name) {
+                missing.push('اسم البوكيه');
+                if (!firstMissingField) firstMissingField = 'name';
+            }
+            if (!creator) {
+                missing.push('المسؤول عن التصميم');
+                if (!firstMissingField) firstMissingField = 'creator';
+            }
+            if (!hasItems) {
+                missing.push('إضافة أصناف داخل البوكيه');
+                if (!firstMissingField) firstMissingField = 'items';
+            }
+            if (!hasPhoto) {
+                missing.push('صورة البوكيه');
+                if (!firstMissingField) firstMissingField = 'photo';
+            }
+
+            return {
+                isComplete: missing.length === 0,
+                hasName: !!name,
+                hasCreator: !!creator,
+                hasItems,
+                hasPhoto,
+                missing,
+                firstMissingField
+            };
+        },
+
+        // إدارة الحالة التفاعلية لزر الحفظ (رمادي عند النقصان / مضيء ومتوهج بالوردي عند اكتمال الصورة والبيانات)
+        updateSaveButtonState() {
+            const saveBtn = document.getElementById('gifts-btn-save-bouquet');
+            const saveLabel = document.getElementById('gifts-btn-save-label');
+            const saveIcon = document.getElementById('gifts-btn-save-icon');
+            const checklistEl = document.getElementById('gifts-save-checklist');
+            const photoBadge = document.getElementById('gifts-photo-required-badge');
+
+            if (!saveBtn) return;
+            if (this._isSaving) return;
+
+            const check = this.checkDraftCompleteness();
+
+            // تحديث شارة الصورة
+            if (photoBadge) {
+                if (check.hasPhoto) {
+                    photoBadge.className = 'gifts-badge-pill gifts-badge-success';
+                    photoBadge.innerHTML = '<i class="fa-solid fa-check"></i> تم التقاط الصورة';
+                } else {
+                    photoBadge.className = 'gifts-badge-pill gifts-badge-required';
+                    photoBadge.innerHTML = '<i class="fa-solid fa-asterisk"></i> صورة البوكيه مطلوبة';
+                }
+            }
+
+            if (check.isComplete) {
+                // كل البيانات والصورة مكتملة: الزر ينور باللون الوردي المتوهج والشيمر
+                saveBtn.classList.remove('gifts-btn-incomplete');
+                saveBtn.classList.add('gifts-btn-ready');
+                if (saveLabel) saveLabel.innerText = "حفظ البوكيه وعرضه في المحل";
+                if (saveIcon) saveIcon.className = "fa-solid fa-wand-magic-sparkles";
+
+                if (checklistEl) {
+                    checklistEl.className = "gifts-save-checklist ready";
+                    checklistEl.innerHTML = `
+                        <span class="gifts-checklist-ready-text">
+                            <i class="fa-solid fa-circle-check"></i> جاهز للحفظ، كافة البيانات والصورة مكتملة
+                        </span>
+                    `;
+                }
+            } else {
+                // البيانات ناقصة أو الصورة لم ترفع: الزر يظل رصاصي بدون تلوين
+                saveBtn.classList.remove('gifts-btn-ready');
+                saveBtn.classList.add('gifts-btn-incomplete');
+                if (saveLabel) saveLabel.innerText = "حفظ البوكيه وعرضه في المحل";
+                if (saveIcon) saveIcon.className = "fa-solid fa-lock";
+
+                if (checklistEl) {
+                    checklistEl.className = "gifts-save-checklist incomplete";
+                    checklistEl.innerHTML = `
+                        <div class="gifts-checklist-missing-title">
+                            <i class="fa-solid fa-circle-exclamation"></i> مطلوب لتفعيل الحفظ والعرض:
+                        </div>
+                        <div class="gifts-checklist-pills">
+                            <span class="gifts-pill-tag ${check.hasName ? 'done' : 'needed'}">
+                                <i class="fa-solid ${check.hasName ? 'fa-check' : 'fa-xmark'}"></i> الاسم
+                            </span>
+                            <span class="gifts-pill-tag ${check.hasCreator ? 'done' : 'needed'}">
+                                <i class="fa-solid ${check.hasCreator ? 'fa-check' : 'fa-xmark'}"></i> المصمم
+                            </span>
+                            <span class="gifts-pill-tag ${check.hasItems ? 'done' : 'needed'}">
+                                <i class="fa-solid ${check.hasItems ? 'fa-check' : 'fa-xmark'}"></i> الأصناف (${this.state.draft.items ? this.state.draft.items.length : 0})
+                            </span>
+                            <span class="gifts-pill-tag ${check.hasPhoto ? 'done' : 'needed'}">
+                                <i class="fa-solid ${check.hasPhoto ? 'fa-check' : 'fa-camera'}"></i> صورة البوكيه
+                            </span>
+                        </div>
+                    `;
+                }
+            }
         },
 
         scrollToDraft() {
@@ -1131,6 +1251,7 @@
                 infoBadge.innerText = `حجم الصورة لجوجل درايف: ${sizeInKB} كيلوبايت (جودة فائقة)`;
                 infoBadge.style.display = 'inline-block';
             }
+            this.updateSaveButtonState();
         },
 
         removePhoto() {
@@ -1210,14 +1331,44 @@
             if (this._isSaving) return;
             const draft = this.state.draft;
 
-            if (!draft.name || draft.name.trim() === '') {
-                this.showToastNotification("يرجى إدخال اسم البوكيه قبل الحفظ");
-                return;
-            }
-
-            if (!draft.items || draft.items.length === 0) {
-                this.showToastNotification("يرجى إضافة صنف واحد على الأقل داخل البوكيه");
-                return;
+            const check = this.checkDraftCompleteness();
+            if (!check.isComplete) {
+                if (!check.hasName) {
+                    this.showToastNotification("يرجى إدخال اسم البوكيه قبل الحفظ");
+                    const nameInput = document.getElementById('gifts-input-name');
+                    if (nameInput) {
+                        nameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        nameInput.focus();
+                    }
+                    return;
+                }
+                if (!check.hasCreator) {
+                    this.showToastNotification("يرجى كتابة اسم المصمم / المسؤول عن التصميم");
+                    const creatorInput = document.getElementById('gifts-input-creator');
+                    if (creatorInput) {
+                        creatorInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        creatorInput.focus();
+                    }
+                    return;
+                }
+                if (!check.hasItems) {
+                    this.showToastNotification("يرجى إضافة صنف واحد على الأقل داخل البوكيه");
+                    const scannerHero = document.querySelector('.gifts-scanner-hero') || document.getElementById('gifts-scanner-input');
+                    if (scannerHero) {
+                        scannerHero.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    return;
+                }
+                if (!check.hasPhoto) {
+                    this.showToastNotification("يرجى التقاط أو رفع صورة للبوكيه أولاً (الصورة إلزامية)");
+                    const photoBox = document.getElementById('gifts-camera-box');
+                    if (photoBox) {
+                        photoBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        photoBox.classList.add('gifts-highlight-pulse');
+                        setTimeout(() => photoBox.classList.remove('gifts-highlight-pulse'), 1800);
+                    }
+                    return;
+                }
             }
 
             const saveBtn = document.getElementById('gifts-btn-save-bouquet');
@@ -1355,8 +1506,7 @@
             } finally {
                 this._isSaving = false;
                 if (saveBtn) saveBtn.disabled = false;
-                if (saveLabel) saveLabel.innerText = "حفظ البوكيه وعرضه في المحل";
-                if (saveIcon) saveIcon.className = "fa-solid fa-floppy-disk";
+                this.updateSaveButtonState();
             }
         },
 

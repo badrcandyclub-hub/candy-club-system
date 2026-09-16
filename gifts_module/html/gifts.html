@@ -82,13 +82,13 @@
                 </div>
 
                 <div class="gifts-form-group fg-pink">
-                    <label>اسم البوكيه أو الوصف</label>
+                    <label>اسم البوكيه أو الوصف <span style="color: var(--gifts-primary); font-weight: 800;">*</span></label>
                     <input type="text" id="gifts-input-name" class="gifts-input" placeholder="مثال: بوكيه ميكس كيت كات وشوكولاتة" oninput="GiftsApp.onDraftChanged()">
                 </div>
 
                 <div class="gifts-form-group fg-lavender" style="display: flex; gap: 10px; flex-wrap: wrap; padding-bottom: 14px;">
                     <div class="gifts-inner-field" style="flex: 2; min-width: 160px;">
-                        <label class="gifts-inner-label">المسؤول عن التصميم</label>
+                        <label class="gifts-inner-label">المسؤول عن التصميم <span style="color: var(--gifts-primary); font-weight: 800;">*</span></label>
                         <input type="text" id="gifts-input-creator" class="gifts-input" placeholder="اسم المصمم" oninput="GiftsApp.onDraftChanged()">
                     </div>
                     <div class="gifts-inner-field" style="flex: 1; min-width: 110px;">
@@ -234,11 +234,14 @@
 
             <!-- 4. Camera & Google Drive Photo (صورة البوكيه) -->
             <div class="gifts-builder-card gifts-card-camera fg-mint">
-                <div class="gifts-section-header">
+                <div class="gifts-section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                     <h4>
                         <i class="fa-solid fa-cloud-arrow-up" style="color: var(--gifts-teal);"></i>
                         صورة البوكيه (رفع مباشر إلى Google Drive)
                     </h4>
+                    <span id="gifts-photo-required-badge" class="gifts-badge-pill gifts-badge-required">
+                        <i class="fa-solid fa-asterisk"></i> صورة البوكيه مطلوبة
+                    </span>
                 </div>
                 <div class="gifts-camera-container" id="gifts-camera-box">
                     <video id="gifts-camera-stream" class="gifts-camera-video" playsinline></video>
@@ -284,10 +287,12 @@
 
                 <!-- Draft Actions -->
                 <div class="gifts-draft-actions">
-                    <button type="button" id="gifts-btn-save-bouquet" class="gifts-btn-primary" onclick="GiftsApp.saveBouquet()">
-                        <i class="fa-solid fa-floppy-disk" id="gifts-btn-save-icon"></i>
+                    <button type="button" id="gifts-btn-save-bouquet" class="gifts-btn-primary gifts-btn-incomplete" onclick="GiftsApp.saveBouquet()">
+                        <i class="fa-solid fa-lock" id="gifts-btn-save-icon"></i>
                         <span id="gifts-btn-save-label">حفظ البوكيه وعرضه في المحل</span>
                     </button>
+                    <!-- Missing items checklist / ready indicator -->
+                    <div id="gifts-save-checklist" class="gifts-save-checklist incomplete"></div>
                     <button type="button" class="gifts-btn-outline" style="color: var(--gifts-red); width: 100%; margin-top: 6px;" onclick="GiftsApp.clearDraft()">
                         <i class="fa-solid fa-trash-can"></i> مسح السلة وتفريغ الأصناف
                     </button>
