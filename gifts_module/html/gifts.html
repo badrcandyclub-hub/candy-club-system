@@ -51,11 +51,6 @@
             <span class="tab-label-full">معرض البوكيهات والمخزون</span>
             <span class="tab-label-short">المعرض</span>
         </button>
-        <button class="gifts-subtab-btn" onclick="GiftsApp.switchSubTab('analytics')">
-            <i class="fa-solid fa-chart-line"></i>
-            <span class="tab-label-full">التقارير ولوحة الصدارة</span>
-            <span class="tab-label-short">التقارير</span>
-        </button>
         <button class="gifts-subtab-btn" onclick="GiftsApp.switchSubTab('catalog')">
             <i class="fa-solid fa-book-open"></i>
             <span class="tab-label-full">كتالوج العملاء التسويقي</span>
@@ -318,7 +313,10 @@
                 <button class="gifts-chip" onclick="GiftsApp.setShowcaseFilter('sold', this)">تم البيع</button>
                 <button class="gifts-chip" onclick="GiftsApp.setShowcaseFilter('disassembled', this)">المفككة</button>
             </div>
-            <div style="display: flex; gap: 8px; align-items: center;">
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <button type="button" class="gifts-btn-outline" style="padding: 10px 14px; font-size: 0.92rem; color: #0F766E; border-color: #99F6E4; background: #F0FDFA;" onclick="GiftsApp.switchSubTab('customers')" title="فتح دليل عملاء الهدايا">
+                    <i class="fa-solid fa-users"></i> دليل العملاء
+                </button>
                 <button type="button" class="gifts-btn-outline" id="gifts-btn-refresh-showcase" style="padding: 10px 16px; font-size: 0.92rem;" onclick="GiftsApp.refreshShowcase()" title="تحديث البوكيهات من السحابة">
                     <i class="fa-solid fa-arrows-rotate" id="gifts-refresh-icon"></i> تحديث
                 </button>
@@ -335,121 +333,7 @@
     </div>
 
     <!-- ================================================================
-         SUB-VIEW 3: ANALYTICS & LEADERBOARD
-         ================================================================ -->
-    <div id="gifts-view-analytics" class="gifts-subview">
-        
-        <!-- Top KPI Cards -->
-        <div class="gifts-analytics-grid">
-            <div class="gifts-kpi-card">
-                <div class="gifts-kpi-icon pink">
-                    <i class="fa-solid fa-boxes-packing"></i>
-                </div>
-                <div class="gifts-kpi-content">
-                    <h5>إجمالي المصنوع</h5>
-                    <div class="kpi-num" id="kpi-total-created">0</div>
-                </div>
-            </div>
-            <div class="gifts-kpi-card">
-                <div class="gifts-kpi-icon teal">
-                    <i class="fa-solid fa-bag-shopping"></i>
-                </div>
-                <div class="gifts-kpi-content">
-                    <h5>إجمالي المبيعات</h5>
-                    <div class="kpi-num" id="kpi-total-sold">0</div>
-                </div>
-            </div>
-            <div class="gifts-kpi-card">
-                <div class="gifts-kpi-icon purple">
-                    <i class="fa-solid fa-shop"></i>
-                </div>
-                <div class="gifts-kpi-content">
-                    <h5>المتبقي في المحل</h5>
-                    <div class="kpi-num" id="kpi-remaining-stock">0</div>
-                </div>
-            </div>
-            <div class="gifts-kpi-card">
-                <div class="gifts-kpi-icon amber">
-                    <i class="fa-solid fa-coins"></i>
-                </div>
-                <div class="gifts-kpi-content">
-                    <h5>إجمالي إيراد الهدايا</h5>
-                    <div class="kpi-num" id="kpi-total-revenue">0 ج.م</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Filter and Export Actions -->
-        <div class="gifts-showcase-toolbar" style="margin-bottom: 20px;">
-            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                <label style="font-size: 0.9rem; font-weight: 800; color: var(--gifts-text);">الفترة الزمنية للتقرير:</label>
-                <select id="gifts-report-period" class="gifts-input" style="width: 160px; padding: 8px 14px;" onchange="GiftsApp.onReportPeriodChanged()">
-                    <option value="today">اليوم</option>
-                    <option value="this_week" selected>هذا الأسبوع</option>
-                    <option value="this_month">هذا الشهر</option>
-                    <option value="custom">فترة مخصصة</option>
-                </select>
-                <div id="gifts-custom-dates" style="display: none; gap: 8px;">
-                    <input type="date" id="gifts-report-from" class="gifts-input" style="width: 140px; padding: 6px;">
-                    <input type="date" id="gifts-report-to" class="gifts-input" style="width: 140px; padding: 6px;">
-                    <button class="gifts-btn-outline" onclick="GiftsApp.renderAnalytics()">تطبيق</button>
-                </div>
-            </div>
-            <div>
-                <button class="gifts-btn-primary" onclick="GiftsApp.exportManagementPDF()">
-                    <i class="fa-solid fa-file-pdf"></i>
-                    <span>استخراج تقرير الإدارة PDF</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Analytics Split Grid -->
-        <div class="gifts-analytics-split">
-            <!-- Employee Sales & Performance Table -->
-            <div class="gifts-table-card">
-                <div class="gifts-section-header">
-                    <h4>
-                        <i class="fa-solid fa-users-gear" style="color: var(--gifts-primary);"></i>
-                        مبيعات وإنجاز الموظفين
-                    </h4>
-                    <span style="font-size: 0.8rem; color: var(--gifts-text-muted); font-weight: 700;">يتم التحديث فوريا</span>
-                </div>
-                <div class="gifts-table-scroll-container">
-                    <table class="gifts-data-table" id="gifts-employee-table">
-                        <thead>
-                            <tr>
-                                <th>اسم الموظف</th>
-                                <th>صنع</th>
-                                <th>بيع</th>
-                                <th>إجمالي المبيعات</th>
-                                <th>التميز والتقييم</th>
-                            </tr>
-                        </thead>
-                        <tbody id="gifts-employee-tbody">
-                            <!-- Rendered dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Top Creators Leaderboard -->
-            <div class="gifts-leaderboard-card">
-                <div class="gifts-section-header">
-                    <h4>
-                        <i class="fa-solid fa-trophy" style="color: #D97706;"></i>
-                        لوحة صدارة صانعي البوكيهات
-                    </h4>
-                </div>
-                <div id="gifts-leaderboard-list">
-                    <!-- Rendered dynamically -->
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- ================================================================
-         SUB-VIEW 4: CUSTOMER MARKETING CATALOG
+         SUB-VIEW 3: CUSTOMER MARKETING CATALOG
          ================================================================ -->
     <div id="gifts-view-catalog" class="gifts-subview">
 
@@ -511,12 +395,129 @@
 
     </div>
 
-
 </div>
 
 <!-- ================================================================
      MODALS
      ================================================================ -->
+
+<!-- 3. Sell Bouquet Modal with Optional Customer Recording -->
+<div class="gifts-modal-overlay" id="gifts-modal-sell-bouquet">
+    <div class="gifts-modal" style="max-width: 520px;">
+        <div class="gifts-modal-header" style="background: linear-gradient(135deg, #F0FDFA 0%, #CCFBF1 100%); border-bottom: 1.5px solid #99F6E4;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 38px; height: 38px; border-radius: 10px; background: #0D9488; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);">
+                    <i class="fa-solid fa-bag-shopping"></i>
+                </div>
+                <div>
+                    <h4 style="color: #0F766E; margin: 0; font-size: 1.15rem; font-weight: 900;">تسجيل بيع البوكيه</h4>
+                    <span style="font-size: 0.78rem; color: #115E59;">تسجيل خروج البوكيه من المحل وتوثيق بيانات المشتري</span>
+                </div>
+            </div>
+            <button class="gifts-modal-close" onclick="GiftsApp.closeModal('gifts-modal-sell-bouquet')" style="color: #0F766E;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="gifts-modal-body" style="padding: 18px 22px;">
+            <!-- Bouquet Quick Preview -->
+            <div id="gifts-sell-bouquet-preview" class="gifts-sell-preview-card">
+                <!-- Injected dynamically via JS -->
+            </div>
+
+            <!-- Quantity to Sell -->
+            <div id="gifts-sell-qty-group" style="margin-top: 14px; padding: 12px 14px; background: #FFF5F9; border: 1px solid var(--gifts-border-pink); border-radius: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <div style="font-weight: 800; font-size: 0.92rem; color: var(--gifts-primary-dark);">الكمية المباعة:</div>
+                    <div id="gifts-sell-stock-hint" style="font-size: 0.76rem; color: var(--gifts-text-muted);">المتوفر في المحل: 1 قطعة</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button type="button" class="gifts-stepper-btn" onclick="GiftsApp.updateSellQty(-1)">-</button>
+                    <input type="number" id="gifts-sell-qty-input" class="gifts-input" value="1" min="1" style="width: 65px; text-align: center; font-weight: 900; padding: 6px;" onchange="GiftsApp.onSellQtyChanged(this.value)">
+                    <button type="button" class="gifts-stepper-btn" onclick="GiftsApp.updateSellQty(1)">+</button>
+                </div>
+                <div id="gifts-sell-subtotal-badge" style="width: 100%; text-align: left; font-size: 0.85rem; font-weight: 800; color: var(--gifts-primary-dark); padding-top: 4px; border-top: 1px dashed rgba(233, 30, 140, 0.2);">
+                    إجمالي المبلغ: 0.00 ج.م
+                </div>
+            </div>
+
+            <!-- Optional Customer Section -->
+            <div class="gifts-customer-section" style="margin-top: 16px; padding: 14px; background: #F8FAFC; border: 1.5px dashed #CBD5E1; border-radius: 12px; transition: all 0.3s ease;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                    <div style="display: flex; align-items: center; gap: 7px; font-weight: 800; font-size: 0.92rem; color: #1E293B;">
+                        <i class="fa-solid fa-user-tag" style="color: #0D9488;"></i>
+                        بيانات العميل
+                    </div>
+                    <span style="font-size: 0.74rem; font-weight: 800; padding: 3px 9px; border-radius: 20px; background: #E2E8F0; color: #475569;">
+                        اختياري
+                    </span>
+                </div>
+                <p style="font-size: 0.77rem; color: #64748B; margin: 0 0 12px 0; line-height: 1.4;">
+                    يمكنك إدخال اسم العميل ورقم هاتفه لإضافته إلى قاعدة عملاء الهدايا، أو المتابعة مباشرة بدون إدخال.
+                </p>
+
+                <div class="gifts-form-group" style="margin-bottom: 10px;">
+                    <label style="font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 4px; display: block;">اسم العميل (اختياري)</label>
+                    <div style="position: relative;">
+                        <input type="text" id="gifts-sell-customer-name" class="gifts-input" placeholder="اكتب اسم العميل (مثال: أ / كريم ممدوح)" autocomplete="off" oninput="GiftsApp.onSellCustomerNameInput(this.value)">
+                        <div id="gifts-sell-customer-suggestions" class="gifts-autocomplete-dropdown" style="display: none;"></div>
+                    </div>
+                </div>
+
+                <div class="gifts-form-group" style="margin-bottom: 0;">
+                    <label style="font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 4px; display: block;">رقم الهاتف / الواتساب (اختياري)</label>
+                    <input type="tel" id="gifts-sell-customer-phone" class="gifts-input" placeholder="مثال: 01012345678" dir="ltr" style="text-align: right;" autocomplete="off">
+                </div>
+            </div>
+        </div>
+
+        <div class="gifts-modal-footer" style="padding: 14px 22px; background: #FFFFFF; border-top: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+            <button type="button" class="gifts-btn-outline" onclick="GiftsApp.closeModal('gifts-modal-sell-bouquet')">
+                إلغاء
+            </button>
+            <button type="button" class="gifts-btn-primary" id="gifts-btn-confirm-sell" style="background: linear-gradient(135deg, #0D9488 0%, #0F766E 100%); box-shadow: 0 4px 16px rgba(13, 148, 136, 0.35); flex: 1; max-width: 220px;" onclick="GiftsApp.confirmBouquetSale()">
+                <i class="fa-solid fa-check-double"></i>
+                <span>تأكيد عملية البيع</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 4. Add / Edit Customer Modal -->
+<div class="gifts-modal-overlay" id="gifts-modal-add-customer">
+    <div class="gifts-modal" style="max-width: 480px;">
+        <div class="gifts-modal-header">
+            <h4>
+                <i class="fa-solid fa-user-plus" style="color: #0D9488;"></i>
+                <span id="gifts-modal-add-customer-title">إضافة عميل إلى دليل الهدايا</span>
+            </h4>
+            <button class="gifts-modal-close" onclick="GiftsApp.closeModal('gifts-modal-add-customer')">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="gifts-modal-body" style="padding: 18px 22px;">
+            <input type="hidden" id="gifts-customer-edit-id">
+            <div class="gifts-form-group" style="margin-bottom: 12px;">
+                <label style="font-weight: 700; margin-bottom: 5px; display: block; font-size: 0.88rem;">اسم العميل <span style="color: var(--gifts-primary);">*</span></label>
+                <input type="text" id="gifts-customer-form-name" class="gifts-input" placeholder="اسم العميل الكامل">
+            </div>
+            <div class="gifts-form-group" style="margin-bottom: 12px;">
+                <label style="font-weight: 700; margin-bottom: 5px; display: block; font-size: 0.88rem;">رقم الهاتف / الواتساب</label>
+                <input type="tel" id="gifts-customer-form-phone" class="gifts-input" placeholder="01012345678" dir="ltr" style="text-align: right;">
+            </div>
+            <div class="gifts-form-group" style="margin-bottom: 0;">
+                <label style="font-weight: 700; margin-bottom: 5px; display: block; font-size: 0.88rem;">ملاحظات عن العميل (اختياري)</label>
+                <input type="text" id="gifts-customer-form-notes" class="gifts-input" placeholder="مثال: يفضل بوكيهات الشوكولاتة الداكنة">
+            </div>
+        </div>
+        <div class="gifts-modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+            <button type="button" class="gifts-btn-outline" onclick="GiftsApp.closeModal('gifts-modal-add-customer')">إلغاء</button>
+            <button type="button" class="gifts-btn-primary" style="background: linear-gradient(135deg, #0D9488 0%, #0F766E 100%);" onclick="GiftsApp.saveCustomerForm()">
+                <i class="fa-solid fa-check"></i> حفظ العميل
+            </button>
+        </div>
+    </div>
+</div>
 
 
 <!-- 2. Audit Trail / Timeline Modal -->

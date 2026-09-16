@@ -1910,6 +1910,14 @@
             </div>
         </section>
 
+        <!-- تقارير الهدايا والبوكيهات (يتم تحميله بنظام Lazy Loading عند فتح القسم فقط) -->
+        <section id="gifts-reports-tab" class="tab-pane">
+            <div id="gifts-reports-loading-placeholder" style="text-align:center; padding:60px 20px; color:#0F766E;">
+                <i class="fa-solid fa-spinner fa-spin fa-2x" style="color: #0D9488;"></i>
+                <p style="margin-top:14px; font-weight: bold; font-size:1.05rem;">جاري تحميل تقارير الهدايا والبوكيهات...</p>
+            </div>
+        </section>
+
     </main>
 
     <!-- القائمة الجانبية (Sidebar) -->
@@ -2003,6 +2011,9 @@
                 <div class="menu-group-items" style="display: none;">
                     <button class="nav-item" data-target="gifts-tab" data-subtab="builder" style="color: #e91e8c;">
                         <span class="icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span><span class="label">قسم الهدايا والبوكيهات</span>
+                    </button>
+                    <button class="nav-item" data-target="gifts-reports-tab" data-subtab="analytics" style="color: #0d9488;">
+                        <span class="icon"><i class="fa-solid fa-chart-pie"></i></span><span class="label">تقارير الهدايا والبوكيهات</span>
                     </button>
                 </div>
             </div>
@@ -2503,6 +2514,8 @@
                         <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u-perms" value="expiry"> الصلاحيات</label>
                         <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u-perms" value="pricetags"> كروت الأسعار</label>
                         <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u-perms" value="financials"> حساب المناديب</label>
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u-perms" value="gifts"> قسم الهدايا والبوكيهات</label>
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u-perms" value="gifts_reports"> تقارير الهدايا والبوكيهات</label>
                     </div>
                 </div>
 

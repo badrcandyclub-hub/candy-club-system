@@ -3483,3 +3483,245 @@ button:active,
     display: none !important;
 }
 
+/* ================================================================
+   Gifts Customers Directory & Selling Modal Styles
+   ================================================================ */
+
+.gifts-customers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+    margin-top: 14px;
+}
+
+.gifts-customer-card {
+    background: #FFFFFF;
+    border-radius: var(--gifts-radius-md);
+    border: 1px solid var(--gifts-border-pink);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+    transition: var(--gifts-spring);
+    position: relative;
+    overflow: hidden;
+}
+
+.gifts-customer-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(233, 30, 140, 0.12);
+    border-color: #F472B6;
+}
+
+.gifts-customer-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.gifts-customer-avatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0D9488 0%, #0F766E 100%);
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    font-weight: 900;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.28);
+}
+
+.gifts-customer-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.gifts-customer-name {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--gifts-text);
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gifts-customer-phone-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.84rem;
+}
+
+.gifts-btn-wa {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: #DCFCE7;
+    color: #166534;
+    text-decoration: none;
+    font-weight: 800;
+    font-size: 0.78rem;
+    border: 1px solid #BBF7D0;
+    transition: all 0.2s ease;
+}
+
+.gifts-btn-wa:hover {
+    background: #22C55E;
+    color: #FFFFFF;
+    border-color: #22C55E;
+}
+
+.gifts-customer-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    background: #FFF5F9;
+    padding: 10px;
+    border-radius: var(--gifts-radius-sm);
+    border: 1px solid #FCE7F3;
+}
+
+.gifts-cust-mini-stat {
+    display: flex;
+    flex-direction: column;
+}
+
+.gifts-cust-stat-label {
+    font-size: 0.72rem;
+    color: var(--gifts-text-muted);
+    font-weight: 700;
+}
+
+.gifts-cust-stat-val {
+    font-size: 0.95rem;
+    font-weight: 900;
+    color: var(--gifts-primary-dark);
+}
+
+.gifts-customer-last-purchase {
+    font-size: 0.8rem;
+    color: #475569;
+    background: #F8FAFC;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #E2E8F0;
+}
+
+.gifts-customer-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: auto;
+    border-top: 1px solid #F1F5F9;
+    padding-top: 10px;
+}
+
+/* Selling Modal Bouquet Preview Card */
+.gifts-sell-preview-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 12px;
+}
+
+.gifts-sell-preview-img {
+    width: 65px;
+    height: 65px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid #CBD5E1;
+    background: #FFFFFF;
+    flex-shrink: 0;
+}
+
+.gifts-sell-preview-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--gifts-text);
+    margin-bottom: 4px;
+}
+
+.gifts-sell-preview-meta {
+    display: flex;
+    gap: 10px;
+    font-size: 0.85rem;
+    color: var(--gifts-text-muted);
+    flex-wrap: wrap;
+}
+
+/* Autocomplete Dropdown */
+.gifts-autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #FFFFFF;
+    border: 1.5px solid #0D9488;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    max-height: 180px;
+    overflow-y: auto;
+    z-index: 10001;
+    margin-top: 4px;
+}
+
+.gifts-autocomplete-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #F1F5F9;
+    font-size: 0.86rem;
+    transition: background 0.15s ease;
+}
+
+.gifts-autocomplete-item:hover {
+    background: #F0FDFA;
+    color: #0F766E;
+}
+
+/* Buyer Chip on Showcase Cards */
+.gifts-card-buyer-chip {
+    margin-top: 6px;
+    padding: 5px 8px;
+    background: #F0FDFA;
+    border: 1px solid #CCFBF1;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: #0F766E;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+/* Reports & CRM Subtabs Navigation Bar - Teal / Cyan Theme */
+.gifts-reports-nav-bar {
+    border-color: rgba(13, 148, 136, 0.28) !important;
+    box-shadow: 0 8px 28px rgba(13, 148, 136, 0.08) !important;
+}
+
+.gifts-reports-nav-bar .gifts-subtab-btn:hover {
+    color: #0F766E;
+    background: rgba(204, 251, 241, 0.6);
+}
+
+.gifts-reports-nav-bar .gifts-subtab-btn.active {
+    background: linear-gradient(135deg, #0D9488 0%, #0F766E 100%) !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 6px 20px rgba(13, 148, 136, 0.38) !important;
+}
+
+
+

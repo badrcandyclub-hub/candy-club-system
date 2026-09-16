@@ -39,7 +39,13 @@
             cloneTarget: null,
             activeShowcaseFilter: 'all',
             activeTimelineBouquetId: null,
-            reportPeriod: 'this_week'
+            currentSubTab: 'builder',
+            currentReportsTab: 'analytics',
+            reportPeriod: 'this_week',
+            customers: [],
+            customerSearchQuery: '',
+            sellingBouquetId: null,
+            sellingQty: 1
         },
 
         // مساعد الوصول المباشر والآمن لعميل Supabase
@@ -75,9 +81,11 @@
                         console.log('Gifts realtime change detected in Supabase:', payload);
                         this.loadBouquets().then(() => {
                             this.updateHeaderStats();
+                            this.updateReportsHeaderStats();
                             if (this.state.currentSubTab === 'showcase') {
                                 this.renderShowcase();
-                            } else if (this.state.currentSubTab === 'analytics') {
+                            }
+                            if (this.state.currentReportsTab === 'analytics') {
                                 this.renderAnalytics();
                             }
                         });
@@ -127,6 +135,9 @@
             // جلب البوكيهات من سوبا بيز
             await this.loadBouquets();
 
+            // تحميل وتزامن دليل عملاء الهدايا
+            this.loadCustomers();
+
             // تفعيل المزامنة اللحظية عبر Supabase Realtime
             this.setupRealtimeSubscription();
 
@@ -160,26 +171,25 @@
             }
         },
 
-        // 2. التبديل بين التبويبات الداخلية
-        switchSubTab(tabName) {
+        // 2. التبديل بين التبويبات الداخلية لقسم الهدايا والبوكيهات
+        switchSubTab(tabName = 'builder') {
             this.state.currentSubTab = tabName;
 
-            // تحديث أزرار التنقل
-            document.querySelectorAll('.gifts-subtab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            const activeBtn = Array.from(document.querySelectorAll('.gifts-subtab-btn')).find(b => {
-                const onclickAttr = b.getAttribute('onclick') || '';
-                return onclickAttr.includes(`'${tabName}'`);
-            });
-            if (activeBtn) activeBtn.classList.add('active');
+            // تحديث أزرار التنقل داخل قسم الهدايا
+            const scope = document.getElementById('gifts-tab');
+            if (scope) {
+                scope.querySelectorAll('.gifts-subtab-btn').forEach(btn => btn.classList.remove('active'));
+                const activeBtn = Array.from(scope.querySelectorAll('.gifts-subtab-btn')).find(b => {
+                    const onclickAttr = b.getAttribute('onclick') || '';
+                    return onclickAttr.includes(`'${tabName}'`);
+                });
+                if (activeBtn) activeBtn.classList.add('active');
 
-            // إظهار المحتوى المطلوب
-            document.querySelectorAll('.gifts-subview').forEach(view => {
-                view.classList.remove('active');
-            });
-            const targetView = document.getElementById(`gifts-view-${tabName}`);
-            if (targetView) targetView.classList.add('active');
+                // إظهار المحتوى المطلوب داخل قسم الهدايا
+                scope.querySelectorAll('.gifts-subview').forEach(view => view.classList.remove('active'));
+                const targetView = scope.querySelector(`#gifts-view-${tabName}`);
+                if (targetView) targetView.classList.add('active');
+            }
 
             // إيقاف الكاميرات إذا تم مغادرة تبويب التجميع لتوفير الرام
             if (tabName !== 'builder') {
@@ -193,19 +203,79 @@
                 this.renderRecentAddedList();
             } else if (tabName === 'showcase') {
                 this.renderShowcase();
-                // جلب أحدث البيانات من سوبا بيز في الخلفية لضمان ظهور أي بوكيه حُفظ من الموبايل
                 this.loadBouquets().then(() => {
                     this.renderShowcase();
                     this.updateHeaderStats();
                 });
-            } else if (tabName === 'analytics') {
-                this.renderAnalytics();
-                this.loadBouquets().then(() => {
-                    this.renderAnalytics();
-                });
             } else if (tabName === 'catalog') {
                 this.renderCustomerCatalog();
             }
+        },
+
+        // التبديل بين التبويبات الداخلية لشاشة تقارير وعملاء الهدايا
+        switchReportsTab(tabName = 'analytics') {
+            this.state.currentReportsTab = tabName;
+
+            const scope = document.getElementById('gifts-reports-tab');
+            if (scope) {
+                scope.querySelectorAll('.gifts-subtab-btn').forEach(btn => btn.classList.remove('active'));
+                const activeBtn = Array.from(scope.querySelectorAll('.gifts-subtab-btn')).find(b => {
+                    const onclickAttr = b.getAttribute('onclick') || '';
+                    return onclickAttr.includes(`'${tabName}'`);
+                });
+                if (activeBtn) activeBtn.classList.add('active');
+
+                scope.querySelectorAll('.gifts-subview').forEach(view => view.classList.remove('active'));
+                const targetView = scope.querySelector(`#gifts-view-${tabName}`);
+                if (targetView) targetView.classList.add('active');
+            }
+
+            if (tabName === 'analytics') {
+                this.renderAnalytics();
+                this.loadBouquets().then(() => {
+                    this.renderAnalytics();
+                    this.updateReportsHeaderStats();
+                });
+            } else if (tabName === 'customers') {
+                this.renderCustomersDirectory();
+            }
+        },
+
+        // تهيئة شاشة تقارير الهدايا والعملاء المستقلة
+        initReports(initialSubtab = 'analytics') {
+            this.loadBouquets().then(() => {
+                this.updateReportsHeaderStats();
+                if (this.state.currentReportsTab === 'analytics') {
+                    this.renderAnalytics();
+                }
+            });
+            this.loadCustomers();
+            this.setupRealtimeSubscription();
+            this.updateReportsHeaderStats();
+            this.switchReportsTab(initialSubtab);
+        },
+
+        // تحديث شريط إحصائيات تقارير الهدايا
+        updateReportsHeaderStats() {
+            const soldCountEl = document.getElementById('gifts-rep-stat-sold');
+            const revEl = document.getElementById('gifts-rep-stat-revenue');
+            const custEl = document.getElementById('gifts-rep-stat-customers');
+
+            if (!soldCountEl && !revEl && !custEl) return;
+
+            let totalSold = 0;
+            let totalRev = 0;
+            (this.state.bouquets || []).forEach(b => {
+                if (b.status === 'sold') {
+                    const q = b.quantity || 1;
+                    totalSold += q;
+                    totalRev += Number(b.total_price) || 0;
+                }
+            });
+
+            if (soldCountEl) soldCountEl.textContent = totalSold;
+            if (revEl) revEl.textContent = `${totalRev.toFixed(2)} ج.م`;
+            if (custEl) custEl.textContent = (this.state.customers || []).length;
         },
 
         // 3. جلب كتالوج المنتجات من Firebase المتزامن
@@ -2025,6 +2095,16 @@
                                     <span style="font-size: 0.85rem; color: var(--gifts-text-muted);">سعر البيع:</span>
                                     <span class="gifts-card-price">${Number(b.total_price).toFixed(2)} ج.م</span>
                                 </div>
+                                ${b.customer_name ? `
+                                    <div class="gifts-card-buyer-chip">
+                                        <span><i class="fa-solid fa-user-check"></i> المشتري: <strong>${this.escapeHtml(b.customer_name)}</strong></span>
+                                        ${b.customer_phone ? `
+                                            <a href="https://wa.me/20${b.customer_phone.replace(/\D/g, '').replace(/^0+/, '')}" target="_blank" class="gifts-btn-wa" title="مراسلة على واتساب">
+                                                <i class="fa-brands fa-whatsapp"></i> ${this.escapeHtml(b.customer_phone)}
+                                            </a>
+                                        ` : ''}
+                                    </div>
+                                ` : ''}
                             </div>
                         </div>
 
@@ -2033,7 +2113,7 @@
                                 <i class="fa-solid fa-print"></i> طباعة
                             </button>
                             ${b.status === 'ready' ? `
-                                <button type="button" class="gifts-card-btn" style="color: var(--gifts-teal);" title="تسجيل كـ مباع" onclick="GiftsApp.markBouquetSold('${b.id}')">
+                                <button type="button" class="gifts-card-btn" style="color: var(--gifts-teal);" title="تسجيل كـ مباع" onclick="GiftsApp.openSellModal('${b.id}')">
                                     <i class="fa-solid fa-bag-shopping"></i> بيع
                                 </button>
                                 <button type="button" class="gifts-card-btn" style="color: var(--gifts-amber);" title="تفكيك وإرجاع الأصناف للمخزن" onclick="GiftsApp.disassembleBouquet('${b.id}')">
@@ -2185,69 +2265,217 @@
             this.showToastNotification(`تم تفكيك (${disQty}) بوكيه وإرجاع محتوياته للمخزن بنجاح`);
         },
 
-        async markBouquetSold(id) {
+        // 10. نافذة وإجراء بيع البوكيه مع تسجيل بيانات العميل الاختيارية
+        openSellModal(id) {
             const bouquet = this.state.bouquets.find(b => b.id === id);
             if (!bouquet) return;
 
-            const totalQty = parseInt(bouquet.quantity) || 1;
-            let soldQty = 1;
+            this.state.sellingBouquetId = id;
+            this.state.sellingQty = 1;
 
-            if (totalQty > 1) {
-                const answer = prompt(`البوكيه متوفر منه (${totalQty}) قطع في المحل.\nكم عدد القطع التي تم بيعها؟ (أدخل رقماً من 1 إلى ${totalQty})`, "1");
-                if (answer === null) return;
-                const parsed = parseInt(answer);
-                if (isNaN(parsed) || parsed < 1 || parsed > totalQty) {
-                    this.showToastNotification("يرجى إدخال كمية صحيحة");
-                    return;
-                }
-                soldQty = parsed;
+            const modal = document.getElementById('gifts-modal-sell-bouquet');
+            const preview = document.getElementById('gifts-sell-bouquet-preview');
+            const qtyInput = document.getElementById('gifts-sell-qty-input');
+            const stockHint = document.getElementById('gifts-sell-stock-hint');
+            const subtotalBadge = document.getElementById('gifts-sell-subtotal-badge');
+            const custNameInput = document.getElementById('gifts-sell-customer-name');
+            const custPhoneInput = document.getElementById('gifts-sell-customer-phone');
+            const suggestions = document.getElementById('gifts-sell-customer-suggestions');
+
+            const totalQty = parseInt(bouquet.quantity) || 1;
+            const price = Number(bouquet.total_price) || 0;
+
+            if (preview) {
+                const imgTag = bouquet.image_url ?
+                    `<img src="${bouquet.image_url}" class="gifts-sell-preview-img" alt="${this.escapeHtml(bouquet.name)}">` :
+                    `<div class="gifts-sell-preview-img" style="display:flex;align-items:center;justify-content:center;color:#F472B6;font-size:1.4rem;"><i class="fa-solid fa-gift"></i></div>`;
+
+                preview.innerHTML = `
+                    ${imgTag}
+                    <div style="flex: 1; min-width: 0;">
+                        <div class="gifts-sell-preview-title">${this.escapeHtml(bouquet.name)}</div>
+                        <div class="gifts-sell-preview-meta">
+                            <span><i class="fa-solid fa-tag" style="color: var(--gifts-primary);"></i> السعر: <strong>${price.toFixed(2)} ج.م</strong></span>
+                            <span><i class="fa-solid fa-box-archive"></i> المتوفر بالمحل: <strong>${totalQty} قطعة</strong></span>
+                        </div>
+                    </div>
+                `;
             }
+
+            if (qtyInput) {
+                qtyInput.value = "1";
+                qtyInput.max = totalQty;
+            }
+            if (stockHint) stockHint.innerText = `المتوفر في المحل: ${totalQty} قطعة`;
+            if (subtotalBadge) subtotalBadge.innerText = `إجمالي المبلغ المطلوب: ${price.toFixed(2)} ج.م`;
+
+            if (custNameInput) custNameInput.value = '';
+            if (custPhoneInput) custPhoneInput.value = '';
+            if (suggestions) suggestions.style.display = 'none';
+
+            if (modal) modal.classList.add('active');
+        },
+
+        updateSellQty(delta) {
+            const bouquet = this.state.bouquets.find(b => b.id === this.state.sellingBouquetId);
+            if (!bouquet) return;
+
+            const totalQty = parseInt(bouquet.quantity) || 1;
+            let newQty = (this.state.sellingQty || 1) + delta;
+            if (newQty < 1) newQty = 1;
+            if (newQty > totalQty) newQty = totalQty;
+
+            this.state.sellingQty = newQty;
+            const input = document.getElementById('gifts-sell-qty-input');
+            if (input) input.value = newQty;
+
+            this.updateSellSubtotal();
+        },
+
+        onSellQtyChanged(val) {
+            const bouquet = this.state.bouquets.find(b => b.id === this.state.sellingBouquetId);
+            if (!bouquet) return;
+
+            const totalQty = parseInt(bouquet.quantity) || 1;
+            let parsed = parseInt(val);
+            if (isNaN(parsed) || parsed < 1) parsed = 1;
+            if (parsed > totalQty) parsed = totalQty;
+
+            this.state.sellingQty = parsed;
+            const input = document.getElementById('gifts-sell-qty-input');
+            if (input) input.value = parsed;
+
+            this.updateSellSubtotal();
+        },
+
+        updateSellSubtotal() {
+            const bouquet = this.state.bouquets.find(b => b.id === this.state.sellingBouquetId);
+            if (!bouquet) return;
+
+            const qty = this.state.sellingQty || 1;
+            const price = Number(bouquet.total_price) || 0;
+            const subtotal = qty * price;
+
+            const badge = document.getElementById('gifts-sell-subtotal-badge');
+            if (badge) badge.innerText = `إجمالي المبلغ (${qty} × ${price.toFixed(2)}): ${subtotal.toFixed(2)} ج.م`;
+        },
+
+        onSellCustomerNameInput(val) {
+            const suggestions = document.getElementById('gifts-sell-customer-suggestions');
+            if (!suggestions) return;
+
+            const query = (val || '').trim();
+            if (!query) {
+                suggestions.style.display = 'none';
+                return;
+            }
+
+            const q = this.normalizeArabic(query);
+            const matches = (this.state.customers || []).filter(c => {
+                return this.normalizeArabic(c.name || '').includes(q) || (c.phone || '').includes(q);
+            }).slice(0, 5);
+
+            if (matches.length === 0) {
+                suggestions.style.display = 'none';
+                return;
+            }
+
+            suggestions.innerHTML = matches.map(c => `
+                <div class="gifts-autocomplete-item" onclick="GiftsApp.selectCustomerSuggestion('${this.escapeHtml(c.name)}', '${this.escapeHtml(c.phone || '')}')">
+                    <span><i class="fa-solid fa-user-check" style="color:#0D9488; margin-left:6px;"></i> <strong>${this.escapeHtml(c.name)}</strong> <small style="color:var(--gifts-text-muted);">(${c.totalBouquets} بوكيه سابق)</small></span>
+                    <span style="direction:ltr; font-size:0.8rem; font-weight:700; color:#334155;">${this.escapeHtml(c.phone || '')}</span>
+                </div>
+            `).join('');
+            suggestions.style.display = 'block';
+        },
+
+        selectCustomerSuggestion(name, phone) {
+            const nameInput = document.getElementById('gifts-sell-customer-name');
+            const phoneInput = document.getElementById('gifts-sell-customer-phone');
+            const suggestions = document.getElementById('gifts-sell-customer-suggestions');
+
+            if (nameInput) nameInput.value = name;
+            if (phoneInput) phoneInput.value = phone;
+            if (suggestions) suggestions.style.display = 'none';
+        },
+
+        async confirmBouquetSale() {
+            const id = this.state.sellingBouquetId;
+            const bouquet = this.state.bouquets.find(b => b.id === id);
+            if (!bouquet) {
+                this.closeModal('gifts-modal-sell-bouquet');
+                return;
+            }
+
+            const totalQty = parseInt(bouquet.quantity) || 1;
+            let soldQty = parseInt(this.state.sellingQty) || 1;
+            if (soldQty < 1) soldQty = 1;
+            if (soldQty > totalQty) soldQty = totalQty;
+
+            const nameInput = document.getElementById('gifts-sell-customer-name');
+            const phoneInput = document.getElementById('gifts-sell-customer-phone');
+            const custName = (nameInput ? nameInput.value : '').trim();
+            const custPhone = (phoneInput ? phoneInput.value : '').trim();
 
             const now = new Date().toISOString();
             const userName = this.getCurrentUserName();
 
+            // صياغة وصف حدث التايم لاين متضمنا العميل إن وُجد
+            let eventText = '';
+            if (soldQty === totalQty) {
+                eventText = custName ?
+                    `تم بيع كامل البوكيه (${soldQty} قطعة) للعميل "${custName}"${custPhone ? ` (${custPhone})` : ''}` :
+                    `تم بيع كامل البوكيه (${soldQty} قطعة) للعميل`;
+            } else {
+                eventText = custName ?
+                    `تم بيع (${soldQty}) قطعة للعميل "${custName}"${custPhone ? ` (${custPhone})` : ''} والمتبقي (${totalQty - soldQty}) قطعة` :
+                    `تم بيع (${soldQty}) قطعة من البوكيه، والمتبقي (${totalQty - soldQty}) قطعة`;
+            }
+
+            // تحديث بيانات البوكيه
             if (soldQty === totalQty) {
                 bouquet.status = 'sold';
                 bouquet.sold_at = now;
-                bouquet.timeline.push({
-                    event: `تم بيع كامل البوكيه (${soldQty} قطعة) للعميل`,
-                    by: userName,
-                    time: now
-                });
+                if (custName) bouquet.customer_name = custName;
+                if (custPhone) bouquet.customer_phone = custPhone;
+                if (!bouquet.timeline) bouquet.timeline = [];
+                bouquet.timeline.push({ event: eventText, by: userName, time: now });
 
                 const sb = this.getSupabase();
                 if (sb) {
                     try {
-                        await sb
-                            .from(GIFTS_TABLE)
-                            .update({
+                        const updatePayload = {
+                            status: 'sold',
+                            sold_at: now,
+                            timeline: bouquet.timeline
+                        };
+                        if (custName) updatePayload.customer_name = custName;
+                        if (custPhone) updatePayload.customer_phone = custPhone;
+
+                        const { error } = await sb.from(GIFTS_TABLE).update(updatePayload).eq('id', id);
+                        if (error) {
+                            await sb.from(GIFTS_TABLE).update({
                                 status: 'sold',
                                 sold_at: now,
                                 timeline: bouquet.timeline
-                            })
-                            .eq('id', id);
+                            }).eq('id', id);
+                        }
                     } catch (e) {
                         console.warn("Supabase update error:", e);
                     }
                 }
             } else {
                 bouquet.quantity = totalQty - soldQty;
-                bouquet.timeline.push({
-                    event: `تم بيع (${soldQty}) قطعة من البوكيه، والمتبقي (${bouquet.quantity}) قطعة`,
-                    by: userName,
-                    time: now
-                });
+                if (!bouquet.timeline) bouquet.timeline = [];
+                bouquet.timeline.push({ event: eventText, by: userName, time: now });
 
                 const sb = this.getSupabase();
                 if (sb) {
                     try {
-                        await sb
-                            .from(GIFTS_TABLE)
-                            .update({
-                                quantity: bouquet.quantity,
-                                timeline: bouquet.timeline
-                            })
-                            .eq('id', id);
+                        await sb.from(GIFTS_TABLE).update({
+                            quantity: bouquet.quantity,
+                            timeline: bouquet.timeline
+                        }).eq('id', id);
                     } catch (e) {
                         console.warn("Supabase update error:", e);
                     }
@@ -2259,14 +2487,22 @@
                     quantity: soldQty,
                     status: 'sold',
                     sold_at: now,
+                    customer_name: custName || null,
+                    customer_phone: custPhone || null,
                     timeline: [
-                        { event: `تم بيع (${soldQty}) قطعة تم فصلها من البوكيه الأصلي`, by: userName, time: now }
+                        { event: eventText, by: userName, time: now }
                     ]
                 };
 
                 if (sb) {
                     try {
-                        await sb.from(GIFTS_TABLE).insert([soldRecord]);
+                        const insertPayload = { ...soldRecord };
+                        const { error } = await sb.from(GIFTS_TABLE).insert([insertPayload]);
+                        if (error) {
+                            delete insertPayload.customer_name;
+                            delete insertPayload.customer_phone;
+                            await sb.from(GIFTS_TABLE).insert([insertPayload]);
+                        }
                     } catch (e) {
                         console.warn("Supabase insert soldRecord error:", e);
                     }
@@ -2274,10 +2510,410 @@
                 this.state.bouquets.unshift(soldRecord);
             }
 
+            // حفظ بيانات العميل في دليل عملاء الهدايا
+            if (custName || custPhone) {
+                this.recordCustomerPurchase(custName, custPhone, bouquet, soldQty, now);
+            }
+
             this.saveBouquetsToLocal();
             this.updateHeaderStats();
             this.renderShowcase();
-            this.showToastNotification(`تم تسجيل بيع (${soldQty}) بوكيه بنجاح`);
+            this.closeModal('gifts-modal-sell-bouquet');
+
+            const successMsg = custName ?
+                `تم تسجيل بيع (${soldQty}) بوكيه للعميل "${custName}" وحفظه بدليل العملاء` :
+                `تم تسجيل بيع (${soldQty}) بوكيه بنجاح`;
+            this.showToastNotification(successMsg);
+        },
+
+        recordCustomerPurchase(name, phone, bouquet, soldQty, dateStr) {
+            const cleanPhone = (phone || '').replace(/\D/g, '');
+            const cleanName = (name || '').trim();
+
+            if (!Array.isArray(this.state.customers)) this.state.customers = [];
+
+            let existing = this.state.customers.find(c => {
+                if (cleanPhone && c.phone && c.phone.replace(/\D/g, '') === cleanPhone) return true;
+                if (cleanName && c.name && this.normalizeArabic(c.name) === this.normalizeArabic(cleanName)) return true;
+                return false;
+            });
+
+            const purchaseItem = {
+                bouquetId: bouquet.id,
+                bouquetName: bouquet.name,
+                qty: soldQty,
+                price: soldQty * (Number(bouquet.total_price) || 0),
+                date: dateStr
+            };
+
+            if (existing) {
+                if (!existing.purchases) existing.purchases = [];
+                existing.purchases.push(purchaseItem);
+                existing.totalBouquets = (existing.totalBouquets || 0) + soldQty;
+                existing.totalSpent = (existing.totalSpent || 0) + purchaseItem.price;
+                existing.lastPurchaseDate = dateStr;
+                if (!existing.phone && phone) existing.phone = phone;
+                if (!existing.name && name) existing.name = name;
+            } else {
+                this.state.customers.unshift({
+                    id: `cust_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+                    name: cleanName || 'عميل بدون اسم',
+                    phone: phone || '',
+                    totalBouquets: soldQty,
+                    totalSpent: purchaseItem.price,
+                    purchases: [purchaseItem],
+                    lastPurchaseDate: dateStr,
+                    notes: ''
+                });
+            }
+
+            this.saveCustomersToLocal();
+        },
+
+        markBouquetSold(id) {
+            this.openSellModal(id);
+        },
+
+        // 11. إدارة وقاعدة بيانات عملاء الهدايا (Gifts CRM)
+        loadCustomers() {
+            try {
+                let list = [];
+                const saved = localStorage.getItem('candy_gifts_customers');
+                if (saved) {
+                    list = JSON.parse(saved);
+                }
+                if (!Array.isArray(list)) list = [];
+
+                // استخراج ومزامنة أي عملاء تم تسجيل بيع بوكيهات لهم سابقاً
+                (this.state.bouquets || []).forEach(b => {
+                    if (b.status === 'sold' && (b.customer_name || b.customer_phone)) {
+                        const name = (b.customer_name || '').trim();
+                        const phone = (b.customer_phone || '').trim();
+                        if (name || phone) {
+                            const cleanPhone = phone.replace(/\D/g, '');
+                            let existing = list.find(c => {
+                                if (cleanPhone && c.phone && c.phone.replace(/\D/g, '') === cleanPhone) return true;
+                                if (name && c.name && this.normalizeArabic(c.name) === this.normalizeArabic(name)) return true;
+                                return false;
+                            });
+
+                            const purchaseEntry = {
+                                bouquetId: b.id,
+                                bouquetName: b.name,
+                                qty: Number(b.quantity) || 1,
+                                price: Number(b.total_price) || 0,
+                                date: b.sold_at || b.created_at || new Date().toISOString()
+                            };
+
+                            if (!existing) {
+                                list.push({
+                                    id: `cust_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+                                    name: name || 'عميل بدون اسم',
+                                    phone: phone || '',
+                                    totalBouquets: Number(b.quantity) || 1,
+                                    totalSpent: Number(b.total_price) || 0,
+                                    purchases: [purchaseEntry],
+                                    lastPurchaseDate: b.sold_at || b.created_at || new Date().toISOString(),
+                                    notes: ''
+                                });
+                            } else {
+                                if (!existing.purchases) existing.purchases = [];
+                                const hasPurchase = existing.purchases.some(p => p.bouquetId === b.id);
+                                if (!hasPurchase) {
+                                    existing.purchases.push(purchaseEntry);
+                                    existing.totalBouquets = (existing.totalBouquets || 0) + (Number(b.quantity) || 1);
+                                    existing.totalSpent = (existing.totalSpent || 0) + (Number(b.total_price) || 0);
+                                }
+                                if (!existing.phone && phone) existing.phone = phone;
+                                if (!existing.name && name) existing.name = name;
+                            }
+                        }
+                    }
+                });
+
+                this.state.customers = list;
+                this.saveCustomersToLocal();
+            } catch (e) {
+                console.warn("Could not load gifts customers:", e);
+                this.state.customers = [];
+            }
+        },
+
+        saveCustomersToLocal() {
+            try {
+                localStorage.setItem('candy_gifts_customers', JSON.stringify(this.state.customers));
+            } catch (e) {
+                console.warn("Could not save gifts customers:", e);
+            }
+        },
+
+        onCustomersSearch(query) {
+            this.state.customerSearchQuery = (query || '').trim();
+            this.renderCustomersDirectory();
+        },
+
+        renderCustomersDirectory() {
+            const container = document.getElementById('gifts-customers-container');
+            const countBadge = document.getElementById('gifts-customers-count-badge');
+            const statCount = document.getElementById('gifts-stat-cust-count');
+            const statBouquets = document.getElementById('gifts-stat-cust-bouquets');
+            const statSales = document.getElementById('gifts-stat-cust-total-sales');
+
+            const customers = this.state.customers || [];
+            const totalCust = customers.length;
+            const totalBq = customers.reduce((sum, c) => sum + (Number(c.totalBouquets) || 0), 0);
+            const totalSpent = customers.reduce((sum, c) => sum + (Number(c.totalSpent) || 0), 0);
+
+            if (statCount) statCount.innerText = `${totalCust} عميل`;
+            if (statBouquets) statBouquets.innerText = `${totalBq} بوكيه`;
+            if (statSales) statSales.innerText = `${totalSpent.toFixed(2)} ج.م`;
+
+            if (!container) return;
+
+            const q = this.normalizeArabic(this.state.customerSearchQuery || '');
+            const filtered = customers.filter(c => {
+                if (!q) return true;
+                const nameMatch = this.normalizeArabic(c.name || '').includes(q);
+                const phoneMatch = (c.phone || '').includes(q);
+                return nameMatch || phoneMatch;
+            });
+
+            if (countBadge) countBadge.innerText = `${filtered.length} عميل معروض`;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="gifts-empty-state" style="grid-column: 1 / -1; padding: 40px 20px;">
+                        <i class="fa-solid fa-users" style="font-size: 2.8rem; color: #99F6E4; margin-bottom: 12px;"></i>
+                        <h4 style="margin: 0 0 6px 0; color: #0F766E;">${q ? 'لا توجد نتائج مطابقة لبحثك' : 'دليل عملاء الهدايا فارغ حالياً'}</h4>
+                        <p style="margin: 0; color: var(--gifts-text-muted); font-size: 0.88rem; max-width: 480px; line-height: 1.5;">
+                            ${q ? 'جرب البحث باسم أو رقم هاتف آخر' : 'عند بيع أي بوكيه من المعرض وكتابة اسم ورقم العميل، سيتم حفظه هنا تلقائياً لإنشاء قاعدة عملاء كاندي كلوب للهدايا والواتساب.'}
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+
+            // ترتيب العملاء حسب الأحدث أو الأكثر شراءً
+            filtered.sort((a, b) => new Date(b.lastPurchaseDate || 0) - new Date(a.lastPurchaseDate || 0));
+
+            container.innerHTML = filtered.map((cust, idx) => {
+                const initials = (cust.name || 'ع').trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('');
+                const cleanPhone = (cust.phone || '').replace(/\D/g, '');
+                const waUrl = cleanPhone ? `https://wa.me/20${cleanPhone.replace(/^0+/, '')}` : null;
+                const callUrl = cleanPhone ? `tel:${cleanPhone}` : null;
+                const lastDateStr = cust.lastPurchaseDate ? new Date(cust.lastPurchaseDate).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric', year: 'numeric' }) : 'غير محدد';
+                const purchases = cust.purchases || [];
+
+                let badgeHtml = '';
+                if (cust.totalBouquets >= 4) {
+                    badgeHtml = '<span style="font-size: 0.72rem; padding: 2px 7px; border-radius: 12px; background: #FEF3C7; color: #B45309; font-weight: 800;"><i class="fa-solid fa-crown"></i> عميل ذهبي</span>';
+                } else if (cust.totalBouquets >= 2) {
+                    badgeHtml = '<span style="font-size: 0.72rem; padding: 2px 7px; border-radius: 12px; background: #EEF2FF; color: #4338CA; font-weight: 800;"><i class="fa-solid fa-star"></i> عميل مميز</span>';
+                } else {
+                    badgeHtml = '<span style="font-size: 0.72rem; padding: 2px 7px; border-radius: 12px; background: #F1F5F9; color: #475569; font-weight: 700;">عميل جديد</span>';
+                }
+
+                return `
+                    <div class="gifts-customer-card">
+                        <div class="gifts-customer-card-header">
+                            <div class="gifts-customer-avatar">${initials}</div>
+                            <div class="gifts-customer-info">
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+                                    <div class="gifts-customer-name" title="${this.escapeHtml(cust.name)}">${this.escapeHtml(cust.name)}</div>
+                                    ${badgeHtml}
+                                </div>
+                                <div class="gifts-customer-phone-row">
+                                    ${cust.phone ? `
+                                        <span style="direction: ltr; font-weight: 700; color: #334155;">${this.escapeHtml(cust.phone)}</span>
+                                        ${waUrl ? `
+                                            <a href="${waUrl}" target="_blank" class="gifts-btn-wa" title="مراسلة على واتساب">
+                                                <i class="fa-brands fa-whatsapp"></i> واتساب
+                                            </a>
+                                        ` : ''}
+                                        ${callUrl ? `
+                                            <a href="${callUrl}" style="color: #0284C7; font-size: 0.85rem; padding: 2px 5px;" title="اتصال هاتفي">
+                                                <i class="fa-solid fa-phone"></i>
+                                            </a>
+                                        ` : ''}
+                                    ` : '<span style="color: var(--gifts-text-muted); font-size: 0.78rem;">لا يوجد رقم مسجل</span>'}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="gifts-customer-stats-grid">
+                            <div class="gifts-cust-mini-stat">
+                                <span class="gifts-cust-stat-label">البوكيهات المشتراة</span>
+                                <span class="gifts-cust-stat-val">${cust.totalBouquets || 0} بوكيه</span>
+                            </div>
+                            <div class="gifts-cust-mini-stat">
+                                <span class="gifts-cust-stat-label">إجمالي المدفوع</span>
+                                <span class="gifts-cust-stat-val" style="color: #0F766E;">${Number(cust.totalSpent || 0).toFixed(2)} ج.م</span>
+                            </div>
+                        </div>
+
+                        <div class="gifts-customer-last-purchase">
+                            <div style="font-size: 0.72rem; color: #64748B; margin-bottom: 2px;">
+                                <i class="fa-solid fa-clock-rotate-left" style="color: #0D9488;"></i> آخر عملية شراء:
+                            </div>
+                            <div style="font-weight: 700; color: #1E293B;">
+                                ${purchases.length > 0 ? this.escapeHtml(purchases[purchases.length - 1].bouquetName) : 'بوكيه هدايا'}
+                                <span style="font-size: 0.74rem; font-weight: normal; color: #64748B; margin-right: 4px;">(${lastDateStr})</span>
+                            </div>
+                        </div>
+
+                        <!-- Collapsible Purchases History -->
+                        <div id="gifts-cust-history-${idx}" style="display: none; background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 8px; padding: 8px 10px; font-size: 0.78rem; max-height: 140px; overflow-y: auto;">
+                            <div style="font-weight: 800; color: #334155; margin-bottom: 5px;">سجل مشتريات البوكيهات:</div>
+                            ${purchases.map(p => `
+                                <div style="display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px solid #E2E8F0;">
+                                    <span>${this.escapeHtml(p.bouquetName)} (${p.qty} قطعة)</span>
+                                    <span style="font-weight: 700; color: #0D9488;">${Number(p.price).toFixed(2)} ج.م</span>
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <div class="gifts-customer-actions">
+                            ${purchases.length > 0 ? `
+                                <button type="button" class="gifts-card-btn" style="flex: 1; font-size: 0.78rem;" onclick="GiftsApp.toggleCustomerHistory(${idx})">
+                                    <i class="fa-solid fa-receipt"></i> سجل المشتريات (${purchases.length})
+                                </button>
+                            ` : ''}
+                            <button type="button" class="gifts-card-btn" style="font-size: 0.78rem;" title="تعديل بيانات العميل" onclick="GiftsApp.openAddCustomerModal('${cust.id}')">
+                                <i class="fa-solid fa-pen-to-square"></i> تعديل
+                            </button>
+                            <button type="button" class="gifts-card-btn" style="color: var(--gifts-red); font-size: 0.78rem;" title="حذف العميل" onclick="GiftsApp.deleteCustomer('${cust.id}')">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        },
+
+        toggleCustomerHistory(idx) {
+            const el = document.getElementById(`gifts-cust-history-${idx}`);
+            if (el) {
+                el.style.display = el.style.display === 'none' ? 'block' : 'none';
+            }
+        },
+
+        exportCustomersToCSV() {
+            const customers = this.state.customers || [];
+            if (customers.length === 0) {
+                this.showToastNotification("لا يوجد عملاء مسجلين لتصديرهم");
+                return;
+            }
+
+            let csv = "\uFEFFاسم العميل,رقم الهاتف,عدد البوكيهات المشتراة,إجمالي المشتريات (ج.م),تاريخ آخر شراء,ملاحظات\n";
+            customers.forEach(c => {
+                const dateStr = c.lastPurchaseDate ? new Date(c.lastPurchaseDate).toLocaleDateString('ar-EG') : '';
+                const line = [
+                    `"${(c.name || '').replace(/"/g, '""')}"`,
+                    `"${(c.phone || '').replace(/"/g, '""')}"`,
+                    c.totalBouquets || 0,
+                    (c.totalSpent || 0).toFixed(2),
+                    `"${dateStr}"`,
+                    `"${(c.notes || '').replace(/"/g, '""')}"`
+                ].join(',');
+                csv += line + "\n";
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `عملاء_هدايا_كاندي_كلوب_${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            this.showToastNotification("تم تصدير ملف إكسيل / CSV لعملاء الهدايا بنجاح");
+        },
+
+        openAddCustomerModal(customerId = null) {
+            const modal = document.getElementById('gifts-modal-add-customer');
+            const title = document.getElementById('gifts-modal-add-customer-title');
+            const idInput = document.getElementById('gifts-customer-edit-id');
+            const nameInput = document.getElementById('gifts-customer-form-name');
+            const phoneInput = document.getElementById('gifts-customer-form-phone');
+            const notesInput = document.getElementById('gifts-customer-form-notes');
+
+            if (!modal) return;
+
+            if (customerId) {
+                const cust = (this.state.customers || []).find(c => c.id === customerId);
+                if (!cust) return;
+                if (title) title.innerText = "تعديل بيانات العميل";
+                if (idInput) idInput.value = cust.id;
+                if (nameInput) nameInput.value = cust.name || '';
+                if (phoneInput) phoneInput.value = cust.phone || '';
+                if (notesInput) notesInput.value = cust.notes || '';
+            } else {
+                if (title) title.innerText = "إضافة عميل إلى دليل الهدايا";
+                if (idInput) idInput.value = '';
+                if (nameInput) nameInput.value = '';
+                if (phoneInput) phoneInput.value = '';
+                if (notesInput) notesInput.value = '';
+            }
+
+            modal.classList.add('active');
+        },
+
+        saveCustomerForm() {
+            const idInput = document.getElementById('gifts-customer-edit-id');
+            const nameInput = document.getElementById('gifts-customer-form-name');
+            const phoneInput = document.getElementById('gifts-customer-form-phone');
+            const notesInput = document.getElementById('gifts-customer-form-notes');
+
+            const name = (nameInput ? nameInput.value : '').trim();
+            const phone = (phoneInput ? phoneInput.value : '').trim();
+            const notes = (notesInput ? notesInput.value : '').trim();
+            const id = idInput ? idInput.value : '';
+
+            if (!name) {
+                this.showToastNotification("يرجى إدخال اسم العميل");
+                if (nameInput) nameInput.focus();
+                return;
+            }
+
+            if (id) {
+                const cust = (this.state.customers || []).find(c => c.id === id);
+                if (cust) {
+                    cust.name = name;
+                    cust.phone = phone;
+                    cust.notes = notes;
+                    this.showToastNotification(`تم تحديث بيانات العميل "${name}"`);
+                }
+            } else {
+                const newCust = {
+                    id: `cust_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+                    name,
+                    phone,
+                    totalBouquets: 0,
+                    totalSpent: 0,
+                    purchases: [],
+                    lastPurchaseDate: null,
+                    notes
+                };
+                if (!Array.isArray(this.state.customers)) this.state.customers = [];
+                this.state.customers.unshift(newCust);
+                this.showToastNotification(`تمت إضافة العميل "${name}" لدليل الهدايا`);
+            }
+
+            this.saveCustomersToLocal();
+            this.closeModal('gifts-modal-add-customer');
+            this.renderCustomersDirectory();
+        },
+
+        deleteCustomer(id) {
+            const cust = (this.state.customers || []).find(c => c.id === id);
+            if (!cust) return;
+            if (!confirm(`هل أنت متأكد من حذف العميل "${cust.name}" من دليل الهدايا؟`)) return;
+
+            this.state.customers = this.state.customers.filter(c => c.id !== id);
+            this.saveCustomersToLocal();
+            this.renderCustomersDirectory();
+            this.showToastNotification(`تم حذف العميل "${cust.name}"`);
         },
 
         getCurrentUserName() {
@@ -2881,6 +3517,8 @@
             if (readyEl) readyEl.innerText = readyCount;
             if (soldEl) soldEl.innerText = soldCount;
             if (todayEl) todayEl.innerText = todayCreated;
+
+            this.updateReportsHeaderStats();
         },
 
         showToastNotification(message) {

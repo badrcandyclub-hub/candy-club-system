@@ -1218,7 +1218,7 @@ window.MODULE_GROUPS = {
     'marketing': { name: 'العملاء والتسويق', icon: 'fa-solid fa-users-viewfinder fa-fade', tabs: ['customers-tab', 'whatsapp-campaign-tab'], req: 'customers,users,orders' },
     'products': { name: 'المنتجات', icon: 'fa-solid fa-tags fa-beat', tabs: ['price-tags-tab', 'shortages-tab', 'expiry-tab', 'inventory-transfers-tab'], req: 'catalog,drafts,users,expiries' },
     'hr': { name: 'شئون الموظفين', icon: 'fa-solid fa-id-card-clip fa-flip', tabs: ['hr-tab', 'hr-admin-tab'], req: 'attendance,users' },
-    'gifts': { name: 'قسم الهدايا والبوكيهات', icon: 'fa-solid fa-wand-magic-sparkles', tabs: ['gifts-tab'], req: 'gifts' },
+    'gifts': { name: 'قسم الهدايا والبوكيهات', icon: 'fa-solid fa-wand-magic-sparkles', tabs: ['gifts-tab', 'gifts-reports-tab'], req: 'gifts,gifts_reports' },
     'admin': { name: 'الإدارة والتقارير', icon: 'fa-solid fa-chart-pie fa-spin', tabs: ['reports-tab', 'moderators-tab', 'users-tab'], req: 'orders,users,customers,shipping,financials,shortages' }
 };
 
@@ -1288,6 +1288,12 @@ document.querySelectorAll('.nav-item').forEach(btn => {
             let subtab = btn.getAttribute('data-subtab') || 'builder';
             if (typeof window.lazyLoadGiftsModule === 'function') {
                 window.lazyLoadGiftsModule(subtab);
+            }
+        }
+        if (targetId === 'gifts-reports-tab') {
+            let subtab = btn.getAttribute('data-subtab') || 'analytics';
+            if (typeof window.lazyLoadGiftsReportsModule === 'function') {
+                window.lazyLoadGiftsReportsModule(subtab);
             }
         }
 
@@ -1423,6 +1429,81 @@ window.lazyLoadGiftsModule = function(subtab = 'builder') {
         .catch(err => {
             console.error("Gifts module loading error:", err);
             tabPane.innerHTML = '<div style="text-align:center; padding:40px; color:#c0392b; font-weight:bold;">حدث خطأ أثناء تحميل واجهة قسم الهدايا</div>';
+        });
+};
+
+// ==========================================
+// Lazy Loading for Candy Club Gifts Reports Module
+// ==========================================
+window.giftsReportsModuleLoaded = false;
+window.lazyLoadGiftsReportsModule = function(subtab = 'analytics') {
+    let tabPane = document.getElementById('gifts-reports-tab');
+    if (!tabPane) return;
+
+    if (window.giftsReportsModuleLoaded && window.GiftsApp) {
+        if (typeof window.GiftsApp.switchReportsTab === 'function') {
+            window.GiftsApp.switchReportsTab(subtab);
+        }
+        return;
+    }
+
+    // 1. Ensure gifts.css is loaded
+    if (!document.getElementById('gifts-module-css')) {
+        let link = document.createElement('link');
+        link.id = 'gifts-module-css';
+        link.rel = 'stylesheet';
+        link.href = 'gifts_module/css/gifts.css?v=' + Date.now();
+        document.head.appendChild(link);
+    }
+
+    // 2. Fetch gifts_reports.html and inject into gifts-reports-tab
+    fetch('gifts_module/html/gifts_reports.html?v=' + Date.now())
+        .then(res => {
+            if (!res.ok) throw new Error("Failed to load gifts_reports.html");
+            return res.text();
+        })
+        .then(html => {
+            tabPane.innerHTML = html;
+
+            // 3. Ensure gifts.js is loaded dynamically
+            if (!document.getElementById('gifts-module-js')) {
+                let script = document.createElement('script');
+                script.id = 'gifts-module-js';
+                script.src = 'gifts_module/js/gifts.js?v=' + Date.now();
+                script.onload = function() {
+                    window.giftsReportsModuleLoaded = true;
+                    if (window.GiftsApp && typeof window.GiftsApp.initReports === 'function') {
+                        window.GiftsApp.initReports(subtab);
+                    }
+                };
+                script.onerror = function() {
+                    let fallbackScript = document.createElement('script');
+                    fallbackScript.id = 'gifts-module-js-fallback';
+                    fallbackScript.src = 'gifts_module/gifts.js?v=' + Date.now();
+                    fallbackScript.onload = function() {
+                        window.giftsReportsModuleLoaded = true;
+                        if (window.GiftsApp && typeof window.GiftsApp.initReports === 'function') {
+                            window.GiftsApp.initReports(subtab);
+                        }
+                    };
+                    fallbackScript.onerror = function() {
+                        tabPane.innerHTML = '<div style="text-align:center; padding:40px; color:#c0392b; font-weight:bold;">تعذر تحميل كود تقارير الهدايا</div>';
+                    };
+                    document.body.appendChild(fallbackScript);
+                };
+                document.body.appendChild(script);
+            } else {
+                window.giftsReportsModuleLoaded = true;
+                if (window.GiftsApp && typeof window.GiftsApp.initReports === 'function') {
+                    window.GiftsApp.initReports(subtab);
+                } else if (window.GiftsApp && typeof window.GiftsApp.switchReportsTab === 'function') {
+                    window.GiftsApp.switchReportsTab(subtab);
+                }
+            }
+        })
+        .catch(err => {
+            console.error("Gifts reports module loading error:", err);
+            tabPane.innerHTML = '<div style="text-align:center; padding:40px; color:#c0392b; font-weight:bold;">حدث خطأ أثناء تحميل واجهة تقارير الهدايا</div>';
         });
 };
 
@@ -10897,11 +10978,12 @@ function applyPermissions() {
         if (permKey === "inventory-transfers") permKey = "inventory";
         if (permKey === "price-tags") permKey = "pricetags";
         if (permKey === "whatsapp-campaign") permKey = "whatsapp";
+        if (permKey === "gifts-reports") permKey = "gifts_reports";
         if (permKey === "users") { btn.style.display = window.location.pathname.toLowerCase().includes("admin.html") ? "flex" : "none"; if (btn.style.display==="flex") btn.onclick=null; return; }
         
         
         
-        if (hasPerm(permKey) || isFullAccess) {
+        if (hasPerm(permKey) || (permKey === "gifts_reports" && hasPerm("gifts-reports")) || isFullAccess) {
             btn.style.display = "flex";
             btn.classList.remove('locked-nav-item');
             btn.onclick = null; // restore normal click

@@ -1,0 +1,270 @@
+<!-- ================================================================
+     Candy Club Gifts Reports & Customer CRM Module
+     شاشة تقارير الهدايا ودليل العملاء المستقلة
+     ================================================================ -->
+
+<div class="gifts-module-container gifts-reports-container">
+
+    <!-- 1. Header Card -->
+    <div class="gifts-header-card" style="background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); color: #ffffff; border-color: #334155;">
+        <div class="gifts-title-group">
+            <h2 style="color: #ffffff;">
+                <i class="fa-solid fa-chart-pie" style="color: #0D9488;"></i>
+                تقارير الهدايا والبوكيهات
+            </h2>
+            <p style="color: #94A3B8;">التحليلات والمؤشرات المالية ولوحة الصدارة وإدارة سجل وبيانات عملاء قسم الهدايا</p>
+        </div>
+        <div class="gifts-quick-stats">
+            <div class="gifts-stat-chip" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #ffffff;">
+                <i class="fa-solid fa-bag-shopping" style="color: #0D9488; font-size: 1.25rem;"></i>
+                <div>
+                    <div class="chip-label" style="color: #94A3B8;"><span class="gifts-live-dot" style="background: #0D9488;"></span> إجمالي المبيعات</div>
+                    <div class="chip-val" id="gifts-rep-stat-sold" style="color: #ffffff;">0</div>
+                </div>
+            </div>
+            <div class="gifts-stat-chip" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #ffffff;">
+                <i class="fa-solid fa-coins" style="color: #F59E0B; font-size: 1.25rem;"></i>
+                <div>
+                    <div class="chip-label" style="color: #94A3B8;">إجمالي الإيراد</div>
+                    <div class="chip-val" id="gifts-rep-stat-revenue" style="color: #FBBF24;">0.00 ج.م</div>
+                </div>
+            </div>
+            <div class="gifts-stat-chip" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #ffffff;">
+                <i class="fa-solid fa-users" style="color: #38BDF8; font-size: 1.25rem;"></i>
+                <div>
+                    <div class="chip-label" style="color: #94A3B8;">عملاء مسجلين</div>
+                    <div class="chip-val" id="gifts-rep-stat-customers" style="color: #38BDF8;">0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Sub-Tabs Navigation Bar (2 Subtabs) -->
+    <div class="gifts-nav-bar gifts-reports-nav-bar">
+        <button class="gifts-subtab-btn active" onclick="GiftsApp.switchReportsTab('analytics')">
+            <i class="fa-solid fa-chart-line"></i>
+            <span class="tab-label-full">التقارير ولوحة الصدارة</span>
+            <span class="tab-label-short">التقارير</span>
+        </button>
+        <button class="gifts-subtab-btn" onclick="GiftsApp.switchReportsTab('customers')">
+            <i class="fa-solid fa-users"></i>
+            <span class="tab-label-full">دليل عملاء الهدايا</span>
+            <span class="tab-label-short">عملاء الهدايا</span>
+        </button>
+    </div>
+
+    <!-- ================================================================
+         SUB-VIEW 1: ANALYTICS & LEADERBOARD (التقارير)
+         ================================================================ -->
+    <div id="gifts-view-analytics" class="gifts-subview active">
+        
+        <!-- Top KPI Cards -->
+        <div class="gifts-analytics-grid">
+            <div class="gifts-kpi-card">
+                <div class="gifts-kpi-icon pink">
+                    <i class="fa-solid fa-boxes-packing"></i>
+                </div>
+                <div class="gifts-kpi-content">
+                    <h5>إجمالي المصنوع</h5>
+                    <div class="kpi-num" id="kpi-total-created">0</div>
+                </div>
+            </div>
+            <div class="gifts-kpi-card">
+                <div class="gifts-kpi-icon teal">
+                    <i class="fa-solid fa-bag-shopping"></i>
+                </div>
+                <div class="gifts-kpi-content">
+                    <h5>إجمالي المبيعات</h5>
+                    <div class="kpi-num" id="kpi-total-sold">0</div>
+                </div>
+            </div>
+            <div class="gifts-kpi-card">
+                <div class="gifts-kpi-icon purple">
+                    <i class="fa-solid fa-shop"></i>
+                </div>
+                <div class="gifts-kpi-content">
+                    <h5>المتبقي في المحل</h5>
+                    <div class="kpi-num" id="kpi-remaining-stock">0</div>
+                </div>
+            </div>
+            <div class="gifts-kpi-card">
+                <div class="gifts-kpi-icon amber">
+                    <i class="fa-solid fa-coins"></i>
+                </div>
+                <div class="gifts-kpi-content">
+                    <h5>إجمالي إيراد الهدايا</h5>
+                    <div class="kpi-num" id="kpi-total-revenue">0 ج.م</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter and Export Actions -->
+        <div class="gifts-showcase-toolbar" style="margin-bottom: 20px;">
+            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                <label style="font-size: 0.9rem; font-weight: 800; color: var(--gifts-text);">الفترة الزمنية للتقرير:</label>
+                <select id="gifts-report-period" class="gifts-input" style="width: 160px; padding: 8px 14px;" onchange="GiftsApp.onReportPeriodChanged()">
+                    <option value="today">اليوم</option>
+                    <option value="this_week" selected>هذا الأسبوع</option>
+                    <option value="this_month">هذا الشهر</option>
+                    <option value="custom">فترة مخصصة</option>
+                </select>
+                <div id="gifts-custom-dates" style="display: none; gap: 8px;">
+                    <input type="date" id="gifts-report-from" class="gifts-input" style="width: 140px; padding: 6px;">
+                    <input type="date" id="gifts-report-to" class="gifts-input" style="width: 140px; padding: 6px;">
+                    <button class="gifts-btn-outline" onclick="GiftsApp.renderAnalytics()">تطبيق</button>
+                </div>
+            </div>
+            <div>
+                <button class="gifts-btn-primary" onclick="GiftsApp.exportManagementPDF()">
+                    <i class="fa-solid fa-file-pdf"></i>
+                    <span>استخراج تقرير الإدارة PDF</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Analytics Split Grid -->
+        <div class="gifts-analytics-split">
+            <!-- Employee Sales & Performance Table -->
+            <div class="gifts-table-card">
+                <div class="gifts-section-header">
+                    <h4>
+                        <i class="fa-solid fa-users-gear" style="color: var(--gifts-primary);"></i>
+                        مبيعات وإنجاز الموظفين
+                    </h4>
+                    <span style="font-size: 0.8rem; color: var(--gifts-text-muted); font-weight: 700;">يتم التحديث فوريا</span>
+                </div>
+                <div class="gifts-table-scroll-container">
+                    <table class="gifts-data-table" id="gifts-employee-table">
+                        <thead>
+                            <tr>
+                                <th>اسم الموظف</th>
+                                <th>صنع</th>
+                                <th>بيع</th>
+                                <th>إجمالي المبيعات</th>
+                                <th>التميز والتقييم</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gifts-employee-tbody">
+                            <!-- Rendered dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Top Creators Leaderboard -->
+            <div class="gifts-leaderboard-card">
+                <div class="gifts-section-header">
+                    <h4>
+                        <i class="fa-solid fa-trophy" style="color: #D97706;"></i>
+                        لوحة صدارة صانعي البوكيهات
+                    </h4>
+                </div>
+                <div id="gifts-leaderboard-list">
+                    <!-- Rendered dynamically -->
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ================================================================
+         SUB-VIEW 2: GIFTS CUSTOMERS DIRECTORY (عملاء الهدايا)
+         ================================================================ -->
+    <div id="gifts-view-customers" class="gifts-subview">
+        <!-- Customers Hero & Header Stats -->
+        <div class="gifts-analytics-header" style="background: linear-gradient(135deg, #F0FDFA 0%, #CCFBF1 50%, #FFFFFF 100%); border: 1.5px solid #99F6E4;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+                <div>
+                    <h3 style="margin: 0; color: #0F766E; font-size: 1.35rem; font-weight: 900; display: flex; align-items: center; gap: 10px;">
+                        <i class="fa-solid fa-address-book" style="color: #0D9488;"></i>
+                        دليل عملاء الهدايا والبوكيهات
+                    </h3>
+                    <p style="margin: 4px 0 0 0; font-size: 0.84rem; color: #115E59; font-weight: 600;">
+                        قاعدة بيانات تلقائية لتوثيق مشتري الهدايا وبناء سجل المبيعات والتواصل معهم
+                    </p>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button type="button" class="gifts-btn-outline" style="font-size: 0.85rem; padding: 8px 14px; background: #FFFFFF; color: #0F766E;" onclick="GiftsApp.exportCustomersToCSV()">
+                        <i class="fa-solid fa-file-arrow-down" style="color: #10B981;"></i> تصدير البيانات (CSV)
+                    </button>
+                    <button type="button" class="gifts-btn-primary" style="background: linear-gradient(135deg, #0D9488 0%, #0F766E 100%); font-size: 0.85rem; padding: 8px 16px;" onclick="GiftsApp.openAddCustomerModal()">
+                        <i class="fa-solid fa-user-plus"></i> إضافة عميل جديد
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Chips -->
+            <div class="gifts-quick-stats" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+                <div class="gifts-stat-chip" style="background: #FFFFFF; border: 1px solid #99F6E4;">
+                    <i class="fa-solid fa-users" style="color: #0D9488;"></i>
+                    <span class="chip-label">إجمالي العملاء المسجلين</span>
+                    <span class="chip-val" id="gifts-stat-cust-count" style="color: #0F766E;">0</span>
+                </div>
+                <div class="gifts-stat-chip" style="background: #FFFFFF; border: 1px solid #99F6E4;">
+                    <i class="fa-solid fa-gift" style="color: #E91E8C;"></i>
+                    <span class="chip-label">إجمالي البوكيهات المشتراة</span>
+                    <span class="chip-val" id="gifts-stat-cust-bouquets" style="color: var(--gifts-primary-dark);">0</span>
+                </div>
+                <div class="gifts-stat-chip" style="background: #FFFFFF; border: 1px solid #99F6E4;">
+                    <i class="fa-solid fa-coins" style="color: #D97706;"></i>
+                    <span class="chip-label">قيمة المشتريات الموثقة</span>
+                    <span class="chip-val" id="gifts-stat-cust-total-sales" style="color: #B45309;">0.00 ج.م</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Bar & Counter -->
+        <div style="margin: 16px 0; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+            <div class="gifts-search-box" style="flex: 1; min-width: 260px; max-width: 420px; position: relative;">
+                <input type="text" id="gifts-customers-search-input" class="gifts-input" placeholder="ابحث باسم العميل أو رقم الهاتف..." oninput="GiftsApp.onCustomersSearch(this.value)">
+            </div>
+            <span id="gifts-customers-count-badge" style="font-size: 0.85rem; font-weight: 700; color: var(--gifts-text-muted);">
+                0 عميل
+            </span>
+        </div>
+
+        <!-- Customers Grid -->
+        <div id="gifts-customers-container" class="gifts-customers-grid">
+            <!-- Rendered dynamically -->
+        </div>
+    </div>
+
+    <!-- ================================================================
+         MODALS FOR CUSTOMERS MANAGEMENT
+         ================================================================ -->
+    <div class="gifts-modal-overlay" id="gifts-modal-add-customer">
+        <div class="gifts-modal" style="max-width: 480px;">
+            <div class="gifts-modal-header" style="background: linear-gradient(135deg, #F0FDFA 0%, #CCFBF1 100%); border-bottom: 1.5px solid #99F6E4;">
+                <h4>
+                    <i class="fa-solid fa-user-plus" style="color: #0D9488;"></i>
+                    <span id="gifts-modal-add-customer-title" style="color: #0F766E;">إضافة عميل إلى دليل الهدايا</span>
+                </h4>
+                <button class="gifts-modal-close" onclick="GiftsApp.closeModal('gifts-modal-add-customer')" style="color: #0F766E;">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="gifts-modal-body" style="padding: 18px 22px;">
+                <input type="hidden" id="gifts-customer-edit-id">
+                <div class="gifts-form-group" style="margin-bottom: 12px;">
+                    <label style="font-weight: 700; margin-bottom: 5px; display: block; font-size: 0.88rem;">اسم العميل <span style="color: var(--gifts-primary);">*</span></label>
+                    <input type="text" id="gifts-customer-form-name" class="gifts-input" placeholder="اسم العميل الكامل">
+                </div>
+                <div class="gifts-form-group" style="margin-bottom: 12px;">
+                    <label style="font-weight: 700; margin-bottom: 5px; display: block; font-size: 0.88rem;">رقم الهاتف / الواتساب</label>
+                    <input type="tel" id="gifts-customer-form-phone" class="gifts-input" placeholder="01012345678" dir="ltr" style="text-align: right;">
+                </div>
+                <div class="gifts-form-group" style="margin-bottom: 0;">
+                    <label style="font-weight: 700; margin-bottom: 5px; display: block; font-size: 0.88rem;">ملاحظات عن العميل (اختياري)</label>
+                    <input type="text" id="gifts-customer-form-notes" class="gifts-input" placeholder="مثال: يفضل بوكيهات الشوكولاتة الداكنة">
+                </div>
+            </div>
+            <div class="gifts-modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                <button type="button" class="gifts-btn-outline" onclick="GiftsApp.closeModal('gifts-modal-add-customer')">إلغاء</button>
+                <button type="button" class="gifts-btn-primary" style="background: linear-gradient(135deg, #0D9488 0%, #0F766E 100%);" onclick="GiftsApp.saveCustomerForm()">
+                    <i class="fa-solid fa-check"></i> حفظ العميل
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>
