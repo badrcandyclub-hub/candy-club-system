@@ -1438,6 +1438,15 @@ window.lazyLoadGiftsModule = function(subtab = 'builder') {
 window.giftsReportsModuleLoaded = false;
 window.lazyLoadGiftsReportsModule = function(subtab = 'analytics') {
     let tabPane = document.getElementById('gifts-reports-tab');
+    if (!tabPane) {
+        let main = document.querySelector('main.app-content') || document.querySelector('main');
+        if (main) {
+            tabPane = document.createElement('section');
+            tabPane.id = 'gifts-reports-tab';
+            tabPane.className = 'tab-pane';
+            main.appendChild(tabPane);
+        }
+    }
     if (!tabPane) return;
 
     if (window.giftsReportsModuleLoaded && window.GiftsApp) {
@@ -10948,7 +10957,57 @@ window.handleLogout = function() {
     window.location.reload();
 };
 
+window.ensureGiftsReportsElements = function() {
+    // Ensure section exists in main
+    if (!document.getElementById('gifts-reports-tab')) {
+        let main = document.querySelector('main.app-content') || document.querySelector('main');
+        if (main) {
+            let sec = document.createElement('section');
+            sec.id = 'gifts-reports-tab';
+            sec.className = 'tab-pane';
+            sec.innerHTML = '<div id="gifts-reports-loading-placeholder" style="text-align:center; padding:60px 20px; color:#0F766E;"><i class="fa-solid fa-spinner fa-spin fa-2x" style="color: #0D9488;"></i><p style="margin-top:14px; font-weight: bold; font-size:1.05rem;">جاري تحميل تقارير الهدايا والبوكيهات...</p></div>';
+            main.appendChild(sec);
+        }
+    }
+
+    // Ensure sidebar button exists in #gifts-menu-group
+    let giftsGroup = document.getElementById('gifts-menu-group');
+    if (giftsGroup) {
+        let items = giftsGroup.querySelector('.menu-group-items');
+        if (items && !items.querySelector('[data-target="gifts-reports-tab"]')) {
+            let btn = document.createElement('button');
+            btn.className = 'nav-item';
+            btn.setAttribute('data-target', 'gifts-reports-tab');
+            btn.setAttribute('data-subtab', 'analytics');
+            btn.style.color = '#0d9488';
+            btn.innerHTML = '<span class="icon"><i class="fa-solid fa-chart-pie"></i></span><span class="label">تقارير الهدايا والبوكيهات</span>';
+            items.appendChild(btn);
+
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-pane').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                let targetElement = document.getElementById('gifts-reports-tab');
+                if (targetElement) targetElement.classList.add('active');
+                if (typeof window.lazyLoadGiftsReportsModule === 'function') {
+                    window.lazyLoadGiftsReportsModule('analytics');
+                }
+            });
+        }
+    }
+};
+
+// Run immediately and on DOM load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', window.ensureGiftsReportsElements);
+} else {
+    window.ensureGiftsReportsElements();
+}
+
 function applyPermissions() {
+    if (typeof window.ensureGiftsReportsElements === 'function') {
+        window.ensureGiftsReportsElements();
+    }
     if (!currentUser) return;
     
     let headerLogoSub = document.querySelector('.logo-sub');
@@ -10983,7 +11042,9 @@ function applyPermissions() {
         
         
         
-        if (hasPerm(permKey) || (permKey === "gifts_reports" && hasPerm("gifts-reports")) || isFullAccess) {
+        let hasGiftsPerm = hasPerm("gifts_reports") || hasPerm("gifts-reports") || hasPerm("gifts");
+        let allowed = (permKey === "gifts_reports" ? hasGiftsPerm : hasPerm(permKey)) || isFullAccess;
+        if (allowed) {
             btn.style.display = "flex";
             btn.classList.remove('locked-nav-item');
             btn.onclick = null; // restore normal click

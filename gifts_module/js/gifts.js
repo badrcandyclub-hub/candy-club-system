@@ -278,6 +278,59 @@
             if (custEl) custEl.textContent = (this.state.customers || []).length;
         },
 
+        // الانتقال المباشر إلى شاشة تقارير وعملاء الهدايا
+        openReportsScreen(subtab = 'analytics') {
+            const reportsNavBtn = document.querySelector('.nav-item[data-target="gifts-reports-tab"]');
+            if (reportsNavBtn) {
+                reportsNavBtn.click();
+                if (typeof this.switchReportsTab === 'function') {
+                    setTimeout(() => this.switchReportsTab(subtab), 60);
+                }
+                return;
+            }
+
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(c => c.classList.remove('active'));
+
+            let repPane = document.getElementById('gifts-reports-tab');
+            if (!repPane) {
+                let main = document.querySelector('main.app-content') || document.querySelector('main');
+                if (main) {
+                    repPane = document.createElement('section');
+                    repPane.id = 'gifts-reports-tab';
+                    repPane.className = 'tab-pane';
+                    main.appendChild(repPane);
+                }
+            }
+            if (repPane) repPane.classList.add('active');
+
+            if (typeof window.lazyLoadGiftsReportsModule === 'function') {
+                window.lazyLoadGiftsReportsModule(subtab);
+            }
+        },
+
+        // العودة المباشرة إلى قسم وتجميع الهدايا والبوكيهات
+        openGiftsScreen(subtab = 'showcase') {
+            const giftsNavBtn = document.querySelector('.nav-item[data-target="gifts-tab"]');
+            if (giftsNavBtn) {
+                giftsNavBtn.click();
+                if (typeof this.switchSubTab === 'function') {
+                    setTimeout(() => this.switchSubTab(subtab), 60);
+                }
+                return;
+            }
+
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(c => c.classList.remove('active'));
+
+            let giftsPane = document.getElementById('gifts-tab');
+            if (giftsPane) giftsPane.classList.add('active');
+
+            if (typeof window.lazyLoadGiftsModule === 'function') {
+                window.lazyLoadGiftsModule(subtab);
+            }
+        },
+
         // 3. جلب كتالوج المنتجات من Firebase المتزامن
         async loadCatalogProducts() {
             const statusEl = document.getElementById('gifts-catalog-status');
