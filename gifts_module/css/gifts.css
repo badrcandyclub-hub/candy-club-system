@@ -340,16 +340,17 @@
     padding: 24px;
     backdrop-filter: blur(10px);
     box-sizing: border-box;
+    position: relative;
 }
 
 /* Left Column on Desktop */
-.gifts-card-info { grid-column: 1; margin-bottom: 20px; }
-.gifts-card-basket { grid-column: 1; margin-bottom: 20px; }
-.gifts-card-camera { grid-column: 1; margin-bottom: 20px; }
-.gifts-card-totals { grid-column: 1; margin-bottom: 20px; }
+.gifts-card-info { grid-column: 1; margin-bottom: 20px; position: relative; z-index: 20; }
+.gifts-card-basket { grid-column: 1; margin-bottom: 20px; position: relative; z-index: 10; }
+.gifts-card-camera { grid-column: 1; margin-bottom: 20px; position: relative; z-index: 9; }
+.gifts-card-totals { grid-column: 1; margin-bottom: 20px; position: relative; z-index: 8; }
 
-/* Right Column on Desktop (Scanner Panel) */
-.gifts-card-scanner { grid-column: 2; grid-row: 1 / span 4; margin-bottom: 20px; }
+/* Right Column on Desktop (Scanner Panel - Highest Z-Index) */
+.gifts-card-scanner { grid-column: 2; grid-row: 1 / span 4; margin-bottom: 20px; position: relative !important; z-index: 1000 !important; overflow: visible !important; }
 
 /* Backward Compatibility with Left Panel */
 .gifts-draft-card {
@@ -2910,12 +2911,12 @@
         box-sizing: border-box !important;
     }
 
-    /* Strict Mobile Order Requested by User */
-    .gifts-card-info { order: 1 !important; }
-    .gifts-card-scanner { order: 2 !important; }
-    .gifts-card-basket { order: 3 !important; }
-    .gifts-card-camera { order: 4 !important; }
-    .gifts-card-totals { order: 5 !important; }
+    /* Strict Mobile Order Requested by User with Stacking Context Priority */
+    .gifts-card-info { order: 1 !important; position: relative !important; z-index: 20 !important; }
+    .gifts-card-scanner { order: 2 !important; position: relative !important; z-index: 1000 !important; overflow: visible !important; }
+    .gifts-card-basket { order: 3 !important; position: relative !important; z-index: 10 !important; }
+    .gifts-card-camera { order: 4 !important; position: relative !important; z-index: 9 !important; }
+    .gifts-card-totals { order: 5 !important; position: relative !important; z-index: 8 !important; }
 
     /* Legacy classes fallback */
     .gifts-scanner-panel {
