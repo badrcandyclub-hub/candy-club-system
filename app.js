@@ -11042,8 +11042,7 @@ function applyPermissions() {
         
         
         
-        let hasGiftsPerm = hasPerm("gifts_reports") || hasPerm("gifts-reports") || hasPerm("gifts");
-        let allowed = (permKey === "gifts_reports" ? hasGiftsPerm : hasPerm(permKey)) || isFullAccess;
+        let allowed = hasPerm(permKey) || isFullAccess;
         if (allowed) {
             btn.style.display = "flex";
             btn.classList.remove('locked-nav-item');
@@ -11096,7 +11095,31 @@ function applyPermissions() {
     }
 }
 
+window.ensureGiftsReportsAdminPermCard = function() {
+    let modal = document.getElementById('userModal');
+    if (!modal) return;
+    if (modal.querySelector('input[name="u-perms"][value="gifts_reports"]')) return;
+    
+    let giftsCard = modal.querySelector('input[name="u-perms"][value="gifts"]')?.closest('.perm-card') || 
+                    modal.querySelector('input[name="u-perms"][value="gifts"]')?.closest('label');
+                    
+    let card = document.createElement('label');
+    card.className = 'perm-card';
+    card.setAttribute('onclick', 'togglePermCard(this)');
+    card.innerHTML = '<input type="checkbox" name="u-perms" value="gifts_reports"> <span class="perm-icon" style="color: #0d9488;"><i class="fa-solid fa-chart-pie"></i></span> <span class="perm-text">تقارير الهدايا والبوكيهات</span>';
+
+    if (giftsCard && giftsCard.parentNode) {
+        giftsCard.parentNode.insertBefore(card, giftsCard.nextSibling);
+    } else {
+        let grid = modal.querySelector('.perms-grid') || modal.querySelector('[style*="grid"]');
+        if (grid) grid.appendChild(card);
+    }
+};
+
 window.openAddUserModal = function() {
+    if (typeof window.ensureGiftsReportsAdminPermCard === 'function') {
+        window.ensureGiftsReportsAdminPermCard();
+    }
     document.getElementById('user-mode').value = 'add';
     document.getElementById('u-username').value = '';
     document.getElementById('u-username').readOnly = false;
@@ -11106,13 +11129,20 @@ window.openAddUserModal = function() {
     document.getElementById('u-pass-req').style.display = 'inline';
     document.getElementById('u-status-group').style.display = 'none';
     
-    document.querySelectorAll('input[name="u-perms"]').forEach(c => c.checked = false);
+    document.querySelectorAll('input[name="u-perms"]').forEach(c => {
+        c.checked = false;
+        let card = c.closest('.perm-card');
+        if (card) card.classList.remove('active-perm');
+    });
     
     document.getElementById('userModalTitle').innerText = 'إضافة مستخدم جديد';
     document.getElementById('userModal').style.display = 'flex';
 };
 
 window.openEditUserModal = function(username, displayName, permsStr, status, password) {
+    if (typeof window.ensureGiftsReportsAdminPermCard === 'function') {
+        window.ensureGiftsReportsAdminPermCard();
+    }
     document.getElementById('user-mode').value = 'edit';
     document.getElementById('u-username').value = username;
     document.getElementById('u-username').readOnly = true; 
@@ -11129,7 +11159,14 @@ window.openEditUserModal = function(username, displayName, permsStr, status, pas
     
     let pList = permsStr ? String(permsStr).split(",") : [];
     checkboxes.forEach(c => {
-        if (pList.includes(c.value)) c.checked = true;
+        let card = c.closest('.perm-card');
+        if (pList.includes(c.value)) {
+            c.checked = true;
+            if (card) card.classList.add('active-perm');
+        } else {
+            c.checked = false;
+            if (card) card.classList.remove('active-perm');
+        }
     });
     
     document.getElementById('userModalTitle').innerText = 'تعديل بيانات المستخدم';
