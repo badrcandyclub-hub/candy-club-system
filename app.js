@@ -11214,6 +11214,9 @@ window.handleUserSubmit = async function(e) {
 
 
 window.loadUsersList = function() {
+    if (typeof window.ensureGiftsReportsAdminPermCard === 'function') {
+        window.ensureGiftsReportsAdminPermCard();
+    }
     let tbody = document.getElementById('usersTbody');
     if (!tbody) return;
     
