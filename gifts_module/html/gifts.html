@@ -66,22 +66,24 @@
     <!-- ================================================================
          SUB-VIEW 1: BOUQUET BUILDER
          ================================================================ -->
+    <!-- ================================================================
+         SUB-VIEW 1: BOUQUET BUILDER
+         ================================================================ -->
     <div id="gifts-view-builder" class="gifts-subview active">
         <div class="gifts-builder-grid">
 
-            <!-- Left Panel: Draft and Basket -->
-            <div class="gifts-draft-card">
+            <!-- 1. Basic Info Card (اسم البوكيه والمسؤول عن التصميم والكمية) -->
+            <div class="gifts-builder-card gifts-card-info fg-pink-lavender">
                 <div class="gifts-section-header">
                     <h4>
-                        <i class="fa-solid fa-basket-shopping" style="color: var(--gifts-primary);"></i>
-                        مكونات وتفاصيل البوكيه
+                        <i class="fa-solid fa-wand-magic-sparkles" style="color: var(--gifts-primary);"></i>
+                        بيانات وتصميم البوكيه
                     </h4>
                     <button type="button" class="gifts-btn-outline" onclick="GiftsApp.switchSubTab('showcase')" title="تصفح المعرض للنسخ والتكرار">
                         <i class="fa-solid fa-gift"></i> نسخ من المعرض
                     </button>
                 </div>
 
-                <!-- Basic Info Fields -->
                 <div class="gifts-form-group fg-pink">
                     <label>اسم البوكيه أو الوصف</label>
                     <input type="text" id="gifts-input-name" class="gifts-input" placeholder="مثال: بوكيه ميكس كيت كات وشوكولاتة" oninput="GiftsApp.onDraftChanged()">
@@ -97,78 +99,10 @@
                         <input type="number" id="gifts-input-qty" class="gifts-input" value="1" min="1" oninput="GiftsApp.onDraftChanged()">
                     </div>
                 </div>
-
-                <!-- Camera & Photo Capture with Canvas Compression -->
-                <div class="gifts-form-group fg-mint">
-                    <label>صورة البوكيه (رفع مباشر إلى Google Drive)</label>
-                    <div class="gifts-camera-container" id="gifts-camera-box">
-                        <video id="gifts-camera-stream" class="gifts-camera-video" playsinline></video>
-                        <img id="gifts-image-preview" class="gifts-camera-preview" alt="معاينة الصورة">
-                        
-                        <div id="gifts-camera-placeholder">
-                            <i class="fa-solid fa-camera" style="font-size: 2.2rem; color: #F472B6; margin-bottom: 8px;"></i>
-                            <div style="font-size: 0.85rem; color: var(--gifts-text-muted); font-weight: 700;">التقط صورة للبوكيه أو ارفعها من المعرض</div>
-                        </div>
-
-                        <div class="gifts-camera-btns" style="margin-top: 10px;">
-                            <button type="button" class="gifts-btn-outline" id="gifts-btn-open-camera" onclick="GiftsApp.startCamera()">
-                                <i class="fa-solid fa-camera"></i> فتح الكاميرا
-                            </button>
-                            <button type="button" class="gifts-btn-outline" id="gifts-btn-snap" style="display: none;" onclick="GiftsApp.capturePhoto()">
-                                <i class="fa-solid fa-camera-retro"></i> التقاط
-                            </button>
-                            <label class="gifts-btn-outline" style="cursor: pointer; margin: 0;">
-                                <i class="fa-solid fa-upload"></i> من الصور
-                                <input type="file" id="gifts-file-input" accept="image/*" style="display: none;" onchange="GiftsApp.handleFileUpload(event)">
-                            </label>
-                            <button type="button" class="gifts-btn-outline" id="gifts-btn-remove-photo" style="display: none; color: var(--gifts-red);" onclick="GiftsApp.removePhoto()">
-                                <i class="fa-solid fa-trash"></i> حذف
-                            </button>
-                        </div>
-                        <div id="gifts-compression-info" class="gifts-compression-badge" style="display: none;"></div>
-                    </div>
-                </div>
-
-                <!-- Chosen Items Basket -->
-                <div class="gifts-form-group fg-amber">
-                    <label style="display: flex; justify-content: space-between;">
-                        <span>الأصناف المضافة داخل البوكيه</span>
-                        <span id="gifts-basket-count" style="color: var(--gifts-primary); font-weight: 900;">0 أصناف</span>
-                    </label>
-                    <div class="gifts-basket-container" id="gifts-basket-items">
-                        <div class="gifts-empty-state" style="padding: 24px 10px;">
-                            <i class="fa-solid fa-basket-shopping" style="font-size: 2rem; color: #CBD5E1; margin-bottom: 8px;"></i>
-                            <div style="font-size: 0.88rem; font-weight: 700;">لم يتم اختيار أصناف بعد، امسح الباركود أو ابحث باسم الصنف للإضافة</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Totals Box -->
-                <div class="gifts-totals-box">
-                    <div class="gifts-totals-row">
-                        <span>إجمالي عدد القطع:</span>
-                        <span id="gifts-total-units" style="font-weight: 800;">0 قطعة</span>
-                    </div>
-                    <div class="gifts-totals-row">
-                        <span>السعر الإجمالي للبوكيه:</span>
-                        <span id="gifts-total-price">0.00 ج.م</span>
-                    </div>
-                </div>
-
-                <!-- Draft Actions -->
-                <div class="gifts-draft-actions">
-                    <button type="button" id="gifts-btn-save-bouquet" class="gifts-btn-primary" onclick="GiftsApp.saveBouquet()">
-                        <i class="fa-solid fa-floppy-disk" id="gifts-btn-save-icon"></i>
-                        <span id="gifts-btn-save-label">حفظ البوكيه وعرضه في المحل</span>
-                    </button>
-                    <button type="button" class="gifts-btn-outline" style="color: var(--gifts-red); width: 100%; margin-top: 6px;" onclick="GiftsApp.clearDraft()">
-                        <i class="fa-solid fa-trash-can"></i> مسح السلة وتفريغ الأصناف
-                    </button>
-                </div>
             </div>
 
-            <!-- Right Panel: Smart Barcode Scanner & Fast Product Search -->
-            <div class="gifts-scanner-panel">
+            <!-- 2. Scanner & Search Panel (الاسكان والسيرش وبطاقة الصنف المختار) -->
+            <div class="gifts-builder-card gifts-card-scanner">
                 <div class="gifts-section-header">
                     <h4>
                         <i class="fa-solid fa-barcode" style="color: var(--gifts-primary);"></i>
@@ -213,45 +147,58 @@
                     </div>
                 </div>
 
-                <!-- Selected / Scanned Product Card (بطاقة الصنف الممسوح) -->
+                <!-- Selected / Scanned Product Card (بطاقة الصنف الممسوح المحسنة) -->
                 <div class="gifts-found-card" id="gifts-found-card">
                     <div class="gifts-found-header">
-                        <div>
-                            <h3 class="gifts-found-title" id="gifts-found-title">اسم الصنف المختار</h3>
-                            <div class="gifts-found-barcode" id="gifts-found-barcode">000000000000</div>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div class="gifts-found-icon">
+                                <i class="fa-solid fa-gift"></i>
+                            </div>
+                            <div>
+                                <h3 class="gifts-found-title" id="gifts-found-title">اسم الصنف المختار</h3>
+                                <div class="gifts-found-barcode" id="gifts-found-barcode">الباركود: 000000000000</div>
+                            </div>
                         </div>
-                        <span id="gifts-found-stock-badge" class="gifts-badge badge-ready" style="position: static;">متوفر</span>
+                        <span id="gifts-found-stock-badge" class="gifts-badge badge-ready">متوفر</span>
                     </div>
 
                     <div class="gifts-found-grid">
-                        <div>
-                            <span style="font-size: 0.85rem; color: var(--gifts-text-muted);">سعر القطعة:</span>
-                            <div style="display: flex; align-items: center; gap: 6px; margin-top: 4px;">
+                        <div class="gifts-found-field">
+                            <label class="gifts-found-label">سعر القطعة</label>
+                            <div class="gifts-found-input-wrap">
                                 <input type="number" id="gifts-found-price-input" class="gifts-found-price-input" step="any" min="0" oninput="GiftsApp.onFoundPriceChanged(this.value)" onkeydown="if(event.key === 'Enter') { event.preventDefault(); GiftsApp.confirmAddScannedProduct(); }">
-                                <span style="font-weight: 800; font-size: 0.95rem; color: var(--gifts-primary-dark);">ج.م</span>
+                                <span class="gifts-currency-tag">ج.م</span>
                             </div>
                         </div>
 
-                        <div>
-                            <span style="font-size: 0.85rem; color: var(--gifts-text-muted);">الوزن (بالجرام):</span>
-                            <div style="display: flex; align-items: center; gap: 6px; margin-top: 4px;">
-                                <input type="number" id="gifts-found-weight-input" class="gifts-found-price-input" style="width: 120px;" min="0" step="1" placeholder="أرقام فقط مثال: 100" oninput="GiftsApp.onFoundWeightChanged(this.value)" onkeydown="if(event.key === 'Enter') { event.preventDefault(); GiftsApp.confirmAddScannedProduct(); }">
-                                <span style="font-weight: 800; font-size: 0.9rem; color: var(--gifts-text-muted);">جرام</span>
+                        <div class="gifts-found-field">
+                            <label class="gifts-found-label">الوزن (جرام - اختياري)</label>
+                            <div class="gifts-found-input-wrap">
+                                <input type="number" id="gifts-found-weight-input" class="gifts-found-price-input" min="0" step="1" placeholder="مثال: 100" oninput="GiftsApp.onFoundWeightChanged(this.value)" onkeydown="if(event.key === 'Enter') { event.preventDefault(); GiftsApp.confirmAddScannedProduct(); }">
+                                <span class="gifts-currency-tag">جم</span>
                             </div>
                         </div>
 
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <span style="font-weight: 800; font-size: 0.9rem;">الكمية:</span>
-                            <div class="gifts-basket-actions">
+                        <div class="gifts-found-field gifts-found-qty-field">
+                            <label class="gifts-found-label">الكمية المطلوبة</label>
+                            <div class="gifts-basket-actions gifts-found-stepper">
                                 <button type="button" class="gifts-stepper-btn" onclick="GiftsApp.updateFoundQty(-1)">-</button>
-                                <span class="gifts-stepper-val" id="gifts-found-qty" style="font-size: 1.1rem; min-width: 32px;">1</span>
+                                <span class="gifts-stepper-val" id="gifts-found-qty">1</span>
                                 <button type="button" class="gifts-stepper-btn" onclick="GiftsApp.updateFoundQty(1)">+</button>
                             </div>
                         </div>
                     </div>
 
-                    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px;">
-                        <button type="button" class="gifts-btn-outline" onclick="GiftsApp.closeFoundCard()">إلغاء</button>
+                    <!-- Live Subtotal Bar -->
+                    <div class="gifts-found-subtotal-bar">
+                        <span>إجمالي هذا الصنف:</span>
+                        <strong id="gifts-found-subtotal-val">0.00 ج.م</strong>
+                    </div>
+
+                    <div class="gifts-found-actions">
+                        <button type="button" class="gifts-btn-outline gifts-btn-found-cancel" onclick="GiftsApp.closeFoundCard()">
+                            <i class="fa-solid fa-xmark"></i> إلغاء
+                        </button>
                         <button type="button" class="gifts-btn-add-bouquet" onclick="GiftsApp.confirmAddScannedProduct()">
                             <i class="fa-solid fa-plus"></i> إضافة الصنف للبوكيه
                         </button>
@@ -268,7 +215,86 @@
                         <!-- List of items added to draft -->
                     </div>
                 </div>
+            </div>
 
+            <!-- 3. Chosen Items Basket (الأصناف المضافة داخل البوكيه) -->
+            <div class="gifts-builder-card gifts-card-basket fg-amber">
+                <div class="gifts-section-header">
+                    <h4>
+                        <i class="fa-solid fa-basket-shopping" style="color: var(--gifts-primary);"></i>
+                        الأصناف المضافة داخل البوكيه
+                    </h4>
+                    <span id="gifts-basket-count" style="color: var(--gifts-primary); font-weight: 900;">0 أصناف</span>
+                </div>
+
+                <div class="gifts-basket-container" id="gifts-basket-items">
+                    <div class="gifts-empty-state" style="padding: 24px 10px;">
+                        <i class="fa-solid fa-basket-shopping" style="font-size: 2rem; color: #CBD5E1; margin-bottom: 8px;"></i>
+                        <div style="font-size: 0.88rem; font-weight: 700;">لم يتم اختيار أصناف بعد، امسح الباركود أو ابحث باسم الصنف للإضافة</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Camera & Google Drive Photo (صورة البوكيه) -->
+            <div class="gifts-builder-card gifts-card-camera fg-mint">
+                <div class="gifts-section-header">
+                    <h4>
+                        <i class="fa-solid fa-cloud-arrow-up" style="color: var(--gifts-teal);"></i>
+                        صورة البوكيه (رفع مباشر إلى Google Drive)
+                    </h4>
+                </div>
+                <div class="gifts-camera-container" id="gifts-camera-box">
+                    <video id="gifts-camera-stream" class="gifts-camera-video" playsinline></video>
+                    <img id="gifts-image-preview" class="gifts-camera-preview" alt="معاينة الصورة">
+                    
+                    <div id="gifts-camera-placeholder">
+                        <i class="fa-solid fa-camera" style="font-size: 2.2rem; color: #F472B6; margin-bottom: 8px;"></i>
+                        <div style="font-size: 0.85rem; color: var(--gifts-text-muted); font-weight: 700;">التقط صورة للبوكيه أو ارفعها من المعرض</div>
+                    </div>
+
+                    <div class="gifts-camera-btns" style="margin-top: 10px;">
+                        <button type="button" class="gifts-btn-outline" id="gifts-btn-open-camera" onclick="GiftsApp.startCamera()">
+                            <i class="fa-solid fa-camera"></i> فتح الكاميرا
+                        </button>
+                        <button type="button" class="gifts-btn-outline" id="gifts-btn-snap" style="display: none;" onclick="GiftsApp.capturePhoto()">
+                            <i class="fa-solid fa-camera-retro"></i> التقاط
+                        </button>
+                        <label class="gifts-btn-outline" style="cursor: pointer; margin: 0;">
+                            <i class="fa-solid fa-upload"></i> من الصور
+                            <input type="file" id="gifts-file-input" accept="image/*" style="display: none;" onchange="GiftsApp.handleFileUpload(event)">
+                        </label>
+                        <button type="button" class="gifts-btn-outline" id="gifts-btn-remove-photo" style="display: none; color: var(--gifts-red);" onclick="GiftsApp.removePhoto()">
+                            <i class="fa-solid fa-trash"></i> حذف
+                        </button>
+                    </div>
+                    <div id="gifts-compression-info" class="gifts-compression-badge" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- 5. Totals & Save Actions (إجمالي القطع والسعر وزر حفظ البوكيه وعرضه في المحل) -->
+            <div class="gifts-builder-card gifts-card-totals">
+                <!-- Totals Box -->
+                <div class="gifts-totals-box">
+                    <div class="gifts-totals-row">
+                        <span>إجمالي عدد القطع:</span>
+                        <span id="gifts-total-units" style="font-weight: 800;">0 قطعة</span>
+                    </div>
+                    <div class="gifts-totals-row">
+                        <span>السعر الإجمالي للبوكيه:</span>
+                        <span id="gifts-total-price">0.00 ج.م</span>
+                    </div>
+                </div>
+
+                <!-- Draft Actions -->
+                <div class="gifts-draft-actions">
+                    <button type="button" id="gifts-btn-save-bouquet" class="gifts-btn-primary" onclick="GiftsApp.saveBouquet()">
+                        <i class="fa-solid fa-floppy-disk" id="gifts-btn-save-icon"></i>
+                        <span id="gifts-btn-save-label">حفظ البوكيه وعرضه في المحل</span>
+                    </button>
+                    <button type="button" class="gifts-btn-outline" style="color: var(--gifts-red); width: 100%; margin-top: 6px;" onclick="GiftsApp.clearDraft()">
+                        <i class="fa-solid fa-trash-can"></i> مسح السلة وتفريغ الأصناف
+                    </button>
+                </div>
             </div>
 
         </div>

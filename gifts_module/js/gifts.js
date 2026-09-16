@@ -363,13 +363,13 @@
 
             dropdown.innerHTML = matches.map((p, idx) => `
                 <div class="gifts-autocomplete-item" onclick="GiftsApp.selectFoundProductByIndex(${idx})">
-                    <div style="flex: 1;">
+                    <div style="flex: 1; padding-left: 8px;">
                         <div class="item-title">${p.name}</div>
                         <div class="item-meta">باركود: ${p.barcode} | متبقي بالمخزن: ${p.stock}</div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
                         <span class="item-price">${p.price > 0 ? p.price.toFixed(2) + ' ج.م' : 'سعر مخصص'}</span>
-                        <button type="button" class="gifts-btn-outline" style="padding: 4px 10px; font-size: 0.8rem;">اختيار</button>
+                        <button type="button" class="gifts-btn-outline" style="padding: 5px 12px; font-size: 0.82rem;" onclick="event.stopPropagation(); GiftsApp.selectFoundProductByIndex(${idx})">اختيار</button>
                     </div>
                 </div>
             `).join('');
@@ -408,7 +408,10 @@
             if (product) {
                 this.selectFoundProduct(product);
                 const input = document.getElementById('gifts-scanner-input');
-                if (input) input.value = '';
+                if (input) {
+                    input.value = '';
+                    input.blur();
+                }
                 const dropdown = document.getElementById('gifts-autocomplete-dropdown');
                 if (dropdown) dropdown.style.display = 'none';
             } else {
@@ -423,7 +426,24 @@
             }
         },
 
-        // اختيار الصنف الممسوح وإظهار بطاقة الإضافة وتجهيز السعر والحجم
+        // حساب وتحديث إجمالي الصنف الممسوح لحظيا داخل البطاقة
+        updateFoundSubtotal() {
+            const subtotalEl = document.getElementById('gifts-found-subtotal-val');
+            if (!subtotalEl) return;
+            const qty = this.state.foundProductQty || 1;
+            let price = 0;
+            const priceInput = document.getElementById('gifts-found-price-input');
+            if (priceInput && priceInput.value !== '') {
+                const parsed = parseFloat(priceInput.value);
+                if (!isNaN(parsed) && parsed >= 0) price = parsed;
+            } else if (this.state.foundProductCustomPrice !== undefined && this.state.foundProductCustomPrice !== '') {
+                const parsed = parseFloat(this.state.foundProductCustomPrice);
+                if (!isNaN(parsed) && parsed >= 0) price = parsed;
+            }
+            subtotalEl.innerText = `${(price * qty).toFixed(2)} ج.م`;
+        },
+
+        // اختيار الصنف الممسوح وإظهار بطاقة الإضافة وتجهيز السعر والوزن
         selectFoundProduct(productOrBarcode) {
             let product = null;
             if (typeof productOrBarcode === 'object' && productOrBarcode !== null) {
@@ -448,8 +468,11 @@
             const dropdown = document.getElementById('gifts-autocomplete-dropdown');
             const searchInput = document.getElementById('gifts-scanner-input');
 
-            // تنظيف حقل البحث وإخفاء قائمة الاقتراحات
-            if (searchInput) searchInput.value = '';
+            // تنظيف حقل البحث وإخفاء الاقتراحات وإغلاق كيبورد الموبايل
+            if (searchInput) {
+                searchInput.value = '';
+                searchInput.blur();
+            }
             if (dropdown) dropdown.style.display = 'none';
 
             if (titleEl) titleEl.innerText = product.name;
@@ -478,6 +501,8 @@
                 }
             }
 
+            this.updateFoundSubtotal();
+
             if (card) {
                 card.style.display = 'block';
                 card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -494,6 +519,7 @@
         onFoundPriceChanged(val) {
             const num = parseFloat(val);
             this.state.foundProductCustomPrice = (!isNaN(num) && num >= 0) ? num : 0;
+            this.updateFoundSubtotal();
         },
 
         onFoundWeightChanged(val) {
@@ -507,6 +533,7 @@
             this.state.foundProductQty = next;
             const qtyEl = document.getElementById('gifts-found-qty');
             if (qtyEl) qtyEl.innerText = next;
+            this.updateFoundSubtotal();
         },
 
         closeFoundCard() {
@@ -595,17 +622,21 @@
                 return;
             }
 
-            // عرض آخر 4 أصناف مضافة
-            const reversed = [...items].reverse().slice(0, 4);
-            container.innerHTML = reversed.map(item => `
-                <div style="display: flex; justify-content: space-between; align-items: center; background: #FFFFFF; border: 1px solid var(--gifts-border-pink); border-radius: var(--gifts-radius-sm); padding: 8px 14px;">
-                    <div>
+            // عرض آخر 4 أصناف مضافة مع إمكانية الحذف المباشر
+            const indexedItems = items.map((item, originalIdx) => ({ item, originalIdx }));
+            const reversed = indexedItems.reverse().slice(0, 4);
+            container.innerHTML = reversed.map(({ item, originalIdx }) => `
+                <div style="display: flex; justify-content: space-between; align-items: center; background: #FFFFFF; border: 1px solid var(--gifts-border-pink); border-radius: var(--gifts-radius-sm); padding: 8px 12px;">
+                    <div style="flex: 1; padding-left: 8px;">
                         <div style="font-size: 0.88rem; font-weight: 800; color: var(--gifts-text);">${item.name}</div>
                         <div style="font-size: 0.75rem; color: var(--gifts-text-muted);">${item.barcode}</div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <span style="font-weight: 900; color: var(--gifts-primary-dark); font-size: 0.88rem;">${item.qty} قطعة</span>
                         <span style="font-size: 0.82rem; color: var(--gifts-text-muted);">${(item.price * item.qty).toFixed(2)} ج.م</span>
+                        <button type="button" class="gifts-basket-remove" title="حذف هذا الصنف من البوكيه" onclick="GiftsApp.removeItemFromDraftByIndex(${originalIdx})">
+                            <i class="fa-solid fa-trash-can" style="color: var(--gifts-red); font-size: 0.88rem;"></i>
+                        </button>
                     </div>
                 </div>
             `).join('');
@@ -789,11 +820,13 @@
         },
 
         removeItemFromDraftByIndex(index) {
-            if (!this.state.draft.items[index]) return;
+            if (!this.state.draft.items || !this.state.draft.items[index]) return;
+            const removed = this.state.draft.items[index];
             this.state.draft.items.splice(index, 1);
             this.onDraftChanged();
             this.renderDraftBasket();
             this.renderRecentAddedList();
+            this.showToastNotification(`تم حذف "${removed.name}" من البوكيه`);
         },
 
         updateItemQty(barcode, delta) {
