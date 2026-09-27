@@ -383,13 +383,32 @@ async function handleSupabaseRequest(url, options) {
                 break;
             }
             case 'getAttendance': {
-                let query = supabase.from('attendance').select('*').order('date', { ascending: true });
+                let query = supabase.from('attendance').select('*').order('date', { ascending: true }).order('id', { ascending: true });
                 if (params.employee) query = query.eq('employee_name', params.employee);
                 if (params.exactDate) query = query.eq('date', params.exactDate);
                 else if (params.month) query = query.like('date', params.month + '-%');
                 
                 const { data: attData } = await fetchAllSupabaseRows(query);
-                responseData.attendance = (attData || []).map(r => ({
+                
+                // Deduplicate by employee + date to ensure all views (employee, manager, PDF export) match perfectly
+                const dedupedMap = new Map();
+                (attData || []).forEach(r => {
+                    const key = `${r.employee_name}___${r.date}`;
+                    if (!dedupedMap.has(key)) {
+                        dedupedMap.set(key, r);
+                    } else {
+                        const existing = dedupedMap.get(key);
+                        const hasCheckOut = r.check_out && r.check_out !== '-' && String(r.check_out).trim() !== '';
+                        const existHasCheckOut = existing.check_out && existing.check_out !== '-' && String(existing.check_out).trim() !== '';
+                        if (hasCheckOut && !existHasCheckOut) {
+                            dedupedMap.set(key, r);
+                        } else if (r.status === 'حاضر' && existing.status !== 'حاضر') {
+                            dedupedMap.set(key, r);
+                        }
+                    }
+                });
+
+                responseData.attendance = Array.from(dedupedMap.values()).map(r => ({
                     id: r.id, employee: r.employee_name, date: r.date, checkIn: r.check_in, checkOut: r.check_out,
                     hours: r.hours, status: r.status, notes: r.notes, requestStatus: r.request_status
                 }));
@@ -718,12 +737,53 @@ async function handleSupabaseRequest(url, options) {
                 responseData = { success: true };
                 break;
             case 'editAttendance': {
-                const { data: existAtt } = await supabase.from('attendance').select('*').eq('employee_name', params.employeeName).eq('date', params.date);
-                if (existAtt && existAtt.length > 0) {
-                    const { error: editErr } = await supabase.from('attendance').update({ check_in: params.checkIn, check_out: params.checkOut, hours: params.hours, status: params.status, notes: params.notes }).eq('id', existAtt[0].id);
+                let targetId = params.recordId ? parseInt(params.recordId, 10) : null;
+                
+                // If recordId not provided or invalid, find existing record by employee and date
+                if (!targetId) {
+                    const { data: existAtt } = await supabase.from('attendance')
+                        .select('id')
+                        .eq('employee_name', params.employeeName)
+                        .eq('date', params.date)
+                        .order('id', { ascending: true })
+                        .limit(1);
+                    if (existAtt && existAtt.length > 0) {
+                        targetId = existAtt[0].id;
+                    }
+                }
+
+                if (targetId) {
+                    const { error: editErr } = await supabase.from('attendance')
+                        .update({
+                            check_in: params.checkIn,
+                            check_out: params.checkOut,
+                            hours: params.hours,
+                            status: params.status,
+                            notes: params.notes
+                        })
+                        .eq('id', targetId);
                     if (editErr) return createJsonResponse({ success: false, error: editErr.message });
+                    
+                    // Clean up any other duplicate records for this employee on this date to eliminate ghost rows
+                    try {
+                        await supabase.from('attendance')
+                            .delete()
+                            .eq('employee_name', params.employeeName)
+                            .eq('date', params.date)
+                            .neq('id', targetId);
+                    } catch(cleanErr) {
+                        console.warn('Duplicate cleanup warning:', cleanErr);
+                    }
                 } else {
-                    const { error: insAttErr } = await supabase.from('attendance').insert([{ employee_name: params.employeeName, date: params.date, check_in: params.checkIn, check_out: params.checkOut, hours: params.hours, status: params.status || 'حاضر', notes: params.notes }]);
+                    const { error: insAttErr } = await supabase.from('attendance').insert([{
+                        employee_name: params.employeeName,
+                        date: params.date,
+                        check_in: params.checkIn,
+                        check_out: params.checkOut,
+                        hours: params.hours,
+                        status: params.status || 'حاضر',
+                        notes: params.notes
+                    }]);
                     if (insAttErr) return createJsonResponse({ success: false, error: insAttErr.message });
                 }
                 responseData = { success: true };
@@ -1068,7 +1128,13 @@ function calculateAttendanceHoursString(inTimeStr, outTimeStr, inDate, outDate) 
             let d1 = new Date(inDate + 'T00:00:00');
             let d2 = new Date(outDate + 'T00:00:00');
             let days = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
-            if (days > 0) diffMins += days * 24 * 60;
+            if (days === 1) {
+                // Legitimate overnight shift (e.g. 10 PM to 6 AM)
+                diffMins += 24 * 60;
+            } else if (days > 1) {
+                // Multi-day gap (forgot to checkout days ago) -> calculate as normal shift within 24h
+                if (diffMins < 0) diffMins += 24 * 60;
+            }
         } catch(e) {}
     } else if (diffMins < 0) {
         diffMins += 24 * 60;
@@ -11807,9 +11873,11 @@ function updateHrButtons() {
 }
 
 function handleCheckIn() {
+    if (window._isHrProcessing) return;
     if (!hrIsInRange) { showToast('يجب أن تكون داخل نطاق الفرع', 'error'); return; }
     if (!currentUser) { showToast('يرجى تسجيل الدخول أولاً', 'error'); return; }
 
+    window._isHrProcessing = true;
     let btn = document.getElementById('checkInBtn');
     if (btn) {
         btn.disabled = true;
@@ -11842,6 +11910,7 @@ function handleCheckIn() {
             loadMyAttendance();
         })
         .finally(() => {
+            window._isHrProcessing = false;
             if (btn) {
                 btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> تسجيل حضور';
                 btn.disabled = false;
@@ -11851,9 +11920,11 @@ function handleCheckIn() {
 }
 
 function handleCheckOut() {
+    if (window._isHrProcessing) return;
     if (!hrIsInRange) { showToast('يجب أن تكون داخل نطاق الفرع', 'error'); return; }
     if (!currentUser) return;
 
+    window._isHrProcessing = true;
     let btn = document.getElementById('checkOutBtn');
     if (btn) {
         btn.disabled = true;
@@ -11888,6 +11959,7 @@ function handleCheckOut() {
             loadMyAttendance();
         })
         .finally(() => {
+            window._isHrProcessing = false;
             if (btn) {
                 btn.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> تسجيل انصراف';
                 btn.disabled = false;
@@ -12188,7 +12260,7 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
                 html += `<td style="padding:10px; text-align:center; font-weight:bold; color:#c62828; font-size:0.85rem;">${r.checkOut || '-'}</td>`;
                 html += `<td style="padding:10px; text-align:center; font-weight:900; color:#1a237e; font-size:0.9rem;">${formatHoursDisplay(r.hours)}</td>`;
                 html += `<td style="padding:10px; text-align:center;"><span style="background:${color}20; color:${color}; padding:4px 10px; border-radius:20px; font-size:0.78rem; font-weight:bold; white-space:nowrap;">${r.status}</span></td>`;
-                html += `<td style="padding:10px; text-align:center;"><button class="interactive-btn" onclick="openEditAttendanceModal('${empName}','${r.date}','${r.checkIn||''}','${r.checkOut||''}','${r.status||''}','${safeNotes}','${r.hours||''}')" style="background:linear-gradient(135deg,#ff9800,#ef6c00); color:white; border:none; padding:7px 12px; border-radius:8px; cursor:pointer; font-size:0.8rem; display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-pen"></i></button></td>`;
+                html += `<td style="padding:10px; text-align:center;"><button class="interactive-btn" onclick="openEditAttendanceModal('${empName}','${r.date}','${r.checkIn||''}','${r.checkOut||''}','${r.status||''}','${safeNotes}','${r.hours||''}','${r.id||''}')" style="background:linear-gradient(135deg,#ff9800,#ef6c00); color:white; border:none; padding:7px 12px; border-radius:8px; cursor:pointer; font-size:0.8rem; display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-pen"></i></button></td>`;
                 html += '</tr>';
             });
         }
@@ -12256,7 +12328,7 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
                     html += `<td style="padding:10px; text-align:center; font-weight:bold; color:#c62828; font-size:0.85rem;">${r.checkOut || '-'}</td>`;
                     html += `<td style="padding:10px; text-align:center; font-weight:900; color:#1a237e; font-size:0.9rem;" dir="ltr">${displayHours}</td>`;
                     html += `<td style="padding:10px; text-align:center;"><span style="background:${color}20; color:${color}; padding:4px 10px; border-radius:20px; font-size:0.78rem; font-weight:bold; white-space:nowrap;">${r.status}</span></td>`;
-                    html += `<td style="padding:10px; text-align:center;"><button class="interactive-btn" onclick="openEditAttendanceModal('${empName}','${r.date}','${r.checkIn||''}','${r.checkOut||''}','${r.status||''}','${safeNotes}','${r.hours||''}')" style="background:linear-gradient(135deg,#ff9800,#ef6c00); color:white; border:none; padding:7px 12px; border-radius:8px; cursor:pointer; font-size:0.8rem; display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-pen"></i></button></td>`;
+                    html += `<td style="padding:10px; text-align:center;"><button class="interactive-btn" onclick="openEditAttendanceModal('${empName}','${r.date}','${r.checkIn||''}','${r.checkOut||''}','${r.status||''}','${safeNotes}','${r.hours||''}','${r.id||''}')" style="background:linear-gradient(135deg,#ff9800,#ef6c00); color:white; border:none; padding:7px 12px; border-radius:8px; cursor:pointer; font-size:0.8rem; display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-pen"></i></button></td>`;
                     html += '</tr>';
                 });
                 
@@ -12432,7 +12504,7 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
                     html += `<td style="padding:10px; text-align:center; font-weight:bold; color:#c62828; font-size:0.85rem;">${r.checkOut || '-'}</td>`;
                     html += `<td style="padding:10px; text-align:center; font-weight:900; color:#1a237e; font-size:0.9rem;" dir="ltr">${displayHours}</td>`;
                     html += `<td style="padding:10px; text-align:center;"><span style="background:${color}20; color:${color}; padding:4px 10px; border-radius:20px; font-size:0.78rem; font-weight:bold; white-space:nowrap;">${r.status}</span></td>`;
-                    html += `<td style="padding:10px; text-align:center;"><button class="interactive-btn" onclick="openEditAttendanceModal('${empNameEscaped}','${dateStr}','${r.checkIn||''}','${r.checkOut||''}','${r.status||''}','${safeNotes}','${r.hours||''}')" style="background:linear-gradient(135deg,#ff9800,#ef6c00); color:white; border:none; padding:7px 12px; border-radius:8px; cursor:pointer; font-size:0.8rem; display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-pen"></i></button></td>`;
+                    html += `<td style="padding:10px; text-align:center;"><button class="interactive-btn" onclick="openEditAttendanceModal('${empNameEscaped}','${dateStr}','${r.checkIn||''}','${r.checkOut||''}','${r.status||''}','${safeNotes}','${r.hours||''}','${r.id||''}')" style="background:linear-gradient(135deg,#ff9800,#ef6c00); color:white; border:none; padding:7px 12px; border-radius:8px; cursor:pointer; font-size:0.8rem; display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-pen"></i></button></td>`;
                     html += '</tr>';
                 } else if (isFuture) {
                     html += `<tr style="background:#fafafa; border-bottom:1px solid #eee; opacity:0.6;">`;
@@ -12735,8 +12807,8 @@ window.syncAttendanceEditorValue = function(targetKey) {
     calcEditHours();
 };
 
-window.openEditAttendanceModal = function(employee, date, checkIn, checkOut, status, notes, hoursStr) {
-    _editAttData = { employee, date };
+window.openEditAttendanceModal = function(employee, date, checkIn, checkOut, status, notes, hoursStr, recordId = null) {
+    _editAttData = { id: recordId || null, employee, date };
 
     let modal = document.getElementById('editAttendanceModal');
     if (!modal) return;
@@ -12751,28 +12823,21 @@ window.openEditAttendanceModal = function(employee, date, checkIn, checkOut, sta
     let notesEl = document.getElementById('editAttNotes');
     if (notesEl) notesEl.value = notes || '';
     
-    // Extract hours if available
+    // Clear manual hours override so it doesn't accidentally override the calculated hours!
     let hoursEl = document.getElementById('editAttManualHours');
     let hInput = document.getElementById('editAttManualHours_h');
     let mInput = document.getElementById('editAttManualHours_m');
-    if (hoursEl) {
-        if (hoursStr) {
-            hoursEl.value = formatHoursDisplay(hoursStr);
-            if (hInput && mInput) {
-                let parts = hoursEl.value.split(':');
-                if (parts.length === 2) {
-                    hInput.value = parts[0];
-                    mInput.value = parts[1];
-                } else {
-                    hInput.value = hoursEl.value;
-                    mInput.value = '00';
-                }
-            }
-        } else {
-            hoursEl.value = '';
-            if (hInput) hInput.value = '';
-            if (mInput) mInput.value = '';
-        }
+    if (hoursEl) hoursEl.value = '';
+    
+    // Provide clean placeholders based on old hours so manager can see reference without forcing it as an active override
+    let oldParts = hoursStr ? formatHoursDisplay(hoursStr).split(':') : [];
+    if (hInput) {
+        hInput.value = '';
+        hInput.placeholder = (oldParts.length === 2) ? oldParts[0] : '00';
+    }
+    if (mInput) {
+        mInput.value = '';
+        mInput.placeholder = (oldParts.length === 2) ? oldParts[1] : '00';
     }
 
     let statusEl = document.getElementById('editAttStatus');
@@ -12792,6 +12857,16 @@ window.closeEditAttendanceModal = function() {
     let modal = document.getElementById('editAttendanceModal');
     if (modal) modal.style.display = 'none';
     document.body.style.overflow = '';
+};
+
+window.clearAttendanceManualHours = function() {
+    let hoursEl = document.getElementById('editAttManualHours');
+    let hInput = document.getElementById('editAttManualHours_h');
+    let mInput = document.getElementById('editAttManualHours_m');
+    if (hoursEl) hoursEl.value = '';
+    if (hInput) hInput.value = '';
+    if (mInput) mInput.value = '';
+    calcEditHours();
 };
 
 window.updateHiddenManualHours = function() {
@@ -12888,8 +12963,14 @@ window.calcEditHours = function() {
 };
 
 window.loadAdminAttendance = function() {
-    if(typeof loadAdminDailyAttendance === 'function') loadAdminDailyAttendance();
-    if(typeof loadAdminMonthlyAttendance === 'function') loadAdminMonthlyAttendance();
+    let df = document.getElementById('hrAdminDailyDateFilter');
+    if (df && df.value && typeof loadAdminDailyAttendance === 'function') {
+        loadAdminDailyAttendance();
+    }
+    let mf = document.getElementById('hrAdminMonthlyMonthFilter');
+    if (mf && mf.value && typeof loadAdminMonthlyAttendance === 'function') {
+        loadAdminMonthlyAttendance();
+    }
 };
 
 window.saveAttendanceEdit = function() {
@@ -12911,10 +12992,23 @@ window.saveAttendanceEdit = function() {
     let engDate = _editAttData.date.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
     
     let calculatedHours = (document.getElementById('editAttHoursText').innerText || '').trim();
-    let finalHours = manualHours ? manualHours : calculatedHours;
+    
+    // Determine final hours:
+    // If status is Absent/Unpaid, hours are 0
+    // If status is Paid Leave, default is 8:00 unless manual override entered
+    // If status is Present: ONLY use manual override if manager actually typed values into the manual boxes; otherwise use calculated hours
+    let finalHours = '';
+    if (status === 'غائب' || status === 'إجازة بدون مرتب') {
+        finalHours = '0 ساعة';
+    } else if (status === 'إجازة مدفوعة') {
+        finalHours = manualHours ? manualHours : '8:00';
+    } else {
+        finalHours = manualHours ? manualHours : calculatedHours;
+    }
 
     let formData = new URLSearchParams();
     formData.append('action', 'editAttendance');
+    if (_editAttData && _editAttData.id) formData.append('recordId', _editAttData.id);
     formData.append('employeeName', _editAttData.employee);
     formData.append('date', engDate);
     formData.append('checkIn', checkInVal);
@@ -12931,7 +13025,7 @@ window.saveAttendanceEdit = function() {
                 closeEditAttendanceModal();
                 loadAdminAttendance();
             } else {
-                showToast(data.error || 'حدث خطأ', 'error');
+                showToast(data.error || 'حدث خطأ أثناء الحفظ', 'error');
             }
         })
         .catch((err) => {
@@ -12942,10 +13036,6 @@ window.saveAttendanceEdit = function() {
             if (btn) { btn.innerHTML = originalHtml; btn.disabled = false; }
         });
 };
-
-
-
-
 
 window.handleLeaveDecision = function(employee, date, decision, btnElement = null) {
     let originalHtml = '';

@@ -2645,9 +2645,15 @@
 
                 <!-- Manual Hours Override -->
                 <div style="background:#fff7ed; padding:15px; border-radius:16px; border:1px dashed #f59e0b;">
-                    <label style="display:flex; align-items:center; gap:8px; font-size:0.9rem; font-weight:700; color:#d97706; margin-bottom:12px;">
-                        <i class="fa-solid fa-stopwatch"></i> ساعات العمل (تعديل يدوي - للمدير)
-                    </label>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:8px; flex-wrap:wrap;">
+                        <label style="display:flex; align-items:center; gap:8px; font-size:0.9rem; font-weight:700; color:#d97706; margin:0;">
+                            <i class="fa-solid fa-stopwatch"></i> ساعات العمل (تعديل يدوي - للمدير)
+                        </label>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span style="font-size:0.75rem; color:#b45309; font-weight:700; background:#fef3c7; padding:3px 8px; border-radius:6px;">(اتركه فارغاً للاحتساب التلقائي)</span>
+                            <button type="button" onclick="clearAttendanceManualHours()" title="مسح التعديل اليدوي" style="background:#fee2e2; border:1px solid #fca5a5; color:#b91c1c; border-radius:6px; padding:3px 8px; font-size:0.75rem; font-weight:bold; cursor:pointer; display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-rotate-left"></i> مسح</button>
+                        </div>
+                    </div>
                     
                     <div style="display:flex; align-items:center; justify-content:center; background:#fff; border:2px solid #fcd34d; border-radius:12px; padding:8px 16px; transition:all 0.2s; box-shadow:0 2px 4px rgba(245,158,11,0.05);" onfocus-within="this.style.borderColor='#f59e0b'; this.style.boxShadow='0 0 0 4px rgba(245,158,11,0.1)';">
                         <div style="display:flex; flex-direction:column; align-items:center;">
