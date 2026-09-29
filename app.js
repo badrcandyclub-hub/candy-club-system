@@ -1127,6 +1127,43 @@ async function handleSupabaseRequest(url, options) {
                         }
                     }
 
+                    // Also update placeholder/outdated product names in immutable archive (expiry_receipts_log) by barcode ONLY (leaves quantities untouched)
+                    try {
+                        const { data: archiveRows, error: arcErr } = await fetchAllSupabaseRows(
+                            supabase.from('expiry_receipts_log')
+                                .select('id, barcode, product_name')
+                                .not('barcode', 'is', null)
+                                .neq('barcode', '')
+                        );
+                        if (!arcErr && Array.isArray(archiveRows)) {
+                            for (const arcRow of archiveRows) {
+                                const bcode = String(arcRow.barcode || '').trim();
+                                const curName = String(arcRow.product_name || '').trim();
+                                if (!bcode) continue;
+
+                                let match = null;
+                                const subBcodes = bcode.split(',');
+                                for (let sbc of subBcodes) {
+                                    const cleanSub = sbc.trim();
+                                    if (cleanSub) {
+                                        match = fbProductMap.get(cleanSub) || fbProductMap.get(cleanSub.toLowerCase());
+                                        if (match) break;
+                                    }
+                                }
+
+                                if (match && match.name && match.name.trim() && match.name.trim() !== curName) {
+                                    await supabase.from('expiry_receipts_log').update({ product_name: match.name.trim() }).eq('id', arcRow.id);
+                                    if (Array.isArray(window.receiptsArchiveData)) {
+                                        let winItem = window.receiptsArchiveData.find(i => String(i.id) === String(arcRow.id));
+                                        if (winItem) winItem.name = match.name.trim();
+                                    }
+                                }
+                            }
+                        }
+                    } catch(e) {
+                        console.warn("Could not sync names to expiry_receipts_log:", e);
+                    }
+
                     // 4. Aggregate by barcode for stock adjustment
                     const gsMap = {};
                     gsData.forEach(row => {
@@ -14434,6 +14471,40 @@ window.runSyncNow = async function() {
                             updatedCount++;
                         }
                     }
+                }
+
+                // Also update product names in expiry_receipts_log without touching quantities
+                try {
+                    const { data: allArchiveWithBarcode } = await fetchAllSupabaseRows(
+                        supabase.from('expiry_receipts_log')
+                            .select('id, barcode, product_name')
+                            .not('barcode', 'is', null)
+                            .neq('barcode', '')
+                    );
+                    if (allArchiveWithBarcode && allArchiveWithBarcode.length > 0) {
+                        for (let arc of allArchiveWithBarcode) {
+                            const curName = String(arc.product_name || '').trim();
+                            const rawBc = String(arc.barcode || '').trim().toLowerCase();
+                            if (!rawBc) continue;
+                            const subBcs = rawBc.split(',').map(b => b.trim()).filter(Boolean);
+                            
+                            const catalogMatch = fullCatalog.find(c => {
+                                if (!c) return false;
+                                const catCodes = String(c.barcode || '').split(',').map(b => b.trim().toLowerCase());
+                                return subBcs.some(sb => catCodes.includes(sb));
+                            });
+                            
+                            if (catalogMatch && catalogMatch.name && catalogMatch.name.trim() && catalogMatch.name.trim() !== curName) {
+                                await supabase.from('expiry_receipts_log').update({ product_name: catalogMatch.name.trim() }).eq('id', arc.id);
+                                if (Array.isArray(window.receiptsArchiveData)) {
+                                    let winArc = window.receiptsArchiveData.find(i => String(i.id) === String(arc.id));
+                                    if (winArc) winArc.name = catalogMatch.name.trim();
+                                }
+                            }
+                        }
+                    }
+                } catch(e) {
+                    console.warn("Could not sync archive names in runSyncNow:", e);
                 }
             }
 
