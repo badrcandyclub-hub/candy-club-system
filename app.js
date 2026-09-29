@@ -11803,7 +11803,7 @@ loadDataFromServer = function(customDate = null) {
 
 
 // ============================================================
-// ⭐ HR MODULE: نظام الحضور والانصراف بالـ GPS (موقع ديناميكي من السيرفر)
+// HR MODULE: نظام الحضور والانصراف بالـ GPS (موقع ديناميكي من السيرفر)
 // ============================================================
 let HR_BRANCH_LAT = null;
 let HR_BRANCH_LNG = null;
@@ -11814,14 +11814,22 @@ let hrBranchData = null;
 window.loadBranchLocation = async function() {
     try {
         const { data, error } = await supabase.from('branches').select('*').limit(1);
-        if (!error && data && data.length > 0 && data[0].latitude && data[0].longitude) {
-            HR_BRANCH_LAT = parseFloat(data[0].latitude);
-            HR_BRANCH_LNG = parseFloat(data[0].longitude);
-            HR_RADIUS_METERS = parseInt(data[0].radius_meters) || 100;
-            hrBranchData = data[0];
-            localStorage.setItem('cc_branch_data', JSON.stringify(data[0]));
-            console.log("Branch location loaded from Supabase:", { lat: HR_BRANCH_LAT, lng: HR_BRANCH_LNG, radius: HR_RADIUS_METERS });
-            return hrBranchData;
+        if (!error) {
+            if (data && data.length > 0 && data[0].latitude && data[0].longitude) {
+                HR_BRANCH_LAT = parseFloat(data[0].latitude);
+                HR_BRANCH_LNG = parseFloat(data[0].longitude);
+                HR_RADIUS_METERS = parseInt(data[0].radius_meters) || 100;
+                hrBranchData = data[0];
+                localStorage.setItem('cc_branch_data', JSON.stringify(data[0]));
+                console.log("Branch location loaded from Supabase:", { lat: HR_BRANCH_LAT, lng: HR_BRANCH_LNG, radius: HR_RADIUS_METERS });
+                return hrBranchData;
+            } else {
+                HR_BRANCH_LAT = null;
+                HR_BRANCH_LNG = null;
+                hrBranchData = null;
+                localStorage.removeItem('cc_branch_data');
+                return null;
+            }
         }
     } catch(e) {
         console.warn("Could not load branch location from Supabase:", e);
@@ -11842,13 +11850,45 @@ window.loadBranchLocation = async function() {
         }
     } catch(e) {}
     
+    HR_BRANCH_LAT = null;
+    HR_BRANCH_LNG = null;
     return null;
 };
 
-// تشغيل جلب الموقع تلقائياً عند بدء التشغيل
+// جلب الموقع تلقائياً عند بدء التشغيل
 if (window.supabase) {
     window.loadBranchLocation();
 }
+
+window.updateBranchMapPreviewLink = function() {
+    const latInput = document.getElementById('branchLocLat');
+    const lngInput = document.getElementById('branchLocLng');
+    const mapLinkContainer = document.getElementById('branchLocMapLinkContainer');
+    const mapLink = document.getElementById('branchLocMapLink');
+    const badge = document.getElementById('branchLocStatusBadge');
+    
+    const lat = latInput ? parseFloat(latInput.value) : null;
+    const lng = lngInput ? parseFloat(lngInput.value) : null;
+    
+    if (lat && !isNaN(lat) && lng && !isNaN(lng)) {
+        if (mapLinkContainer && mapLink) {
+            mapLinkContainer.style.display = 'block';
+            mapLink.href = 'https://www.google.com/maps?q=' + lat + ',' + lng;
+        }
+        if (badge) {
+            badge.style.background = '#e0f2fe';
+            badge.style.color = '#0369a1';
+            badge.innerHTML = '<i class="fa-solid fa-location-dot"></i> إحداثيات جاهزة للحفظ';
+        }
+    } else {
+        if (mapLinkContainer) mapLinkContainer.style.display = 'none';
+        if (badge) {
+            badge.style.background = '#fef3c7';
+            badge.style.color = '#92400e';
+            badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> غير محدد بعد';
+        }
+    }
+};
 
 window.openBranchLocationModal = async function() {
     const modal = document.getElementById('branchLocationModal');
@@ -11860,35 +11900,38 @@ window.openBranchLocationModal = async function() {
     const nameInput = document.getElementById('branchLocName');
     const latInput = document.getElementById('branchLocLat');
     const lngInput = document.getElementById('branchLocLng');
-    const latDisplay = document.getElementById('branchLocLatDisplay');
-    const lngDisplay = document.getElementById('branchLocLngDisplay');
     const radiusInput = document.getElementById('branchLocRadius');
     const notice = document.getElementById('branchLocGpsNotice');
-    const mapLinkContainer = document.getElementById('branchLocMapLinkContainer');
-    const mapLink = document.getElementById('branchLocMapLink');
+    const badge = document.getElementById('branchLocStatusBadge');
     
-    if (notice) notice.innerText = '';
+    if (notice) notice.innerHTML = '';
     
     if (locData && locData.latitude && locData.longitude) {
         if (nameInput) nameInput.value = locData.branch_name || 'الفرع الرئيسي';
-        if (latInput) latInput.value = locData.latitude;
-        if (lngInput) lngInput.value = locData.longitude;
-        if (latDisplay) latDisplay.innerText = Number(locData.latitude).toFixed(6);
-        if (lngDisplay) lngDisplay.innerText = Number(locData.longitude).toFixed(6);
+        if (latInput) latInput.value = Number(locData.latitude).toFixed(6);
+        if (lngInput) lngInput.value = Number(locData.longitude).toFixed(6);
         if (radiusInput) radiusInput.value = locData.radius_meters || 100;
-        if (mapLinkContainer && mapLink) {
-            mapLinkContainer.style.display = 'block';
-            mapLink.href = `https://www.google.com/maps?q=${locData.latitude},${locData.longitude}`;
+        if (badge) {
+            badge.style.background = '#dcfce7';
+            badge.style.color = '#15803d';
+            badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> موقع معتمد';
         }
+        window.updateBranchMapPreviewLink();
     } else {
         if (nameInput) nameInput.value = 'الفرع الرئيسي';
         if (latInput) latInput.value = '';
         if (lngInput) lngInput.value = '';
-        if (latDisplay) latDisplay.innerText = 'غير محدد بعد';
-        if (lngDisplay) lngDisplay.innerText = 'غير محدد بعد';
         if (radiusInput) radiusInput.value = 100;
+        if (badge) {
+            badge.style.background = '#fef3c7';
+            badge.style.color = '#92400e';
+            badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> غير محدد بعد';
+        }
+        const mapLinkContainer = document.getElementById('branchLocMapLinkContainer');
         if (mapLinkContainer) mapLinkContainer.style.display = 'none';
-        if (notice) notice.innerHTML = '<span style="color:#e65100;">⚠️ لم يتم تحديد الموقع بعد. اضغط على الزر الأزرق لسحب موقعك الآن.</span>';
+        if (notice) {
+            notice.innerHTML = '<span style="color:#b45309; font-weight:600;"><i class="fa-solid fa-circle-info"></i> اضغط على زر السحب أو أدخل الإحداثيات يدوياً.</span>';
+        }
     }
 };
 
@@ -11902,13 +11945,9 @@ window.captureCurrentLocationForBranch = function() {
     const notice = document.getElementById('branchLocGpsNotice');
     const latInput = document.getElementById('branchLocLat');
     const lngInput = document.getElementById('branchLocLng');
-    const latDisplay = document.getElementById('branchLocLatDisplay');
-    const lngDisplay = document.getElementById('branchLocLngDisplay');
-    const mapLinkContainer = document.getElementById('branchLocMapLinkContainer');
-    const mapLink = document.getElementById('branchLocMapLink');
     
     if (!navigator.geolocation) {
-        if (notice) notice.innerText = 'عفواً، المتصفح الحالي لا يدعم تحديد الموقع الجغرافي.';
+        if (notice) notice.innerHTML = '<span style="color:#dc2626;"><i class="fa-solid fa-circle-xmark"></i> متصفحك لا يدعم تحديد الموقع الجغرافي.</span>';
         return;
     }
     
@@ -11916,7 +11955,7 @@ window.captureCurrentLocationForBranch = function() {
         btn.disabled = true;
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التقاط إحداثيات موقعك بدقة...';
     }
-    if (notice) notice.innerText = 'يرجى السماح بالوصول للموقع إذا طُلب منك ذلك...';
+    if (notice) notice.innerHTML = '<span style="color:#2563eb;"><i class="fa-solid fa-satellite-dish"></i> يرجى السماح للمتصفح بالوصول للموقع...</span>';
     
     navigator.geolocation.getCurrentPosition(
         (pos) => {
@@ -11924,23 +11963,18 @@ window.captureCurrentLocationForBranch = function() {
             const lng = pos.coords.longitude;
             const acc = Math.round(pos.coords.accuracy || 0);
             
-            if (latInput) latInput.value = lat;
-            if (lngInput) lngInput.value = lng;
-            if (latDisplay) latDisplay.innerText = lat.toFixed(6);
-            if (lngDisplay) lngDisplay.innerText = lng.toFixed(6);
+            if (latInput) latInput.value = Number(lat).toFixed(6);
+            if (lngInput) lngInput.value = Number(lng).toFixed(6);
             
-            if (mapLinkContainer && mapLink) {
-                mapLinkContainer.style.display = 'block';
-                mapLink.href = `https://www.google.com/maps?q=${lat},${lng}`;
-            }
+            window.updateBranchMapPreviewLink();
             
             if (notice) {
-                notice.innerHTML = `<span style="color:#2e7d32; font-weight:bold;">✅ تم التقاط موقعك الحالي بنجاح (دقة الإشارة: ${acc} متر). اضغط على زر الحفظ بالأسفل.</span>`;
+                notice.innerHTML = '<span style="color:#15803d; font-weight:700;"><i class="fa-solid fa-circle-check"></i> تم التقاط الموقع الحالي بنجاح (دقة الإشارة: ' + acc + ' متر). اضغط حفظ لتطبيقه.</span>';
             }
             
             if (btn) {
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-crosshairs"></i> 📍 تحديث الموقع الحالي مرة أخرى';
+                btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> إعادة التقاط الموقع الحالي';
             }
         },
         (err) => {
@@ -11948,11 +11982,11 @@ window.captureCurrentLocationForBranch = function() {
             if (notice) {
                 let msg = 'فشل تحديد الموقع. يرجى تفعيل الـ GPS وإعطاء الإذن للمتصفح.';
                 if (err.code === 1) msg = 'تم رفض الإذن. يرجى تفعيل إذن الموقع للمتصفح من الإعدادات.';
-                notice.innerHTML = `<span style="color:#d32f2f;">❌ ${msg}</span>`;
+                notice.innerHTML = '<span style="color:#dc2626; font-weight:600;"><i class="fa-solid fa-circle-xmark"></i> ' + msg + '</span>';
             }
             if (btn) {
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-crosshairs"></i> 📍 سحب وتحديد موقعي الحالي الآن';
+                btn.innerHTML = '<i class="fa-solid fa-crosshairs"></i> سحب وتحديد موقعي الحالي الآن';
             }
         },
         { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
@@ -11972,15 +12006,15 @@ window.handleSaveBranchLocation = async function(e) {
     const lng = lngInput ? parseFloat(lngInput.value) : null;
     const radius = radiusInput ? parseInt(radiusInput.value) : 100;
     
-    if (!lat || !lng) {
-        if (typeof showToast === 'function') showToast("يرجى سحب الموقع الجغرافي أولاً بالضغط على الزر الأزرق", "warning");
-        else alert("يرجى سحب الموقع الجغرافي أولاً");
+    if (!lat || isNaN(lat) || !lng || isNaN(lng)) {
+        if (typeof showToast === 'function') showToast("يرجى سحب الموقع الجغرافي أو إدخال الإحداثيات يدوياً", "warning");
+        else alert("يرجى سحب الموقع الجغرافي أو إدخال الإحداثيات يدوياً");
         return;
     }
     
     if (saveBtn) {
         saveBtn.disabled = true;
-        saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الحفظ في السيرفر...';
+        saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري حفظ وتطبيق المقر...';
     }
     
     try {
@@ -12019,9 +12053,9 @@ window.handleSaveBranchLocation = async function(e) {
         }
         
         if (typeof showToast === 'function') {
-            showToast("تم حفظ وتطبيق موقع الفرع بنجاح 📍", "success");
+            showToast("تم حفظ وتطبيق المقر الجغرافي للفرع بنجاح", "success");
         } else {
-            alert("تم حفظ وتطبيق موقع الفرع بنجاح 📍");
+            alert("تم حفظ وتطبيق المقر الجغرافي للفرع بنجاح");
         }
         
         window.closeBranchLocationModal();
@@ -12035,7 +12069,7 @@ window.handleSaveBranchLocation = async function(e) {
         console.error("Save branch error:", err);
         let msg = "فشل حفظ الموقع في السيرفر.";
         if (err.message && err.message.includes('Could not find the table')) {
-            msg = "تنبيه: جدول branches غير موجود في السوبابيز بعد. يرجى إنشاء الجدول من SQL Editor كما هو موضح بالتعليمات.";
+            msg = "تنبيه: جدول branches غير موجود في السوبابيز بعد.";
         } else if (err.message) {
             msg += " " + err.message;
         }
@@ -12044,10 +12078,11 @@ window.handleSaveBranchLocation = async function(e) {
     } finally {
         if (saveBtn) {
             saveBtn.disabled = false;
-            saveBtn.innerHTML = '<i class="fa-solid fa-save"></i> حفظ وتطبيق الموقع';
+            saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> حفظ وتطبيق المقر الجغرافي';
         }
     }
 };
+
 let hrGpsWatchId = null;
 let hrIsInRange = false;
 let hrTodayStatus = null; // null, 'checkedIn', 'checkedOut'
@@ -12167,7 +12202,7 @@ function initHrGps() {
     function updateGps(pos) {
         if (HR_BRANCH_LAT === null || HR_BRANCH_LNG === null) {
             dot.className = 'gps-dot gps-out';
-            text.innerText = '📍 لم يتم ضبط موقع الفرع بعد. يرجى من المدير ضبط الموقع من لوحة الإدارة.';
+            text.innerText = 'لم يتم ضبط موقع الفرع بعد. يرجى من المدير ضبط الموقع من لوحة الإدارة.';
             hrIsInRange = false;
             updateHrButtons();
             return;
@@ -12236,6 +12271,7 @@ function updateHrButtons() {
 
 function handleCheckIn() {
     if (window._isHrProcessing) return;
+    if (HR_BRANCH_LAT === null || HR_BRANCH_LNG === null) { showToast('لم يتم ضبط المقر الجغرافي للفرع بعد. يرجى مراجعة إدارة الفرع.', 'error'); return; }
     if (!hrIsInRange) { showToast('يجب أن تكون داخل نطاق الفرع', 'error'); return; }
     if (!currentUser) { showToast('يرجى تسجيل الدخول أولاً', 'error'); return; }
 
@@ -12283,6 +12319,7 @@ function handleCheckIn() {
 
 function handleCheckOut() {
     if (window._isHrProcessing) return;
+    if (HR_BRANCH_LAT === null || HR_BRANCH_LNG === null) { showToast('لم يتم ضبط المقر الجغرافي للفرع بعد. يرجى مراجعة إدارة الفرع.', 'error'); return; }
     if (!hrIsInRange) { showToast('يجب أن تكون داخل نطاق الفرع', 'error'); return; }
     if (!currentUser) return;
 

@@ -2542,68 +2542,114 @@
     <script src="app.js?v=62.0" charset="UTF-8" defer></script>
     <script src="update_notice.js" defer></script>
 
-    <!-- ⭐ Modal: إعداد موقع ونطاق الفرع (GPS Geofencing) -->
-    <div id="branchLocationModal" class="modal-overlay" style="display:none; align-items:center; justify-content:center; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.6); backdrop-filter:blur(6px); z-index:99999;">
-        <div class="modal-content" style="max-width: 520px; width: 92%; padding: 25px; border-radius: 16px; background: #ffffff; box-shadow: 0 20px 40px rgba(0,0,0,0.25); text-align: right; direction: rtl; font-family: 'Cairo', sans-serif;">
+    <!-- Modal: إعداد موقع ونطاق الفرع (GPS Geofencing) -->
+    <div id="branchLocationModal" class="modal-overlay" style="display:none; align-items:center; justify-content:center; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.65); backdrop-filter:blur(8px); z-index:99999;">
+        <div class="modal-content" style="max-width: 860px; width: 94%; max-height: 90vh; overflow-y: auto; padding: 26px 30px; border-radius: 20px; background: #ffffff; box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25); text-align: right; direction: rtl; font-family: 'Cairo', sans-serif; position: relative;">
             
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 15px;">
-                <h3 style="margin: 0; color: #1565c0; font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
-                    <i class="fa-solid fa-location-dot" style="color: #e91e63;"></i> ضبط النطاق الجغرافي للفرع
-                </h3>
-                <button type="button" onclick="closeBranchLocationModal()" style="background: none; border: none; font-size: 1.3rem; color: #94a3b8; cursor: pointer;">
+            <!-- Modal Header -->
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 14px; margin-bottom: 18px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #eff6ff, #dbeafe); color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.15);">
+                        <i class="fa-solid fa-location-crosshairs"></i>
+                    </div>
+                    <div>
+                        <h3 style="margin: 0; color: #0f172a; font-size: 1.25rem; font-weight: 800;">ضبط النطاق الجغرافي للفرع</h3>
+                        <p style="margin: 3px 0 0; color: #64748b; font-size: 0.83rem; font-weight: 500;">تحديد الإحداثيات الجغرافية ونطاق الحضور والانصراف للموظفين بدقة</p>
+                    </div>
+                </div>
+                <!-- Close Button (X only) -->
+                <button type="button" onclick="closeBranchLocationModal()" style="background:#f1f5f9; border:none; border-radius:50%; width:36px; height:36px; font-size:1.1rem; cursor:pointer; color:#64748b; display:flex; align-items:center; justify-content:center; transition: all 0.2s;" onmouseover="this.style.background='#fee2e2'; this.style.color='#ef4444';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#64748b';" title="إغلاق">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
 
-            <p style="color: #64748b; font-size: 0.9rem; line-height: 1.5; margin-bottom: 18px;">
-                حدد المقر الجغرافي للفرع ونصف القطر المسموح به للموظفين لتسجيل الحضور والانصراف بدقة.
-            </p>
-
             <form id="branchLocationForm" onsubmit="handleSaveBranchLocation(event)">
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; font-weight: bold; font-size: 0.9rem; margin-bottom: 6px; color: #334155;">اسم الفرع</label>
-                    <input type="text" id="branchLocName" class="form-input" placeholder="مثال: الفرع الرئيسي" required style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-family: inherit; font-size: 0.95rem; box-sizing: border-box;">
+                <!-- Two-Column Landscape Grid -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; align-items: stretch;">
+                    
+                    <!-- العمود الأيمن: بيانات الفرع ونطاق التغطية -->
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">
+                                <i class="fa-solid fa-store" style="color: #2563eb; font-size: 1rem;"></i>
+                                <span style="font-weight: 800; font-size: 0.95rem; color: #1e293b;">بيانات الفرع ونطاق السماح</span>
+                            </div>
+
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; font-weight: 700; font-size: 0.88rem; margin-bottom: 6px; color: #334155;">اسم الفرع</label>
+                                <input type="text" id="branchLocName" class="form-input" placeholder="مثال: الفرع الرئيسي" required style="width: 100%; padding: 11px 13px; border-radius: 10px; border: 1px solid #cbd5e1; font-family: inherit; font-size: 0.95rem; box-sizing: border-box; background: #ffffff;">
+                            </div>
+
+                            <div style="margin-bottom: 14px;">
+                                <label style="display: block; font-weight: 700; font-size: 0.88rem; margin-bottom: 6px; color: #334155;">نصف قطر النطاق المسموح به (بالمتر)</label>
+                                <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
+                                    <input type="number" id="branchLocRadius" min="10" max="5000" step="10" value="100" required style="flex: 1; padding: 10px 12px; border-radius: 10px; border: 1px solid #cbd5e1; font-family: inherit; font-size: 1.1rem; font-weight: 800; text-align: center; box-sizing: border-box; background: #ffffff; color: #0f172a;">
+                                    <span style="color: #64748b; font-weight: 700; font-size: 0.9rem; min-width: 32px;">متر</span>
+                                </div>
+                                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;">
+                                    <button type="button" onclick="document.getElementById('branchLocRadius').value=50" class="interactive-btn" style="padding: 7px 4px; font-size: 0.82rem; font-weight: 700; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; color: #334155; transition: all 0.2s;">50م</button>
+                                    <button type="button" onclick="document.getElementById('branchLocRadius').value=100" class="interactive-btn" style="padding: 7px 4px; font-size: 0.82rem; font-weight: 700; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; color: #334155; transition: all 0.2s;">100م</button>
+                                    <button type="button" onclick="document.getElementById('branchLocRadius').value=200" class="interactive-btn" style="padding: 7px 4px; font-size: 0.82rem; font-weight: 700; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; color: #334155; transition: all 0.2s;">200م</button>
+                                    <button type="button" onclick="document.getElementById('branchLocRadius').value=500" class="interactive-btn" style="padding: 7px 4px; font-size: 0.82rem; font-weight: 700; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; color: #334155; transition: all 0.2s;">500م</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; margin-top: 10px;">
+                            <p style="margin: 0; font-size: 0.78rem; color: #64748b; line-height: 1.5; display: flex; align-items: flex-start; gap: 6px;">
+                                <i class="fa-solid fa-shield-halved" style="color: #10b981; font-size: 0.95rem; margin-top: 2px;"></i>
+                                <span>حماية جغرافية: لن يتمكن الموظفون من تسجيل الحضور أو الانصراف إلا إذا تواجدوا داخل هذا النطاق.</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- العمود الأيسر: الإحداثيات والتقاط الموقع الجغرافي -->
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <i class="fa-solid fa-satellite-dish" style="color: #0284c7; font-size: 1rem;"></i>
+                                    <span style="font-weight: 800; font-size: 0.95rem; color: #1e293b;">إحداثيات المقر (GPS)</span>
+                                </div>
+                                <span id="branchLocStatusBadge" style="font-size: 0.75rem; padding: 4px 10px; border-radius: 6px; background: #fef3c7; color: #92400e; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;">
+                                    <i class="fa-solid fa-triangle-exclamation"></i> غير محدد
+                                </span>
+                            </div>
+
+                            <!-- حقول الإحداثيات (يمكن كتابتها أو سحبها تلقائياً) -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
+                                <div>
+                                    <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #475569; margin-bottom: 5px;">خط العرض (Lat)</label>
+                                    <input type="number" step="any" id="branchLocLat" placeholder="31.209774" required style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #cbd5e1; font-family: monospace; font-size: 0.92rem; text-align: center; background: #ffffff; box-sizing: border-box;" oninput="updateBranchMapPreviewLink()">
+                                </div>
+                                <div>
+                                    <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #475569; margin-bottom: 5px;">خط الطول (Lng)</label>
+                                    <input type="number" step="any" id="branchLocLng" placeholder="29.935520" required style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #cbd5e1; font-family: monospace; font-size: 0.92rem; text-align: center; background: #ffffff; box-sizing: border-box;" oninput="updateBranchMapPreviewLink()">
+                                </div>
+                            </div>
+
+                            <!-- زر سحب الموقع عبر الـ GPS -->
+                            <button type="button" id="btnCaptureCurrentLocation" onclick="captureCurrentLocationForBranch()" class="interactive-btn" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #0284c7, #0369a1); color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25); transition: all 0.2s;">
+                                <i class="fa-solid fa-crosshairs"></i> سحب وتحديد موقعي الحالي الآن
+                            </button>
+
+                            <!-- تنبيه الحالة بدون أي إيموجي -->
+                            <div id="branchLocGpsNotice" style="font-size: 0.82rem; margin-top: 10px; min-height: 22px; text-align: center;"></div>
+                        </div>
+
+                        <!-- رابط معاينة الموقع على الخريطة -->
+                        <div id="branchLocMapLinkContainer" style="margin-top: 10px; text-align: center; display: none;">
+                            <a id="branchLocMapLink" href="#" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; color: #0284c7; text-decoration: none; font-size: 0.84rem; font-weight: 700; padding: 7px 14px; background: #e0f2fe; border-radius: 8px; transition: background 0.2s;">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i> معاينة المقر على خرائط Google
+                            </a>
+                        </div>
+                    </div>
                 </div>
 
-                <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; padding: 15px; margin-bottom: 18px; text-align: center;">
-                    <div style="display: flex; justify-content: space-around; margin-bottom: 12px; font-family: monospace; font-size: 0.9rem; color: #475569;">
-                        <div>خط العرض (Lat): <strong id="branchLocLatDisplay" style="color: #0284c7;">غير محدد</strong></div>
-                        <div>خط الطول (Lng): <strong id="branchLocLngDisplay" style="color: #0284c7;">غير محدد</strong></div>
-                    </div>
-                    <input type="hidden" id="branchLocLat">
-                    <input type="hidden" id="branchLocLng">
-
-                    <button type="button" id="btnCaptureCurrentLocation" onclick="captureCurrentLocationForBranch()" class="interactive-btn" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #0284c7, #0369a1); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 10px rgba(2, 132, 199, 0.25);">
-                        <i class="fa-solid fa-crosshairs"></i> 📍 سحب وتحديد موقعي الحالي الآن
-                    </button>
-                    <div id="branchLocGpsNotice" style="font-size: 0.82rem; color: #64748b; margin-top: 8px;"></div>
-                    <div id="branchLocMapLinkContainer" style="margin-top: 6px; display: none;">
-                        <a id="branchLocMapLink" href="#" target="_blank" style="color: #0284c7; text-decoration: none; font-size: 0.85rem; font-weight: bold;">
-                            <i class="fa-solid fa-map-location-dot"></i> معاينة الموقع على Google Maps
-                        </a>
-                    </div>
-                </div>
-
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; font-weight: bold; font-size: 0.9rem; margin-bottom: 6px; color: #334155;">نصف قطر النطاق المسموح به (بالمتر)</label>
-                    <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
-                        <input type="number" id="branchLocRadius" min="10" max="5000" step="10" value="100" required style="flex: 1; padding: 10px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-family: inherit; font-size: 1rem; font-weight: bold; text-align: center; box-sizing: border-box;">
-                        <span style="color: #64748b; font-weight: bold;">متر</span>
-                    </div>
-                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                        <button type="button" onclick="document.getElementById('branchLocRadius').value=50" class="interactive-btn" style="flex:1; padding:6px; font-size:0.8rem; background:#f1f5f9; border:1px solid #e2e8f0; border-radius:6px; cursor:pointer;">50م</button>
-                        <button type="button" onclick="document.getElementById('branchLocRadius').value=100" class="interactive-btn" style="flex:1; padding:6px; font-size:0.8rem; background:#f1f5f9; border:1px solid #e2e8f0; border-radius:6px; cursor:pointer;">100م</button>
-                        <button type="button" onclick="document.getElementById('branchLocRadius').value=200" class="interactive-btn" style="flex:1; padding:6px; font-size:0.8rem; background:#f1f5f9; border:1px solid #e2e8f0; border-radius:6px; cursor:pointer;">200م</button>
-                        <button type="button" onclick="document.getElementById('branchLocRadius').value=500" class="interactive-btn" style="flex:1; padding:6px; font-size:0.8rem; background:#f1f5f9; border:1px solid #e2e8f0; border-radius:6px; cursor:pointer;">500م</button>
-                    </div>
-                </div>
-
-                <div style="display: flex; gap: 10px;">
-                    <button type="submit" id="btnSaveBranchLocation" class="interactive-btn" style="flex: 2; padding: 12px; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                        <i class="fa-solid fa-save"></i> حفظ وتطبيق الموقع
-                    </button>
-                    <button type="button" onclick="closeBranchLocationModal()" class="interactive-btn" style="flex: 1; padding: 12px; background: #e2e8f0; color: #475569; border: none; border-radius: 8px; font-weight: bold; font-size: 0.95rem; cursor: pointer;">
-                        إلغاء
+                <!-- Footer: فقط زر الحفظ والتطبيق (تم إلغاء زر الإلغاء بناءً على طلب المستخدم) -->
+                <div style="margin-top: 20px; border-top: 1px solid #f1f5f9; padding-top: 18px;">
+                    <button type="submit" id="btnSaveBranchLocation" class="interactive-btn" style="width: 100%; padding: 14px; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 1.05rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3); transition: all 0.2s;">
+                        <i class="fa-solid fa-floppy-disk"></i> حفظ وتطبيق المقر الجغرافي
                     </button>
                 </div>
             </form>
