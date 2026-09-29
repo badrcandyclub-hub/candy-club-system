@@ -93,6 +93,9 @@ window.secureDelete = async function(tableName, matchColumn, matchValue) {
         p_user: user.username,
         p_pass: pass
     });
+    if (!error && typeof window.bumpSystemActivity === 'function') {
+        window.bumpSystemActivity();
+    }
     return { data, error };
 };
 
@@ -1069,6 +1072,13 @@ async function handleSupabaseRequest(url, options) {
                 break;
         }
         
+        // ⭐ Bump system version if mutating action succeeded
+        if (action && !action.startsWith('get') && responseData && responseData.success !== false) {
+            if (typeof window.bumpSystemActivity === 'function') {
+                window.bumpSystemActivity();
+            }
+        }
+
         return createJsonResponse(responseData);
         
     } catch (err) {
@@ -1803,6 +1813,93 @@ window.onload = () => {
     checkSession();
 };
 
+// ==========================================
+// ⭐ Smart System Version & Global Activity Tracker (V16.3)
+// ==========================================
+window.lastKnownSystemVersion = parseInt(localStorage.getItem('cc_last_system_activity') || '0', 10);
+
+window.bumpSystemActivity = async function() {
+    const now = Date.now();
+    window.lastKnownSystemVersion = now;
+    localStorage.setItem('cc_last_system_activity', String(now));
+    
+    try {
+        const { data, error } = await supabase
+            .from('settings_shipping')
+            .select('id')
+            .eq('zone_name', '_SYSTEM_VERSION_')
+            .eq('zone_type', 'system')
+            .limit(1);
+
+        if (data && data.length > 0) {
+            await supabase
+                .from('settings_shipping')
+                .update({ price: now, delivery_type: String(now) })
+                .eq('id', data[0].id);
+        } else {
+            await supabase
+                .from('settings_shipping')
+                .insert([{
+                    zone_name: '_SYSTEM_VERSION_',
+                    zone_type: 'system',
+                    price: now,
+                    delivery_type: String(now)
+                }]);
+        }
+    } catch (e) {
+        console.warn('[SmartSync] Silent bumpSystemActivity error:', e);
+    }
+};
+
+window.checkAndSyncSystemUpdates = async function(force = false) {
+    // 1. If tab is in background (hidden) and not forced, skip to save network & logs
+    if (document.hidden && !force) {
+        return;
+    }
+    // 2. If a modal is open, avoid interrupting user interaction
+    if (document.querySelector('.modal-overlay.active')) {
+        return;
+    }
+
+    try {
+        // Lightweight check: ONLY query the system version timestamp (~50 bytes)
+        const { data, error } = await supabase
+            .from('settings_shipping')
+            .select('price')
+            .eq('zone_name', '_SYSTEM_VERSION_')
+            .eq('zone_type', 'system')
+            .limit(1);
+
+        if (error) {
+            console.warn('[SmartSync] Error fetching version:', error);
+            return;
+        }
+
+        if (!data || data.length === 0) {
+            // First time initialization if row doesn't exist
+            window.bumpSystemActivity();
+            return;
+        }
+
+        const serverVersion = parseFloat(data[0].price) || 0;
+
+        // If server has a newer timestamp than our local known version
+        if (serverVersion > (window.lastKnownSystemVersion || 0) || force) {
+            console.log(`[SmartSync] New activity detected on server (${serverVersion} > ${window.lastKnownSystemVersion}). Refreshing data...`);
+            window.lastKnownSystemVersion = serverVersion;
+            localStorage.setItem('cc_last_system_activity', String(serverVersion));
+            
+            if (typeof loadDataFromServer === 'function') {
+                await loadDataFromServer();
+            }
+        } else {
+            console.log('[SmartSync] No new activity detected. Skipping heavy database fetch.');
+        }
+    } catch (err) {
+        console.warn('[SmartSync] Check failed silently:', err);
+    }
+};
+
 window.supabaseStaticCache = {};
 const CACHE_RULES = {
     'users': 60 * 60 * 1000,
@@ -2330,6 +2427,15 @@ async function loadDataFromServer(customDate = null) {
             window.lastFilterDate = currentFilterDate;
         }
         window._prevHistoryIds = historyOrders.map(o => o.id);
+
+        // Update local system version from server row if available, or current time
+        const sysVerRow = (rawShipping || []).find(r => r.zone_name === '_SYSTEM_VERSION_' && r.zone_type === 'system');
+        if (sysVerRow && sysVerRow.price) {
+            window.lastKnownSystemVersion = parseFloat(sysVerRow.price) || Date.now();
+        } else {
+            window.lastKnownSystemVersion = Date.now();
+        }
+        localStorage.setItem('cc_last_system_activity', String(window.lastKnownSystemVersion));
 
     } catch (err) {
         console.error("Supabase Load Error:", err);
@@ -5044,11 +5150,19 @@ if (addOosBtn) {
     });
 }
 
+// ⭐ Smart Periodic Sync (5 Minutes, Activity-Aware, Visibility-Aware)
 setInterval(() => {
-    if (!document.querySelector('.modal-overlay.active')) {
-        loadDataFromServer();
+    if (typeof window.checkAndSyncSystemUpdates === 'function') {
+        window.checkAndSyncSystemUpdates(false);
     }
-}, 180000);
+}, 300000);
+
+// Also check immediately when user switches back to this tab
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && typeof window.checkAndSyncSystemUpdates === 'function') {
+        window.checkAndSyncSystemUpdates(false);
+    }
+});
 
 const darkModeToggle = document.getElementById('darkModeToggle');
 if (darkModeToggle) {

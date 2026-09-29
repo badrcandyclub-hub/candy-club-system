@@ -1609,6 +1609,7 @@
 
                 this.state.bouquets.unshift(bouquetRecord);
                 this.saveBouquetsToLocal();
+                if (typeof window.bumpSystemActivity === 'function') window.bumpSystemActivity();
 
                 const syncMsg = syncedToSupabase ? " (متزامن مع السحابة)" : " (محفوظ محليا)";
                 this.showToastNotification(`تم حفظ البوكيه "${bouquetRecord.name}" بنجاح${syncMsg}`);
@@ -2207,6 +2208,7 @@
 
             this.state.bouquets = this.state.bouquets.filter(b => b.id !== id);
             this.saveBouquetsToLocal();
+            if (typeof window.bumpSystemActivity === 'function') window.bumpSystemActivity();
             this.updateHeaderStats();
             this.renderShowcase();
             this.showToastNotification(`تم حذف البوكيه "${bouquet.name}" بنجاح`);

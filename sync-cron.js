@@ -89,6 +89,33 @@ async function updateGlobalSyncTime() {
             })
         });
     }
+    // Also bump _SYSTEM_VERSION_ so cashier browsers detect sync changes immediately
+    try {
+        const verCheckUrl = `${SUPABASE_URL}/rest/v1/settings_shipping?zone_name=eq._SYSTEM_VERSION_&zone_type=eq.system&select=id`;
+        const verCheckRes = await fetch(verCheckUrl, { headers });
+        const verData = await verCheckRes.json();
+        if (verData && verData.length > 0) {
+            await fetch(`${SUPABASE_URL}/rest/v1/settings_shipping?id=${verData[0].id}`, {
+                method: 'PATCH',
+                headers,
+                body: JSON.stringify({ price: now, delivery_type: nowStr })
+            });
+        } else {
+            await fetch(`${SUPABASE_URL}/rest/v1/settings_shipping`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    zone_name: '_SYSTEM_VERSION_',
+                    zone_type: 'system',
+                    price: now,
+                    delivery_type: nowStr
+                })
+            });
+        }
+    } catch (e) {
+        console.warn('Could not update _SYSTEM_VERSION_ in sync-cron:', e);
+    }
+
     return now;
 }
 
