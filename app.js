@@ -180,6 +180,90 @@ window.fetch = async function(url, options) {
     return originalFetch.apply(this, arguments);
 };
 
+
+// ============================================================
+// 📦 EXPIRY RECEIPTS IMMUTABLE ARCHIVE (سجل استلامات الصلاحيات الثابت)
+// ============================================================
+window.receiptsArchiveData = [];
+
+window.loadReceiptsArchiveData = async function() {
+    try {
+        if (!window.supabase) return;
+        const { data: rawArchive, error: arcErr } = await fetchAllSupabaseRows(
+            supabase.from('expiry_receipts_log').select('*').order('created_at', { ascending: false })
+        );
+        if (!arcErr && Array.isArray(rawArchive)) {
+            window.receiptsArchiveData = rawArchive.map(e => ({
+                id: e.id,
+                name: e.product_name,
+                qty: e.quantity !== undefined ? parseFloat(e.quantity) : (parseFloat(e.qty) || 0),
+                expiryDate: e.expiry_date,
+                location: e.location || '',
+                regDate: e.reg_date || '',
+                receiver: e.receiver || '',
+                notes: e.notes || '',
+                originalPrice: e.original_price || '',
+                offerPrice: e.offer_price || '',
+                status: e.status || '',
+                barcode: e.barcode || ''
+            }));
+            console.log("Loaded immutable expiry receipts archive:", window.receiptsArchiveData.length, "records");
+            
+            // Re-render calendar dots if flatpickr exists
+            if (typeof renderExpiryCalendarDots === 'function') {
+                renderExpiryCalendarDots();
+            }
+        }
+    } catch(err) {
+        console.warn("Could not load expiry_receipts_log:", err);
+    }
+};
+
+window.getReceiptsForSelectedDates = function(selectedDates) {
+    let result = [];
+    selectedDates.forEach(dateKey => {
+        let fromArchive = (window.receiptsArchiveData || []).filter(item => {
+            if (!item.regDate) return false;
+            return getCalendarDateKey(item.regDate) === dateKey;
+        });
+        
+        if (fromArchive.length > 0) {
+            result.push(...fromArchive);
+        } else {
+            // Legacy fallback to active expiryData for dates prior to the archive table
+            let fromLegacy = (expiryData || []).filter(item => {
+                if (!item.regDate) return false;
+                return getCalendarDateKey(item.regDate) === dateKey;
+            });
+            result.push(...fromLegacy);
+        }
+    });
+    return result;
+};
+
+window.renderExpiryCalendarDots = function() {
+    if (!window.expiryDataDatesSet) window.expiryDataDatesSet = new Set();
+    window.expiryDataDatesSet.clear();
+    
+    // Add dates from legacy active expiryData
+    (expiryData || []).forEach(item => {
+        if (item.regDate) {
+            window.expiryDataDatesSet.add(getCalendarDateKey(item.regDate));
+        }
+    });
+    
+    // Add dates from immutable receipts archive
+    (window.receiptsArchiveData || []).forEach(item => {
+        if (item.regDate) {
+            window.expiryDataDatesSet.add(getCalendarDateKey(item.regDate));
+        }
+    });
+    
+    if (typeof expiryExportDatePicker !== 'undefined' && expiryExportDatePicker) {
+        expiryExportDatePicker.redraw();
+    }
+};
+
 async function handleSupabaseRequest(url, options) {
     let action = null;
     let params = {};
@@ -531,14 +615,81 @@ async function handleSupabaseRequest(url, options) {
                 await updateCustomerStatsInDatabase(params.phone, { customer_name: params.name, governorate: params.gov, address: params.address });
                 responseData = { success: true };
                 break;
-            case 'addExpiry':
-                await supabase.from('expiries').insert([{ product_name: params.name, qty: params.qty, expiry_date: params.expiryDate, location: params.location, registrar_name: params.regDate, receiver: params.receiver, notes: params.notes, original_price: params.originalPrice, offer_price: params.offerPrice, status: params.status, barcode: params.barcode }]);
+            case 'addExpiry': {
+                const expRow = { product_name: params.name, qty: params.qty, expiry_date: params.expiryDate, location: params.location, registrar_name: params.regDate, receiver: params.receiver, notes: params.notes, original_price: params.originalPrice, offer_price: params.offerPrice, status: params.status, barcode: params.barcode };
+                await supabase.from('expiries').insert([expRow]);
+                try {
+                    const arcRow = {
+                        product_name: params.name,
+                        barcode: params.barcode || '',
+                        quantity: params.qty || 0,
+                        expiry_date: params.expiryDate || '',
+                        location: params.location || '',
+                        reg_date: params.regDate || '',
+                        receiver: params.receiver || '',
+                        notes: params.notes || '',
+                        original_price: params.originalPrice || '',
+                        offer_price: params.offerPrice || '',
+                        status: params.status || ''
+                    };
+                    await supabase.from('expiry_receipts_log').insert([arcRow]);
+                    if (Array.isArray(window.receiptsArchiveData)) {
+                        window.receiptsArchiveData.push({
+                            name: arcRow.product_name,
+                            qty: arcRow.quantity,
+                            expiryDate: arcRow.expiry_date,
+                            location: arcRow.location,
+                            regDate: arcRow.reg_date,
+                            receiver: arcRow.receiver,
+                            notes: arcRow.notes,
+                            originalPrice: arcRow.original_price,
+                            offerPrice: arcRow.offer_price,
+                            status: arcRow.status,
+                            barcode: arcRow.barcode
+                        });
+                        if (typeof window.renderExpiryCalendarDots === 'function') window.renderExpiryCalendarDots();
+                    }
+                } catch(errLog) {
+                    console.warn("Could not insert into expiry_receipts_log:", errLog);
+                }
                 break;
-            case 'addExpiriesBatch':
+            }
+            case 'addExpiriesBatch': {
                 const batchItems = JSON.parse(params.batchData);
                 const expRows = batchItems.map(item => ({ product_name: item.name, qty: item.qty, expiry_date: item.expiryDate, location: item.location, reg_date: item.regDate, receiver: item.receiver, notes: item.notes, status: item.status, barcode: item.barcode }));
                 await supabase.from('expiries').insert(expRows);
+                try {
+                    const arcRows = batchItems.map(item => ({
+                        product_name: item.name,
+                        barcode: item.barcode || '',
+                        quantity: item.qty || 0,
+                        expiry_date: item.expiryDate || '',
+                        location: item.location || '',
+                        reg_date: item.regDate || '',
+                        receiver: item.receiver || '',
+                        notes: item.notes || '',
+                        status: item.status || ''
+                    }));
+                    await supabase.from('expiry_receipts_log').insert(arcRows);
+                    if (Array.isArray(window.receiptsArchiveData)) {
+                        window.receiptsArchiveData.push(...arcRows.map(r => ({
+                            name: r.product_name,
+                            qty: r.quantity,
+                            expiryDate: r.expiry_date,
+                            location: r.location,
+                            regDate: r.reg_date,
+                            receiver: r.receiver,
+                            notes: r.notes,
+                            status: r.status,
+                            barcode: r.barcode
+                        })));
+                        if (typeof window.renderExpiryCalendarDots === 'function') window.renderExpiryCalendarDots();
+                    }
+                } catch(errLog) {
+                    console.warn("Could not insert batch into expiry_receipts_log:", errLog);
+                }
                 break;
+            }
             case 'updateExpiryItemData':
                 const idParts = params.id ? String(params.id).split('|') : [];
                 const targetName = idParts[0] || params.id;
@@ -2100,6 +2251,7 @@ async function loadDataFromServer(customDate = null) {
             permissions: u.permissions, status: u.status, lastLogin: u.last_login
         }));
         if (typeof loadUsersList === 'function') loadUsersList();
+        if (typeof window.loadReceiptsArchiveData === 'function') window.loadReceiptsArchiveData();
 
         // Expiries
         window.expiriesData = (rawExpiries || []).map(e => ({
@@ -5750,15 +5902,19 @@ function loadExpiryData() {
     // V16.5: استخدام البيانات المحملة مسبقاً بدلاً من استدعاء السيرفر
     if (window.expiriesData && window.expiriesData.length > 0) {
         expiryData = Array.isArray(window.expiriesData) ? window.expiriesData : [];
-        if(!window.expiryDataDatesSet) window.expiryDataDatesSet = new Set();
-        window.expiryDataDatesSet.clear();
-        expiryData.forEach(item => {
-            if(item.regDate) {
-                window.expiryDataDatesSet.add(getCalendarDateKey(item.regDate));
+        if (typeof window.renderExpiryCalendarDots === 'function') {
+            window.renderExpiryCalendarDots();
+        } else {
+            if(!window.expiryDataDatesSet) window.expiryDataDatesSet = new Set();
+            window.expiryDataDatesSet.clear();
+            expiryData.forEach(item => {
+                if(item.regDate) {
+                    window.expiryDataDatesSet.add(getCalendarDateKey(item.regDate));
+                }
+            });
+            if(typeof expiryExportDatePicker !== 'undefined' && expiryExportDatePicker) {
+                expiryExportDatePicker.redraw();
             }
-        });
-        if(typeof expiryExportDatePicker !== 'undefined' && expiryExportDatePicker) {
-            expiryExportDatePicker.redraw();
         }
         
         // <i class='fa-solid fa-star'></i> سحب الباركود للمنتجات القديمة من الفايربيز أو إذا كان العمود غير موجود في الإكسيل
@@ -7465,7 +7621,7 @@ if (btnExportDate) {
 
         let selectedDates = dateValStr.split(', ');
 
-        let filtered = expiryData.filter(item => {
+        let filtered = (typeof window.getReceiptsForSelectedDates === 'function') ? window.getReceiptsForSelectedDates(selectedDates) : expiryData.filter(item => {
             if (!item.regDate) return false;
             const dateKey = getCalendarDateKey(item.regDate);
             return selectedDates.includes(dateKey);
@@ -7492,7 +7648,7 @@ if (btnExportDatePDF) {
         let selectedDates = dateValStr.split(', ');
         let pdfTitleDate = selectedDates.length <= 2 ? selectedDates.join(' و ') : `تواريخ متعددة (${selectedDates.length} أيام)`;
 
-        let filtered = expiryData.filter(item => {
+        let filtered = (typeof window.getReceiptsForSelectedDates === 'function') ? window.getReceiptsForSelectedDates(selectedDates) : expiryData.filter(item => {
             if (!item.regDate) return false;
             const dateKey = getCalendarDateKey(item.regDate);
             return selectedDates.includes(dateKey);
