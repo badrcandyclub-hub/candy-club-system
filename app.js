@@ -222,21 +222,12 @@ window.loadReceiptsArchiveData = async function() {
 window.getReceiptsForSelectedDates = function(selectedDates) {
     let result = [];
     selectedDates.forEach(dateKey => {
+        // Strictly export from the immutable receipts archive
         let fromArchive = (window.receiptsArchiveData || []).filter(item => {
             if (!item.regDate) return false;
             return getCalendarDateKey(item.regDate) === dateKey;
         });
-        
-        if (fromArchive.length > 0) {
-            result.push(...fromArchive);
-        } else {
-            // Legacy fallback to active expiryData for dates prior to the archive table
-            let fromLegacy = (expiryData || []).filter(item => {
-                if (!item.regDate) return false;
-                return getCalendarDateKey(item.regDate) === dateKey;
-            });
-            result.push(...fromLegacy);
-        }
+        result.push(...fromArchive);
     });
     return result;
 };
@@ -245,14 +236,7 @@ window.renderExpiryCalendarDots = function() {
     if (!window.expiryDataDatesSet) window.expiryDataDatesSet = new Set();
     window.expiryDataDatesSet.clear();
     
-    // Add dates from legacy active expiryData
-    (expiryData || []).forEach(item => {
-        if (item.regDate) {
-            window.expiryDataDatesSet.add(getCalendarDateKey(item.regDate));
-        }
-    });
-    
-    // Add dates from immutable receipts archive
+    // Strictly mark dates from the immutable receipts archive (starts fresh from today)
     (window.receiptsArchiveData || []).forEach(item => {
         if (item.regDate) {
             window.expiryDataDatesSet.add(getCalendarDateKey(item.regDate));
