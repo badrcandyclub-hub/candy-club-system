@@ -12740,19 +12740,19 @@ function loadMyAttendance() {
                 bannerEl.innerHTML = `
                     <div style="background:linear-gradient(135deg,#e8f5e9,#c8e6c9); border-radius:12px; padding:14px; text-align:center; border:1px solid #a5d6a7;">
                         <div style="font-size:1.6rem; font-weight:900; color:#1b5e20;">${presentDays}</div>
-                        <div style="font-size:0.78rem; color:#2e7d32; font-weight:bold;">📅 أيام حضور</div>
+                        <div style="font-size:0.78rem; color:#2e7d32; font-weight:bold;"><span class="hr-css-icon hr-css-icon--calendar" aria-hidden="true"></span> أيام حضور</div>
                     </div>
                     <div style="background:linear-gradient(135deg,#e3f2fd,#bbdefb); border-radius:12px; padding:14px; text-align:center; border:1px solid #90caf9;">
                         <div style="font-size:1.6rem; font-weight:900; color:#0d47a1;">${formattedTotalHours}</div>
-                        <div style="font-size:0.78rem; color:#1565c0; font-weight:bold;">⏱️ إجمالي الساعات</div>
+                        <div style="font-size:0.78rem; color:#1565c0; font-weight:bold;"><span class="hr-css-icon hr-css-icon--clock" aria-hidden="true"></span> إجمالي الساعات</div>
                     </div>
                     <div style="background:linear-gradient(135deg,#fff3e0,#ffe0b2); border-radius:12px; padding:14px; text-align:center; border:1px solid #ffcc80;">
                         <div style="font-size:1.6rem; font-weight:900; color:#e65100;">${paidLeaves}</div>
-                        <div style="font-size:0.78rem; color:#ef6c00; font-weight:bold;">🏖️ إجازات مدفوعة</div>
+                        <div style="font-size:0.78rem; color:#ef6c00; font-weight:bold;"><span class="hr-css-icon hr-css-icon--leave" aria-hidden="true"></span> إجازات مدفوعة</div>
                     </div>
                     <div style="background:linear-gradient(135deg,#ffebee,#ffcdd2); border-radius:12px; padding:14px; text-align:center; border:1px solid #ef9a9a;">
                         <div style="font-size:1.6rem; font-weight:900; color:#b71c1c;">${unpaidLeaves + absences}</div>
-                        <div style="font-size:0.78rem; color:#c62828; font-weight:bold;">❌ غياب</div>
+                        <div style="font-size:0.78rem; color:#c62828; font-weight:bold;"><span class="hr-css-icon hr-css-icon--cross" aria-hidden="true"></span> غياب</div>
                     </div>
                 `;
                 bannerEl.style.display = 'grid';
@@ -13006,19 +13006,19 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
                 <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px; margin-bottom:15px;">
                     <div style="background:linear-gradient(135deg,#e8f5e9,#c8e6c9); border-radius:12px; padding:14px; text-align:center; border:1px solid #a5d6a7;">
                         <div style="font-size:1.6rem; font-weight:900; color:#1b5e20;">${adminPresentDays}</div>
-                        <div style="font-size:0.78rem; color:#2e7d32; font-weight:bold;">📅 أيام حضور</div>
+                        <div style="font-size:0.78rem; color:#2e7d32; font-weight:bold;"><span class="hr-css-icon hr-css-icon--calendar" aria-hidden="true"></span> أيام حضور</div>
                     </div>
                     <div style="background:linear-gradient(135deg,#e3f2fd,#bbdefb); border-radius:12px; padding:14px; text-align:center; border:1px solid #90caf9;">
                         <div style="font-size:1.6rem; font-weight:900; color:#0d47a1;">${formattedTotalHours}</div>
-                        <div style="font-size:0.78rem; color:#1565c0; font-weight:bold;">⏱️ إجمالي الساعات</div>
+                        <div style="font-size:0.78rem; color:#1565c0; font-weight:bold;"><span class="hr-css-icon hr-css-icon--clock" aria-hidden="true"></span> إجمالي الساعات</div>
                     </div>
                     <div style="background:linear-gradient(135deg,#fff3e0,#ffe0b2); border-radius:12px; padding:14px; text-align:center; border:1px solid #ffcc80;">
                         <div style="font-size:1.6rem; font-weight:900; color:#e65100;">${adminPaidLeaves}</div>
-                        <div style="font-size:0.78rem; color:#ef6c00; font-weight:bold;">🏖️ إجازات مدفوعة</div>
+                        <div style="font-size:0.78rem; color:#ef6c00; font-weight:bold;"><span class="hr-css-icon hr-css-icon--leave" aria-hidden="true"></span> إجازات مدفوعة</div>
                     </div>
                     <div style="background:linear-gradient(135deg,#ffebee,#ffcdd2); border-radius:12px; padding:14px; text-align:center; border:1px solid #ef9a9a;">
                         <div style="font-size:1.6rem; font-weight:900; color:#b71c1c;">${adminUnpaidLeaves + adminAbsences}</div>
-                        <div style="font-size:0.78rem; color:#c62828; font-weight:bold;">❌ غياب</div>
+                        <div style="font-size:0.78rem; color:#c62828; font-weight:bold;"><span class="hr-css-icon hr-css-icon--cross" aria-hidden="true"></span> غياب</div>
                     </div>
                 </div>
             `;
@@ -13087,7 +13087,7 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
                     html += `<td style="padding:10px; text-align:center; font-weight:bold; font-size:0.85rem; color:#bdbdbd;">${selectedEmp}</td>`;
                     html += `<td style="padding:10px; text-align:center; font-size:0.85rem; color:#bdbdbd;">${dateStr}<br><span style="font-size:0.7rem;">${dayName}</span></td>`;
                     html += `<td colspan="3" style="padding:10px; text-align:center; color:#bdbdbd; font-size:0.78rem;">لم يحن بعد</td>`;
-                    html += `<td style="padding:10px; text-align:center;"><span style="background:#e0e0e020;color:#bdbdbd;padding:3px 8px;border-radius:20px;font-size:0.72rem;">🔜</span></td>`;
+                    html += `<td style="padding:10px; text-align:center;"><span style="color:#bdbdbd;font-size:0.72rem;">—</span></td>`;
                     html += `<td style="padding:10px; text-align:center;">-</td>`;
                     html += '</tr>';
                 } else {
@@ -13096,7 +13096,7 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
                     html += `<td style="padding:10px; text-align:center; font-weight:bold; font-size:0.85rem;">${selectedEmp}</td>`;
                     html += `<td style="padding:10px; text-align:center; font-size:0.85rem; color:#c62828;">${dateStr}<br><span style="font-size:0.7rem;">${dayName}</span></td>`;
                     html += `<td colspan="3" style="padding:10px; text-align:center; color:#c62828; font-size:0.78rem; font-weight:bold;">غائب</td>`;
-                    html += `<td style="padding:10px; text-align:center;"><span style="background:#ef9a9a20;color:#c62828;padding:3px 8px;border-radius:20px;font-size:0.72rem;font-weight:bold;">❌ غائب</span></td>`;
+                    html += `<td style="padding:10px; text-align:center;"><span class="hr-attendance-badge hr-attendance-badge--absent"><span class="hr-css-icon hr-css-icon--cross" aria-hidden="true"></span>غائب</span></td>`;
                     html += `<td style="padding:10px; text-align:center;"><button class="interactive-btn" onclick="openEditAttendanceModal('${empNameEscaped}','${dateStr}','','','غائب','','')" style="background:linear-gradient(135deg,#ff9800,#ef6c00); color:white; border:none; padding:7px 12px; border-radius:8px; cursor:pointer; font-size:0.8rem; display:inline-flex; align-items:center; gap:4px;"><i class="fa-solid fa-pen"></i></button></td>`;
                     html += '</tr>';
                 }
@@ -13186,11 +13186,11 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
                     let hrsVal = formatHoursDisplay(r.hours);
 
                     let statusBadge = '';
-                    if (isPaidLeave) statusBadge = '<span style="background:#fbc02d20;color:#f57f17;padding:3px 8px;border-radius:20px;font-size:0.72rem;font-weight:bold;">🏖️ إجازة مدفوعة</span>';
-                    else if (isUnpaidLeave) statusBadge = '<span style="background:#c6282820;color:#c62828;padding:3px 8px;border-radius:20px;font-size:0.72rem;font-weight:bold;">📋 بدون راتب</span>';
-                    else if (isPending) statusBadge = '<span style="background:#ab47bc20;color:#ab47bc;padding:3px 8px;border-radius:20px;font-size:0.72rem;font-weight:bold;">⏳ انتظار</span>';
-                    else if (isRejected) statusBadge = '<span style="background:#c6282820;color:#c62828;padding:3px 8px;border-radius:20px;font-size:0.72rem;font-weight:bold;">❌ مرفوضة</span>';
-                    else if (r.status === 'حاضر') statusBadge = '<span style="background:#2e7d3220;color:#2e7d32;padding:3px 8px;border-radius:20px;font-size:0.72rem;font-weight:bold;">✅ حاضر</span>';
+                    if (isPaidLeave) statusBadge = '<span class="hr-attendance-badge hr-attendance-badge--paid"><span class="hr-css-icon hr-css-icon--leave" aria-hidden="true"></span>إجازة مدفوعة</span>';
+                    else if (isUnpaidLeave) statusBadge = '<span class="hr-attendance-badge hr-attendance-badge--unpaid"><span class="hr-css-icon hr-css-icon--calendar" aria-hidden="true"></span>بدون راتب</span>';
+                    else if (isPending) statusBadge = '<span class="hr-attendance-badge hr-attendance-badge--pending"><span class="hr-css-icon hr-css-icon--clock" aria-hidden="true"></span>انتظار</span>';
+                    else if (isRejected) statusBadge = '<span class="hr-attendance-badge hr-attendance-badge--rejected"><span class="hr-css-icon hr-css-icon--cross" aria-hidden="true"></span>مرفوضة</span>';
+                    else if (r.status === 'حاضر') statusBadge = '<span class="hr-attendance-badge hr-attendance-badge--present"><span class="hr-css-icon hr-css-icon--check" aria-hidden="true"></span>حاضر</span>';
                     else statusBadge = `<span style="background:#54607a20;color:#546e7a;padding:3px 8px;border-radius:20px;font-size:0.72rem;">${r.status}</span>`;
 
                     html += `<tr style="${rowStyle}">`;
@@ -13205,7 +13205,7 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
                     html += `<tr style="background:#fafafa; border-bottom:1px solid #eee; opacity:0.6;">`;
                     html += `<td style="padding:10px 8px; text-align:center;"><div style="font-size:0.85rem;color:#bdbdbd;">${String(i).padStart(2,'0')}</div><div style="font-size:0.7rem;color:#bdbdbd;">${dayName}</div></td>`;
                     html += `<td colspan="3" style="padding:10px 8px; text-align:center; color:#bdbdbd; font-size:0.78rem;">لم يحن بعد</td>`;
-                    html += `<td style="padding:10px 8px; text-align:center;"><span style="background:#e0e0e020;color:#bdbdbd;padding:3px 8px;border-radius:20px;font-size:0.72rem;">🔜</span></td>`;
+                    html += `<td style="padding:10px 8px; text-align:center;"><span style="color:#bdbdbd;font-size:0.72rem;">—</span></td>`;
                     html += '</tr>';
                 } else {
                     // Past day with no record
@@ -13214,7 +13214,7 @@ function renderAttendanceTable(records, container, isAdminView = false, isMonthl
                     html += `<td style="padding:10px 8px; text-align:center; color:#ef9a9a;">-</td>`;
                     html += `<td style="padding:10px 8px; text-align:center; color:#ef9a9a;">-</td>`;
                     html += `<td style="padding:10px 8px; text-align:center; color:#ef9a9a;">-</td>`;
-                    html += `<td style="padding:10px 8px; text-align:center;"><span style="background:#ffebee;color:#c62828;padding:3px 8px;border-radius:20px;font-size:0.72rem;font-weight:bold;">❌ غائب</span></td>`;
+                    html += `<td style="padding:10px 8px; text-align:center;"><span class="hr-attendance-badge hr-attendance-badge--absent"><span class="hr-css-icon hr-css-icon--cross" aria-hidden="true"></span>غائب</span></td>`;
                     html += '</tr>';
                 }
             }

@@ -30,6 +30,161 @@
             font-size: 14px; font-family: monospace; text-align: left; direction: ltr;
             max-height: 50vh; overflow-y: auto; display: none;
         }
+
+        .hr-css-icon {
+            display: inline-block;
+            position: relative;
+            width: 14px;
+            height: 14px;
+            flex: 0 0 14px;
+            vertical-align: -2px;
+            color: currentColor;
+        }
+
+        .hr-css-icon--calendar {
+            height: 12px;
+            border: 1.7px solid currentColor;
+            border-radius: 3px;
+            background: linear-gradient(currentColor, currentColor) 0 3px / 100% 1.5px no-repeat;
+        }
+
+        .hr-css-icon--calendar::before {
+            position: absolute;
+            top: -3px;
+            left: 2px;
+            width: 2px;
+            height: 5px;
+            border-radius: 2px;
+            background: currentColor;
+            box-shadow: 6px 0 currentColor;
+            content: "";
+        }
+
+        .hr-css-icon--clock {
+            border: 1.8px solid currentColor;
+            border-radius: 50%;
+        }
+
+        .hr-css-icon--clock::before,
+        .hr-css-icon--clock::after {
+            position: absolute;
+            left: 5px;
+            top: 2px;
+            width: 1.5px;
+            height: 5px;
+            border-radius: 2px;
+            background: currentColor;
+            content: "";
+        }
+
+        .hr-css-icon--clock::after {
+            left: 6px;
+            top: 6px;
+            width: 4px;
+            height: 1.5px;
+        }
+
+        .hr-css-icon--leave {
+            height: 12px;
+            border: 1.7px solid currentColor;
+            border-radius: 3px;
+            background: linear-gradient(currentColor, currentColor) 0 3px / 100% 1.5px no-repeat;
+        }
+
+        .hr-css-icon--leave::before {
+            position: absolute;
+            top: -3px;
+            left: 2px;
+            width: 2px;
+            height: 5px;
+            border-radius: 2px;
+            background: currentColor;
+            box-shadow: 6px 0 currentColor;
+            content: "";
+        }
+
+        .hr-css-icon--leave::after {
+            position: absolute;
+            right: 1px;
+            bottom: 1px;
+            width: 4px;
+            height: 2px;
+            border-left: 1.5px solid currentColor;
+            border-bottom: 1.5px solid currentColor;
+            transform: rotate(-45deg);
+            content: "";
+        }
+
+        .hr-css-icon--check::before,
+        .hr-css-icon--check::after,
+        .hr-css-icon--cross::before,
+        .hr-css-icon--cross::after {
+            position: absolute;
+            top: 6px;
+            left: 1px;
+            width: 6px;
+            height: 2px;
+            border-radius: 2px;
+            background: currentColor;
+            transform: rotate(45deg);
+            content: "";
+        }
+
+        .hr-css-icon--check::after {
+            top: 5px;
+            left: 5px;
+            width: 8px;
+            transform: rotate(-48deg);
+        }
+
+        .hr-css-icon--cross::before {
+            left: 1px;
+            width: 12px;
+            transform: rotate(45deg);
+        }
+
+        .hr-css-icon--cross::after {
+            left: 1px;
+            width: 12px;
+            transform: rotate(-45deg);
+        }
+
+        .hr-attendance-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .hr-attendance-badge--present {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .hr-attendance-badge--paid {
+            background: #fff8e1;
+            color: #f57f17;
+        }
+
+        .hr-attendance-badge--unpaid {
+            background: #fce4ec;
+            color: #c62828;
+        }
+
+        .hr-attendance-badge--pending {
+            background: #f3e5f5;
+            color: #8e24aa;
+        }
+
+        .hr-attendance-badge--rejected,
+        .hr-attendance-badge--absent {
+            background: #ffebee;
+            color: #c62828;
+        }
     </style>
     <script>
         window.onerror = function(msg, url, line, col, error) {
@@ -2740,10 +2895,10 @@
                     </label>
                     <div style="position:relative;">
                         <select id="editAttStatus" onchange="handleEditStatusChange()" style="width:100%; padding:12px 16px; border:2px solid #10b981; border-radius:12px; font-size:1.1rem; font-family:inherit; box-sizing:border-box; outline:none; transition:all 0.2s; background:#ecfdf5; color:#065f46; font-weight:600; appearance:none; cursor:pointer; box-shadow:0 0 0 4px rgba(16,185,129,0.08);" onfocus="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 4px rgba(16,185,129,0.12)';" onblur="this.style.borderColor='#10b981'; this.style.boxShadow='0 0 0 4px rgba(16,185,129,0.08)';">
-                            <option value="حاضر">✅ حاضر</option>
-                            <option value="إجازة مدفوعة">🏖️ إجازة مدفوعة</option>
-                            <option value="إجازة بدون مرتب">📋 إجازة بدون مرتب</option>
-                            <option value="غائب">❌ غائب</option>
+                            <option value="حاضر">حاضر</option>
+                            <option value="إجازة مدفوعة">إجازة مدفوعة</option>
+                            <option value="إجازة بدون مرتب">إجازة بدون مرتب</option>
+                            <option value="غائب">غائب</option>
                         </select>
                         <i class="fa-solid fa-chevron-down" style="position:absolute; left:16px; top:50%; transform:translateY(-50%); color:#047857; pointer-events:none;"></i>
                     </div>
