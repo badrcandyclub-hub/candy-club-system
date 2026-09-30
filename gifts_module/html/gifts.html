@@ -239,20 +239,43 @@
                     </span>
                 </div>
                 <div class="gifts-camera-container" id="gifts-camera-box">
-                    <video id="gifts-camera-stream" class="gifts-camera-video" playsinline></video>
-                    <img id="gifts-image-preview" class="gifts-camera-preview" alt="معاينة الصورة">
-                    
-                    <div id="gifts-camera-placeholder">
-                        <i class="fa-solid fa-camera" style="font-size: 2.2rem; color: #F472B6; margin-bottom: 8px;"></i>
-                        <div style="font-size: 0.85rem; color: var(--gifts-text-muted); font-weight: 700;">التقط صورة للبوكيه أو ارفعها من المعرض</div>
+                    <div class="gifts-camera-viewport-3x4" id="gifts-camera-viewport-3x4">
+                        <video id="gifts-camera-stream" class="gifts-camera-video" playsinline autoplay></video>
+                        <img id="gifts-image-preview" class="gifts-camera-preview" alt="معاينة الصورة">
+                        
+                        <!-- 3:4 Viewfinder Guide Overlay -->
+                        <div class="gifts-camera-guide-overlay" id="gifts-camera-guide-overlay" style="display: none;">
+                            <div class="gifts-camera-reticle reticle-tl"></div>
+                            <div class="gifts-camera-reticle reticle-tr"></div>
+                            <div class="gifts-camera-reticle reticle-bl"></div>
+                            <div class="gifts-camera-reticle reticle-br"></div>
+                            <div class="gifts-camera-grid-line grid-h1"></div>
+                            <div class="gifts-camera-grid-line grid-h2"></div>
+                            <div class="gifts-camera-grid-line grid-v1"></div>
+                            <div class="gifts-camera-grid-line grid-v2"></div>
+                            <div class="gifts-camera-badge-ratio">
+                                <i class="fa-brands fa-instagram"></i> كادر رأسي موحد 3:4
+                            </div>
+                        </div>
+
+                        <div id="gifts-camera-placeholder">
+                            <i class="fa-solid fa-camera" style="font-size: 2.2rem; color: #F472B6; margin-bottom: 8px;"></i>
+                            <div style="font-size: 0.85rem; color: var(--gifts-text-muted); font-weight: 700;">التقط صورة للبوكيه أو ارفعها من المعرض</div>
+                            <div style="font-size: 0.72rem; color: #E91E8C; font-weight: 700; margin-top: 5px;">
+                                <i class="fa-brands fa-instagram"></i> مقاس رأسي 3:4 موحد لكل المعروضات
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="gifts-camera-btns" style="margin-top: 10px;">
+                    <div class="gifts-camera-btns" style="margin-top: 12px;">
                         <button type="button" class="gifts-btn-outline" id="gifts-btn-open-camera" onclick="GiftsApp.startCamera()">
                             <i class="fa-solid fa-camera"></i> فتح الكاميرا
                         </button>
-                        <button type="button" class="gifts-btn-outline" id="gifts-btn-snap" style="display: none;" onclick="GiftsApp.capturePhoto()">
-                            <i class="fa-solid fa-camera-retro"></i> التقاط
+                        <button type="button" class="gifts-btn-outline" id="gifts-btn-snap" style="display: none; background: #E91E8C; color: #FFF; border-color: #BE185D;" onclick="GiftsApp.capturePhoto()">
+                            <i class="fa-solid fa-camera-retro"></i> التقاط الكادر 3:4
+                        </button>
+                        <button type="button" class="gifts-btn-outline" id="gifts-btn-cancel-cam" style="display: none;" onclick="GiftsApp.stopCamera()">
+                            <i class="fa-solid fa-xmark"></i> إغلاق الكاميرا
                         </button>
                         <label class="gifts-btn-outline" style="cursor: pointer; margin: 0;">
                             <i class="fa-solid fa-upload"></i> من الصور
@@ -573,22 +596,22 @@
                 </span>
             </div>
 
-            <!-- Preview Areas: Current vs New -->
+            <!-- Preview Areas: Current vs New (3:4 Unified) -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px;">
                 <!-- Current Image -->
                 <div style="text-align: center;">
                     <span style="font-size: 0.8rem; font-weight: 700; color: #64748B; margin-bottom: 6px; display: block;">الصورة الحالية</span>
-                    <div id="gifts-change-photo-current-wrap" style="width: 100%; height: 150px; border-radius: 12px; border: 1px solid #CBD5E1; background: #F1F5F9; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                    <div id="gifts-change-photo-current-wrap" style="width: 100%; max-width: 135px; aspect-ratio: 3 / 4; margin: 0 auto; border-radius: 12px; border: 1.5px solid #CBD5E1; background: #F1F5F9; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
                         <i class="fa-solid fa-gift" style="font-size: 2.2rem; color: #CBD5E1;"></i>
                     </div>
                 </div>
 
                 <!-- New Image Preview -->
                 <div style="text-align: center;">
-                    <span style="font-size: 0.8rem; font-weight: 700; color: #E91E8C; margin-bottom: 6px; display: block;">الصورة الجديدة</span>
-                    <div id="gifts-change-photo-new-wrap" style="width: 100%; height: 150px; border-radius: 12px; border: 2px dashed #F472B6; background: #FFF5F9; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative;">
-                        <span id="gifts-change-photo-placeholder-text" style="font-size: 0.8rem; color: #9D174D; font-weight: 600;">لم يتم اختيار صورة</span>
-                        <img id="gifts-change-photo-new-img" src="" alt="معاينة" style="display: none; width: 100%; height: 100%; object-fit: contain;">
+                    <span style="font-size: 0.8rem; font-weight: 700; color: #E91E8C; margin-bottom: 6px; display: block;">الصورة الجديدة (3:4)</span>
+                    <div id="gifts-change-photo-new-wrap" style="width: 100%; max-width: 135px; aspect-ratio: 3 / 4; margin: 0 auto; border-radius: 12px; border: 2px dashed #F472B6; background: #FFF5F9; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; box-shadow: 0 2px 8px rgba(233, 30, 140, 0.06);">
+                        <span id="gifts-change-photo-placeholder-text" style="font-size: 0.78rem; color: #9D174D; font-weight: 600; padding: 6px;">لم يتم اختيار صورة بعد</span>
+                        <img id="gifts-change-photo-new-img" src="" alt="معاينة" style="display: none; width: 100%; height: 100%; object-fit: cover;">
                     </div>
                     <div id="gifts-change-photo-size-badge" style="display: none; font-size: 0.75rem; color: #059669; font-weight: bold; margin-top: 5px;"></div>
                 </div>
@@ -596,10 +619,26 @@
 
             <!-- Camera Stream (When Active) -->
             <div id="gifts-change-photo-camera-container" style="display: none; margin-bottom: 16px; text-align: center;">
-                <video id="gifts-change-photo-camera-stream" autoplay playsinline style="width: 100%; max-height: 240px; object-fit: cover; border-radius: 12px; border: 2px solid #E91E8C; background: #000;"></video>
-                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                <div class="gifts-camera-viewport-3x4" style="margin: 0 auto 10px auto; max-width: 240px;">
+                    <video id="gifts-change-photo-camera-stream" autoplay playsinline class="gifts-camera-video"></video>
+                    <!-- 3:4 Viewfinder Guide Overlay -->
+                    <div class="gifts-camera-guide-overlay" style="display: block;">
+                        <div class="gifts-camera-reticle reticle-tl"></div>
+                        <div class="gifts-camera-reticle reticle-tr"></div>
+                        <div class="gifts-camera-reticle reticle-bl"></div>
+                        <div class="gifts-camera-reticle reticle-br"></div>
+                        <div class="gifts-camera-grid-line grid-h1"></div>
+                        <div class="gifts-camera-grid-line grid-h2"></div>
+                        <div class="gifts-camera-grid-line grid-v1"></div>
+                        <div class="gifts-camera-grid-line grid-v2"></div>
+                        <div class="gifts-camera-badge-ratio">
+                            <i class="fa-brands fa-instagram"></i> كادر رأسي موحد 3:4
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px;">
                     <button type="button" id="gifts-change-photo-snap-btn" class="interactive-btn" onclick="GiftsApp.captureChangePhoto()" style="flex: 2; padding: 10px; background: #E91E8C; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
-                        <i class="fa-solid fa-camera"></i> التقاط الصورة الآن
+                        <i class="fa-solid fa-camera"></i> التقاط الكادر 3:4 الآن
                     </button>
                     <button type="button" class="interactive-btn" onclick="GiftsApp.stopChangePhotoCamera()" style="flex: 1; padding: 10px; background: #F1F5F9; color: #475569; border: 1px solid #CBD5E1; border-radius: 8px; font-weight: bold; cursor: pointer;">
                         إلغاء الكاميرا

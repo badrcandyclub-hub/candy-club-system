@@ -526,14 +526,88 @@
     box-shadow: 0 4px 18px rgba(233, 30, 140, 0.1);
 }
 
+.gifts-camera-viewport-3x4 {
+    position: relative;
+    width: 100%;
+    max-width: 260px;
+    aspect-ratio: 3 / 4;
+    margin: 0 auto;
+    border-radius: var(--gifts-radius-sm);
+    overflow: hidden;
+    background: #0F172A;
+    border: 2px solid var(--gifts-primary);
+    box-shadow: 0 8px 24px rgba(233, 30, 140, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#gifts-camera-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: linear-gradient(135deg, #FFF5F9 0%, #FFFFFF 100%);
+    text-align: center;
+}
+
 .gifts-camera-preview, .gifts-camera-video {
     width: 100%;
-    max-height: 200px;
+    height: 100%;
     object-fit: cover;
-    border-radius: var(--gifts-radius-sm);
     display: none;
-    margin-bottom: 10px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* 3:4 Viewfinder Overlay & Reticles */
+.gifts-camera-guide-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.gifts-camera-reticle {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border-color: #F472B6;
+    border-style: solid;
+}
+.reticle-tl { top: 12px; left: 12px; border-width: 3px 0 0 3px; border-top-left-radius: 4px; }
+.reticle-tr { top: 12px; right: 12px; border-width: 3px 3px 0 0; border-top-right-radius: 4px; }
+.reticle-bl { bottom: 12px; left: 12px; border-width: 0 0 3px 3px; border-bottom-left-radius: 4px; }
+.reticle-br { bottom: 12px; right: 12px; border-width: 0 3px 3px 0; border-bottom-right-radius: 4px; }
+
+.gifts-camera-grid-line {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.22);
+}
+.grid-h1 { top: 33.33%; left: 0; right: 0; height: 1px; }
+.grid-h2 { top: 66.66%; left: 0; right: 0; height: 1px; }
+.grid-v1 { left: 33.33%; top: 0; bottom: 0; width: 1px; }
+.grid-v2 { left: 66.66%; top: 0; bottom: 0; width: 1px; }
+
+.gifts-camera-badge-ratio {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.82);
+    backdrop-filter: blur(6px);
+    color: #FDF2F8;
+    border: 1px solid rgba(244, 114, 182, 0.55);
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
 }
 
 .gifts-camera-btns {
@@ -1371,7 +1445,8 @@
 
 .gifts-card-img-wrap {
     width: 100%;
-    height: 190px;
+    aspect-ratio: 3 / 4;
+    max-height: 290px;
     background: linear-gradient(135deg, #FFF5F9 0%, #FDF2F8 100%);
     position: relative;
     overflow: hidden;
@@ -2388,7 +2463,9 @@
 .gifts-catalog-card-img-wrap {
     position: relative;
     overflow: hidden;
-    height: 200px;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    max-height: 310px;
     background: linear-gradient(135deg, #FFF0F6 0%, #FDF2F8 100%);
 }
 
@@ -3430,7 +3507,9 @@ body.gifts-modal-open {
     }
 
     .gifts-catalog-card-img-wrap {
-        height: 170px;
+        aspect-ratio: 3 / 4;
+        max-height: 280px;
+        height: auto;
     }
 
     .gifts-catalog-section-bar {

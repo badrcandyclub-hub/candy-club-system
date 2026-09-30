@@ -1245,11 +1245,83 @@
         },
 
         // 7. تصوير البوكيه وضغط Canvas والرفع لجوجل درايف
+        /**
+         * أداة توحيد وقص وضغط الصور إلى مقاس بوست إنستجرام الرأسي (3:4)
+         * تقبل فيديو الكاميرا، أو صورة مرفوعة Image، أو عنصر Canvas
+         * تقوم بالقص المتمركز التلقائي Center-Crop إلى نسبة 3:4 الدقيقة
+         * مع تحجيم عالي الدقة بحد أقصى 960x1280 وضغط JPEG 0.88 لحجم خفيف وجودة كريستالية
+         */
+        cropAndCompressImageTo3x4(source, maxWidth = 960, maxHeight = 1280, quality = 0.88) {
+            const srcW = source.videoWidth || source.naturalWidth || source.width;
+            const srcH = source.videoHeight || source.naturalHeight || source.height;
+
+            if (!srcW || !srcH) {
+                throw new Error("Invalid image source dimensions");
+            }
+
+            const targetRatio = 3 / 4; // 0.75 (Instagram Portrait)
+            const srcRatio = srcW / srcH;
+
+            let cropX = 0;
+            let cropY = 0;
+            let cropW = srcW;
+            let cropH = srcH;
+
+            if (srcRatio > targetRatio) {
+                // الصورة أوسع بالعرض من 3:4 -> قص متمركز للجانبين
+                cropH = srcH;
+                cropW = Math.round(srcH * targetRatio);
+                cropX = Math.round((srcW - cropW) / 2);
+            } else if (srcRatio < targetRatio) {
+                // الصورة أطول من 3:4 (مثل ستوري 9:16) -> قص متمركز للأعلى والأسفل
+                cropW = srcW;
+                cropH = Math.round(srcW / targetRatio);
+                cropY = Math.round((srcH - cropH) / 2);
+            }
+
+            // تحديد مقاس الإخراج بدقة نسبة 3:4
+            let outW = cropW;
+            let outH = cropH;
+
+            if (outW > maxWidth || outH > maxHeight) {
+                outW = maxWidth;
+                outH = maxHeight; // 960x1280
+            } else {
+                outH = Math.round(outW * (4 / 3));
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = outW;
+            canvas.height = outH;
+            const ctx = canvas.getContext('2d');
+
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+
+            ctx.drawImage(source, cropX, cropY, cropW, cropH, 0, 0, outW, outH);
+
+            const base64 = canvas.toDataURL('image/jpeg', quality);
+            const head = 'data:image/jpeg;base64,';
+            const sizeInBytes = Math.round((base64.length - head.length) * 3 / 4);
+            const sizeInKB = Math.round(sizeInBytes / 1024);
+
+            return {
+                base64,
+                sizeInKB,
+                width: outW,
+                height: outH
+            };
+        },
+
+        // 7. تصوير البوكيه وضغط Canvas والرفع لجوجل درايف
         async startCamera() {
             const video = document.getElementById('gifts-camera-stream');
             const btnOpen = document.getElementById('gifts-btn-open-camera');
             const btnSnap = document.getElementById('gifts-btn-snap');
+            const btnCancel = document.getElementById('gifts-btn-cancel-cam');
             const placeholder = document.getElementById('gifts-camera-placeholder');
+            const guideOverlay = document.getElementById('gifts-camera-guide-overlay');
+            const preview = document.getElementById('gifts-image-preview');
 
             try {
                 const constraints = {
@@ -1266,9 +1338,12 @@
                 video.style.display = 'block';
                 video.play().catch(e => console.warn('Video playback deferred:', e));
 
+                if (preview) preview.style.display = 'none';
                 if (placeholder) placeholder.style.display = 'none';
+                if (guideOverlay) guideOverlay.style.display = 'block';
                 if (btnOpen) btnOpen.style.display = 'none';
                 if (btnSnap) btnSnap.style.display = 'inline-flex';
+                if (btnCancel) btnCancel.style.display = 'inline-flex';
             } catch (err) {
                 console.error("Camera access failed:", err);
                 this.showToastNotification("تعذر فتح الكاميرا، يمكنك اختيار صورة من جهازك");
@@ -1283,23 +1358,44 @@
             const video = document.getElementById('gifts-camera-stream');
             const btnOpen = document.getElementById('gifts-btn-open-camera');
             const btnSnap = document.getElementById('gifts-btn-snap');
-            if (video) video.style.display = 'none';
+            const btnCancel = document.getElementById('gifts-btn-cancel-cam');
+            const guideOverlay = document.getElementById('gifts-camera-guide-overlay');
+            const placeholder = document.getElementById('gifts-camera-placeholder');
+            const preview = document.getElementById('gifts-image-preview');
+
+            if (video) {
+                video.srcObject = null;
+                video.style.display = 'none';
+            }
+            if (guideOverlay) guideOverlay.style.display = 'none';
             if (btnOpen) btnOpen.style.display = 'inline-flex';
             if (btnSnap) btnSnap.style.display = 'none';
+            if (btnCancel) btnCancel.style.display = 'none';
+
+            if (!this.state.draft.photoBase64 && placeholder) {
+                placeholder.style.display = 'flex';
+            }
+            if (this.state.draft.photoBase64 && preview) {
+                preview.style.display = 'block';
+            }
         },
 
         capturePhoto() {
             const video = document.getElementById('gifts-camera-stream');
             if (!video || !this.state.cameraStream) return;
 
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth || 640;
-            canvas.height = video.videoHeight || 480;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            try {
+                const result = this.cropAndCompressImageTo3x4(video);
+                this.stopCamera();
+                this.state.draft.photoBase64 = result.base64;
+                this.state.draft.photoSizeKB = result.sizeInKB;
 
-            this.stopCamera();
-            this.compressCanvasImage(canvas);
+                this.displayCompressedPhoto(result.base64, result.sizeInKB);
+                this.onDraftChanged();
+            } catch (err) {
+                console.error("Capture photo failed:", err);
+                this.showToastNotification("حدث خطأ أثناء التقاط وتجهيز الصورة بنسبة 3:4");
+            }
         },
 
         handleFileUpload(event) {
@@ -1310,52 +1406,34 @@
             reader.onload = (e) => {
                 const img = new Image();
                 img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0);
-                    this.compressCanvasImage(canvas);
+                    try {
+                        const result = this.cropAndCompressImageTo3x4(img);
+                        this.state.draft.photoBase64 = result.base64;
+                        this.state.draft.photoSizeKB = result.sizeInKB;
+
+                        this.displayCompressedPhoto(result.base64, result.sizeInKB);
+                        this.onDraftChanged();
+                    } catch (err) {
+                        console.error("Image upload 3:4 crop failed:", err);
+                        this.showToastNotification("تعذر معالجة الصورة، يرجى اختيار ملف آخر");
+                    }
                 };
                 img.src = e.target.result;
             };
             reader.readAsDataURL(file);
+            event.target.value = '';
         },
 
         compressCanvasImage(canvas) {
-            const maxDimension = 1400;
-            let targetWidth = canvas.width;
-            let targetHeight = canvas.height;
-
-            if (targetWidth > maxDimension || targetHeight > maxDimension) {
-                if (targetWidth > targetHeight) {
-                    targetHeight = Math.round((targetHeight * maxDimension) / targetWidth);
-                    targetWidth = maxDimension;
-                } else {
-                    targetWidth = Math.round((targetWidth * maxDimension) / targetHeight);
-                    targetHeight = maxDimension;
-                }
+            try {
+                const result = this.cropAndCompressImageTo3x4(canvas);
+                this.state.draft.photoBase64 = result.base64;
+                this.state.draft.photoSizeKB = result.sizeInKB;
+                this.displayCompressedPhoto(result.base64, result.sizeInKB);
+                this.onDraftChanged();
+            } catch (e) {
+                console.warn("Fallback canvas compression:", e);
             }
-
-            const scaledCanvas = document.createElement('canvas');
-            scaledCanvas.width = targetWidth;
-            scaledCanvas.height = targetHeight;
-            const scaledCtx = scaledCanvas.getContext('2d');
-            scaledCtx.drawImage(canvas, 0, 0, targetWidth, targetHeight);
-
-            // جودة فائقة بحجم مثالي بين 300 إلى 500 كيلوبايت لرفعها على Google Drive
-            const quality = 0.88;
-            const compressedBase64 = scaledCanvas.toDataURL('image/jpeg', quality);
-
-            const head = 'data:image/jpeg;base64,';
-            const sizeInBytes = Math.round((compressedBase64.length - head.length) * 3 / 4);
-            const sizeInKB = Math.round(sizeInBytes / 1024);
-
-            this.state.draft.photoBase64 = compressedBase64;
-            this.state.draft.photoSizeKB = sizeInKB;
-
-            this.displayCompressedPhoto(compressedBase64, sizeInKB);
-            this.onDraftChanged();
         },
 
         displayCompressedPhoto(base64, sizeInKB) {
@@ -1363,7 +1441,9 @@
             const placeholder = document.getElementById('gifts-camera-placeholder');
             const btnRemove = document.getElementById('gifts-btn-remove-photo');
             const infoBadge = document.getElementById('gifts-compression-info');
+            const guideOverlay = document.getElementById('gifts-camera-guide-overlay');
 
+            if (guideOverlay) guideOverlay.style.display = 'none';
             if (preview) {
                 preview.src = base64;
                 preview.style.display = 'block';
@@ -1371,7 +1451,7 @@
             if (placeholder) placeholder.style.display = 'none';
             if (btnRemove) btnRemove.style.display = 'inline-flex';
             if (infoBadge) {
-                infoBadge.innerText = `حجم الصورة لجوجل درايف: ${sizeInKB} كيلوبايت (جودة فائقة)`;
+                infoBadge.innerHTML = `<i class="fa-brands fa-instagram"></i> مقاس بوست إنستا موحد (3:4) • حجم التخزين: ${sizeInKB} ك.ب (جودة فائقة)`;
                 infoBadge.style.display = 'inline-block';
             }
             this.updateSaveButtonState();
@@ -1385,13 +1465,15 @@
             const placeholder = document.getElementById('gifts-camera-placeholder');
             const btnRemove = document.getElementById('gifts-btn-remove-photo');
             const infoBadge = document.getElementById('gifts-compression-info');
+            const guideOverlay = document.getElementById('gifts-camera-guide-overlay');
             const fileInput = document.getElementById('gifts-file-input');
 
+            if (guideOverlay) guideOverlay.style.display = 'none';
             if (preview) {
                 preview.src = '';
                 preview.style.display = 'none';
             }
-            if (placeholder) placeholder.style.display = 'block';
+            if (placeholder) placeholder.style.display = 'flex';
             if (btnRemove) btnRemove.style.display = 'none';
             if (infoBadge) infoBadge.style.display = 'none';
             if (fileInput) fileInput.value = '';
@@ -3551,38 +3633,67 @@
         exportCustomerCatalogPDF() {
             const readyBouquets = this.state.bouquets.filter(b => b.status === 'ready');
             if (readyBouquets.length === 0) {
-                this.showToastNotification("لا توجد بوكيهات جاهزة لعرضها في كتالوج العملاء");
+                this.showToastNotification("لا توجد بوكيهات جاهزة حالياً لعرضها في كتالوج العملاء");
                 return;
             }
 
-            const printWindow = window.open('', '_blank', 'width=1000,height=800');
+            const printWindow = window.open('', '_blank', 'width=1100,height=900');
             if (!printWindow) {
-                this.showToastNotification("يرجى السماح بالنوافذ المنبثقة لفتح الكتالوج");
+                this.showToastNotification("يرجى السماح بالنوافذ المنبثقة لفتح كتالوج العملاء");
                 return;
             }
+
+            const todayFormatted = new Date().toLocaleDateString('ar-EG', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
 
             const cardsHtml = readyBouquets.map(b => {
                 const imgTag = b.image_url ?
-                    `<div style="width: 100%; aspect-ratio: 4 / 3; max-height: 220px; overflow: hidden; border-radius: 10px; margin-bottom: 12px; background: #F8FAFC; display: flex; align-items: center; justify-content: center;">
-                        <img src="${b.image_url}" style="width: 100%; height: 100%; object-fit: cover; object-position: center; display: block;">
+                    `<div class="catalog-card-media">
+                        <img src="${b.image_url}" alt="${this.escapeHtml(b.name)}" loading="lazy">
+                        <div class="catalog-card-badge"><i class="fa-solid fa-crown"></i> تصميم حصري</div>
                      </div>` :
-                    `<div style="width: 100%; aspect-ratio: 4 / 3; max-height: 220px; background: #FFF0F6; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #E91E8C; border-radius: 10px; margin-bottom: 12px;">
-                        <i class="fa-solid fa-gift" style="font-size: 38px; margin-bottom: 6px;"></i>
-                        <span style="font-size: 11px; color: #9D174D; font-weight: bold;">كاندي كلوب</span>
+                    `<div class="catalog-card-media catalog-card-noimg">
+                        <i class="fa-solid fa-gift"></i>
+                        <span>كاندي كلوب • باقة فاخرة</span>
                      </div>`;
 
-                const itemsSummary = (b.items || []).map(i => `${i.qty}× ${i.name}`).join(' ، ');
+                const items = b.items || [];
+                const itemsPills = items.length > 0 ? items.map(item => `
+                    <span class="catalog-pill">
+                        <strong class="catalog-pill-qty">${item.qty}×</strong>
+                        <span class="catalog-pill-name">${this.escapeHtml(item.name)}</span>
+                    </span>
+                `).join('') : '<span class="catalog-pill-empty">تشكيلة شوكولاتة وحلويات مختارة بعناية</span>';
 
                 return `
-                    <div style="border: 2px solid #FCE7F3; border-radius: 12px; padding: 14px; background: #FFFFFF; display: flex; flex-direction: column; justify-content: space-between; page-break-inside: avoid;">
-                        <div>
-                            ${imgTag}
-                            <h3 style="margin: 0 0 6px 0; font-size: 16px; color: #BE185D;">${b.name}</h3>
-                            <div style="font-size: 12px; color: #334155; line-height: 1.4; margin-bottom: 12px;"><strong>المكونات:</strong> ${itemsSummary}</div>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed #FCE7F3; padding-top: 8px;">
-                            <span style="font-size: 12px; color: #64748B;">السعر الرسمي:</span>
-                            <span style="font-size: 18px; font-weight: 900; color: #E91E8C;">${Number(b.total_price).toFixed(2)} ج.م</span>
+                    <div class="catalog-card">
+                        ${imgTag}
+                        <div class="catalog-card-content">
+                            <h3 class="catalog-card-title">${this.escapeHtml(b.name)}</h3>
+                            
+                            <div class="catalog-items-section">
+                                <div class="catalog-items-title">
+                                    <i class="fa-solid fa-boxes-stacked"></i> محتويات ومكونات البوكيه:
+                                </div>
+                                <div class="catalog-pills-wrap">
+                                    ${itemsPills}
+                                </div>
+                            </div>
+
+                            <div class="catalog-card-footer">
+                                <div class="catalog-price-box">
+                                    <span class="catalog-price-label">السعر الرسمي:</span>
+                                    <div class="catalog-price-val">
+                                        ${Number(b.total_price).toFixed(2)} <span class="currency">ج.م</span>
+                                    </div>
+                                </div>
+                                <div class="catalog-status-badge">
+                                    <span class="catalog-status-dot"></span> جاهز للتسليم الفوري
+                                </div>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -3593,39 +3704,421 @@
                 <html dir="rtl" lang="ar">
                 <head>
                     <meta charset="UTF-8">
-                    <title>كتالوج بوكيهات وهدايا كاندي كلوب</title>
-                    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>كتالوج بوكيهات كاندي كلوب الفاخرة | Candy Club Gifts</title>
+                    <link rel="preconnect" href="https://fonts.googleapis.com">
+                    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+                    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Outfit:wght@500;700;800;900&display=swap" rel="stylesheet">
+                    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
                     <style>
-                        body { font-family: 'Cairo', sans-serif; padding: 25px; margin: 0; color: #1E293B; background: #FFFDFE; }
-                        .catalog-header { text-align: center; border-bottom: 3px solid #E91E8C; padding-bottom: 16px; margin-bottom: 24px; }
-                        .catalog-title { font-size: 26px; font-weight: 900; color: #BE185D; margin: 0 0 6px 0; }
-                        .catalog-sub { font-size: 14px; color: #E91E8C; font-weight: 700; margin: 0; }
-                        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+                        :root {
+                            --primary: #BE185D;
+                            --primary-light: #E91E8C;
+                            --primary-soft: #FFF1F2;
+                            --primary-border: #FBCFE8;
+                            --text-main: #0F172A;
+                            --text-muted: #64748B;
+                            --bg-page: #FFFDFE;
+                            --card-bg: #FFFFFF;
+                        }
+                        * { box-sizing: border-box; }
+                        body {
+                            font-family: 'Cairo', sans-serif;
+                            margin: 0;
+                            padding: 0;
+                            background: var(--bg-page);
+                            color: var(--text-main);
+                            -webkit-print-color-adjust: exact;
+                            print-color-adjust: exact;
+                        }
+
+                        /* Floating Top Bar (Hidden on Print) */
+                        .screen-toolbar {
+                            position: sticky;
+                            top: 0;
+                            z-index: 1000;
+                            background: #0F172A;
+                            color: #FFFFFF;
+                            padding: 12px 24px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+                        }
+                        .toolbar-info {
+                            display: flex;
+                            align-items: center;
+                            gap: 12px;
+                            font-size: 0.92rem;
+                            font-weight: 700;
+                        }
+                        .toolbar-badge {
+                            background: linear-gradient(135deg, #E91E8C, #BE185D);
+                            color: #FFF;
+                            padding: 4px 12px;
+                            border-radius: 20px;
+                            font-size: 0.8rem;
+                        }
+                        .toolbar-btns {
+                            display: flex;
+                            gap: 10px;
+                        }
+                        .btn-toolbar {
+                            padding: 8px 18px;
+                            border-radius: 8px;
+                            font-family: inherit;
+                            font-size: 0.88rem;
+                            font-weight: 700;
+                            cursor: pointer;
+                            border: none;
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 6px;
+                            transition: all 0.2s;
+                        }
+                        .btn-print {
+                            background: linear-gradient(135deg, #E91E8C, #BE185D);
+                            color: #FFFFFF;
+                        }
+                        .btn-print:hover { filter: brightness(1.1); transform: scale(1.02); }
+                        .btn-close {
+                            background: rgba(255,255,255,0.12);
+                            color: #FFFFFF;
+                        }
+                        .btn-close:hover { background: rgba(255,255,255,0.22); }
+
+                        .catalog-container {
+                            max-width: 1080px;
+                            margin: 0 auto;
+                            padding: 30px 24px;
+                        }
+
+                        /* Header */
+                        .catalog-header {
+                            text-align: center;
+                            padding: 24px 20px 20px;
+                            background: linear-gradient(135deg, #FFF1F2 0%, #FDF2F8 50%, #FFFFFF 100%);
+                            border-radius: 20px;
+                            border: 2px solid var(--primary-border);
+                            margin-bottom: 28px;
+                            position: relative;
+                            box-shadow: 0 4px 20px rgba(233, 30, 140, 0.05);
+                        }
+                        .catalog-logo-wrap {
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 8px;
+                            background: #BE185D;
+                            color: #FFF;
+                            padding: 6px 16px;
+                            border-radius: 30px;
+                            font-weight: 800;
+                            font-size: 0.85rem;
+                            margin-bottom: 12px;
+                            letter-spacing: 0.5px;
+                        }
+                        .catalog-title {
+                            font-size: 28px;
+                            font-weight: 900;
+                            color: #831843;
+                            margin: 0 0 8px 0;
+                            letter-spacing: -0.5px;
+                        }
+                        .catalog-sub {
+                            font-size: 14px;
+                            font-weight: 700;
+                            color: #BE185D;
+                            margin: 0 0 10px 0;
+                        }
+                        .catalog-meta-row {
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            gap: 16px;
+                            font-size: 12px;
+                            color: var(--text-muted);
+                            font-weight: 600;
+                        }
+
+                        /* Grid */
+                        .catalog-grid {
+                            display: grid;
+                            grid-template-columns: repeat(2, 1fr);
+                            gap: 24px;
+                        }
+
+                        /* Card (3:4 Vertical Instagram Format) */
+                        .catalog-card {
+                            background: var(--card-bg);
+                            border: 1.5px solid var(--primary-border);
+                            border-radius: 18px;
+                            overflow: hidden;
+                            display: flex;
+                            flex-direction: column;
+                            box-shadow: 0 6px 20px rgba(233, 30, 140, 0.06);
+                            page-break-inside: avoid;
+                            break-inside: avoid;
+                            transition: transform 0.2s;
+                        }
+                        .catalog-card:hover {
+                            transform: translateY(-3px);
+                            box-shadow: 0 10px 28px rgba(233, 30, 140, 0.12);
+                        }
+
+                        /* 3:4 Media Container */
+                        .catalog-card-media {
+                            position: relative;
+                            width: 100%;
+                            aspect-ratio: 3 / 4;
+                            max-height: 330px;
+                            background: #FDF2F8;
+                            overflow: hidden;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            border-bottom: 1px solid var(--primary-border);
+                        }
+                        .catalog-card-media img {
+                            width: 100%;
+                            height: 100%;
+                            object-fit: cover;
+                            object-position: center;
+                            display: block;
+                        }
+                        .catalog-card-badge {
+                            position: absolute;
+                            top: 10px;
+                            right: 10px;
+                            background: rgba(190, 24, 93, 0.9);
+                            backdrop-filter: blur(4px);
+                            color: #FFFFFF;
+                            font-size: 10.5px;
+                            font-weight: 800;
+                            padding: 4px 10px;
+                            border-radius: 20px;
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+                            display: flex;
+                            align-items: center;
+                            gap: 5px;
+                        }
+                        .catalog-card-noimg {
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 10px;
+                            color: var(--primary-light);
+                            font-size: 13px;
+                            font-weight: 700;
+                        }
+                        .catalog-card-noimg i { font-size: 48px; opacity: 0.7; }
+
+                        /* Content */
+                        .catalog-card-content {
+                            padding: 16px;
+                            display: flex;
+                            flex-direction: column;
+                            flex: 1;
+                            justify-content: space-between;
+                        }
+                        .catalog-card-title {
+                            margin: 0 0 10px 0;
+                            font-size: 18px;
+                            font-weight: 900;
+                            color: #831843;
+                            line-height: 1.3;
+                        }
+
+                        .catalog-items-section {
+                            margin-bottom: 14px;
+                            background: #FFFDFE;
+                            border: 1px solid #FFE4E6;
+                            border-radius: 10px;
+                            padding: 10px;
+                        }
+                        .catalog-items-title {
+                            font-size: 11px;
+                            font-weight: 800;
+                            color: var(--primary);
+                            margin-bottom: 6px;
+                            display: flex;
+                            align-items: center;
+                            gap: 5px;
+                        }
+                        .catalog-pills-wrap {
+                            display: flex;
+                            flex-wrap: wrap;
+                            gap: 5px;
+                            align-content: flex-start;
+                        }
+                        .catalog-pill {
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 4px;
+                            background: #FFF1F2;
+                            border: 1px solid #FBCFE8;
+                            color: #9F1239;
+                            border-radius: 6px;
+                            padding: 3px 7px;
+                            font-size: 11px;
+                            font-weight: 700;
+                        }
+                        .catalog-pill-qty {
+                            background: #BE185D;
+                            color: #FFF;
+                            border-radius: 4px;
+                            padding: 1px 4px;
+                            font-size: 9.5px;
+                            font-weight: 900;
+                        }
+                        .catalog-pill-name { white-space: nowrap; }
+                        .catalog-pill-empty { font-size: 11px; color: var(--text-muted); font-style: italic; }
+
+                        /* Footer with price */
+                        .catalog-card-footer {
+                            border-top: 1.5px dashed var(--primary-border);
+                            padding-top: 12px;
+                            margin-top: auto;
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                        }
+                        .catalog-price-label {
+                            font-size: 11px;
+                            font-weight: 700;
+                            color: var(--text-muted);
+                            display: block;
+                        }
+                        .catalog-price-val {
+                            font-family: 'Cairo', 'Outfit', sans-serif;
+                            font-size: 22px;
+                            font-weight: 900;
+                            color: #BE185D;
+                            line-height: 1;
+                        }
+                        .catalog-price-val .currency {
+                            font-size: 12px;
+                            font-weight: 700;
+                            color: var(--primary-light);
+                        }
+                        .catalog-status-badge {
+                            background: #ECFDF5;
+                            border: 1px solid #A7F3D0;
+                            color: #065F46;
+                            padding: 5px 12px;
+                            border-radius: 20px;
+                            font-size: 11px;
+                            font-weight: 800;
+                            display: flex;
+                            align-items: center;
+                            gap: 6px;
+                        }
+                        .catalog-status-dot {
+                            width: 7px;
+                            height: 7px;
+                            border-radius: 50%;
+                            background: #10B981;
+                            display: inline-block;
+                        }
+
+                        /* Page Footer */
+                        .catalog-footer {
+                            text-align: center;
+                            margin-top: 36px;
+                            padding: 18px;
+                            border-top: 2px solid var(--primary-border);
+                            color: var(--text-muted);
+                            font-size: 12px;
+                            font-weight: 600;
+                        }
+                        .catalog-footer-seal {
+                            font-size: 13px;
+                            font-weight: 800;
+                            color: #831843;
+                            margin-bottom: 4px;
+                        }
+
+                        /* Print Optimization */
                         @media print {
-                            body { padding: 8mm; background: #FFF; }
-                            @page { size: A4 portrait; margin: 8mm; }
+                            .no-print { display: none !important; }
+                            body {
+                                background: #FFF !important;
+                                padding: 0 !important;
+                            }
+                            .catalog-container {
+                                max-width: 100% !important;
+                                padding: 0 !important;
+                            }
+                            .catalog-grid {
+                                gap: 14mm !important;
+                            }
+                            .catalog-card {
+                                border: 1.5px solid #FBCFE8 !important;
+                                box-shadow: none !important;
+                                break-inside: avoid !important;
+                                page-break-inside: avoid !important;
+                            }
+                            .catalog-card-media {
+                                max-height: 290px !important;
+                            }
+                            @page {
+                                size: A4 portrait;
+                                margin: 10mm 10mm 12mm 10mm;
+                            }
+                        }
+
+                        @media screen and (max-width: 720px) {
+                            .catalog-grid { grid-template-columns: 1fr; }
+                            .screen-toolbar { flex-direction: column; gap: 10px; text-align: center; }
                         }
                     </style>
                 </head>
                 <body>
-                    <div class="catalog-header">
-                        <h1 class="catalog-title">تشكيلة بوكيهات وهدايا كاندي كلوب</h1>
-                        <p class="catalog-sub">Candy Club Gifts Collection - أحدث البوكيهات الفاخرة المتاحة في الفرع</p>
+                    <div class="screen-toolbar no-print">
+                        <div class="toolbar-info">
+                            <span class="toolbar-badge"><i class="fa-brands fa-instagram"></i> مقاس موحد 3:4</span>
+                            <span>معاينة كتالوج كاندي كلوب الفاخر للعملاء</span>
+                        </div>
+                        <div class="toolbar-btns">
+                            <button type="button" class="btn-toolbar btn-print" onclick="window.print()">
+                                <i class="fa-solid fa-print"></i> طباعة / حفظ كـ PDF
+                            </button>
+                            <button type="button" class="btn-toolbar btn-close" onclick="window.close()">
+                                <i class="fa-solid fa-xmark"></i> إغلاق
+                            </button>
+                        </div>
                     </div>
 
-                    <div class="grid">
-                        ${cardsHtml}
-                    </div>
+                    <div class="catalog-container">
+                        <div class="catalog-header">
+                            <div class="catalog-logo-wrap">
+                                <i class="fa-solid fa-gift"></i> CANDY CLUB GIFTS
+                            </div>
+                            <h1 class="catalog-title">تشكيلة بوكيهات وهدايا كاندي كلوب الفاخرة</h1>
+                            <p class="catalog-sub">أحدث البوكيهات المصنوعة يدوياً والمتاحة في الفرع للحجز والتسليم الفوري</p>
+                            <div class="catalog-meta-row">
+                                <span><i class="fa-regular fa-calendar-check"></i> تاريخ التحديث: ${todayFormatted}</span>
+                                <span>•</span>
+                                <span><i class="fa-solid fa-store"></i> متوفرة وجاهزة بالفرع</span>
+                            </div>
+                        </div>
 
-                    <div style="text-align: center; margin-top: 30px; font-size: 12px; color: #64748B; border-top: 1px solid #FCE7F3; padding-top: 12px;">
-                        للطلب والحجز والاستفسار يرجى التواصل مع خدمة عملاء كاندي كلوب
+                        <div class="catalog-grid">
+                            ${cardsHtml}
+                        </div>
+
+                        <div class="catalog-footer">
+                            <div class="catalog-footer-seal">كاندي كلوب - تصاميم حصرية وشوكولاتة وهدايا أصلية 100%</div>
+                            <div>للطلب والحجز والاستفسار يرجى التواصل مع خدمة عملاء كاندي كلوب أو زيارة أقرب فرع</div>
+                        </div>
                     </div>
 
                     <script>
+                        // الطباعة التلقائية بعد تحميل الصور بالكامل
                         window.onload = function() {
                             setTimeout(function() {
                                 window.print();
-                            }, 500);
+                            }, 600);
                         };
                     </script>
                 </body>
@@ -3767,14 +4260,14 @@
             const video = document.getElementById('gifts-change-photo-camera-stream');
             if (!video || !this.state.changePhoto || !this.state.changePhoto.stream) return;
 
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth || 640;
-            canvas.height = video.videoHeight || 480;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            this.stopChangePhotoCamera();
-            this.compressChangePhotoCanvas(canvas);
+            try {
+                const result = this.cropAndCompressImageTo3x4(video);
+                this.stopChangePhotoCamera();
+                this.applyChangePhotoResult(result);
+            } catch (err) {
+                console.error("Capture change photo failed:", err);
+                this.showToastNotification("حدث خطأ أثناء التقاط وتجهيز الصورة بنسبة 3:4");
+            }
         },
 
         handleChangePhotoFileUpload(event) {
@@ -3785,12 +4278,13 @@
             reader.onload = (e) => {
                 const img = new Image();
                 img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0);
-                    this.compressChangePhotoCanvas(canvas);
+                    try {
+                        const result = this.cropAndCompressImageTo3x4(img);
+                        this.applyChangePhotoResult(result);
+                    } catch (err) {
+                        console.error("Change photo 3:4 crop error:", err);
+                        this.showToastNotification("تعذر معالجة الصورة، يرجى اختيار ملف آخر");
+                    }
                 };
                 img.src = e.target.result;
             };
@@ -3799,36 +4293,18 @@
         },
 
         compressChangePhotoCanvas(canvas) {
-            const maxDimension = 1400;
-            let targetWidth = canvas.width;
-            let targetHeight = canvas.height;
-
-            if (targetWidth > maxDimension || targetHeight > maxDimension) {
-                if (targetWidth > targetHeight) {
-                    targetHeight = Math.round((targetHeight * maxDimension) / targetWidth);
-                    targetWidth = maxDimension;
-                } else {
-                    targetWidth = Math.round((targetWidth * maxDimension) / targetHeight);
-                    targetHeight = maxDimension;
-                }
+            try {
+                const result = this.cropAndCompressImageTo3x4(canvas);
+                this.applyChangePhotoResult(result);
+            } catch (err) {
+                console.error("Fallback change photo canvas compression:", err);
             }
+        },
 
-            const scaledCanvas = document.createElement('canvas');
-            scaledCanvas.width = targetWidth;
-            scaledCanvas.height = targetHeight;
-            const scaledCtx = scaledCanvas.getContext('2d');
-            scaledCtx.drawImage(canvas, 0, 0, targetWidth, targetHeight);
-
-            const quality = 0.88;
-            const compressedBase64 = scaledCanvas.toDataURL('image/jpeg', quality);
-
-            const head = 'data:image/jpeg;base64,';
-            const sizeInBytes = Math.round((compressedBase64.length - head.length) * 3 / 4);
-            const sizeInKB = Math.round(sizeInBytes / 1024);
-
+        applyChangePhotoResult(result) {
             if (!this.state.changePhoto) this.state.changePhoto = {};
-            this.state.changePhoto.photoBase64 = compressedBase64;
-            this.state.changePhoto.photoSizeKB = sizeInKB;
+            this.state.changePhoto.photoBase64 = result.base64;
+            this.state.changePhoto.photoSizeKB = result.sizeInKB;
 
             const newImg = document.getElementById('gifts-change-photo-new-img');
             const placeholderText = document.getElementById('gifts-change-photo-placeholder-text');
@@ -3836,12 +4312,12 @@
             const submitBtn = document.getElementById('gifts-btn-submit-change-photo');
 
             if (newImg) {
-                newImg.src = compressedBase64;
+                newImg.src = result.base64;
                 newImg.style.display = 'block';
             }
             if (placeholderText) placeholderText.style.display = 'none';
             if (sizeBadge) {
-                sizeBadge.innerText = `حجم الصورة: ${sizeInKB} كيلوبايت`;
+                sizeBadge.innerHTML = `<i class="fa-brands fa-instagram"></i> حجم الصورة: ${result.sizeInKB} ك.ب (مقاس موحد 3:4)`;
                 sizeBadge.style.display = 'block';
             }
             if (submitBtn) submitBtn.disabled = false;
