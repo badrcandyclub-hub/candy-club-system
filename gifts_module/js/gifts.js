@@ -3159,7 +3159,6 @@
             const infoEl = document.getElementById('gifts-lightbox-info');
             const priceTag = document.getElementById('gifts-lightbox-price-tag');
             const changeBtn = document.getElementById('gifts-lightbox-action-change');
-            const rawLink = document.getElementById('gifts-lightbox-open-raw');
 
             if (imgEl) imgEl.src = bouquet.image_url;
             if (nameEl) nameEl.innerText = bouquet.name || 'بوكيه كاندي كلوب';
@@ -3170,7 +3169,6 @@
                 infoEl.innerText = [creator, itemsCount, qtyText].filter(Boolean).join(' • ');
             }
             if (priceTag) priceTag.innerText = `${Number(bouquet.total_price || 0).toFixed(2)} ج.م`;
-            if (rawLink) rawLink.href = bouquet.image_url;
             if (changeBtn) {
                 changeBtn.onclick = () => {
                     this.closeLightbox();
