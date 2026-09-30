@@ -1450,64 +1450,74 @@
                         </div>
                     </div>
 
-                    <section class="marketplace-archive-panel" aria-labelledby="marketplaceArchiveTitle">
-                        <div class="marketplace-archive-heading">
-                            <div>
-                                <h3 id="marketplaceArchiveTitle"><i class="fa-solid fa-store"></i> متابعة طلبات وInstaShop</h3>
-                                <p>تعديل الحالة هنا يحدّث كل سجلات المنتج التي لها نفس الباركود، بدون تغيير بيانات الصلاحيات الأساسية.</p>
+                    <details class="marketplace-archive-panel">
+                        <summary class="marketplace-archive-summary" aria-labelledby="marketplaceArchiveTitle">
+                            <span class="marketplace-archive-summary-title">
+                                <i class="fa-solid fa-store"></i>
+                                متابعة <span class="marketplace-word marketplace-word--talabat">طلبات</span>
+                                <span class="marketplace-word-connector">و</span>
+                                <span class="marketplace-word marketplace-word--instashop">InstaShop</span>
+                            </span>
+                            <span class="marketplace-archive-summary-meta">
+                                <span id="marketplaceArchiveCount" class="marketplace-archive-count">0 منتج</span>
+                                <i class="fa-solid fa-chevron-down marketplace-archive-chevron" aria-hidden="true"></i>
+                            </span>
+                        </summary>
+                        <div class="marketplace-archive-content">
+                            <div class="marketplace-archive-heading">
+                                <p>تعديل الحالة يحدّث كل سجلات المنتج التي لها نفس الباركود، بدون تغيير بيانات الصلاحيات الأساسية.</p>
                             </div>
-                            <span id="marketplaceArchiveCount" class="marketplace-archive-count">0 منتج</span>
-                        </div>
-                        <div class="marketplace-archive-controls">
-                            <label>شهر التسجيل
-                                <input type="month" id="marketplaceArchiveMonth" dir="ltr">
-                            </label>
-                            <label>بحث بالاسم أو الباركود
-                                <input type="search" id="marketplaceArchiveSearch" placeholder="اسم المنتج أو الباركود">
-                            </label>
-                            <label class="marketplace-filter--talabat">حالة طلبات
-                                <select id="marketplaceArchiveTalabatFilter">
-                                    <option value="all">كل الحالات</option>
-                                    <option value="present">موجود</option>
-                                    <option value="absent">غير موجود</option>
-                                    <option value="unknown">غير محدد</option>
-                                </select>
-                            </label>
-                            <label class="marketplace-filter--instashop">حالة InstaShop
-                                <select id="marketplaceArchiveInstashopFilter">
-                                    <option value="all">كل الحالات</option>
-                                    <option value="present">موجود</option>
-                                    <option value="absent">غير موجود</option>
-                                    <option value="unknown">غير محدد</option>
-                                </select>
-                            </label>
-                            <div class="marketplace-archive-actions">
-                                <button type="button" id="exportMarketplaceArchiveExcelBtn" class="interactive-btn"><i class="fa-solid fa-file-excel"></i> Excel</button>
-                                <button type="button" id="exportMarketplaceArchivePdfBtn" class="interactive-btn"><i class="fa-solid fa-print"></i> PDF</button>
+                            <div class="marketplace-archive-controls">
+                                <label>شهر التسجيل
+                                    <input type="month" id="marketplaceArchiveMonth" dir="ltr">
+                                </label>
+                                <label>بحث بالاسم أو الباركود
+                                    <input type="search" id="marketplaceArchiveSearch" placeholder="اسم المنتج أو الباركود">
+                                </label>
+                                <label class="marketplace-filter--talabat">حالة طلبات
+                                    <select id="marketplaceArchiveTalabatFilter">
+                                        <option value="all">كل الحالات</option>
+                                        <option value="present">موجود</option>
+                                        <option value="absent">غير موجود</option>
+                                        <option value="unknown">غير محدد</option>
+                                    </select>
+                                </label>
+                                <label class="marketplace-filter--instashop">حالة InstaShop
+                                    <select id="marketplaceArchiveInstashopFilter">
+                                        <option value="all">كل الحالات</option>
+                                        <option value="present">موجود</option>
+                                        <option value="absent">غير موجود</option>
+                                        <option value="unknown">غير محدد</option>
+                                    </select>
+                                </label>
+                                <div class="marketplace-archive-actions">
+                                    <button type="button" id="exportMarketplaceArchiveExcelBtn" class="interactive-btn"><i class="fa-solid fa-file-excel"></i> Excel</button>
+                                    <button type="button" id="exportMarketplaceArchivePdfBtn" class="interactive-btn"><i class="fa-solid fa-print"></i> PDF</button>
+                                </div>
+                            </div>
+                            <div class="marketplace-archive-table-wrap">
+                                <table class="data-table marketplace-archive-table">
+                                    <thead>
+                                        <tr>
+                                            <th>المنتج</th>
+                                            <th>الباركود</th>
+                                            <th>تاريخ التسجيل</th>
+                                            <th class="marketplace-table-heading--talabat">طلبات</th>
+                                            <th class="marketplace-table-heading--instashop">InstaShop</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="marketplaceArchiveTableBody">
+                                        <tr><td colspan="5" class="marketplace-archive-empty">جاري تحميل سجل المتابعة...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="marketplace-archive-pagination" aria-label="صفحات المنتجات">
+                                <button type="button" id="marketplaceArchivePrevBtn" class="interactive-btn">السابق</button>
+                                <span id="marketplaceArchivePageInfo">صفحة 1 من 1</span>
+                                <button type="button" id="marketplaceArchiveNextBtn" class="interactive-btn">التالي</button>
                             </div>
                         </div>
-                        <div class="marketplace-archive-table-wrap">
-                            <table class="data-table marketplace-archive-table">
-                                <thead>
-                                    <tr>
-                                        <th>المنتج</th>
-                                        <th>الباركود</th>
-                                        <th>تاريخ التسجيل</th>
-                                        <th>طلبات</th>
-                                        <th>InstaShop</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="marketplaceArchiveTableBody">
-                                    <tr><td colspan="5" class="marketplace-archive-empty">جاري تحميل سجل المتابعة...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="marketplace-archive-pagination" aria-label="صفحات المنتجات">
-                            <button type="button" id="marketplaceArchivePrevBtn" class="interactive-btn">السابق</button>
-                            <span id="marketplaceArchivePageInfo">صفحة 1 من 1</span>
-                            <button type="button" id="marketplaceArchiveNextBtn" class="interactive-btn">التالي</button>
-                        </div>
-                    </section>
+                    </details>
 
                     <!-- نظام البطاقات (الداشبورد) -->
                     <div class="traffic-light-grid"

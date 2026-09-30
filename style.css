@@ -5158,24 +5158,72 @@ body.dark-mode .wheel-picker-container {
 .marketplace-archive-panel {
     min-width: 0;
     margin: 18px 0 24px;
-    padding: 16px;
     border: 1px solid #cbd5e1;
     border-radius: 16px;
     background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
 }
 
-.marketplace-archive-heading {
+.marketplace-archive-summary {
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    align-items: flex-start;
     gap: 12px;
-    margin-bottom: 14px;
+    padding: 16px;
+    color: #172554;
+    cursor: pointer;
+    list-style: none;
 }
 
-.marketplace-archive-heading h3 {
-    margin: 0 0 4px;
-    color: #172554;
+.marketplace-archive-summary::-webkit-details-marker {
+    display: none;
+}
+
+.marketplace-archive-summary-title {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 7px;
+    font-size: 1.15rem;
+    font-weight: 900;
+}
+
+.marketplace-word-connector {
+    color: #64748b;
+    font-weight: 700;
+}
+
+.marketplace-word--talabat,
+.marketplace-table-heading--talabat {
+    color: #ea580c;
+}
+
+.marketplace-word--instashop,
+.marketplace-table-heading--instashop {
+    color: #7c3aed;
+}
+
+.marketplace-archive-summary-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.marketplace-archive-chevron {
+    color: #64748b;
+    transition: transform 0.2s ease;
+}
+
+.marketplace-archive-panel[open] .marketplace-archive-chevron {
+    transform: rotate(180deg);
+}
+
+.marketplace-archive-content {
+    padding: 0 16px 16px;
+}
+
+.marketplace-archive-heading {
+    margin-bottom: 14px;
 }
 
 .marketplace-archive-heading p {
@@ -5332,16 +5380,20 @@ body.dark-mode .wheel-picker-container {
     }
 
     .marketplace-archive-panel {
-        padding: 12px 9px;
         border-radius: 12px;
     }
 
-    .marketplace-archive-heading {
-        flex-direction: column;
+    .marketplace-archive-summary {
+        align-items: flex-start;
+        padding: 12px 9px;
     }
 
-    .marketplace-archive-heading h3 {
+    .marketplace-archive-summary-title {
         font-size: 1.05rem;
+    }
+
+    .marketplace-archive-content {
+        padding: 0 9px 12px;
     }
 
     .marketplace-archive-controls {
