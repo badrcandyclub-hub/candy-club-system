@@ -58,13 +58,6 @@
     100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(13, 148, 136, 0); }
 }
 
-@keyframes gifts-laser-sweep {
-    0% { left: -30%; opacity: 0; }
-    20% { opacity: 1; }
-    80% { opacity: 1; }
-    100% { left: 110%; opacity: 0; }
-}
-
 @keyframes gifts-btn-shimmer {
     0% { transform: translateX(-120%) skewX(-20deg); }
     100% { transform: translateX(220%) skewX(-20deg); }
@@ -1029,23 +1022,9 @@
     text-align: center;
     margin-bottom: 24px;
     position: relative;
-    overflow: visible !important;
+    overflow: hidden;
     box-shadow: 0 6px 20px rgba(233, 30, 140, 0.05);
     z-index: 30;
-}
-
-/* Laser Scanline Effect */
-.gifts-laser-scanline {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 60px;
-    height: 3px;
-    background: linear-gradient(90deg, transparent, #E91E8C, #F43F5E, transparent);
-    box-shadow: 0 0 10px #E91E8C, 0 0 20px #E91E8C;
-    animation: gifts-laser-sweep 3.5s ease-in-out infinite;
-    pointer-events: none;
-    border-radius: 4px;
 }
 
 .gifts-scanner-hero-title {

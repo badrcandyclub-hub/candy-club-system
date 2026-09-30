@@ -291,6 +291,8 @@ function escapeMarketplaceArchiveHtml(value) {
 }
 
 window.marketplaceArchiveFilteredData = [];
+window.marketplaceArchivePage = 1;
+const MARKETPLACE_ARCHIVE_PAGE_SIZE = 50;
 window.renderMarketplaceArchive = function() {
     const tbody = document.getElementById('marketplaceArchiveTableBody');
     if (!tbody) return;
@@ -310,10 +312,20 @@ window.renderMarketplaceArchive = function() {
     });
 
     window.marketplaceArchiveFilteredData = rows;
+    const pageCount = Math.max(1, Math.ceil(rows.length / MARKETPLACE_ARCHIVE_PAGE_SIZE));
+    window.marketplaceArchivePage = Math.min(Math.max(1, window.marketplaceArchivePage), pageCount);
+    const pageStart = (window.marketplaceArchivePage - 1) * MARKETPLACE_ARCHIVE_PAGE_SIZE;
+    const visibleRows = rows.slice(pageStart, pageStart + MARKETPLACE_ARCHIVE_PAGE_SIZE);
     const count = document.getElementById('marketplaceArchiveCount');
+    const pageInfo = document.getElementById('marketplaceArchivePageInfo');
     if (count) count.textContent = `${rows.length} منتج`;
+    if (pageInfo) pageInfo.textContent = `صفحة ${window.marketplaceArchivePage} من ${pageCount}`;
+    const previousButton = document.getElementById('marketplaceArchivePrevBtn');
+    const nextButton = document.getElementById('marketplaceArchiveNextBtn');
+    if (previousButton) previousButton.disabled = window.marketplaceArchivePage <= 1;
+    if (nextButton) nextButton.disabled = window.marketplaceArchivePage >= pageCount;
     if (rows.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="marketplace-archive-empty">لا توجد سجلات مطابقة. جرّب تغيير الشهر أو الفلاتر.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="marketplace-archive-empty">لا توجد سجلات مطابقة. جرّب تغيير الشهر أو الفلاتر.</td></tr>';
         return;
     }
 
@@ -322,7 +334,7 @@ window.renderMarketplaceArchive = function() {
         <option value="present" ${status === 'present' ? 'selected' : ''}>موجود</option>
         <option value="absent" ${status === 'absent' ? 'selected' : ''}>غير موجود</option>`;
 
-    tbody.innerHTML = rows.map(item => {
+    tbody.innerHTML = visibleRows.map(item => {
         const id = escapeMarketplaceArchiveHtml(item.id || '');
         const barcode = escapeMarketplaceArchiveHtml(item.barcode || '');
         const talabatStatus = window.normalizeMarketplaceStatus(item.talabatStatus);
@@ -332,7 +344,6 @@ window.renderMarketplaceArchive = function() {
             <tr>
                 <td class="marketplace-product-name">${escapeMarketplaceArchiveHtml(item.name || 'اسم غير مسجل')}</td>
                 <td class="marketplace-barcode" dir="ltr">${barcode || '-'}</td>
-                <td>${escapeMarketplaceArchiveHtml(item.qty || 0)}</td>
                 <td dir="ltr">${registrationDate}</td>
                 <td>
                     <select class="marketplace-status-select marketplace-status-select--talabat" data-archive-id="${id}" data-archive-barcode="${barcode}" data-marketplace-status="talabat" data-previous-value="${talabatStatus}" aria-label="حالة طلبات للمنتج ${escapeMarketplaceArchiveHtml(item.name || '')}">
@@ -382,7 +393,18 @@ document.addEventListener('DOMContentLoaded', () => {
         monthInput.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     }
     ['marketplaceArchiveMonth', 'marketplaceArchiveSearch', 'marketplaceArchiveTalabatFilter', 'marketplaceArchiveInstashopFilter']
-        .forEach(id => document.getElementById(id)?.addEventListener('input', window.renderMarketplaceArchive));
+        .forEach(id => document.getElementById(id)?.addEventListener('input', () => {
+            window.marketplaceArchivePage = 1;
+            window.renderMarketplaceArchive();
+        }));
+    document.getElementById('marketplaceArchivePrevBtn')?.addEventListener('click', () => {
+        window.marketplaceArchivePage -= 1;
+        window.renderMarketplaceArchive();
+    });
+    document.getElementById('marketplaceArchiveNextBtn')?.addEventListener('click', () => {
+        window.marketplaceArchivePage += 1;
+        window.renderMarketplaceArchive();
+    });
     document.getElementById('marketplaceArchiveTableBody')?.addEventListener('change', async event => {
         const select = event.target;
         if (!(select instanceof HTMLSelectElement) || !select.classList.contains('marketplace-status-select')) return;
@@ -2216,16 +2238,82 @@ window.onload = () => {
         });
     }
 
-    // <i class=\'fa-solid fa-star\'></i> زرار التحديث السريع
+    // <i class=\'fa-solid fa-star\'></i> زرار التحديث السريع الشامل (الطلبات، المخزون، البوكيهات، ومنتجات فايربيز)
     let quickRefreshBtn = document.getElementById('quickRefreshBtn');
     if (quickRefreshBtn) quickRefreshBtn.addEventListener('click', () => {
-        showToast("جاري تحديث البيانات...", "warning");
-        window.supabaseStaticCache = {}; // Invalidate cache manually
-        loadDataFromServer();
+        if (typeof window.refreshAllSystemData === 'function') {
+            window.refreshAllSystemData();
+        } else {
+            showToast("جاري تحديث البيانات...", "warning");
+            window.supabaseStaticCache = {}; // Invalidate cache manually
+            loadDataFromServer();
+        }
     });
 
     // ⭐ V16: تحقق من الجلسة بدلاً من التحميل المباشر
     checkSession();
+};
+
+// ==========================================
+// ⭐ الزر الموحد للتحديث الشامل للنظام بالكامل (طلبات، مخزون، بوكيهات، ومنتجات)
+// ==========================================
+window.refreshAllSystemData = async function() {
+    const quickRefreshBtn = document.getElementById('quickRefreshBtn');
+    const refreshIcon = quickRefreshBtn ? quickRefreshBtn.querySelector('i') : null;
+    if (refreshIcon) refreshIcon.classList.add('fa-spin');
+    if (quickRefreshBtn) quickRefreshBtn.style.pointerEvents = 'none';
+
+    if (typeof showToast === 'function') {
+        showToast("جاري تحديث كافة البيانات والمنتجات...", "warning");
+    }
+
+    // تفريغ الكاش لإجبار الجلب المباشر
+    window.supabaseStaticCache = {};
+    try {
+        localStorage.removeItem('candy_firebase_products_cache');
+    } catch(e) {}
+
+    try {
+        await Promise.allSettled([
+            typeof fetchCatalogFromFirebase === 'function' ? fetchCatalogFromFirebase() : Promise.resolve(),
+            typeof loadDataFromServer === 'function' ? loadDataFromServer() : Promise.resolve()
+        ]);
+
+        // تحديث موديول البوكيهات والهدايا بالكامل إن كان مفعّلاً
+        if (window.GiftsApp) {
+            try {
+                if (typeof window.GiftsApp.loadCatalogProducts === 'function') {
+                    await window.GiftsApp.loadCatalogProducts();
+                }
+                if (typeof window.GiftsApp.loadBouquets === 'function') {
+                    await window.GiftsApp.loadBouquets();
+                }
+                if (typeof window.GiftsApp.updateHeaderStats === 'function') {
+                    window.GiftsApp.updateHeaderStats();
+                }
+                if (typeof window.GiftsApp.renderShowcase === 'function') {
+                    window.GiftsApp.renderShowcase();
+                }
+                if (typeof window.GiftsApp.renderCatalogView === 'function') {
+                    window.GiftsApp.renderCatalogView();
+                }
+            } catch (errGifts) {
+                console.warn("Gifts module refresh warning:", errGifts);
+            }
+        }
+
+        if (typeof showToast === 'function') {
+            showToast("تم تحديث كافة البيانات والمنتجات والبوكيهات بنجاح", "success");
+        }
+    } catch (err) {
+        console.error("Global refresh error:", err);
+        if (typeof showToast === 'function') {
+            showToast("حدث خطأ أثناء التحديث", "error");
+        }
+    } finally {
+        if (refreshIcon) refreshIcon.classList.remove('fa-spin');
+        if (quickRefreshBtn) quickRefreshBtn.style.pointerEvents = 'auto';
+    }
 };
 
 // ==========================================
@@ -2852,6 +2940,15 @@ async function loadDataFromServer(customDate = null) {
             window.lastKnownSystemVersion = Date.now();
         }
         localStorage.setItem('cc_last_system_activity', String(window.lastKnownSystemVersion));
+
+        // ⭐ مزامنة وتحديث بوكيهات قسم الهدايا تلقائياً مع السيرفر إن كان الموديول مفتوحاً
+        if (window.GiftsApp && typeof window.GiftsApp.loadBouquets === 'function') {
+            window.GiftsApp.loadBouquets().then(() => {
+                if (typeof window.GiftsApp.updateHeaderStats === 'function') window.GiftsApp.updateHeaderStats();
+                if (typeof window.GiftsApp.renderShowcase === 'function') window.GiftsApp.renderShowcase();
+                if (typeof window.GiftsApp.renderCatalogView === 'function') window.GiftsApp.renderCatalogView();
+            }).catch(e => console.warn("Gifts refresh during loadDataFromServer error:", e));
+        }
 
     } catch (err) {
         console.error("Supabase Load Error:", err);
@@ -5728,6 +5825,7 @@ function fetchCatalogFromFirebase() {
             } catch(e) { 
                 barcodeCatalogData = []; 
             }
+            window.barcodeCatalogData = barcodeCatalogData;
             console.log("⚡ تم تحميل الكاش المحلي: ", barcodeCatalogData.length, "منتج");
             updateSmartSuggestionsFromFirebase();
         }
@@ -5736,13 +5834,14 @@ function fetchCatalogFromFirebase() {
     }
 
     console.log("<i class='fa-solid fa-hourglass-half'></i> جاري تحميل بيانات المنتجات من Firebase...");
-    fetch(FIREBASE_PRODUCTS_URL)
+    return fetch(FIREBASE_PRODUCTS_URL)
         .then(response => {
             if (!response.ok) throw new Error("فشل الاتصال بـ Firebase: " + response.status);
             return response.json();
         })
         .then(data => {
             barcodeCatalogData = parseFirebaseProducts(data);
+            window.barcodeCatalogData = barcodeCatalogData;
             
             try {
                 localStorage.setItem(FIREBASE_CACHE_KEY, JSON.stringify(barcodeCatalogData));
@@ -5770,12 +5869,14 @@ function fetchCatalogFromFirebase() {
                     renderExpiryDashboard();
                 }
             }
+            return barcodeCatalogData;
         })
         .catch(err => {
             console.error("<i class='fa-solid fa-xmark'></i> خطأ في تحميل المنتجات من Firebase:", err);
             if (barcodeCatalogData.length === 0) {
                 if (typeof showToast === 'function') showToast("<i class='fa-solid fa-triangle-exclamation'></i> فشل تحميل بيانات المنتجات من السيرفر", "error");
             }
+            return barcodeCatalogData;
         });
 }
 
@@ -7655,7 +7756,7 @@ window.printSelectedExpiry = function() {
 // 3. Export Logic (تصدير متقدم ExcelJS)
 // ==========================================
 
-async function generateExcel(dataToExport, reportTitle) {
+async function generateExcel(dataToExport, reportTitle, options = {}) {
     if (!dataToExport || dataToExport.length === 0) {
         showToast("لا توجد بيانات للتصدير في هذه القائمة", "warning");
         return;
@@ -7683,7 +7784,13 @@ async function generateExcel(dataToExport, reportTitle) {
             Object.prototype.hasOwnProperty.call(row, 'instashopStatus')
         );
 
-        sheet1.columns = [
+        sheet1.columns = options.marketplaceArchive ? [
+            { header: 'اسم المنتج', key: 'name', width: 35 },
+            { header: 'الباركود', key: 'barcode', width: 20 },
+            { header: 'تاريخ التسجيل', key: 'reg', width: 18 },
+            { header: 'طلبات', key: 'talabatStatus', width: 18 },
+            { header: 'InstaShop', key: 'instashopStatus', width: 18 }
+        ] : [
             { header: 'اسم المنتج', key: 'name', width: 35 },
             { header: 'الكمية', key: 'qty', width: 12 },
             { header: 'الباركود', key: 'barcode', width: 20 },
@@ -7726,7 +7833,13 @@ async function generateExcel(dataToExport, reportTitle) {
             if (formattedRegDate === 'Invalid Date') formattedRegDate = row.regDate;
             if (formattedExpDate === 'Invalid Date') formattedExpDate = row.expiryDate;
 
-            const newRow = sheet1.addRow({
+            const newRow = sheet1.addRow(options.marketplaceArchive ? {
+                name: row.name || '',
+                barcode: row.barcode || '',
+                reg: row.regDate || '',
+                talabatStatus: window.marketplaceStatusLabel(row.talabatStatus),
+                instashopStatus: window.marketplaceStatusLabel(row.instashopStatus)
+            } : {
                 name: row.name || '',
                 origPrice: row.originalPrice || '',
                 offerPrice: row.offerPrice || '',
@@ -7807,10 +7920,9 @@ function generateMarketplaceArchivePdf(rows, month) {
         <tr>
             <td>${escapeMarketplaceArchiveHtml(item.name || 'اسم غير مسجل')}</td>
             <td dir="ltr">${escapeMarketplaceArchiveHtml(item.barcode || '-')}</td>
-            <td>${escapeMarketplaceArchiveHtml(item.qty || 0)}</td>
             <td dir="ltr">${escapeMarketplaceArchiveHtml(item.regDate || '-')}</td>
-            <td>${window.marketplaceStatusLabel(item.talabatStatus)}</td>
-            <td>${window.marketplaceStatusLabel(item.instashopStatus)}</td>
+            <td class="talabat">${window.marketplaceStatusLabel(item.talabatStatus)}</td>
+            <td class="instashop">${window.marketplaceStatusLabel(item.instashopStatus)}</td>
         </tr>`).join('');
 
     printWindow.document.write(`<!doctype html>
@@ -7825,15 +7937,17 @@ function generateMarketplaceArchivePdf(rows, month) {
                 table { width: 100%; border-collapse: collapse; }
                 th, td { border: 1px solid #cbd5e1; padding: 9px; text-align: center; }
                 th { color: #fff; background: #334155; }
+                th.talabat, td.talabat { color: #c2410c; background: #fff7ed; }
+                th.instashop, td.instashop { color: #6d28d9; background: #f5f3ff; }
                 tbody tr:nth-child(even) { background: #f8fafc; }
                 @media print { body { padding: 0; } }
             </style>
         </head>
         <body>
-            <h1>حالات المنتجات على طلبات وInstaShop</h1>
+            <h1>متابعة المنتجات على طلبات وInstaShop</h1>
             <p>شهر التسجيل: ${monthLabel} | عدد السجلات: ${rows.length}</p>
             <table>
-                <thead><tr><th>المنتج</th><th>الباركود</th><th>الكمية</th><th>تاريخ التسجيل</th><th>طلبات</th><th>InstaShop</th></tr></thead>
+                <thead><tr><th>المنتج</th><th>الباركود</th><th>تاريخ التسجيل</th><th class="talabat">طلبات</th><th class="instashop">InstaShop</th></tr></thead>
                 <tbody>${rowsHtml}</tbody>
             </table>
         </body>
@@ -7850,7 +7964,7 @@ document.getElementById('exportMarketplaceArchiveExcelBtn')?.addEventListener('c
         return;
     }
     window.renderMarketplaceArchive();
-    await generateExcel(window.marketplaceArchiveFilteredData || [], `حالات_المنصات_${month}`);
+    await generateExcel(window.marketplaceArchiveFilteredData || [], `حالات_المنصات_${month}`, { marketplaceArchive: true });
 });
 
 document.getElementById('exportMarketplaceArchivePdfBtn')?.addEventListener('click', () => {

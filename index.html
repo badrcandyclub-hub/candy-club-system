@@ -1453,8 +1453,8 @@
                     <section class="marketplace-archive-panel" aria-labelledby="marketplaceArchiveTitle">
                         <div class="marketplace-archive-heading">
                             <div>
-                                <h3 id="marketplaceArchiveTitle"><i class="fa-solid fa-store"></i> متابعة طلبات وInstaShop - الأرشيف</h3>
-                                <p>تعديل الحالات هنا يؤثر على سجلات الأرشيف التي لها نفس الباركود فقط، ولا يغيّر بيانات الصلاحيات الأساسية.</p>
+                                <h3 id="marketplaceArchiveTitle"><i class="fa-solid fa-store"></i> متابعة طلبات وInstaShop</h3>
+                                <p>تعديل الحالة هنا يحدّث كل سجلات المنتج التي لها نفس الباركود، بدون تغيير بيانات الصلاحيات الأساسية.</p>
                             </div>
                             <span id="marketplaceArchiveCount" class="marketplace-archive-count">0 منتج</span>
                         </div>
@@ -1482,7 +1482,6 @@
                                 </select>
                             </label>
                             <div class="marketplace-archive-actions">
-                                <button type="button" id="refreshMarketplaceArchiveBtn" class="interactive-btn"><i class="fa-solid fa-rotate"></i> تحديث</button>
                                 <button type="button" id="exportMarketplaceArchiveExcelBtn" class="interactive-btn"><i class="fa-solid fa-file-excel"></i> Excel</button>
                                 <button type="button" id="exportMarketplaceArchivePdfBtn" class="interactive-btn"><i class="fa-solid fa-print"></i> PDF</button>
                             </div>
@@ -1493,16 +1492,20 @@
                                     <tr>
                                         <th>المنتج</th>
                                         <th>الباركود</th>
-                                        <th>الكمية</th>
                                         <th>تاريخ التسجيل</th>
                                         <th>طلبات</th>
                                         <th>InstaShop</th>
                                     </tr>
                                 </thead>
                                 <tbody id="marketplaceArchiveTableBody">
-                                    <tr><td colspan="6" class="marketplace-archive-empty">جاري تحميل سجل الأرشيف...</td></tr>
+                                    <tr><td colspan="5" class="marketplace-archive-empty">جاري تحميل سجل المتابعة...</td></tr>
                                 </tbody>
                             </table>
+                        </div>
+                        <div class="marketplace-archive-pagination" aria-label="صفحات المنتجات">
+                            <button type="button" id="marketplaceArchivePrevBtn" class="interactive-btn">السابق</button>
+                            <span id="marketplaceArchivePageInfo">صفحة 1 من 1</span>
+                            <button type="button" id="marketplaceArchiveNextBtn" class="interactive-btn">التالي</button>
                         </div>
                     </section>
 

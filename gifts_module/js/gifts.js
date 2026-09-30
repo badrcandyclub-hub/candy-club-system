@@ -2388,18 +2388,23 @@
             this.printBouquetThermalReceipt(this.state.activeTimelineBouquetId);
         },
 
-        // تحديث المعرض يدوياً من سوبا بيز
+        // تحديث المعرض والمنتجات يدوياً (مدمج مع التحديث الشامل للنظام)
         async refreshShowcase() {
+            if (typeof window.refreshAllSystemData === 'function') {
+                return await window.refreshAllSystemData();
+            }
+
             const btn = document.getElementById('gifts-btn-refresh-showcase');
             const icon = document.getElementById('gifts-refresh-icon');
             if (icon) icon.classList.add('fa-spin');
             if (btn) btn.disabled = true;
 
             try {
+                await this.loadCatalogProducts();
                 await this.loadBouquets();
                 this.updateHeaderStats();
                 this.renderShowcase();
-                this.showToastNotification("تم تحديث قائمة البوكيهات من السحابة بنجاح");
+                this.showToastNotification("تم تحديث قائمة البوكيهات والمنتجات من السحابة بنجاح");
             } catch (e) {
                 console.error("Error refreshing showcase:", e);
                 this.showToastNotification("حدث خطأ أثناء تحديث القائمة من السحابة");

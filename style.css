@@ -5113,14 +5113,16 @@ body.dark-mode .wheel-picker-container {
 
 .ledger-platform-field--talabat .ledger-platform-select,
 .marketplace-status-select--talabat {
-    color: #c2410c;
-    background-color: #fff7ed;
+    color: #fff;
+    border-color: #ea580c;
+    background-color: #ea580c;
 }
 
 .ledger-platform-field--instashop .ledger-platform-select,
 .marketplace-status-select--instashop {
-    color: #6d28d9;
-    background-color: #f5f3ff;
+    color: #fff;
+    border-color: #7c3aed;
+    background-color: #7c3aed;
 }
 
 .ledger-platform-hint {
@@ -5247,6 +5249,21 @@ body.dark-mode .wheel-picker-container {
     font: inherit;
     font-weight: 800;
     cursor: pointer;
+}
+
+.marketplace-archive-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding-top: 12px;
+    color: #334155;
+    font-weight: 800;
+}
+
+.marketplace-archive-pagination button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
 }
 
 #exportMarketplaceArchiveExcelBtn {
