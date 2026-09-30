@@ -281,6 +281,9 @@
                             <i class="fa-solid fa-upload"></i> من الصور
                             <input type="file" id="gifts-file-input" accept="image/*" style="display: none;" onchange="GiftsApp.handleFileUpload(event)">
                         </label>
+                        <button type="button" class="gifts-btn-outline" id="gifts-btn-adjust-crop" style="display: none; color: #BE185D;" onclick="GiftsApp.openCropModalForDraft()">
+                            <i class="fa-solid fa-sliders"></i> تعديل الكادر
+                        </button>
                         <button type="button" class="gifts-btn-outline" id="gifts-btn-remove-photo" style="display: none; color: var(--gifts-red);" onclick="GiftsApp.removePhoto()">
                             <i class="fa-solid fa-trash"></i> حذف
                         </button>
@@ -334,7 +337,6 @@
                 <button class="gifts-chip active" onclick="GiftsApp.setShowcaseFilter('all', this)">كل البوكيهات</button>
                 <button class="gifts-chip" onclick="GiftsApp.setShowcaseFilter('ready', this)">جاهز في المحل</button>
                 <button class="gifts-chip" onclick="GiftsApp.setShowcaseFilter('sold', this)">تم البيع</button>
-                <button class="gifts-chip" onclick="GiftsApp.setShowcaseFilter('disassembled', this)">المفككة</button>
             </div>
             <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                 <button type="button" class="gifts-btn-outline" id="gifts-btn-refresh-showcase" style="padding: 10px 16px; font-size: 0.92rem;" onclick="GiftsApp.refreshShowcase()" title="تحديث البوكيهات من السحابة">
@@ -614,6 +616,9 @@
                         <img id="gifts-change-photo-new-img" src="" alt="معاينة" style="display: none; width: 100%; height: 100%; object-fit: cover;">
                     </div>
                     <div id="gifts-change-photo-size-badge" style="display: none; font-size: 0.75rem; color: #059669; font-weight: bold; margin-top: 5px;"></div>
+                    <button type="button" class="interactive-btn" id="gifts-btn-adjust-change-crop" style="display: none; margin: 6px auto 0 auto; padding: 4px 10px; font-size: 0.78rem; background: #FFF; border: 1px solid #F472B6; color: #BE185D; border-radius: 6px; font-weight: 700; cursor: pointer;" onclick="GiftsApp.openCropModalForChangePhoto()">
+                        <i class="fa-solid fa-sliders"></i> تعديل الكادر
+                    </button>
                 </div>
             </div>
 
@@ -689,6 +694,84 @@
                     <i class="fa-solid fa-camera"></i> تغيير الصورة
                 </button>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================================================================
+     MODAL: أداة ضبط وتوسيط كادر الصورة التفاعلية (3:4)
+     ================================================================ -->
+<div class="gifts-modal-overlay" id="gifts-modal-crop-adjust" style="z-index: 100010;">
+    <div class="gifts-modal-box" style="max-width: 440px; border-radius: 20px; overflow: hidden; background: #0F172A; color: #FFFFFF; border: 1px solid rgba(244, 114, 182, 0.3); box-shadow: 0 25px 70px rgba(0,0,0,0.7);">
+        <!-- Header -->
+        <div style="padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h4 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #F472B6; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-crop-simple"></i> ضبط وتوسيط كادر الصورة (3:4)
+                </h4>
+                <div style="font-size: 0.75rem; color: #94A3B8; margin-top: 3px;">اسحب الصورة لتحديد الجزء الظاهر بدقة</div>
+            </div>
+            <button type="button" onclick="GiftsApp.closeCropModal()" style="background: none; border: none; color: #94A3B8; font-size: 1.2rem; cursor: pointer;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- Interactive Viewport -->
+        <div style="padding: 18px; text-align: center; background: #070B14;">
+            <div id="gifts-crop-viewport" style="width: 270px; height: 360px; margin: 0 auto; position: relative; overflow: hidden; border-radius: 14px; border: 2px solid #E91E8C; box-shadow: 0 0 25px rgba(233, 30, 140, 0.35); cursor: grab; user-select: none; touch-action: none; background: #000;">
+                <img id="gifts-crop-img" src="" alt="قص" style="position: absolute; top: 0; left: 0; pointer-events: none; transform-origin: 0 0; will-change: transform;">
+                <!-- 3:4 Framing Grid Overlay -->
+                <div class="gifts-camera-guide-overlay" style="display: block; pointer-events: none;">
+                    <div class="gifts-camera-reticle reticle-tl"></div>
+                    <div class="gifts-camera-reticle reticle-tr"></div>
+                    <div class="gifts-camera-reticle reticle-bl"></div>
+                    <div class="gifts-camera-reticle reticle-br"></div>
+                    <div class="gifts-camera-grid-line grid-h1"></div>
+                    <div class="gifts-camera-grid-line grid-h2"></div>
+                    <div class="gifts-camera-grid-line grid-v1"></div>
+                    <div class="gifts-camera-grid-line grid-v2"></div>
+                    <div class="gifts-camera-badge-ratio" style="bottom: 8px; font-size: 0.72rem; padding: 2px 8px;">
+                        اسحب لتحريك الكادر
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nudge & Zoom Controls -->
+            <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 10px;">
+                <!-- Zoom Slider -->
+                <div style="display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 0.8rem; color: #CBD5E1;">
+                    <i class="fa-solid fa-magnifying-glass-minus"></i>
+                    <input type="range" id="gifts-crop-zoom" min="1" max="2.5" step="0.02" value="1" style="width: 170px; accent-color: #E91E8C; cursor: pointer;" oninput="GiftsApp.onCropZoomChange(this.value)">
+                    <i class="fa-solid fa-magnifying-glass-plus"></i>
+                    <button type="button" class="interactive-btn" onclick="GiftsApp.resetCropPosition()" style="padding: 3px 8px; background: rgba(255,255,255,0.12); color: #FFF; border: none; border-radius: 6px; font-size: 0.75rem; cursor: pointer;" title="إعادة ضبط للمنتصف">
+                        <i class="fa-solid fa-rotate-right"></i> ضبط
+                    </button>
+                </div>
+
+                <!-- Directional Nudge Buttons -->
+                <div style="display: flex; justify-content: center; gap: 8px;">
+                    <button type="button" class="interactive-btn" onclick="GiftsApp.nudgeCrop(20, 0)" style="padding: 6px 14px; background: rgba(255,255,255,0.1); color: #FFF; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; font-size: 0.85rem; cursor: pointer;" title="تحريك يمين">
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                    <button type="button" class="interactive-btn" onclick="GiftsApp.nudgeCrop(-20, 0)" style="padding: 6px 14px; background: rgba(255,255,255,0.1); color: #FFF; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; font-size: 0.85rem; cursor: pointer;" title="تحريك يسار">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                    <button type="button" class="interactive-btn" onclick="GiftsApp.nudgeCrop(0, 20)" style="padding: 6px 14px; background: rgba(255,255,255,0.1); color: #FFF; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; font-size: 0.85rem; cursor: pointer;" title="تحريك لأسفل">
+                        <i class="fa-solid fa-arrow-down"></i>
+                    </button>
+                    <button type="button" class="interactive-btn" onclick="GiftsApp.nudgeCrop(0, -20)" style="padding: 6px 14px; background: rgba(255,255,255,0.1); color: #FFF; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; font-size: 0.85rem; cursor: pointer;" title="تحريك لأعلى">
+                        <i class="fa-solid fa-arrow-up"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="padding: 14px 20px; background: #0B1120; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+            <button type="button" class="gifts-btn-outline" onclick="GiftsApp.closeCropModal()" style="background: rgba(255,255,255,0.08); color: #CBD5E1; border-color: rgba(255,255,255,0.15);">إلغاء</button>
+            <button type="button" class="interactive-btn" onclick="GiftsApp.confirmCropAdjustment()" style="padding: 9px 20px; background: linear-gradient(135deg, #E91E8C, #BE185D); color: #FFF; border: none; border-radius: 10px; font-weight: 800; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 7px; box-shadow: 0 4px 14px rgba(233, 30, 140, 0.4);">
+                <i class="fa-solid fa-check"></i> تأكيد واعتماد الكادر (3:4)
+            </button>
         </div>
     </div>
 </div>

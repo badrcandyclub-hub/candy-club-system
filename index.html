@@ -11,8 +11,8 @@
     <link rel="icon" type="image/png" href="favicon.png?v=8">
     <link rel="apple-touch-icon" href="favicon.png?v=8">
     <link rel="manifest" href="app-manifest.json?v=999">
-    <link rel="stylesheet" href="style.css?v=77.0">
-    <link rel="stylesheet" href="gifts_module/css/gifts.css?v=14">
+    <link rel="stylesheet" href="style.css?v=78.0">
+    <link rel="stylesheet" href="gifts_module/css/gifts.css?v=15">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap"
         rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" type="text/javascript" crossorigin="anonymous"></script>
@@ -1450,6 +1450,62 @@
                         </div>
                     </div>
 
+                    <section class="marketplace-archive-panel" aria-labelledby="marketplaceArchiveTitle">
+                        <div class="marketplace-archive-heading">
+                            <div>
+                                <h3 id="marketplaceArchiveTitle"><i class="fa-solid fa-store"></i> متابعة طلبات وInstaShop - الأرشيف</h3>
+                                <p>تعديل الحالات هنا يؤثر على سجلات الأرشيف التي لها نفس الباركود فقط، ولا يغيّر بيانات الصلاحيات الأساسية.</p>
+                            </div>
+                            <span id="marketplaceArchiveCount" class="marketplace-archive-count">0 منتج</span>
+                        </div>
+                        <div class="marketplace-archive-controls">
+                            <label>شهر التسجيل
+                                <input type="month" id="marketplaceArchiveMonth" dir="ltr">
+                            </label>
+                            <label>بحث بالاسم أو الباركود
+                                <input type="search" id="marketplaceArchiveSearch" placeholder="اسم المنتج أو الباركود">
+                            </label>
+                            <label class="marketplace-filter--talabat">حالة طلبات
+                                <select id="marketplaceArchiveTalabatFilter">
+                                    <option value="all">كل الحالات</option>
+                                    <option value="present">موجود</option>
+                                    <option value="absent">غير موجود</option>
+                                    <option value="unknown">غير محدد</option>
+                                </select>
+                            </label>
+                            <label class="marketplace-filter--instashop">حالة InstaShop
+                                <select id="marketplaceArchiveInstashopFilter">
+                                    <option value="all">كل الحالات</option>
+                                    <option value="present">موجود</option>
+                                    <option value="absent">غير موجود</option>
+                                    <option value="unknown">غير محدد</option>
+                                </select>
+                            </label>
+                            <div class="marketplace-archive-actions">
+                                <button type="button" id="refreshMarketplaceArchiveBtn" class="interactive-btn"><i class="fa-solid fa-rotate"></i> تحديث</button>
+                                <button type="button" id="exportMarketplaceArchiveExcelBtn" class="interactive-btn"><i class="fa-solid fa-file-excel"></i> Excel</button>
+                                <button type="button" id="exportMarketplaceArchivePdfBtn" class="interactive-btn"><i class="fa-solid fa-print"></i> PDF</button>
+                            </div>
+                        </div>
+                        <div class="marketplace-archive-table-wrap">
+                            <table class="data-table marketplace-archive-table">
+                                <thead>
+                                    <tr>
+                                        <th>المنتج</th>
+                                        <th>الباركود</th>
+                                        <th>الكمية</th>
+                                        <th>تاريخ التسجيل</th>
+                                        <th>طلبات</th>
+                                        <th>InstaShop</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="marketplaceArchiveTableBody">
+                                    <tr><td colspan="6" class="marketplace-archive-empty">جاري تحميل سجل الأرشيف...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
                     <!-- نظام البطاقات (الداشبورد) -->
                     <div class="traffic-light-grid"
                         style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
@@ -1667,6 +1723,25 @@
                                 </button>
                             </div>
                         </div>
+                        <div class="ledger-marketplace-statuses">
+                            <div class="ledger-platform-field ledger-platform-field--talabat">
+                                <label for="ledgerTalabatStatus">حالة طلبات</label>
+                                <select id="ledgerTalabatStatus" class="ledger-platform-select">
+                                    <option value="unknown">غير محدد</option>
+                                    <option value="present">موجود</option>
+                                    <option value="absent">غير موجود</option>
+                                </select>
+                            </div>
+                            <div class="ledger-platform-field ledger-platform-field--instashop">
+                                <label for="ledgerInstashopStatus">حالة InstaShop</label>
+                                <select id="ledgerInstashopStatus" class="ledger-platform-select">
+                                    <option value="unknown">غير محدد</option>
+                                    <option value="present">موجود</option>
+                                    <option value="absent">غير موجود</option>
+                                </select>
+                            </div>
+                            <p class="ledger-platform-hint">لو الباركود اتسجل قبل كده, هنعرض آخر حالة محفوظة له تلقائيًا.</p>
+                        </div>
                         <div style="grid-column: span 4;">
                             <label>ملاحظات</label>
                             <input type="text" id="ledgerProdNotes" placeholder="اختياري">
@@ -1689,13 +1764,14 @@
                                     <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">الكمية</th>
                                     <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">الانتهاء</th>
                                     <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">المكان/المورد</th>
-                                    <th style="padding: 10px; border-bottom: 2px solid #dee2e6; text-align: center;">
-                                        إجراء</th>
+                                        <th style="padding: 10px; border-bottom: 2px solid #dee2e6;">طلبات / InstaShop</th>
+                                        <th style="padding: 10px; border-bottom: 2px solid #dee2e6; text-align: center;">
+                                            إجراء</th>
                                 </tr>
                             </thead>
                             <tbody id="ledgerCartBody">
                                 <tr>
-                                    <td colspan="5" style="text-align:center; padding: 20px; color: #7f8c8d;">لا توجد
+                                    <td colspan="6" style="text-align:center; padding: 20px; color: #7f8c8d;">لا توجد
                                         منتجات مضافة حتى الآن.</td>
                                 </tr>
                             </tbody>
@@ -2695,7 +2771,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script src="email_service.js?v=5.0" defer></script>
-    <script src="app.js?v=63.0" charset="UTF-8" defer></script>
+    <script src="app.js?v=64.0" charset="UTF-8" defer></script>
     <script src="update_notice.js" defer></script>
 
     <!-- Modal: إعداد موقع ونطاق الفرع (GPS Geofencing) -->

@@ -1446,7 +1446,6 @@
 .gifts-card-img-wrap {
     width: 100%;
     aspect-ratio: 3 / 4;
-    max-height: 290px;
     background: linear-gradient(135deg, #FFF5F9 0%, #FDF2F8 100%);
     position: relative;
     overflow: hidden;
@@ -1498,11 +1497,6 @@
 
 .gifts-badge.badge-sold {
     background: linear-gradient(135deg, #64748B 0%, #475569 100%);
-    color: #FFFFFF;
-}
-
-.gifts-badge.badge-disassembled {
-    background: linear-gradient(135deg, #94A3B8 0%, #64748B 100%);
     color: #FFFFFF;
 }
 
@@ -2465,7 +2459,6 @@
     overflow: hidden;
     width: 100%;
     aspect-ratio: 3 / 4;
-    max-height: 310px;
     background: linear-gradient(135deg, #FFF0F6 0%, #FDF2F8 100%);
 }
 
@@ -3508,8 +3501,7 @@ body.gifts-modal-open {
 
     .gifts-catalog-card-img-wrap {
         aspect-ratio: 3 / 4;
-        max-height: 280px;
-        height: auto;
+        width: 100%;
     }
 
     .gifts-catalog-section-bar {

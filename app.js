@@ -191,7 +191,7 @@ window.receiptsArchiveData = [];
 
 window.loadReceiptsArchiveData = async function() {
     try {
-        if (!window.supabase) return;
+        if (!window.supabase) return false;
         const { data: rawArchive, error: arcErr } = await fetchAllSupabaseRows(
             supabase.from('expiry_receipts_log').select('*').order('created_at', { ascending: false })
         );
@@ -208,7 +208,9 @@ window.loadReceiptsArchiveData = async function() {
                 originalPrice: e.original_price || '',
                 offerPrice: e.offer_price || '',
                 status: e.status || '',
-                barcode: e.barcode || ''
+                barcode: e.barcode || '',
+                talabatStatus: window.normalizeMarketplaceStatus(e.talabat_status),
+                instashopStatus: window.normalizeMarketplaceStatus(e.instashop_status)
             }));
             console.log("Loaded immutable expiry receipts archive:", window.receiptsArchiveData.length, "records");
             
@@ -216,9 +218,15 @@ window.loadReceiptsArchiveData = async function() {
             if (typeof renderExpiryCalendarDots === 'function') {
                 renderExpiryCalendarDots();
             }
+            if (typeof window.renderMarketplaceArchive === 'function') {
+                window.renderMarketplaceArchive();
+            }
+            return true;
         }
+        return false;
     } catch(err) {
         console.warn("Could not load expiry_receipts_log:", err);
+        return false;
     }
 };
 
@@ -250,6 +258,166 @@ window.renderExpiryCalendarDots = function() {
         expiryExportDatePicker.redraw();
     }
 };
+
+window.normalizeMarketplaceStatus = function(status) {
+    return ['present', 'absent'].includes(status) ? status : 'unknown';
+};
+
+window.marketplaceStatusLabel = function(status) {
+    const labels = { present: 'موجود', absent: 'غير موجود', unknown: 'غير محدد' };
+    return labels[window.normalizeMarketplaceStatus(status)];
+};
+
+window.getMarketplaceStatusForBarcode = function(barcode) {
+    const normalizedBarcode = String(barcode || '').trim().toLowerCase();
+    if (!normalizedBarcode) return { talabatStatus: 'unknown', instashopStatus: 'unknown' };
+    const previousEntry = (window.receiptsArchiveData || []).find(entry =>
+        String(entry.barcode || '').trim().toLowerCase() === normalizedBarcode
+    );
+    return {
+        talabatStatus: window.normalizeMarketplaceStatus(previousEntry && previousEntry.talabatStatus),
+        instashopStatus: window.normalizeMarketplaceStatus(previousEntry && previousEntry.instashopStatus)
+    };
+};
+
+function escapeMarketplaceArchiveHtml(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, character => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    })[character]);
+}
+
+window.marketplaceArchiveFilteredData = [];
+window.renderMarketplaceArchive = function() {
+    const tbody = document.getElementById('marketplaceArchiveTableBody');
+    if (!tbody) return;
+
+    const month = document.getElementById('marketplaceArchiveMonth')?.value || '';
+    const query = (document.getElementById('marketplaceArchiveSearch')?.value || '').trim().toLowerCase();
+    const talabatFilter = document.getElementById('marketplaceArchiveTalabatFilter')?.value || 'all';
+    const instashopFilter = document.getElementById('marketplaceArchiveInstashopFilter')?.value || 'all';
+    const rows = (window.receiptsArchiveData || []).filter(item => {
+        const entryMonth = String(item.regDate || '').slice(0, 7);
+        const matchesMonth = !month || entryMonth === month;
+        const searchable = `${item.name || ''} ${item.barcode || ''}`.toLowerCase();
+        const matchesQuery = !query || searchable.includes(query);
+        const matchesTalabat = talabatFilter === 'all' || window.normalizeMarketplaceStatus(item.talabatStatus) === talabatFilter;
+        const matchesInstashop = instashopFilter === 'all' || window.normalizeMarketplaceStatus(item.instashopStatus) === instashopFilter;
+        return matchesMonth && matchesQuery && matchesTalabat && matchesInstashop;
+    });
+
+    window.marketplaceArchiveFilteredData = rows;
+    const count = document.getElementById('marketplaceArchiveCount');
+    if (count) count.textContent = `${rows.length} منتج`;
+    if (rows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="marketplace-archive-empty">لا توجد سجلات مطابقة. جرّب تغيير الشهر أو الفلاتر.</td></tr>';
+        return;
+    }
+
+    const statusOptions = status => `
+        <option value="unknown" ${status === 'unknown' ? 'selected' : ''}>غير محدد</option>
+        <option value="present" ${status === 'present' ? 'selected' : ''}>موجود</option>
+        <option value="absent" ${status === 'absent' ? 'selected' : ''}>غير موجود</option>`;
+
+    tbody.innerHTML = rows.map(item => {
+        const id = escapeMarketplaceArchiveHtml(item.id || '');
+        const barcode = escapeMarketplaceArchiveHtml(item.barcode || '');
+        const talabatStatus = window.normalizeMarketplaceStatus(item.talabatStatus);
+        const instashopStatus = window.normalizeMarketplaceStatus(item.instashopStatus);
+        const registrationDate = escapeMarketplaceArchiveHtml(item.regDate || '-');
+        return `
+            <tr>
+                <td class="marketplace-product-name">${escapeMarketplaceArchiveHtml(item.name || 'اسم غير مسجل')}</td>
+                <td class="marketplace-barcode" dir="ltr">${barcode || '-'}</td>
+                <td>${escapeMarketplaceArchiveHtml(item.qty || 0)}</td>
+                <td dir="ltr">${registrationDate}</td>
+                <td>
+                    <select class="marketplace-status-select marketplace-status-select--talabat" data-archive-id="${id}" data-archive-barcode="${barcode}" data-marketplace-status="talabat" data-previous-value="${talabatStatus}" aria-label="حالة طلبات للمنتج ${escapeMarketplaceArchiveHtml(item.name || '')}">
+                        ${statusOptions(talabatStatus)}
+                    </select>
+                </td>
+                <td>
+                    <select class="marketplace-status-select marketplace-status-select--instashop" data-archive-id="${id}" data-archive-barcode="${barcode}" data-marketplace-status="instashop" data-previous-value="${instashopStatus}" aria-label="حالة InstaShop للمنتج ${escapeMarketplaceArchiveHtml(item.name || '')}">
+                        ${statusOptions(instashopStatus)}
+                    </select>
+                </td>
+            </tr>`;
+    }).join('');
+};
+
+async function saveMarketplaceArchiveStatus(select) {
+    const platform = select.dataset.marketplaceStatus;
+    const barcode = String(select.dataset.archiveBarcode || '').trim();
+    const id = select.dataset.archiveId;
+    const status = window.normalizeMarketplaceStatus(select.value);
+    const field = platform === 'talabat' ? 'talabat_status' : platform === 'instashop' ? 'instashop_status' : '';
+    if (!field) throw new Error('منصة غير معروفة لتحديث الحالة.');
+    if (!barcode && !id) throw new Error('لا يوجد باركود أو معرّف لهذا السجل.');
+
+    let query = supabase.from('expiry_receipts_log').update({ [field]: status });
+    query = barcode ? query.eq('barcode', barcode) : query.eq('id', id);
+    const { error } = await query;
+    if (error) throw error;
+
+    const normalizedBarcode = barcode.toLowerCase();
+    (window.receiptsArchiveData || []).forEach(item => {
+        const matches = barcode
+            ? String(item.barcode || '').trim().toLowerCase() === normalizedBarcode
+            : String(item.id) === String(id);
+        if (matches) {
+            if (platform === 'talabat') item.talabatStatus = status;
+            else item.instashopStatus = status;
+        }
+    });
+    window.renderMarketplaceArchive();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const monthInput = document.getElementById('marketplaceArchiveMonth');
+    if (monthInput && !monthInput.value) {
+        const now = new Date();
+        monthInput.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    }
+    ['marketplaceArchiveMonth', 'marketplaceArchiveSearch', 'marketplaceArchiveTalabatFilter', 'marketplaceArchiveInstashopFilter']
+        .forEach(id => document.getElementById(id)?.addEventListener('input', window.renderMarketplaceArchive));
+    document.getElementById('marketplaceArchiveTableBody')?.addEventListener('change', async event => {
+        const select = event.target;
+        if (!(select instanceof HTMLSelectElement) || !select.classList.contains('marketplace-status-select')) return;
+        const oldValue = select.dataset.previousValue || 'unknown';
+        select.disabled = true;
+        try {
+            await saveMarketplaceArchiveStatus(select);
+            if (typeof window.showToast === 'function') window.showToast('تم تحديث حالة المنصة في الأرشيف لكل سجلات الباركود.', 'success');
+        } catch (error) {
+            console.error('Marketplace archive status update failed:', error);
+            select.value = oldValue;
+            if (typeof window.showToast === 'function') {
+                window.showToast(`تعذر تحديث الحالة في الأرشيف: ${error.message || 'خطأ غير معروف'}`, 'error');
+            }
+        } finally {
+            select.disabled = false;
+        }
+    });
+    document.getElementById('refreshMarketplaceArchiveBtn')?.addEventListener('click', async event => {
+        const button = event.currentTarget;
+        button.disabled = true;
+        try {
+            const loaded = await window.loadReceiptsArchiveData();
+            if (!loaded) throw new Error('لم يتم تحميل بيانات الأرشيف من قاعدة البيانات.');
+            window.renderMarketplaceArchive();
+            if (typeof window.showToast === 'function') window.showToast('تم تحديث أرشيف المنصات.', 'success');
+        } catch (error) {
+            console.error('Marketplace archive refresh failed:', error);
+            if (typeof window.showToast === 'function') window.showToast('تعذر تحديث أرشيف المنصات.', 'error');
+        } finally {
+            button.disabled = false;
+        }
+    });
+    window.renderMarketplaceArchive();
+});
 
 async function handleSupabaseRequest(url, options) {
     let action = null;
@@ -644,37 +812,109 @@ async function handleSupabaseRequest(url, options) {
             case 'addExpiriesBatch': {
                 const batchItems = JSON.parse(params.batchData);
                 const expRows = batchItems.map(item => ({ product_name: item.name, qty: item.qty, expiry_date: item.expiryDate, location: item.location, reg_date: item.regDate, receiver: item.receiver, notes: item.notes, status: item.status, barcode: item.barcode }));
-                await supabase.from('expiries').insert(expRows);
-                try {
-                    const arcRows = batchItems.map(item => ({
-                        product_name: item.name,
-                        barcode: item.barcode || '',
-                        quantity: item.qty || 0,
-                        expiry_date: item.expiryDate || '',
-                        location: item.location || '',
-                        reg_date: item.regDate || '',
-                        receiver: item.receiver || '',
-                        notes: item.notes || '',
-                        status: item.status || ''
-                    }));
-                    await supabase.from('expiry_receipts_log').insert(arcRows);
-                    if (Array.isArray(window.receiptsArchiveData)) {
-                        window.receiptsArchiveData.push(...arcRows.map(r => ({
-                            name: r.product_name,
-                            qty: r.quantity,
-                            expiryDate: r.expiry_date,
-                            location: r.location,
-                            regDate: r.reg_date,
-                            receiver: r.receiver,
-                            notes: r.notes,
-                            status: r.status,
-                            barcode: r.barcode
-                        })));
-                        if (typeof window.renderExpiryCalendarDots === 'function') window.renderExpiryCalendarDots();
-                    }
-                } catch(errLog) {
-                    console.warn("Could not insert batch into expiry_receipts_log:", errLog);
+                const archiveRows = batchItems.map(item => ({
+                    product_name: item.name,
+                    barcode: item.barcode || '',
+                    quantity: item.qty || 0,
+                    expiry_date: item.expiryDate || '',
+                    location: item.location || '',
+                    reg_date: item.regDate || '',
+                    receiver: item.receiver || '',
+                    notes: item.notes || '',
+                    status: item.status || '',
+                    talabat_status: window.normalizeMarketplaceStatus(item.talabatStatus),
+                    instashop_status: window.normalizeMarketplaceStatus(item.instashopStatus)
+                }));
+
+                const { data: insertedArchiveRows, error: archiveInsertError } = await supabase
+                    .from('expiry_receipts_log')
+                    .insert(archiveRows)
+                    .select('*');
+                if (archiveInsertError) {
+                    responseData = { success: false, error: `تعذر حفظ سجل الاستلام في الأرشيف: ${archiveInsertError.message}` };
+                    break;
                 }
+
+                const { error: expiryInsertError } = await supabase.from('expiries').insert(expRows);
+                if (expiryInsertError) {
+                    const insertedIds = (insertedArchiveRows || []).map(row => row.id).filter(id => id !== undefined && id !== null);
+                    let rollbackError = null;
+                    if (insertedIds.length) {
+                        const { error } = await supabase.from('expiry_receipts_log').delete().in('id', insertedIds);
+                        rollbackError = error;
+                    }
+                    responseData = {
+                        success: false,
+                        partial: Boolean(rollbackError),
+                        error: rollbackError
+                            ? `فشل حفظ الصلاحيات (${expiryInsertError.message}) وتعذر التراجع عن سجل الأرشيف (${rollbackError.message}). راجع الأرشيف قبل إعادة المحاولة.`
+                            : `تعذر حفظ الصلاحيات الأساسية: ${expiryInsertError.message}`
+                    };
+                    break;
+                }
+
+                const latestStatusByBarcode = new Map();
+                batchItems.forEach(item => {
+                    const barcode = String(item.barcode || '').trim();
+                    if (barcode) {
+                        latestStatusByBarcode.set(barcode, {
+                            talabat_status: window.normalizeMarketplaceStatus(item.talabatStatus),
+                            instashop_status: window.normalizeMarketplaceStatus(item.instashopStatus)
+                        });
+                    }
+                });
+                let statusSyncError = null;
+                for (const [barcode, platformStatuses] of latestStatusByBarcode) {
+                    const { error } = await supabase.from('expiry_receipts_log')
+                        .update(platformStatuses)
+                        .eq('barcode', barcode);
+                    if (error) {
+                        statusSyncError = error;
+                        break;
+                    }
+                }
+
+                if (Array.isArray(window.receiptsArchiveData)) {
+                    const addedRows = (insertedArchiveRows || []).map(row => ({
+                        id: row.id,
+                        name: row.product_name,
+                        qty: row.quantity !== undefined ? parseFloat(row.quantity) : (parseFloat(row.qty) || 0),
+                        expiryDate: row.expiry_date,
+                        location: row.location || '',
+                        regDate: row.reg_date || '',
+                        receiver: row.receiver || '',
+                        notes: row.notes || '',
+                        originalPrice: row.original_price || '',
+                        offerPrice: row.offer_price || '',
+                        status: row.status || '',
+                        barcode: row.barcode || '',
+                        talabatStatus: window.normalizeMarketplaceStatus(row.talabat_status),
+                        instashopStatus: window.normalizeMarketplaceStatus(row.instashop_status)
+                    }));
+                    if (!statusSyncError) {
+                        addedRows.forEach(row => {
+                            const latestStatus = latestStatusByBarcode.get(String(row.barcode || '').trim());
+                            if (latestStatus) {
+                                row.talabatStatus = latestStatus.talabat_status;
+                                row.instashopStatus = latestStatus.instashop_status;
+                            }
+                        });
+                        latestStatusByBarcode.forEach((statuses, barcode) => {
+                            window.receiptsArchiveData.forEach(row => {
+                                if (String(row.barcode || '').trim() === barcode) {
+                                    row.talabatStatus = statuses.talabat_status;
+                                    row.instashopStatus = statuses.instashop_status;
+                                }
+                            });
+                        });
+                    }
+                    window.receiptsArchiveData.push(...addedRows);
+                    if (typeof window.renderExpiryCalendarDots === 'function') window.renderExpiryCalendarDots();
+                    if (typeof window.renderMarketplaceArchive === 'function') window.renderMarketplaceArchive();
+                }
+                responseData = statusSyncError
+                    ? { success: false, partial: true, error: `تم تسجيل الاستلام، لكن تعذر تحديث الحالات السابقة لنفس الباركود: ${statusSyncError.message}. حدّث الحالة من الأرشيف.` }
+                    : { success: true };
                 break;
             }
             case 'updateExpiryItemData':
@@ -5768,6 +6008,7 @@ function processBarcodeAction(val) {
             showToast("<i class='fa-solid fa-triangle-exclamation'></i> لم يتم التعرف على النص أو الكتالوج فارغ", "error");
         }
         
+        applyLedgerMarketplaceDefaults(val);
         playBeepSound();
         if (invProdQty) invProdQty.focus();
     } else if (currentScannerMode === 'ledger') {
@@ -6145,6 +6386,26 @@ window.closeLedgerModal = function () {
     ledgerModal.style.display = 'none';
 };
 
+function applyLedgerMarketplaceDefaults(barcode) {
+    const defaults = window.getMarketplaceStatusForBarcode(barcode);
+    const talabatSelect = document.getElementById('ledgerTalabatStatus');
+    const instashopSelect = document.getElementById('ledgerInstashopStatus');
+    if (talabatSelect) {
+        talabatSelect.value = defaults.talabatStatus;
+        talabatSelect.dataset.userSelected = 'false';
+    }
+    if (instashopSelect) {
+        instashopSelect.value = defaults.instashopStatus;
+        instashopSelect.dataset.userSelected = 'false';
+    }
+}
+
+['ledgerTalabatStatus', 'ledgerInstashopStatus'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', event => {
+        event.currentTarget.dataset.userSelected = 'true';
+    });
+});
+
 const startInvCameraScannerBtn = document.getElementById('startInvCameraScannerBtn');
 if (startInvCameraScannerBtn) {
     startInvCameraScannerBtn.addEventListener('click', () => {
@@ -6200,6 +6461,7 @@ if (ledgerProdBarcodeInp) {
     });
     ledgerProdBarcodeInp.addEventListener('change', () => {
         const val = ledgerProdBarcodeInp.value.trim();
+        if (val) applyLedgerMarketplaceDefaults(val);
         if (val && typeof barcodeCatalogData !== 'undefined' && barcodeCatalogData.length > 0) {
             const found = barcodeCatalogData.find(p => String(p.barcode).split(',').map(b => b.trim().toLowerCase()).includes(val.toLowerCase()));
             if (found && found.name) {
@@ -6254,6 +6516,8 @@ if (addLedgerItemBtn) {
         const location = document.getElementById('ledgerProdLocation').value;
         const notes = document.getElementById('ledgerProdNotes').value;
         const barcode = document.getElementById('ledgerProdBarcode') ? document.getElementById('ledgerProdBarcode').value.trim() : '';
+        const talabatStatus = window.normalizeMarketplaceStatus(document.getElementById('ledgerTalabatStatus')?.value);
+        const instashopStatus = window.normalizeMarketplaceStatus(document.getElementById('ledgerInstashopStatus')?.value);
 
         if (!name) {
             if (barcode) {
@@ -6277,7 +6541,9 @@ if (addLedgerItemBtn) {
             location: location,
             status: 'مش في عرض',
             notes: notes,
-            barcode: barcode
+            barcode: barcode,
+            talabatStatus: talabatStatus,
+            instashopStatus: instashopStatus
         };
 
         ledgerCart.push(item);
@@ -6289,6 +6555,7 @@ if (addLedgerItemBtn) {
         document.getElementById('ledgerProdLocation').value = '';
         document.getElementById('ledgerProdNotes').value = '';
         if (document.getElementById('ledgerProdBarcode')) document.getElementById('ledgerProdBarcode').value = '';
+        applyLedgerMarketplaceDefaults('');
     });
 }
 
@@ -6300,7 +6567,7 @@ function renderLedgerCart() {
     countSpan.innerText = ledgerCart.length;
 
     if (ledgerCart.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: #7f8c8d;">لا توجد منتجات مضافة حتى الآن.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px; color: #7f8c8d;">لا توجد منتجات مضافة حتى الآن.</td></tr>';
         return;
     }
 
@@ -6312,6 +6579,10 @@ function renderLedgerCart() {
                 <td style="padding: 8px;">${item.qty}</td>
                 <td style="padding: 8px;" dir="ltr">${item.expiryDate}</td>
                 <td style="padding: 8px;">${item.location || '-'}</td>
+                <td style="padding: 8px;">
+                    <span class="ledger-status-chip ledger-status-chip--talabat">طلبات: ${window.marketplaceStatusLabel(item.talabatStatus)}</span>
+                    <span class="ledger-status-chip ledger-status-chip--instashop">InstaShop: ${window.marketplaceStatusLabel(item.instashopStatus)}</span>
+                </td>
                 <td style="padding: 8px; text-align: center; display: flex; gap: 5px; justify-content: center;">
                     <button class="interactive-btn" style="background: #f39c12; color: white; border: none; padding: 5px 10px; border-radius: 5px;" onclick="editLedgerItem(${index})">تعديل</button>
                     <button class="interactive-btn" style="background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 5px;" onclick="removeLedgerItem(${index})">حذف</button>
@@ -6329,6 +6600,14 @@ window.editLedgerItem = function (index) {
     document.getElementById('ledgerProdLocation').value = item.location || '';
     document.getElementById('ledgerProdNotes').value = item.notes || '';
     if (document.getElementById('ledgerProdBarcode')) document.getElementById('ledgerProdBarcode').value = item.barcode || '';
+    if (document.getElementById('ledgerTalabatStatus')) {
+        document.getElementById('ledgerTalabatStatus').value = window.normalizeMarketplaceStatus(item.talabatStatus);
+        document.getElementById('ledgerTalabatStatus').dataset.userSelected = 'true';
+    }
+    if (document.getElementById('ledgerInstashopStatus')) {
+        document.getElementById('ledgerInstashopStatus').value = window.normalizeMarketplaceStatus(item.instashopStatus);
+        document.getElementById('ledgerInstashopStatus').dataset.userSelected = 'true';
+    }
 
     ledgerCart.splice(index, 1);
     renderLedgerCart();
@@ -6373,7 +6652,22 @@ if (saveLedgerBtn) {
         formData.append('batchData', JSON.stringify(payload));
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
-            .then(() => {
+            .then(response => response.json())
+            .then(async result => {
+                if (!result.success) {
+                    setBtnLoading(saveLedgerBtn, false);
+                    if (result.partial) {
+                        ledgerCart = [];
+                        renderLedgerCart();
+                        closeLedgerModal();
+                        await loadExpiryData();
+                        await window.loadReceiptsArchiveData();
+                        showToast(`${result.error || 'تم الحفظ جزئيًا.'} راجع الأرشيف قبل إعادة تسجيل الاستلام.`, 'error');
+                    } else {
+                        showToast(result.error || 'تعذر حفظ الاستلام.', 'error');
+                    }
+                    return;
+                }
                 showToast("<i class=\'fa-solid fa-check\'></i> تم حفظ البضاعة بنجاح", "success");
                 setBtnLoading(saveLedgerBtn, false);
                 ledgerCart = [];
@@ -6381,7 +6675,7 @@ if (saveLedgerBtn) {
                 closeLedgerModal();
                 loadExpiryData(); // Refresh the dashboard
             }).catch(() => {
-                showToast("<i class=\'fa-solid fa-xmark\'></i> حدث خطأ في الاتصال", "error");
+                showToast("<i class=\'fa-solid fa-xmark\'></i> تعذر تأكيد حفظ الاستلام. راجع الأرشيف قبل إعادة المحاولة.", "error");
                 setBtnLoading(saveLedgerBtn, false);
             });
     });
@@ -7384,6 +7678,10 @@ async function generateExcel(dataToExport, reportTitle) {
         workbook.created = new Date();
 
         const sheet1 = workbook.addWorksheet('البيانات التفصيلية', { views: [{ rightToLeft: true }] });
+        const hasMarketplaceStatuses = dataToExport.some(row =>
+            Object.prototype.hasOwnProperty.call(row, 'talabatStatus') ||
+            Object.prototype.hasOwnProperty.call(row, 'instashopStatus')
+        );
 
         sheet1.columns = [
             { header: 'اسم المنتج', key: 'name', width: 35 },
@@ -7398,7 +7696,11 @@ async function generateExcel(dataToExport, reportTitle) {
             { header: 'ملاحظات', key: 'notes', width: 30 },
             { header: 'السعر الأساسي', key: 'origPrice', width: 15 },
             { header: 'سعر العرض', key: 'offerPrice', width: 15 },
-            { header: 'الحالة', key: 'status', width: 18 }
+            { header: 'الحالة', key: 'status', width: 18 },
+            ...(hasMarketplaceStatuses ? [
+                { header: 'حالة طلبات', key: 'talabatStatus', width: 18 },
+                { header: 'حالة InstaShop', key: 'instashopStatus', width: 18 }
+            ] : [])
         ];
 
         sheet1.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 12 };
@@ -7437,7 +7739,11 @@ async function generateExcel(dataToExport, reportTitle) {
                 loc: row.location || '',
                 rec: row.receiver || '',
                 status: row.status || '',
-                notes: row.notes || ''
+                notes: row.notes || '',
+                ...(hasMarketplaceStatuses ? {
+                    talabatStatus: window.marketplaceStatusLabel(row.talabatStatus),
+                    instashopStatus: window.marketplaceStatusLabel(row.instashopStatus)
+                } : {})
             });
 
             newRow.alignment = { vertical: 'middle', horizontal: 'center' };
@@ -7484,6 +7790,78 @@ async function generateExcel(dataToExport, reportTitle) {
         showToast("<i class=\'fa-solid fa-xmark\'></i> حدث خطأ أثناء التصدير", "error");
     }
 }
+
+function generateMarketplaceArchivePdf(rows, month) {
+    if (!rows.length) {
+        showToast('لا توجد سجلات مطابقة للتصدير في هذا الشهر.', 'warning');
+        return;
+    }
+    const printWindow = window.open('', '_blank', 'height=800,width=1000');
+    if (!printWindow) {
+        showToast('يرجى السماح بالنوافذ المنبثقة لفتح تقرير PDF.', 'error');
+        return;
+    }
+
+    const monthLabel = escapeMarketplaceArchiveHtml(month);
+    const rowsHtml = rows.map(item => `
+        <tr>
+            <td>${escapeMarketplaceArchiveHtml(item.name || 'اسم غير مسجل')}</td>
+            <td dir="ltr">${escapeMarketplaceArchiveHtml(item.barcode || '-')}</td>
+            <td>${escapeMarketplaceArchiveHtml(item.qty || 0)}</td>
+            <td dir="ltr">${escapeMarketplaceArchiveHtml(item.regDate || '-')}</td>
+            <td>${window.marketplaceStatusLabel(item.talabatStatus)}</td>
+            <td>${window.marketplaceStatusLabel(item.instashopStatus)}</td>
+        </tr>`).join('');
+
+    printWindow.document.write(`<!doctype html>
+        <html lang="ar" dir="rtl">
+        <head>
+            <meta charset="utf-8">
+            <title>حالات طلبات وInstaShop - ${monthLabel}</title>
+            <style>
+                body { font-family: Arial, sans-serif; color: #172033; padding: 24px; }
+                h1 { color: #172033; font-size: 22px; margin: 0 0 6px; }
+                p { color: #64748b; margin: 0 0 18px; }
+                table { width: 100%; border-collapse: collapse; }
+                th, td { border: 1px solid #cbd5e1; padding: 9px; text-align: center; }
+                th { color: #fff; background: #334155; }
+                tbody tr:nth-child(even) { background: #f8fafc; }
+                @media print { body { padding: 0; } }
+            </style>
+        </head>
+        <body>
+            <h1>حالات المنتجات على طلبات وInstaShop</h1>
+            <p>شهر التسجيل: ${monthLabel} | عدد السجلات: ${rows.length}</p>
+            <table>
+                <thead><tr><th>المنتج</th><th>الباركود</th><th>الكمية</th><th>تاريخ التسجيل</th><th>طلبات</th><th>InstaShop</th></tr></thead>
+                <tbody>${rowsHtml}</tbody>
+            </table>
+        </body>
+        </html>`);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => printWindow.print(), 250);
+}
+
+document.getElementById('exportMarketplaceArchiveExcelBtn')?.addEventListener('click', async event => {
+    const month = document.getElementById('marketplaceArchiveMonth')?.value || '';
+    if (!month) {
+        showToast('اختر شهر التسجيل أولاً.', 'warning');
+        return;
+    }
+    window.renderMarketplaceArchive();
+    await generateExcel(window.marketplaceArchiveFilteredData || [], `حالات_المنصات_${month}`);
+});
+
+document.getElementById('exportMarketplaceArchivePdfBtn')?.addEventListener('click', () => {
+    const month = document.getElementById('marketplaceArchiveMonth')?.value || '';
+    if (!month) {
+        showToast('اختر شهر التسجيل أولاً.', 'warning');
+        return;
+    }
+    window.renderMarketplaceArchive();
+    generateMarketplaceArchivePdf(window.marketplaceArchiveFilteredData || [], month);
+});
 
 // Export Current List Button (inside Details Section)
 const expirySortSelect = document.getElementById('expirySortSelect');

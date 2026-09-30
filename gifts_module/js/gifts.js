@@ -45,7 +45,23 @@
             customers: [],
             customerSearchQuery: '',
             sellingBouquetId: null,
-            sellingQty: 1
+            sellingQty: 1,
+            cropEditor: {
+                target: 'builder',
+                sourceImage: null,
+                srcW: 0,
+                srcH: 0,
+                baseScale: 1,
+                zoom: 1,
+                panX: 0,
+                panY: 0,
+                isDragging: false,
+                dragStartX: 0,
+                dragStartY: 0,
+                dragStartPanX: 0,
+                dragStartPanY: 0,
+                eventsAttached: false
+            }
         },
 
         // مساعد الوصول المباشر والآمن لعميل Supabase
@@ -1380,21 +1396,258 @@
             }
         },
 
+        initCropEditorEvents() {
+            const ce = this.state.cropEditor;
+            if (ce.eventsAttached) return;
+
+            const viewport = document.getElementById('gifts-crop-viewport');
+            if (!viewport) return;
+
+            viewport.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                if (!ce.sourceImage) return;
+                ce.isDragging = true;
+                ce.dragStartX = e.clientX;
+                ce.dragStartY = e.clientY;
+                ce.dragStartPanX = ce.panX;
+                ce.dragStartPanY = ce.panY;
+                viewport.style.cursor = 'grabbing';
+                try { viewport.setPointerCapture(e.pointerId); } catch (_) {}
+            });
+
+            viewport.addEventListener('pointermove', (e) => {
+                if (!ce.isDragging || !ce.sourceImage) return;
+                const dx = e.clientX - ce.dragStartX;
+                const dy = e.clientY - ce.dragStartY;
+                ce.panX = ce.dragStartPanX + dx;
+                ce.panY = ce.dragStartPanY + dy;
+                this.applyCropTransform();
+            });
+
+            const stopDrag = (e) => {
+                if (ce.isDragging) {
+                    ce.isDragging = false;
+                    viewport.style.cursor = 'grab';
+                    try { if (e && e.pointerId) viewport.releasePointerCapture(e.pointerId); } catch (_) {}
+                }
+            };
+
+            viewport.addEventListener('pointerup', stopDrag);
+            viewport.addEventListener('pointercancel', stopDrag);
+
+            viewport.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                if (!ce.sourceImage) return;
+                const zoomInput = document.getElementById('gifts-crop-zoom');
+                let currentZoom = parseFloat(zoomInput ? zoomInput.value : ce.zoom) || 1;
+                const delta = e.deltaY < 0 ? 0.08 : -0.08;
+                let nextZoom = Math.min(2.5, Math.max(1, currentZoom + delta));
+                if (zoomInput) zoomInput.value = nextZoom.toFixed(2);
+                this.onCropZoomChange(nextZoom);
+            }, { passive: false });
+
+            ce.eventsAttached = true;
+        },
+
+        openCropModal(sourceImage, target = 'builder') {
+            if (!sourceImage) return;
+            this.initCropEditorEvents();
+
+            const ce = this.state.cropEditor;
+            ce.target = target;
+            ce.sourceImage = sourceImage;
+            ce.srcW = sourceImage.naturalWidth || sourceImage.width || 600;
+            ce.srcH = sourceImage.naturalHeight || sourceImage.height || 800;
+
+            const viewW = 270;
+            const viewH = 360;
+            ce.baseScale = Math.max(viewW / ce.srcW, viewH / ce.srcH);
+            ce.zoom = 1;
+
+            const zoomInput = document.getElementById('gifts-crop-zoom');
+            if (zoomInput) zoomInput.value = '1';
+
+            const dispW = ce.srcW * ce.baseScale;
+            const dispH = ce.srcH * ce.baseScale;
+            ce.panX = (viewW - dispW) / 2;
+            ce.panY = (viewH - dispH) / 2;
+
+            const cropImg = document.getElementById('gifts-crop-img');
+            if (cropImg) {
+                cropImg.src = sourceImage.src;
+            }
+
+            this.applyCropTransform();
+            this.openModal('gifts-modal-crop-adjust');
+        },
+
+        applyCropTransform() {
+            const ce = this.state.cropEditor;
+            if (!ce || !ce.sourceImage) return;
+            const cropImg = document.getElementById('gifts-crop-img');
+            if (!cropImg) return;
+
+            const viewW = 270;
+            const viewH = 360;
+            const dispW = ce.srcW * ce.baseScale * ce.zoom;
+            const dispH = ce.srcH * ce.baseScale * ce.zoom;
+
+            // Restrict pan so image always covers 3:4 box
+            const minPanX = viewW - dispW;
+            const maxPanX = 0;
+            const minPanY = viewH - dispH;
+            const maxPanY = 0;
+
+            ce.panX = Math.min(maxPanX, Math.max(minPanX, ce.panX));
+            ce.panY = Math.min(maxPanY, Math.max(minPanY, ce.panY));
+
+            cropImg.style.width = Math.round(dispW) + 'px';
+            cropImg.style.height = Math.round(dispH) + 'px';
+            cropImg.style.left = Math.round(ce.panX) + 'px';
+            cropImg.style.top = Math.round(ce.panY) + 'px';
+        },
+
+        onCropZoomChange(newZoom) {
+            const ce = this.state.cropEditor;
+            if (!ce || !ce.sourceImage) return;
+            const oldZoom = ce.zoom;
+            const z = Math.min(2.5, Math.max(1, parseFloat(newZoom) || 1));
+            ce.zoom = z;
+
+            const cx = 135;
+            const cy = 180;
+            ce.panX = cx - (cx - ce.panX) * (z / oldZoom);
+            ce.panY = cy - (cy - ce.panY) * (z / oldZoom);
+
+            this.applyCropTransform();
+        },
+
+        nudgeCrop(dx, dy) {
+            const ce = this.state.cropEditor;
+            if (!ce || !ce.sourceImage) return;
+            ce.panX += dx;
+            ce.panY += dy;
+            this.applyCropTransform();
+        },
+
+        resetCropPosition() {
+            const ce = this.state.cropEditor;
+            if (!ce || !ce.sourceImage) return;
+            ce.zoom = 1;
+            const zoomInput = document.getElementById('gifts-crop-zoom');
+            if (zoomInput) zoomInput.value = '1';
+            const dispW = ce.srcW * ce.baseScale;
+            const dispH = ce.srcH * ce.baseScale;
+            ce.panX = (270 - dispW) / 2;
+            ce.panY = (360 - dispH) / 2;
+            this.applyCropTransform();
+        },
+
+        confirmCropAdjustment() {
+            const ce = this.state.cropEditor;
+            if (!ce || !ce.sourceImage) return;
+
+            const viewW = 270;
+            const viewH = 360;
+            const effectiveScale = ce.baseScale * ce.zoom;
+
+            const cropX = (-ce.panX) / effectiveScale;
+            const cropY = (-ce.panY) / effectiveScale;
+            const cropW = viewW / effectiveScale;
+            const cropH = viewH / effectiveScale;
+
+            const outW = 960;
+            const outH = 1280;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = outW;
+            canvas.height = outH;
+            const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+
+            ctx.drawImage(ce.sourceImage, cropX, cropY, cropW, cropH, 0, 0, outW, outH);
+
+            const base64 = canvas.toDataURL('image/jpeg', 0.88);
+            const head = 'data:image/jpeg;base64,';
+            const sizeInBytes = Math.round((base64.length - head.length) * 3 / 4);
+            const sizeInKB = Math.round(sizeInBytes / 1024);
+
+            const result = {
+                base64,
+                sizeInKB,
+                width: outW,
+                height: outH
+            };
+
+            if (ce.target === 'builder') {
+                this.state.draft.photoBase64 = result.base64;
+                this.state.draft.photoSizeKB = result.sizeInKB;
+                this.displayCompressedPhoto(result.base64, result.sizeInKB);
+                this.onDraftChanged();
+                const btnAdjust = document.getElementById('gifts-btn-adjust-crop');
+                if (btnAdjust) btnAdjust.style.display = 'inline-flex';
+            } else if (ce.target === 'changePhoto') {
+                this.applyChangePhotoResult(result);
+                const btnAdjust = document.getElementById('gifts-btn-adjust-change-crop');
+                if (btnAdjust) btnAdjust.style.display = 'block';
+            }
+
+            this.closeCropModal();
+            this.showToastNotification("تم اعتماد وتوسيط كادر الصورة بنسبة 3:4 بنجاح");
+        },
+
+        closeCropModal() {
+            this.closeModal('gifts-modal-crop-adjust');
+        },
+
+        openCropModalForDraft() {
+            if (!this.state.draft.photoBase64) {
+                this.showToastNotification("يرجى التقاط صورة أو اختيارها أولاً لتعديل الكادر");
+                return;
+            }
+            const img = new Image();
+            img.onload = () => {
+                this.openCropModal(img, 'builder');
+            };
+            img.src = this.state.draft.photoBase64;
+        },
+
+        openCropModalForChangePhoto() {
+            if (!this.state.changePhoto || !this.state.changePhoto.photoBase64) {
+                this.showToastNotification("يرجى التقاط صورة أو اختيارها أولاً لتعديل الكادر");
+                return;
+            }
+            const img = new Image();
+            img.onload = () => {
+                this.openCropModal(img, 'changePhoto');
+            };
+            img.src = this.state.changePhoto.photoBase64;
+        },
+
         capturePhoto() {
             const video = document.getElementById('gifts-camera-stream');
             if (!video || !this.state.cameraStream) return;
 
             try {
-                const result = this.cropAndCompressImageTo3x4(video);
-                this.stopCamera();
-                this.state.draft.photoBase64 = result.base64;
-                this.state.draft.photoSizeKB = result.sizeInKB;
+                const w = video.videoWidth || 1280;
+                const h = video.videoHeight || 720;
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = w;
+                tempCanvas.height = h;
+                const ctx = tempCanvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, w, h);
 
-                this.displayCompressedPhoto(result.base64, result.sizeInKB);
-                this.onDraftChanged();
+                this.stopCamera();
+
+                const img = new Image();
+                img.onload = () => {
+                    this.openCropModal(img, 'builder');
+                };
+                img.src = tempCanvas.toDataURL('image/jpeg', 0.95);
             } catch (err) {
                 console.error("Capture photo failed:", err);
-                this.showToastNotification("حدث خطأ أثناء التقاط وتجهيز الصورة بنسبة 3:4");
+                this.showToastNotification("حدث خطأ أثناء التقاط الصورة من الكاميرا");
             }
         },
 
@@ -1406,17 +1659,7 @@
             reader.onload = (e) => {
                 const img = new Image();
                 img.onload = () => {
-                    try {
-                        const result = this.cropAndCompressImageTo3x4(img);
-                        this.state.draft.photoBase64 = result.base64;
-                        this.state.draft.photoSizeKB = result.sizeInKB;
-
-                        this.displayCompressedPhoto(result.base64, result.sizeInKB);
-                        this.onDraftChanged();
-                    } catch (err) {
-                        console.error("Image upload 3:4 crop failed:", err);
-                        this.showToastNotification("تعذر معالجة الصورة، يرجى اختيار ملف آخر");
-                    }
+                    this.openCropModal(img, 'builder');
                 };
                 img.src = e.target.result;
             };
@@ -1440,6 +1683,7 @@
             const preview = document.getElementById('gifts-image-preview');
             const placeholder = document.getElementById('gifts-camera-placeholder');
             const btnRemove = document.getElementById('gifts-btn-remove-photo');
+            const btnAdjust = document.getElementById('gifts-btn-adjust-crop');
             const infoBadge = document.getElementById('gifts-compression-info');
             const guideOverlay = document.getElementById('gifts-camera-guide-overlay');
 
@@ -1450,6 +1694,7 @@
             }
             if (placeholder) placeholder.style.display = 'none';
             if (btnRemove) btnRemove.style.display = 'inline-flex';
+            if (btnAdjust) btnAdjust.style.display = 'inline-flex';
             if (infoBadge) {
                 infoBadge.innerHTML = `<i class="fa-brands fa-instagram"></i> مقاس بوست إنستا موحد (3:4) • حجم التخزين: ${sizeInKB} ك.ب (جودة فائقة)`;
                 infoBadge.style.display = 'inline-block';
@@ -1464,6 +1709,7 @@
             const preview = document.getElementById('gifts-image-preview');
             const placeholder = document.getElementById('gifts-camera-placeholder');
             const btnRemove = document.getElementById('gifts-btn-remove-photo');
+            const btnAdjust = document.getElementById('gifts-btn-adjust-crop');
             const infoBadge = document.getElementById('gifts-compression-info');
             const guideOverlay = document.getElementById('gifts-camera-guide-overlay');
             const fileInput = document.getElementById('gifts-file-input');
@@ -1475,6 +1721,7 @@
             }
             if (placeholder) placeholder.style.display = 'flex';
             if (btnRemove) btnRemove.style.display = 'none';
+            if (btnAdjust) btnAdjust.style.display = 'none';
             if (infoBadge) infoBadge.style.display = 'none';
             if (fileInput) fileInput.value = '';
 
@@ -1738,7 +1985,7 @@
                         .order('created_at', { ascending: false });
 
                     if (!error && Array.isArray(data)) {
-                        this.state.bouquets = data;
+                        this.state.bouquets = data.filter(b => b.status !== 'disassembled');
                         this.saveBouquetsToLocal();
                         loaded = true;
                     } else if (error) {
@@ -1753,7 +2000,8 @@
                 try {
                     const localData = localStorage.getItem('candy_gifts_bouquets');
                     if (localData) {
-                        this.state.bouquets = JSON.parse(localData);
+                        const parsed = JSON.parse(localData);
+                        this.state.bouquets = Array.isArray(parsed) ? parsed.filter(b => b.status !== 'disassembled') : [];
                     }
                 } catch (e) {
                     console.warn("Could not read local bouquets:", e);
@@ -2171,6 +2419,7 @@
             if (!container) return;
 
             let list = this.state.bouquets.filter(b => {
+                if (b.status === 'disassembled') return false;
                 if (query) {
                     const matchName = (b.name || '').toLowerCase().includes(query);
                     const matchCreator = (b.creator_name || '').toLowerCase().includes(query);
@@ -2201,8 +2450,6 @@
 
                 if (b.status === 'sold') {
                     badgeHtml = '<span class="gifts-badge badge-sold">تم البيع</span>';
-                } else if (b.status === 'disassembled') {
-                    badgeHtml = '<span class="gifts-badge badge-disassembled">مفكك</span>';
                 } else if (b.quantity === 1) {
                     badgeHtml = '<span class="gifts-badge badge-last">آخر قطعة</span>';
                 } else if (isNew) {
@@ -2269,9 +2516,6 @@
                                 <button type="button" class="gifts-card-btn" style="color: var(--gifts-teal);" title="تسجيل كـ مباع" onclick="GiftsApp.openSellModal('${b.id}')">
                                     <i class="fa-solid fa-bag-shopping"></i> بيع
                                 </button>
-                                <button type="button" class="gifts-card-btn" style="color: var(--gifts-amber);" title="تفكيك وإرجاع الأصناف للمخزن" onclick="GiftsApp.disassembleBouquet('${b.id}')">
-                                    <i class="fa-solid fa-arrow-rotate-left"></i> تفكيك
-                                </button>
                             ` : ''}
                             <button type="button" class="gifts-card-btn" style="color: #7C3AED;" title="نسخ محتويات هذا البوكيه إلى شاشة التجميع مع تحديث الأسعار" onclick="GiftsApp.cloneToBuilder('${b.id}')">
                                 <i class="fa-solid fa-wand-magic-sparkles"></i> نسخ للتجميع
@@ -2318,105 +2562,6 @@
             document.querySelectorAll('.gifts-showcase-toolbar .gifts-chip').forEach(c => c.classList.remove('active'));
             if (btnEl) btnEl.classList.add('active');
             this.renderShowcase();
-        },
-
-        async disassembleBouquet(id) {
-            const bouquet = this.state.bouquets.find(b => b.id === id);
-            if (!bouquet) return;
-
-            const totalQty = parseInt(bouquet.quantity) || 1;
-            let disQty = 1;
-
-            if (totalQty > 1) {
-                const answer = prompt(`البوكيه متوفر منه (${totalQty}) قطع.\nكم عدد القطع المراد تفكيكها وإرجاع مكوناتها للمخزن؟ (أدخل رقماً من 1 إلى ${totalQty})`, String(totalQty));
-                if (answer === null) return;
-                const parsed = parseInt(answer);
-                if (isNaN(parsed) || parsed < 1 || parsed > totalQty) {
-                    this.showToastNotification("يرجى إدخال كمية صحيحة");
-                    return;
-                }
-                disQty = parsed;
-            } else {
-                if (!confirm(`هل أنت متأكد من تفكيك البوكيه "${bouquet.name}" وإرجاع جميع مكوناته إلى المخزون؟`)) {
-                    return;
-                }
-            }
-
-            const now = new Date().toISOString();
-            const userName = this.getCurrentUserName();
-
-            if (disQty === totalQty) {
-                bouquet.status = 'disassembled';
-                bouquet.disassembled_at = now;
-                bouquet.timeline.push({
-                    event: `تم تفكيك كامل البوكيه (${disQty} قطعة) وإرجاع كافة المكونات إلى المخزون`,
-                    by: userName,
-                    time: now
-                });
-
-                const sb = this.getSupabase();
-                if (sb) {
-                    try {
-                        await sb
-                            .from(GIFTS_TABLE)
-                            .update({
-                                status: 'disassembled',
-                                disassembled_at: now,
-                                timeline: bouquet.timeline
-                            })
-                            .eq('id', id);
-                    } catch (e) {
-                        console.warn("Supabase update error:", e);
-                    }
-                }
-            } else {
-                bouquet.quantity = totalQty - disQty;
-                bouquet.timeline.push({
-                    event: `تم تفكيك (${disQty}) بوكيه وإرجاع مكوناتها للمخزن، والمتبقي (${bouquet.quantity}) قطعة`,
-                    by: userName,
-                    time: now
-                });
-
-                const sb = this.getSupabase();
-                if (sb) {
-                    try {
-                        await sb
-                            .from(GIFTS_TABLE)
-                            .update({
-                                quantity: bouquet.quantity,
-                                timeline: bouquet.timeline
-                            })
-                            .eq('id', id);
-                    } catch (e) {
-                        console.warn("Supabase update error:", e);
-                    }
-                }
-
-                const disRecord = {
-                    ...JSON.parse(JSON.stringify(bouquet)),
-                    id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `bq_dis_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
-                    quantity: disQty,
-                    status: 'disassembled',
-                    disassembled_at: now,
-                    timeline: [
-                        { event: `تم تفكيك (${disQty}) قطعة تم فصلها من البوكيه وإرجاع مكوناتها للمخزن`, by: userName, time: now }
-                    ]
-                };
-
-                if (sb) {
-                    try {
-                        await sb.from(GIFTS_TABLE).insert([disRecord]);
-                    } catch (e) {
-                        console.warn("Supabase insert disRecord error:", e);
-                    }
-                }
-                this.state.bouquets.unshift(disRecord);
-            }
-
-            this.saveBouquetsToLocal();
-            this.updateHeaderStats();
-            this.renderShowcase();
-            this.showToastNotification(`تم تفكيك (${disQty}) بوكيه وإرجاع محتوياته للمخزن بنجاح`);
         },
 
         // 10. نافذة وإجراء بيع البوكيه مع تسجيل بيانات العميل الاختيارية
@@ -3430,7 +3575,7 @@
             }
 
             const bouquetsRows = bouquets.slice(0, 40).map(b => {
-                const statusBadge = b.status === 'sold' ? 'تم البيع' : (b.status === 'ready' ? 'جاهز' : 'مفكك');
+                const statusBadge = b.status === 'sold' ? 'تم البيع' : 'جاهز';
                 const itemsText = (b.items || []).map(i => `${i.qty}× ${i.name}`).join(' ، ');
                 const imgTag = b.image_url ? `<img src="${b.image_url}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px;">` : '-';
                 return `
@@ -3551,27 +3696,32 @@
             const countEl   = document.getElementById('gifts-catalog-item-count');
             if (!container) return;
 
-            const readyBouquets = this.state.bouquets.filter(b => b.status === 'ready');
+            const catalogList = this.state.bouquets.filter(b => b.status !== 'disassembled');
 
             // Update count chip
             if (countEl) {
-                countEl.innerHTML = `<i class="fa-solid fa-gift"></i> ${readyBouquets.length} بوكيه`;
+                countEl.innerHTML = `<i class="fa-solid fa-gift"></i> ${catalogList.length} بوكيه`;
             }
 
-            if (readyBouquets.length === 0) {
+            if (catalogList.length === 0) {
                 container.innerHTML = `
                     <div class="gifts-empty-state" style="grid-column: 1 / -1; padding: 60px 20px;">
                         <div class="gifts-empty-icon-wrap">
                             <i class="fa-solid fa-store-slash"></i>
                         </div>
-                        <h4>لا توجد بوكيهات معروضة للبيع حالياً</h4>
+                        <h4>لا توجد بوكيهات معروضة حالياً</h4>
                         <p>قم بتجميع بوكيهات جديدة من تبويب "تجميع" لتظهر تلقائياً في الكتالوج التسويقي للعملاء</p>
                     </div>
                 `;
                 return;
             }
 
-            container.innerHTML = readyBouquets.map((b, idx) => {
+            container.innerHTML = catalogList.map((b, idx) => {
+                const isReady = (b.status === 'ready');
+                const ribbonHtml = isReady
+                    ? `<div class="gifts-catalog-ribbon"><i class="fa-solid fa-circle-check"></i> متوفر الآن</div>`
+                    : `<div class="gifts-catalog-ribbon" style="background: linear-gradient(135deg, #7C3AED, #9333EA);"><i class="fa-solid fa-clock"></i> يُنفذ بالطلب (3-6 س)</div>`;
+
                 // Image or placeholder
                 const imgHtml = b.image_url
                     ? `<img src="${b.image_url}" alt="${b.name}">`
@@ -3597,10 +3747,7 @@
                     <div class="gifts-catalog-card" style="animation-delay: ${idx * 0.07}s">
                         <div class="gifts-catalog-card-img-wrap" onclick="GiftsApp.openImageLightbox('${b.id}')" style="cursor: pointer;" title="انقر لتكبير وتفحص الصورة">
                             ${imgHtml}
-                            <div class="gifts-catalog-ribbon">
-                                <i class="fa-solid fa-circle-check"></i>
-                                متوفر الآن
-                            </div>
+                            ${ribbonHtml}
                         </div>
                         <div class="gifts-catalog-card-body">
                             <h4 class="gifts-catalog-card-name">${b.name}</h4>
@@ -3631,9 +3778,9 @@
         },
 
         exportCustomerCatalogPDF() {
-            const readyBouquets = this.state.bouquets.filter(b => b.status === 'ready');
-            if (readyBouquets.length === 0) {
-                this.showToastNotification("لا توجد بوكيهات جاهزة حالياً لعرضها في كتالوج العملاء");
+            const catalogBouquets = this.state.bouquets.filter(b => b.status !== 'disassembled');
+            if (catalogBouquets.length === 0) {
+                this.showToastNotification("لا توجد بوكيهات مسجلة حالياً لعرضها في كتالوج العملاء");
                 return;
             }
 
@@ -3649,15 +3796,26 @@
                 day: 'numeric'
             });
 
-            const cardsHtml = readyBouquets.map(b => {
+            const cardsHtml = catalogBouquets.map(b => {
+                const isReady = (b.status === 'ready');
+                const badgeText = isReady ? 'متوفر بالفرع الآن' : 'يُنفذ خلال 3 - 6 ساعات';
+                const badgeIcon = isReady ? 'fa-bolt' : 'fa-clock';
+                const badgeClass = isReady ? 'badge-ready' : 'badge-custom';
+                const cardClass = isReady ? 'card-ready' : 'card-custom';
+
+                const statusText = isReady ? 'جاهز للتسليم الفوري' : 'متاح للتنفيذ خلال 3 - 6 ساعات';
+                const statusDotClass = isReady ? 'dot-ready' : 'dot-custom';
+                const statusBadgeClass = isReady ? 'status-ready' : 'status-custom';
+
                 const imgTag = b.image_url ?
                     `<div class="catalog-card-media">
                         <img src="${b.image_url}" alt="${this.escapeHtml(b.name)}" loading="lazy">
-                        <div class="catalog-card-badge"><i class="fa-solid fa-crown"></i> تصميم حصري</div>
+                        <div class="catalog-card-badge ${badgeClass}"><i class="fa-solid ${badgeIcon}"></i> ${badgeText}</div>
                      </div>` :
                     `<div class="catalog-card-media catalog-card-noimg">
                         <i class="fa-solid fa-gift"></i>
                         <span>كاندي كلوب • باقة فاخرة</span>
+                        <div class="catalog-card-badge ${badgeClass}"><i class="fa-solid ${badgeIcon}"></i> ${badgeText}</div>
                      </div>`;
 
                 const items = b.items || [];
@@ -3669,7 +3827,7 @@
                 `).join('') : '<span class="catalog-pill-empty">تشكيلة شوكولاتة وحلويات مختارة بعناية</span>';
 
                 return `
-                    <div class="catalog-card">
+                    <div class="catalog-card ${cardClass}">
                         ${imgTag}
                         <div class="catalog-card-content">
                             <h3 class="catalog-card-title">${this.escapeHtml(b.name)}</h3>
@@ -3690,8 +3848,8 @@
                                         ${Number(b.total_price).toFixed(2)} <span class="currency">ج.م</span>
                                     </div>
                                 </div>
-                                <div class="catalog-status-badge">
-                                    <span class="catalog-status-dot"></span> جاهز للتسليم الفوري
+                                <div class="catalog-status-badge ${statusBadgeClass}">
+                                    <span class="catalog-status-dot ${statusDotClass}"></span> ${statusText}
                                 </div>
                             </div>
                         </div>
@@ -3788,19 +3946,19 @@
                         .btn-close:hover { background: rgba(255,255,255,0.22); }
 
                         .catalog-container {
-                            max-width: 1080px;
+                            max-width: 1200px;
                             margin: 0 auto;
-                            padding: 30px 24px;
+                            padding: 24px 20px;
                         }
 
                         /* Header */
                         .catalog-header {
                             text-align: center;
-                            padding: 24px 20px 20px;
+                            padding: 20px 24px;
                             background: linear-gradient(135deg, #FFF1F2 0%, #FDF2F8 50%, #FFFFFF 100%);
-                            border-radius: 20px;
+                            border-radius: 18px;
                             border: 2px solid var(--primary-border);
-                            margin-bottom: 28px;
+                            margin-bottom: 24px;
                             position: relative;
                             box-shadow: 0 4px 20px rgba(233, 30, 140, 0.05);
                         }
@@ -3810,22 +3968,22 @@
                             gap: 8px;
                             background: #BE185D;
                             color: #FFF;
-                            padding: 6px 16px;
+                            padding: 5px 16px;
                             border-radius: 30px;
                             font-weight: 800;
                             font-size: 0.85rem;
-                            margin-bottom: 12px;
+                            margin-bottom: 10px;
                             letter-spacing: 0.5px;
                         }
                         .catalog-title {
-                            font-size: 28px;
+                            font-size: 26px;
                             font-weight: 900;
                             color: #831843;
-                            margin: 0 0 8px 0;
+                            margin: 0 0 6px 0;
                             letter-spacing: -0.5px;
                         }
                         .catalog-sub {
-                            font-size: 14px;
+                            font-size: 13.5px;
                             font-weight: 700;
                             color: #BE185D;
                             margin: 0 0 10px 0;
@@ -3840,29 +3998,38 @@
                             font-weight: 600;
                         }
 
-                        /* Grid */
+                        /* Grid - auto-fill so columns are never stretched into wide landscape */
                         .catalog-grid {
                             display: grid;
-                            grid-template-columns: repeat(2, 1fr);
+                            grid-template-columns: repeat(auto-fill, minmax(280px, 320px));
+                            justify-content: center;
                             gap: 24px;
                         }
 
                         /* Card (3:4 Vertical Instagram Format) */
                         .catalog-card {
                             background: var(--card-bg);
-                            border: 1.5px solid var(--primary-border);
                             border-radius: 18px;
                             overflow: hidden;
                             display: flex;
                             flex-direction: column;
-                            box-shadow: 0 6px 20px rgba(233, 30, 140, 0.06);
                             page-break-inside: avoid;
                             break-inside: avoid;
                             transition: transform 0.2s;
                         }
+                        .catalog-card.card-ready {
+                            border: 2px solid #E91E8C;
+                            box-shadow: 0 6px 20px rgba(233, 30, 140, 0.1);
+                        }
+                        .catalog-card.card-custom {
+                            border: 1.5px solid #CBD5E1;
+                            background: #FAF9FC;
+                            box-shadow: 0 4px 16px rgba(100, 116, 139, 0.08);
+                            opacity: 0.94;
+                        }
                         .catalog-card:hover {
                             transform: translateY(-3px);
-                            box-shadow: 0 10px 28px rgba(233, 30, 140, 0.12);
+                            box-shadow: 0 10px 28px rgba(233, 30, 140, 0.14);
                         }
 
                         /* 3:4 Media Container */
@@ -3870,7 +4037,6 @@
                             position: relative;
                             width: 100%;
                             aspect-ratio: 3 / 4;
-                            max-height: 330px;
                             background: #FDF2F8;
                             overflow: hidden;
                             display: flex;
@@ -3889,17 +4055,22 @@
                             position: absolute;
                             top: 10px;
                             right: 10px;
-                            background: rgba(190, 24, 93, 0.9);
-                            backdrop-filter: blur(4px);
+                            backdrop-filter: blur(6px);
                             color: #FFFFFF;
                             font-size: 10.5px;
                             font-weight: 800;
                             padding: 4px 10px;
                             border-radius: 20px;
-                            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.18);
                             display: flex;
                             align-items: center;
                             gap: 5px;
+                        }
+                        .catalog-card-badge.badge-ready {
+                            background: linear-gradient(135deg, #059669, #10B981);
+                        }
+                        .catalog-card-badge.badge-custom {
+                            background: linear-gradient(135deg, #7C3AED, #9333EA);
                         }
                         .catalog-card-noimg {
                             display: flex;
@@ -3923,7 +4094,7 @@
                         }
                         .catalog-card-title {
                             margin: 0 0 10px 0;
-                            font-size: 18px;
+                            font-size: 17px;
                             font-weight: 900;
                             color: #831843;
                             line-height: 1.3;
@@ -3960,7 +4131,7 @@
                             color: #9F1239;
                             border-radius: 6px;
                             padding: 3px 7px;
-                            font-size: 11px;
+                            font-size: 10.5px;
                             font-weight: 700;
                         }
                         .catalog-pill-qty {
@@ -3991,7 +4162,7 @@
                         }
                         .catalog-price-val {
                             font-family: 'Cairo', 'Outfit', sans-serif;
-                            font-size: 22px;
+                            font-size: 21px;
                             font-weight: 900;
                             color: #BE185D;
                             line-height: 1;
@@ -4002,23 +4173,35 @@
                             color: var(--primary-light);
                         }
                         .catalog-status-badge {
-                            background: #ECFDF5;
-                            border: 1px solid #A7F3D0;
-                            color: #065F46;
-                            padding: 5px 12px;
+                            padding: 4px 10px;
                             border-radius: 20px;
-                            font-size: 11px;
+                            font-size: 10.5px;
                             font-weight: 800;
                             display: flex;
                             align-items: center;
                             gap: 6px;
                         }
+                        .catalog-status-badge.status-ready {
+                            background: #ECFDF5;
+                            border: 1px solid #A7F3D0;
+                            color: #065F46;
+                        }
+                        .catalog-status-badge.status-custom {
+                            background: #F5F3FF;
+                            border: 1px solid #DDD6FE;
+                            color: #6D28D9;
+                        }
                         .catalog-status-dot {
                             width: 7px;
                             height: 7px;
                             border-radius: 50%;
-                            background: #10B981;
                             display: inline-block;
+                        }
+                        .catalog-status-dot.dot-ready {
+                            background: #10B981;
+                        }
+                        .catalog-status-dot.dot-custom {
+                            background: #8B5CF6;
                         }
 
                         /* Page Footer */
@@ -4038,7 +4221,7 @@
                             margin-bottom: 4px;
                         }
 
-                        /* Print Optimization */
+                        /* Print Optimization - Compact Header & 3:4 Cards starting on Page 1 */
                         @media print {
                             .no-print { display: none !important; }
                             body {
@@ -4048,22 +4231,111 @@
                             .catalog-container {
                                 max-width: 100% !important;
                                 padding: 0 !important;
+                                margin: 0 !important;
+                            }
+                            .catalog-header {
+                                padding: 6px 14px !important;
+                                margin-bottom: 8mm !important;
+                                border-radius: 8px !important;
+                                border: 1.5px solid #FBCFE8 !important;
+                                display: flex !important;
+                                justify-content: space-between !important;
+                                align-items: center !important;
+                                text-align: right !important;
+                                background: #FFF1F2 !important;
+                                box-shadow: none !important;
+                            }
+                            .catalog-header-text {
+                                display: flex !important;
+                                flex-direction: column !important;
+                                align-items: flex-start !important;
+                            }
+                            .catalog-title {
+                                font-size: 14pt !important;
+                                margin: 0 !important;
+                                color: #831843 !important;
+                                line-height: 1.2 !important;
+                            }
+                            .catalog-sub {
+                                display: none !important;
+                            }
+                            .catalog-meta-row {
+                                font-size: 8.5pt !important;
+                                color: #64748B !important;
+                                margin-top: 2px !important;
+                                gap: 12px !important;
+                                justify-content: flex-start !important;
+                            }
+                            .catalog-logo-wrap {
+                                padding: 4px 12px !important;
+                                font-size: 9.5pt !important;
+                                margin-bottom: 0 !important;
+                                flex-shrink: 0 !important;
                             }
                             .catalog-grid {
-                                gap: 14mm !important;
+                                display: grid !important;
+                                grid-template-columns: repeat(2, 1fr) !important;
+                                gap: 8mm !important;
+                                width: 100% !important;
                             }
                             .catalog-card {
-                                border: 1.5px solid #FBCFE8 !important;
                                 box-shadow: none !important;
                                 break-inside: avoid !important;
                                 page-break-inside: avoid !important;
+                                border-radius: 10px !important;
+                                border: 1.5px solid #E2E8F0 !important;
+                            }
+                            .catalog-card.card-ready {
+                                border: 1.5px solid #F472B6 !important;
+                            }
+                            .catalog-card.card-custom {
+                                border: 1.5px solid #CBD5E1 !important;
+                                opacity: 1 !important;
                             }
                             .catalog-card-media {
-                                max-height: 290px !important;
+                                height: 105mm !important;
+                                max-height: 105mm !important;
+                                aspect-ratio: 3 / 4 !important;
+                            }
+                            .catalog-card-content {
+                                padding: 8px 10px !important;
+                            }
+                            .catalog-card-title {
+                                font-size: 12pt !important;
+                                margin-bottom: 4px !important;
+                            }
+                            .catalog-items-section {
+                                padding: 4px 6px !important;
+                                margin-bottom: 6px !important;
+                            }
+                            .catalog-items-title {
+                                font-size: 8.5pt !important;
+                                margin-bottom: 3px !important;
+                            }
+                            .catalog-pill {
+                                font-size: 8pt !important;
+                                padding: 1px 4px !important;
+                            }
+                            .catalog-card-footer {
+                                padding-top: 6px !important;
+                            }
+                            .catalog-price-val {
+                                font-size: 15pt !important;
+                            }
+                            .catalog-status-badge {
+                                font-size: 8pt !important;
+                                padding: 3px 8px !important;
+                            }
+                            .catalog-card-badge {
+                                font-size: 8pt !important;
+                                padding: 2px 7px !important;
+                            }
+                            .catalog-footer {
+                                display: none !important;
                             }
                             @page {
                                 size: A4 portrait;
-                                margin: 10mm 10mm 12mm 10mm;
+                                margin: 10mm 10mm 10mm 10mm;
                             }
                         }
 
@@ -4091,15 +4363,17 @@
 
                     <div class="catalog-container">
                         <div class="catalog-header">
+                            <div class="catalog-header-text">
+                                <h1 class="catalog-title">تشكيلة بوكيهات وهدايا كاندي كلوب الفاخرة</h1>
+                                <p class="catalog-sub">أحدث البوكيهات المصنوعة يدوياً والمتاحة للتسليم الفوري والتنفيذ المباشر</p>
+                                <div class="catalog-meta-row">
+                                    <span><i class="fa-regular fa-calendar-check"></i> تاريخ التحديث: ${todayFormatted}</span>
+                                    <span>•</span>
+                                    <span><i class="fa-solid fa-store"></i> متوفرة وجاهزة بالفرع</span>
+                                </div>
+                            </div>
                             <div class="catalog-logo-wrap">
                                 <i class="fa-solid fa-gift"></i> CANDY CLUB GIFTS
-                            </div>
-                            <h1 class="catalog-title">تشكيلة بوكيهات وهدايا كاندي كلوب الفاخرة</h1>
-                            <p class="catalog-sub">أحدث البوكيهات المصنوعة يدوياً والمتاحة في الفرع للحجز والتسليم الفوري</p>
-                            <div class="catalog-meta-row">
-                                <span><i class="fa-regular fa-calendar-check"></i> تاريخ التحديث: ${todayFormatted}</span>
-                                <span>•</span>
-                                <span><i class="fa-solid fa-store"></i> متوفرة وجاهزة بالفرع</span>
                             </div>
                         </div>
 
@@ -4210,6 +4484,9 @@
             if (cameraContainer) cameraContainer.style.display = 'none';
             if (submitBtn) submitBtn.disabled = true;
 
+            const btnAdjust = document.getElementById('gifts-btn-adjust-change-crop');
+            if (btnAdjust) btnAdjust.style.display = 'none';
+
             this.openModal('gifts-modal-change-photo');
         },
 
@@ -4261,12 +4538,24 @@
             if (!video || !this.state.changePhoto || !this.state.changePhoto.stream) return;
 
             try {
-                const result = this.cropAndCompressImageTo3x4(video);
+                const w = video.videoWidth || 1280;
+                const h = video.videoHeight || 720;
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = w;
+                tempCanvas.height = h;
+                const ctx = tempCanvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, w, h);
+
                 this.stopChangePhotoCamera();
-                this.applyChangePhotoResult(result);
+
+                const img = new Image();
+                img.onload = () => {
+                    this.openCropModal(img, 'changePhoto');
+                };
+                img.src = tempCanvas.toDataURL('image/jpeg', 0.95);
             } catch (err) {
                 console.error("Capture change photo failed:", err);
-                this.showToastNotification("حدث خطأ أثناء التقاط وتجهيز الصورة بنسبة 3:4");
+                this.showToastNotification("حدث خطأ أثناء التقاط الصورة من الكاميرا");
             }
         },
 
@@ -4278,13 +4567,7 @@
             reader.onload = (e) => {
                 const img = new Image();
                 img.onload = () => {
-                    try {
-                        const result = this.cropAndCompressImageTo3x4(img);
-                        this.applyChangePhotoResult(result);
-                    } catch (err) {
-                        console.error("Change photo 3:4 crop error:", err);
-                        this.showToastNotification("تعذر معالجة الصورة، يرجى اختيار ملف آخر");
-                    }
+                    this.openCropModal(img, 'changePhoto');
                 };
                 img.src = e.target.result;
             };
@@ -4310,6 +4593,7 @@
             const placeholderText = document.getElementById('gifts-change-photo-placeholder-text');
             const sizeBadge = document.getElementById('gifts-change-photo-size-badge');
             const submitBtn = document.getElementById('gifts-btn-submit-change-photo');
+            const btnAdjust = document.getElementById('gifts-btn-adjust-change-crop');
 
             if (newImg) {
                 newImg.src = result.base64;
@@ -4320,6 +4604,7 @@
                 sizeBadge.innerHTML = `<i class="fa-brands fa-instagram"></i> حجم الصورة: ${result.sizeInKB} ك.ب (مقاس موحد 3:4)`;
                 sizeBadge.style.display = 'block';
             }
+            if (btnAdjust) btnAdjust.style.display = 'block';
             if (submitBtn) submitBtn.disabled = false;
         },
 
