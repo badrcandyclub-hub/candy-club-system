@@ -5111,18 +5111,109 @@ body.dark-mode .wheel-picker-container {
     font-weight: 700;
 }
 
-.ledger-platform-field--talabat .ledger-platform-select,
-.marketplace-status-select--talabat {
-    color: #fff;
-    border-color: #ea580c;
-    background-color: #ea580c;
+.ledger-platform-select--native {
+    display: none;
 }
 
-.ledger-platform-field--instashop .ledger-platform-select,
-.marketplace-status-select--instashop {
-    color: #fff;
-    border-color: #7c3aed;
-    background-color: #7c3aed;
+.ledger-custom-select {
+    position: relative;
+}
+
+.ledger-custom-select__button {
+    width: 100%;
+    min-height: 40px;
+    padding: 7px 35px 7px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #f1f5f9;
+    color: #475569;
+    font: inherit;
+    font-weight: 800;
+    text-align: right;
+    cursor: pointer;
+}
+
+.ledger-custom-select__button::after {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: translateY(-65%) rotate(45deg);
+    pointer-events: none;
+}
+
+.ledger-custom-select__button[data-status="present"] {
+    border-color: #16a34a;
+    background: #dcfce7;
+    color: #166534;
+}
+
+.ledger-custom-select__button[data-status="absent"] {
+    border-color: #dc2626;
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.ledger-custom-select__button[data-status="unknown"] {
+    border-color: #94a3b8;
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.ledger-custom-select__menu {
+    position: absolute;
+    z-index: 20;
+    right: 0;
+    left: 0;
+    display: none;
+    gap: 4px;
+    margin-top: 4px;
+    padding: 5px;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    background: #fff;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.16);
+}
+
+.ledger-custom-select.is-open .ledger-custom-select__menu {
+    display: grid;
+}
+
+.ledger-custom-select__menu button {
+    min-height: 36px;
+    padding: 6px 10px;
+    border: 0;
+    border-radius: 6px;
+    background: #fff;
+    color: #334155;
+    font: inherit;
+    font-weight: 700;
+    text-align: right;
+    cursor: pointer;
+}
+
+.ledger-custom-select__menu button:hover,
+.ledger-custom-select__menu button[aria-selected="true"] {
+    background: #f1f5f9;
+}
+
+.ledger-custom-select__menu button[data-value="present"][aria-selected="true"] {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.ledger-custom-select__menu button[data-value="absent"][aria-selected="true"] {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.ledger-custom-select__menu button[data-value="unknown"][aria-selected="true"] {
+    background: #f1f5f9;
+    color: #475569;
 }
 
 .ledger-platform-hint {
@@ -5368,7 +5459,8 @@ body.dark-mode .wheel-picker-container {
 @media (max-width: 600px) {
     .ledger-marketplace-statuses {
         grid-template-columns: minmax(0, 1fr);
-        padding: 9px;
+        gap: 7px;
+        padding: 7px;
     }
 
     .ledger-platform-hint {
@@ -5377,6 +5469,22 @@ body.dark-mode .wheel-picker-container {
 
     .ledger-status-chip {
         white-space: normal;
+    }
+
+    .ledger-platform-field {
+        gap: 3px;
+        padding: 7px 8px;
+    }
+
+    .ledger-platform-field label {
+        font-size: 0.8rem;
+    }
+
+    .ledger-custom-select__button {
+        min-height: 36px;
+        padding-top: 5px;
+        padding-bottom: 5px;
+        font-size: 0.86rem;
     }
 
     .marketplace-archive-panel {

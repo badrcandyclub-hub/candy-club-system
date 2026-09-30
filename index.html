@@ -11,7 +11,7 @@
     <link rel="icon" type="image/png" href="favicon.png?v=8">
     <link rel="apple-touch-icon" href="favicon.png?v=8">
     <link rel="manifest" href="app-manifest.json?v=999">
-    <link rel="stylesheet" href="style.css?v=78.0">
+    <link rel="stylesheet" href="style.css?v=79.0">
     <link rel="stylesheet" href="gifts_module/css/gifts.css?v=15">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap"
         rel="stylesheet">
@@ -1739,19 +1739,35 @@
                         <div class="ledger-marketplace-statuses">
                             <div class="ledger-platform-field ledger-platform-field--talabat">
                                 <label for="ledgerTalabatStatus">حالة طلبات</label>
-                                <select id="ledgerTalabatStatus" class="ledger-platform-select">
+                                <select id="ledgerTalabatStatus" class="ledger-platform-select ledger-platform-select--native" aria-hidden="true" tabindex="-1">
                                     <option value="unknown">غير محدد</option>
                                     <option value="present">موجود</option>
                                     <option value="absent">غير موجود</option>
                                 </select>
+                                <div class="ledger-custom-select ledger-custom-select--talabat" data-select-id="ledgerTalabatStatus">
+                                    <button type="button" class="ledger-custom-select__button" aria-haspopup="listbox" aria-expanded="false">غير محدد</button>
+                                    <div class="ledger-custom-select__menu" role="listbox">
+                                        <button type="button" role="option" data-value="unknown">غير محدد</button>
+                                        <button type="button" role="option" data-value="present">موجود</button>
+                                        <button type="button" role="option" data-value="absent">غير موجود</button>
+                                    </div>
+                                </div>
                             </div>
                             <div class="ledger-platform-field ledger-platform-field--instashop">
                                 <label for="ledgerInstashopStatus">حالة InstaShop</label>
-                                <select id="ledgerInstashopStatus" class="ledger-platform-select">
+                                <select id="ledgerInstashopStatus" class="ledger-platform-select ledger-platform-select--native" aria-hidden="true" tabindex="-1">
                                     <option value="unknown">غير محدد</option>
                                     <option value="present">موجود</option>
                                     <option value="absent">غير موجود</option>
                                 </select>
+                                <div class="ledger-custom-select ledger-custom-select--instashop" data-select-id="ledgerInstashopStatus">
+                                    <button type="button" class="ledger-custom-select__button" aria-haspopup="listbox" aria-expanded="false">غير محدد</button>
+                                    <div class="ledger-custom-select__menu" role="listbox">
+                                        <button type="button" role="option" data-value="unknown">غير محدد</button>
+                                        <button type="button" role="option" data-value="present">موجود</button>
+                                        <button type="button" role="option" data-value="absent">غير موجود</button>
+                                    </div>
+                                </div>
                             </div>
                             <p class="ledger-platform-hint">لو الباركود اتسجل قبل كده, هنعرض آخر حالة محفوظة له تلقائيًا.</p>
                         </div>
@@ -2784,7 +2800,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script src="email_service.js?v=5.0" defer></script>
-    <script src="app.js?v=64.0" charset="UTF-8" defer></script>
+    <script src="app.js?v=65.0" charset="UTF-8" defer></script>
     <script src="update_notice.js" defer></script>
 
     <!-- Modal: إعداد موقع ونطاق الفرع (GPS Geofencing) -->

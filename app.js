@@ -268,6 +268,57 @@ window.marketplaceStatusLabel = function(status) {
     return labels[window.normalizeMarketplaceStatus(status)];
 };
 
+function syncLedgerCustomMarketplaceSelect(selectId) {
+    const select = document.getElementById(selectId);
+    const customSelect = document.querySelector(`.ledger-custom-select[data-select-id="${selectId}"]`);
+    if (!select || !customSelect) return;
+    const value = window.normalizeMarketplaceStatus(select.value);
+    const button = customSelect.querySelector('.ledger-custom-select__button');
+    if (button) {
+        button.textContent = window.marketplaceStatusLabel(value);
+        button.dataset.status = value;
+    }
+    customSelect.querySelectorAll('[role="option"]').forEach(option => {
+        option.setAttribute('aria-selected', option.dataset.value === value ? 'true' : 'false');
+    });
+}
+
+function setupLedgerCustomMarketplaceSelects() {
+    document.querySelectorAll('.ledger-custom-select[data-select-id]').forEach(customSelect => {
+        const selectId = customSelect.dataset.selectId;
+        const select = document.getElementById(selectId);
+        const button = customSelect.querySelector('.ledger-custom-select__button');
+        if (!select || !button || customSelect.dataset.ready === 'true') return;
+        customSelect.dataset.ready = 'true';
+        button.addEventListener('click', () => {
+            const willOpen = !customSelect.classList.contains('is-open');
+            document.querySelectorAll('.ledger-custom-select.is-open').forEach(openSelect => {
+                openSelect.classList.remove('is-open');
+                openSelect.querySelector('.ledger-custom-select__button')?.setAttribute('aria-expanded', 'false');
+            });
+            customSelect.classList.toggle('is-open', willOpen);
+            button.setAttribute('aria-expanded', String(willOpen));
+        });
+        customSelect.querySelectorAll('[role="option"]').forEach(option => {
+            option.addEventListener('click', () => {
+                select.value = option.dataset.value;
+                select.dispatchEvent(new Event('change', { bubbles: true }));
+                syncLedgerCustomMarketplaceSelect(selectId);
+                customSelect.classList.remove('is-open');
+                button.setAttribute('aria-expanded', 'false');
+            });
+        });
+        syncLedgerCustomMarketplaceSelect(selectId);
+    });
+    document.addEventListener('click', event => {
+        if (event.target.closest('.ledger-custom-select')) return;
+        document.querySelectorAll('.ledger-custom-select.is-open').forEach(customSelect => {
+            customSelect.classList.remove('is-open');
+            customSelect.querySelector('.ledger-custom-select__button')?.setAttribute('aria-expanded', 'false');
+        });
+    });
+}
+
 window.getMarketplaceStatusForBarcode = function(barcode) {
     const normalizedBarcode = String(barcode || '').trim().toLowerCase();
     if (!normalizedBarcode) return { talabatStatus: 'unknown', instashopStatus: 'unknown' };
@@ -6494,10 +6545,12 @@ function applyLedgerMarketplaceDefaults(barcode) {
     if (talabatSelect) {
         talabatSelect.value = defaults.talabatStatus;
         talabatSelect.dataset.userSelected = 'false';
+        syncLedgerCustomMarketplaceSelect('ledgerTalabatStatus');
     }
     if (instashopSelect) {
         instashopSelect.value = defaults.instashopStatus;
         instashopSelect.dataset.userSelected = 'false';
+        syncLedgerCustomMarketplaceSelect('ledgerInstashopStatus');
     }
 }
 
@@ -6506,6 +6559,8 @@ function applyLedgerMarketplaceDefaults(barcode) {
         event.currentTarget.dataset.userSelected = 'true';
     });
 });
+
+setupLedgerCustomMarketplaceSelects();
 
 const startInvCameraScannerBtn = document.getElementById('startInvCameraScannerBtn');
 if (startInvCameraScannerBtn) {
@@ -6704,10 +6759,12 @@ window.editLedgerItem = function (index) {
     if (document.getElementById('ledgerTalabatStatus')) {
         document.getElementById('ledgerTalabatStatus').value = window.normalizeMarketplaceStatus(item.talabatStatus);
         document.getElementById('ledgerTalabatStatus').dataset.userSelected = 'true';
+        syncLedgerCustomMarketplaceSelect('ledgerTalabatStatus');
     }
     if (document.getElementById('ledgerInstashopStatus')) {
         document.getElementById('ledgerInstashopStatus').value = window.normalizeMarketplaceStatus(item.instashopStatus);
         document.getElementById('ledgerInstashopStatus').dataset.userSelected = 'true';
+        syncLedgerCustomMarketplaceSelect('ledgerInstashopStatus');
     }
 
     ledgerCart.splice(index, 1);
