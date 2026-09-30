@@ -1400,24 +1400,33 @@
         },
 
         // رفع الصورة حصريا إلى سيرفر Google Drive عبر Web App
-        async uploadPhotoToGoogleDrive(base64Image, filename) {
+        async uploadPhotoToGoogleDrive(base64Image, filename, deleteFileId = null) {
             if (!base64Image || !base64Image.startsWith('data:image')) {
                 return null;
             }
 
             try {
-                const response = await fetch(GOOGLE_DRIVE_WEBAPP_URL, {
+                const fetchFn = window.originalFetch || window.fetch;
+                const payload = {
+                    image: base64Image,
+                    filename: filename || `bouquet_${Date.now()}.jpg`
+                };
+                if (deleteFileId) {
+                    payload.deleteFileId = deleteFileId;
+                }
+
+                const response = await fetchFn(GOOGLE_DRIVE_WEBAPP_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({
-                        image: base64Image,
-                        filename: filename || `bouquet_${Date.now()}.jpg`
-                    })
+                    body: JSON.stringify(payload),
+                    redirect: 'follow'
                 });
 
                 const result = await response.json();
                 if (result && result.status === 'success' && result.url) {
                     return result.url;
+                } else if (result && result.message) {
+                    console.error("Google Drive Apps Script error:", result.message);
                 }
             } catch (err) {
                 console.warn("Google Drive upload error:", err);
@@ -2132,6 +2141,9 @@
                                 ${badgeHtml}
                                 ${imgHtml}
                                 <span class="gifts-card-qty-chip">${b.quantity} بوكيه</span>
+                                <button type="button" class="gifts-btn-change-photo-trigger" onclick="event.stopPropagation(); GiftsApp.openChangePhotoModal('${b.id}')" title="تغيير أو إضافة صورة للبوكيه">
+                                    <i class="fa-solid fa-camera"></i>
+                                </button>
                             </div>
                             <div class="gifts-card-body">
                                 <div class="gifts-card-header">
@@ -3594,10 +3606,271 @@
                     dropdown.style.display = 'none';
                 }
             });
-        }
+        },
+
+        // 📸 تحديث واستبدال صورة البوكيه (Google Drive + Supabase)
+        // ============================================================
+        openChangePhotoModal(bouquetId) {
+            const bouquet = this.state.bouquets.find(b => String(b.id) === String(bouquetId));
+            if (!bouquet) {
+                this.showToastNotification("لم يتم العثور على البوكيه المحدد");
+                return;
+            }
+
+            this.state.changePhoto = {
+                bouquetId: bouquetId,
+                photoBase64: null,
+                photoSizeKB: 0,
+                stream: null
+            };
+
+            const idInput = document.getElementById('gifts-change-photo-bouquet-id');
+            const nameEl = document.getElementById('gifts-change-photo-bouquet-name');
+            const currentWrap = document.getElementById('gifts-change-photo-current-wrap');
+            const newImg = document.getElementById('gifts-change-photo-new-img');
+            const placeholderText = document.getElementById('gifts-change-photo-placeholder-text');
+            const sizeBadge = document.getElementById('gifts-change-photo-size-badge');
+            const submitBtn = document.getElementById('gifts-btn-submit-change-photo');
+            const cameraContainer = document.getElementById('gifts-change-photo-camera-container');
+
+            if (idInput) idInput.value = bouquetId;
+            if (nameEl) nameEl.innerText = bouquet.name;
+
+            // عرض الصورة الحالية إن وجدت
+            if (currentWrap) {
+                if (bouquet.image_url) {
+                    currentWrap.innerHTML = `<img src="${bouquet.image_url}" alt="${this.escapeHtml(bouquet.name)}" style="width: 100%; height: 100%; object-fit: cover;">`;
+                } else {
+                    currentWrap.innerHTML = `<div style="display:flex; flex-direction:column; align-items:center; gap:4px; color:#94A3B8;"><i class="fa-solid fa-gift" style="font-size:2.2rem;"></i><span style="font-size:0.75rem;">بدون صورة</span></div>`;
+                }
+            }
+
+            // إعادة ضبط معاينة الصورة الجديدة
+            if (newImg) { newImg.src = ''; newImg.style.display = 'none'; }
+            if (placeholderText) placeholderText.style.display = 'block';
+            if (sizeBadge) sizeBadge.style.display = 'none';
+            if (cameraContainer) cameraContainer.style.display = 'none';
+            if (submitBtn) submitBtn.disabled = true;
+
+            this.openModal('gifts-modal-change-photo');
+        },
+
+        closeChangePhotoModal() {
+            this.stopChangePhotoCamera();
+            this.closeModal('gifts-modal-change-photo');
+        },
+
+        async startChangePhotoCamera() {
+            const container = document.getElementById('gifts-change-photo-camera-container');
+            const video = document.getElementById('gifts-change-photo-camera-stream');
+
+            try {
+                const constraints = {
+                    video: {
+                        facingMode: { ideal: 'environment' },
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                };
+
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                if (!this.state.changePhoto) this.state.changePhoto = {};
+                this.state.changePhoto.stream = stream;
+                if (video) {
+                    video.srcObject = stream;
+                    video.play().catch(e => console.warn('Video playback deferred:', e));
+                }
+                if (container) container.style.display = 'block';
+            } catch(err) {
+                console.error("Camera access failed:", err);
+                this.showToastNotification("تعذر فتح الكاميرا، يرجى اختيار صورة من جهازك");
+            }
+        },
+
+        stopChangePhotoCamera() {
+            if (this.state.changePhoto && this.state.changePhoto.stream) {
+                this.state.changePhoto.stream.getTracks().forEach(track => track.stop());
+                this.state.changePhoto.stream = null;
+            }
+            const container = document.getElementById('gifts-change-photo-camera-container');
+            const video = document.getElementById('gifts-change-photo-camera-stream');
+            if (video) video.srcObject = null;
+            if (container) container.style.display = 'none';
+        },
+
+        captureChangePhoto() {
+            const video = document.getElementById('gifts-change-photo-camera-stream');
+            if (!video || !this.state.changePhoto || !this.state.changePhoto.stream) return;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            this.stopChangePhotoCamera();
+            this.compressChangePhotoCanvas(canvas);
+        },
+
+        handleChangePhotoFileUpload(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    this.compressChangePhotoCanvas(canvas);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+            event.target.value = '';
+        },
+
+        compressChangePhotoCanvas(canvas) {
+            const maxDimension = 1400;
+            let targetWidth = canvas.width;
+            let targetHeight = canvas.height;
+
+            if (targetWidth > maxDimension || targetHeight > maxDimension) {
+                if (targetWidth > targetHeight) {
+                    targetHeight = Math.round((targetHeight * maxDimension) / targetWidth);
+                    targetWidth = maxDimension;
+                } else {
+                    targetWidth = Math.round((targetWidth * maxDimension) / targetHeight);
+                    targetHeight = maxDimension;
+                }
+            }
+
+            const scaledCanvas = document.createElement('canvas');
+            scaledCanvas.width = targetWidth;
+            scaledCanvas.height = targetHeight;
+            const scaledCtx = scaledCanvas.getContext('2d');
+            scaledCtx.drawImage(canvas, 0, 0, targetWidth, targetHeight);
+
+            const quality = 0.88;
+            const compressedBase64 = scaledCanvas.toDataURL('image/jpeg', quality);
+
+            const head = 'data:image/jpeg;base64,';
+            const sizeInBytes = Math.round((compressedBase64.length - head.length) * 3 / 4);
+            const sizeInKB = Math.round(sizeInBytes / 1024);
+
+            if (!this.state.changePhoto) this.state.changePhoto = {};
+            this.state.changePhoto.photoBase64 = compressedBase64;
+            this.state.changePhoto.photoSizeKB = sizeInKB;
+
+            const newImg = document.getElementById('gifts-change-photo-new-img');
+            const placeholderText = document.getElementById('gifts-change-photo-placeholder-text');
+            const sizeBadge = document.getElementById('gifts-change-photo-size-badge');
+            const submitBtn = document.getElementById('gifts-btn-submit-change-photo');
+
+            if (newImg) {
+                newImg.src = compressedBase64;
+                newImg.style.display = 'block';
+            }
+            if (placeholderText) placeholderText.style.display = 'none';
+            if (sizeBadge) {
+                sizeBadge.innerText = `حجم الصورة: ${sizeInKB} كيلوبايت`;
+                sizeBadge.style.display = 'block';
+            }
+            if (submitBtn) submitBtn.disabled = false;
+        },
+
+        async submitChangePhoto() {
+            const bouquetId = this.state.changePhoto ? this.state.changePhoto.bouquetId : null;
+            const base64 = this.state.changePhoto ? this.state.changePhoto.photoBase64 : null;
+            const submitBtn = document.getElementById('gifts-btn-submit-change-photo');
+
+            if (!bouquetId || !base64) {
+                this.showToastNotification("يرجى التقاط أو اختيار صورة أولاً");
+                return;
+            }
+
+            const bouquet = this.state.bouquets.find(b => String(b.id) === String(bouquetId));
+            if (!bouquet) {
+                this.showToastNotification("لم يتم العثور على بيانات البوكيه");
+                return;
+            }
+
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الرفع إلى Google Drive...';
+            }
+
+            try {
+                // استخراج معرف الملف القديم من Google Drive لحذفه إن وجد
+                let oldFileId = null;
+                if (bouquet.image_url && typeof bouquet.image_url === 'string') {
+                    const m = bouquet.image_url.match(/\/d\/([a-zA-Z0-9_-]+)/) || bouquet.image_url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+                    if (m && m[1]) oldFileId = m[1];
+                }
+
+                const cleanName = (bouquet.name || 'bouquet').replace(/\s+/g, '_');
+                const filename = `bouquet_${cleanName}_${Date.now()}.jpg`;
+                const driveUrl = await this.uploadPhotoToGoogleDrive(base64, filename, oldFileId);
+
+                if (!driveUrl || !driveUrl.startsWith('http')) {
+                    throw new Error("تعذر رفع الصورة إلى Google Drive. يرجى التحقق من الاتصال والمحاولة ثانية.");
+                }
+
+                const now = new Date().toISOString();
+                const userName = (typeof currentUser !== 'undefined' && currentUser && currentUser.displayName) ? currentUser.displayName : (bouquet.creator_name || 'موظف الهدايا');
+
+                // تحديث الكائن المحلي
+                bouquet.image_url = driveUrl;
+                if (!bouquet.timeline) bouquet.timeline = [];
+                bouquet.timeline.push({
+                    event: 'تم تحديث صورة البوكيه',
+                    by: userName,
+                    time: now
+                });
+
+                // التحديث في Supabase
+                const sb = this.getSupabase();
+                let synced = false;
+                if (sb) {
+                    try {
+                        const { error: sbErr } = await sb
+                            .from(GIFTS_TABLE)
+                            .update({
+                                image_url: driveUrl,
+                                timeline: bouquet.timeline
+                            })
+                            .eq('id', bouquet.id);
+
+                        if (!sbErr) synced = true;
+                        else console.warn("Supabase update photo error:", sbErr);
+                    } catch(errSb) {
+                        console.warn("Supabase update photo exception:", errSb);
+                    }
+                }
+
+                this.saveBouquetsToLocal();
+                this.renderShowcaseBouquets();
+                this.closeChangePhotoModal();
+
+                this.showToastNotification(`تم تحديث صورة البوكيه ورفعها إلى Google Drive بنجاح! ${synced ? '☁️' : ''}`);
+            } catch(err) {
+                console.error("Change photo error:", err);
+                this.showToastNotification(err.message || "حدث خطأ أثناء رفع الصورة");
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> حفظ وتحديث الصورة';
+                }
+            }
+        },
     };
 
-    window.GiftsApp = GiftsApp;
+    
+        // ============================================================
+window.GiftsApp = GiftsApp;
 
 })(window);
 

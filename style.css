@@ -4580,3 +4580,483 @@ body.dark-mode .wheel-picker-container {
     border-radius: 50%;
     background-color: #2e7d32;
 }
+
+@media (max-width: 600px) {
+    #moderators-tab {
+        width: 100%;
+        min-width: 0;
+        height: auto !important;
+    }
+
+    #moderators-tab > .moderators-page-card {
+        width: 100%;
+        height: auto !important;
+        min-height: calc(100vh - var(--header-height) - var(--nav-height) - 24px);
+        padding: 16px 12px;
+        overflow: hidden;
+        transform: none;
+    }
+
+    #moderators-tab > .moderators-page-card:hover {
+        transform: none;
+    }
+
+    #moderators-tab .moderators-header {
+        margin-bottom: 16px !important;
+    }
+
+    #moderators-tab .moderators-header h2 {
+        font-size: 1.15rem;
+        line-height: 1.5;
+        padding-inline-start: 28px;
+    }
+
+    #moderators-tab .moderators-header p {
+        font-size: 0.85rem !important;
+        line-height: 1.6;
+    }
+
+    #moderators-tab .moderators-add-form {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px !important;
+    }
+
+    #moderators-tab #newModeratorName {
+        width: 100%;
+        min-width: 0;
+        min-height: 48px;
+    }
+
+    #moderators-tab #addModeratorBtn {
+        width: 100%;
+        min-height: 48px;
+        justify-content: center;
+        padding: 10px 14px !important;
+    }
+
+    #moderators-tab #moderatorsList {
+        width: 100%;
+        max-height: 180px !important;
+        margin-bottom: 14px !important;
+        border-radius: 14px;
+    }
+
+    #moderators-tab #moderatorsList .data-row {
+        gap: 10px;
+        min-width: 0;
+        padding: 10px;
+    }
+
+    #moderators-tab #moderatorsList .mod-row-name {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    #moderators-tab #moderatorsList .mod-row-item > button {
+        flex: 0 0 42px;
+        min-width: 42px;
+        min-height: 42px;
+    }
+
+    #moderators-tab .moderators-toolbar {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 10px;
+        padding: 12px !important;
+    }
+
+    #moderators-tab .moderators-toolbar h3 {
+        font-size: 1rem;
+    }
+
+    #moderators-tab .moderators-filter {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px !important;
+        width: 100%;
+    }
+
+    #moderators-tab .moderators-filter label {
+        grid-column: 1 / -1;
+        font-size: 0.85rem !important;
+    }
+
+    #moderators-tab #moderatorsMonthFilter {
+        width: 100%;
+        min-width: 0;
+    }
+
+    #moderators-tab .moderators-filter button {
+        min-width: 88px;
+        min-height: 44px;
+    }
+
+    #moderators-tab #moderatorsDashboardContainer {
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 12px !important;
+        min-width: 0;
+        overflow: visible !important;
+    }
+
+    #moderators-tab #moderatorsDashboardContainer > .report-card {
+        min-width: 0;
+        padding: 14px !important;
+        border-radius: 14px !important;
+    }
+
+    #moderators-tab #moderatorsDashboardContainer .report-card h3 {
+        min-width: 0;
+        font-size: 1.1rem !important;
+        overflow-wrap: anywhere;
+    }
+
+    #moderators-tab #moderatorsDashboardContainer .report-card > div:last-child {
+        gap: 8px !important;
+    }
+
+    #moderators-tab #moderatorsDashboardContainer .report-card > div:last-child > div {
+        min-width: 0;
+        padding: 9px 6px !important;
+    }
+
+    #moderators-tab #moderatorsDashboardContainer .report-card > div:last-child > div > div:last-child {
+        font-size: 1rem !important;
+        overflow-wrap: anywhere;
+    }
+}
+
+@media (max-width: 600px) {
+    #financials-tab {
+        width: 100%;
+        min-width: 0;
+    }
+
+    #financials-tab > .financials-page-card {
+        width: 100%;
+        min-width: 0;
+        padding: 14px 10px;
+        overflow: hidden;
+        transform: none;
+    }
+
+    #financials-tab > .financials-page-card:hover {
+        transform: none;
+    }
+
+    #financials-tab .financials-header-row {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 12px !important;
+        margin-bottom: 14px !important;
+    }
+
+    #financials-tab .financials-header-row > div:first-child {
+        display: grid;
+        gap: 6px;
+        min-width: 0;
+    }
+
+    #financials-tab .financials-header-row h2 {
+        margin: 0 !important;
+        font-size: 1.25rem;
+        line-height: 1.45;
+    }
+
+    #financials-tab #financialsTotalAmount {
+        font-size: 1.05rem;
+        line-height: 1.5;
+    }
+
+    #financials-tab .financials-controls {
+        display: flex !important;
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 9px !important;
+        width: 100%;
+        min-width: 0;
+    }
+
+    #financials-tab .financials-add-driver-form,
+    #financials-tab .financials-month-filter,
+    #financials-tab .financials-order-search {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 8px !important;
+        width: 100%;
+        min-width: 0;
+        padding: 9px !important;
+    }
+
+    #financials-tab .financials-add-driver-form input,
+    #financials-tab .financials-month-filter input,
+    #financials-tab .financials-order-search input {
+        width: 100% !important;
+        min-width: 0;
+        margin: 0 !important;
+    }
+
+    #financials-tab .financials-add-driver-form #addDriverBtn {
+        grid-column: 1 / -1;
+        width: 100%;
+        min-height: 44px;
+    }
+
+    #financials-tab .financials-filter-search {
+        display: flex !important;
+        flex-direction: column;
+        gap: 8px !important;
+        width: 100%;
+        min-width: 0;
+    }
+
+    #financials-tab .financials-month-filter label {
+        grid-column: 1 / -1;
+        font-size: 0.84rem !important;
+    }
+
+    #financials-tab .financials-month-filter #driversMonthFilter {
+        grid-column: 1 / -1;
+    }
+
+    #financials-tab .financials-month-filter button {
+        grid-column: 1 / -1;
+        width: 100%;
+        min-height: 44px;
+        padding: 9px 10px !important;
+    }
+
+    #financials-tab .financials-order-search #driverOrderSearchInput {
+        grid-column: 1 / -1;
+    }
+
+    #financials-tab .financials-order-search button {
+        grid-column: 1 / -1;
+        width: 100%;
+        min-height: 44px;
+        padding: 9px 10px !important;
+    }
+
+    #financials-tab .financials-select-all,
+    #financials-tab #closeSelectedFinancialsBtn {
+        min-height: 44px;
+        justify-content: center;
+        width: 100%;
+        margin: 0;
+    }
+
+    #financials-tab .financials-display-list {
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 12px !important;
+        min-width: 0;
+        overflow: visible !important;
+    }
+
+    #financials-tab .financials-display-list > .driver-card {
+        width: 100%;
+        min-width: 0;
+        padding: 12px !important;
+        margin: 0 !important;
+        border-radius: 14px !important;
+    }
+
+    #financials-tab .financial-header {
+        align-items: flex-start !important;
+        gap: 8px !important;
+    }
+
+    #financials-tab .financial-header > div {
+        flex-wrap: wrap !important;
+        min-width: 0;
+    }
+
+    #financials-tab .financial-header > div > span:first-child {
+        white-space: normal !important;
+        overflow-wrap: anywhere;
+        font-size: 1rem !important;
+    }
+
+    #financials-tab .financial-metrics-grid {
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 5px !important;
+    }
+
+    #financials-tab .financial-metrics-grid > div {
+        min-width: 0;
+        padding: 7px 3px !important;
+    }
+
+    #financials-tab .financial-metrics-grid > div > div:first-child {
+        min-height: 2.2em;
+        font-size: 0.62rem !important;
+        line-height: 1.25;
+        white-space: normal !important;
+        overflow-wrap: anywhere;
+    }
+
+    #financials-tab .financial-metrics-grid > div > div:nth-child(2) {
+        font-size: 0.92rem !important;
+        overflow-wrap: anywhere;
+    }
+
+    #financials-tab .financial-status {
+        font-size: 0.84rem !important;
+        line-height: 1.55;
+        overflow-wrap: anywhere;
+    }
+
+    #financials-tab .financial-order-item > div:first-child {
+        flex-wrap: wrap;
+    }
+
+    #financials-tab .financial-order-item > div:first-child > div:first-child {
+        flex-wrap: wrap !important;
+        min-width: 0;
+    }
+
+    #financials-tab .financial-order-item > div:first-child > div:first-child > span {
+        white-space: normal !important;
+        overflow-wrap: anywhere;
+    }
+
+    #financials-tab .financial-order-item .btn-settle {
+        min-height: 38px;
+    }
+
+    #financials-tab .financial-order-item > div:nth-child(2) {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 3px !important;
+        padding: 6px 4px !important;
+    }
+
+    #financials-tab .financial-order-item > div:last-child {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        line-height: 1.5;
+    }
+
+    #financials-tab .financial-order-item > div:last-child > span {
+        overflow-wrap: anywhere;
+    }
+}
+
+#financials-tab .financial-css-icon {
+    position: relative;
+    display: inline-block;
+    width: 1em;
+    height: 0.9em;
+    flex: 0 0 1em;
+    margin-inline-end: 0.2em;
+    vertical-align: -0.08em;
+    color: currentColor;
+}
+
+#financials-tab .financial-css-icon::before,
+#financials-tab .financial-css-icon::after {
+    position: absolute;
+    box-sizing: border-box;
+    content: "";
+}
+
+#financials-tab .financial-css-icon--cash::before {
+    top: 0.12em;
+    left: 0.04em;
+    width: 0.9em;
+    height: 0.62em;
+    border: 1.5px solid currentColor;
+    border-radius: 0.14em;
+}
+
+#financials-tab .financial-css-icon--cash::after {
+    top: 0.3em;
+    left: 0.39em;
+    width: 0.2em;
+    height: 0.2em;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+}
+
+#financials-tab .financial-css-icon--phone::before {
+    top: 0.02em;
+    left: 0.22em;
+    width: 0.56em;
+    height: 0.84em;
+    border: 1.5px solid currentColor;
+    border-radius: 0.16em;
+}
+
+#financials-tab .financial-css-icon--phone::after {
+    bottom: 0.11em;
+    left: 0.47em;
+    width: 0.07em;
+    height: 0.07em;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+#financials-tab .financial-css-icon--truck {
+    background: linear-gradient(currentColor, currentColor) right 0.04em top 0.18em / 0.24em 0.34em no-repeat;
+}
+
+#financials-tab .financial-css-icon--truck::before {
+    top: 0.12em;
+    left: 0.02em;
+    width: 0.74em;
+    height: 0.49em;
+    border: 1.5px solid currentColor;
+    border-radius: 0.08em;
+}
+
+#financials-tab .financial-css-icon--truck::after {
+    bottom: 0.02em;
+    left: 0.17em;
+    width: 0.17em;
+    height: 0.17em;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0.48em 0 0 -0.01em currentColor;
+}
+
+#financials-tab .financial-css-icon--check::before,
+#financials-tab .financial-css-icon--balance::before {
+    top: 0.02em;
+    left: 0.06em;
+    width: 0.82em;
+    height: 0.82em;
+    border: 1.5px solid currentColor;
+    border-radius: 50%;
+}
+
+#financials-tab .financial-css-icon--check::after {
+    top: 0.2em;
+    left: 0.29em;
+    width: 0.25em;
+    height: 0.42em;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: rotate(45deg);
+}
+
+#financials-tab .financial-css-icon--balance::after {
+    top: 0.31em;
+    left: 0.27em;
+    width: 0.4em;
+    height: 1px;
+    background: currentColor;
+    box-shadow: 0 0.16em 0 currentColor;
+}
+
+#financials-tab .financial-payment-badge,
+#financials-tab .financial-metric-label,
+#financials-tab .financial-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2em;
+}
+
+#financials-tab .financial-status {
+    display: flex;
+}

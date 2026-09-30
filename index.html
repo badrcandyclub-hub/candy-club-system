@@ -1085,13 +1085,13 @@
             </div>
         </section>
 
-        <section id="moderators-tab" class="tab-pane" style="height: 100%;">
-            <div class="section-card" style="width: 100%; box-sizing: border-box; display: flex; flex-direction: column; height: 100%;">
-                <div style="margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 10px;">
+        <section id="moderators-tab" class="tab-pane moderators-tab" style="height: 100%;">
+            <div class="section-card moderators-page-card" style="width: 100%; box-sizing: border-box; display: flex; flex-direction: column; height: 100%;">
+                <div class="moderators-header" style="margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 10px;">
                     <h2 style="color: #8e24aa; margin: 0;"><i class="fa-solid fa-users-gear"></i> إدارة الكاشيرية والمودريتور</h2>
                     <p style="color: #7f8c8d; font-size: 0.9rem; margin-top: 5px;">متابعة أداء ومبيعات كل كاشير أو مودريتور.</p>
                 </div>
-                <div style="display:flex; gap:10px; margin-bottom:15px; border-bottom: 1px dashed var(--border); padding-bottom: 15px;">
+                <div class="moderators-add-form" style="display:flex; gap:10px; margin-bottom:15px; border-bottom: 1px dashed var(--border); padding-bottom: 15px;">
                     <input type="text" id="newModeratorName" placeholder="اسم الكاشير الجديد" style="margin-bottom:0; flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border);">
                     <button id="addModeratorBtn" class="btn-confirm interactive-btn" style="white-space: nowrap; padding: 0 20px;">إضافة كاشير <i class="fa-solid fa-plus"></i></button>
                 </div>
@@ -1100,9 +1100,9 @@
                     <p class="empty-msg">جاري التحميل...</p>
                 </div>
                 
-                <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px; background: #fdfdfd; border-radius: 10px; border: 1px solid var(--border);">
+                <div class="moderators-toolbar" style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px; background: #fdfdfd; border-radius: 10px; border: 1px solid var(--border);">
                     <h3 style="margin:0; font-size: 1rem; color: #34495e;"><i class="fa-solid fa-chart-pie"></i> إحصائيات الأداء</h3>
-                    <div style="display:flex; align-items: center; gap: 10px;">
+                    <div class="moderators-filter" style="display:flex; align-items: center; gap: 10px;">
                         <label for="moderatorsMonthFilter" style="margin:0; font-size: 0.9rem; color: #7f8c8d; font-weight: bold;">تصفية بالشهر:</label>
                         <input type="month" id="moderatorsMonthFilter" style="margin-bottom: 0; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border); font-family: 'Cairo', sans-serif;">
                         <button type="button" class="btn-primary" onclick="refreshModeratorsStats()" style="padding: 6px 15px; border-radius: 8px; font-size: 0.85rem;"><i class="fa-solid fa-arrows-rotate"></i> جلب</button>
@@ -1834,36 +1834,36 @@
             </div>
         </section>
 
-        <section id="financials-tab" class="tab-pane">
-            <div class="section-card" style="width: 100%; box-sizing: border-box; display: flex; flex-direction: column;">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 10px; gap: 10px;">
+        <section id="financials-tab" class="tab-pane financials-tab">
+            <div class="section-card financials-page-card" style="width: 100%; box-sizing: border-box; display: flex; flex-direction: column;">
+                <div class="financials-header-row" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 10px; gap: 10px;">
                     <div>
                         <h2 style="color: var(--primary); margin: 0; display: inline-block; margin-left: 15px;"><i class="fa-solid fa-wallet"></i> حسابات المناديب</h2>
                         <h3 style="color: var(--success); margin: 0; display: inline-block;" id="financialsTotalAmount">إجمالي الحساب: 0 ج.م</h3>
                     </div>
-                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <div style="display: flex; gap: 5px; background: #FAFBFF; border: 1px solid var(--border); border-radius: 8px; padding: 5px;">
+                    <div class="financials-controls" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <div class="financials-add-driver-form" style="display: flex; gap: 5px; background: #FAFBFF; border: 1px solid var(--border); border-radius: 8px; padding: 5px;">
                             <input type="text" id="newDriverName" placeholder="اسم المندوب" style="margin-bottom: 0; padding: 5px; width: 120px;">
                             <input type="tel" id="newDriverPhone" placeholder="رقم الموبايل" style="margin-bottom: 0; padding: 5px; width: 120px;">
                             <button id="addDriverBtn" class="btn-confirm" style="padding: 5px 10px;"><i class="fa-solid fa-plus"></i> إضافة</button>
                         </div>
                         
 <!-- Filter & Search Container -->
-                        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                        <div class="financials-filter-search" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
                             <!-- Month Filter -->
-                            <div style="display: flex; gap: 5px; align-items: center; background: #FAFBFF; border: 1px solid var(--border); border-radius: 8px; padding: 5px;">
+                            <div class="financials-month-filter" style="display: flex; gap: 5px; align-items: center; background: #FAFBFF; border: 1px solid var(--border); border-radius: 8px; padding: 5px;">
                                 <label for="driversMonthFilter" style="margin:0; font-size: 0.85rem; font-weight:bold; color:var(--text-main);">تصفية بالشهر:</label>
                                 <input type="month" id="driversMonthFilter" style="margin-bottom:0; padding:4px; border:1px solid #ccc; border-radius:4px;">
                                 <button type="button" class="btn-primary interactive-btn" onclick="refreshDriversStats()" style="padding: 4px 12px; border-radius: 6px; background: linear-gradient(135deg, var(--primary), var(--primary-light)); border: none; box-shadow: 0 2px 4px rgba(233,30,99,0.3); transition: all 0.3s; font-weight:bold;"><i class="fa-solid fa-bolt"></i> تحديث البيانات</button>
                             </div>
                             <!-- Order Search -->
-                            <div style="display: flex; gap: 5px; align-items: center; background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px; padding: 5px;">
+                            <div class="financials-order-search" style="display: flex; gap: 5px; align-items: center; background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px; padding: 5px;">
                                 <input type="text" id="driverOrderSearchInput" placeholder="بحث برقم الأوردر (لمعرفة مندوبه وحالته)..." style="margin-bottom:0; padding:5px; border:1px solid #ffd54f; border-radius:4px; width:240px; font-size:0.85rem;" onkeypress="if(event.key==='Enter') window.searchDriverOrder()">
                                 <button type="button" class="btn-search interactive-btn" onclick="window.searchDriverOrder()" style="padding: 4px 12px; border-radius: 6px;"><i class="fa-solid fa-magnifying-glass"></i> تتبع الأوردر</button>
                             </div>
                         </div>
 
-                        <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: bold; background: var(--bg); padding: 5px 10px; border-radius: 8px;">
+                        <label class="financials-select-all" style="display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: bold; background: var(--bg); padding: 5px 10px; border-radius: 8px;">
                             <input type="checkbox" id="selectAllFinancialsCheckbox" style="width: 18px; height: 18px;">
                             تحديد الكل
                         </label>
@@ -1871,7 +1871,7 @@
                     </div>
                 </div>
                 
-                <div id="financialsDisplayList" class="reports-grid" style="width: 100%; display: grid; gap: 15px; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); align-items: start; align-content: start;">
+                <div id="financialsDisplayList" class="reports-grid financials-display-list" style="width: 100%; display: grid; gap: 15px; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); align-items: start; align-content: start;">
                     <p class="empty-msg" style="grid-column: 1 / -1;">جاري تحميل الحسابات من السيرفر...</p>
                 </div>
             </div>

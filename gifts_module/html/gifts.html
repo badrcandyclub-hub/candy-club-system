@@ -549,6 +549,84 @@
 
 
 <!-- ================================================================
+     MODAL: تحديث / تغيير أو إضافة صورة للبوكيه (Google Drive + Supabase)
+     ================================================================ -->
+<div class="gifts-modal-overlay" id="gifts-modal-change-photo" style="display: none;">
+    <div class="gifts-modal" style="max-width: 520px;">
+        <div class="gifts-modal-header" style="background: linear-gradient(135deg, #FFF1F2 0%, #FCE7F3 100%); border-bottom: 1px solid #FBCFE8;">
+            <h4 style="color: #9D174D; margin: 0; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-camera-rotate"></i>
+                <span>تحديث صورة البوكيه</span>
+            </h4>
+            <button class="gifts-modal-close" onclick="GiftsApp.closeChangePhotoModal()" style="color: #9D174D;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="gifts-modal-body" style="padding: 18px 22px;">
+            <input type="hidden" id="gifts-change-photo-bouquet-id">
+            
+            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                    <span style="font-size: 0.8rem; color: #64748B; display: block;">اسم البوكيه:</span>
+                    <strong id="gifts-change-photo-bouquet-name" style="font-size: 1rem; color: #0F172A;">-</strong>
+                </div>
+                <span id="gifts-change-photo-status-badge" style="font-size: 0.78rem; padding: 4px 8px; border-radius: 6px; background: #E0E7FF; color: #3730A3; font-weight: bold;">
+                    جاهز للتعديل
+                </span>
+            </div>
+
+            <!-- Preview Areas: Current vs New -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
+                <!-- Current Image -->
+                <div style="text-align: center;">
+                    <span style="font-size: 0.8rem; font-weight: bold; color: #64748B; margin-bottom: 6px; display: block;">الصورة الحالية</span>
+                    <div id="gifts-change-photo-current-wrap" style="width: 100%; height: 140px; border-radius: 10px; border: 1px solid #CBD5E1; background: #F1F5F9; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                        <i class="fa-solid fa-gift" style="font-size: 2.2rem; color: #CBD5E1;"></i>
+                    </div>
+                </div>
+
+                <!-- New Image Preview -->
+                <div style="text-align: center;">
+                    <span style="font-size: 0.8rem; font-weight: bold; color: #E91E8C; margin-bottom: 6px; display: block;">الصورة الجديدة</span>
+                    <div id="gifts-change-photo-new-wrap" style="width: 100%; height: 140px; border-radius: 10px; border: 2px dashed #F472B6; background: #FFF5F9; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative;">
+                        <span id="gifts-change-photo-placeholder-text" style="font-size: 0.8rem; color: #9D174D; font-weight: 500;">لم يتم اختيار صورة</span>
+                        <img id="gifts-change-photo-new-img" src="" alt="معاينة" style="display: none; width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                    <div id="gifts-change-photo-size-badge" style="display: none; font-size: 0.75rem; color: #059669; font-weight: bold; margin-top: 4px;"></div>
+                </div>
+            </div>
+
+            <!-- Camera Stream (When Active) -->
+            <div id="gifts-change-photo-camera-container" style="display: none; margin-bottom: 14px; text-align: center;">
+                <video id="gifts-change-photo-camera-stream" autoplay playsinline style="width: 100%; max-height: 220px; object-fit: cover; border-radius: 10px; border: 2px solid #E91E8C; background: #000;"></video>
+                <button type="button" id="gifts-change-photo-snap-btn" class="interactive-btn" onclick="GiftsApp.captureChangePhoto()" style="margin-top: 8px; width: 100%; padding: 10px; background: #E91E8C; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                    <i class="fa-solid fa-camera"></i> التقاط الصورة الآن
+                </button>
+            </div>
+
+            <!-- Action Buttons for photo source -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button type="button" id="gifts-btn-open-change-camera" class="interactive-btn" onclick="GiftsApp.startChangePhotoCamera()" style="padding: 10px; background: #F1F5F9; border: 1px solid #CBD5E1; border-radius: 8px; font-weight: bold; font-size: 0.88rem; cursor: pointer; color: #334155; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    <i class="fa-solid fa-camera" style="color: #E91E8C;"></i> فتح الكاميرا
+                </button>
+                <button type="button" class="interactive-btn" onclick="document.getElementById('gifts-change-photo-file-input').click()" style="padding: 10px; background: #F1F5F9; border: 1px solid #CBD5E1; border-radius: 8px; font-weight: bold; font-size: 0.88rem; cursor: pointer; color: #334155; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    <i class="fa-solid fa-image" style="color: #0284c7;"></i> رفع من الجهاز
+                </button>
+                <input type="file" id="gifts-change-photo-file-input" accept="image/*" style="display: none;" onchange="GiftsApp.handleChangePhotoFileUpload(event)">
+            </div>
+        </div>
+
+        <div class="gifts-modal-footer" style="padding: 14px 22px; background: #FFFFFF; border-top: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center;">
+            <button type="button" class="gifts-btn-outline" onclick="GiftsApp.closeChangePhotoModal()">إلغاء</button>
+            <button type="button" id="gifts-btn-submit-change-photo" class="interactive-btn" onclick="GiftsApp.submitChangePhoto()" style="padding: 10px 20px; background: linear-gradient(135deg, #E91E8C, #D81B60); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 10px rgba(233, 30, 140, 0.25);" disabled>
+                <i class="fa-solid fa-cloud-arrow-up"></i> حفظ وتحديث الصورة
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ================================================================
      HIDDEN PRINT TEMPLATE FOR 80MM THERMAL RECEIPT (JsBarcode)
      ================================================================ -->
 <div id="gifts-thermal-print-area">

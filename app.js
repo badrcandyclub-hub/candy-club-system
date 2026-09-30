@@ -171,9 +171,12 @@ async function updateCustomerStatsInDatabase(phone, fallbackData = {}) {
     }
 }
 
+window.originalFetch = originalFetch;
+
 window.fetch = async function(url, options) {
-    // Intercept Google Sheets calls
-    if (typeof url === 'string' && (url.includes('DISABLED - MIGRATED TO SUPABASE') || url.includes('script.google.com'))) {
+    // Intercept Google Sheets calls migrated to Supabase, but NEVER intercept Google Drive image uploads or other external web apps
+    const isGoogleDriveUploader = typeof url === 'string' && (url.includes('AKfycbwx-tcJs67wcNR9adRLE70meZUjpeWSVpmDGIY1qJj5owFbIfWt5Sq8y6Kd3CYr7jdb') || url.includes('googleusercontent.com'));
+    if (!isGoogleDriveUploader && typeof url === 'string' && (url.includes('DISABLED - MIGRATED TO SUPABASE') || url.includes('script.google.com'))) {
         return handleSupabaseRequest(url, options);
     }
     // Normal fetch for everything else
@@ -9325,22 +9328,22 @@ function renderFinancials(finList) {
             statusBadgeBg = '#f8fafc';
             statusBadgeColor = '#64748b';
             statusBorderColor = '#e2e8f0';
-            statusTextFull = '✅ لا توجد أوردرات معلقة';
+            statusTextFull = '<span class="financial-css-icon financial-css-icon--check" aria-hidden="true"></span> لا توجد أوردرات معلقة';
         } else if (netDue > 0) {
             statusBadgeBg = '#ecfdf5';
             statusBadgeColor = '#065f46';
             statusBorderColor = '#a7f3d0';
-            statusTextFull = `💵 مطلوب توريد من المندوب: <strong style="font-size:1.15rem; font-weight:900; color:#047857;">${netDue} ج.م</strong>`;
+            statusTextFull = `<span class="financial-css-icon financial-css-icon--cash" aria-hidden="true"></span> مطلوب توريد من المندوب: <strong style="font-size:1.15rem; font-weight:900; color:#047857;">${netDue} ج.م</strong>`;
         } else if (netDue < 0) {
             statusBadgeBg = '#fff7ed';
             statusBadgeColor = '#9a3412';
             statusBorderColor = '#fed7aa';
-            statusTextFull = `🛵 مستحق صرفه للمندوب (شحن إنستاباي): <strong style="font-size:1.15rem; font-weight:900; color:#c2410c;">${Math.abs(netDue)} ج.م</strong>`;
+            statusTextFull = `<span class="financial-css-icon financial-css-icon--truck" aria-hidden="true"></span> مستحق صرفه للمندوب (شحن إنستاباي): <strong style="font-size:1.15rem; font-weight:900; color:#c2410c;">${Math.abs(netDue)} ج.م</strong>`;
         } else {
             statusBadgeBg = '#eff6ff';
             statusBadgeColor = '#1e40af';
             statusBorderColor = '#bfdbfe';
-            statusTextFull = `⚖️ الحساب متصفي بالكامل (0 ج.م)`;
+            statusTextFull = `<span class="financial-css-icon financial-css-icon--balance" aria-hidden="true"></span> الحساب متصفي بالكامل (0 ج.م)`;
         }
 
         let cardClass = isSettled ? "financial-row driver-card settled" : "financial-row driver-card";
@@ -9370,7 +9373,7 @@ function renderFinancials(finList) {
                             <div style="display:flex; align-items:center; gap:6px; flex-wrap:nowrap;">
                                 <input type="checkbox" class="financial-order-checkbox" data-order-id="${o.id}" data-payment="${o.payment}" style="width: 17px; height: 17px; cursor: pointer; margin: 0;">
                                 <span style="font-weight:900; font-size:0.92rem; color:#0f172a; white-space:nowrap; direction:ltr;">${o.id}</span>
-                                <span style="background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:bold; white-space:nowrap;">💵 كاش</span>
+                                <span class="financial-payment-badge financial-payment-badge--cash" style="background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:bold; white-space:nowrap;"><span class="financial-css-icon financial-css-icon--cash" aria-hidden="true"></span> كاش</span>
                             </div>
                             <button class="btn-settle interactive-btn" onclick="settleDriverOrder('${o.id}', this, 'كاش')" style="background:#16a34a; color:white; border:none; padding:5px 12px; border-radius:6px; font-size:0.8rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:5px; white-space:nowrap; flex-shrink:0;">
                                 <span>تسوية</span> <i class="fa-solid fa-check"></i>
@@ -9414,7 +9417,7 @@ function renderFinancials(finList) {
                             <div style="display:flex; align-items:center; gap:6px; flex-wrap:nowrap;">
                                 <input type="checkbox" class="financial-order-checkbox" data-order-id="${o.id}" data-payment="${o.payment}" style="width: 17px; height: 17px; cursor: pointer; margin: 0;">
                                 <span style="font-weight:900; font-size:0.92rem; color:#0f172a; white-space:nowrap; direction:ltr;">${o.id}</span>
-                                <span style="background:#f3e8ff; color:#7e22ce; border:1px solid #d8b4fe; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:bold; white-space:nowrap;">📱 إنستاباي</span>
+                                <span class="financial-payment-badge financial-payment-badge--instapay" style="background:#f3e8ff; color:#7e22ce; border:1px solid #d8b4fe; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:bold; white-space:nowrap;"><span class="financial-css-icon financial-css-icon--phone" aria-hidden="true"></span> إنستاباي</span>
                             </div>
                             <button class="btn-settle interactive-btn" onclick="settleDriverOrder('${o.id}', this, 'إنستاباي')" style="background:#9333ea; color:white; border:none; padding:5px 12px; border-radius:6px; font-size:0.8rem; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:5px; white-space:nowrap; flex-shrink:0;">
                                 <span>تسوية</span> <i class="fa-solid fa-hand-holding-dollar"></i>
@@ -9469,17 +9472,17 @@ function renderFinancials(finList) {
                 </div>
 
                 <!-- Financial Mini Metrics Grid -->
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; width: 100%; box-sizing: border-box;">
+                <div class="financial-metrics-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; width: 100%; box-sizing: border-box;">
                     <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 8px 4px; text-align: center;">
-                        <div style="font-size: 0.7rem; color: #047857; font-weight: bold; white-space:nowrap;">💵 كاش المندوب</div>
+                        <div class="financial-metric-label" style="font-size: 0.7rem; color: #047857; font-weight: bold; white-space:nowrap;"><span class="financial-css-icon financial-css-icon--cash" aria-hidden="true"></span> كاش المندوب</div>
                         <div style="font-size: 1.05rem; font-weight: 900; color: #065f46;">${totalCashCollected} <span style="font-size:0.65rem;">ج</span></div>
                     </div>
                     <div style="background: #faf5ff; border: 1px solid #d8b4fe; border-radius: 8px; padding: 8px 4px; text-align: center;">
-                        <div style="font-size: 0.7rem; color: #7e22ce; font-weight: bold; white-space:nowrap;">📱 إنستاباي</div>
+                        <div class="financial-metric-label" style="font-size: 0.7rem; color: #7e22ce; font-weight: bold; white-space:nowrap;"><span class="financial-css-icon financial-css-icon--phone" aria-hidden="true"></span> إنستاباي</div>
                         <div style="font-size: 1.05rem; font-weight: 900; color: #581c87;">${totalInstaAmount} <span style="font-size:0.65rem;">ج</span></div>
                     </div>
                     <div style="background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 8px 4px; text-align: center;">
-                        <div style="font-size: 0.7rem; color: #c2410c; font-weight: bold; white-space:nowrap;">🚚 أجرة الشحن</div>
+                        <div class="financial-metric-label" style="font-size: 0.7rem; color: #c2410c; font-weight: bold; white-space:nowrap;"><span class="financial-css-icon financial-css-icon--truck" aria-hidden="true"></span> أجرة الشحن</div>
                         <div style="font-size: 1.05rem; font-weight: 900; color: #9a3412;">${totalShipping} <span style="font-size:0.65rem;">ج</span></div>
                     </div>
                 </div>
