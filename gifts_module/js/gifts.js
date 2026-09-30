@@ -1427,9 +1427,11 @@
                     return result.url;
                 } else if (result && result.message) {
                     console.error("Google Drive Apps Script error:", result.message);
+                    throw new Error(result.message);
                 }
             } catch (err) {
                 console.warn("Google Drive upload error:", err);
+                throw err;
             }
             return null;
         },

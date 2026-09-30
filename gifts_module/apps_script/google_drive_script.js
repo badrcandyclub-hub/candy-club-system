@@ -46,7 +46,29 @@ function doPost(e) {
     var decoded = Utilities.base64Decode(base64Data);
     var blob = Utilities.newBlob(decoded, "image/jpeg", fileName);
     
-    var folder = DriveApp.getFolderById(FOLDER_ID);
+    var folder = null;
+    try {
+      if (FOLDER_ID && FOLDER_ID !== "YOUR_GOOGLE_DRIVE_FOLDER_ID_HERE") {
+        folder = DriveApp.getFolderById(FOLDER_ID);
+      }
+    } catch(fErr) {
+      folder = null;
+    }
+    
+    // إذا لم يتوفر المجلد أو تعذر الوصول للمعرف، يتم البحث بالاسم أو إنشاؤه تلقائياً
+    if (!folder) {
+      try {
+        var folders = DriveApp.getFoldersByName("Candy Club Gifts");
+        if (folders.hasNext()) {
+          folder = folders.next();
+        } else {
+          folder = DriveApp.createFolder("Candy Club Gifts");
+        }
+      } catch(fCreateErr) {
+        folder = DriveApp.getRootFolder();
+      }
+    }
+    
     var file = folder.createFile(blob);
     
     // ضبط الصلاحية للعرض المباشر للجميع عبر الرابط
