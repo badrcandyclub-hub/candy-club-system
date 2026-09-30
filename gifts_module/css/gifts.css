@@ -2360,7 +2360,7 @@
 /* === Catalog Cards Grid === */
 .gifts-catalog-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 20px;
 }
 
@@ -2471,46 +2471,60 @@
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-    margin-bottom: 18px;
+    align-content: flex-start;
+    align-items: flex-start;
+    margin-bottom: 16px;
     flex: 1;
 }
 
 .gifts-catalog-item-pill {
-    background: var(--gifts-primary-soft);
-    border: 1px solid var(--gifts-primary-border);
-    color: var(--gifts-primary-dark);
-    font-size: 0.78rem;
-    font-weight: 800;
-    padding: 4px 10px;
-    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    background: #FFF1F7;
+    border: 1px solid #FBCFE8;
+    color: #BE185D;
+    font-size: 0.74rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    line-height: 1.4;
+    border-radius: 8px;
     white-space: nowrap;
-    transition: var(--gifts-transition);
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
 }
 
 .gifts-catalog-card:hover .gifts-catalog-item-pill {
-    background: var(--gifts-primary);
-    color: #FFFFFF;
-    border-color: var(--gifts-primary);
+    background: #FCE7F3;
+    border-color: #F472B6;
+    color: #9D174D;
 }
 
 .gifts-catalog-item-pill-more {
+    display: inline-flex;
+    align-items: center;
     background: #F1F5F9;
-    border: 1px solid #E2E8F0;
-    color: var(--gifts-text-muted);
-    font-size: 0.78rem;
-    font-weight: 800;
-    padding: 4px 10px;
-    border-radius: 9999px;
+    border: 1px solid #CBD5E1;
+    color: #475569;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 9px;
+    line-height: 1.4;
+    border-radius: 8px;
+    white-space: nowrap;
 }
 
 /* Card footer */
 .gifts-catalog-card-footer {
-    padding: 14px 18px;
+    padding: 12px 16px;
     border-top: 1.5px solid var(--gifts-border-pink);
     background: linear-gradient(135deg, #FFFDFE 0%, #FFF5F9 100%);
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 8px;
 }
 
 .gifts-catalog-card-price-label {

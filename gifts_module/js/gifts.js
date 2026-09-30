@@ -3539,8 +3539,8 @@
                                     <span class="gifts-catalog-card-price-currency">ج.م</span>
                                 </div>
                             </div>
-                            <button type="button" class="gifts-btn-outline" style="font-size: 0.8rem; padding: 6px 12px; border-radius: 8px;" title="نسخ هذا البوكيه لشاشة التجميع لتجهيز واحد مثله" onclick="GiftsApp.cloneToBuilder('${b.id}')">
-                                <i class="fa-solid fa-wand-magic-sparkles"></i> تجميع مثله
+                            <button type="button" class="gifts-btn-outline gifts-catalog-clone-btn" style="white-space: nowrap; flex-shrink: 0; font-size: 0.8rem; padding: 6px 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 5px;" title="نسخ هذا البوكيه لشاشة التجميع لتجهيز واحد مثله" onclick="GiftsApp.cloneToBuilder('${b.id}')">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> <span>تجميع مثله</span>
                             </button>
                         </div>
                     </div>
