@@ -2139,9 +2139,12 @@
                 return `
                     <div class="gifts-card">
                         <div>
-                            <div class="gifts-card-img-wrap">
+                            <div class="gifts-card-img-wrap" onclick="GiftsApp.openImageLightbox('${b.id}')" ondblclick="GiftsApp.openImageLightbox('${b.id}')" title="انقر لتكبير وتفحص صورة البوكيه">
                                 ${badgeHtml}
                                 ${imgHtml}
+                                <div class="gifts-card-zoom-hint">
+                                    <i class="fa-solid fa-magnifying-glass-plus"></i> تكبير الصورة
+                                </div>
                                 <span class="gifts-card-qty-chip">${b.quantity} بوكيه</span>
                                 <button type="button" class="gifts-btn-change-photo-trigger" onclick="event.stopPropagation(); GiftsApp.openChangePhotoModal('${b.id}')" title="تغيير أو إضافة صورة للبوكيه">
                                     <i class="fa-solid fa-camera"></i>
@@ -3126,11 +3129,63 @@
         closeModal(modalId) {
             const modal = document.getElementById(modalId);
             if (modal) modal.classList.remove('active');
+            if (!document.querySelector('.gifts-modal-overlay.active')) {
+                document.body.classList.remove('gifts-modal-open');
+            }
         },
 
         openModal(modalId) {
             const modal = document.getElementById(modalId);
-            if (modal) modal.classList.add('active');
+            if (!modal) return;
+            if (modal.parentElement !== document.body) {
+                document.body.appendChild(modal);
+            }
+            modal.classList.add('active');
+            document.body.classList.add('gifts-modal-open');
+        },
+
+        // عارض الصور عالي الدقة (Lightbox) لتكبير وتفحص صور البوكيهات
+        openImageLightbox(bouquetId) {
+            const bouquet = this.state.bouquets.find(b => String(b.id) === String(bouquetId));
+            if (!bouquet) return;
+
+            if (!bouquet.image_url) {
+                this.openChangePhotoModal(bouquetId);
+                return;
+            }
+
+            const imgEl = document.getElementById('gifts-lightbox-main-img');
+            const nameEl = document.getElementById('gifts-lightbox-name');
+            const infoEl = document.getElementById('gifts-lightbox-info');
+            const priceTag = document.getElementById('gifts-lightbox-price-tag');
+            const changeBtn = document.getElementById('gifts-lightbox-action-change');
+            const rawLink = document.getElementById('gifts-lightbox-open-raw');
+
+            if (imgEl) imgEl.src = bouquet.image_url;
+            if (nameEl) nameEl.innerText = bouquet.name || 'بوكيه كاندي كلوب';
+            if (infoEl) {
+                const creator = bouquet.creator_name ? `صنع بواسطة: ${bouquet.creator_name}` : '';
+                const itemsCount = bouquet.items ? `${bouquet.items.length} صنف` : '';
+                const qtyText = `المتوفر: ${bouquet.quantity} بوكيه`;
+                infoEl.innerText = [creator, itemsCount, qtyText].filter(Boolean).join(' • ');
+            }
+            if (priceTag) priceTag.innerText = `${Number(bouquet.total_price || 0).toFixed(2)} ج.م`;
+            if (rawLink) rawLink.href = bouquet.image_url;
+            if (changeBtn) {
+                changeBtn.onclick = () => {
+                    this.closeLightbox();
+                    this.openChangePhotoModal(bouquetId);
+                };
+            }
+
+            this.openModal('gifts-modal-lightbox');
+        },
+
+        closeLightbox(event) {
+            if (event && event.target && event.target.closest && event.target.closest('.gifts-lightbox-box') && !event.target.closest('.gifts-lightbox-close-btn')) {
+                return;
+            }
+            this.closeModal('gifts-modal-lightbox');
         },
 
 
@@ -3460,7 +3515,7 @@
 
                 return `
                     <div class="gifts-catalog-card" style="animation-delay: ${idx * 0.07}s">
-                        <div class="gifts-catalog-card-img-wrap">
+                        <div class="gifts-catalog-card-img-wrap" onclick="GiftsApp.openImageLightbox('${b.id}')" style="cursor: pointer;" title="انقر لتكبير وتفحص الصورة">
                             ${imgHtml}
                             <div class="gifts-catalog-ribbon">
                                 <i class="fa-solid fa-circle-check"></i>
@@ -3510,8 +3565,13 @@
 
             const cardsHtml = readyBouquets.map(b => {
                 const imgTag = b.image_url ?
-                    `<img src="${b.image_url}" style="width: 100%; height: 160px; object-fit: cover; border-radius: 8px; margin-bottom: 10px;">` :
-                    `<div style="width: 100%; height: 160px; background: #FFF0F6; display: flex; align-items: center; justify-content: center; font-size: 40px; color: #E91E8C; border-radius: 8px; margin-bottom: 10px;"><i class="fa-solid fa-gift"></i></div>`;
+                    `<div style="width: 100%; aspect-ratio: 4 / 3; max-height: 220px; overflow: hidden; border-radius: 10px; margin-bottom: 12px; background: #F8FAFC; display: flex; align-items: center; justify-content: center;">
+                        <img src="${b.image_url}" style="width: 100%; height: 100%; object-fit: cover; object-position: center; display: block;">
+                     </div>` :
+                    `<div style="width: 100%; aspect-ratio: 4 / 3; max-height: 220px; background: #FFF0F6; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #E91E8C; border-radius: 10px; margin-bottom: 12px;">
+                        <i class="fa-solid fa-gift" style="font-size: 38px; margin-bottom: 6px;"></i>
+                        <span style="font-size: 11px; color: #9D174D; font-weight: bold;">كاندي كلوب</span>
+                     </div>`;
 
                 const itemsSummary = (b.items || []).map(i => `${i.qty}× ${i.name}`).join(' ، ');
 
@@ -3859,10 +3919,13 @@
                 }
 
                 this.saveBouquetsToLocal();
-                this.renderShowcaseBouquets();
+                this.renderShowcase();
+                if (this.state.activeTab === 'catalog') {
+                    this.renderCustomerCatalog();
+                }
                 this.closeChangePhotoModal();
 
-                this.showToastNotification(`تم تحديث صورة البوكيه ورفعها إلى Google Drive بنجاح! ${synced ? '☁️' : ''}`);
+                this.showToastNotification("تم حفظ وتحديث صورة البوكيه ورفعها بنجاح! ☁️");
             } catch(err) {
                 console.error("Change photo error:", err);
                 this.showToastNotification(err.message || "حدث خطأ أثناء رفع الصورة");
@@ -3872,6 +3935,10 @@
                     submitBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> حفظ وتحديث الصورة';
                 }
             }
+        },
+
+        renderShowcaseBouquets() {
+            return this.renderShowcase();
         },
     };
 
