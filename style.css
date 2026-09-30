@@ -5083,13 +5083,15 @@ body.dark-mode .wheel-picker-container {
 }
 
 .ledger-platform-field--talabat {
-    border-color: #fed7aa;
-    color: #c2410c;
+    border-color: #ea580c;
+    background: #f97316;
+    color: #fff;
 }
 
 .ledger-platform-field--instashop {
-    border-color: #ddd6fe;
-    color: #6d28d9;
+    border-color: #ec4899;
+    background: #ec4899;
+    color: #fff;
 }
 
 .ledger-platform-field label {
@@ -5146,19 +5148,31 @@ body.dark-mode .wheel-picker-container {
     pointer-events: none;
 }
 
+.ledger-custom-select__button[data-status="unknown"] {
+    border-color: #94a3b8;
+    background: #f1f5f9;
+    color: #475569;
+}
+
 .ledger-custom-select__button[data-status="present"] {
     border-color: #16a34a;
-    background: #dcfce7;
-    color: #166534;
+    background: #16a34a;
+    color: #fff;
 }
 
 .ledger-custom-select__button[data-status="absent"] {
     border-color: #dc2626;
-    background: #fee2e2;
-    color: #991b1b;
+    background: #dc2626;
+    color: #fff;
 }
 
-.ledger-custom-select__button[data-status="unknown"] {
+.ledger-platform-field--talabat .ledger-custom-select__button,
+.ledger-platform-field--instashop .ledger-custom-select__button {
+    border-width: 2px;
+}
+
+.ledger-platform-field--talabat .ledger-custom-select__button[data-status="unknown"],
+.ledger-platform-field--instashop .ledger-custom-select__button[data-status="unknown"] {
     border-color: #94a3b8;
     background: #f1f5f9;
     color: #475569;
