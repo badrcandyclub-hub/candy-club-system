@@ -420,6 +420,53 @@
             }
         },
 
+        // ============================================================
+        // ⚖️ دوال ميزان الباركود الذكي (Candy Club Scale Barcode - EAN13)
+        // ============================================================
+        calculateEan13Checksum(code12Digits) {
+            const str = String(code12Digits).replace(/\D/g, '');
+            if (str.length !== 12) return 0;
+            let sum = 0;
+            for (let i = 0; i < 12; i++) {
+                const digit = parseInt(str[i], 10);
+                sum += digit * (i % 2 === 0 ? 1 : 3);
+            }
+            const remainder = sum % 10;
+            return remainder === 0 ? 0 : 10 - remainder;
+        },
+
+        generateScaleBarcode(itemCode = '000001', weightGrams = 0) {
+            const plu = String(itemCode).replace(/\D/g, '').slice(-6).padStart(6, '0');
+            const weightInt = Math.min(99999, Math.max(0, Math.round(Number(weightGrams) || 0)));
+            const weightStr = String(weightInt).padStart(5, '0');
+            const raw12 = '2' + plu + weightStr;
+            const checksum = this.calculateEan13Checksum(raw12);
+            return raw12 + checksum;
+        },
+
+        parseScaleBarcode(rawBarcode) {
+            if (!rawBarcode) return null;
+            const clean = String(rawBarcode).trim().replace(/[\s-]+/g, '');
+            // EAN-13 وزني يبدأ بـ 2 ومكون من 13 رقماً (مثال: 2000001005309 لكاندي 530 جم)
+            if (!/^2\d{12}$/.test(clean)) return null;
+
+            const raw12 = clean.slice(0, 12);
+            const checksum = parseInt(clean.slice(12, 13), 10);
+            if (this.calculateEan13Checksum(raw12) !== checksum) {
+                return null;
+            }
+
+            const itemCode = clean.slice(1, 7); // '000001'
+            const weightGrams = parseInt(clean.slice(7, 12), 10); // 530
+            return {
+                isScale: true,
+                rawBarcode: clean,
+                itemCode: itemCode,
+                weightGrams: weightGrams,
+                weightKg: weightGrams / 1000
+            };
+        },
+
         // خوارزمية تقييم وترتيب دقة البحث بالباركود والاسم مع الحفاظ الكامل على الأصفار البادئة
         scoreProductMatch(product, queryRaw) {
             if (!product || !queryRaw) return 0;
@@ -439,6 +486,14 @@
             }
             const barcodes = rawBarcodes.map(b => String(b).trim().toLowerCase());
             const nameNorm = product.name ? this.normalizeArabic(product.name) : '';
+
+            // 0. تطابق باركود الميزان الذكي (إذا كان كود الميزان يبدأ بـ 2 ويطابق كود الصنف)
+            if (/^2\d{12}$/.test(q)) {
+                const targetCode = q.slice(1, 7);
+                if (barcodes.some(b => b === targetCode) || (targetCode === '000001' && nameNorm.includes('كاندي'))) {
+                    return 2000;
+                }
+            }
 
             // 1. التطابق التام بالباركود (بنفس الأصفار والتركيب بالضبط - كود 000001 يطابق 000001 فقط)
             if (barcodes.some(b => b === q)) return 1000;
@@ -492,6 +547,25 @@
         // 4. محرك البحث التفاعلي والمسح بمسدس الباركود
         onSearchInput(event) {
             const raw = (event.target.value || '').trim();
+            const cleanRaw = raw.replace(/[\s-]+/g, '');
+
+            // فحص فوري لباركود الميزان الذكي عند إدخال 13 رقم
+            const scaleInfo = this.parseScaleBarcode(cleanRaw);
+            if (scaleInfo) {
+                let product = this.findProduct(scaleInfo.itemCode);
+                if (!product) {
+                    product = this.state.catalogProducts.find(p => 
+                        (p.barcodes && p.barcodes.includes(scaleInfo.itemCode)) || 
+                        p.barcode === scaleInfo.itemCode || 
+                        (scaleInfo.itemCode === '000001' && p.name && p.name.includes('كاندي'))
+                    );
+                }
+                if (product) {
+                    this.onBarcodeEntered(cleanRaw);
+                    return;
+                }
+            }
+
             const dropdown = document.getElementById('gifts-autocomplete-dropdown');
             if (!dropdown) return;
 
@@ -535,7 +609,34 @@
         },
 
         onBarcodeEntered(barcode) {
-            const clean = String(barcode || '').trim();
+            const clean = String(barcode || '').trim().replace(/[\s-]+/g, '');
+
+            // فحص هل الباركود الممسوح هو باركود ميزان ذكي (EAN-13 وزني مثل 2000001005309)
+            const scaleInfo = this.parseScaleBarcode(clean);
+            if (scaleInfo) {
+                let product = this.findProduct(scaleInfo.itemCode);
+                if (!product) {
+                    product = this.state.catalogProducts.find(p => 
+                        (p.barcodes && p.barcodes.includes(scaleInfo.itemCode)) || 
+                        p.barcode === scaleInfo.itemCode || 
+                        (scaleInfo.itemCode === '000001' && p.name && p.name.includes('كاندي'))
+                    );
+                }
+                if (product) {
+                    this.selectFoundProduct(product, {
+                        weight: scaleInfo.weightGrams,
+                        isScaleScan: true
+                    });
+                    const input = document.getElementById('gifts-scanner-input');
+                    if (input) {
+                        input.value = '';
+                        input.blur();
+                    }
+                    const dropdown = document.getElementById('gifts-autocomplete-dropdown');
+                    if (dropdown) dropdown.style.display = 'none';
+                    return;
+                }
+            }
 
             // إذا كان الحقل فارغا والبطاقة معروضة، يتم تثبيت الإضافة للبوكيه مباشرة
             if (!clean) {
@@ -601,7 +702,7 @@
         },
 
         // اختيار الصنف الممسوح وإظهار بطاقة الإضافة وتجهيز السعر والوزن
-        selectFoundProduct(productOrBarcode) {
+        selectFoundProduct(productOrBarcode, options = {}) {
             let product = null;
             if (typeof productOrBarcode === 'object' && productOrBarcode !== null) {
                 product = productOrBarcode;
@@ -610,10 +711,20 @@
             }
             if (!product) return;
 
+            const isScaleScan = !!options.isScaleScan;
+            const scannedWeight = (options.weight !== undefined && Number(options.weight) > 0) ? Number(options.weight) : '';
+            
+            // تحديد السعر المبدئي: إذا مسح باركود ميزان ولديه وزن، يحسب السعر (الوزن × 0.60 ج.م للكاندي أو سعر الكيلو)
+            let initialPrice = product.price;
+            if (isScaleScan && scannedWeight > 0) {
+                const ratePerKg = (product.price > 0) ? product.price : 600; // 600 LE/kg
+                initialPrice = Number(((scannedWeight / 1000) * ratePerKg).toFixed(2));
+            }
+
             this.state.selectedFoundProduct = product;
             this.state.foundProductQty = 1;
-            this.state.foundProductCustomPrice = product.price;
-            this.state.foundProductWeight = '';
+            this.state.foundProductCustomPrice = initialPrice;
+            this.state.foundProductWeight = scannedWeight;
 
             const card = document.getElementById('gifts-found-card');
             const titleEl = document.getElementById('gifts-found-title');
@@ -637,16 +748,19 @@
             if (qtyEl) qtyEl.innerText = '1';
 
             if (priceInput) {
-                priceInput.value = product.price > 0 ? product.price : '';
+                priceInput.value = initialPrice > 0 ? initialPrice : '';
                 priceInput.placeholder = product.price > 0 ? '0.00' : 'أدخل السعر';
             }
 
             if (weightInput) {
-                weightInput.value = '';
+                weightInput.value = scannedWeight || '';
             }
 
             if (badgeEl) {
-                if (product.stock <= 0) {
+                if (isScaleScan) {
+                    badgeEl.className = 'gifts-badge badge-ready';
+                    badgeEl.innerText = `وزنة ميزان (${scannedWeight} جم)`;
+                } else if (product.stock <= 0) {
                     badgeEl.className = 'gifts-badge badge-last';
                     badgeEl.innerText = 'نفد من المخزن';
                 } else if (product.stock <= 3) {
@@ -665,9 +779,15 @@
                 card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
 
-            // تركيز المؤشر فورا على السعر إذا كان الصنف بالوزن أو سعره 0
-            if (product.price === 0 && priceInput) {
-                setTimeout(() => priceInput.focus(), 150);
+            // تركيز المؤشر فورا على السعر أو الوزن إذا كان الصنف بالوزن
+            if (isScaleScan) {
+                this.showToastNotification(`⚖️ تم مسح ستيكر الميزان: ${product.name} (${scannedWeight} جم) - ${initialPrice} ج.م`);
+            } else if (product.price === 0 && priceInput) {
+                if (weightInput && (product.barcode.includes('000001') || (product.name && product.name.includes('كاندي')))) {
+                    setTimeout(() => weightInput.focus(), 150);
+                } else {
+                    setTimeout(() => priceInput.focus(), 150);
+                }
             }
 
             this.playBeepSound();
@@ -682,6 +802,23 @@
         onFoundWeightChanged(val) {
             const num = parseFloat(val);
             this.state.foundProductWeight = (!isNaN(num) && num > 0) ? num : '';
+
+            // حساب السعر التلقائي إذا كان كاندي بالوزن (600 ج.م للكيلو = 0.60 ج.م للجرام)
+            const p = this.state.selectedFoundProduct;
+            if (p && (String(p.barcode).includes('000001') || (p.name && String(p.name).includes('كاندي')))) {
+                const priceInput = document.getElementById('gifts-found-price-input');
+                if (priceInput) {
+                    if (num > 0) {
+                        const calculatedPrice = Number(((num / 1000) * 600).toFixed(2));
+                        priceInput.value = calculatedPrice;
+                        this.state.foundProductCustomPrice = calculatedPrice;
+                    } else {
+                        priceInput.value = '';
+                        this.state.foundProductCustomPrice = 0;
+                    }
+                    this.updateFoundSubtotal();
+                }
+            }
         },
 
         updateFoundQty(delta) {
@@ -2069,13 +2206,27 @@
             // توليد بطاقات الأصناف بحدود واضحة ومسافات ممتازة للمسح السريع
             const itemsHtml = items.map((item, idx) => {
                 const cleanCode = item.primaryBarcode || (item.barcode ? String(item.barcode).split(/[,|\s/]+/)[0].trim() : '000000');
+                
+                // ⚖️ فحص وتوليد باركود الميزان الذكي إذا كان الصنف كاندي بالوزن
+                let barcodeToRender = cleanCode;
+                let isScaleBarcode = false;
+                const hasWeight = item.weight && Number(item.weight) > 0;
+                const isCandyOrWeighted = cleanCode === '000001' || String(item.name || '').includes('كاندي') || cleanCode === '011110628';
+                
+                if (hasWeight && isCandyOrWeighted) {
+                    barcodeToRender = this.generateScaleBarcode('000001', item.weight);
+                    isScaleBarcode = true;
+                }
+
                 let svgBarcodeHtml = '';
 
-                if (window.JsBarcode && cleanCode) {
+                if (window.JsBarcode && barcodeToRender) {
                     try {
                         const tempSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-                        window.JsBarcode(tempSvg, cleanCode, {
-                            format: 'CODE128',
+                        // بالنسبة لباركود الميزان الـ 13 رقم نستخدم EAN13 مع fallback لـ CODE128
+                        const bFormat = (isScaleBarcode && barcodeToRender.length === 13) ? 'EAN13' : 'CODE128';
+                        window.JsBarcode(tempSvg, barcodeToRender, {
+                            format: bFormat,
                             width: 1.8,
                             height: 32,
                             displayValue: true,
@@ -2086,14 +2237,29 @@
                         });
                         svgBarcodeHtml = tempSvg.outerHTML;
                     } catch (e) {
-                        console.warn("JsBarcode error for code " + cleanCode, e);
-                        svgBarcodeHtml = `<div style="font-family: monospace; font-size: 11px; font-weight: 900; padding: 2px; letter-spacing: 1px;">${cleanCode}</div>`;
+                        try {
+                            const tempSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                            window.JsBarcode(tempSvg, barcodeToRender, {
+                                format: 'CODE128',
+                                width: 1.8,
+                                height: 32,
+                                displayValue: true,
+                                font: 'monospace',
+                                fontSize: 10,
+                                textMargin: 1,
+                                margin: 1
+                            });
+                            svgBarcodeHtml = tempSvg.outerHTML;
+                        } catch (err) {
+                            svgBarcodeHtml = `<div style="font-family: monospace; font-size: 11px; font-weight: 900; padding: 2px; letter-spacing: 1px;">${barcodeToRender}</div>`;
+                        }
                     }
                 } else {
-                    svgBarcodeHtml = `<div style="font-family: monospace; font-size: 11px; font-weight: 900; padding: 2px; letter-spacing: 1px;">${cleanCode}</div>`;
+                    svgBarcodeHtml = `<div style="font-family: monospace; font-size: 11px; font-weight: 900; padding: 2px; letter-spacing: 1px;">${barcodeToRender}</div>`;
                 }
 
                 const weightBadge = item.weight ? `<span class="thermal-weight-tag">${item.weight} جم</span>` : '';
+                const scaleBadge = isScaleBarcode ? `<div style="font-size: 8.5px; color: #166534; font-weight: 800; margin-top: 1px; text-align: center;">⚡ باركود ميزان (مسح سريع بوزن ${item.weight} جم)</div>` : '';
                 const lineTotal = ((parseFloat(item.price) || 0) * (parseInt(item.qty) || 1)).toFixed(2);
 
                 return `
@@ -2106,6 +2272,7 @@
                         
                         <div class="thermal-barcode-box">
                             ${svgBarcodeHtml}
+                            ${scaleBadge}
                         </div>
 
                         <div class="thermal-item-pricing">
