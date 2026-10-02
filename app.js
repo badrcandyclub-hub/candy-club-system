@@ -3921,12 +3921,16 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
                 const catalogMatch = (typeof catalogData !== 'undefined' && Array.isArray(catalogData)) 
                     ? catalogData.find(p => p.name && (p.name.includes('كاندي') || (p.barcode && String(p.barcode).includes(scaleInfo.itemCode))))
                     : null;
-                const ratePerKg = (catalogMatch && catalogMatch.price > 0) ? Number(catalogMatch.price) : 600;
+                const rawPrice = (catalogMatch && catalogMatch.price > 0) ? Number(catalogMatch.price) : 600;
+                // إذا كان السعر بالكتالوج <= 100 فهو سعر الـ 100 جرام ويضرب في 10 لحساب سعر الكيلو
+                const ratePerKg = (rawPrice <= 100) ? (rawPrice * 10) : rawPrice;
                 const calculatedPrice = Number(((scaleInfo.weightGrams / 1000) * ratePerKg).toFixed(2));
                 nameInput.value = `كاندي بالوزن (${scaleInfo.weightGrams} جم)`;
                 priceInput.value = calculatedPrice;
                 qtyInput.value = 1;
                 calculateTotal();
+                priceInput.focus();
+                priceInput.select();
                 return;
             }
         }
@@ -6306,7 +6310,9 @@ function handleBarcodeMatch(barcodeValue) {
         const catalogMatch = (typeof barcodeCatalogData !== 'undefined' && Array.isArray(barcodeCatalogData))
             ? barcodeCatalogData.find(p => String(p.barcode).split(',').map(b=>b.trim().toLowerCase()).includes(scaleInfo.itemCode.toLowerCase()) || (scaleInfo.itemCode === '000001' && p.name && p.name.includes('كاندي')))
             : null;
-        const ratePerKg = (catalogMatch && catalogMatch.price > 0) ? Number(catalogMatch.price) : 600;
+        const rawPrice = (catalogMatch && catalogMatch.price > 0) ? Number(catalogMatch.price) : 600;
+        // إذا كان السعر بالكتالوج <= 100 فهو سعر الـ 100 جرام ويضرب في 10 لحساب سعر الكيلو
+        const ratePerKg = (rawPrice <= 100) ? (rawPrice * 10) : rawPrice;
         const calculatedPrice = Number(((scaleInfo.weightGrams / 1000) * ratePerKg).toFixed(2));
         
         matchedProduct = {
@@ -6561,8 +6567,8 @@ if (addToCartBtn) {
                 }
             }
 
-            if (foundRow) {
-                // زيادة الكمية للصف الحالي
+            if (foundRow && !currentScannedProduct.isScale) {
+                // زيادة الكمية للصف الحالي للمنتجات العادية فقط
                 let qtyInput = foundRow.querySelector('.product-qty-input');
                 if (qtyInput) {
                     qtyInput.value = parseInt(qtyInput.value || 1) + 1;
@@ -6587,7 +6593,9 @@ if (addToCartBtn) {
 
             // استخدام دالة إضافة المنتجات الحالية في النظام
             if (typeof addProductRow === 'function') {
-                addProductRow(productName, productPrice, "1", true);
+                const isScale = !!(currentScannedProduct && currentScannedProduct.isScale);
+                // بالنسبة لمنتج الميزان، نترك الحقول قابلة للتعديل حتى يستطيع الكاشير مراجعة أو كتابة السعر بحرية
+                addProductRow(productName, productPrice, "1", !isScale);
 
                 // تحديث الإجمالي
                 if (typeof calculateTotal === 'function') calculateTotal();
@@ -6596,6 +6604,21 @@ if (addToCartBtn) {
 
                 // إغلاق النافذة
                 closeModalWithHistory('scanResultModal');
+
+                // إذا كان الصنف بالوزن، نركز المؤشر على خانة السعر فوراً لتسهيل المراجعة أو الكتابة
+                if (isScale) {
+                    setTimeout(() => {
+                        const allRows = document.querySelectorAll('.product-row');
+                        if (allRows.length > 0) {
+                            const lastRow = allRows[allRows.length - 1];
+                            const pInput = lastRow.querySelector('.product-price-input');
+                            if (pInput) {
+                                pInput.focus();
+                                pInput.select();
+                            }
+                        }
+                    }, 100);
+                }
 
                 // التأكد من وجود صف فارغ للإدخال اليدوي
                 if (document.querySelectorAll('.product-row:not(.confirmed)').length === 0) {

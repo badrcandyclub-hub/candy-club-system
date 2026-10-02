@@ -717,10 +717,11 @@
             const isScaleScan = !!options.isScaleScan;
             const scannedWeight = (options.weight !== undefined && Number(options.weight) > 0) ? Number(options.weight) : '';
             
-            // تحديد السعر المبدئي: إذا مسح باركود ميزان ولديه وزن، يحسب السعر (الوزن × 0.60 ج.م للكاندي أو سعر الكيلو)
+            // تحديد السعر المبدئي: إذا مسح باركود ميزان ولديه وزن، يحسب السعر (الوزن × سعر الجرام أو الكيلو)
             let initialPrice = product.price;
             if (isScaleScan && scannedWeight > 0) {
-                const ratePerKg = (product.price > 0) ? product.price : 600; // 600 LE/kg
+                const rawPrice = (product.price > 0) ? Number(product.price) : 600;
+                const ratePerKg = (rawPrice <= 100) ? (rawPrice * 10) : rawPrice;
                 initialPrice = Number(((scannedWeight / 1000) * ratePerKg).toFixed(2));
             }
 
@@ -806,13 +807,15 @@
             const num = parseFloat(val);
             this.state.foundProductWeight = (!isNaN(num) && num > 0) ? num : '';
 
-            // حساب السعر التلقائي إذا كان كاندي بالوزن (600 ج.م للكيلو = 0.60 ج.م للجرام)
+            // حساب السعر التلقائي إذا كان كاندي بالوزن
             const p = this.state.selectedFoundProduct;
             if (p && (String(p.barcode).includes('000001') || (p.name && String(p.name).includes('كاندي')))) {
                 const priceInput = document.getElementById('gifts-found-price-input');
                 if (priceInput) {
                     if (num > 0) {
-                        const calculatedPrice = Number(((num / 1000) * 600).toFixed(2));
+                        const rawPrice = (p.price > 0) ? Number(p.price) : 600;
+                        const ratePerKg = (rawPrice <= 100) ? (rawPrice * 10) : rawPrice;
+                        const calculatedPrice = Number(((num / 1000) * ratePerKg).toFixed(2));
                         priceInput.value = calculatedPrice;
                         this.state.foundProductCustomPrice = calculatedPrice;
                     } else {
@@ -878,13 +881,18 @@
                 (i.weight || '') === (itemWeight || '')
             );
 
+            let itemName = product.name;
+            if (itemWeight && !itemName.includes('جم') && !itemName.includes('جرام')) {
+                itemName = `${itemName} (${itemWeight} جم)`;
+            }
+
             if (existingIndex > -1) {
                 this.state.draft.items[existingIndex].qty += addQty;
             } else {
                 this.state.draft.items.push({
                     barcode: product.barcode,
                     primaryBarcode: cleanSingleBarcode,
-                    name: product.name,
+                    name: itemName,
                     price: itemPrice,
                     weight: itemWeight,
                     qty: addQty,
@@ -2279,13 +2287,13 @@
                         const bFormat = (isScaleBarcode && barcodeToRender.length === 13) ? 'EAN13' : 'CODE128';
                         window.JsBarcode(tempSvg, barcodeToRender, {
                             format: bFormat,
-                            width: 1.8,
-                            height: 32,
+                            width: 2.0,
+                            height: 38,
                             displayValue: true,
                             font: 'monospace',
                             fontSize: 10,
-                            textMargin: 1,
-                            margin: 1
+                            textMargin: 2,
+                            margin: 2
                         });
                         svgBarcodeHtml = tempSvg.outerHTML;
                     } catch (e) {
@@ -3506,7 +3514,10 @@
                 }
 
                 let finalPrice = Number(item.price || 0);
-                if (currentProd && currentProd.price !== undefined && Number(currentProd.price) > 0) {
+                const hasWeight = item.weight && Number(item.weight) > 0;
+
+                // تحديث سعر الأصناف العادية فقط بالقطعة، أما الأصناف الوزنية فنحتفظ بسعر وزنتها المحسوب
+                if (!hasWeight && currentProd && currentProd.price !== undefined && Number(currentProd.price) > 0) {
                     const sysPrice = Number(currentProd.price);
                     if (Math.abs(sysPrice - finalPrice) > 0.01) {
                         updatedPricesCount++;
@@ -3517,7 +3528,8 @@
                 return {
                     id: (currentProd && currentProd.id) || item.id || `item_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
                     barcode: (currentProd && currentProd.barcode) || item.barcode || '',
-                    name: (currentProd && currentProd.name) || item.name || 'صنف',
+                    primaryBarcode: item.primaryBarcode || (currentProd && currentProd.barcode) || item.barcode || '',
+                    name: item.name || (currentProd && currentProd.name) || 'صنف',
                     price: finalPrice,
                     qty: Number(item.qty) || 1,
                     weight: item.weight || ''
@@ -3661,7 +3673,14 @@
             // 5. إضافة الأصناف داخل جدول الأوردر وتأكيدها
             items.forEach(item => {
                 if (typeof addProductRow === 'function') {
-                    addProductRow(item.name || 'صنف', String(item.price || 0), String(item.qty || 1), true, '');
+                    const hasWeight = item.weight && Number(item.weight) > 0;
+                    let itemName = item.name || 'صنف';
+                    if (hasWeight && !itemName.includes('جم') && !itemName.includes('جرام')) {
+                        itemName = `${itemName} (${item.weight} جم)`;
+                    }
+                    const itemQty = item.qty || 1;
+                    const itemPrice = item.price || 0;
+                    addProductRow(itemName, String(itemPrice), String(itemQty), true, '');
                 }
             });
 
