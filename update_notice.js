@@ -15,38 +15,38 @@ document.addEventListener('DOMContentLoaded', () => {
                     <img src="favicon.png" alt="Candy Club Logo" style="width: 85px; height: 85px; border-radius: 20px; display: block; margin: -65px auto 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); border: 4px solid #ffffff; background: #fff; object-fit: cover;">
                     
                     <h2 style="color: #2a2a40; margin-top: 0; font-size: 1.5rem; font-weight: 900; margin-bottom: 8px; animation: slideDownText 0.5s ease forwards; opacity: 0; animation-delay: 0.1s;">
-                        تحديث جديد وشامل <span style="color: #fff; background: linear-gradient(135deg, #FF4081, #E040FB); padding: 2px 10px; border-radius: 12px; font-size: 1.2rem; vertical-align: middle; margin-right: 5px; box-shadow: 0 4px 10px rgba(255,64,129,0.3);">V1.1</span>
+                        تحديث جديد وشامل <span style="color: #fff; background: linear-gradient(135deg, #FF4081, #E040FB); padding: 2px 10px; border-radius: 12px; font-size: 1.2rem; vertical-align: middle; margin-right: 5px; box-shadow: 0 4px 10px rgba(255,64,129,0.3);">V1.5</span>
                     </h2>
                     
                     <p style="color: #607d8b; font-size: 0.95rem; line-height: 1.5; margin-bottom: 25px; font-weight: 600; animation: slideDownText 0.5s ease forwards; opacity: 0; animation-delay: 0.2s;">
-                        اكتشف الإضافات الجديدة التي صممناها لتسريع وتسهيل عملك
+                        اكتشف الإضافات والميزات الجديدة التي صممناها لتطوير وتسهيل عملك
                     </p>
                     
                     <!-- كروت المميزات الأربعة -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px; text-align: right; direction: rtl;">
                         
-                        <!-- كارت 1: النواقص -->
-                        <div class="update-card" style="background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(4px); border-radius: 12px; padding: 15px; border-right: 4px solid #FF5252; box-shadow: 0 3px 10px rgba(255, 82, 82, 0.08); animation-delay: 0.3s;">
-                            <h4 style="margin: 0 0 8px 0; color: #D32F2F; font-size: 1rem; font-weight: 800;"><i class="fa-solid fa-box-open" style="margin-left: 6px; animation: dropInBox 3s ease-in-out infinite;"></i>النواقص (جربها الآن)</h4>
-                            <p style="margin: 0; font-size: 0.85rem; color: #555; line-height: 1.5; font-weight: 600;">إضافة خانة جديدة مخصصة لتسجيل ومتابعة النواقص بكل سهولة ومرونة</p>
+                        <!-- كارت 1: النواقص الفعلي (قريباً) -->
+                        <div class="update-card" style="background: rgba(255, 255, 255, 0.78); backdrop-filter: blur(4px); border-radius: 14px; padding: 15px; border-right: 4px solid #FF5252; box-shadow: 0 3px 10px rgba(255, 82, 82, 0.08); animation-delay: 0.3s;">
+                            <h4 style="margin: 0 0 8px 0; color: #D32F2F; font-size: 0.98rem; font-weight: 800;"><i class="fa-solid fa-boxes-stacked" style="margin-left: 6px; animation: dropInBox 3s ease-in-out infinite;"></i>النواقص الفعلي (قريباً)</h4>
+                            <p style="margin: 0; font-size: 0.83rem; color: #555; line-height: 1.5; font-weight: 600;">قريباً سيتم إطلاق نظام جرد ومتابعة النواقص الفعلية بالمحل بدقة وسرعة فائقة</p>
                         </div>
                         
-                        <!-- كارت 2: المزامنة الذكية -->
-                        <div class="update-card" style="background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(4px); border-radius: 12px; padding: 15px; border-right: 4px solid #00E676; box-shadow: 0 3px 10px rgba(0, 230, 118, 0.08); animation-delay: 0.4s;">
-                            <h4 style="margin: 0 0 8px 0; color: #2E7D32; font-size: 1rem; font-weight: 800;"><i class="fa-solid fa-rotate" style="margin-left: 6px; animation: slowSpin 4s linear infinite;"></i>المزامنة الذكية</h4>
-                            <p style="margin: 0; font-size: 0.85rem; color: #555; line-height: 1.5; font-weight: 600;">نظام جديد يضبط أرصدتك بأثر رجعي ويصحح الأسماء المجهولة تلقائياً</p>
+                        <!-- كارت 2: وزنة الكاندي الذكية -->
+                        <div class="update-card" style="background: rgba(255, 255, 255, 0.78); backdrop-filter: blur(4px); border-radius: 14px; padding: 15px; border-right: 4px solid #00E676; box-shadow: 0 3px 10px rgba(0, 230, 118, 0.08); animation-delay: 0.4s;">
+                            <h4 style="margin: 0 0 8px 0; color: #2E7D32; font-size: 0.98rem; font-weight: 800;"><i class="fa-solid fa-scale-balanced" style="margin-left: 6px; animation: scaleRock 3s ease-in-out infinite;"></i>وزنة الكاندي الذكية</h4>
+                            <p style="margin: 0; font-size: 0.83rem; color: #555; line-height: 1.5; font-weight: 600;">دعم كامل لاستيكرات الميزان وقراءة وزن وسعر الكاندي تلقائياً بمسدس الباركود والكاميرا</p>
                         </div>
 
-                        <!-- كارت 3: حل جذري للأخطاء -->
-                        <div class="update-card" style="background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(4px); border-radius: 12px; padding: 15px; border-right: 4px solid #FFD740; box-shadow: 0 3px 10px rgba(255, 215, 64, 0.08); animation-delay: 0.5s;">
-                            <h4 style="margin: 0 0 8px 0; color: #F57F17; font-size: 1rem; font-weight: 800;"><i class="fa-solid fa-shield-halved" style="margin-left: 6px; animation: shieldPulse 3s ease-in-out infinite;"></i>حل جذري للأخطاء</h4>
-                            <p style="margin: 0; font-size: 0.85rem; color: #555; line-height: 1.5; font-weight: 600;">معالجة تامة لمشكلة تضارب الأسماء وعدم خصم المبيعات بشكل صحيح</p>
+                        <!-- كارت 3: قسم الهدايا والبوكيهات -->
+                        <div class="update-card" style="background: rgba(255, 255, 255, 0.78); backdrop-filter: blur(4px); border-radius: 14px; padding: 15px; border-right: 4px solid #E040FB; box-shadow: 0 3px 10px rgba(224, 64, 251, 0.08); animation-delay: 0.5s;">
+                            <h4 style="margin: 0 0 8px 0; color: #9C27B0; font-size: 0.98rem; font-weight: 800;"><i class="fa-solid fa-gift" style="margin-left: 6px; animation: giftBounce 3s ease-in-out infinite;"></i>قسم الهدايا والبوكيهات</h4>
+                            <p style="margin: 0; font-size: 0.83rem; color: #555; line-height: 1.5; font-weight: 600;">نظام متكامل لتصميم وتجميع البوكيهات وطباعة باركودات الأصناف وتحويلها لفواتير فورية</p>
                         </div>
-                        
-                        <!-- كارت 4: تحسينات في الشكل -->
-                        <div class="update-card" style="background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(4px); border-radius: 12px; padding: 15px; border-right: 4px solid #40C4FF; box-shadow: 0 3px 10px rgba(64, 196, 255, 0.08); animation-delay: 0.6s;">
-                            <h4 style="margin: 0 0 8px 0; color: #0277BD; font-size: 1rem; font-weight: 800;"><i class="fa-solid fa-palette" style="margin-left: 6px; animation: colorWiggle 3s ease-in-out infinite;"></i>تحسينات في الشكل</h4>
-                            <p style="margin: 0; font-size: 0.85rem; color: #555; line-height: 1.5; font-weight: 600;">واجهة مريحة للعين وتجربة استخدام أسرع وأكثر استقراراً من قبل</p>
+
+                        <!-- كارت 4: حل جذري للأخطاء -->
+                        <div class="update-card" style="background: rgba(255, 255, 255, 0.78); backdrop-filter: blur(4px); border-radius: 14px; padding: 15px; border-right: 4px solid #3F51B5; box-shadow: 0 3px 10px rgba(63, 81, 181, 0.08); animation-delay: 0.6s;">
+                            <h4 style="margin: 0 0 8px 0; color: #303F9F; font-size: 0.98rem; font-weight: 800;"><i class="fa-solid fa-shield-halved" style="margin-left: 6px; animation: shieldPulse 3s ease-in-out infinite;"></i>حل جذري للأخطاء</h4>
+                            <p style="margin: 0; font-size: 0.83rem; color: #555; line-height: 1.5; font-weight: 600;">معالجة تامة لتضارب الأسماء وضمان دقة الحسابات وخصم المخزون واستقرار النظام 100%</p>
                         </div>
 
                     </div>
@@ -67,9 +67,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 @keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
                 
                 @keyframes dropInBox { 0%, 100% { transform: translateY(0) scale(1); } 30% { transform: translateY(-6px) scale(1.05); } 50% { transform: translateY(2px) scale(0.95); } 70% { transform: translateY(0) scale(1); } }
-                @keyframes slowSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                @keyframes scaleRock { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(10deg); } 75% { transform: rotate(-10deg); } }
+                @keyframes giftBounce { 0%, 100% { transform: scale(1) translateY(0); } 30% { transform: scale(1.15) translateY(-5px); } 60% { transform: scale(0.95) translateY(2px); } }
                 @keyframes shieldPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.15); opacity: 0.8; } }
-                @keyframes colorWiggle { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-12deg); } 75% { transform: rotate(12deg); } }
                 
                 .update-card {
                     opacity: 0;
