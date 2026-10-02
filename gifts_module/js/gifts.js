@@ -166,6 +166,13 @@
             // تفعيل مستمعات الأحداث
             this.bindEvents();
 
+            // نقل نوافذ المودال الخاصة بقسم الهدايا لتكون تحت body مباشرة لتفادي أي قيود حركية أو إزاحة
+            document.querySelectorAll('.gifts-modal-overlay').forEach(m => {
+                if (m.parentElement !== document.body) {
+                    document.body.appendChild(m);
+                }
+            });
+
             // تحديث حالة زر الحفظ التفاعلي
             this.updateSaveButtonState();
         },
@@ -1256,8 +1263,8 @@
         },
 
         scrollToDraft() {
-            const el = document.querySelector('.gifts-draft-card');
-            if (el) el.scrollIntoView({ behavior: 'smooth' });
+            const el = document.querySelector('.gifts-card-info') || document.querySelector('.gifts-card-basket');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         },
 
         // 7. تصوير البوكيه وضغط Canvas والرفع لجوجل درايف
@@ -2514,6 +2521,12 @@
                         </div>
 
                         <div class="gifts-card-actions">
+                            <button type="button" class="gifts-card-btn" style="color: #059669; font-weight: 800;" title="نقل محتويات هذا البوكيه لإنشاء أوردر أونلاين فوراً" onclick="GiftsApp.transferBouquetToOrder('${b.id}')">
+                                <i class="fa-solid fa-truck-fast"></i> أوردر أونلاين
+                            </button>
+                            <button type="button" class="gifts-card-btn" style="color: #7C3AED;" title="نسخ محتويات هذا البوكيه إلى شاشة التجميع مع تحديث الأسعار" onclick="GiftsApp.cloneToBuilder('${b.id}')">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> نسخ للتجميع
+                            </button>
                             <button type="button" class="gifts-card-btn" title="طباعة باركودات الأصناف" onclick="GiftsApp.printBouquetThermalReceipt('${b.id}')">
                                 <i class="fa-solid fa-print"></i> طباعة
                             </button>
@@ -2522,9 +2535,6 @@
                                     <i class="fa-solid fa-bag-shopping"></i> بيع
                                 </button>
                             ` : ''}
-                            <button type="button" class="gifts-card-btn" style="color: #7C3AED;" title="نسخ محتويات هذا البوكيه إلى شاشة التجميع مع تحديث الأسعار" onclick="GiftsApp.cloneToBuilder('${b.id}')">
-                                <i class="fa-solid fa-wand-magic-sparkles"></i> نسخ للتجميع
-                            </button>
                             <button type="button" class="gifts-card-btn" title="سجل حركات البوكيه" onclick="GiftsApp.openTimelineModal('${b.id}')">
                                 <i class="fa-solid fa-clock-rotate-left"></i> سجل
                             </button>
@@ -2617,7 +2627,7 @@
             if (custPhoneInput) custPhoneInput.value = '';
             if (suggestions) suggestions.style.display = 'none';
 
-            if (modal) modal.classList.add('active');
+            this.openModal('gifts-modal-sell-bouquet');
         },
 
         updateSellQty(delta) {
@@ -3160,7 +3170,7 @@
                 if (notesInput) notesInput.value = '';
             }
 
-            modal.classList.add('active');
+            this.openModal('gifts-modal-add-customer');
         },
 
         saveCustomerForm() {
@@ -3233,15 +3243,18 @@
 
         // نسخ بوكيه بالكامل ونقل أصنافه فوراً إلى شاشة التجميع مع تحديث الأسعار بأسعار السيستم الحالية
         cloneToBuilder(id) {
-            const bouquet = this.state.bouquets.find(b => b.id === id);
+            const bouquet = this.state.bouquets.find(b => String(b.id) === String(id));
             if (!bouquet) {
                 this.showToastNotification("لم يتم العثور على البوكيه المطلوب");
                 return;
             }
 
             // 1. فحص كل صنف وتحديث سعره من قائمة المنتجات الحالية بالسيستم
-            const originalItems = bouquet.items || [];
-            if (originalItems.length === 0) {
+            let originalItems = bouquet.items || [];
+            if (typeof originalItems === 'string') {
+                try { originalItems = JSON.parse(originalItems); } catch(e) { originalItems = []; }
+            }
+            if (!Array.isArray(originalItems) || originalItems.length === 0) {
                 this.showToastNotification("هذا البوكيه لا يحتوي على أصناف لنسخها");
                 return;
             }
@@ -3275,10 +3288,10 @@
                 };
             });
 
-            // 2. تعبئة مسودة التجميع بالبيانات المنسوخة
+            // 2. تعبئة مسودة التجميع بالبيانات المنسوخة (مع الاحتفاظ باسم البوكيه واسم المصمم)
             this.state.draft = {
-                name: bouquet.name ? `${bouquet.name} (تكرار)` : 'بوكيه جديد',
-                creator: this.getCurrentUserName(),
+                name: bouquet.name || 'بوكيه جديد',
+                creator: bouquet.creator_name || this.getCurrentUserName(),
                 qty: 1,
                 colorTag: bouquet.color_tag || '#E91E8C',
                 items: refreshedItems,
@@ -3293,7 +3306,7 @@
             this.switchSubTab('builder');
 
             // 5. تحديث الحقول في واجهة التجميع
-            setTimeout(() => {
+            const applyDraftValues = () => {
                 const nameInput = document.getElementById('gifts-input-name');
                 const creatorInput = document.getElementById('gifts-input-creator');
                 const qtyInput = document.getElementById('gifts-input-qty');
@@ -3305,14 +3318,17 @@
                 this.renderDraftBasket();
                 this.renderRecentAddedList();
                 this.removePhoto();
-
-                // 6. إشعار بنجاح العملية
-                const priceNotice = updatedPricesCount > 0
-                    ? ` (تم تحديث أسعار ${updatedPricesCount} صنف بأسعار السيستم الحالية)`
-                    : ' (الأسعار مطابقة لأحدث أسعار بالسيستم)';
-                this.showToastNotification(`تم نسخ محتويات بوكيه "${bouquet.name}" إلى التجميع بنجاح${priceNotice}`);
                 this.scrollToDraft();
-            }, 60);
+            };
+
+            applyDraftValues();
+            setTimeout(applyDraftValues, 80);
+
+            // 6. إشعار بنجاح العملية
+            const priceNotice = updatedPricesCount > 0
+                ? ` (تم تحديث أسعار ${updatedPricesCount} صنف بأسعار السيستم الحالية)`
+                : ' (الأسعار مطابقة لأحدث أسعار بالسيستم)';
+            this.showToastNotification(`تم نسخ محتويات بوكيه "${bouquet.name}" إلى التجميع بنجاح${priceNotice}`);
         },
 
         openCloneModal(id) {
@@ -3320,25 +3336,27 @@
         },
 
         openTimelineModal(id) {
-            const bouquet = this.state.bouquets.find(b => b.id === id);
+            const bouquet = this.state.bouquets.find(b => String(b.id) === String(id));
             if (!bouquet) return;
 
             this.state.activeTimelineBouquetId = id;
 
             const headerInfo = document.getElementById('gifts-timeline-header-info');
             const container = document.getElementById('gifts-timeline-container');
-            const modal = document.getElementById('gifts-modal-timeline');
 
             if (headerInfo) {
                 headerInfo.innerHTML = `
                     <div style="color: var(--gifts-primary-dark); font-size: 1.15rem; margin-bottom: 4px;">${bouquet.name}</div>
-                    <div style="color: var(--gifts-text-muted); font-size: 0.88rem;">المسؤول عن التصميم: ${bouquet.creator_name} | السعر: ${Number(bouquet.total_price).toFixed(2)} ج.م</div>
+                    <div style="color: var(--gifts-text-muted); font-size: 0.88rem;">المسؤول عن التصميم: ${bouquet.creator_name || 'غير محدد'} | السعر: ${Number(bouquet.total_price).toFixed(2)} ج.م</div>
                 `;
             }
 
-            const events = bouquet.timeline || [];
+            let events = bouquet.timeline || [];
+            if (typeof events === 'string') {
+                try { events = JSON.parse(events); } catch(e) { events = []; }
+            }
             if (container) {
-                if (events.length === 0) {
+                if (!Array.isArray(events) || events.length === 0) {
                     container.innerHTML = '<div style="color: var(--gifts-text-muted); padding: 10px;">لا توجد أحداث مسجلة لهذا البوكيه</div>';
                 } else {
                     container.innerHTML = events.map(ev => {
@@ -3355,7 +3373,96 @@
                 }
             }
 
-            if (modal) modal.classList.add('active');
+            this.openModal('gifts-modal-timeline');
+        },
+
+        // 11. نقل محتويات البوكيه بالكامل لإنشاء أوردر أونلاين جديد في النظام
+        transferBouquetToOrder(id) {
+            const bouquet = this.state.bouquets.find(b => String(b.id) === String(id));
+            if (!bouquet) {
+                this.showToastNotification("لم يتم العثور على البوكيه المطلوب");
+                return;
+            }
+
+            let items = bouquet.items || [];
+            if (typeof items === 'string') {
+                try { items = JSON.parse(items); } catch(e) { items = []; }
+            }
+            if (!Array.isArray(items) || items.length === 0) {
+                this.showToastNotification("هذا البوكيه لا يحتوي على أصناف لنقلها للأوردر");
+                return;
+            }
+
+            // 1. الانتقال فوراً إلى تبويب إنشاء طلب جديد
+            const createTabBtn = document.querySelector('.nav-item[data-target="create-tab"]');
+            if (createTabBtn) {
+                createTabBtn.click();
+            } else {
+                document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-pane').forEach(c => c.classList.remove('active'));
+                const createPane = document.getElementById('create-tab');
+                if (createPane) createPane.classList.add('active');
+            }
+
+            // 2. إغلاق القائمة الجانبية في الموبايل أو الشاشات المفتوحة
+            const appSidebar = document.getElementById("app-sidebar");
+            const sidebarOverlay = document.getElementById("sidebar-overlay");
+            if (appSidebar && appSidebar.classList.contains("open")) {
+                appSidebar.classList.remove("open");
+                if (sidebarOverlay) sidebarOverlay.classList.remove("active");
+            }
+
+            // 3. إغلاق أي مودال كان مفتوحاً
+            document.querySelectorAll('.gifts-modal-overlay.active').forEach(m => m.classList.remove('active'));
+            document.body.classList.remove('gifts-modal-open');
+
+            // 4. تفريغ جدول منتجات الفاتورة وإضافة أصناف البوكيه
+            const productsContainer = document.getElementById('productsContainer');
+            if (productsContainer) {
+                productsContainer.innerHTML = '';
+            }
+
+            // 5. إضافة الأصناف داخل جدول الأوردر وتأكيدها
+            items.forEach(item => {
+                if (typeof addProductRow === 'function') {
+                    addProductRow(item.name || 'صنف', String(item.price || 0), String(item.qty || 1), true, '');
+                }
+            });
+
+            // 6. تحديد خيار "أوردر هدية"
+            const giftCheckbox = document.getElementById('isGiftCheckbox');
+            if (giftCheckbox) {
+                giftCheckbox.checked = true;
+            }
+
+            // 7. نقل بيانات العميل إن كانت مسجلة بالبوكيه
+            if (bouquet.customer_name) {
+                const nameInp = document.getElementById('customerName');
+                if (nameInp) nameInp.value = bouquet.customer_name;
+            }
+            if (bouquet.customer_phone) {
+                const phoneInp = document.getElementById('customerPhone');
+                if (phoneInp) phoneInp.value = bouquet.customer_phone;
+            }
+
+            // 8. إعادة حساب إجمالي الفاتورة
+            if (typeof calculateTotal === 'function') {
+                calculateTotal();
+            }
+
+            // 9. التمرير إلى نموذج الأوردر
+            const orderForm = document.getElementById('orderForm') || document.getElementById('create-tab');
+            if (orderForm) {
+                orderForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            // 10. إشعار تأكيد واضح
+            const msg = `تم نقل أصناف بوكيه "${bouquet.name}" إلى شاشة إنشاء أوردر أونلاين بنجاح (${items.length} صنف)`;
+            if (typeof showToast === 'function') {
+                showToast(msg, "success");
+            } else {
+                this.showToastNotification(msg);
+            }
         },
 
         closeModal(modalId) {
