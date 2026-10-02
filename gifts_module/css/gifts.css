@@ -1024,9 +1024,9 @@
     text-align: center;
     margin-bottom: 24px;
     position: relative;
-    overflow: hidden;
+    overflow: visible !important;
     box-shadow: 0 6px 20px rgba(233, 30, 140, 0.05);
-    z-index: 30;
+    z-index: 500;
 }
 
 .gifts-scanner-hero-title {
@@ -1047,7 +1047,7 @@
     position: relative;
     max-width: 620px;
     margin: 18px auto 0;
-    z-index: 1000;
+    z-index: 600;
 }
 
 .gifts-scanner-input-wrap i.search-icon {
@@ -1093,51 +1093,72 @@
     right: 0;
     background: #FFFFFF;
     border: 2px solid var(--gifts-primary);
-    border-radius: var(--gifts-radius-sm);
-    box-shadow: 0 20px 48px rgba(233, 30, 140, 0.24);
+    border-radius: 12px;
+    box-shadow: 0 20px 48px rgba(233, 30, 140, 0.28), 0 4px 16px rgba(0, 0, 0, 0.08);
     max-height: 380px;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     z-index: 999999 !important;
     display: none;
     text-align: right;
     animation: gifts-card-pop 0.2s ease-out;
 }
 
-.gifts-autocomplete-item {
+.gifts-autocomplete-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.gifts-autocomplete-list::-webkit-scrollbar-track {
+    background: #FFF5F9;
+    border-radius: 8px;
+}
+
+.gifts-autocomplete-list::-webkit-scrollbar-thumb {
+    background: #F472B6;
+    border-radius: 8px;
+}
+
+.gifts-autocomplete-list .gifts-autocomplete-item {
     padding: 13px 18px;
     border-bottom: 1px solid #F8FAFC;
     display: flex;
     justify-content: space-between;
     align-items: center;
     cursor: pointer;
-    transition: var(--gifts-transition);
+    transition: all 0.2s ease;
+    gap: 12px;
 }
 
-.gifts-autocomplete-item:last-child {
+.gifts-autocomplete-list .gifts-autocomplete-item:last-child {
     border-bottom: none;
 }
 
-.gifts-autocomplete-item:hover {
+.gifts-autocomplete-list .gifts-autocomplete-item:hover,
+.gifts-autocomplete-list .gifts-autocomplete-item:active {
     background: #FFF0F6;
     padding-right: 22px;
 }
 
-.gifts-autocomplete-item .item-title {
+.gifts-autocomplete-list .gifts-autocomplete-item .item-title {
     font-weight: 800;
     color: var(--gifts-text);
     font-size: 0.96rem;
+    line-height: 1.35;
+    word-break: break-word;
 }
 
-.gifts-autocomplete-item .item-meta {
+.gifts-autocomplete-list .gifts-autocomplete-item .item-meta {
     font-size: 0.8rem;
     color: var(--gifts-text-muted);
-    margin-top: 2px;
+    margin-top: 3px;
+    line-height: 1.3;
 }
 
-.gifts-autocomplete-item .item-price {
+.gifts-autocomplete-list .gifts-autocomplete-item .item-price {
     font-weight: 900;
     color: var(--gifts-primary-dark);
     font-size: 1.05rem;
+    white-space: nowrap;
 }
 
 /* Camera Barcode Scanner Viewport */
@@ -3181,7 +3202,7 @@ body.gifts-modal-open {
         box-sizing: border-box !important;
         overflow: visible !important;
         position: relative !important;
-        z-index: 30 !important;
+        z-index: 500 !important;
     }
 
     .gifts-scanner-hero-title {
@@ -3198,6 +3219,36 @@ body.gifts-modal-open {
         max-width: 100% !important;
         box-sizing: border-box !important;
         margin: 12px auto 0 !important;
+        position: relative !important;
+        z-index: 600 !important;
+    }
+
+    .gifts-autocomplete-list {
+        max-height: 270px !important;
+        border-radius: 10px !important;
+        box-shadow: 0 16px 36px rgba(233, 30, 140, 0.3) !important;
+    }
+
+    .gifts-autocomplete-list .gifts-autocomplete-item {
+        padding: 10px 12px !important;
+        gap: 8px !important;
+    }
+
+    .gifts-autocomplete-list .gifts-autocomplete-item:hover,
+    .gifts-autocomplete-list .gifts-autocomplete-item:active {
+        padding-right: 14px !important;
+    }
+
+    .gifts-autocomplete-list .gifts-autocomplete-item .item-title {
+        font-size: 0.88rem !important;
+    }
+
+    .gifts-autocomplete-list .gifts-autocomplete-item .item-meta {
+        font-size: 0.74rem !important;
+    }
+
+    .gifts-autocomplete-list .gifts-autocomplete-item .item-price {
+        font-size: 0.92rem !important;
     }
 
     .gifts-scanner-input {
@@ -3757,7 +3808,7 @@ button:active,
     margin-top: 4px;
 }
 
-.gifts-autocomplete-item {
+.gifts-autocomplete-dropdown .gifts-autocomplete-item {
     padding: 8px 12px;
     cursor: pointer;
     display: flex;
@@ -3768,7 +3819,7 @@ button:active,
     transition: background 0.15s ease;
 }
 
-.gifts-autocomplete-item:hover {
+.gifts-autocomplete-dropdown .gifts-autocomplete-item:hover {
     background: #F0FDFA;
     color: #0F766E;
 }
