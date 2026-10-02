@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     <!-- عنوان التحديث مع بادج V1.5 بلون كلوب الأزرق -->
                     <h2 style="color: #0f172a; margin: 0 0 4px 0; font-size: 1.25rem; font-weight: 900; animation: slideDownText 0.4s ease forwards; opacity: 0; animation-delay: 0.1s;">
-                        تحديث كاندي كلاب <span style="color: #fff; background: linear-gradient(135deg, #0288D1, #00B0FF); padding: 2px 10px; border-radius: 12px; font-size: 1rem; vertical-align: middle; margin-right: 4px; box-shadow: 0 3px 10px rgba(2,136,209,0.35); font-family: monospace; font-weight: 800;">V1.5</span>
+                        تحديث كاندي كلوب <span style="color: #fff; background: linear-gradient(135deg, #0288D1, #00B0FF); padding: 2px 10px; border-radius: 12px; font-size: 1rem; vertical-align: middle; margin-right: 4px; box-shadow: 0 3px 10px rgba(2,136,209,0.35); font-family: monospace; font-weight: 800;">V1.5</span>
                     </h2>
                     
                     <p style="color: #475569; font-size: 0.8rem; line-height: 1.35; margin: 0 0 12px 0; font-weight: 600; animation: slideDownText 0.4s ease forwards; opacity: 0; animation-delay: 0.15s;">
