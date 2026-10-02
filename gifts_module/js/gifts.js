@@ -31,6 +31,9 @@
             cameraStream: null,
             barcodeScannerInstance: null,
             isScanningBarcode: false,
+            scannerFacingMode: 'environment',
+            availableCameras: [],
+            selectedCameraId: null,
             selectedFoundProduct: null,
             foundProductQty: 1,
             foundProductCustomPrice: 0,
@@ -959,7 +962,7 @@
 
             // إنهاء وتفريغ أي ماسح سابق بأمان
             if (this.state.barcodeScannerInstance) {
-                await this.stopCameraBarcodeScanner();
+                await this.stopCameraBarcodeScanner(true);
             }
 
             if (readerBox) readerBox.innerHTML = '';
@@ -991,34 +994,49 @@
                     aspectRatio: 1.6
                 };
 
-                // اختيار الكاميرا تلقائياً: الكاميرا الخلفية للهواتف، أو كاميرا الويب المتاحة للكمبيوتر
-                let cameraConfig = { facingMode: { ideal: "environment" } };
+                // فتح الكاميرا الخلفية (environment) كافتراضي أساسي للهواتف والمحمول
+                const desiredFacing = this.state.scannerFacingMode || 'environment';
+                let cameraConfig = this.state.selectedCameraId || { facingMode: desiredFacing };
+
                 try {
-                    if (window.Html5Qrcode && typeof window.Html5Qrcode.getCameras === 'function') {
-                        const cameras = await window.Html5Qrcode.getCameras();
-                        if (cameras && cameras.length > 0) {
-                            const backCamera = cameras.find(c => {
-                                const lbl = (c.label || '').toLowerCase();
-                                return lbl.includes('back') || lbl.includes('rear') || lbl.includes('environment');
-                            });
-                            cameraConfig = backCamera ? backCamera.id : cameras[0].id;
+                    await scanner.start(
+                        cameraConfig,
+                        config,
+                        (decodedText) => {
+                            this.stopCameraBarcodeScanner();
+                            this.onBarcodeEntered(decodedText);
+                        },
+                        () => {
+                            // تجاهل إشعارات الإطارات التي لا تحتوي على باركود
                         }
-                    }
-                } catch (camErr) {
-                    console.warn("Camera enumeration fallback:", camErr);
+                    );
+                } catch (primaryErr) {
+                    console.warn("Primary camera start failed, attempting fallback:", primaryErr);
+                    // في حال فشل الكاميرا الخلفية (مثلاً على جهاز كمبيوتر بمفردة ويب كام أمامية فقط)
+                    const fallbackFacing = (desiredFacing === 'environment') ? 'user' : 'environment';
+                    await scanner.start(
+                        { facingMode: fallbackFacing },
+                        config,
+                        (decodedText) => {
+                            this.stopCameraBarcodeScanner();
+                            this.onBarcodeEntered(decodedText);
+                        },
+                        () => {}
+                    );
+                    this.state.scannerFacingMode = fallbackFacing;
                 }
 
-                await scanner.start(
-                    cameraConfig,
-                    config,
-                    (decodedText) => {
-                        this.stopCameraBarcodeScanner();
-                        this.onBarcodeEntered(decodedText);
-                    },
-                    () => {
-                        // تجاهل إشعارات الإطارات التي لا تحتوي على باركود
+                // بعد نجاح فتح الكاميرا، استعلام قائمة الكاميرات المتاحة لتسهيل التبديل لاحقاً
+                try {
+                    if (window.Html5Qrcode && typeof window.Html5Qrcode.getCameras === 'function') {
+                        const cams = await window.Html5Qrcode.getCameras();
+                        if (cams && cams.length > 0) {
+                            this.state.availableCameras = cams;
+                        }
                     }
-                );
+                } catch (e) {
+                    console.warn("Camera enumeration info:", e);
+                }
             } catch (err) {
                 console.error("Camera scanner start failed:", err);
                 await this.stopCameraBarcodeScanner();
@@ -1026,13 +1044,47 @@
             }
         },
 
-        async stopCameraBarcodeScanner() {
+        async switchCameraBarcodeScanner() {
+            if (!this.state.isScanningBarcode) return;
+
+            // عكس وضع الكاميرا بين الخلفية والأمامية
+            const currentMode = this.state.scannerFacingMode || 'environment';
+            const targetMode = (currentMode === 'environment') ? 'user' : 'environment';
+            this.state.scannerFacingMode = targetMode;
+            this.state.selectedCameraId = null;
+
+            // إذا كانت الكاميرات معرفة مسبقاً، نبحث عن الكاميرا المطابقة للهدف
+            if (this.state.availableCameras && this.state.availableCameras.length > 1) {
+                const targetCamera = this.state.availableCameras.find(c => {
+                    const lbl = (c.label || '').toLowerCase();
+                    if (targetMode === 'environment') {
+                        return lbl.includes('back') || lbl.includes('rear') || lbl.includes('environment') || lbl.includes('خلف');
+                    } else {
+                        return lbl.includes('front') || lbl.includes('user') || lbl.includes('selfie') || lbl.includes('أمام');
+                    }
+                });
+
+                if (targetCamera) {
+                    this.state.selectedCameraId = targetCamera.id;
+                }
+            }
+
+            // إعادة تشغيل الماسح بالكاميرا المحددة دون إخفاء الحاوية
+            await this.stopCameraBarcodeScanner(true);
+            await this.startCameraBarcodeScanner();
+        },
+
+        async stopCameraBarcodeScanner(keepViewVisible = false) {
             const view = document.getElementById('gifts-barcode-scanner-view');
             const btnLabel = document.getElementById('gifts-scanner-btn-label');
 
             this.state.isScanningBarcode = false;
-            if (btnLabel) btnLabel.innerText = 'فتح كاميرا مسح الباركود';
-            if (view) view.style.display = 'none';
+            if (!keepViewVisible) {
+                if (btnLabel) btnLabel.innerText = 'فتح كاميرا مسح الباركود';
+                if (view) view.style.display = 'none';
+                this.state.selectedCameraId = null;
+                this.state.scannerFacingMode = 'environment';
+            }
 
             if (this.state.barcodeScannerInstance) {
                 const scanner = this.state.barcodeScannerInstance;

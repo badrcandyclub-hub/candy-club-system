@@ -132,9 +132,15 @@
                 <!-- Camera Barcode Scanner Viewport -->
                 <div id="gifts-barcode-scanner-view">
                     <div id="gifts-reader-box" style="width: 100%;"></div>
-                    <div style="padding: 10px; text-align: center; background: #FFF; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="padding: 10px; text-align: center; background: #FFF; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;">
                         <span style="font-size: 0.85rem; font-weight: bold; color: var(--gifts-primary-dark);">وجه الكاميرا نحو باركود الصنف</span>
-                        <button type="button" class="gifts-btn-outline" style="padding: 4px 12px; font-size: 0.8rem;" onclick="GiftsApp.toggleCameraBarcodeScanner()">إغلاق الكاميرا</button>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <button type="button" class="gifts-btn-outline" style="padding: 5px 12px; font-size: 0.82rem; background: #FFF0F5; border-color: var(--gifts-accent); color: var(--gifts-accent); display: inline-flex; align-items: center; gap: 6px;" onclick="GiftsApp.switchCameraBarcodeScanner()" title="تبديل الكاميرا (الخلفية / الأمامية)">
+                                <i class="fa-solid fa-camera-rotate"></i>
+                                <span>تبديل الكاميرا</span>
+                            </button>
+                            <button type="button" class="gifts-btn-outline" style="padding: 5px 12px; font-size: 0.82rem;" onclick="GiftsApp.stopCameraBarcodeScanner()">إغلاق الكاميرا</button>
+                        </div>
                     </div>
                 </div>
 
