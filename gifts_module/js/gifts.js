@@ -717,11 +717,13 @@
             const isScaleScan = !!options.isScaleScan;
             const scannedWeight = (options.weight !== undefined && Number(options.weight) > 0) ? Number(options.weight) : '';
             
-            // تحديد السعر المبدئي: إذا مسح باركود ميزان ولديه وزن، يحسب السعر (الوزن × سعر الجرام أو الكيلو)
+            // تحديد السعر المبدئي: باركود ميزان الكاندي يحسب على 600.00 ج.م للكيلو (0.60 ج.م للجرام = 318.00 ج.م للـ 530 جم)
             let initialPrice = product.price;
             if (isScaleScan && scannedWeight > 0) {
-                const rawPrice = (product.price > 0) ? Number(product.price) : 600;
-                const ratePerKg = (rawPrice <= 100) ? (rawPrice * 10) : rawPrice;
+                let ratePerKg = 600;
+                if (product.price && Number(product.price) >= 100) {
+                    ratePerKg = Number(product.price);
+                }
                 initialPrice = Number(((scannedWeight / 1000) * ratePerKg).toFixed(2));
             }
 
@@ -807,14 +809,16 @@
             const num = parseFloat(val);
             this.state.foundProductWeight = (!isNaN(num) && num > 0) ? num : '';
 
-            // حساب السعر التلقائي إذا كان كاندي بالوزن
+            // حساب السعر التلقائي إذا كان كاندي بالوزن (600.00 ج.م للكيلو = 0.60 ج.م للجرام = 318.00 ج.م للـ 530 جم)
             const p = this.state.selectedFoundProduct;
             if (p && (String(p.barcode).includes('000001') || (p.name && String(p.name).includes('كاندي')))) {
                 const priceInput = document.getElementById('gifts-found-price-input');
                 if (priceInput) {
                     if (num > 0) {
-                        const rawPrice = (p.price > 0) ? Number(p.price) : 600;
-                        const ratePerKg = (rawPrice <= 100) ? (rawPrice * 10) : rawPrice;
+                        let ratePerKg = 600;
+                        if (p.price && Number(p.price) >= 100) {
+                            ratePerKg = Number(p.price);
+                        }
                         const calculatedPrice = Number(((num / 1000) * ratePerKg).toFixed(2));
                         priceInput.value = calculatedPrice;
                         this.state.foundProductCustomPrice = calculatedPrice;

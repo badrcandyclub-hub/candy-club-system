@@ -3918,12 +3918,18 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
         if (typeof parseScaleBarcode === 'function') {
             const scaleInfo = parseScaleBarcode(nameInput.value);
             if (scaleInfo) {
-                const catalogMatch = (typeof catalogData !== 'undefined' && Array.isArray(catalogData)) 
-                    ? catalogData.find(p => p.name && (p.name.includes('كاندي') || (p.barcode && String(p.barcode).includes(scaleInfo.itemCode))))
-                    : null;
-                const rawPrice = (catalogMatch && catalogMatch.price > 0) ? Number(catalogMatch.price) : 600;
-                // إذا كان السعر بالكتالوج <= 100 فهو سعر الـ 100 جرام ويضرب في 10 لحساب سعر الكيلو
-                const ratePerKg = (rawPrice <= 100) ? (rawPrice * 10) : rawPrice;
+                let catalogMatch = null;
+                if (typeof catalogData !== 'undefined' && Array.isArray(catalogData)) {
+                    catalogMatch = catalogData.find(p => p.barcode && String(p.barcode).split(/[,|\s]+/).includes(scaleInfo.itemCode));
+                    if (!catalogMatch) {
+                        catalogMatch = catalogData.find(p => p.name && (p.name.trim() === 'كاندي بالوزن' || p.name.trim() === 'كاندي'));
+                    }
+                }
+                // السعر القياسي المعتمد لميزان كاندي كلوب هو 600.00 ج.م للكيلو (كما في استيكر الميزان 600.00 LE/kg = 318 ج.م للـ 530 جم)
+                let ratePerKg = 600;
+                if (catalogMatch && Number(catalogMatch.price) >= 100) {
+                    ratePerKg = Number(catalogMatch.price);
+                }
                 const calculatedPrice = Number(((scaleInfo.weightGrams / 1000) * ratePerKg).toFixed(2));
                 nameInput.value = `كاندي بالوزن (${scaleInfo.weightGrams} جم)`;
                 priceInput.value = calculatedPrice;
@@ -6307,12 +6313,19 @@ function handleBarcodeMatch(barcodeValue) {
     let matchedProduct = null;
 
     if (scaleInfo) {
-        const catalogMatch = (typeof barcodeCatalogData !== 'undefined' && Array.isArray(barcodeCatalogData))
-            ? barcodeCatalogData.find(p => String(p.barcode).split(',').map(b=>b.trim().toLowerCase()).includes(scaleInfo.itemCode.toLowerCase()) || (scaleInfo.itemCode === '000001' && p.name && p.name.includes('كاندي')))
-            : null;
-        const rawPrice = (catalogMatch && catalogMatch.price > 0) ? Number(catalogMatch.price) : 600;
-        // إذا كان السعر بالكتالوج <= 100 فهو سعر الـ 100 جرام ويضرب في 10 لحساب سعر الكيلو
-        const ratePerKg = (rawPrice <= 100) ? (rawPrice * 10) : rawPrice;
+        let catalogMatch = null;
+        if (typeof barcodeCatalogData !== 'undefined' && Array.isArray(barcodeCatalogData)) {
+            catalogMatch = barcodeCatalogData.find(p => String(p.barcode || '').split(/[,|\s]+/).includes(scaleInfo.itemCode));
+            if (!catalogMatch) {
+                catalogMatch = barcodeCatalogData.find(p => p.name && (p.name.trim() === 'كاندي بالوزن' || p.name.trim() === 'كاندي'));
+            }
+        }
+        
+        // السعر القياسي المعتمد لميزان كاندي كلوب هو 600.00 ج.م للكيلو (كما في استيكر الميزان 600.00 LE/kg = 318.00 ج.م للـ 530 جم)
+        let ratePerKg = 600;
+        if (catalogMatch && Number(catalogMatch.price) >= 100) {
+            ratePerKg = Number(catalogMatch.price);
+        }
         const calculatedPrice = Number(((scaleInfo.weightGrams / 1000) * ratePerKg).toFixed(2));
         
         matchedProduct = {
