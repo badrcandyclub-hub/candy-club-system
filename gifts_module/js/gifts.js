@@ -1099,6 +1099,23 @@
             this.updateSaveButtonState();
         },
 
+        saveDraft() {
+            try {
+                localStorage.setItem('candy_gifts_draft', JSON.stringify({
+                    name: this.state.draft.name || '',
+                    creator: this.state.draft.creator || '',
+                    qty: this.state.draft.qty || 1,
+                    colorTag: this.state.draft.colorTag || '#E91E8C',
+                    items: this.state.draft.items || [],
+                    photoBase64: this.state.draft.photoBase64 || null,
+                    photoSizeKB: this.state.draft.photoSizeKB || 0
+                }));
+            } catch (e) {
+                console.warn("Could not save draft to LocalStorage:", e);
+            }
+            this.updateSaveButtonState();
+        },
+
         restoreDraft() {
             try {
                 const saved = localStorage.getItem('candy_gifts_draft');
@@ -3314,7 +3331,7 @@
                 if (creatorInput) creatorInput.value = this.state.draft.creator;
                 if (qtyInput) qtyInput.value = '1';
 
-                this.onDraftChanged();
+                this.saveDraft();
                 this.renderDraftBasket();
                 this.renderRecentAddedList();
                 this.removePhoto();
