@@ -3915,6 +3915,21 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
     if (isConfirmed) confirmBtn.innerHTML = "<i class=\'fa-solid fa-pencil\'></i>";
 
     nameInput.addEventListener('input', () => {
+        if (typeof parseScaleBarcode === 'function') {
+            const scaleInfo = parseScaleBarcode(nameInput.value);
+            if (scaleInfo) {
+                const catalogMatch = (typeof catalogData !== 'undefined' && Array.isArray(catalogData)) 
+                    ? catalogData.find(p => p.name && (p.name.includes('كاندي') || (p.barcode && String(p.barcode).includes(scaleInfo.itemCode))))
+                    : null;
+                const ratePerKg = (catalogMatch && catalogMatch.price > 0) ? Number(catalogMatch.price) : 600;
+                const calculatedPrice = Number(((scaleInfo.weightGrams / 1000) * ratePerKg).toFixed(2));
+                nameInput.value = `كاندي بالوزن (${scaleInfo.weightGrams} جم)`;
+                priceInput.value = calculatedPrice;
+                qtyInput.value = 1;
+                calculateTotal();
+                return;
+            }
+        }
         let selected = catalogData.find(p => p.name === nameInput.value);
         if (selected) {
             let baseP = parseFloat(selected.price) || 0;
@@ -6108,6 +6123,44 @@ function stopBarcodeScanner() {
 
 let globalScanLock = false;
 
+// ==========================================
+// ⚖️ دوال ميزان الباركود الذكي (Candy Club Scale Barcode Parser - EAN13)
+// ==========================================
+function calculateEan13Checksum(code12Digits) {
+    const str = String(code12Digits).replace(/\D/g, '');
+    if (str.length !== 12) return 0;
+    let sum = 0;
+    for (let i = 0; i < 12; i++) {
+        const digit = parseInt(str[i], 10);
+        sum += digit * (i % 2 === 0 ? 1 : 3);
+    }
+    const remainder = sum % 10;
+    return remainder === 0 ? 0 : 10 - remainder;
+}
+
+function parseScaleBarcode(rawBarcode) {
+    if (!rawBarcode) return null;
+    const clean = String(rawBarcode).trim().replace(/[\s-]+/g, '');
+    // EAN-13 وزني يبدأ بـ 2 ومكون من 13 رقماً (مثال: 2000001005309 لكاندي 530 جم)
+    if (!/^2\d{12}$/.test(clean)) return null;
+
+    const raw12 = clean.slice(0, 12);
+    const checksum = parseInt(clean.slice(12, 13), 10);
+    if (calculateEan13Checksum(raw12) !== checksum) {
+        return null;
+    }
+
+    const itemCode = clean.slice(1, 7); // '000001'
+    const weightGrams = parseInt(clean.slice(7, 12), 10); // 530
+    return {
+        isScale: true,
+        rawBarcode: clean,
+        itemCode: itemCode,
+        weightGrams: weightGrams,
+        weightKg: Number((weightGrams / 1000).toFixed(3)) // 0.530
+    };
+}
+
 function processBarcodeAction(val) {
     if (globalScanLock) {
         console.warn('Scan ignored due to debounce lock (too fast).');
@@ -6120,12 +6173,28 @@ function processBarcodeAction(val) {
         globalScanLock = false;
     }, 1000);
 
+    const scaleInfo = parseScaleBarcode(val);
+
     if (currentScannerMode === 'inventory') {
         const invProdName = document.getElementById('invProdName');
         const invProdQty = document.getElementById('invProdQty');
         const invProdBarcode = document.getElementById('invProdBarcode');
         const invProdExpiry = document.getElementById('invProdExpiry');
         
+        if (scaleInfo) {
+            let found = null;
+            if (typeof barcodeCatalogData !== 'undefined' && Array.isArray(barcodeCatalogData)) {
+                found = barcodeCatalogData.find(p => String(p.barcode).split(',').map(b=>b.trim().toLowerCase()).includes(scaleInfo.itemCode.toLowerCase()) || (scaleInfo.itemCode === '000001' && p.name && p.name.includes('كاندي')));
+            }
+            if (invProdName) invProdName.value = found ? found.name : 'كاندي بالوزن';
+            if (invProdQty) invProdQty.value = scaleInfo.weightKg;
+            if (invProdBarcode) invProdBarcode.value = val;
+            showToast(`<i class='fa-solid fa-scale-balanced'></i> تم قراءة استيكر ميزان: ${found ? found.name : 'كاندي بالوزن'} (${scaleInfo.weightGrams} جم / ${scaleInfo.weightKg} كجم)`, "success");
+            playBeepSound();
+            if (invProdQty) invProdQty.focus();
+            return;
+        }
+
         if (val && barcodeCatalogData) {
             const found = barcodeCatalogData.find(p => String(p.barcode).split(',').map(b=>b.trim().toLowerCase()).includes(val.toLowerCase()));
             if (found) {
@@ -6168,6 +6237,20 @@ function processBarcodeAction(val) {
         const ledgerProdQty = document.getElementById('ledgerProdQty');
         const ledgerProdBarcode = document.getElementById('ledgerProdBarcode');
         
+        if (scaleInfo) {
+            let found = null;
+            if (typeof barcodeCatalogData !== 'undefined' && Array.isArray(barcodeCatalogData)) {
+                found = barcodeCatalogData.find(p => String(p.barcode).split(',').map(b=>b.trim().toLowerCase()).includes(scaleInfo.itemCode.toLowerCase()) || (scaleInfo.itemCode === '000001' && p.name && p.name.includes('كاندي')));
+            }
+            if (ledgerProdName) ledgerProdName.value = found ? found.name : 'كاندي بالوزن';
+            if (ledgerProdQty) ledgerProdQty.value = scaleInfo.weightKg;
+            if (ledgerProdBarcode) ledgerProdBarcode.value = val;
+            showToast(`<i class='fa-solid fa-scale-balanced'></i> تم قراءة استيكر ميزان: ${found ? found.name : 'كاندي بالوزن'} (${scaleInfo.weightGrams} جم / ${scaleInfo.weightKg} كجم)`, "success");
+            playBeepSound();
+            if (ledgerProdQty) ledgerProdQty.focus();
+            return;
+        }
+
         if (val && barcodeCatalogData) {
             const found = barcodeCatalogData.find(p => String(p.barcode).split(',').map(b=>b.trim().toLowerCase()).includes(val.toLowerCase()));
             if (found) {
@@ -6216,7 +6299,29 @@ function onScanFailure(error) {
 let currentScannedProduct = null;
 
 function handleBarcodeMatch(barcodeValue) {
-    let matchedProduct = barcodeCatalogData.find(p => String(p.barcode).split(',').map(b=>b.trim().toLowerCase()).includes(String(barcodeValue).trim().toLowerCase()));
+    const scaleInfo = parseScaleBarcode(barcodeValue);
+    let matchedProduct = null;
+
+    if (scaleInfo) {
+        const catalogMatch = (typeof barcodeCatalogData !== 'undefined' && Array.isArray(barcodeCatalogData))
+            ? barcodeCatalogData.find(p => String(p.barcode).split(',').map(b=>b.trim().toLowerCase()).includes(scaleInfo.itemCode.toLowerCase()) || (scaleInfo.itemCode === '000001' && p.name && p.name.includes('كاندي')))
+            : null;
+        const ratePerKg = (catalogMatch && catalogMatch.price > 0) ? Number(catalogMatch.price) : 600;
+        const calculatedPrice = Number(((scaleInfo.weightGrams / 1000) * ratePerKg).toFixed(2));
+        
+        matchedProduct = {
+            name: `كاندي بالوزن (${scaleInfo.weightGrams} جم)`,
+            price: calculatedPrice,
+            stock: catalogMatch ? catalogMatch.stock : 'متاح',
+            barcode: barcodeValue,
+            isScale: true,
+            weightGrams: scaleInfo.weightGrams
+        };
+    } else {
+        matchedProduct = (typeof barcodeCatalogData !== 'undefined' && Array.isArray(barcodeCatalogData))
+            ? barcodeCatalogData.find(p => String(p.barcode).split(',').map(b=>b.trim().toLowerCase()).includes(String(barcodeValue).trim().toLowerCase()))
+            : null;
+    }
 
     if (matchedProduct) {
         currentScannedProduct = matchedProduct;
@@ -6228,15 +6333,15 @@ function handleBarcodeMatch(barcodeValue) {
         // عرض الكمية المتاحة (Stock)
         const stockEl = document.getElementById('scanResultStock');
         if (stockEl) {
-            stockEl.textContent = Number(matchedProduct.stock);
+            stockEl.textContent = scaleInfo ? `${scaleInfo.weightGrams} جم` : Number(matchedProduct.stock);
             // تلوين الكمية حسب المخزون
             const stockContainer = document.getElementById('scanResultStockContainer');
             if (stockContainer) {
-                if (matchedProduct.stock <= 0) {
+                if (!scaleInfo && matchedProduct.stock <= 0) {
                     stockContainer.style.background = '#fbe9e7';
                     stockContainer.querySelector('.stock-label').style.color = '#c62828';
                     stockEl.style.color = '#c62828';
-                } else if (matchedProduct.stock <= 5) {
+                } else if (!scaleInfo && matchedProduct.stock <= 5) {
                     stockContainer.style.background = '#fff3e0';
                     stockContainer.querySelector('.stock-label').style.color = '#e65100';
                     stockEl.style.color = '#e65100';
@@ -6618,6 +6723,18 @@ if (ledgerProdBarcodeInp) {
     ledgerProdBarcodeInp.addEventListener('change', () => {
         const val = ledgerProdBarcodeInp.value.trim();
         if (val) applyLedgerMarketplaceDefaults(val);
+        const scaleInfo = parseScaleBarcode(val);
+        if (scaleInfo) {
+            const found = (typeof barcodeCatalogData !== 'undefined' && Array.isArray(barcodeCatalogData) && barcodeCatalogData.length > 0)
+                ? barcodeCatalogData.find(p => String(p.barcode).split(',').map(b => b.trim().toLowerCase()).includes(scaleInfo.itemCode.toLowerCase()) || (scaleInfo.itemCode === '000001' && p.name && p.name.includes('كاندي')))
+                : null;
+            const ledgerProdName = document.getElementById('ledgerProdName');
+            const ledgerProdQty = document.getElementById('ledgerProdQty');
+            if (ledgerProdName) ledgerProdName.value = found ? found.name : 'كاندي بالوزن';
+            if (ledgerProdQty) ledgerProdQty.value = scaleInfo.weightKg;
+            showToast(`<i class='fa-solid fa-scale-balanced'></i> تم قراءة استيكر ميزان: ${scaleInfo.weightGrams} جم (${scaleInfo.weightKg} كجم)`, "success");
+            return;
+        }
         if (val && typeof barcodeCatalogData !== 'undefined' && barcodeCatalogData.length > 0) {
             const found = barcodeCatalogData.find(p => String(p.barcode).split(',').map(b => b.trim().toLowerCase()).includes(val.toLowerCase()));
             if (found && found.name) {
@@ -10935,6 +11052,15 @@ window.searchDriverOrder = async function() {
         searchInvBarcodeBtn.addEventListener('click', () => {
             let val = invProdBarcode.value.trim().toLowerCase();
             if(!val) return;
+            const scaleInfo = parseScaleBarcode(val);
+            if (scaleInfo) {
+                invProdName.value = 'كاندي بالوزن';
+                if (invProdQty) invProdQty.value = scaleInfo.weightKg;
+                invProdBarcode.value = val;
+                if (invProdExpiry) invProdExpiry.value = '';
+                showToast("<i class='fa-solid fa-scale-balanced'></i> تم قراءة استيكر ميزان: كاندي بالوزن (" + scaleInfo.weightGrams + " جم)", "success");
+                return;
+            }
             let exactMatch = barcodeCatalogData.find(p => p.barcode && String(p.barcode).split(',').map(b=>b.trim().toLowerCase()).includes(val));
             if (exactMatch) {
                 invProdName.value = exactMatch.name;
