@@ -6090,6 +6090,168 @@ const getSupportedFormats = () => {
     return undefined;
 };
 
+// ==========================================
+// 🔍 نظام التكبير الذكي للكاميرا (Pinch-to-Zoom & Hardware Camera Zoom)
+// بدون أزرار: تكبير مباشر بالإصبعين (Pinch)، ونقرتين سريعتين (Double Tap)
+// ==========================================
+window.attachCameraPinchToZoom = function(containerId) {
+    const container = typeof containerId === 'string' ? document.getElementById(containerId) : containerId;
+    if (!container) return;
+
+    // إلغاء أي مستمعين سابقين للحاوية لتفادي التكرار
+    if (container._pinchAbortController) {
+        try { container._pinchAbortController.abort(); } catch (e) {}
+    }
+
+    const video = container.querySelector('video');
+    if (!video) {
+        setTimeout(() => {
+            if (typeof window.attachCameraPinchToZoom === 'function') {
+                window.attachCameraPinchToZoom(containerId);
+            }
+        }, 250);
+        return;
+    }
+
+    container.style.position = 'relative';
+    container.style.overflow = 'hidden';
+    container.style.touchAction = 'none';
+
+    video.style.transformOrigin = 'center center';
+    video.style.transition = 'transform 0.08s ease-out';
+
+    // شارة عرض نسبة التكبير اللحظية بشكل طافي وأنيق يختفي تلقائياً
+    let badge = container.querySelector('.camera-zoom-badge');
+    if (!badge) {
+        badge = document.createElement('div');
+        badge.className = 'camera-zoom-badge';
+        badge.style.cssText = 'position: absolute; top: 12px; left: 50%; transform: translateX(-50%); background: rgba(10, 25, 47, 0.85); color: #00E5FF; padding: 4px 14px; border-radius: 20px; font-size: 0.88rem; font-weight: 800; font-family: monospace, sans-serif; z-index: 99999; pointer-events: none; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(0, 229, 255, 0.45); opacity: 0; transition: opacity 0.3s ease, transform 0.15s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.4); direction: ltr;';
+        badge.innerHTML = '🔍 <span>1.0x</span>';
+        container.appendChild(badge);
+    }
+
+    const stream = video.srcObject;
+    const track = (stream && stream.getVideoTracks) ? stream.getVideoTracks()[0] : null;
+    let capabilities = {};
+    let hasHardware = false;
+    let minZoom = 1.0;
+    let maxZoom = 5.0;
+    let step = 0.1;
+    let currentZoom = 1.0;
+
+    try {
+        if (track && typeof track.getCapabilities === 'function') {
+            capabilities = track.getCapabilities() || {};
+            if (capabilities.zoom) {
+                hasHardware = true;
+                minZoom = capabilities.zoom.min || 1.0;
+                maxZoom = capabilities.zoom.max || 5.0;
+                step = capabilities.zoom.step || 0.1;
+                console.log(`[CameraZoom] Hardware zoom active (${minZoom}x to ${maxZoom}x, step ${step})`);
+            }
+        }
+    } catch (e) {
+        console.warn('[CameraZoom] Capabilities error:', e);
+    }
+
+    let hardwareWorking = hasHardware;
+    let hideBadgeTimer = null;
+
+    const showBadge = (val) => {
+        if (!badge) return;
+        const span = badge.querySelector('span');
+        if (span) span.innerText = `${val.toFixed(1)}x`;
+        badge.style.opacity = '1';
+        badge.style.transform = 'translateX(-50%) scale(1.05)';
+        setTimeout(() => { if (badge) badge.style.transform = 'translateX(-50%) scale(1)'; }, 100);
+
+        if (hideBadgeTimer) clearTimeout(hideBadgeTimer);
+        hideBadgeTimer = setTimeout(() => {
+            if (badge) badge.style.opacity = '0';
+        }, 1500);
+    };
+
+    const applyZoom = (targetZoom) => {
+        let clamped = Math.max(minZoom, Math.min(maxZoom, targetZoom));
+        if (step > 0 && step < 1) {
+            clamped = Math.round(clamped * 10) / 10;
+        } else if (step >= 1) {
+            clamped = Math.round(clamped);
+        }
+        currentZoom = clamped;
+        showBadge(currentZoom);
+
+        if (hardwareWorking && track) {
+            track.applyConstraints({ advanced: [{ zoom: Number(currentZoom.toFixed(1)) }] })
+                .then(() => {
+                    video.style.transform = 'scale(1)';
+                })
+                .catch(() => {
+                    hardwareWorking = false;
+                    video.style.transform = `scale(${currentZoom})`;
+                });
+        } else {
+            video.style.transform = `scale(${currentZoom})`;
+        }
+    };
+
+    // إعداد AbortController للأحداث
+    const abortController = new AbortController();
+    container._pinchAbortController = abortController;
+    const { signal } = abortController;
+
+    // إيماءات التكبير بالإصبعين (Pinch to Zoom) ونقرتين سريعتين (Double Tap)
+    let startDist = 0;
+    let startZoom = 1.0;
+    let lastTapTime = 0;
+
+    container.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2) {
+            e.preventDefault();
+            startDist = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+            startZoom = currentZoom;
+        } else if (e.touches.length === 1) {
+            const now = Date.now();
+            if (now - lastTapTime < 300) {
+                // نقرتان سريعتان (Double Tap): التبديل السريع بين 1x و 2x
+                e.preventDefault();
+                const next = (currentZoom > 1.4) ? minZoom : Math.min(maxZoom, 2.0);
+                applyZoom(next);
+            }
+            lastTapTime = now;
+        }
+    }, { passive: false, signal });
+
+    container.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 2 && startDist > 0) {
+            e.preventDefault();
+            e.stopPropagation();
+            const currentDist = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+            const scaleFactor = currentDist / startDist;
+            applyZoom(startZoom * scaleFactor);
+        }
+    }, { passive: false, signal });
+
+    container.addEventListener('touchend', (e) => {
+        if (e.touches.length < 2) {
+            startDist = 0;
+        }
+    }, { passive: true, signal });
+
+    // دعم عجلة الماوس لمن يستخدم لابتوب أو كمبيوتر
+    container.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const delta = -e.deltaY * 0.003;
+        applyZoom(currentZoom + delta);
+    }, { passive: false, signal });
+};
+
 function startBarcodeScanner() {
     try {
         if (html5QrcodeScanner) {
@@ -6103,6 +6265,13 @@ function startBarcodeScanner() {
         let config = { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.0 };
 
         html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
+            .then(() => {
+                setTimeout(() => {
+                    if (typeof window.attachCameraPinchToZoom === 'function') {
+                        window.attachCameraPinchToZoom('reader');
+                    }
+                }, 300);
+            })
             .catch(err => {
                 console.error("تعذر تشغيل الكاميرا:", err);
                 showToast("تعذر تشغيل الكاميرا، يمكنك استخدام البحث اليدوي أو رفع صورة.", "warning");
@@ -6115,6 +6284,11 @@ function startBarcodeScanner() {
 
 function stopBarcodeScanner() {
     try {
+        const reader = document.getElementById('reader');
+        if (reader && reader._pinchAbortController) {
+            try { reader._pinchAbortController.abort(); } catch (e) {}
+            reader._pinchAbortController = null;
+        }
         if (html5QrcodeScanner) {
             html5QrcodeScanner.stop().then(() => {
                 html5QrcodeScanner.clear();

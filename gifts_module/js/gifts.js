@@ -1097,6 +1097,13 @@
                     this.state.scannerFacingMode = fallbackFacing;
                 }
 
+                // تفعيل التكبير الذكي بالإصبعين (Pinch to zoom) ونقرتين سريعتين بدون أزرار
+                if (typeof window.attachCameraPinchToZoom === 'function') {
+                    setTimeout(() => {
+                        window.attachCameraPinchToZoom('gifts-reader-box');
+                    }, 300);
+                }
+
                 // بعد نجاح فتح الكاميرا، استعلام قائمة الكاميرات المتاحة لتسهيل التبديل لاحقاً
                 try {
                     if (window.Html5Qrcode && typeof window.Html5Qrcode.getCameras === 'function') {
@@ -1172,7 +1179,13 @@
             }
 
             const readerBox = document.getElementById('gifts-reader-box');
-            if (readerBox) readerBox.innerHTML = '';
+            if (readerBox) {
+                if (readerBox._pinchAbortController) {
+                    try { readerBox._pinchAbortController.abort(); } catch (e) {}
+                    readerBox._pinchAbortController = null;
+                }
+                readerBox.innerHTML = '';
+            }
         },
 
         // صوت Beep مميز وفاخر عند مسح الباركود
