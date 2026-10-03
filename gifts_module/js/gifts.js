@@ -1104,6 +1104,17 @@
                     }, 300);
                 }
 
+                // كبسولة التبديل البصري للعدسات المتعددة (للأجهزة التي بها عدسة تيليفوتو / بيريسكوب)
+                if (typeof window.setupCameraLensSwitcher === 'function') {
+                    setTimeout(() => {
+                        window.setupCameraLensSwitcher('gifts-reader-box', async (newCameraId) => {
+                            await this.stopCameraBarcodeScanner(true);
+                            this.state.selectedCameraId = newCameraId;
+                            await this.startCameraBarcodeScanner();
+                        }, this.state.selectedCameraId);
+                    }, 350);
+                }
+
                 // بعد نجاح فتح الكاميرا، استعلام قائمة الكاميرات المتاحة لتسهيل التبديل لاحقاً
                 try {
                     if (window.Html5Qrcode && typeof window.Html5Qrcode.getCameras === 'function') {
@@ -1184,6 +1195,8 @@
                     try { readerBox._pinchAbortController.abort(); } catch (e) {}
                     readerBox._pinchAbortController = null;
                 }
+                const oldSwitcher = readerBox.querySelector('.camera-lens-switcher');
+                if (oldSwitcher) oldSwitcher.remove();
                 readerBox.innerHTML = '';
             }
         },
