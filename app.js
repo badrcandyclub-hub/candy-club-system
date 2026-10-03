@@ -6252,93 +6252,23 @@ window.attachCameraPinchToZoom = function(containerId) {
     }, { passive: false, signal });
 };
 
-// ==========================================
-// 📷 المكتشف الذكي للعدسات المتعددة (Multi-Camera Optical Lens Switcher)
-// يتعرف تلقائياً على كاميرات الهاتف: لو الهاتف به عدسة مقربة (Telephoto / 3x Periscope)
-// يظهر كبسولة أنيقة للتبديل البصري، وإذا كان هاتفاً عادياً لا يظهر أي شيء نهائياً
-// ==========================================
-window.setupCameraLensSwitcher = async function(containerId, onSwitchCameraCallback, activeCameraId = null) {
-    const container = typeof containerId === 'string' ? document.getElementById(containerId) : containerId;
-    if (!container || !window.Html5Qrcode || typeof window.Html5Qrcode.getCameras !== 'function') return;
-
-    try {
-        const cameras = await window.Html5Qrcode.getCameras();
-        if (!cameras || cameras.length <= 1) return;
-
-        // فلترة الكاميرات الخلفية فقط
-        const backCameras = cameras.filter(c => {
-            const lbl = (c.label || '').toLowerCase();
-            return !lbl.includes('front') && !lbl.includes('user') && !lbl.includes('selfie') && !lbl.includes('أمام');
-        });
-
-        // إذا كان هناك كاميرا خلفية واحدة فقط (هاتف عادي)، لا ننشئ أي زر نهائياً!
-        if (backCameras.length <= 1) return;
-
-        // إزالة أي كبسولة سابقة
-        const oldSwitcher = container.querySelector('.camera-lens-switcher');
-        if (oldSwitcher) oldSwitcher.remove();
-
-        const primaryCam = backCameras[0];
-        // البحث عن كاميرا التيليفوتو أو البيريسكوب، أو آخر كاميرا خلفية ذات مؤشر أعلى
-        const telephotoCam = backCameras.find(c => /tele|zoom|بيريسكوب|3x|2x|aux|extra/i.test(c.label)) || backCameras[backCameras.length - 1];
-
-        if (primaryCam.id === telephotoCam.id) return;
-
-        const isTelephotoActive = activeCameraId === telephotoCam.id;
-
-        const switcher = document.createElement('div');
-        switcher.className = 'camera-lens-switcher';
-        switcher.style.cssText = 'position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); display: inline-flex; align-items: center; background: rgba(15, 23, 42, 0.85); padding: 3px; border-radius: 9999px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(56, 189, 248, 0.35); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4); z-index: 99998; direction: ltr; user-select: none; gap: 2px;';
-
-        switcher.innerHTML = `
-            <button type="button" class="lens-switch-btn ${!isTelephotoActive ? 'active' : ''}" data-cam="${primaryCam.id}" style="border: none; background: ${!isTelephotoActive ? 'rgba(56, 189, 248, 0.25)' : 'transparent'}; color: ${!isTelephotoActive ? '#38bdf8' : '#94a3b8'}; padding: 4px 12px; border-radius: 9999px; font-size: 0.82rem; font-weight: 800; cursor: pointer; transition: all 0.2s; font-family: monospace;">1x</button>
-            <button type="button" class="lens-switch-btn ${isTelephotoActive ? 'active' : ''}" data-cam="${telephotoCam.id}" style="border: none; background: ${isTelephotoActive ? 'rgba(56, 189, 248, 0.25)' : 'transparent'}; color: ${isTelephotoActive ? '#38bdf8' : '#94a3b8'}; padding: 4px 12px; border-radius: 9999px; font-size: 0.82rem; font-weight: 800; cursor: pointer; transition: all 0.2s; font-family: monospace;">3x <span style="font-size:0.65rem; opacity:0.85; font-family: sans-serif;">بصري</span></button>
-        `;
-
-        switcher.querySelectorAll('.lens-switch-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                const camId = btn.getAttribute('data-cam');
-                if (camId) {
-                    onSwitchCameraCallback(camId);
-                }
-            });
-        });
-
-        container.appendChild(switcher);
-    } catch (e) {
-        console.warn('[LensSwitcher] Detection error:', e);
-    }
-};
-
-let currentScannerCameraId = null;
-
-function startBarcodeScanner(targetCameraId = null) {
+function startBarcodeScanner() {
     try {
         if (html5QrcodeScanner) {
             return;
         }
 
-        currentScannerCameraId = targetCameraId;
         let formats = getSupportedFormats();
         let configObj = formats ? { formatsToSupport: formats } : undefined;
         html5QrcodeScanner = new Html5Qrcode("reader", configObj);
 
         let config = { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.0 };
-        let cameraToUse = targetCameraId ? targetCameraId : { facingMode: "environment" };
 
-        html5QrcodeScanner.start(cameraToUse, config, onScanSuccess, onScanFailure)
+        html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
             .then(() => {
                 setTimeout(() => {
                     if (typeof window.attachCameraPinchToZoom === 'function') {
                         window.attachCameraPinchToZoom('reader');
-                    }
-                    if (typeof window.setupCameraLensSwitcher === 'function') {
-                        window.setupCameraLensSwitcher('reader', (newCameraId) => {
-                            stopBarcodeScanner();
-                            setTimeout(() => startBarcodeScanner(newCameraId), 150);
-                        }, targetCameraId);
                     }
                 }, 300);
             })
@@ -6355,13 +6285,9 @@ function startBarcodeScanner(targetCameraId = null) {
 function stopBarcodeScanner() {
     try {
         const reader = document.getElementById('reader');
-        if (reader) {
-            if (reader._pinchAbortController) {
-                try { reader._pinchAbortController.abort(); } catch (e) {}
-                reader._pinchAbortController = null;
-            }
-            const oldSwitcher = reader.querySelector('.camera-lens-switcher');
-            if (oldSwitcher) oldSwitcher.remove();
+        if (reader && reader._pinchAbortController) {
+            try { reader._pinchAbortController.abort(); } catch (e) {}
+            reader._pinchAbortController = null;
         }
         if (html5QrcodeScanner) {
             html5QrcodeScanner.stop().then(() => {
