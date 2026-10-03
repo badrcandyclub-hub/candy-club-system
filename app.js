@@ -6120,13 +6120,13 @@ window.attachCameraPinchToZoom = function(containerId) {
     video.style.transformOrigin = 'center center';
     video.style.transition = 'transform 0.08s ease-out';
 
-    // شارة عرض نسبة التكبير اللحظية بشكل طافي وأنيق يختفي تلقائياً
+    // شارة عرض نسبة التكبير اللحظية بتصميم CSS راقي وعصري بدون أي إيموجي
     let badge = container.querySelector('.camera-zoom-badge');
     if (!badge) {
         badge = document.createElement('div');
         badge.className = 'camera-zoom-badge';
-        badge.style.cssText = 'position: absolute; top: 12px; left: 50%; transform: translateX(-50%); background: rgba(10, 25, 47, 0.85); color: #00E5FF; padding: 4px 14px; border-radius: 20px; font-size: 0.88rem; font-weight: 800; font-family: monospace, sans-serif; z-index: 99999; pointer-events: none; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid rgba(0, 229, 255, 0.45); opacity: 0; transition: opacity 0.3s ease, transform 0.15s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.4); direction: ltr;';
-        badge.innerHTML = '🔍 <span>1.0x</span>';
+        badge.style.cssText = 'position: absolute; top: 14px; left: 50%; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 7px; background: rgba(15, 23, 42, 0.85); color: #38bdf8; padding: 5px 14px; border-radius: 9999px; font-size: 0.88rem; font-weight: 700; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; z-index: 99999; pointer-events: none; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(56, 189, 248, 0.35); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45); opacity: 0; transition: opacity 0.25s ease, transform 0.15s ease; direction: ltr; user-select: none;';
+        badge.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="11" cy="11" r="7.5"></circle><line x1="21" y1="21" x2="16.5" y2="16.5"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg><span class="zoom-text" style="font-family: monospace, sans-serif; font-size: 0.95rem; font-weight: 800; letter-spacing: 0.5px;">1.0x</span>';
         container.appendChild(badge);
     }
 
@@ -6159,7 +6159,7 @@ window.attachCameraPinchToZoom = function(containerId) {
 
     const showBadge = (val) => {
         if (!badge) return;
-        const span = badge.querySelector('span');
+        const span = badge.querySelector('.zoom-text') || badge.querySelector('span');
         if (span) span.innerText = `${val.toFixed(1)}x`;
         badge.style.opacity = '1';
         badge.style.transform = 'translateX(-50%) scale(1.05)';
