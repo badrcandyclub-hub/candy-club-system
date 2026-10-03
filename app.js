@@ -6157,6 +6157,30 @@ window.attachCameraPinchToZoom = function(containerId) {
     let hardwareWorking = hasHardware;
     let hideBadgeTimer = null;
 
+    // كبسولة التبديل السريع البصري الذكية (تظهر فقط إذا كان الهاتف يدعم زووم هاردوير عالي مثل Realme 12 Pro+)
+    let lensBar = container.querySelector('.camera-lens-bar');
+    if (!lensBar && hasHardware && maxZoom >= 2.5) {
+        const targetHighZoom = maxZoom >= 3.0 ? 3.0 : 2.0;
+        lensBar = document.createElement('div');
+        lensBar.className = 'camera-lens-bar';
+        lensBar.style.cssText = 'position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); display: inline-flex; align-items: center; background: rgba(15, 23, 42, 0.85); padding: 3px; border-radius: 9999px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(56, 189, 248, 0.35); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4); z-index: 99998; direction: ltr; user-select: none; gap: 4px;';
+
+        lensBar.innerHTML = `
+            <button type="button" class="lens-step-btn active" data-zoom="1.0" style="border: none; background: rgba(56, 189, 248, 0.25); color: #38bdf8; padding: 4px 12px; border-radius: 9999px; font-size: 0.82rem; font-weight: 800; cursor: pointer; transition: all 0.2s; font-family: monospace;">1x</button>
+            <button type="button" class="lens-step-btn" data-zoom="${targetHighZoom}" style="border: none; background: transparent; color: #94a3b8; padding: 4px 12px; border-radius: 9999px; font-size: 0.82rem; font-weight: 800; cursor: pointer; transition: all 0.2s; font-family: monospace;">${targetHighZoom}x <span style="font-size:0.65rem; opacity:0.85; font-family: sans-serif;">بصري</span></button>
+        `;
+
+        lensBar.querySelectorAll('.lens-step-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                const z = parseFloat(btn.getAttribute('data-zoom'));
+                if (!isNaN(z)) applyZoom(z);
+            });
+        });
+        container.appendChild(lensBar);
+    }
+
     const showBadge = (val) => {
         if (!badge) return;
         const span = badge.querySelector('.zoom-text') || badge.querySelector('span');
@@ -6180,6 +6204,17 @@ window.attachCameraPinchToZoom = function(containerId) {
         }
         currentZoom = clamped;
         showBadge(currentZoom);
+
+        if (lensBar) {
+            const isHigh = currentZoom >= (maxZoom >= 3.0 ? 2.5 : 1.8);
+            const btns = lensBar.querySelectorAll('.lens-step-btn');
+            if (btns.length === 2) {
+                btns[0].style.background = !isHigh ? 'rgba(56, 189, 248, 0.25)' : 'transparent';
+                btns[0].style.color = !isHigh ? '#38bdf8' : '#94a3b8';
+                btns[1].style.background = isHigh ? 'rgba(56, 189, 248, 0.25)' : 'transparent';
+                btns[1].style.color = isHigh ? '#38bdf8' : '#94a3b8';
+            }
+        }
 
         if (hardwareWorking && track) {
             track.applyConstraints({ advanced: [{ zoom: Number(currentZoom.toFixed(1)) }] })
