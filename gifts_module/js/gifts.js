@@ -564,6 +564,7 @@
                     );
                 }
                 if (product) {
+                    if (event && event.target) event.target.value = '';
                     this.onBarcodeEntered(cleanRaw);
                     return;
                 }
@@ -611,10 +612,80 @@
             dropdown.style.display = 'block';
         },
 
+        // إضافة الصنف مباشرة وفوراً إلى سلة البوكيه (مسح سريع بمسدس الباركود والكاميرا بدون تسقيط أصناف)
+        addItemDirectlyToBasket(product, options = {}) {
+            if (!product) return;
+            const addQty = options.qty || 1;
+            const itemPrice = options.price !== undefined ? Number(options.price) : Number(product.price || 0);
+            const itemWeight = options.weight || '';
+
+            const cleanSingleBarcode = product.primaryBarcode || (product.barcodes && product.barcodes[0]) || product.barcode;
+            const existingIndex = this.state.draft.items.findIndex(i => 
+                i.barcode === product.barcode && 
+                i.price === itemPrice && 
+                (i.weight || '') === (itemWeight || '')
+            );
+
+            let itemName = product.name;
+            if (itemWeight && !itemName.includes('جم') && !itemName.includes('جرام')) {
+                itemName = `${itemName} (${itemWeight} جم)`;
+            }
+
+            if (existingIndex > -1) {
+                this.state.draft.items[existingIndex].qty += addQty;
+            } else {
+                this.state.draft.items.push({
+                    barcode: product.barcode,
+                    primaryBarcode: cleanSingleBarcode,
+                    name: itemName,
+                    price: itemPrice,
+                    weight: itemWeight,
+                    qty: addQty,
+                    stock: product.stock
+                });
+            }
+
+            this.state.lastAddedBarcode = product.barcode;
+            this.onDraftChanged();
+            this.renderDraftBasket();
+            this.renderRecentAddedList();
+            this.closeFoundCard();
+            this.playBeepSound();
+
+            const weightBadge = itemWeight ? ` (${itemWeight} جم)` : '';
+            this.showToastNotification(`✓ تمت إضافة (${itemName}) للبوكيه`);
+
+            // التأكد من الحفاظ على مؤشر الماوس داخل حقل الباركود للاستمرار بالمسح
+            const input = document.getElementById('gifts-scanner-input');
+            if (input) {
+                input.value = '';
+                input.focus();
+            }
+        },
+
         onBarcodeEntered(barcode) {
             const clean = String(barcode || '').trim().replace(/[\s-]+/g, '');
 
-            // فحص هل الباركود الممسوح هو باركود ميزان ذكي (EAN-13 وزني مثل 2000001005309)
+            // تفريغ فوري لحقل الإدخال لمنع تكرار القراءة
+            const input = document.getElementById('gifts-scanner-input');
+            if (input) input.value = '';
+
+            // إذا كان هناك صنف تم اختياره يدوياً في البطاقة مسبقاً، نؤكده أولاً حتى لا يسقط
+            if (this.state.selectedFoundProduct) {
+                const currentP = this.state.selectedFoundProduct;
+                const matchesCurrent = (currentP.barcodes && currentP.barcodes.includes(clean)) || currentP.barcode === clean;
+                if (matchesCurrent) {
+                    this.confirmAddScannedProduct();
+                    if (input) input.focus();
+                    return;
+                } else {
+                    this.confirmAddScannedProduct();
+                }
+            }
+
+            if (!clean) return;
+
+            // 1. فحص باركود ميزان الكاندي الذكي (EAN-13 وزني مثل 2000001005309)
             const scaleInfo = this.parseScaleBarcode(clean);
             if (scaleInfo) {
                 let product = this.findProduct(scaleInfo.itemCode);
@@ -626,57 +697,45 @@
                     );
                 }
                 if (product) {
-                    this.selectFoundProduct(product, {
-                        weight: scaleInfo.weightGrams,
-                        isScaleScan: true
-                    });
-                    const input = document.getElementById('gifts-scanner-input');
-                    if (input) {
-                        input.value = '';
-                        input.blur();
+                    let ratePerKg = 600;
+                    if (product.price && Number(product.price) >= 100) {
+                        ratePerKg = Number(product.price);
                     }
+                    const calculatedPrice = Number(((scaleInfo.weightGrams / 1000) * ratePerKg).toFixed(2));
+                    this.addItemDirectlyToBasket(product, {
+                        qty: 1,
+                        price: calculatedPrice,
+                        weight: scaleInfo.weightGrams,
+                        isScale: true
+                    });
                     const dropdown = document.getElementById('gifts-autocomplete-dropdown');
                     if (dropdown) dropdown.style.display = 'none';
                     return;
                 }
             }
 
-            // إذا كان الحقل فارغا والبطاقة معروضة، يتم تثبيت الإضافة للبوكيه مباشرة
-            if (!clean) {
-                if (this.state.selectedFoundProduct) {
-                    this.confirmAddScannedProduct();
-                }
-                return;
-            }
-
-            // إذا كانت البطاقة معروضة بالفعل لنفس الصنف وتم مسح باركوده مجددا بمسدس الباركود، تزيد الكمية
-            if (this.state.selectedFoundProduct) {
-                const currentP = this.state.selectedFoundProduct;
-                const matchesCurrent = (currentP.barcodes && currentP.barcodes.includes(clean)) || currentP.barcode === clean;
-                if (matchesCurrent) {
-                    this.updateFoundQty(1);
-                    this.playBeepSound();
-                    const input = document.getElementById('gifts-scanner-input');
-                    if (input) input.value = '';
-                    return;
-                }
-            }
-
+            // 2. فحص الباركود في الكتالوج العادي والإضافة الفورية للسلة
             let product = this.findProduct(clean);
             if (!product && this.state.currentSearchResults && this.state.currentSearchResults.length > 0) {
                 product = this.state.currentSearchResults[0];
             }
+
             if (product) {
-                this.selectFoundProduct(product);
-                const input = document.getElementById('gifts-scanner-input');
-                if (input) {
-                    input.value = '';
-                    input.blur();
-                }
+                this.addItemDirectlyToBasket(product, {
+                    qty: 1,
+                    price: product.price || 0,
+                    weight: ''
+                });
                 const dropdown = document.getElementById('gifts-autocomplete-dropdown');
                 if (dropdown) dropdown.style.display = 'none';
             } else {
                 this.showToastNotification("لم يتم العثور على صنف مطابق لهذا الباركود أو الاسم");
+                this.playBeepSound();
+                if (input) {
+                    input.value = clean;
+                    input.select();
+                    input.focus();
+                }
             }
         },
 
@@ -5073,8 +5132,46 @@
     };
 
     
-        // ============================================================
 window.GiftsApp = GiftsApp;
+
+    // مستمع الباركود العام لقسم الهدايا: يلتقط مسح مسدس الباركود حتى لو لم يكن المؤشر داخل حقل الإدخال
+    let giftsGlobalBarcodeBuffer = '';
+    let giftsLastKeyTime = 0;
+
+    window.addEventListener('keydown', (e) => {
+        const giftsScreen = document.getElementById('gifts-app-root') || document.querySelector('.gifts-container');
+        if (!giftsScreen) return;
+        const style = window.getComputedStyle(giftsScreen);
+        if (style.display === 'none' || style.visibility === 'hidden') return;
+
+        const target = e.target;
+        const isOtherInput = target && target.tagName === 'INPUT' && target.id !== 'gifts-scanner-input' && target.type !== 'button';
+        const isTextarea = target && target.tagName === 'TEXTAREA';
+        if (isOtherInput || isTextarea) return;
+
+        const now = Date.now();
+        // مسدسات الباركود ترسل الحروف بسرعة فائقة جداً (أقل من 120ms بين الحرف والآخر)
+        if (now - giftsLastKeyTime > 120) {
+            giftsGlobalBarcodeBuffer = '';
+        }
+        giftsLastKeyTime = now;
+
+        if (e.key === 'Enter') {
+            const candidate = giftsGlobalBarcodeBuffer.trim();
+            giftsGlobalBarcodeBuffer = '';
+            if (candidate.length >= 3 && window.GiftsApp && typeof window.GiftsApp.onBarcodeEntered === 'function') {
+                e.preventDefault();
+                window.GiftsApp.onBarcodeEntered(candidate);
+                const input = document.getElementById('gifts-scanner-input');
+                if (input) {
+                    input.value = '';
+                    input.focus();
+                }
+            }
+        } else if (e.key && e.key.length === 1) {
+            giftsGlobalBarcodeBuffer += e.key;
+        }
+    });
 
 })(window);
 

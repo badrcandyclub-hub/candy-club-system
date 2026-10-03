@@ -6171,17 +6171,20 @@ function parseScaleBarcode(rawBarcode) {
     };
 }
 
+let lastScannedBarcodeVal = '';
+let lastScannedBarcodeTime = 0;
+
 function processBarcodeAction(val) {
-    if (globalScanLock) {
-        console.warn('Scan ignored due to debounce lock (too fast).');
-        return; // Prevent duplicate rapid scans from physical scanners
+    const now = Date.now();
+    const cleanBarcode = String(val || '').trim();
+
+    // منع تكرار نفس الباركود فقط خلال 300ms (حماية ارتداد المسدس أو فريمات الكاميرا المتتالية) مع السماح بمسح باركودات مختلفة بسرعة فورية
+    if (cleanBarcode && cleanBarcode === lastScannedBarcodeVal && (now - lastScannedBarcodeTime) < 300) {
+        console.warn('Scan ignored due to duplicate bounce lock (same barcode within 300ms).');
+        return;
     }
-    
-    // Lock scanning for 1 full second
-    globalScanLock = true;
-    setTimeout(() => {
-        globalScanLock = false;
-    }, 1000);
+    lastScannedBarcodeVal = cleanBarcode;
+    lastScannedBarcodeTime = now;
 
     const scaleInfo = parseScaleBarcode(val);
 
@@ -6257,7 +6260,10 @@ function processBarcodeAction(val) {
             if (ledgerProdBarcode) ledgerProdBarcode.value = val;
             showToast(`<i class='fa-solid fa-scale-balanced'></i> تم قراءة استيكر ميزان: ${found ? found.name : 'كاندي بالوزن'} (${scaleInfo.weightGrams} جم / ${scaleInfo.weightKg} كجم)`, "success");
             playBeepSound();
-            if (ledgerProdQty) ledgerProdQty.focus();
+            if (ledgerProdBarcode) {
+                ledgerProdBarcode.focus();
+                ledgerProdBarcode.select();
+            }
             return;
         }
 
@@ -6265,12 +6271,28 @@ function processBarcodeAction(val) {
             const found = barcodeCatalogData.find(p => String(p.barcode).split(',').map(b=>b.trim().toLowerCase()).includes(val.toLowerCase()));
             if (found) {
                 if (ledgerProdName) ledgerProdName.value = found.name;
-                if (ledgerProdQty) ledgerProdQty.value = found.stock ? Number(found.stock) : 0;
+                // تعيين الكمية الافتراضية 1 إن لم تكن محددة مسبقاً
+                if (ledgerProdQty && (!ledgerProdQty.value || Number(ledgerProdQty.value) <= 0)) {
+                    ledgerProdQty.value = 1;
+                }
                 if (ledgerProdBarcode) ledgerProdBarcode.value = val;
-                showToast("<i class='fa-solid fa-check'></i> " + found.name + " | الكمية: " + found.stock + " | السعر: " + found.price + " ج.م", "success");
+
+                // استدعاء تاريخ الصلاحية تلقائياً إن وجد في قاعدة البيانات
+                const ledgerProdDate = document.getElementById('ledgerProdDate');
+                if (ledgerProdDate && !ledgerProdDate.value) {
+                    let expMatch = (typeof expiryData !== 'undefined' && Array.isArray(expiryData))
+                        ? expiryData.find(e => String(e.barcode).trim() === val || String(e.name).trim() === String(found.name).trim())
+                        : null;
+                    if (expMatch && expMatch.expiryDate) {
+                        let d = new Date(expMatch.expiryDate);
+                        if (!isNaN(d.getTime())) ledgerProdDate.value = d.toLocaleDateString('en-CA');
+                    }
+                }
+
+                showToast("<i class='fa-solid fa-check'></i> " + found.name + " | الرصيد الحالي: " + (found.stock || 0) + " | السعر: " + found.price + " ج.م", "success");
             } else {
                 if (ledgerProdName) ledgerProdName.value = '';
-                if (ledgerProdQty) ledgerProdQty.value = '';
+                if (ledgerProdQty && (!ledgerProdQty.value || Number(ledgerProdQty.value) <= 0)) ledgerProdQty.value = 1;
                 if (ledgerProdBarcode) ledgerProdBarcode.value = val; 
                 showToast("<i class='fa-solid fa-triangle-exclamation'></i> تنبيه: الباركود (" + val + ") غير مسجل في الكاشير حالياً، سيتم حفظه مؤقتاً بانتظار إضافته على الكاشير والمزامنة.", "warning");
             }
@@ -6278,9 +6300,13 @@ function processBarcodeAction(val) {
             showToast("<i class='fa-solid fa-triangle-exclamation'></i> لم يتم التعرف على النص أو الكتالوج فارغ", "error");
         }
         
+        applyLedgerMarketplaceDefaults(val);
         playBeepSound();
-        if (ledgerProdQty) {
-            ledgerProdQty.focus();
+
+        // الحفاظ الدائم على التركيز في خانة الباركود لمسح المنتج التالي مباشرة بمسدس الباركود
+        if (ledgerProdBarcode) {
+            ledgerProdBarcode.focus();
+            ledgerProdBarcode.select();
         }
     } else {
         handleBarcodeMatch(val);
@@ -6668,10 +6694,17 @@ const ledgerModal = document.getElementById('ledgerModal');
 
 if (openLedgerBtn) {
     openLedgerBtn.addEventListener('click', () => {
+        if (typeof currentScannerMode !== 'undefined') {
+            currentScannerMode = 'ledger';
+        }
         if (!document.getElementById('ledgerRegDate').value) {
             document.getElementById('ledgerRegDate').value = new Date().toISOString().split('T')[0];
         }
         ledgerModal.style.display = 'flex';
+        setTimeout(() => {
+            const bInp = document.getElementById('ledgerProdBarcode');
+            if (bInp) bInp.focus();
+        }, 150);
     });
 }
 
@@ -6783,6 +6816,28 @@ if (ledgerProdBarcodeInp) {
     });
 }
 
+// حماية حقل الكمية في الاستلامات: لو الكاشير مسح باركود بالخطأ أثناء وقوف المؤشر على الكمية، يتم تحويله للباركود فوراً
+const ledgerProdQtyInp = document.getElementById('ledgerProdQty');
+if (ledgerProdQtyInp) {
+    ledgerProdQtyInp.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const val = String(ledgerProdQtyInp.value || '').trim();
+            if (val.length >= 6) {
+                e.preventDefault();
+                ledgerProdQtyInp.value = '1';
+                const bInp = document.getElementById('ledgerProdBarcode');
+                if (bInp) {
+                    bInp.value = val;
+                    if (typeof processBarcodeAction === 'function') {
+                        currentScannerMode = 'ledger';
+                        processBarcodeAction(val);
+                    }
+                }
+            }
+        }
+    });
+}
+
 const startOrderCameraScannerBtn = document.getElementById('startOrderCameraScannerBtn');
 if (startOrderCameraScannerBtn) {
     startOrderCameraScannerBtn.addEventListener('click', () => {
@@ -6863,7 +6918,10 @@ if (addLedgerItemBtn) {
         document.getElementById('ledgerProdDate').value = '';
         document.getElementById('ledgerProdLocation').value = '';
         document.getElementById('ledgerProdNotes').value = '';
-        if (document.getElementById('ledgerProdBarcode')) document.getElementById('ledgerProdBarcode').value = '';
+        if (document.getElementById('ledgerProdBarcode')) {
+            document.getElementById('ledgerProdBarcode').value = '';
+            document.getElementById('ledgerProdBarcode').focus();
+        }
         applyLedgerMarketplaceDefaults('');
     });
 }
