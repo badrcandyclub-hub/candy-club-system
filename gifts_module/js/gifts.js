@@ -1065,9 +1065,9 @@
                     aspectRatio: 1.6
                 };
 
-                // فتح الكاميرا الخلفية (environment) كافتراضي أساسي للهواتف والمحمول
+                // فتح الكاميرا الخلفية (environment) دائماً كافتراضي لمسح الباركود
                 const desiredFacing = this.state.scannerFacingMode || 'environment';
-                let cameraConfig = this.state.selectedCameraId || { facingMode: desiredFacing };
+                let cameraConfig = this.state.selectedCameraId ? { deviceId: { exact: this.state.selectedCameraId } } : { facingMode: desiredFacing };
 
                 try {
                     await scanner.start(
@@ -1082,11 +1082,11 @@
                         }
                     );
                 } catch (primaryErr) {
-                    console.warn("Primary camera start failed, attempting fallback:", primaryErr);
-                    // في حال فشل الكاميرا الخلفية (مثلاً على جهاز كمبيوتر بمفردة ويب كام أمامية فقط)
-                    const fallbackFacing = (desiredFacing === 'environment') ? 'user' : 'environment';
+                    console.warn("Primary camera start failed, retrying with standard environment camera:", primaryErr);
+                    this.state.selectedCameraId = null;
+                    this.state.scannerFacingMode = 'environment';
                     await scanner.start(
-                        { facingMode: fallbackFacing },
+                        { facingMode: "environment" },
                         config,
                         (decodedText) => {
                             this.stopCameraBarcodeScanner();
@@ -1094,7 +1094,6 @@
                         },
                         () => {}
                     );
-                    this.state.scannerFacingMode = fallbackFacing;
                 }
 
                 // تفعيل التكبير الذكي بالإصبعين (Pinch to zoom) ونقرتين سريعتين بدون أزرار
