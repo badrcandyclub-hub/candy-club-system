@@ -12507,6 +12507,28 @@ function checkSession() {
             
             document.getElementById('login-screen').style.display = 'none';
             applyPermissions();
+            
+            // Sync user permissions in background to immediately reflect admin changes
+            if (currentUser && currentUser.username && window.supabase) {
+                window.supabase.from('users').select('permissions, display_name, status').eq('username', currentUser.username).single()
+                    .then(({ data: freshUser }) => {
+                        if (freshUser && freshUser.status === "نشط") {
+                            let updated = false;
+                            if (freshUser.permissions && currentUser.permissions !== freshUser.permissions) {
+                                currentUser.permissions = freshUser.permissions;
+                                updated = true;
+                            }
+                            if (freshUser.display_name && currentUser.displayName !== freshUser.display_name) {
+                                currentUser.displayName = freshUser.display_name;
+                                updated = true;
+                            }
+                            if (updated) {
+                                localStorage.setItem('cc_user', JSON.stringify(currentUser));
+                                applyPermissions();
+                            }
+                        }
+                    }).catch(err => console.warn("Permission sync background check:", err));
+            }
             // تمت إزالة التحميل التلقائي لتفعيل الـ Lazy Loading
             if (typeof updateSuspendedCount === 'function') updateSuspendedCount();
         } catch (e) {
@@ -13111,9 +13133,34 @@ window.ensureGiftsReportsAdminPermCard = function() {
     }
 };
 
+window.ensureWaitlistAdminPermCard = function() {
+    let modal = document.getElementById('userModal');
+    if (!modal) return;
+    if (modal.querySelector('input[name="u-perms"][value="waitlist"]')) return;
+    
+    let targetCard = modal.querySelector('input[name="u-perms"][value="gifts_reports"]')?.closest('.perm-card') || 
+                    modal.querySelector('input[name="u-perms"][value="gifts"]')?.closest('.perm-card') || 
+                    modal.querySelector('input[name="u-perms"][value="gifts_reports"]')?.closest('label');
+                    
+    let card = document.createElement('label');
+    card.className = 'perm-card';
+    card.setAttribute('onclick', 'togglePermCard(this)');
+    card.innerHTML = '<input type="checkbox" name="u-perms" value="waitlist"> <span class="perm-icon" style="color: #e91e63;"><i class="fa-solid fa-hourglass-half"></i></span> <span class="perm-text">نواقص العملاء (الانتظار)</span>';
+
+    if (targetCard && targetCard.parentNode) {
+        targetCard.parentNode.insertBefore(card, targetCard.nextSibling);
+    } else {
+        let grid = modal.querySelector('.perms-grid') || modal.querySelector('[style*="grid"]');
+        if (grid) grid.appendChild(card);
+    }
+};
+
 window.openAddUserModal = function() {
     if (typeof window.ensureGiftsReportsAdminPermCard === 'function') {
         window.ensureGiftsReportsAdminPermCard();
+    }
+    if (typeof window.ensureWaitlistAdminPermCard === 'function') {
+        window.ensureWaitlistAdminPermCard();
     }
     document.getElementById('user-mode').value = 'add';
     document.getElementById('u-username').value = '';
@@ -13137,6 +13184,9 @@ window.openAddUserModal = function() {
 window.openEditUserModal = function(username, displayName, permsStr, status, password) {
     if (typeof window.ensureGiftsReportsAdminPermCard === 'function') {
         window.ensureGiftsReportsAdminPermCard();
+    }
+    if (typeof window.ensureWaitlistAdminPermCard === 'function') {
+        window.ensureWaitlistAdminPermCard();
     }
     document.getElementById('user-mode').value = 'edit';
     document.getElementById('u-username').value = username;
@@ -13195,6 +13245,17 @@ window.handleUserSubmit = async function(e) {
             if (password !== '') updates.password = password;
             await supabase.from('users').update(updates).eq('username', username);
         }
+        
+        // Immediately sync local session if current user edited their own account
+        if (typeof currentUser !== 'undefined' && currentUser && (currentUser.username === username || currentUser.email === username)) {
+            currentUser.permissions = perms.join(',');
+            currentUser.displayName = displayName;
+            localStorage.setItem('cc_user', JSON.stringify(currentUser));
+            if (typeof applyPermissions === 'function') {
+                applyPermissions();
+            }
+        }
+        
         showToast(mode === 'add' ? 'تمت إضافة المستخدم بنجاح' : 'تم تعديل المستخدم بنجاح', 'success');
         document.getElementById('userModal').style.display = 'none';
         // Refresh usersData
@@ -13211,6 +13272,9 @@ window.handleUserSubmit = async function(e) {
 window.loadUsersList = function() {
     if (typeof window.ensureGiftsReportsAdminPermCard === 'function') {
         window.ensureGiftsReportsAdminPermCard();
+    }
+    if (typeof window.ensureWaitlistAdminPermCard === 'function') {
+        window.ensureWaitlistAdminPermCard();
     }
     let tbody = document.getElementById('usersTbody');
     if (!tbody) return;
