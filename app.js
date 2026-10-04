@@ -56,6 +56,42 @@ if (window.supabase) {
 }
 
 // ==========================================
+// 🏷️ Barcode Aliases & Smart Match Normalizer
+// ==========================================
+const KNOWN_BARCODE_ALIASES = {
+    '5011061058027': '7015661058027', // دابل ديرز جيلى بين شطه 90 جم
+    '7015661058027': '5011061058027',
+    '855400091266': '8857660091266',  // سموكي بوبينج تفاح 7 جم
+    '8857660091266': '855400091266',
+};
+window.KNOWN_BARCODE_ALIASES = KNOWN_BARCODE_ALIASES;
+
+window.getBarcodeVariants = function(rawBarcode) {
+    if (!rawBarcode) return [];
+    const set = new Set();
+    const cleanRaw = String(rawBarcode).trim().toLowerCase();
+    const subCodes = cleanRaw.split(',').map(s => s.trim()).filter(Boolean);
+    const aliases = window.KNOWN_BARCODE_ALIASES || KNOWN_BARCODE_ALIASES;
+    
+    subCodes.forEach(code => {
+        if (!code) return;
+        set.add(code);
+        if (aliases[code]) {
+            set.add(String(aliases[code]).trim().toLowerCase());
+        }
+        for (const [a, b] of Object.entries(aliases)) {
+            if (a.toLowerCase() === code) set.add(b.toLowerCase());
+            if (b.toLowerCase() === code) set.add(a.toLowerCase());
+        }
+        if (code.length === 12) set.add('0' + code);
+        if (code.length === 13 && code.startsWith('0')) set.add(code.substring(1));
+        const stripped = code.replace(/^0+/, '');
+        if (stripped) set.add(stripped);
+    });
+    return Array.from(set);
+};
+
+// ==========================================
 // ⭐ Supabase Local Backend Interceptor
 // ==========================================
 const originalFetch = window.fetch;
@@ -1369,6 +1405,13 @@ async function handleSupabaseRequest(url, options) {
                     const fbStockMap = {};
                     const fbProductMap = new Map();
 
+                    const aliases = window.KNOWN_BARCODE_ALIASES || {
+                        '5011061058027': '7015661058027',
+                        '7015661058027': '5011061058027',
+                        '855400091266': '8857660091266',
+                        '8857660091266': '855400091266'
+                    };
+
                     fbItems.forEach(item => {
                         if (!item) return;
                         const b = item.Barcode;
@@ -1397,11 +1440,8 @@ async function handleSupabaseRequest(url, options) {
                         }
                     });
 
-                    // ربط الباركودات البديلة المعروفة لضمان التطابق التلقائي مع أصناف الكاشير
-                    const KNOWN_BARCODE_ALIASES = {
-                        '5011061058027': '7015661058027', // دابل ديرز جيلى بين شطه 90 جم
-                    };
-                    for (const [aliasBc, origBc] of Object.entries(KNOWN_BARCODE_ALIASES)) {
+                    // ربط الباركودات البديلة المعروفة لضمان التطابق التلقائي المتبادل مع أصناف الكاشير
+                    for (const [aliasBc, origBc] of Object.entries(aliases)) {
                         if (fbProductMap.has(origBc)) {
                             const pData = fbProductMap.get(origBc);
                             fbProductMap.set(aliasBc, pData);
@@ -1410,40 +1450,49 @@ async function handleSupabaseRequest(url, options) {
                                 fbStockMap[aliasBc] = fbStockMap[origBc];
                             }
                         }
+                        if (fbProductMap.has(aliasBc)) {
+                            const pData = fbProductMap.get(aliasBc);
+                            fbProductMap.set(origBc, pData);
+                            fbProductMap.set(origBc.toLowerCase(), pData);
+                            if (fbStockMap.hasOwnProperty(aliasBc)) {
+                                fbStockMap[origBc] = fbStockMap[aliasBc];
+                            }
+                        }
                     }
+
+                    // دالة ذكية للبحث عن المنتج باستخدام كافة تنوعات الباركود والبادئات
+                    const findFbProduct = (barcodeStr) => {
+                        if (!barcodeStr) return null;
+                        const variants = (typeof window.getBarcodeVariants === 'function')
+                            ? window.getBarcodeVariants(barcodeStr)
+                            : String(barcodeStr).split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+                        for (let v of variants) {
+                            if (fbProductMap.has(v)) return fbProductMap.get(v);
+                            if (fbProductMap.has(v.toLowerCase())) return fbProductMap.get(v.toLowerCase());
+                        }
+                        return null;
+                    };
 
                     // 2. Fetch Supabase expiries
                     const { data: gsData } = await fetchAllSupabaseRows(supabase.from('expiries').select('*'));
-                    if (!gsData || gsData.length === 0) {
-                        responseData = { success: true, message: 'لا توجد بيانات في شيت الصلاحيات' };
-                        break;
-                    }
-
-                    // 3. Match and update names of products to official POS/Firebase catalog name
                     let namesUpdatedCount = 0;
-                    for (const row of gsData) {
-                        const bcode = String(row.barcode || '').trim();
-                        const currentName = String(row.product_name || '').trim();
-                        if (!bcode) continue;
+                    if (gsData && gsData.length > 0) {
+                        for (const row of gsData) {
+                            const bcode = String(row.barcode || '').trim();
+                            const currentName = String(row.product_name || '').trim();
+                            if (!bcode) continue;
 
-                        let match = null;
-                        const subBcodes = bcode.split(',');
-                        for (let sbc of subBcodes) {
-                            const cleanSub = sbc.trim();
-                            if (cleanSub) {
-                                match = fbProductMap.get(cleanSub) || fbProductMap.get(cleanSub.toLowerCase());
-                                if (match) break;
+                            const match = findFbProduct(bcode);
+                            if (match && match.name && match.name.trim() && match.name.trim() !== currentName) {
+                                await supabase.from('expiries').update({ product_name: match.name.trim() }).eq('id', row.id);
+                                row.product_name = match.name.trim();
+                                namesUpdatedCount++;
                             }
                         }
-
-                        if (match && match.name && match.name.trim() && match.name.trim() !== currentName) {
-                            await supabase.from('expiries').update({ product_name: match.name.trim() }).eq('id', row.id);
-                            row.product_name = match.name.trim();
-                            namesUpdatedCount++;
-                        }
                     }
 
-                    // Also update placeholder/outdated product names in immutable archive (expiry_receipts_log) by barcode ONLY (leaves quantities untouched)
+                    // 3. Update placeholder/outdated product names in immutable archive (expiry_receipts_log) by barcode ONLY (strictly leaves quantities untouched)
+                    let archiveUpdatedCount = 0;
                     try {
                         const { data: archiveRows, error: arcErr } = await fetchAllSupabaseRows(
                             supabase.from('expiry_receipts_log')
@@ -1457,22 +1506,14 @@ async function handleSupabaseRequest(url, options) {
                                 const curName = String(arcRow.product_name || '').trim();
                                 if (!bcode) continue;
 
-                                let match = null;
-                                const subBcodes = bcode.split(',');
-                                for (let sbc of subBcodes) {
-                                    const cleanSub = sbc.trim();
-                                    if (cleanSub) {
-                                        match = fbProductMap.get(cleanSub) || fbProductMap.get(cleanSub.toLowerCase());
-                                        if (match) break;
-                                    }
-                                }
-
+                                const match = findFbProduct(bcode);
                                 if (match && match.name && match.name.trim() && match.name.trim() !== curName) {
                                     await supabase.from('expiry_receipts_log').update({ product_name: match.name.trim() }).eq('id', arcRow.id);
                                     if (Array.isArray(window.receiptsArchiveData)) {
                                         let winItem = window.receiptsArchiveData.find(i => String(i.id) === String(arcRow.id));
                                         if (winItem) winItem.name = match.name.trim();
                                     }
+                                    archiveUpdatedCount++;
                                 }
                             }
                         }
@@ -1480,76 +1521,16 @@ async function handleSupabaseRequest(url, options) {
                         console.warn("Could not sync names to expiry_receipts_log:", e);
                     }
 
-                    // 4. Aggregate by barcode for stock adjustment
-                    const gsMap = {};
-                    gsData.forEach(row => {
-                        const bcode = String(row.barcode || '').trim();
-                        if (!bcode) return;
-                        const qty = parseFloat(row.qty) || 0;
-                        if (!gsMap[bcode]) gsMap[bcode] = { totalQty: 0, rows: [] };
-                        gsMap[bcode].totalQty += qty;
-                        gsMap[bcode].rows.push({ id: row.id, qty: qty, expDate: row.expiry_date || '', name: row.product_name });
-                    });
-
-                    // 5. Compare and adjust quantities via FIFO
-                    let changesCount = 0;
-                    for (const bcode in gsMap) {
-                        const gsTotal = gsMap[bcode].totalQty;
-                        let fbTotal = null;
-                        if (fbStockMap.hasOwnProperty(bcode)) {
-                            fbTotal = fbStockMap[bcode];
-                        } else if (fbStockMap.hasOwnProperty(bcode.toLowerCase())) {
-                            fbTotal = fbStockMap[bcode.toLowerCase()];
-                        } else {
-                            const subBcs = bcode.split(',');
-                            for (let sbc of subBcs) {
-                                const cs = sbc.trim();
-                                if (fbStockMap.hasOwnProperty(cs)) { fbTotal = fbStockMap[cs]; break; }
-                                if (fbStockMap.hasOwnProperty(cs.toLowerCase())) { fbTotal = fbStockMap[cs.toLowerCase()]; break; }
-                            }
-                        }
-                        if (fbTotal === null) continue;
-                        const diff = gsTotal - fbTotal;
-
-                        if (diff > 0) {
-                            // Sold - deduct using FIFO
-                            let qtyToDeduct = diff;
-                            const rows = gsMap[bcode].rows.sort((a, b) => new Date(a.expDate) - new Date(b.expDate));
-                            for (const r of rows) {
-                                if (qtyToDeduct <= 0) break;
-                                if (r.qty > 0) {
-                                    const newQty = Math.max(0, r.qty - qtyToDeduct);
-                                    qtyToDeduct -= r.qty;
-                                    await supabase.from('expiries').update({ qty: newQty }).eq('id', r.id);
-                                    changesCount++;
-                                }
-                            }
-                        } else if (diff < 0) {
-                            // Returned - add to nearest expiry
-                            const rows = gsMap[bcode].rows.sort((a, b) => new Date(a.expDate) - new Date(b.expDate));
-                            if (rows.length > 0) {
-                                const newQty = rows[0].qty + Math.abs(diff);
-                                await supabase.from('expiries').update({ qty: newQty }).eq('id', rows[0].id);
-                                changesCount++;
-                            }
-                        }
+                    // ملاحظة هامة: المزامنة في هذه الصفحة تقتصر حصراً على تصحيح ومطابقة أسماء المنتجات مع الكاشير
+                    // ولا تقوم بتعديل أي كميات أو تطبيق خصومات FIFO حفاظاً على دقة الأرصدة
+                    let msg = '';
+                    const totalUpdated = namesUpdatedCount + archiveUpdatedCount;
+                    if (totalUpdated > 0) {
+                        msg = `تم بنجاح تحديث وتصحيح أسماء ${totalUpdated} منتج في الصلاحيات وسجل الاستلامات طبقاً لبيانات الكاشير`;
+                    } else {
+                        msg = 'البيانات وأسماء المنتجات متطابقة تماماً مع الكاشير';
                     }
-
-                    if (changesCount > 0) {
-                        await window.secureDelete('expiries', 'qty', '0');
-                    }
-
-                    let msgParts = [];
-                    if (namesUpdatedCount > 0) {
-                        msgParts.push(`تم تحديث وتصحيح أسماء ${namesUpdatedCount} منتج طبقاً للكاشير`);
-                    }
-                    if (changesCount > 0) {
-                        msgParts.push(`تم تحديث أرصدة ${changesCount} منتج مع الكاشير`);
-                    }
-                    if (msgParts.length === 0) {
-                        msgParts.push('البيانات وأسماء المنتجات متطابقة تماماً مع الكاشير');
-                    }
-                    responseData = { success: true, message: msgParts.join(' ، ') };
+                    responseData = { success: true, message: msg };
                 } catch (fbErr) {
                     responseData = { success: false, error: 'فشل الاتصال بقاعدة بيانات الفايربيز: ' + fbErr.message };
                 }
@@ -5984,21 +5965,26 @@ let html5QrcodeScanner = null;
 const FIREBASE_PRODUCTS_URL = 'https://candyclubsync-default-rtdb.firebaseio.com/products.json';
 const FIREBASE_CACHE_KEY = 'candy_firebase_products_cache';
 
-const KNOWN_BARCODE_ALIASES = {
-    '5011061058027': '7015661058027', // دابل ديرز جيلى بين شطه 90 جم
-};
-
 // تحويل بيانات Firebase الخام إلى مصفوفة منتجات
 function parseFirebaseProducts(data) {
     const result = [];
     if (data) {
         const items = Array.isArray(data) ? data : Object.values(data);
+        const aliases = window.KNOWN_BARCODE_ALIASES || {
+            '5011061058027': '7015661058027',
+            '7015661058027': '5011061058027',
+            '855400091266': '8857660091266',
+            '8857660091266': '855400091266'
+        };
         items.forEach(item => {
             if (item && item.Barcode && item.Name) {
                 let rawBc = Array.isArray(item.Barcode) ? item.Barcode.join(',') : String(item.Barcode);
-                for (const [aliasBc, origBc] of Object.entries(KNOWN_BARCODE_ALIASES)) {
+                for (const [aliasBc, origBc] of Object.entries(aliases)) {
                     if (rawBc.includes(origBc) && !rawBc.includes(aliasBc)) {
                         rawBc += ',' + aliasBc;
+                    }
+                    if (rawBc.includes(aliasBc) && !rawBc.includes(origBc)) {
+                        rawBc += ',' + origBc;
                     }
                 }
                 result.push({
@@ -6079,13 +6065,10 @@ if (scanAnotherBtn) {
 const getSupportedFormats = () => {
     if (typeof Html5QrcodeSupportedFormats !== 'undefined') {
         return [
-            Html5QrcodeSupportedFormats.QR_CODE,
             Html5QrcodeSupportedFormats.EAN_13,
             Html5QrcodeSupportedFormats.EAN_8,
             Html5QrcodeSupportedFormats.CODE_128,
-            Html5QrcodeSupportedFormats.CODE_39,
-            Html5QrcodeSupportedFormats.UPC_A,
-            Html5QrcodeSupportedFormats.UPC_E
+            Html5QrcodeSupportedFormats.UPC_A
         ];
     }
     return undefined;
@@ -15765,6 +15748,20 @@ window.runSyncNow = async function() {
             }
 
             if (fullCatalog && fullCatalog.length > 0) {
+                const findCatalogMatch = (rawBc) => {
+                    if (!rawBc) return null;
+                    const variants = (typeof window.getBarcodeVariants === 'function')
+                        ? window.getBarcodeVariants(rawBc)
+                        : String(rawBc).split(',').map(b => b.trim().toLowerCase()).filter(Boolean);
+                    return fullCatalog.find(c => {
+                        if (!c) return false;
+                        const catVariants = (typeof window.getBarcodeVariants === 'function')
+                            ? window.getBarcodeVariants(c.barcode)
+                            : String(c.barcode || '').split(',').map(b => b.trim().toLowerCase()).filter(Boolean);
+                        return variants.some(v => catVariants.includes(v));
+                    });
+                };
+
                 const { data: allExpiriesWithBarcode } = await fetchAllSupabaseRows(
                     supabase.from('expiries')
                         .select('id, barcode, product_name')
@@ -15775,18 +15772,17 @@ window.runSyncNow = async function() {
                 if (allExpiriesWithBarcode && allExpiriesWithBarcode.length > 0) {
                     for (let exp of allExpiriesWithBarcode) {
                         const curName = String(exp.product_name || '').trim();
-                        const rawBc = String(exp.barcode || '').trim().toLowerCase();
+                        const rawBc = String(exp.barcode || '').trim();
                         if (!rawBc) continue;
-                        const subBcs = rawBc.split(',').map(b => b.trim()).filter(Boolean);
                         
-                        const catalogMatch = fullCatalog.find(c => {
-                            if (!c) return false;
-                            const catCodes = String(c.barcode || '').split(',').map(b => b.trim().toLowerCase());
-                            return subBcs.some(sb => catCodes.includes(sb));
-                        });
-                        
+                        const catalogMatch = findCatalogMatch(rawBc);
                         if (catalogMatch && catalogMatch.name && catalogMatch.name.trim() && catalogMatch.name.trim() !== curName) {
                             await supabase.from('expiries').update({ product_name: catalogMatch.name.trim() }).eq('id', exp.id);
+                            exp.product_name = catalogMatch.name.trim();
+                            if (typeof expiryData !== 'undefined' && Array.isArray(expiryData)) {
+                                let inMem = expiryData.find(e => String(e.id || '').endsWith(String(exp.id)) || (e.barcode && String(e.barcode).trim() === rawBc));
+                                if (inMem) inMem.name = catalogMatch.name.trim();
+                            }
                             updatedCount++;
                         }
                     }
@@ -15803,28 +15799,38 @@ window.runSyncNow = async function() {
                     if (allArchiveWithBarcode && allArchiveWithBarcode.length > 0) {
                         for (let arc of allArchiveWithBarcode) {
                             const curName = String(arc.product_name || '').trim();
-                            const rawBc = String(arc.barcode || '').trim().toLowerCase();
+                            const rawBc = String(arc.barcode || '').trim();
                             if (!rawBc) continue;
-                            const subBcs = rawBc.split(',').map(b => b.trim()).filter(Boolean);
                             
-                            const catalogMatch = fullCatalog.find(c => {
-                                if (!c) return false;
-                                const catCodes = String(c.barcode || '').split(',').map(b => b.trim().toLowerCase());
-                                return subBcs.some(sb => catCodes.includes(sb));
-                            });
-                            
+                            const catalogMatch = findCatalogMatch(rawBc);
                             if (catalogMatch && catalogMatch.name && catalogMatch.name.trim() && catalogMatch.name.trim() !== curName) {
                                 await supabase.from('expiry_receipts_log').update({ product_name: catalogMatch.name.trim() }).eq('id', arc.id);
+                                arc.product_name = catalogMatch.name.trim();
                                 if (Array.isArray(window.receiptsArchiveData)) {
                                     let winArc = window.receiptsArchiveData.find(i => String(i.id) === String(arc.id));
                                     if (winArc) winArc.name = catalogMatch.name.trim();
                                 }
+                                updatedCount++;
                             }
                         }
                     }
                 } catch(e) {
                     console.warn("Could not sync archive names in runSyncNow:", e);
                 }
+            }
+
+            // Immediately refresh views and calendar
+            if (typeof renderExpiryDashboard === 'function') {
+                renderExpiryDashboard();
+            }
+            if (typeof window.renderMarketplaceArchive === 'function') {
+                window.renderMarketplaceArchive();
+            }
+            if (typeof renderExpiryCalendarDots === 'function') {
+                renderExpiryCalendarDots();
+            }
+            if (typeof window.loadReceiptsArchiveData === 'function') {
+                await window.loadReceiptsArchiveData();
             }
 
             let msg = data.message || 'تمت المزامنة بنجاح';
