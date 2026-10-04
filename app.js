@@ -5857,7 +5857,7 @@ function renderWaitlistTab(list = oosData) {
     const enrichedItems = allItems.map(item => {
         const stockInfo = checkProductStoreStock(item.product);
         if (stockInfo.available) availableCount++;
-        if (item.reason === 'استفسار عن توفر') inquiriesCount++;
+        if (item.reason === 'استفسار عن توفر' || String(item.reason).includes('صفحة الروابط')) inquiriesCount++;
         else if (item.reason === 'انتظار نزول عرض') offersCount++;
         return { ...item, stockInfo };
     });
@@ -5889,7 +5889,7 @@ function renderWaitlistTab(list = oosData) {
         if (waitlistActiveFilter === 'available') {
             return item.stockInfo.available;
         } else if (waitlistActiveFilter === 'inquiry') {
-            return item.reason === 'استفسار عن توفر';
+            return item.reason === 'استفسار عن توفر' || String(item.reason).includes('صفحة الروابط');
         } else if (waitlistActiveFilter === 'offer') {
             return item.reason === 'انتظار نزول عرض';
         }
@@ -5931,13 +5931,40 @@ function renderWaitlistTab(list = oosData) {
             `;
         }
 
+        let rawReason = item.reason || '';
+        let attachedImg = null;
+        if (rawReason.includes('[IMG:')) {
+            const m = rawReason.match(/\[IMG:(data:image\/[^\]]+)\]/);
+            if (m) {
+                attachedImg = m[1];
+                rawReason = rawReason.replace(m[0], '').replace(/\s*\|\s*$/, '').trim();
+            }
+        }
+
         let reasonBadgeHtml = '';
-        if (item.reason === 'انتظار نزول عرض') {
+        if (rawReason.includes('صفحة الروابط') || rawReason.includes('Hub') || rawReason.includes('الموقع')) {
+            reasonBadgeHtml = `<span style="background: #fdf2f8; color: #db2777; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; border: 1px solid #fbcfe8;"><i class="fa-solid fa-link"></i> من صفحة الروابط</span>`;
+        } else if (rawReason === 'انتظار نزول عرض') {
             reasonBadgeHtml = `<span style="background: #ffedd5; color: #c2410c; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;"><i class="fa-solid fa-tags"></i> انتظار عرض</span>`;
-        } else if (item.reason === 'طلب كمية خاصة') {
+        } else if (rawReason === 'طلب كمية خاصة') {
             reasonBadgeHtml = `<span style="background: #f3e8ff; color: #7e22ce; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;"><i class="fa-solid fa-boxes-stacked"></i> كمية خاصة</span>`;
         } else {
             reasonBadgeHtml = `<span style="background: #e0f2fe; color: #0369a1; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;"><i class="fa-solid fa-bell"></i> استفسار توفر</span>`;
+        }
+
+        let imageBoxHtml = '';
+        if (attachedImg) {
+            imageBoxHtml = `
+                <div style="margin-top: 10px; border-top: 1px dashed #e2e8f0; padding-top: 8px;">
+                    <a href="${attachedImg}" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none; background: #ffffff; padding: 6px 10px; border-radius: 8px; border: 1px solid #cbd5e1; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                        <img src="${attachedImg}" style="width: 44px; height: 44px; border-radius: 6px; object-fit: cover; border: 1px solid #e2e8f0;" alt="صورة الصنف">
+                        <div style="text-align: right;">
+                            <div style="font-size: 0.8rem; font-weight: 800; color: #0f172a;"><i class="fa-solid fa-camera" style="color: #e91e63;"></i> صورة من العميل</div>
+                            <div style="font-size: 0.72rem; color: #64748b;">اضغط للمعاينة بحجم أكبر 🔍</div>
+                        </div>
+                    </a>
+                </div>
+            `;
         }
 
         const card = document.createElement('div');
@@ -5949,7 +5976,7 @@ function renderWaitlistTab(list = oosData) {
                     <div>
                         <div style="font-weight: 800; font-size: 1.05rem; color: #0f172a; display: flex; align-items: center; gap: 7px;">
                             <i class="fa-solid fa-user-circle" style="color: #94a3b8; font-size: 1.15rem;"></i>
-                            ${item.customer || 'بدون اسم'}
+                            ${item.customer || 'عميل من الرابط'}
                         </div>
                         <a href="tel:${item.phone}" style="display: inline-flex; align-items: center; gap: 5px; color: #64748b; font-size: 0.88rem; text-decoration: none; margin-top: 3px; font-weight: 600;" dir="ltr">
                             <i class="fa-solid fa-phone" style="font-size: 0.75rem; color: #0284c7;"></i> ${item.phone}
@@ -5969,6 +5996,7 @@ function renderWaitlistTab(list = oosData) {
                     <div style="font-size: 1.05rem; font-weight: 800; color: #1e293b; line-height: 1.3;">
                         ${item.product}
                     </div>
+                    ${imageBoxHtml}
                 </div>
             </div>
 
