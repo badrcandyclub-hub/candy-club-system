@@ -2659,6 +2659,7 @@ async function loadDataFromServer(customDate = null) {
         // Expiries
         window.expiriesData = (rawExpiries || []).map(e => ({
             id: (e.product_name || '') + '|' + (e.qty || '') + '|' + (e.expiry_date || ''),
+            dbId: e.id,
             name: e.product_name, qty: e.qty, expiryDate: e.expiry_date,
             location: e.location, registrarName: e.registrar_name,
             regDate: e.reg_date, receiver: e.receiver, notes: e.notes,
@@ -8067,14 +8068,97 @@ window.toggleExpirySelection = function(idString, isChecked) {
 };
 
 window.openEditExpiryModal = function(id) {
-    let item = expiryData.find(i => String(i.id) === String(id));
-    if (!item) return;
+    if (!id && id !== 0) return;
+    const idStr = String(id).trim();
+    let item = null;
+    let isArchiveItem = false;
     
-    document.getElementById('editExpiryId').value = item.id;
+    // 1. Check in expiryData
+    if (Array.isArray(expiryData)) {
+        item = expiryData.find(i => String(i.id) === idStr || String(i.dbId) === idStr);
+    }
+    
+    // 2. Check in window.receiptsArchiveData (used by receipts batches)
+    if (!item && Array.isArray(window.receiptsArchiveData)) {
+        item = window.receiptsArchiveData.find(i => String(i.id) === idStr);
+        if (item) isArchiveItem = true;
+    }
+    
+    // 3. Check in window.expiriesData
+    if (!item && Array.isArray(window.expiriesData)) {
+        item = window.expiriesData.find(i => String(i.id) === idStr || String(i.dbId) === idStr);
+    }
+
+    // 4. Check in current batch items if present
+    if (!item && Array.isArray(window._currentBatchItems)) {
+        item = window._currentBatchItems.find(i => String(i.id) === idStr);
+        if (item) isArchiveItem = true;
+    }
+
+    // 5. Try composite match (name|qty|date or name|qty|date|dbId)
+    if (!item && idStr.includes('|')) {
+        let parts = idStr.split('|');
+        let pName = parts[0];
+        let pQty = parts[1];
+        let pExp = parts[2];
+        let pDbId = parts[3];
+        
+        if (Array.isArray(expiryData)) {
+            item = expiryData.find(i => (pDbId && String(i.dbId) === pDbId) || (i.name === pName && i.expiryDate === pExp));
+        }
+        if (!item && Array.isArray(window.receiptsArchiveData)) {
+            item = window.receiptsArchiveData.find(i => (pDbId && String(i.id) === pDbId) || (i.name === pName && i.expiryDate === pExp));
+            if (item) isArchiveItem = true;
+        }
+    }
+
+    // 6. Fallback: match from DOM card in open batch modal
+    if (!item) {
+        const batchCard = document.querySelector(`.batch-item-card[data-item-id="${id}"]`);
+        if (batchCard) {
+            const nameEl = batchCard.querySelector('.batch-item-name');
+            const cardName = nameEl ? nameEl.innerText.replace(/[\n\r]+/g, ' ').trim() : '';
+            if (cardName && Array.isArray(window.receiptsArchiveData)) {
+                item = window.receiptsArchiveData.find(i => i.name === cardName);
+                if (item) isArchiveItem = true;
+            }
+        }
+    }
+    
+    if (!item) {
+        console.warn("openEditExpiryModal: Item not found with id", id);
+        if (typeof showToast === 'function') {
+            showToast("تعذر العثور على بيانات هذا الصنف للتعديل", "warning");
+        }
+        return;
+    }
+    
+    const editModal = document.getElementById('editExpiryModal');
+    if (!editModal) {
+        console.error("editExpiryModal element not found in DOM");
+        return;
+    }
+
+    const idInput = document.getElementById('editExpiryId');
+    idInput.value = item.id;
+    idInput.dataset.itemKey = idStr;
+    idInput.dataset.isArchive = isArchiveItem ? "true" : "false";
+    idInput.dataset.archiveId = (isArchiveItem || /^\d+$/.test(idStr)) ? idStr : (item.dbId || '');
+    idInput.dataset.origName = item.name || '';
+    idInput.dataset.origQty = item.qty !== undefined ? item.qty : '';
+    idInput.dataset.origExpiry = item.expiryDate || '';
+    idInput.dataset.origReceiver = item.receiver || '';
+    idInput.dataset.origLocation = item.location || '';
+    idInput.dataset.origNotes = item.notes || '';
+    idInput.dataset.origBarcode = item.barcode || '';
+    idInput.dataset.regDate = item.regDate || '';
+
     if (document.getElementById('editExpiryName')) {
         document.getElementById('editExpiryName').value = item.name || '';
     }
-    document.getElementById('editExpiryQty').value = item.qty || '';
+    if (document.getElementById('editExpiryQty')) {
+        document.getElementById('editExpiryQty').value = item.qty !== undefined ? item.qty : '';
+    }
     
     let d = new Date(item.expiryDate);
     if (!isNaN(d.getTime())) {
@@ -8083,28 +8167,46 @@ window.openEditExpiryModal = function(id) {
         document.getElementById('editExpiryDate').value = item.expiryDate || '';
     }
     
-    document.getElementById('editExpiryReceiver').value = item.receiver || '';
-    document.getElementById('editExpiryLocation').value = item.location || '';
-    document.getElementById('editExpiryNotes').value = item.notes || '';
+    if (document.getElementById('editExpiryReceiver')) {
+        document.getElementById('editExpiryReceiver').value = item.receiver || '';
+    }
+    if (document.getElementById('editExpiryLocation')) {
+        document.getElementById('editExpiryLocation').value = item.location || '';
+    }
+    if (document.getElementById('editExpiryNotes')) {
+        document.getElementById('editExpiryNotes').value = item.notes || '';
+    }
     if (document.getElementById('editExpiryBarcode')) {
         document.getElementById('editExpiryBarcode').value = item.barcode || '';
     }
     
-    document.getElementById('editExpiryModal').style.display = 'flex';
+    editModal.style.zIndex = '10020';
+    editModal.style.display = 'flex';
 };
 
 window.closeEditExpiryModal = function() {
-    document.getElementById('editExpiryModal').style.display = 'none';
+    const editModal = document.getElementById('editExpiryModal');
+    if (editModal) editModal.style.display = 'none';
 };
 
 window.saveEditExpiryModal = async function() {
-    const id = document.getElementById('editExpiryId').value;
+    const idInput = document.getElementById('editExpiryId');
+    if (!idInput) return;
+    
+    const id = idInput.value;
+    const itemKey = idInput.dataset.itemKey || id;
+    const archiveId = idInput.dataset.archiveId;
+    const origName = idInput.dataset.origName || '';
+    const origExpiry = idInput.dataset.origExpiry || '';
+    const origReceiver = idInput.dataset.origReceiver || '';
+    const origRegDate = idInput.dataset.regDate || '';
+
     const prodName = document.getElementById('editExpiryName') ? document.getElementById('editExpiryName').value.trim() : '';
-    const qty = document.getElementById('editExpiryQty').value;
-    const date = document.getElementById('editExpiryDate').value;
-    const receiver = document.getElementById('editExpiryReceiver').value;
-    const location = document.getElementById('editExpiryLocation').value;
-    const notes = document.getElementById('editExpiryNotes').value;
+    const qty = document.getElementById('editExpiryQty') ? document.getElementById('editExpiryQty').value.trim() : '';
+    const date = document.getElementById('editExpiryDate') ? document.getElementById('editExpiryDate').value.trim() : '';
+    const receiver = document.getElementById('editExpiryReceiver') ? document.getElementById('editExpiryReceiver').value.trim() : '';
+    const location = document.getElementById('editExpiryLocation') ? document.getElementById('editExpiryLocation').value.trim() : '';
+    const notes = document.getElementById('editExpiryNotes') ? document.getElementById('editExpiryNotes').value.trim() : '';
     const barcode = document.getElementById('editExpiryBarcode') ? document.getElementById('editExpiryBarcode').value.trim() : '';
     
     if (!qty || !date || !receiver) {
@@ -8114,64 +8216,135 @@ window.saveEditExpiryModal = async function() {
     
     showToast("جاري حفظ التعديلات في قاعدة البيانات...", "info");
     
-    const updatePayload = {
-        qty: String(qty),
-        expiry_date: date,
-        receiver: receiver,
-        location: location || '',
-        notes: notes || ''
-    };
-    if (prodName) updatePayload.product_name = prodName;
-    if (barcode) updatePayload.barcode = barcode;
-    
     try {
-        let updateQuery = supabase.from('expiries').update(updatePayload);
-        let numericId = null;
-        if (/^\d+$/.test(String(id).trim())) {
-            numericId = parseInt(id);
-            updateQuery = updateQuery.eq('id', numericId);
-        } else {
-            // Find item in expiryData to get its real dbId
-            let foundItem = expiryData.find(i => String(i.id) === String(id));
-            if (foundItem && foundItem.dbId) {
-                numericId = foundItem.dbId;
-                updateQuery = updateQuery.eq('id', numericId);
-            } else {
-                let parts = String(id).split('|');
-                if (parts.length >= 4 && /^\d+$/.test(parts[3])) {
-                    numericId = parseInt(parts[3]);
-                    updateQuery = updateQuery.eq('id', numericId);
-                } else {
-                    updateQuery = updateQuery.eq('product_name', parts[0]).eq('expiry_date', parts[2] || date);
-                }
+        // 1. Update expiry_receipts_log in Supabase (the audit/receipt log)
+        const archivePayload = {
+            quantity: parseFloat(qty) || 0,
+            expiry_date: date,
+            receiver: receiver,
+            location: location || '',
+            notes: notes || ''
+        };
+        if (prodName) archivePayload.product_name = prodName;
+        if (barcode) archivePayload.barcode = barcode;
+
+        let archiveUpdated = false;
+        if (archiveId && /^\d+$/.test(String(archiveId).trim())) {
+            const { error: arcErr } = await supabase
+                .from('expiry_receipts_log')
+                .update(archivePayload)
+                .eq('id', parseInt(archiveId));
+            if (!arcErr) archiveUpdated = true;
+        }
+        
+        if (!archiveUpdated && origName) {
+            let q = supabase.from('expiry_receipts_log').update(archivePayload).eq('product_name', origName);
+            if (origExpiry) q = q.eq('expiry_date', origExpiry);
+            if (origRegDate) q = q.eq('reg_date', origRegDate);
+            await q;
+        }
+
+        // 2. Update expiries table in Supabase (the active inventory)
+        const expPayload = {
+            qty: String(qty),
+            expiry_date: date,
+            receiver: receiver,
+            location: location || '',
+            notes: notes || ''
+        };
+        if (prodName) expPayload.product_name = prodName;
+        if (barcode) expPayload.barcode = barcode;
+
+        let expUpdated = false;
+        let foundExp = (expiryData || []).find(i => String(i.id) === String(id) || String(i.dbId) === String(id) || String(i.id) === String(itemKey));
+        if (foundExp && foundExp.dbId) {
+            const { error: expErr } = await supabase
+                .from('expiries')
+                .update(expPayload)
+                .eq('id', foundExp.dbId);
+            if (!expErr) expUpdated = true;
+        }
+        
+        if (!expUpdated && /^\d+$/.test(String(id).trim()) && !archiveUpdated) {
+            const { error: numErr } = await supabase
+                .from('expiries')
+                .update(expPayload)
+                .eq('id', parseInt(id));
+            if (!numErr) expUpdated = true;
+        }
+        
+        if (!expUpdated && origName) {
+            let q2 = supabase.from('expiries').update(expPayload).eq('product_name', origName);
+            if (origExpiry) q2 = q2.eq('expiry_date', origExpiry);
+            await q2;
+        }
+
+        // 3. Update in-memory collections:
+        // A) window.receiptsArchiveData
+        if (Array.isArray(window.receiptsArchiveData)) {
+            let arcItem = window.receiptsArchiveData.find(i => 
+                String(i.id) === String(id) || 
+                String(i.id) === String(itemKey) || 
+                String(i.id) === String(archiveId) ||
+                (i.name === origName && i.expiryDate === origExpiry)
+            );
+            if (arcItem) {
+                if (prodName) arcItem.name = prodName;
+                arcItem.qty = parseFloat(qty) || 0;
+                arcItem.expiryDate = date;
+                arcItem.receiver = receiver;
+                arcItem.location = location || '';
+                arcItem.notes = notes || '';
+                if (barcode) arcItem.barcode = barcode;
             }
         }
-        
-        const { error } = await updateQuery;
-        if (error) {
-            console.error("Supabase update error:", error);
-            showToast("حدث خطأ أثناء التعديل في قاعدة البيانات: " + error.message, "error");
-            return;
+
+        // B) window._currentBatchItems (live batch array)
+        if (Array.isArray(window._currentBatchItems)) {
+            let bItem = window._currentBatchItems.find(it => 
+                String(it.id) === String(id) || 
+                String(it.id) === String(itemKey) || 
+                String(it.id) === String(archiveId) || 
+                (it.name === origName && it.expiryDate === origExpiry)
+            );
+            if (bItem) {
+                if (prodName) bItem.name = prodName;
+                bItem.qty = qty;
+                bItem.expiryDate = date;
+                bItem.receiver = receiver;
+                bItem.location = location || '';
+                bItem.notes = notes || '';
+                if (barcode) bItem.barcode = barcode;
+            }
         }
-        
-        showToast("<i class='fa-solid fa-check'></i> تم حفظ التعديلات في السيرفر بنجاح", "success");
-        closeEditExpiryModal();
-        
-        // Update in-memory expiryData
-        let item = expiryData.find(i => String(i.id) === String(id));
-        if (item) {
-            if (prodName) item.name = prodName;
-            item.qty = qty;
-            item.expiryDate = date;
-            item.receiver = receiver;
-            item.location = location || '';
-            item.notes = notes || '';
-            if (barcode) item.barcode = barcode;
+
+        // C) expiryData
+        if (Array.isArray(expiryData)) {
+            let item = expiryData.find(i => 
+                String(i.id) === String(id) || 
+                String(i.id) === String(itemKey) || 
+                String(i.dbId) === String(id) ||
+                (i.name === origName && i.expiryDate === origExpiry)
+            );
+            if (item) {
+                if (prodName) item.name = prodName;
+                item.qty = qty;
+                item.expiryDate = date;
+                item.receiver = receiver;
+                item.location = location || '';
+                item.notes = notes || '';
+                if (barcode) item.barcode = barcode;
+            }
         }
-        
-        // Also update window.expiriesData
+
+        // D) window.expiriesData
         if (Array.isArray(window.expiriesData)) {
-            let winItem = window.expiriesData.find(i => String(i.id) === String(id));
+            let winItem = window.expiriesData.find(i => 
+                String(i.id) === String(id) || 
+                String(i.id) === String(itemKey) || 
+                String(i.dbId) === String(id) ||
+                (i.name === origName && i.expiryDate === origExpiry)
+            );
             if (winItem) {
                 if (prodName) winItem.name = prodName;
                 winItem.qty = qty;
@@ -8182,12 +8355,14 @@ window.saveEditExpiryModal = async function() {
                 if (barcode) winItem.barcode = barcode;
             }
         }
-        
-        // Update item in open batch edit modal live
-        const batchCard = document.querySelector(`.batch-item-card[data-item-id="${id}"]`);
+
+        // 4. Update the card in the open batch edit modal live
+        const batchCard = document.querySelector(`.batch-item-card[data-item-id="${id}"], .batch-item-card[data-item-id="${itemKey}"]`);
         if (batchCard) {
             const nameEl = batchCard.querySelector('.batch-item-name');
-            if (nameEl && prodName) nameEl.innerHTML = `<i class="fa-solid fa-box-open" style="color: #ec4899; font-size: 0.9rem;"></i> ${prodName}`;
+            if (nameEl && prodName) {
+                nameEl.innerHTML = `<i class="fa-solid fa-box-open" style="color: #ec4899; font-size: 0.9rem;"></i> ${prodName}`;
+            }
             const metaEl = batchCard.querySelector('.batch-item-meta');
             if (metaEl) {
                 metaEl.innerHTML = `
@@ -8203,14 +8378,31 @@ window.saveEditExpiryModal = async function() {
                 `;
             }
         }
-        
-        renderExpiryDashboard();
+
+        // 5. Update total pieces counter in the batch edit modal header
+        const totalQtyBadge = document.getElementById('batchModalTotalQty');
+        if (totalQtyBadge) {
+            let totalSum = 0;
+            document.querySelectorAll('.batch-item-card').forEach(card => {
+                let text = card.innerText || '';
+                let m = text.match(/الكمية:\s*([\d.]+)/);
+                if (m) totalSum += parseFloat(m[1]) || 0;
+            });
+            totalQtyBadge.innerText = `${totalSum} قطعة`;
+        }
+
+        showToast("<i class='fa-solid fa-check'></i> تم حفظ التعديلات وتحديث قاعدة البيانات بنجاح", "success");
+        closeEditExpiryModal();
+
+        if (typeof renderExpiryDashboard === 'function') {
+            renderExpiryDashboard();
+        }
         if (document.getElementById('expiryDetailsSection') && document.getElementById('expiryDetailsSection').style.display === 'block') {
             showExpiryDetails(expiryCurrentCategory, false);
         }
     } catch(err) {
         console.error("Error saving expiry:", err);
-        showToast("حدث خطأ غير متوقع أثناء الحفظ", "error");
+        showToast("حدث خطأ أثناء حفظ التعديلات: " + (err.message || err), "error");
     }
 };
 
@@ -8909,7 +9101,7 @@ window.showBatchEditModal = function(bId, items, pdfTitleDate) {
                 <i class="fa-solid fa-layer-group" style="color: #10b981; font-size: 1.1rem;"></i>
                 <div>
                     <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">إجمالي القطع</div>
-                    <div style="font-size: 1.05rem; font-weight: 800; color: #059669;">${totalQty} قطعة</div>
+                    <div id="batchModalTotalQty" style="font-size: 1.05rem; font-weight: 800; color: #059669;">${totalQty} قطعة</div>
                 </div>
             </div>
         </div>
@@ -8925,6 +9117,7 @@ window.showBatchEditModal = function(bId, items, pdfTitleDate) {
     items.forEach(item => {
         let expFormatted = item.expiryDate || 'بدون تاريخ';
         let recFormatted = item.receiver || 'غير محدد';
+        let safeId = String(item.id).replace(/'/g, "\\'");
         html += `
             <div class="batch-item-card" data-item-id="${item.id}" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
                 <div style="display: flex; flex-direction: column; gap: 7px; flex: 1;">
@@ -8943,7 +9136,7 @@ window.showBatchEditModal = function(bId, items, pdfTitleDate) {
                         </span>
                     </div>
                 </div>
-                <button class="interactive-btn" style="background: linear-gradient(135deg, #2563eb, #0284c7); color: white; border: none; padding: 9px 16px; border-radius: 10px; cursor: pointer; font-size: 0.9rem; font-weight: 700; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2); white-space: nowrap;" onclick="openEditExpiryModal('${item.id}')">
+                <button class="interactive-btn batch-item-edit-btn" data-id="${item.id}" style="background: linear-gradient(135deg, #2563eb, #0284c7); color: white; border: none; padding: 9px 16px; border-radius: 10px; cursor: pointer; font-size: 0.9rem; font-weight: 700; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2); white-space: nowrap;" onclick="openEditExpiryModal('${safeId}')">
                     <i class="fa-solid fa-pen-to-square"></i> تعديل
                 </button>
             </div>
@@ -8970,6 +9163,19 @@ window.showBatchEditModal = function(bId, items, pdfTitleDate) {
     modal.innerHTML = html;
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
+
+    window._currentBatchItems = items;
+
+    // Attach direct listeners for edit buttons
+    modal.querySelectorAll('.batch-item-edit-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const id = this.getAttribute('data-id');
+            if (typeof openEditExpiryModal === 'function') {
+                openEditExpiryModal(id);
+            }
+        });
+    });
 
     const closeModal = () => {
         if (overlay.parentNode) document.body.removeChild(overlay);
@@ -9201,7 +9407,59 @@ function generateCategoryPDF(filteredData, categoryName) {
             </div>
             
             <script>
+                function toggleEditMode(btn) {
+                    var isEditing = document.body.classList.toggle('edit-mode-active');
+                    if (btn) {
+                        btn.innerHTML = isEditing ? 'إلغاء وضع التعديل' : 'تفعيل وضع التعديل';
+                        btn.style.background = isEditing ? '#ef4444' : '#3b82f6';
+                    }
+                    document.querySelectorAll('tbody tr').forEach(function(tr) {
+                        Array.from(tr.cells).forEach(function(td, idx) {
+                            if (idx === 0 || td.classList.contains('no-edit')) {
+                                td.contentEditable = 'false';
+                            } else {
+                                td.contentEditable = isEditing ? 'true' : 'false';
+                            }
+                        });
+                    });
+                }
+
+                function deleteReportRow(btn) {
+                    var tr = btn.closest('tr');
+                    if (tr) {
+                        tr.remove();
+                        reindexReportRows();
+                        updateReportTotals();
+                    }
+                }
+
+                function reindexReportRows() {
+                    var idx = 1;
+                    document.querySelectorAll('tbody tr').forEach(function(tr) {
+                        var numSpan = tr.querySelector('.row-num');
+                        if (numSpan) {
+                            numSpan.innerText = idx++;
+                        }
+                    });
+                }
+
+                function updateReportTotals() {
+                    var rows = document.querySelectorAll('tbody tr');
+                    var countEl = document.getElementById('totalItemsCount');
+                    if (countEl) {
+                        countEl.innerText = rows.length;
+                    }
+                }
+
                 window.onload = function() {
+                    try {
+                        if (typeof JsBarcode !== 'undefined') {
+                            JsBarcode(".barcode").init();
+                        }
+                    } catch(e) {
+                        console.error("Barcode rendering failed", e);
+                    }
+
                     window.onbeforeprint = function() {
                         document.querySelectorAll('tbody tr').forEach(tr => {
                             let cell0 = tr.cells[0];
@@ -9221,11 +9479,7 @@ function generateCategoryPDF(filteredData, categoryName) {
                             let t0 = cell0 ? cell0.innerText.trim() : '';
                             if (t0 === '') {
                                 tr.remove();
-                                let countEl = document.getElementById('totalItemsCount');
-                                if (countEl) {
-                                    let c = parseInt(countEl.innerText);
-                                    if (!isNaN(c)) countEl.innerText = c - 1;
-                                }
+                                updateReportTotals();
                             }
                         }
                     });
@@ -9501,9 +9755,55 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
             </div>
             
             <script>
+                function toggleEditMode(btn) {
+                    var isEditing = document.body.classList.toggle('edit-mode-active');
+                    if (btn) {
+                        btn.innerHTML = isEditing ? 'إلغاء وضع التعديل' : 'تفعيل وضع التعديل';
+                        btn.style.background = isEditing ? '#ef4444' : '#3b82f6';
+                    }
+                    document.querySelectorAll('tbody tr').forEach(function(tr) {
+                        Array.from(tr.cells).forEach(function(td, idx) {
+                            if (idx === 0 || td.classList.contains('no-edit')) {
+                                td.contentEditable = 'false';
+                            } else {
+                                td.contentEditable = isEditing ? 'true' : 'false';
+                            }
+                        });
+                    });
+                }
+
+                function deleteReportRow(btn) {
+                    var tr = btn.closest('tr');
+                    if (tr) {
+                        tr.remove();
+                        reindexReportRows();
+                        updateReportTotals();
+                    }
+                }
+
+                function reindexReportRows() {
+                    var idx = 1;
+                    document.querySelectorAll('tbody tr').forEach(function(tr) {
+                        var numSpan = tr.querySelector('.row-num');
+                        if (numSpan) {
+                            numSpan.innerText = idx++;
+                        }
+                    });
+                }
+
+                function updateReportTotals() {
+                    var rows = document.querySelectorAll('tbody tr');
+                    var countEl = document.getElementById('totalItemsCount');
+                    if (countEl) {
+                        countEl.innerText = rows.length;
+                    }
+                }
+
                 window.onload = function() {
                     try {
-                        JsBarcode(".barcode").init();
+                        if (typeof JsBarcode !== 'undefined') {
+                            JsBarcode(".barcode").init();
+                        }
                     } catch(e) {
                         console.error("Barcode rendering failed", e);
                     }
@@ -9527,15 +9827,11 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
                             let t0 = cell0 ? cell0.innerText.trim() : '';
                             if (t0 === '') {
                                 tr.remove();
-                                let countEl = document.getElementById('totalItemsCount');
-                                if (countEl) {
-                                    let c = parseInt(countEl.innerText);
-                                    if (!isNaN(c)) countEl.innerText = c - 1;
-                                }
+                                updateReportTotals();
                             }
                         }
                     });
-                }
+                };
             </script>
         </body>
         </html>
@@ -9791,9 +10087,55 @@ function generatePDFReceipt(filteredData, pdfTitleDate) {
             </div>
             
             <script>
+                function toggleEditMode(btn) {
+                    var isEditing = document.body.classList.toggle('edit-mode-active');
+                    if (btn) {
+                        btn.innerHTML = isEditing ? 'إلغاء وضع التعديل' : 'تفعيل وضع التعديل';
+                        btn.style.background = isEditing ? '#ef4444' : '#3b82f6';
+                    }
+                    document.querySelectorAll('tbody tr').forEach(function(tr) {
+                        Array.from(tr.cells).forEach(function(td, idx) {
+                            if (idx === 0 || td.classList.contains('no-edit')) {
+                                td.contentEditable = 'false';
+                            } else {
+                                td.contentEditable = isEditing ? 'true' : 'false';
+                            }
+                        });
+                    });
+                }
+
+                function deleteReportRow(btn) {
+                    var tr = btn.closest('tr');
+                    if (tr) {
+                        tr.remove();
+                        reindexReportRows();
+                        updateReportTotals();
+                    }
+                }
+
+                function reindexReportRows() {
+                    var idx = 1;
+                    document.querySelectorAll('tbody tr').forEach(function(tr) {
+                        var numSpan = tr.querySelector('.row-num');
+                        if (numSpan) {
+                            numSpan.innerText = idx++;
+                        }
+                    });
+                }
+
+                function updateReportTotals() {
+                    var rows = document.querySelectorAll('tbody tr');
+                    var countEl = document.getElementById('totalItemsCount');
+                    if (countEl) {
+                        countEl.innerText = rows.length;
+                    }
+                }
+
                 window.onload = function() {
                     try {
-                        JsBarcode(".barcode").init();
+                        if (typeof JsBarcode !== 'undefined') {
+                            JsBarcode(".barcode").init();
+                        }
                     } catch(e) {
                         console.error("Barcode rendering failed", e);
                     }
@@ -9817,15 +10159,11 @@ function generatePDFReceipt(filteredData, pdfTitleDate) {
                             let t0 = cell0 ? cell0.innerText.trim() : '';
                             if (t0 === '') {
                                 tr.remove();
-                                let countEl = document.getElementById('totalItemsCount');
-                                if (countEl) {
-                                    let c = parseInt(countEl.innerText);
-                                    if (!isNaN(c)) countEl.innerText = c - 1;
-                                }
+                                updateReportTotals();
                             }
                         }
                     });
-                }
+                };
             </script>
         </body>
         </html>
