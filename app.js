@@ -2696,7 +2696,7 @@ async function loadDataFromServer(customDate = null) {
 
         // Out of stock
         oosData = (rawOOS || []).map(o => ({
-            id: o.id, customer: o.customer_name, phone: o.phone, product: o.product, reason: o.reason || o.purpose, date: o.created_at || o.date
+            id: o.id, customer: o.customer_name, phone: o.phone, product: o.product, reason: o.reason || o.purpose, date: o.created_at || o.date, image_url: o.image_url || null
         }));
         renderOutOfStock(oosData);
 
@@ -5932,8 +5932,8 @@ function renderWaitlistTab(list = oosData) {
         }
 
         let rawReason = item.reason || '';
-        let attachedImg = null;
-        if (rawReason.includes('[IMG:')) {
+        let attachedImg = item.image_url || null;
+        if (!attachedImg && rawReason.includes('[IMG:')) {
             const m = rawReason.match(/\[IMG:(data:image\/[^\]]+)\]/);
             if (m) {
                 attachedImg = m[1];
@@ -5955,14 +5955,11 @@ function renderWaitlistTab(list = oosData) {
         let imageBoxHtml = '';
         if (attachedImg) {
             imageBoxHtml = `
-                <div style="margin-top: 10px; border-top: 1px dashed #e2e8f0; padding-top: 8px;">
-                    <a href="${attachedImg}" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none; background: #ffffff; padding: 6px 10px; border-radius: 8px; border: 1px solid #cbd5e1; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-                        <img src="${attachedImg}" style="width: 44px; height: 44px; border-radius: 6px; object-fit: cover; border: 1px solid #e2e8f0;" alt="صورة الصنف">
-                        <div style="text-align: right;">
-                            <div style="font-size: 0.8rem; font-weight: 800; color: #0f172a;"><i class="fa-solid fa-camera" style="color: #e91e63;"></i> صورة من العميل</div>
-                            <div style="font-size: 0.72rem; color: #64748b;">اضغط للمعاينة بحجم أكبر 🔍</div>
-                        </div>
-                    </a>
+                <div style="margin-top: 10px; border-radius: 10px; overflow: hidden; border: 1px solid #cbd5e1; background: #0f172a; position: relative;">
+                    <img src="${attachedImg}" style="width: 100%; max-height: 150px; object-fit: cover; display: block; cursor: pointer; transition: opacity 0.2s;" onclick="window.open('${attachedImg}')" title="اضغط لتكبير الصورة في صفحة مستقلة" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                    <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.75); color: #fff; padding: 3px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; pointer-events: none; display: flex; align-items: center; gap: 5px;">
+                        <i class="fa-solid fa-camera" style="color: #ec4899;"></i> صورة من العميل (اضغط للتكبير)
+                    </div>
                 </div>
             `;
         }
