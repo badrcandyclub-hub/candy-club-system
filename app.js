@@ -1760,7 +1760,7 @@ function setBtnLoading(btn, isLoading, originalText = "") {
 // ⭐ V16.2: تعريف وحدات النظام (Modules)
 window.MODULE_GROUPS = {
     'orders': { name: 'إدارة الأوردرات', icon: 'fa-solid fa-box fa-bounce', tabs: ['create-tab', 'catalog-tab', 'shipping-tab', 'history-tab', 'financials-tab', 'suspended-tab'], req: 'orders,customers,shipping,catalog,financials,shortages,drafts,users' },
-    'marketing': { name: 'العملاء والتسويق', icon: 'fa-solid fa-users-viewfinder fa-fade', tabs: ['customers-tab', 'whatsapp-campaign-tab'], req: 'customers,users,orders' },
+    'marketing': { name: 'العملاء والتسويق', icon: 'fa-solid fa-users-viewfinder fa-fade', tabs: ['customers-tab', 'whatsapp-campaign-tab', 'waitlist-tab'], req: 'customers,users,orders,out_of_stock' },
     'products': { name: 'المنتجات', icon: 'fa-solid fa-tags fa-beat', tabs: ['price-tags-tab', 'shortages-tab', 'expiry-tab', 'inventory-transfers-tab'], req: 'catalog,drafts,users,expiries' },
     'hr': { name: 'شئون الموظفين', icon: 'fa-solid fa-id-card-clip fa-flip', tabs: ['hr-tab', 'hr-admin-tab'], req: 'attendance,users' },
     'gifts': { name: 'قسم الهدايا والبوكيهات', icon: 'fa-solid fa-wand-magic-sparkles', tabs: ['gifts-tab', 'gifts-reports-tab'], req: 'gifts,gifts_reports' },
@@ -1826,6 +1826,10 @@ document.querySelectorAll('.nav-item').forEach(btn => {
         // ⭐ V16: تحميل المستخدمين إذا تم فتح التاب
         if (targetId === 'users-tab') {
             loadUsersList();
+        }
+        if (targetId === 'waitlist-tab') {
+            if (typeof initWaitlistTab === 'function') initWaitlistTab();
+            if (typeof renderWaitlistTab === 'function') renderWaitlistTab();
         }
         if (targetId === 'hr-tab') { if (typeof initHrTab === 'function') initHrTab(); }
         if (targetId === 'hr-admin-tab') { if (typeof initHrAdminTab === 'function') initHrAdminTab(); }
@@ -5643,82 +5647,414 @@ if (addCatalogBtn) {
     });
 }
 
-function renderOutOfStock(oosList) {
-    let container = document.getElementById('outOfStockContainer');
-    if (!container) return;
-    container.innerHTML = '';
+// ==========================================
+// ⭐ 12. قسم نواقص العملاء وقائمة الانتظار (Customer Waitlist & Shortages Hub)
+// ==========================================
+let waitlistActiveFilter = 'all';
+let waitlistSearchQuery = '';
 
-    if (oosList.length === 0) {
-        container.innerHTML = '<p class="empty-msg">لا يوجد نواقص مسجلة حالياً.</p>';
+window.initWaitlistTab = function() {
+    updateWaitlistProductSuggestions();
+    setupWaitlistEventListeners();
+};
+
+// اقتراحات المنتجات من الكتالوج والفايربيز
+function updateWaitlistProductSuggestions() {
+    const listEl = document.getElementById('waitlistProductList');
+    if (!listEl) return;
+    listEl.innerHTML = '';
+    const seen = new Set();
+    
+    // من كتالوج الباركود (Firebase)
+    if (typeof barcodeCatalogData !== 'undefined' && Array.isArray(barcodeCatalogData)) {
+        barcodeCatalogData.forEach(p => {
+            if (p && p.name && !seen.has(p.name.trim().toLowerCase())) {
+                seen.add(p.name.trim().toLowerCase());
+                const opt = document.createElement('option');
+                opt.value = p.name.trim();
+                listEl.appendChild(opt);
+            }
+        });
+    }
+    
+    // من كتالوج المحل المحلي
+    if (typeof catalogData !== 'undefined' && Array.isArray(catalogData)) {
+        catalogData.forEach(p => {
+            const pName = p.product_name || p.name;
+            if (pName && !seen.has(pName.trim().toLowerCase())) {
+                seen.add(pName.trim().toLowerCase());
+                const opt = document.createElement('option');
+                opt.value = pName.trim();
+                listEl.appendChild(opt);
+            }
+        });
+    }
+}
+
+// فحص رصيد المنتج في الكاشير / الفايربيز
+function checkProductStoreStock(productName) {
+    if (!productName) return { available: false, stock: 0 };
+    const clean = String(productName).trim().toLowerCase();
+    
+    // 1. فحص في barcodeCatalogData (Firebase)
+    if (typeof barcodeCatalogData !== 'undefined' && Array.isArray(barcodeCatalogData)) {
+        const found = barcodeCatalogData.find(p => String(p.name).trim().toLowerCase() === clean);
+        if (found) {
+            const stock = parseFloat(found.stock) || 0;
+            return { available: stock > 0, stock: stock, price: found.price || 0 };
+        }
+    }
+    
+    // 2. فحص في catalogData المحلي
+    if (typeof catalogData !== 'undefined' && Array.isArray(catalogData)) {
+        const found = catalogData.find(p => String(p.product_name || p.name).trim().toLowerCase() === clean);
+        if (found) {
+            const isAvail = found.available === true || found.available === 'true' || found.available === 1;
+            return { available: isAvail, stock: isAvail ? 1 : 0, price: found.price || 0 };
+        }
+    }
+    
+    return { available: false, stock: 0 };
+}
+
+// إعداد المستمعين للأحداث في صفحة النواقص
+function setupWaitlistEventListeners() {
+    // 1. البحث التلقائي عن العميل عند كتابة رقم الموبايل
+    const phoneInput = document.getElementById('waitlistPhone');
+    const custInput = document.getElementById('waitlistCustomer');
+    const custBadge = document.getElementById('waitlistCustInfoBadge');
+    
+    if (phoneInput && !phoneInput._boundWaitlist) {
+        phoneInput._boundWaitlist = true;
+        phoneInput.addEventListener('input', (e) => {
+            const val = e.target.value.trim();
+            if (val.length >= 10 && typeof window.customersData !== 'undefined') {
+                const found = window.customersData.find(c => String(c.phone).trim() === val);
+                if (found && custInput) {
+                    if (!custInput.value || custInput.value.trim() === '') {
+                        custInput.value = found.name || '';
+                    }
+                    if (custBadge) {
+                        custBadge.style.display = 'block';
+                        custBadge.innerHTML = `<i class="fa-solid fa-circle-check"></i> عميل مسجل: ${found.name} (${found.count || 0} أوردرات)`;
+                    }
+                } else if (custBadge) {
+                    custBadge.style.display = 'none';
+                }
+            } else if (custBadge) {
+                custBadge.style.display = 'none';
+            }
+        });
+    }
+
+    // 2. زر حفظ العميل في الانتظار
+    const saveBtn = document.getElementById('saveWaitlistBtn');
+    if (saveBtn && !saveBtn._boundWaitlist) {
+        saveBtn._boundWaitlist = true;
+        saveBtn.addEventListener('click', handleAddWaitlistRecord);
+    }
+
+    // 3. فلترة أزرار الـ Pills
+    const pills = document.querySelectorAll('#waitlistFilterPills .waitlist-filter-pill');
+    pills.forEach(pill => {
+        if (!pill._boundWaitlist) {
+            pill._boundWaitlist = true;
+            pill.addEventListener('click', () => {
+                pills.forEach(p => p.classList.remove('active'));
+                pill.classList.add('active');
+                waitlistActiveFilter = pill.getAttribute('data-filter') || 'all';
+                renderWaitlistTab();
+            });
+        }
+    });
+
+    // 4. حقل البحث اللحظي
+    const searchInput = document.getElementById('waitlistSearchInput');
+    if (searchInput && !searchInput._boundWaitlist) {
+        searchInput._boundWaitlist = true;
+        searchInput.addEventListener('input', (e) => {
+            waitlistSearchQuery = e.target.value.trim().toLowerCase();
+            renderWaitlistTab();
+        });
+    }
+
+    // 5. زر تحديث القائمة
+    const refreshBtn = document.getElementById('refreshWaitlistBtn');
+    if (refreshBtn && !refreshBtn._boundWaitlist) {
+        refreshBtn._boundWaitlist = true;
+        refreshBtn.addEventListener('click', async () => {
+            setBtnLoading(refreshBtn, true);
+            if (typeof loadDataFromServer === 'function') {
+                await loadDataFromServer();
+            }
+            setBtnLoading(refreshBtn, false, '<i class="fa-solid fa-rotate"></i> تحديث القائمة');
+            showToast("تم تحديث قائمة الانتظار بنجاح", "success");
+        });
+    }
+}
+
+// دالة إضافة سجل جديد لقائمة الانتظار
+async function handleAddWaitlistRecord() {
+    const saveBtn = document.getElementById('saveWaitlistBtn');
+    const cust = document.getElementById('waitlistCustomer')?.value.trim();
+    const phone = document.getElementById('waitlistPhone')?.value.trim();
+    const product = document.getElementById('waitlistProduct')?.value.trim();
+    const reason = document.getElementById('waitlistReason')?.value || 'استفسار عن توفر';
+
+    if (!cust || !phone || !product) {
+        showToast("برجاء إدخال رقم الموبايل واسم العميل والمنتج المطلوب", "error");
         return;
     }
 
-    oosList.forEach(item => {
-        let div = document.createElement('div');
-        div.className = 'data-row';
-        div.innerHTML = `
-            <div style="flex:1;">
-                <strong>${item.customer}</strong> <br>
-                <small style="color:var(--primary); font-weight:bold;">${item.product}</small><br>
-                <span style="font-size:0.75rem; color:#888;">الغرض: ${item.reason || '--'}</span>
+    if (saveBtn) setBtnLoading(saveBtn, true);
+
+    try {
+        const { data, error } = await supabase.from('out_of_stock').insert([{
+            customer_name: cust,
+            phone: phone,
+            product: product,
+            reason: reason
+        }]);
+
+        if (error) throw error;
+
+        showToast("<i class='fa-solid fa-check'></i> تم تسجيل العميل في قائمة الانتظار بنجاح", "success");
+        
+        // إعادة تفريغ الحقول
+        if (document.getElementById('waitlistCustomer')) document.getElementById('waitlistCustomer').value = '';
+        if (document.getElementById('waitlistPhone')) document.getElementById('waitlistPhone').value = '';
+        if (document.getElementById('waitlistProduct')) document.getElementById('waitlistProduct').value = '';
+        const custBadge = document.getElementById('waitlistCustInfoBadge');
+        if (custBadge) custBadge.style.display = 'none';
+
+        if (typeof loadDataFromServer === 'function') {
+            loadDataFromServer();
+        }
+    } catch (err) {
+        console.error("Error adding to out_of_stock:", err);
+        showToast("تعذر تسجيل البيانات: " + err.message, "error");
+    } finally {
+        if (saveBtn) setBtnLoading(saveBtn, false, '<i class="fa-solid fa-check"></i> حفظ في قائمة الانتظار');
+    }
+}
+
+// دالة العرض الرئيسية لقائمة الانتظار في التبويب الجديد
+function renderWaitlistTab(list = oosData) {
+    setupWaitlistEventListeners();
+    updateWaitlistProductSuggestions();
+    
+    const container = document.getElementById('waitlistCardsGrid');
+    if (!container) return;
+
+    const allItems = Array.isArray(list) ? list : (Array.isArray(oosData) ? oosData : []);
+
+    // 1. حساب الإحصائيات (KPIs)
+    let totalCount = allItems.length;
+    let availableCount = 0;
+    let inquiriesCount = 0;
+    let offersCount = 0;
+
+    const enrichedItems = allItems.map(item => {
+        const stockInfo = checkProductStoreStock(item.product);
+        if (stockInfo.available) availableCount++;
+        if (item.reason === 'استفسار عن توفر') inquiriesCount++;
+        else if (item.reason === 'انتظار نزول عرض') offersCount++;
+        return { ...item, stockInfo };
+    });
+
+    // تحديث بطاقات الـ KPIs
+    if (document.getElementById('waitlistKpiTotal')) document.getElementById('waitlistKpiTotal').innerText = totalCount;
+    if (document.getElementById('waitlistKpiAvailable')) document.getElementById('waitlistKpiAvailable').innerText = availableCount;
+    if (document.getElementById('waitlistKpiInquiries')) document.getElementById('waitlistKpiInquiries').innerText = inquiriesCount;
+    if (document.getElementById('waitlistKpiOffers')) document.getElementById('waitlistKpiOffers').innerText = offersCount;
+
+    // تحديث أعداد الـ Pills
+    if (document.getElementById('pillCountAll')) document.getElementById('pillCountAll').innerText = totalCount;
+    if (document.getElementById('pillCountAvailable')) document.getElementById('pillCountAvailable').innerText = availableCount;
+    if (document.getElementById('pillCountInquiry')) document.getElementById('pillCountInquiry').innerText = inquiriesCount;
+    if (document.getElementById('pillCountOffer')) document.getElementById('pillCountOffer').innerText = offersCount;
+
+    // 2. تطبيق الفلاتر والبحث
+    let displayItems = enrichedItems.filter(item => {
+        // فلتر البحث
+        if (waitlistSearchQuery) {
+            const q = waitlistSearchQuery;
+            const matchName = String(item.customer || '').toLowerCase().includes(q);
+            const matchPhone = String(item.phone || '').toLowerCase().includes(q);
+            const matchProd = String(item.product || '').toLowerCase().includes(q);
+            if (!matchName && !matchPhone && !matchProd) return false;
+        }
+
+        // فلتر الحبوب (Pills)
+        if (waitlistActiveFilter === 'available') {
+            return item.stockInfo.available;
+        } else if (waitlistActiveFilter === 'inquiry') {
+            return item.reason === 'استفسار عن توفر';
+        } else if (waitlistActiveFilter === 'offer') {
+            return item.reason === 'انتظار نزول عرض';
+        }
+        return true;
+    });
+
+    container.innerHTML = '';
+
+    if (displayItems.length === 0) {
+        container.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 50px 20px; background: white; border-radius: 16px; border: 1px dashed #cbd5e1;">
+                <div style="width: 64px; height: 64px; border-radius: 50%; background: #fdf2f8; color: #e91e63; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; margin: 0 auto 15px auto;">
+                    <i class="fa-solid fa-hourglass-start"></i>
+                </div>
+                <h4 style="margin: 0 0 6px 0; color: #1e293b; font-size: 1.1rem; font-weight: 700;">لا توجد طلبات في هذا القسم</h4>
+                <p style="margin: 0; color: #64748b; font-size: 0.9rem;">يمكنك تسجيل عميل جديد في قائمة الانتظار من النموذج بالأعلى.</p>
             </div>
-            <div style="display:flex; gap:5px;">
-                <button class="interactive-btn wa-oos-btn" style="background:#25D366; color:white; border:none; padding:5px 10px; border-radius:8px;"><i class=\'fa-brands fa-whatsapp\'></i></button>
-                <button class="interactive-btn del-oos-btn" style="background:var(--danger); color:white; border:none; padding:5px 10px; border-radius:8px;"><i class=\'fa-solid fa-xmark\'></i></button>
+        `;
+        return;
+    }
+
+    // 3. رسم الكروت التفاعلية
+    displayItems.forEach(item => {
+        const isAvail = item.stockInfo.available;
+        const stockQty = item.stockInfo.stock;
+        
+        let stockBadgeHtml = '';
+        if (isAvail) {
+            stockBadgeHtml = `
+                <span class="stock-badge-pulse" style="display: inline-flex; align-items: center; gap: 6px; background: #dcfce7; color: #15803d; border: 1px solid #86efac; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 800;">
+                    <i class="fa-solid fa-circle-check"></i> متوفر في الفرع الآن (${stockQty} ق)
+                </span>
+            `;
+        } else {
+            stockBadgeHtml = `
+                <span style="display: inline-flex; align-items: center; gap: 6px; background: #f1f5f9; color: #64748b; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 700;">
+                    <i class="fa-regular fa-clock"></i> بانتظار التوريد
+                </span>
+            `;
+        }
+
+        let reasonBadgeHtml = '';
+        if (item.reason === 'انتظار نزول عرض') {
+            reasonBadgeHtml = `<span style="background: #ffedd5; color: #c2410c; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;"><i class="fa-solid fa-tags"></i> انتظار عرض</span>`;
+        } else if (item.reason === 'طلب كمية خاصة') {
+            reasonBadgeHtml = `<span style="background: #f3e8ff; color: #7e22ce; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;"><i class="fa-solid fa-boxes-stacked"></i> كمية خاصة</span>`;
+        } else {
+            reasonBadgeHtml = `<span style="background: #e0f2fe; color: #0369a1; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;"><i class="fa-solid fa-bell"></i> استفسار توفر</span>`;
+        }
+
+        const card = document.createElement('div');
+        card.className = 'waitlist-card' + (isAvail ? ' card-available' : '');
+        card.innerHTML = `
+            <div>
+                <!-- Top row: Customer Name & Stock Status -->
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 12px;">
+                    <div>
+                        <div style="font-weight: 800; font-size: 1.05rem; color: #0f172a; display: flex; align-items: center; gap: 7px;">
+                            <i class="fa-solid fa-user-circle" style="color: #94a3b8; font-size: 1.15rem;"></i>
+                            ${item.customer || 'بدون اسم'}
+                        </div>
+                        <a href="tel:${item.phone}" style="display: inline-flex; align-items: center; gap: 5px; color: #64748b; font-size: 0.88rem; text-decoration: none; margin-top: 3px; font-weight: 600;" dir="ltr">
+                            <i class="fa-solid fa-phone" style="font-size: 0.75rem; color: #0284c7;"></i> ${item.phone}
+                        </a>
+                    </div>
+                    <div>
+                        ${stockBadgeHtml}
+                    </div>
+                </div>
+
+                <!-- Product Box -->
+                <div style="background: ${isAvail ? 'rgba(255, 255, 255, 0.8)' : '#f8fafc'}; border: 1px solid ${isAvail ? '#bbf7d0' : '#e2e8f0'}; border-radius: 12px; padding: 12px; margin-bottom: 15px;">
+                    <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+                        <span><i class="fa-solid fa-box-open" style="color: #e91e63;"></i> المنتج المطلوب:</span>
+                        ${reasonBadgeHtml}
+                    </div>
+                    <div style="font-size: 1.05rem; font-weight: 800; color: #1e293b; line-height: 1.3;">
+                        ${item.product}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons Footer -->
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid #f1f5f9; padding-top: 12px;">
+                <button type="button" class="btn-wa-action interactive-btn" style="flex: 2 1 120px; background: linear-gradient(135deg, #25D366, #128C7E); color: white; border: none; padding: 9px 12px; border-radius: 10px; font-weight: bold; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 10px rgba(37, 211, 102, 0.25);">
+                    <i class="fa-brands fa-whatsapp" style="font-size: 1.1rem;"></i> مراسلة واتساب
+                </button>
+                <button type="button" class="btn-order-action interactive-btn" style="flex: 1 1 100px; background: linear-gradient(135deg, #8e24aa, #e91e63); color: white; border: none; padding: 9px 12px; border-radius: 10px; font-weight: bold; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 10px rgba(142, 36, 170, 0.25);">
+                    <i class="fa-solid fa-cart-plus"></i> عمل أوردر
+                </button>
+                <button type="button" class="btn-del-action interactive-btn" style="width: 38px; height: 38px; background: #fee2e2; color: #ef4444; border: none; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; transition: all 0.2s;" title="حذف من قائمة الانتظار">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
             </div>
         `;
 
-        div.querySelector('.wa-oos-btn').addEventListener('click', () => {
-            let phone = item.phone.toString().replace(/'/g, '').trim();
+        // WhatsApp Handler with Adaptive Messages
+        card.querySelector('.btn-wa-action').addEventListener('click', () => {
+            let phone = String(item.phone || '').replace(/['\s-]/g, '').trim();
             if (phone.startsWith('0')) phone = '+2' + phone;
-            let msg = `أهلاً بك يا ${item.customer} 👋\nالمنتج اللي سألتنا عليه (${item.product}) متوفر دلوقتي وتقدر تطلبه! 🍬`;
+            
+            let msg = '';
+            if (isAvail) {
+                msg = `أهلاً بك يا ${item.customer} 👋\nبشرى سارة من كاندي كلوب 🍬\nالمنتج اللي سألتنا عليه:\n✨ *${item.product}*\nأصبح متوفراً الآن في المحل! تقدر تطلبه دلوقتي دليفري أو تشرفنا في الفرع.\nتنورنا في أي وقت ❤️`;
+            } else if (item.reason === 'انتظار نزول عرض') {
+                msg = `أهلاً بك يا ${item.customer} 👋\nمعاك كاندي كلوب 🍬 بخصوص متابعة العروض على المنتج:\n✨ *${item.product}*\nحابين نطمنك إننا مسجلين طلبك وهنبلغك أول ما ينزل عليه خصم أو عرض مميز! نقدر نساعدك بأي استفسار آخر؟ ❤️`;
+            } else {
+                msg = `أهلاً بك يا ${item.customer} 👋\nمعاك خدمة عملاء كاندي كلوب 🍬 بخصوص استفسارك عن منتج:\n✨ *${item.product}*\nحابين نساعدك ونتابع معاك بخصوص أي طلبات تحب نجهزها لك ❤️`;
+            }
             window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
         });
 
-        div.querySelector('.del-oos-btn').addEventListener('click', () => {
-            customConfirm("مسح العميل من قائمة النواقص؟", () => {
-                let formData = new URLSearchParams();
-                formData.append('action', 'deleteOutOfStock');
-                formData.append('phone', item.phone);
-                formData.append('product', item.product);
-                fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData });
-                div.remove();
-                showToast("تم الحذف بنجاح", "success");
+        // Convert to Order Handler
+        card.querySelector('.btn-order-action').addEventListener('click', () => {
+            const createBtn = document.querySelector('button.nav-item[data-target="create-tab"]');
+            if (createBtn) createBtn.click();
+            
+            setTimeout(() => {
+                const phoneInput = document.getElementById('customerPhone');
+                const nameInput = document.getElementById('customerName');
+                if (phoneInput) {
+                    phoneInput.value = item.phone || '';
+                    phoneInput.dispatchEvent(new Event('input'));
+                }
+                if (nameInput && item.customer) {
+                    nameInput.value = item.customer;
+                }
+                showToast(`تم نسخ بيانات (${item.customer}) وتجهيز الأوردر للصنف: ${item.product}`, 'success');
+            }, 100);
+        });
+
+        // Delete Handler
+        card.querySelector('.btn-del-action').addEventListener('click', () => {
+            customConfirm(`هل أنت متأكد من حذف العميل (${item.customer}) من قائمة الانتظار؟`, async () => {
+                try {
+                    if (item.id) {
+                        await supabase.from('out_of_stock').delete().eq('id', item.id);
+                    } else {
+                        await supabase.from('out_of_stock').delete().eq('product', item.product).ilike('phone', '%' + item.phone + '%');
+                    }
+                    card.style.opacity = '0';
+                    card.style.transform = 'scale(0.9)';
+                    setTimeout(() => card.remove(), 250);
+                    showToast("تم حذف العميل من قائمة الانتظار بنجاح", "success");
+                    
+                    // تحديث محلي
+                    if (Array.isArray(oosData)) {
+                        oosData = oosData.filter(i => i !== item && i.id !== item.id);
+                        renderWaitlistTab(oosData);
+                    }
+                } catch(e) {
+                    console.error(e);
+                    showToast("حدث خطأ أثناء الحذف", "error");
+                }
             });
         });
 
-        container.appendChild(div);
+        container.appendChild(card);
     });
 }
 
-let addOosBtn = document.getElementById('addOosBtn');
-if (addOosBtn) {
-    addOosBtn.addEventListener('click', () => {
-        let c = document.getElementById('oosCustomer').value;
-        let ph = document.getElementById('oosPhone').value;
-        let pr = document.getElementById('oosProduct').value;
-        let r = document.getElementById('oosReason') ? document.getElementById('oosReason').value : "";
-
-        if (!c || !ph || !pr) { showToast("أكمل بيانات العميل والمنتج الناقص", "error"); return; }
-
-        setBtnLoading(addOosBtn, true);
-        let formData = new URLSearchParams();
-        formData.append('action', 'addOutOfStock');
-        formData.append('customer', c);
-        formData.append('phone', ph);
-        formData.append('product', pr);
-        formData.append('reason', r);
-
-        fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
-            .then(() => {
-                showToast("<i class=\'fa-solid fa-check\'></i> تم تسجيل الناقص", "success");
-                setBtnLoading(addOosBtn, false, "تسجيل");
-                document.getElementById('oosCustomer').value = '';
-                document.getElementById('oosPhone').value = '';
-                document.getElementById('oosProduct').value = '';
-                loadDataFromServer();
-            }).catch(() => setBtnLoading(addOosBtn, false, "تسجيل"));
-    });
+function renderOutOfStock(oosList) {
+    if (typeof renderWaitlistTab === 'function') {
+        renderWaitlistTab(oosList);
+    }
 }
 
 // ⭐ Smart Periodic Sync (5 Minutes, Activity-Aware, Visibility-Aware)

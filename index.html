@@ -512,32 +512,6 @@
                     <i class="fa-solid fa-camera"></i> مسح الباركود للكشف عن السعر
                 </button>
             </div>
-
-            <div class="section-card">
-                <h3 class="section-title"><i class="fa-solid fa-clock-rotate-left"></i> تسجيل النواقص</h3>
-                <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:15px;">
-                    <div style="display:flex; flex-wrap:wrap; gap:10px;">
-                        <input type="text" id="oosCustomer" placeholder="اسم العميل" style="flex:1; min-width: 130px; margin-bottom:0;">
-                        <input type="tel" id="oosPhone" placeholder="الموبايل" style="flex:1; min-width: 130px; margin-bottom:0;">
-                    </div>
-                    <div style="display:flex; flex-wrap:wrap; gap:10px;">
-                        <input type="text" id="oosProduct" placeholder="المنتج الناقص" style="flex:1 1 100%; margin-bottom:0;">
-                        <select id="oosReason" style="flex:2; min-width: 140px; margin-bottom:0; font-size:0.85rem;" required>
-                            <option value="استفسار عن توفر">استفسار عن توفر</option>
-                            <option value="انتظار نزول عرض">انتظار نزول عرض</option>
-                        </select>
-                        <button id="addOosBtn" class="btn-save interactive-btn"
-                            style="flex:1; min-width: 100px; padding: 10px;">تسجيل</button>
-                    </div>
-                </div>
-
-                <h4
-                    style="color: var(--primary); font-size: 0.95rem; margin-bottom: 10px; border-bottom: 1px dashed #ccc; padding-bottom: 5px;">
-                    <i class="fa-solid fa-phone-volume"></i> عملاء في الانتظار:</h4>
-                <div id="outOfStockContainer" class="data-list-container" style="max-height: 200px;">
-                    <p class="empty-msg">لا يوجد نواقص مسجلة حالياً.</p>
-                </div>
-            </div>
         </section>
 
         <section id="history-tab" class="tab-pane">
@@ -1183,6 +1157,229 @@
                         <i class="fa-solid fa-cloud-arrow-down" style="font-size: 3rem; margin-bottom: 10px;"></i>
                         <p>اضغط على "تحديث البيانات" لعرض قاعدة العملاء</p>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ⭐ قسم نواقص العملاء وقائمة الانتظار (Customer Waitlist & Shortages Hub) -->
+        <section id="waitlist-tab" class="tab-pane">
+            <style>
+                .waitlist-kpi-card {
+                    transition: transform 0.2s ease, box-shadow 0.2s ease;
+                }
+                .waitlist-kpi-card:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 20px rgba(0,0,0,0.06) !important;
+                }
+                .waitlist-filter-pill {
+                    border: 1px solid #cbd5e1;
+                    background: #f8fafc;
+                    color: #475569;
+                    padding: 8px 16px;
+                    border-radius: 25px;
+                    font-size: 0.9rem;
+                    font-weight: 700;
+                    cursor: pointer;
+                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    font-family: inherit;
+                }
+                .waitlist-filter-pill:hover {
+                    background: #f1f5f9;
+                    border-color: #94a3b8;
+                    transform: translateY(-1px);
+                }
+                .waitlist-filter-pill.active {
+                    background: linear-gradient(135deg, #e91e63, #c2185b);
+                    color: white;
+                    border-color: transparent;
+                    box-shadow: 0 4px 12px rgba(233, 30, 99, 0.35);
+                }
+                .waitlist-filter-pill.pill-available.active {
+                    background: linear-gradient(135deg, #10b981, #059669);
+                    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+                }
+                .waitlist-card {
+                    background: #ffffff;
+                    border-radius: 16px;
+                    border: 1px solid #e2e8f0;
+                    padding: 18px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+                    transition: all 0.25s ease;
+                    position: relative;
+                    overflow: hidden;
+                }
+                .waitlist-card:hover {
+                    transform: translateY(-3px);
+                    box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+                    border-color: #cbd5e1;
+                }
+                .waitlist-card.card-available {
+                    border-color: #86efac;
+                    background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);
+                }
+                .waitlist-card.card-available::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                    left: 0;
+                    height: 4px;
+                    background: linear-gradient(90deg, #22c55e, #10b981);
+                }
+                .stock-badge-pulse {
+                    animation: pulseStockGlow 2s infinite;
+                }
+                @keyframes pulseStockGlow {
+                    0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+                    70% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+                    100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+                }
+            </style>
+
+            <!-- Header Bar -->
+            <div class="section-card" style="margin-bottom: 20px; background: linear-gradient(135deg, rgba(233, 30, 99, 0.05), rgba(156, 39, 176, 0.05)); border: 1px solid rgba(233, 30, 99, 0.2); border-radius: 16px;">
+                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px;">
+                    <div>
+                        <h2 style="color: #c2185b; margin: 0 0 5px 0; display: flex; align-items: center; gap: 10px; font-size: 1.5rem; font-weight: 800;">
+                            <i class="fa-solid fa-hourglass-half" style="color: #e91e63;"></i> نواقص العملاء (قائمة الانتظار)
+                        </h2>
+                        <p style="margin: 0; color: #64748b; font-size: 0.95rem;">
+                            متابعة طلبات واستفسارات العملاء على الأصناف الناقصة مع كشف فوري لتوفرها في الكاشير والتواصل بنقرة واحدة
+                        </p>
+                    </div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button type="button" id="refreshWaitlistBtn" class="interactive-btn" style="background: linear-gradient(135deg, #e91e63, #9c27b0); color: white; border: none; padding: 10px 18px; border-radius: 12px; font-weight: bold; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(233, 30, 99, 0.25);">
+                            <i class="fa-solid fa-rotate"></i> تحديث القائمة
+                        </button>
+                    </div>
+                </div>
+
+                <!-- KPI Stats Cards -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 20px;">
+                    <div class="waitlist-kpi-card" style="background: white; border-radius: 14px; padding: 14px 18px; border: 1px solid #f1f5f9; box-shadow: 0 4px 12px rgba(0,0,0,0.03); display: flex; align-items: center; justify-content: space-between;">
+                        <div>
+                            <span style="font-size: 0.85rem; color: #64748b; font-weight: 600;">إجمالي المنتظرين</span>
+                            <div id="waitlistKpiTotal" style="font-size: 1.6rem; font-weight: 900; color: #0f172a; margin-top: 4px;">0</div>
+                        </div>
+                        <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(233, 30, 99, 0.1); color: #e91e63; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+                    </div>
+
+                    <div class="waitlist-kpi-card" style="background: white; border-radius: 14px; padding: 14px 18px; border: 1px solid #bbf7d0; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.1); display: flex; align-items: center; justify-content: space-between;">
+                        <div>
+                            <span style="font-size: 0.85rem; color: #15803d; font-weight: 700;">🔥 متوفر في الفرع الآن</span>
+                            <div id="waitlistKpiAvailable" style="font-size: 1.6rem; font-weight: 900; color: #16a34a; margin-top: 4px;">0</div>
+                        </div>
+                        <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(34, 197, 94, 0.15); color: #16a34a; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                            <i class="fa-solid fa-circle-check"></i>
+                        </div>
+                    </div>
+
+                    <div class="waitlist-kpi-card" style="background: white; border-radius: 14px; padding: 14px 18px; border: 1px solid #f1f5f9; box-shadow: 0 4px 12px rgba(0,0,0,0.03); display: flex; align-items: center; justify-content: space-between;">
+                        <div>
+                            <span style="font-size: 0.85rem; color: #64748b; font-weight: 600;">استفسار عن توفر</span>
+                            <div id="waitlistKpiInquiries" style="font-size: 1.6rem; font-weight: 900; color: #0284c7; margin-top: 4px;">0</div>
+                        </div>
+                        <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(2, 132, 199, 0.1); color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                            <i class="fa-solid fa-bell"></i>
+                        </div>
+                    </div>
+
+                    <div class="waitlist-kpi-card" style="background: white; border-radius: 14px; padding: 14px 18px; border: 1px solid #f1f5f9; box-shadow: 0 4px 12px rgba(0,0,0,0.03); display: flex; align-items: center; justify-content: space-between;">
+                        <div>
+                            <span style="font-size: 0.85rem; color: #64748b; font-weight: 600;">انتظار نزول عروض</span>
+                            <div id="waitlistKpiOffers" style="font-size: 1.6rem; font-weight: 900; color: #ea580c; margin-top: 4px;">0</div>
+                        </div>
+                        <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(234, 88, 12, 0.1); color: #ea580c; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                            <i class="fa-solid fa-tags"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Smart Registration Card -->
+            <div class="section-card" style="margin-bottom: 20px; border-radius: 16px; border: 1px solid #e2e8f0;">
+                <h3 class="section-title" style="color: #0f172a; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-user-plus" style="color: #e91e63;"></i> تسجيل عميل جديد في قائمة الانتظار
+                </h3>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 6px; font-weight: 700; font-size: 0.9rem; color: #334155;">
+                            <i class="fa-solid fa-phone" style="color: #e91e63;"></i> رقم الموبايل:
+                        </label>
+                        <div style="position: relative;">
+                            <input type="tel" id="waitlistPhone" placeholder="أدخل رقم الموبايل (11 رقم)" maxlength="11" class="input-field" style="margin-bottom: 0; padding-left: 35px;">
+                            <span id="waitlistPhoneIndicator" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); display: none;"></span>
+                        </div>
+                        <small id="waitlistCustInfoBadge" style="display: none; color: #16a34a; font-weight: 700; margin-top: 4px;"></small>
+                    </div>
+
+                    <div>
+                        <label style="display: block; margin-bottom: 6px; font-weight: 700; font-size: 0.9rem; color: #334155;">
+                            <i class="fa-solid fa-user" style="color: #e91e63;"></i> اسم العميل:
+                        </label>
+                        <input type="text" id="waitlistCustomer" placeholder="الاسم الثلاثي أو المستعار" class="input-field" style="margin-bottom: 0;">
+                    </div>
+
+                    <div style="grid-column: span 1;">
+                        <label style="display: block; margin-bottom: 6px; font-weight: 700; font-size: 0.9rem; color: #334155;">
+                            <i class="fa-solid fa-box-open" style="color: #e91e63;"></i> الصنف الناقص / المطلوب:
+                        </label>
+                        <input type="text" id="waitlistProduct" list="waitlistProductList" placeholder="ابحث أو اكتب اسم المنتج المطلوب..." class="input-field" style="margin-bottom: 0;">
+                        <datalist id="waitlistProductList"></datalist>
+                    </div>
+
+                    <div>
+                        <label style="display: block; margin-bottom: 6px; font-weight: 700; font-size: 0.9rem; color: #334155;">
+                            <i class="fa-solid fa-circle-question" style="color: #e91e63;"></i> سبب / غرض الانتظار:
+                        </label>
+                        <select id="waitlistReason" class="input-field" style="margin-bottom: 0; cursor: pointer;">
+                            <option value="استفسار عن توفر">استفسار عن توفر الصنف</option>
+                            <option value="انتظار نزول عرض">انتظار نزول عرض أو تخفيض</option>
+                            <option value="طلب كمية خاصة">طلب كمية أو حجز مسبق</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end;">
+                    <button type="button" id="saveWaitlistBtn" class="interactive-btn" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 12px 35px; border-radius: 12px; font-weight: bold; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3); display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-check"></i> حفظ في قائمة الانتظار
+                    </button>
+                </div>
+            </div>
+
+            <!-- Toolbar & Filter Pills -->
+            <div class="section-card" style="margin-bottom: 20px; border-radius: 16px; padding: 16px 20px;">
+                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px;">
+                    <!-- Search input -->
+                    <div style="flex: 1 1 280px; position: relative;">
+                        <i class="fa-solid fa-magnifying-glass" style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8;"></i>
+                        <input type="text" id="waitlistSearchInput" placeholder="بحث بالاسم، رقم الموبايل، أو المنتج الناقص..." style="width: 100%; padding: 10px 40px 10px 15px; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 0.95rem; margin-bottom: 0; background: #f8fafc;">
+                    </div>
+
+                    <!-- Filter Pills -->
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;" id="waitlistFilterPills">
+                        <button type="button" class="waitlist-filter-pill active" data-filter="all">الكل (<span id="pillCountAll">0</span>)</button>
+                        <button type="button" class="waitlist-filter-pill pill-available" data-filter="available">🔥 متوفر في الفرع (<span id="pillCountAvailable">0</span>)</button>
+                        <button type="button" class="waitlist-filter-pill" data-filter="inquiry">استفسار (<span id="pillCountInquiry">0</span>)</button>
+                        <button type="button" class="waitlist-filter-pill" data-filter="offer">عروض (<span id="pillCountOffer">0</span>)</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Waitlist Smart Cards Grid -->
+            <div id="waitlistCardsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; margin-bottom: 30px;">
+                <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #94a3b8;">
+                    <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; color: #e91e63; margin-bottom: 10px;"></i>
+                    <p>جاري تحميل قائمة الانتظار...</p>
                 </div>
             </div>
         </section>
@@ -1936,9 +2133,6 @@
             }
         </style>
 
-            </div>
-        </section>
-
         <section id="financials-tab" class="tab-pane financials-tab">
             <div class="section-card financials-page-card" style="width: 100%; box-sizing: border-box; display: flex; flex-direction: column;">
                 <div class="financials-header-row" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 10px; gap: 10px;">
@@ -2229,6 +2423,9 @@
                     </button>
                     <button class="nav-item" data-target="whatsapp-campaign-tab" style="color: #2ecc71;">
                         <span class="icon"><i class="fa-brands fa-whatsapp"></i></span><span class="label">حملات الواتساب</span>
+                    </button>
+                    <button class="nav-item" data-target="waitlist-tab" style="color: #e91e63;">
+                        <span class="icon"><i class="fa-solid fa-hourglass-half"></i></span><span class="label">نواقص العملاء (الانتظار)</span>
                     </button>
                 </div>
             </div>
