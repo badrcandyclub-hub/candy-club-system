@@ -480,37 +480,202 @@
         </section>
 
         <section id="catalog-tab" class="tab-pane">
+            <style>
+                .catalog-kpi-card {
+                    background: #ffffff;
+                    border-radius: 14px;
+                    padding: 14px 18px;
+                    border: 1px solid #f1f5f9;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    transition: transform 0.2s ease, box-shadow 0.2s ease;
+                }
+                .catalog-kpi-card:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+                }
+                .catalog-filter-pill {
+                    border: 1px solid #cbd5e1;
+                    background: #f8fafc;
+                    color: #475569;
+                    padding: 8px 16px;
+                    border-radius: 25px;
+                    font-size: 0.9rem;
+                    font-weight: 700;
+                    cursor: pointer;
+                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    font-family: inherit;
+                }
+                .catalog-filter-pill:hover {
+                    background: #f1f5f9;
+                    border-color: #94a3b8;
+                    transform: translateY(-1px);
+                }
+                .catalog-filter-pill.active {
+                    background: linear-gradient(135deg, #9b59b6, #8e44ad);
+                    color: white;
+                    border-color: transparent;
+                    box-shadow: 0 4px 12px rgba(155, 89, 182, 0.35);
+                }
+                .catalog-filter-pill.pill-offers.active {
+                    background: linear-gradient(135deg, #e91e63, #c2185b);
+                    box-shadow: 0 4px 12px rgba(233, 30, 99, 0.35);
+                }
+                .catalog-card {
+                    background: #ffffff;
+                    border-radius: 16px;
+                    border: 1px solid #e2e8f0;
+                    padding: 16px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+                    transition: all 0.25s ease;
+                    position: relative;
+                    overflow: hidden;
+                }
+                .catalog-card:hover {
+                    transform: translateY(-3px);
+                    box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+                    border-color: #cbd5e1;
+                }
+                .catalog-card.card-on-offer {
+                    border-color: #fbcfe8;
+                    background: linear-gradient(180deg, #ffffff 0%, #fdf2f8 100%);
+                }
+                .catalog-card.card-on-offer::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                    left: 0;
+                    height: 4px;
+                    background: linear-gradient(90deg, #e91e63, #9c27b0);
+                }
+            </style>
 
-            <div class="section-card">
-                <h3 class="section-title"><i class="fa-solid fa-box-open"></i> الكتالوج والعروض</h3>
-                <div style="display:flex; gap:5px; margin-bottom:15px;">
-                    <input type="text" id="newCatalogName" placeholder="اسم المنتج" style="flex:2; margin-bottom:0;">
-                    <input type="number" id="newCatalogPrice" placeholder="السعر" style="flex:1; margin-bottom:0;">
-                    <button id="addCatalogBtn" class="btn-search interactive-btn" style="padding: 0 10px;">إضافة</button>
-                </div>
-                <!-- بحث فوري في الكتالوج -->
-                <div style="margin-bottom: 10px;">
-                    <input type="text" id="catalogSearchInput" placeholder="ابحث في الكتالوج للفلترة الفورية..." style="width: 100%; border-radius: 8px; padding: 8px; box-sizing: border-box;">
-                </div>
-                <div id="catalogListContainer" class="data-list-container" style="max-height: 250px; overflow-y: auto;">
-                    <p class="empty-msg">جاري تحميل الكتالوج...</p>
-                </div>
-                <!-- نظام تقسيم الصفحات (Pagination) -->
-                <div id="catalogPagination" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; align-items: center; margin-top: 15px; padding: 15px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border: 1px solid #ced4da; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
-                    <button id="catalogPrevPage" class="interactive-btn" style="flex: 1 1 80px; justify-content: center; padding: 8px 10px; border-radius: 8px; font-weight: bold; font-family: 'Cairo', sans-serif; background: #ffffff; color: var(--primary); border: 2px solid var(--primary); display: flex; align-items: center; gap: 5px; font-size: 0.9rem;" disabled>
-                        <span style="font-size:1.2rem; line-height:1;">&laquo;</span> السابق
-                    </button>
-                    <span id="catalogPageInfo" style="font-size: 1rem; font-weight: bold; color: var(--text-dark); background: #ffffff; padding: 6px 15px; border-radius: 25px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #dee2e6; text-align: center;">صفحة 1</span>
-                    <button id="catalogNextPage" class="interactive-btn" style="flex: 1 1 80px; justify-content: center; padding: 8px 10px; border-radius: 8px; font-weight: bold; font-family: 'Cairo', sans-serif; background: var(--primary); color: #ffffff; border: 2px solid var(--primary); display: flex; align-items: center; gap: 5px; font-size: 0.9rem;" disabled>
-                        التالي <span style="font-size:1.2rem; line-height:1;">&raquo;</span>
-                    </button>
+            <!-- Header Bar -->
+            <div class="section-card" style="margin-bottom: 20px; background: linear-gradient(135deg, rgba(155, 89, 182, 0.06), rgba(233, 30, 99, 0.06)); border: 1px solid rgba(155, 89, 182, 0.2); border-radius: 16px;">
+                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px;">
+                    <div>
+                        <h2 style="color: #6c3483; margin: 0 0 5px 0; display: flex; align-items: center; gap: 10px; font-size: 1.5rem; font-weight: 800;">
+                            <i class="fa-solid fa-boxes-stacked" style="color: #9b59b6;"></i> كتالوج الأصناف وإدارة العروض
+                        </h2>
+                        <p style="margin: 0; color: #64748b; font-size: 0.95rem;">
+                            متابعة شاملة لجميع منتجات وكاشير المحل، أسعار البيع، أرصدة المخزون، وتفعيل العروض والخصومات بنقرة واحدة
+                        </p>
+                    </div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button type="button" id="openAddCatalogModalBtn" class="interactive-btn" style="background: linear-gradient(135deg, #9b59b6, #8e44ad); color: white; border: none; padding: 10px 18px; border-radius: 12px; font-weight: bold; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(155, 89, 182, 0.25);">
+                            <i class="fa-solid fa-plus"></i> إضافة صنف جديد
+                        </button>
+                        <button type="button" id="openScannerBtn" class="interactive-btn" style="background: linear-gradient(135deg, #0284c7, #0369a1); color: white; border: none; padding: 10px 16px; border-radius: 12px; font-weight: bold; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);">
+                            <i class="fa-solid fa-barcode"></i> مسح باركود
+                        </button>
+                        <button type="button" id="refreshCatalogBtn" class="interactive-btn" style="background: white; color: #475569; border: 1px solid #cbd5e1; padding: 10px 16px; border-radius: 12px; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-rotate"></i> تحديث
+                        </button>
+                    </div>
                 </div>
 
-                <!-- زرار الماسح الضوئي الذكي -->
-                <button type="button" id="openScannerBtn" class="btn-whatsapp interactive-btn pulse-btn"
-                    style="width: 100%; margin-top: 15px; font-size: 1.1rem; background: linear-gradient(135deg, #17a2b8, #0b7dda); box-shadow: 0 6px 20px rgba(23,162,184,0.3);">
-                    <i class="fa-solid fa-camera"></i> مسح الباركود للكشف عن السعر
-                </button>
+                <!-- KPI Stats Cards (4 Cards) -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 20px;">
+                    <div class="catalog-kpi-card">
+                        <div>
+                            <span style="font-size: 0.85rem; color: #64748b; font-weight: 600;">إجمالي المنتجات</span>
+                            <div id="catalogKpiTotal" style="font-size: 1.6rem; font-weight: 900; color: #0f172a; margin-top: 4px;">0</div>
+                        </div>
+                        <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(155, 89, 182, 0.12); color: #9b59b6; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                            <i class="fa-solid fa-boxes-stacked"></i>
+                        </div>
+                    </div>
+
+                    <div class="catalog-kpi-card" style="border-color: #fbcfe8; box-shadow: 0 4px 12px rgba(233, 30, 99, 0.08);">
+                        <div>
+                            <span style="font-size: 0.85rem; color: #be185d; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+                                <i class="fa-solid fa-tags" style="color: #e91e63;"></i> العروض النشطة
+                            </span>
+                            <div id="catalogKpiOffers" style="font-size: 1.6rem; font-weight: 900; color: #e91e63; margin-top: 4px;">0</div>
+                        </div>
+                        <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(233, 30, 99, 0.12); color: #e91e63; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                            <i class="fa-solid fa-tags"></i>
+                        </div>
+                    </div>
+
+                    <div class="catalog-kpi-card" style="border-color: #bbf7d0; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.08);">
+                        <div>
+                            <span style="font-size: 0.85rem; color: #15803d; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+                                <i class="fa-solid fa-circle-check" style="color: #16a34a;"></i> متوفر في المحل
+                            </span>
+                            <div id="catalogKpiInStock" style="font-size: 1.6rem; font-weight: 900; color: #16a34a; margin-top: 4px;">0</div>
+                        </div>
+                        <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(34, 197, 94, 0.12); color: #16a34a; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                            <i class="fa-solid fa-circle-check"></i>
+                        </div>
+                    </div>
+
+                    <div class="catalog-kpi-card" style="border-color: #fecaca; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.08);">
+                        <div>
+                            <span style="font-size: 0.85rem; color: #b91c1c; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+                                <i class="fa-solid fa-triangle-exclamation" style="color: #ef4444;"></i> نفد من المخزن
+                            </span>
+                            <div id="catalogKpiOutOfStock" style="font-size: 1.6rem; font-weight: 900; color: #ef4444; margin-top: 4px;">0</div>
+                        </div>
+                        <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(239, 68, 68, 0.12); color: #ef4444; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toolbar & Filter Pills -->
+            <div class="section-card" style="margin-bottom: 20px; border-radius: 16px; padding: 16px 20px;">
+                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px;">
+                    <!-- Live Search Input -->
+                    <div style="flex: 1 1 280px; position: relative;">
+                        <i class="fa-solid fa-magnifying-glass" style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8;"></i>
+                        <input type="text" id="catalogSearchInput" placeholder="بحث فوري باسم المنتج، الباركود، أو السعر..." style="width: 100%; padding: 10px 40px 10px 15px; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 0.95rem; margin-bottom: 0; background: #f8fafc;">
+                    </div>
+
+                    <!-- Filter Pills -->
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;" id="catalogFilterPills">
+                        <button type="button" class="catalog-filter-pill active" data-filter="all">الكل (<span id="catPillAll">0</span>)</button>
+                        <button type="button" class="catalog-filter-pill pill-offers" data-filter="offers"><i class="fa-solid fa-tags"></i> عروض فقط (<span id="catPillOffers">0</span>)</button>
+                        <button type="button" class="catalog-filter-pill" data-filter="instock"><i class="fa-solid fa-circle-check"></i> متوفر (<span id="catPillInStock">0</span>)</button>
+                        <button type="button" class="catalog-filter-pill" data-filter="out"><i class="fa-solid fa-circle-xmark"></i> نفد (<span id="catPillOut">0</span>)</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cards Grid Container -->
+            <div id="catalogCardsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px; margin-bottom: 20px;">
+                <div style="grid-column: 1 / -1; text-align: center; padding: 50px 20px; color: #94a3b8;">
+                    <i class="fa-solid fa-spinner fa-spin" style="font-size: 2.2rem; color: #9b59b6; margin-bottom: 12px;"></i>
+                    <p style="font-size: 1rem; font-weight: 700;">جاري تحميل ومزامنة الكتالوج...</p>
+                </div>
+            </div>
+
+            <!-- Pagination Bar -->
+            <div id="catalogPagination" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 20px; background: white; border: 1px solid #e2e8f0; border-radius: 14px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); margin-bottom: 30px;">
+                <div id="catalogPageCounter" style="color: #64748b; font-size: 0.9rem; font-weight: 700;">
+                    عرض 0 من إجمالي 0 صنف
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button type="button" id="catalogPrevPage" class="interactive-btn" style="padding: 7px 16px; border-radius: 10px; font-weight: 700; background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" disabled>
+                        <i class="fa-solid fa-chevron-right"></i> السابق
+                    </button>
+                    <span id="catalogPageInfo" style="font-size: 0.92rem; font-weight: 800; color: #0f172a; padding: 6px 14px; background: #f1f5f9; border-radius: 10px;">
+                        صفحة 1
+                    </span>
+                    <button type="button" id="catalogNextPage" class="interactive-btn" style="padding: 7px 16px; border-radius: 10px; font-weight: 700; background: linear-gradient(135deg, #9b59b6, #8e44ad); color: white; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" disabled>
+                        التالي <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                </div>
             </div>
         </section>
 
@@ -2664,24 +2829,72 @@
         </div>
     </div>
 
-    <!-- Driver modal removed and integrated into financials tab -->
-    <div id="editCatalogModal" class="modal-overlay">
-        <div class="modal-content">
-            <h3 style="color: var(--primary); margin-bottom: 15px;"><i class="fa-solid fa-pencil"></i> تعديل المنتج</h3>
+    <!-- مودال إضافة وتعديل صنف في الكتالوج -->
+    <div id="editCatalogModal" class="modal-overlay" style="display: none; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 999999; animation: fadeIn 0.2s ease;">
+        <div style="background: white; border-radius: 20px; width: 92%; max-width: 480px; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); position: relative; max-height: 90vh; overflow-y: auto;">
+            <!-- Header -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(155, 89, 182, 0.12); color: #9b59b6; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+                        <i class="fa-solid fa-box-open"></i>
+                    </div>
+                    <div>
+                        <h3 id="editCatalogModalTitle" style="margin: 0; font-size: 1.2rem; color: #0f172a; font-weight: 800;">تعديل بيانات المنتج</h3>
+                        <p style="margin: 3px 0 0 0; color: #64748b; font-size: 0.85rem;">تحديث الأسعار والعروض الترويجية</p>
+                    </div>
+                </div>
+                <button type="button" id="closeEditCatModal" style="background: #f1f5f9; border: none; width: 34px; height: 34px; border-radius: 50%; color: #64748b; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" onmouseover="this.style.background='#fee2e2'; this.style.color='#ef4444';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#64748b';">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
             <input type="hidden" id="editCatOldName">
 
-            <label style="text-align: right; display: block; margin-bottom: 5px;">اسم المنتج:</label>
-            <input type="text" id="editCatName" readonly style="background:#eee; cursor:not-allowed;">
+            <div style="margin-bottom: 14px;">
+                <label style="display: block; margin-bottom: 6px; font-weight: 700; font-size: 0.9rem; color: #334155;">
+                    <i class="fa-solid fa-tag" style="color: #9b59b6;"></i> اسم المنتج:
+                </label>
+                <input type="text" id="editCatName" placeholder="أدخل اسم المنتج" class="input-field" style="margin-bottom: 0;">
+            </div>
 
-            <label style="text-align: right; display: block; margin-bottom: 5px;">السعر الأساسي:</label>
-            <input type="number" id="editCatPrice" placeholder="السعر الأساسي">
+            <div style="margin-bottom: 14px;">
+                <label style="display: block; margin-bottom: 6px; font-weight: 700; font-size: 0.9rem; color: #334155;">
+                    <i class="fa-solid fa-barcode" style="color: #0284c7;"></i> الباركود (اختياري):
+                </label>
+                <input type="text" id="editCatBarcode" placeholder="رقم الباركود" class="input-field" style="margin-bottom: 0;">
+            </div>
 
-            <label style="text-align: right; display: block; margin-bottom: 5px;">سعر العرض:</label>
-            <input type="number" id="editCatOfferPrice" placeholder="أدخل السعر في حالة تفعيل العرض">
+            <div style="margin-bottom: 14px;">
+                <label style="display: block; margin-bottom: 6px; font-weight: 700; font-size: 0.9rem; color: #334155;">
+                    <i class="fa-solid fa-money-bill-wave" style="color: #10b981;"></i> السعر الأساسي (ج.م):
+                </label>
+                <input type="number" id="editCatPrice" placeholder="مثال: 50" class="input-field" style="margin-bottom: 0;">
+            </div>
 
-            <div class="modal-actions mt-10">
-                <button id="closeEditCatModal" class="btn-cancel">إلغاء</button>
-                <button id="saveEditCatBtn" class="btn-confirm">حفظ التعديلات</button>
+            <!-- Offer Toggle & Offer Price Box -->
+            <div style="background: #fdf2f8; border: 1px solid #fbcfe8; border-radius: 12px; padding: 14px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <label style="font-weight: 800; font-size: 0.92rem; color: #be185d; display: flex; align-items: center; gap: 7px; margin: 0; cursor: pointer;" for="editCatIsOffer">
+                        <i class="fa-solid fa-tags"></i> تفعيل عرض تخفيض لهذا المنتج
+                    </label>
+                    <input type="checkbox" id="editCatIsOffer" style="width: 20px; height: 20px; cursor: pointer; accent-color: #e91e63;">
+                </div>
+                <div id="editCatOfferPriceGroup" style="display: none;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 700; font-size: 0.85rem; color: #9d174d;">
+                        سعر البيع أثناء العرض (ج.م):
+                    </label>
+                    <input type="number" id="editCatOfferPrice" placeholder="أدخل السعر المخفض" class="input-field" style="margin-bottom: 0; background: white;">
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" id="cancelEditCatBtn" class="interactive-btn" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 10px 18px; border-radius: 10px; font-weight: 700; cursor: pointer;">
+                    إلغاء
+                </button>
+                <button type="button" id="saveEditCatBtn" class="interactive-btn" style="background: linear-gradient(135deg, #9b59b6, #8e44ad); color: white; border: none; padding: 10px 24px; border-radius: 10px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 7px; box-shadow: 0 4px 12px rgba(155, 89, 182, 0.25);">
+                    <i class="fa-solid fa-floppy-disk"></i> حفظ البيانات
+                </button>
             </div>
         </div>
     </div>

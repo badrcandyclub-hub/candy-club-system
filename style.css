@@ -2203,10 +2203,8 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
     }
 
     #catalog-tab.active {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 24px;
-        align-items: start;
+        display: block;
+        width: 100%;
     }
 }
 
