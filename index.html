@@ -1351,6 +1351,38 @@
                     </div>
                 </div>
 
+                <!-- Image Attachment Row -->
+                <div style="border-top: 1px dashed #e2e8f0; padding-top: 14px; margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 700; font-size: 0.9rem; color: #334155;">
+                        <i class="fa-solid fa-camera" style="color: #e91e63;"></i> صورة المنتج (اختياري - رفع من الجهاز أو رابط من النت):
+                    </label>
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <input type="file" id="waitlistImageFile" accept="image/*" style="display: none;">
+                        <button type="button" id="waitlistUploadImgBtn" class="interactive-btn" style="background: #f8fafc; color: #334155; border: 1px solid #cbd5e1; padding: 9px 16px; border-radius: 10px; font-weight: 700; font-size: 0.88rem; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; transition: all 0.2s;">
+                            <i class="fa-solid fa-upload" style="color: #e91e63;"></i> اختيار صورة من الجهاز
+                        </button>
+                        
+                        <span style="color: #94a3b8; font-size: 0.85rem; font-weight: 700;">أو</span>
+                        
+                        <div style="flex: 1 1 240px; position: relative;">
+                            <i class="fa-solid fa-link" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.85rem;"></i>
+                            <input type="url" id="waitlistImageUrlInput" placeholder="أو الصق رابط صورة مباشرة من الإنترنت..." class="input-field" style="margin-bottom: 0; padding-right: 34px; font-size: 0.88rem;">
+                        </div>
+                    </div>
+                    
+                    <!-- Preview Container -->
+                    <div id="waitlistImgPreviewBox" style="display: none; margin-top: 12px; align-items: center; gap: 12px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px 14px; border-radius: 12px; width: fit-content; max-width: 100%;">
+                        <img id="waitlistImgPreviewEl" src="" style="width: 52px; height: 52px; object-fit: cover; border-radius: 8px; border: 1px solid #cbd5e1;">
+                        <div style="font-size: 0.85rem;">
+                            <span id="waitlistImgPreviewName" style="font-weight: 700; color: #1e293b; display: block; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">صورة المنتج</span>
+                            <span id="waitlistImgPreviewSize" style="color: #16a34a; font-size: 0.78rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-circle-check"></i> جاهزة ومضغوطة</span>
+                        </div>
+                        <button type="button" id="waitlistRemoveImgBtn" style="background: none; border: none; color: #ef4444; cursor: pointer; padding: 6px; font-size: 1rem; border-radius: 6px;" title="إزالة الصورة">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+
                 <div style="display: flex; justify-content: flex-end;">
                     <button type="button" id="saveWaitlistBtn" class="interactive-btn" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 12px 35px; border-radius: 12px; font-weight: bold; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3); display: flex; align-items: center; gap: 8px;">
                         <i class="fa-solid fa-check"></i> حفظ في قائمة الانتظار
@@ -3337,6 +3369,93 @@
             </div>
         </div>
 
+    </div>
+</div>
+
+<!-- Modal: إضافة أو تعديل صورة المنتج في قائمة الانتظار -->
+<div id="waitlistImageModal" class="modal-overlay" style="display: none; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 999999; animation: fadeIn 0.2s ease;">
+    <div style="background: white; border-radius: 20px; width: 92%; max-width: 460px; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); position: relative; max-height: 90vh; overflow-y: auto;">
+        <!-- Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(233, 30, 99, 0.1); color: #e91e63; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                    <i class="fa-solid fa-camera"></i>
+                </div>
+                <div>
+                    <h3 style="margin: 0; font-size: 1.15rem; color: #0f172a; font-weight: 800;">إضافة أو تعديل صورة المنتج</h3>
+                    <p id="waitlistModalProductSub" style="margin: 3px 0 0 0; color: #64748b; font-size: 0.85rem; font-weight: 600;"></p>
+                </div>
+            </div>
+            <button type="button" onclick="closeWaitlistImageModal()" style="background: #f1f5f9; border: none; width: 34px; height: 34px; border-radius: 50%; color: #64748b; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" onmouseover="this.style.background='#fee2e2'; this.style.color='#ef4444';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#64748b';">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- Options: Upload from device or URL -->
+        <div style="margin-bottom: 16px;">
+            <label style="display: block; font-weight: 700; font-size: 0.9rem; color: #334155; margin-bottom: 8px;">
+                <i class="fa-solid fa-upload" style="color: #e91e63;"></i> الخيار الأول: رفع صورة من الجهاز
+            </label>
+            <input type="file" id="waitlistModalFileInput" accept="image/*" style="display: none;">
+            <button type="button" id="waitlistModalChooseFileBtn" class="interactive-btn" style="width: 100%; background: #f8fafc; border: 2px dashed #cbd5e1; padding: 12px; border-radius: 12px; font-weight: 700; color: #334155; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;" onmouseover="this.style.borderColor='#e91e63'; this.style.color='#e91e63';" onmouseout="this.style.borderColor='#cbd5e1'; this.style.color='#334155';">
+                <i class="fa-solid fa-file-arrow-up" style="color: #e91e63; font-size: 1.1rem;"></i> اضغط لاختيار صورة من جهازك
+            </button>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 10px; margin: 15px 0;">
+            <div style="flex: 1; height: 1px; background: #e2e8f0;"></div>
+            <span style="color: #94a3b8; font-size: 0.85rem; font-weight: 700;">أو من النت</span>
+            <div style="flex: 1; height: 1px; background: #e2e8f0;"></div>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+            <label style="display: block; font-weight: 700; font-size: 0.9rem; color: #334155; margin-bottom: 8px;">
+                <i class="fa-solid fa-globe" style="color: #0284c7;"></i> الخيار الثاني: رابط صورة من الإنترنت
+            </label>
+            <div style="position: relative;">
+                <i class="fa-solid fa-link" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8;"></i>
+                <input type="url" id="waitlistModalUrlInput" placeholder="الصق رابط الصورة هنا: https://..." class="input-field" style="margin-bottom: 0; padding-right: 36px; font-size: 0.9rem;">
+            </div>
+        </div>
+
+        <!-- Preview Box -->
+        <div id="waitlistModalPreviewContainer" style="display: none; margin-bottom: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px; text-align: center;">
+            <div style="font-size: 0.8rem; color: #64748b; font-weight: 700; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                <span>معاينة الصورة المختارة:</span>
+                <span id="waitlistModalSizeBadge" style="color: #16a34a; font-size: 0.78rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-circle-check"></i> جاهزة ومضغوطة</span>
+            </div>
+            <img id="waitlistModalPreviewImg" src="" style="max-height: 180px; max-width: 100%; border-radius: 10px; object-fit: contain; border: 1px solid #cbd5e1; box-shadow: 0 4px 10px rgba(0,0,0,0.06);">
+            <div style="margin-top: 8px;">
+                <button type="button" id="waitlistModalClearBtn" style="background: none; border: none; color: #ef4444; font-size: 0.85rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+                    <i class="fa-solid fa-trash-can"></i> إزالة المعاينة
+                </button>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+            <button type="button" onclick="closeWaitlistImageModal()" class="interactive-btn" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 10px 18px; border-radius: 10px; font-weight: 700; cursor: pointer;">
+                إلغاء
+            </button>
+            <button type="button" id="waitlistModalSaveBtn" class="interactive-btn" style="background: linear-gradient(135deg, #e91e63, #c2185b); color: white; border: none; padding: 10px 24px; border-radius: 10px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 7px; box-shadow: 0 4px 12px rgba(233, 30, 99, 0.25);">
+                <i class="fa-solid fa-floppy-disk"></i> حفظ الصورة
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: تكبير وعرض الصورة بدقة كاملة -->
+<div id="waitlistZoomModal" class="modal-overlay" style="display: none; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); z-index: 1000000; animation: fadeIn 0.2s ease;" onclick="closeWaitlistZoomModal()">
+    <div style="position: relative; max-width: 90vw; max-height: 90vh; display: flex; flex-direction: column; align-items: center;" onclick="event.stopPropagation();">
+        <button type="button" onclick="closeWaitlistZoomModal()" style="position: absolute; top: -45px; left: 0; background: rgba(255,255,255,0.2); border: none; width: 38px; height: 38px; border-radius: 50%; color: white; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" onmouseover="this.style.background='rgba(239, 68, 68, 0.8)';" onmouseout="this.style.background='rgba(255,255,255,0.2)';">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <img id="waitlistZoomModalImg" src="" style="max-width: 90vw; max-height: 80vh; border-radius: 14px; object-fit: contain; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 2px solid rgba(255,255,255,0.1);">
+        <div style="margin-top: 14px; display: flex; gap: 10px;">
+            <a id="waitlistZoomModalOpenTab" href="" target="_blank" class="interactive-btn" style="background: rgba(255,255,255,0.15); color: white; padding: 7px 16px; border-radius: 8px; text-decoration: none; font-size: 0.88rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> فتح في نافذة مستقلة
+            </a>
+        </div>
     </div>
 </div>
 

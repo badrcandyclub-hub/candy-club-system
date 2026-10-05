@@ -5652,6 +5652,48 @@ if (addCatalogBtn) {
 // ==========================================
 let waitlistActiveFilter = 'all';
 let waitlistSearchQuery = '';
+let waitlistFormSelectedImage = null;
+let activeWaitlistEditItem = null;
+let modalSelectedImage = null;
+
+// دالة ضغط الصور محلياً عبر Canvas لتقليل الحجم وتسريع التحميل بدون التأثير على الجودة
+function compressWaitlistImage(file, maxWidth = 600, maxHeight = 600, quality = 0.65) {
+    return new Promise((resolve) => {
+        if (!file || !file.type.startsWith('image/')) {
+            return resolve(null);
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                let width = img.width;
+                let height = img.height;
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxHeight) {
+                        width = Math.round((width * maxHeight) / height);
+                        height = maxHeight;
+                    }
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                resolve(dataUrl);
+            };
+            img.onerror = () => resolve(null);
+            img.src = e.target.result;
+        };
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(file);
+    });
+}
 
 window.initWaitlistTab = function() {
     updateWaitlistProductSuggestions();
@@ -5747,14 +5789,135 @@ function setupWaitlistEventListeners() {
         });
     }
 
-    // 2. زر حفظ العميل في الانتظار
+    // 2. التعامل مع إرفاق الصور في كارت التسجيل الجديد
+    const imgFileInput = document.getElementById('waitlistImageFile');
+    const uploadImgBtn = document.getElementById('waitlistUploadImgBtn');
+    const imgUrlInput = document.getElementById('waitlistImageUrlInput');
+    const imgPreviewBox = document.getElementById('waitlistImgPreviewBox');
+    const imgPreviewEl = document.getElementById('waitlistImgPreviewEl');
+    const imgPreviewName = document.getElementById('waitlistImgPreviewName');
+    const removeImgBtn = document.getElementById('waitlistRemoveImgBtn');
+
+    if (uploadImgBtn && !uploadImgBtn._boundWaitlist) {
+        uploadImgBtn._boundWaitlist = true;
+        uploadImgBtn.addEventListener('click', () => {
+            if (imgFileInput) imgFileInput.click();
+        });
+    }
+
+    if (imgFileInput && !imgFileInput._boundWaitlist) {
+        imgFileInput._boundWaitlist = true;
+        imgFileInput.addEventListener('change', async (e) => {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+            const dataUrl = await compressWaitlistImage(file);
+            if (dataUrl) {
+                waitlistFormSelectedImage = dataUrl;
+                if (imgPreviewEl) imgPreviewEl.src = dataUrl;
+                if (imgPreviewName) imgPreviewName.textContent = file.name || 'صورة من الجهاز';
+                if (imgPreviewBox) imgPreviewBox.style.display = 'inline-flex';
+                if (imgUrlInput) imgUrlInput.value = '';
+            }
+        });
+    }
+
+    if (imgUrlInput && !imgUrlInput._boundWaitlist) {
+        imgUrlInput._boundWaitlist = true;
+        imgUrlInput.addEventListener('input', (e) => {
+            const val = e.target.value.trim();
+            if (val.startsWith('http://') || val.startsWith('https://') || val.startsWith('data:image/')) {
+                waitlistFormSelectedImage = val;
+                if (imgPreviewEl) imgPreviewEl.src = val;
+                if (imgPreviewName) imgPreviewName.textContent = 'صورة من رابط الإنترنت';
+                if (imgPreviewBox) imgPreviewBox.style.display = 'inline-flex';
+                if (imgFileInput) imgFileInput.value = '';
+            } else if (!val && (!imgFileInput || !imgFileInput.files || !imgFileInput.files.length)) {
+                waitlistFormSelectedImage = null;
+                if (imgPreviewBox) imgPreviewBox.style.display = 'none';
+            }
+        });
+    }
+
+    if (removeImgBtn && !removeImgBtn._boundWaitlist) {
+        removeImgBtn._boundWaitlist = true;
+        removeImgBtn.addEventListener('click', () => {
+            waitlistFormSelectedImage = null;
+            if (imgFileInput) imgFileInput.value = '';
+            if (imgUrlInput) imgUrlInput.value = '';
+            if (imgPreviewBox) imgPreviewBox.style.display = 'none';
+        });
+    }
+
+    // 3. التعامل مع مودال إضافة/تعديل الصورة للكروت القائمة
+    const modalFileInput = document.getElementById('waitlistModalFileInput');
+    const modalChooseBtn = document.getElementById('waitlistModalChooseFileBtn');
+    const modalUrlInput = document.getElementById('waitlistModalUrlInput');
+    const modalClearBtn = document.getElementById('waitlistModalClearBtn');
+    const modalSaveBtn = document.getElementById('waitlistModalSaveBtn');
+    const modalPreviewContainer = document.getElementById('waitlistModalPreviewContainer');
+    const modalPreviewImg = document.getElementById('waitlistModalPreviewImg');
+
+    if (modalChooseBtn && !modalChooseBtn._boundWaitlist) {
+        modalChooseBtn._boundWaitlist = true;
+        modalChooseBtn.addEventListener('click', () => {
+            if (modalFileInput) modalFileInput.click();
+        });
+    }
+
+    if (modalFileInput && !modalFileInput._boundWaitlist) {
+        modalFileInput._boundWaitlist = true;
+        modalFileInput.addEventListener('change', async (e) => {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+            const dataUrl = await compressWaitlistImage(file);
+            if (dataUrl) {
+                modalSelectedImage = dataUrl;
+                if (modalPreviewImg) modalPreviewImg.src = dataUrl;
+                if (modalPreviewContainer) modalPreviewContainer.style.display = 'block';
+                if (modalUrlInput) modalUrlInput.value = '';
+            }
+        });
+    }
+
+    if (modalUrlInput && !modalUrlInput._boundWaitlist) {
+        modalUrlInput._boundWaitlist = true;
+        modalUrlInput.addEventListener('input', (e) => {
+            const val = e.target.value.trim();
+            if (val.startsWith('http://') || val.startsWith('https://') || val.startsWith('data:image/')) {
+                modalSelectedImage = val;
+                if (modalPreviewImg) modalPreviewImg.src = val;
+                if (modalPreviewContainer) modalPreviewContainer.style.display = 'block';
+                if (modalFileInput) modalFileInput.value = '';
+            } else if (!val) {
+                modalSelectedImage = null;
+                if (modalPreviewContainer) modalPreviewContainer.style.display = 'none';
+            }
+        });
+    }
+
+    if (modalClearBtn && !modalClearBtn._boundWaitlist) {
+        modalClearBtn._boundWaitlist = true;
+        modalClearBtn.addEventListener('click', () => {
+            modalSelectedImage = null;
+            if (modalFileInput) modalFileInput.value = '';
+            if (modalUrlInput) modalUrlInput.value = '';
+            if (modalPreviewContainer) modalPreviewContainer.style.display = 'none';
+        });
+    }
+
+    if (modalSaveBtn && !modalSaveBtn._boundWaitlist) {
+        modalSaveBtn._boundWaitlist = true;
+        modalSaveBtn.addEventListener('click', saveWaitlistImageModal);
+    }
+
+    // 4. زر حفظ العميل في الانتظار
     const saveBtn = document.getElementById('saveWaitlistBtn');
     if (saveBtn && !saveBtn._boundWaitlist) {
         saveBtn._boundWaitlist = true;
         saveBtn.addEventListener('click', handleAddWaitlistRecord);
     }
 
-    // 3. فلترة أزرار الـ Pills
+    // 5. فلترة أزرار الـ Pills
     const pills = document.querySelectorAll('#waitlistFilterPills .waitlist-filter-pill');
     pills.forEach(pill => {
         if (!pill._boundWaitlist) {
@@ -5768,7 +5931,7 @@ function setupWaitlistEventListeners() {
         }
     });
 
-    // 4. حقل البحث اللحظي
+    // 6. حقل البحث اللحظي
     const searchInput = document.getElementById('waitlistSearchInput');
     if (searchInput && !searchInput._boundWaitlist) {
         searchInput._boundWaitlist = true;
@@ -5778,7 +5941,7 @@ function setupWaitlistEventListeners() {
         });
     }
 
-    // 5. زر تحديث القائمة
+    // 7. زر تحديث القائمة
     const refreshBtn = document.getElementById('refreshWaitlistBtn');
     if (refreshBtn && !refreshBtn._boundWaitlist) {
         refreshBtn._boundWaitlist = true;
@@ -5793,7 +5956,7 @@ function setupWaitlistEventListeners() {
     }
 }
 
-// دالة إضافة سجل جديد لقائمة الانتظار
+// دالة إضافة سجل جديد لقائمة الانتظار مع دعم الصورة (رفع أو رابط)
 async function handleAddWaitlistRecord() {
     const saveBtn = document.getElementById('saveWaitlistBtn');
     const cust = document.getElementById('waitlistCustomer')?.value.trim();
@@ -5809,14 +5972,29 @@ async function handleAddWaitlistRecord() {
     if (saveBtn) setBtnLoading(saveBtn, true);
 
     try {
-        const { data, error } = await supabase.from('out_of_stock').insert([{
+        let finalReason = reason;
+        if (waitlistFormSelectedImage) {
+            finalReason += ' | [IMG:' + waitlistFormSelectedImage + ']';
+        }
+
+        const payload = {
             customer_name: cust,
             phone: phone,
             product: product,
-            reason: reason
-        }]);
+            reason: finalReason
+        };
+        if (waitlistFormSelectedImage) {
+            payload.image_url = waitlistFormSelectedImage;
+        }
 
-        if (error) throw error;
+        let { data, error } = await supabase.from('out_of_stock').insert([payload]);
+        if (error && error.message && error.message.includes('image_url')) {
+            delete payload.image_url;
+            const res = await supabase.from('out_of_stock').insert([payload]);
+            if (res.error) throw res.error;
+        } else if (error) {
+            throw error;
+        }
 
         showToast("<i class='fa-solid fa-check'></i> تم تسجيل العميل في قائمة الانتظار بنجاح", "success");
         
@@ -5826,6 +6004,12 @@ async function handleAddWaitlistRecord() {
         if (document.getElementById('waitlistProduct')) document.getElementById('waitlistProduct').value = '';
         const custBadge = document.getElementById('waitlistCustInfoBadge');
         if (custBadge) custBadge.style.display = 'none';
+
+        // تفريغ صورة المنتج
+        waitlistFormSelectedImage = null;
+        if (document.getElementById('waitlistImageFile')) document.getElementById('waitlistImageFile').value = '';
+        if (document.getElementById('waitlistImageUrlInput')) document.getElementById('waitlistImageUrlInput').value = '';
+        if (document.getElementById('waitlistImgPreviewBox')) document.getElementById('waitlistImgPreviewBox').style.display = 'none';
 
         if (typeof loadDataFromServer === 'function') {
             loadDataFromServer();
@@ -5933,10 +6117,10 @@ function renderWaitlistTab(list = oosData) {
 
         let rawReason = item.reason || '';
         let attachedImg = item.image_url || null;
-        if (!attachedImg && rawReason.includes('[IMG:')) {
-            const m = rawReason.match(/\[IMG:(data:image\/[^\]]+)\]/);
+        if (rawReason.includes('[IMG:')) {
+            const m = rawReason.match(/\[IMG:([^\]]+)\]/);
             if (m) {
-                attachedImg = m[1];
+                if (!attachedImg) attachedImg = m[1];
                 rawReason = rawReason.replace(m[0], '').replace(/\s*\|\s*$/, '').trim();
             }
         }
@@ -5955,11 +6139,27 @@ function renderWaitlistTab(list = oosData) {
         let imageBoxHtml = '';
         if (attachedImg) {
             imageBoxHtml = `
-                <div style="margin-top: 10px; border-radius: 10px; overflow: hidden; border: 1px solid #cbd5e1; background: #0f172a; position: relative;">
-                    <img src="${attachedImg}" style="width: 100%; max-height: 150px; object-fit: cover; display: block; cursor: pointer; transition: opacity 0.2s;" onclick="window.open('${attachedImg}')" title="اضغط لتكبير الصورة في صفحة مستقلة" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
-                    <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.75); color: #fff; padding: 3px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; pointer-events: none; display: flex; align-items: center; gap: 5px;">
-                        <i class="fa-solid fa-camera" style="color: #ec4899;"></i> صورة من العميل (اضغط للتكبير)
+                <div style="margin-top: 10px; border-radius: 12px; overflow: hidden; border: 1px solid #cbd5e1; background: #0f172a; position: relative;">
+                    <img src="${attachedImg}" style="width: 100%; max-height: 160px; object-fit: cover; display: block; cursor: pointer; transition: transform 0.2s;" class="waitlist-card-img" title="اضغط لتكبير الصورة">
+                    <div class="waitlist-zoom-trigger" style="position: absolute; bottom: 8px; right: 8px; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(4px); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                        <i class="fa-solid fa-magnifying-glass-plus" style="color: #ec4899;"></i> عرض بالحجم الكامل
                     </div>
+                    <div style="position: absolute; top: 8px; left: 8px; display: flex; gap: 6px; z-index: 2;">
+                        <button type="button" class="btn-edit-img-action" style="background: rgba(255, 255, 255, 0.95); border: 1px solid #cbd5e1; color: #0284c7; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.85rem; box-shadow: 0 2px 6px rgba(0,0,0,0.15); transition: all 0.2s;" title="تعديل أو تغيير الصورة">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button type="button" class="btn-del-img-action" style="background: rgba(255, 255, 255, 0.95); border: 1px solid #cbd5e1; color: #ef4444; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.85rem; box-shadow: 0 2px 6px rgba(0,0,0,0.15); transition: all 0.2s;" title="حذف الصورة">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        } else {
+            imageBoxHtml = `
+                <div style="margin-top: 10px;">
+                    <button type="button" class="btn-add-img-action interactive-btn" style="width: 100%; background: #f8fafc; border: 1px dashed #cbd5e1; color: #64748b; padding: 8px 12px; border-radius: 10px; font-weight: 700; font-size: 0.82rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: all 0.2s;" onmouseover="this.style.borderColor='#e91e63'; this.style.color='#e91e63'; this.style.background='#fdf2f8';" onmouseout="this.style.borderColor='#cbd5e1'; this.style.color='#64748b'; this.style.background='#f8fafc';">
+                        <i class="fa-solid fa-camera" style="color: #e91e63;"></i> إضافة صورة للمنتج (رفع أو رابط)
+                    </button>
                 </div>
             `;
         }
@@ -6010,6 +6210,25 @@ function renderWaitlistTab(list = oosData) {
                 </button>
             </div>
         `;
+
+        // Image Zoom Listener
+        if (attachedImg) {
+            card.querySelector('.waitlist-card-img')?.addEventListener('click', () => openWaitlistZoomModal(attachedImg));
+            card.querySelector('.waitlist-zoom-trigger')?.addEventListener('click', () => openWaitlistZoomModal(attachedImg));
+            card.querySelector('.btn-edit-img-action')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openWaitlistImageModal(item);
+            });
+            card.querySelector('.btn-del-img-action')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                deleteWaitlistCardImage(item);
+            });
+        } else {
+            card.querySelector('.btn-add-img-action')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openWaitlistImageModal(item);
+            });
+        }
 
         // WhatsApp Handler with Adaptive Messages
         card.querySelector('.btn-wa-action').addEventListener('click', () => {
@@ -6075,6 +6294,152 @@ function renderWaitlistTab(list = oosData) {
         container.appendChild(card);
     });
 }
+
+// دالات إدارة وتعديل وتكبير صورة المنتج في قائمة الانتظار
+window.openWaitlistImageModal = function(item) {
+    activeWaitlistEditItem = item;
+    modalSelectedImage = item.image_url || null;
+    
+    if (!modalSelectedImage && item.reason && item.reason.includes('[IMG:')) {
+        const m = item.reason.match(/\[IMG:([^\]]+)\]/);
+        if (m) modalSelectedImage = m[1];
+    }
+
+    const modal = document.getElementById('waitlistImageModal');
+    if (!modal) return;
+    
+    const sub = document.getElementById('waitlistModalProductSub');
+    if (sub) {
+        sub.textContent = `المنتج: ${item.product || '-'} | العميل: ${item.customer || '-'}`;
+    }
+
+    const urlInput = document.getElementById('waitlistModalUrlInput');
+    const previewContainer = document.getElementById('waitlistModalPreviewContainer');
+    const previewImg = document.getElementById('waitlistModalPreviewImg');
+    const fileInput = document.getElementById('waitlistModalFileInput');
+
+    if (fileInput) fileInput.value = '';
+    if (urlInput) urlInput.value = (modalSelectedImage && modalSelectedImage.startsWith('http')) ? modalSelectedImage : '';
+
+    if (modalSelectedImage) {
+        if (previewImg) previewImg.src = modalSelectedImage;
+        if (previewContainer) previewContainer.style.display = 'block';
+    } else {
+        if (previewContainer) previewContainer.style.display = 'none';
+    }
+
+    modal.style.display = 'flex';
+};
+
+window.closeWaitlistImageModal = function() {
+    const modal = document.getElementById('waitlistImageModal');
+    if (modal) modal.style.display = 'none';
+    activeWaitlistEditItem = null;
+    modalSelectedImage = null;
+};
+
+async function saveWaitlistImageModal() {
+    if (!activeWaitlistEditItem) return;
+    const saveBtn = document.getElementById('waitlistModalSaveBtn');
+    if (saveBtn) setBtnLoading(saveBtn, true);
+
+    try {
+        const item = activeWaitlistEditItem;
+        
+        let cleanReason = (item.reason || '').replace(/\[IMG:[^\]]+\]/g, '').replace(/\s*\|\s*$/, '').trim();
+        let newReason = cleanReason;
+        if (modalSelectedImage) {
+            newReason = (cleanReason ? cleanReason + ' | ' : '') + '[IMG:' + modalSelectedImage + ']';
+        }
+
+        const updatePayload = {
+            reason: newReason
+        };
+        if (modalSelectedImage) {
+            updatePayload.image_url = modalSelectedImage;
+        } else {
+            updatePayload.image_url = null;
+        }
+
+        if (item.id) {
+            let res = await supabase.from('out_of_stock').update(updatePayload).eq('id', item.id);
+            if (res.error && res.error.message && res.error.message.includes('image_url')) {
+                delete updatePayload.image_url;
+                res = await supabase.from('out_of_stock').update(updatePayload).eq('id', item.id);
+            }
+            if (res.error) throw res.error;
+        } else {
+            let res = await supabase.from('out_of_stock').update(updatePayload).eq('product', item.product).ilike('phone', '%' + item.phone + '%');
+            if (res.error && res.error.message && res.error.message.includes('image_url')) {
+                delete updatePayload.image_url;
+                res = await supabase.from('out_of_stock').update(updatePayload).eq('product', item.product).ilike('phone', '%' + item.phone + '%');
+            }
+            if (res.error) throw res.error;
+        }
+
+        // تحديث الكائن في الذاكرة
+        item.reason = newReason;
+        item.image_url = modalSelectedImage;
+
+        closeWaitlistImageModal();
+        showToast("<i class='fa-solid fa-check'></i> تم حفظ صورة المنتج بنجاح", "success");
+        renderWaitlistTab();
+    } catch (err) {
+        console.error("Error saving image:", err);
+        showToast("تعذر حفظ الصورة: " + err.message, "error");
+    } finally {
+        if (saveBtn) setBtnLoading(saveBtn, false, '<i class="fa-solid fa-floppy-disk"></i> حفظ الصورة');
+    }
+}
+
+window.deleteWaitlistCardImage = function(item) {
+    customConfirm(`هل تريد بالتأكيد إزالة صورة المنتج (${item.product})؟`, async () => {
+        try {
+            let cleanReason = (item.reason || '').replace(/\[IMG:[^\]]+\]/g, '').replace(/\s*\|\s*$/, '').trim();
+            const updatePayload = {
+                reason: cleanReason,
+                image_url: null
+            };
+            if (item.id) {
+                let res = await supabase.from('out_of_stock').update(updatePayload).eq('id', item.id);
+                if (res.error && res.error.message && res.error.message.includes('image_url')) {
+                    delete updatePayload.image_url;
+                    res = await supabase.from('out_of_stock').update(updatePayload).eq('id', item.id);
+                }
+                if (res.error) throw res.error;
+            } else {
+                let res = await supabase.from('out_of_stock').update(updatePayload).eq('product', item.product).ilike('phone', '%' + item.phone + '%');
+                if (res.error && res.error.message && res.error.message.includes('image_url')) {
+                    delete updatePayload.image_url;
+                    res = await supabase.from('out_of_stock').update(updatePayload).eq('product', item.product).ilike('phone', '%' + item.phone + '%');
+                }
+                if (res.error) throw res.error;
+            }
+            item.reason = cleanReason;
+            item.image_url = null;
+            showToast("تمت إزالة صورة المنتج بنجاح", "success");
+            renderWaitlistTab();
+        } catch(err) {
+            console.error(err);
+            showToast("تعذر حذف الصورة", "error");
+        }
+    });
+};
+
+window.openWaitlistZoomModal = function(imgSrc) {
+    const modal = document.getElementById('waitlistZoomModal');
+    const img = document.getElementById('waitlistZoomModalImg');
+    const tabLink = document.getElementById('waitlistZoomModalOpenTab');
+    if (!modal || !img) return;
+    img.src = imgSrc;
+    if (tabLink) tabLink.href = imgSrc;
+    modal.style.display = 'flex';
+};
+
+window.closeWaitlistZoomModal = function() {
+    const modal = document.getElementById('waitlistZoomModal');
+    if (modal) modal.style.display = 'none';
+};
 
 function renderOutOfStock(oosList) {
     if (typeof renderWaitlistTab === 'function') {
