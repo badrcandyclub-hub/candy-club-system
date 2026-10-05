@@ -4858,6 +4858,105 @@ function updateShippedSelectedSummary() {
     }
 }
 
+window.selectCourierForSettlement = function(driverName) {
+    const sel = document.getElementById('closeDriverSelect');
+    if (sel) {
+        sel.value = driverName;
+    }
+    const chips = document.querySelectorAll('#quickCourierChips .courier-chip');
+    chips.forEach(chip => {
+        if (chip.dataset.driver === driverName) chip.classList.add('active');
+        else chip.classList.remove('active');
+    });
+    renderDriverShippedOrders(driverName);
+};
+
+function populateShippingCouriersDropdowns() {
+    const assignSelect = document.getElementById('assignDriverSelect');
+    const closeSelect = document.getElementById('closeDriverSelect');
+    const quickChips = document.getElementById('quickCourierChips');
+    const hint = document.getElementById('activeCouriersWithOrdersHint');
+
+    const drivers = window.driversList || [];
+    const shippedOrders = window.shippedOrdersData || (window.latestServerData && window.latestServerData.shippedOrders) || [];
+
+    const driverStats = {};
+    drivers.forEach(d => {
+        driverStats[d.name] = { count: 0, total: 0 };
+    });
+
+    shippedOrders.forEach(o => {
+        const dName = o.driver;
+        if (dName) {
+            if (!driverStats[dName]) driverStats[dName] = { count: 0, total: 0 };
+            driverStats[dName].count++;
+            driverStats[dName].total += parseFloat(o.remaining !== undefined && o.remaining !== null && o.remaining !== "" ? o.remaining : o.total) || 0;
+        }
+    });
+
+    const sortedForSettlement = [...drivers].sort((a, b) => {
+        const aCount = (driverStats[a.name] ? driverStats[a.name].count : 0);
+        const bCount = (driverStats[b.name] ? driverStats[b.name].count : 0);
+        return bCount - aCount;
+    });
+
+    if (closeSelect) {
+        const currentVal = closeSelect.value;
+        closeSelect.innerHTML = '<option value="">-- اختر المندوب --</option>';
+        sortedForSettlement.forEach(d => {
+            const st = driverStats[d.name] || { count: 0, total: 0 };
+            const opt = document.createElement('option');
+            opt.value = d.name;
+            if (st.count > 0) {
+                opt.text = `${d.name} (${st.count} أوردر - ${Math.round(st.total)} ج.م)`;
+                opt.style.fontWeight = 'bold';
+            } else {
+                opt.text = `${d.name} (0 أوردر)`;
+            }
+            closeSelect.appendChild(opt);
+        });
+        if (currentVal) closeSelect.value = currentVal;
+    }
+
+    if (quickChips) {
+        const activeCouriers = sortedForSettlement.filter(d => (driverStats[d.name] && driverStats[d.name].count > 0));
+        quickChips.innerHTML = '';
+        if (activeCouriers.length > 0) {
+            if (hint) hint.innerText = `(${activeCouriers.length} معهم عهدة بالشارع)`;
+            activeCouriers.forEach(d => {
+                const st = driverStats[d.name];
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'courier-chip' + (closeSelect && closeSelect.value === d.name ? ' active' : '');
+                btn.dataset.driver = d.name;
+                btn.innerHTML = `<i class="fa-solid fa-motorcycle"></i> ${d.name}: ${st.count} (${Math.round(st.total)}ج)`;
+                btn.onclick = () => window.selectCourierForSettlement(d.name);
+                quickChips.appendChild(btn);
+            });
+        } else {
+            if (hint) hint.innerText = '';
+            quickChips.innerHTML = '<span style="font-size:0.8rem; color:#64748b;"><i class="fa-solid fa-circle-check" style="color:#10b981;"></i> لا توجد عهد نشطة بالشارع حالياً</span>';
+        }
+    }
+
+    if (assignSelect) {
+        const currentVal = assignSelect.value;
+        assignSelect.innerHTML = '<option value="">-- اختر المندوب --</option>';
+        drivers.forEach(d => {
+            const st = driverStats[d.name] || { count: 0, total: 0 };
+            const opt = document.createElement('option');
+            opt.value = d.name;
+            if (st.count > 0) {
+                opt.text = `${d.name} (معاه ${st.count} بالشارع)`;
+            } else {
+                opt.text = `${d.name} (متاح للتسليم)`;
+            }
+            assignSelect.appendChild(opt);
+        });
+        if (currentVal) assignSelect.value = currentVal;
+    }
+}
+
 function setupShippingHub() {
     if (window._shippingHubInitialized) return;
     window._shippingHubInitialized = true;
@@ -4870,22 +4969,6 @@ function setupShippingHub() {
             if (targetSubtab) window.switchShippingSubTab(targetSubtab);
         });
     });
-
-    // Refresh Shipping Button
-    const refreshBtn = document.getElementById('refreshShippingBtn');
-    if (refreshBtn) {
-        refreshBtn.addEventListener('click', () => {
-            const icon = refreshBtn.querySelector('i');
-            if (icon) icon.classList.add('fa-spin');
-            if (typeof loadDataFromServer === 'function') {
-                loadDataFromServer();
-            }
-            setTimeout(() => {
-                if (icon) icon.classList.remove('fa-spin');
-                showToast("<i class='fa-solid fa-check'></i> تم تحديث بيانات الشحن بنجاح", "success");
-            }, 1000);
-        });
-    }
 
     // Live search input
     const searchInput = document.getElementById('shippingSearchInput');
@@ -4949,7 +5032,13 @@ function setupShippingHub() {
     const closeDriverSelect = document.getElementById('closeDriverSelect');
     if (closeDriverSelect) {
         closeDriverSelect.addEventListener('change', () => {
-            renderDriverShippedOrders(closeDriverSelect.value);
+            const val = closeDriverSelect.value;
+            const chips = document.querySelectorAll('#quickCourierChips .courier-chip');
+            chips.forEach(chip => {
+                if (chip.dataset.driver === val) chip.classList.add('active');
+                else chip.classList.remove('active');
+            });
+            renderDriverShippedOrders(val);
         });
     }
 
@@ -5025,45 +5114,12 @@ function renderShippingRoom(history) {
     const closeDriverSelect = document.getElementById('closeDriverSelect');
 
     const pendingAll = window.pendingOrdersData || [];
-    const pendingOrders = pendingAll.filter(o => o.orderType !== 'استلام من الفرع' && (!o.orderType || !o.orderType.includes('حجز')));
+    const pendingOrders = pendingAll.filter(o => o.orderType !== 'استلام من الفرع' && (!o.orderType || (!o.orderType.includes('حجز') && o.orderType !== 'special_date')));
     const branchOrders = pendingAll.filter(o => o.orderType === 'استلام من الفرع' && o.status !== 'تم التوصيل ومُحاسب');
-    const resOrders = pendingAll.filter(o => o.orderType && o.orderType.includes('حجز'));
+    const resOrders = pendingAll.filter(o => o.orderType && (o.orderType.includes('حجز') || o.orderType === 'special_date'));
 
     const shippedOrders = window.shippedOrdersData || (window.latestServerData && window.latestServerData.shippedOrders) || [];
     const allZones = window.allShippingZones || [];
-
-    // Calculate Totals for KPIs
-    let pendingMoney = 0;
-    pendingOrders.forEach(o => {
-        pendingMoney += parseFloat(o.remaining !== undefined && o.remaining !== null && o.remaining !== "" ? o.remaining : o.total) || 0;
-    });
-
-    let shippedMoney = 0;
-    shippedOrders.forEach(o => {
-        shippedMoney += parseFloat(o.remaining !== undefined && o.remaining !== null && o.remaining !== "" ? o.remaining : o.total) || 0;
-    });
-
-    const branchAndResCount = branchOrders.length + resOrders.length;
-    const totalZonesCount = allZones.length || Object.keys(shippingData || {}).length || 0;
-
-    // Update Top KPI Cards
-    const kpiPendingCount = document.getElementById('shippingKpiPendingCount');
-    if (kpiPendingCount) kpiPendingCount.innerText = pendingOrders.length;
-
-    const kpiPendingMoney = document.getElementById('shippingKpiPendingMoney');
-    if (kpiPendingMoney) kpiPendingMoney.innerText = `${Math.round(pendingMoney).toLocaleString('ar-EG')} ج.م مطلوب تحصيلها`;
-
-    const kpiShippedCount = document.getElementById('shippingKpiShippedCount');
-    if (kpiShippedCount) kpiShippedCount.innerText = shippedOrders.length;
-
-    const kpiShippedMoney = document.getElementById('shippingKpiShippedMoney');
-    if (kpiShippedMoney) kpiShippedMoney.innerText = `${Math.round(shippedMoney).toLocaleString('ar-EG')} ج.م عهدة في الشارع`;
-
-    const kpiBranchAndRes = document.getElementById('shippingKpiBranchAndResCount');
-    if (kpiBranchAndRes) kpiBranchAndRes.innerText = branchAndResCount;
-
-    const kpiZonesCount = document.getElementById('shippingKpiZonesCount');
-    if (kpiZonesCount) kpiZonesCount.innerText = totalZonesCount;
 
     // Update Sub-Tab Badges
     const badgeDispatch = document.getElementById('tabBadgeDispatch');
@@ -5072,20 +5128,26 @@ function renderShippingRoom(history) {
     const badgeSettlement = document.getElementById('tabBadgeSettlement');
     if (badgeSettlement) badgeSettlement.innerText = shippedOrders.length;
 
-    const badgePickups = document.getElementById('tabBadgePickups');
-    if (badgePickups) badgePickups.innerText = branchAndResCount;
+    const badgeBranch = document.getElementById('tabBadgeBranch');
+    if (badgeBranch) badgeBranch.innerText = branchOrders.length;
+
+    const badgeReservations = document.getElementById('tabBadgeReservations');
+    if (badgeReservations) badgeReservations.innerText = resOrders.length;
 
     const badgeZones = document.getElementById('tabBadgeZones');
-    if (badgeZones) badgeZones.innerText = totalZonesCount;
+    if (badgeZones) badgeZones.innerText = allZones.length || Object.keys(shippingData || {}).length || 0;
 
-    // Render Subtab 1: Pending Orders
+    // Populate Drivers Dropdowns with Real-time Order Counts
+    populateShippingCouriersDropdowns();
+
+    // Render Subtab 1: Pending Orders for Dispatch
     if (pendingContainer) {
         pendingContainer.innerHTML = '';
         if (pendingOrders.length === 0) {
             pendingContainer.innerHTML = `
                 <div style="grid-column: 1 / -1; text-align: center; padding: 45px 20px; background: white; border-radius: 16px; border: 1px dashed #cbd5e1;">
                     <i class="fa-solid fa-box-open" style="font-size: 2.2rem; color: #94a3b8; margin-bottom: 10px; display: block;"></i>
-                    <p style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #64748b;">لا يوجد أوردرات شحن قيد التجهيز حالياً.</p>
+                    <p style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #64748b;">لا يوجد شحنات قيد التجهيز حالياً.</p>
                 </div>`;
         } else {
             pendingOrders.forEach(o => {
@@ -5114,7 +5176,7 @@ function renderShippingRoom(history) {
                                 <span class="soc-type-badge ${badgeClass}">${typeText}</span>
                             </div>
                             <div class="soc-name" style="font-size: 1.05rem; font-weight: 800; color: #0f172a; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${o.name}</div>
-                            <div class="soc-info-row" style="margin-bottom: 6px;">
+                            <div class="soc-info-row" style="margin-bottom: 6px; display: flex; flex-wrap: wrap; gap: 8px;">
                                 <div class="soc-info-item highlight"><i class="fa-solid fa-mobile-screen"></i> ${o.phone}</div>
                                 <div class="soc-info-item money"><i class="fa-solid fa-money-bill-wave"></i> ${cashAmount} ج.م</div>
                                 <div class="soc-info-item" style="color: #64748b;"><i class="fa-solid fa-location-dot"></i> ${shortAddress}</div>
@@ -5127,68 +5189,92 @@ function renderShippingRoom(history) {
         updatePendingSelectedSummary();
     }
 
-    // Render Subtab 3: Branch Orders
+    // Render Subtab 3: Branch Pickups
     if (branchContainer) {
         const branchBadge = document.getElementById('branchCountBadge');
         if (branchBadge) branchBadge.innerText = `جاهز: ${branchOrders.length}`;
 
         branchContainer.innerHTML = '';
         if (branchOrders.length === 0) {
-            branchContainer.innerHTML = '<p class="empty-msg" style="text-align: center; padding: 25px; background: white; border-radius: 12px;">لا يوجد أوردرات استلام فرع حالياً.</p>';
+            branchContainer.innerHTML = `
+                <div style="grid-column: 1 / -1; text-align: center; padding: 45px 20px; background: white; border-radius: 16px; border: 1px dashed #cbd5e1;">
+                    <i class="fa-solid fa-store" style="font-size: 2.2rem; color: #94a3b8; margin-bottom: 10px; display: block;"></i>
+                    <p style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #64748b;">لا يوجد أوردرات استلام فرع حالياً.</p>
+                </div>`;
         } else {
             branchOrders.forEach(o => {
-                const searchData = `${o.id} ${o.name} ${o.phone}`;
+                const searchData = `${o.id} ${o.name} ${o.phone} ${o.products || ''}`;
+                const cashAmount = parseFloat(o.remaining !== undefined && o.remaining !== null && o.remaining !== "" ? o.remaining : o.total) || 0;
+
                 branchContainer.innerHTML += `
-                    <div class="shipping-action-card" style="border-right: 4px solid #e91e63;" data-search="${searchData.replace(/"/g, '&quot;')}">
-                        <div class="sac-header">
-                            <span class="sac-name">${o.name}</span>
-                            <span class="sac-id" style="color: #e91e63; font-weight: 800;">#${o.id}</span>
+                    <div class="shipping-order-card" style="border-right: 4px solid #e91e63; flex-direction: column; gap: 8px;" data-search="${searchData.replace(/"/g, '&quot;')}">
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <span style="font-size: 1.05rem; font-weight: 800; color: #0f172a;">${o.name}</span>
+                            <span style="color: #e91e63; font-weight: 800; font-size: 0.95rem;">#${o.id}</span>
                         </div>
-                        <div class="sac-finance-row">
-                            <div class="sac-phone"><i class="fa-solid fa-mobile-screen"></i> ${o.phone}</div>
-                            <div class="sac-total">الإجمالي: ${o.total}ج</div>
-                            <div class="sac-remain">المتبقي: ${o.remaining}ج</div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 10px; width: 100%; font-size: 0.88rem;">
+                            <a href="tel:${o.phone}" style="color: #0284c7; text-decoration: none; font-weight: 700;"><i class="fa-solid fa-phone"></i> ${o.phone}</a>
+                            <span style="color: #64748b;">الإجمالي: ${o.total} ج</span>
+                            <span style="color: #e11d48; font-weight: 800;">المتبقي: ${cashAmount} ج</span>
                         </div>
-                        <div class="sac-actions">
-                            <button type="button" class="interactive-btn" style="width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; border-radius: 10px; padding: 10px; font-weight: 800; font-size: 0.92rem; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="settleBranchOrder('${o.id}', this)">
-                                <i class="fa-solid fa-circle-check"></i> تم تسليم الفرع
-                            </button>
-                        </div>
+                        ${o.products ? `<div style="font-size: 0.78rem; color: #64748b; background: #f8fafc; padding: 4px 8px; border-radius: 6px; width: 100%; box-sizing: border-box;"><i class="fa-solid fa-bag-shopping" style="color: #94a3b8;"></i> ${o.products.replace(/\n/g, ', ')}</div>` : ''}
+                        <button type="button" class="interactive-btn" style="width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; border-radius: 10px; padding: 10px; font-weight: 800; font-size: 0.92rem; display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 4px; box-shadow: 0 3px 10px rgba(16, 185, 129, 0.2);" onclick="settleBranchOrder('${o.id}', this)">
+                            <i class="fa-solid fa-circle-check"></i> تم تسليم الفرع
+                        </button>
                     </div>`;
             });
         }
     }
 
-    // Render Subtab 3: Upcoming Reservations
+    // Render Subtab 4: Scheduled Reservations
     if (resContainer) {
         const resBadge = document.getElementById('reservationsCountBadge');
         if (resBadge) resBadge.innerText = `العدد: ${resOrders.length}`;
 
         resContainer.innerHTML = '';
         if (resOrders.length === 0) {
-            resContainer.innerHTML = '<p class="empty-msg" style="text-align: center; padding: 25px; background: white; border-radius: 12px;">لا يوجد حجوزات قادمة.</p>';
+            resContainer.innerHTML = `
+                <div style="grid-column: 1 / -1; text-align: center; padding: 45px 20px; background: white; border-radius: 16px; border: 1px dashed #cbd5e1;">
+                    <i class="fa-regular fa-calendar-check" style="font-size: 2.2rem; color: #94a3b8; margin-bottom: 10px; display: block;"></i>
+                    <p style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #64748b;">لا يوجد طلبات حجز قادمة.</p>
+                </div>`;
         } else {
             resOrders.forEach(o => {
-                const searchData = `${o.id} ${o.name} ${o.phone} ${o.date || ''}`;
+                const searchData = `${o.id} ${o.name} ${o.phone} ${o.date || o.expectedDate || ''} ${o.products || ''}`;
+                const cashAmount = parseFloat(o.remaining !== undefined && o.remaining !== null && o.remaining !== "" ? o.remaining : o.total) || 0;
+                const reservationDate = o.date || o.expectedDate || o.bookingDate || 'حجز لتاريخ معين';
+
+                let cleanPhone = String(o.phone || '').replace(/[^0-9]/g, '');
+                if (cleanPhone.startsWith('01')) cleanPhone = '2' + cleanPhone;
+
                 resContainer.innerHTML += `
-                    <div class="shipping-action-card" style="border-right: 4px solid #9b59b6;" data-search="${searchData.replace(/"/g, '&quot;')}">
-                        <div class="sac-header">
-                            <span class="sac-name">${o.name}</span>
-                            <span class="sac-id" style="color: #9b59b6; font-weight: 800;">#${o.id}</span>
+                    <div class="shipping-order-card" style="border-right: 4px solid #8b5cf6; flex-direction: column; gap: 8px;" data-search="${searchData.replace(/"/g, '&quot;')}">
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <span style="font-size: 1.05rem; font-weight: 800; color: #0f172a;">${o.name}</span>
+                            <span style="color: #8b5cf6; font-weight: 800; font-size: 0.95rem;">#${o.id}</span>
                         </div>
-                        <div class="sac-finance-row">
-                            <div class="sac-date"><i class="fa-regular fa-calendar-days"></i> ${o.date || 'حجز'}</div>
-                            <div class="sac-phone"><i class="fa-solid fa-mobile-screen"></i> ${o.phone}</div>
-                            <div class="sac-total">الإجمالي: ${o.total}ج</div>
-                            <div class="sac-remain">المتبقي: ${o.remaining}ج</div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 6px;">
+                            <div class="reservation-date-pill">
+                                <i class="fa-regular fa-calendar-days"></i> ميعاد الحجز: <strong>${reservationDate}</strong>
+                            </div>
+                            <span style="color: #7c3aed; font-weight: 800; font-size: 0.95rem;">المتبقي: ${cashAmount} ج</span>
                         </div>
-                        <div class="sac-actions">
-                            <button type="button" class="interactive-btn" style="flex: 1; background: #10b981; color: white; border: none; border-radius: 10px; padding: 8px 12px; font-weight: 700; font-size: 0.88rem; display: flex; align-items: center; justify-content: center; gap: 5px;" onclick="settleBranchOrder('${o.id}', this)">
-                                <i class="fa-solid fa-circle-check"></i> تم التسليم
+                        <div style="display: flex; flex-wrap: wrap; gap: 10px; width: 100%; font-size: 0.88rem;">
+                            <a href="tel:${o.phone}" style="color: #0284c7; text-decoration: none; font-weight: 700;"><i class="fa-solid fa-phone"></i> ${o.phone}</a>
+                            <span style="color: #64748b;">الإجمالي: ${o.total} ج</span>
+                        </div>
+                        ${o.products ? `<div style="font-size: 0.78rem; color: #64748b; background: #f8fafc; padding: 4px 8px; border-radius: 6px; width: 100%; box-sizing: border-box;"><i class="fa-solid fa-bag-shopping" style="color: #94a3b8;"></i> ${o.products.replace(/\g/g, ', ')}</div>` : ''}
+                        <div style="display: flex; gap: 8px; width: 100%; margin-top: 4px;">
+                            <button type="button" class="interactive-btn" style="flex: 1; background: #10b981; color: white; border: none; border-radius: 10px; padding: 9px; font-weight: 800; font-size: 0.88rem; display: flex; align-items: center; justify-content: center; gap: 5px;" onclick="settleBranchOrder('${o.id}', this)">
+                                <i class="fa-solid fa-circle-check"></i> تسليم الحجز
                             </button>
-                            <button type="button" class="interactive-btn" style="flex: 1; background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; border-radius: 10px; padding: 8px 12px; font-weight: 700; font-size: 0.88rem; display: flex; align-items: center; justify-content: center; gap: 5px;" onclick="convertToNormalDelivery('${o.id}', this)">
+                            <button type="button" class="interactive-btn" style="flex: 1; background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; border-radius: 10px; padding: 9px; font-weight: 700; font-size: 0.88rem; display: flex; align-items: center; justify-content: center; gap: 5px;" onclick="convertToNormalDelivery('${o.id}', this)">
                                 <i class="fa-solid fa-truck-fast"></i> تحويل لعادي
                             </button>
+                            ${cleanPhone ? `
+                            <a href="https://wa.me/${cleanPhone}" target="_blank" class="interactive-btn" style="background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; border-radius: 10px; padding: 9px 12px; display: flex; align-items: center; justify-content: center; text-decoration: none;">
+                                <i class="fa-brands fa-whatsapp"></i>
+                            </a>` : ''}
                         </div>
                     </div>`;
             });
@@ -5200,7 +5286,7 @@ function renderShippingRoom(history) {
         renderDriverShippedOrders(closeDriverSelect.value);
     }
 
-    // Render Subtab 4: Zones Grid
+    // Render Subtab 5: Zones Grid
     renderZonesGrid();
 
     // Re-apply any active search
@@ -5306,9 +5392,9 @@ function renderDriverShippedOrders(driver) {
                             <span class="soc-id" style="font-weight: 800; color: #10b981; font-size: 0.95rem;">#${o.id}</span>
                             <span class="soc-name" style="font-size: 1rem; font-weight: 800; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${o.name}</span>
                         </div>
-                        <div class="soc-info-row" style="margin-bottom: 6px;">
+                        <div class="soc-info-row" style="margin-bottom: 6px; display: flex; flex-wrap: wrap; gap: 8px;">
                             <div class="soc-info-item highlight"><i class="fa-solid fa-mobile-screen"></i> ${o.phone}</div>
-                            <div class="soc-info-item remaining" style="color: #047857;"><i class="fa-solid fa-money-bill-wave"></i> عهدة: ${amount} ج.م</div>
+                            <div class="soc-info-item remaining" style="color: #047857; font-weight: 800;"><i class="fa-solid fa-money-bill-wave"></i> عهدة: ${amount} ج.م</div>
                         </div>
                         ${o.address ? `<div style="font-size: 0.8rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><i class="fa-solid fa-location-dot"></i> ${o.address}</div>` : ''}
                     </div>
@@ -5364,9 +5450,6 @@ window.renderZonesGrid = function() {
     const totalDisplay = document.getElementById('zonesTotalCounterDisplay');
     if (totalDisplay) totalDisplay.innerText = allCount;
 
-    const kpiZones = document.getElementById('shippingKpiZonesCount');
-    if (kpiZones) kpiZones.innerText = allCount;
-
     const badgeZones = document.getElementById('tabBadgeZones');
     if (badgeZones) badgeZones.innerText = allCount;
 
@@ -5399,8 +5482,8 @@ window.renderZonesGrid = function() {
 
         if (z.delivery_type === 'next_day') {
             typeLabel = "إسكندرية (تاني يوم)";
-            typeColor = "#9b59b6";
-            typeBg = "rgba(155, 89, 182, 0.1)";
+            typeColor = "#8b5cf6";
+            typeBg = "rgba(139, 92, 246, 0.1)";
         } else if (z.zone_type === 'govs' || z.delivery_type === 'gov') {
             typeLabel = "المحافظات";
             typeColor = "#f59e0b";
@@ -5415,24 +5498,24 @@ window.renderZonesGrid = function() {
         const searchData = `${z.zone_name} ${typeLabel} ${z.price} ${z.duration || ''}`;
 
         container.innerHTML += `
-            <div class="zone-grid-card" data-search="${searchData.replace(/"/g, '&quot;')}" style="border-right: 4px solid ${typeColor}; background: #ffffff; border-radius: 14px; padding: 14px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
-                <div>
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px;">
+            <div class="shipping-order-card" data-search="${searchData.replace(/"/g, '&quot;')}" style="border-right: 4px solid ${typeColor}; flex-direction: column; justify-content: space-between; gap: 8px;">
+                <div style="width: 100%;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 6px;">
                         <h4 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 6px;">
                             <i class="fa-solid fa-location-dot" style="color: ${typeColor};"></i> ${z.zone_name}
                         </h4>
                         <span style="font-size: 1.15rem; font-weight: 900; color: #10b981; white-space: nowrap;">${z.price} ج.م</span>
                     </div>
-                    <div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 10px;">
-                        <span style="font-size: 0.76rem; font-weight: 700; padding: 3px 8px; border-radius: 10px; background: ${typeBg}; color: ${typeColor};">
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+                        <span style="font-size: 0.76rem; font-weight: 700; padding: 3px 8px; border-radius: 8px; background: ${typeBg}; color: ${typeColor};">
                             ${typeLabel}
                         </span>
-                        <span style="font-size: 0.76rem; font-weight: 600; padding: 3px 8px; border-radius: 10px; background: #f1f5f9; color: #475569; display: flex; align-items: center; gap: 4px;">
+                        <span style="font-size: 0.76rem; font-weight: 600; padding: 3px 8px; border-radius: 8px; background: #f1f5f9; color: #475569; display: flex; align-items: center; gap: 4px;">
                             <i class="fa-regular fa-clock" style="color: #94a3b8;"></i> ${z.duration || 'غير محدد'}
                         </span>
                     </div>
                 </div>
-                <div style="display: flex; gap: 8px; border-top: 1px solid #f1f5f9; padding-top: 10px;">
+                <div style="display: flex; gap: 8px; border-top: 1px solid #f1f5f9; padding-top: 8px; width: 100%;">
                     <button type="button" class="interactive-btn" style="flex: 1; background: #f8fafc; color: #334155; border: 1px solid #cbd5e1; padding: 7px 10px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 5px;" onclick="window.editZoneUI('${safeName}', '${safePrice}', '${safeType}', '${safeDuration}', '${safeZoneType}')">
                         <i class="fa-solid fa-pencil"></i> تعديل
                     </button>
@@ -5486,9 +5569,9 @@ function applyShippingLiveSearch() {
 
     filterContainerElements('#pendingOrdersContainer', '.shipping-order-card');
     filterContainerElements('#shippedOrdersContainer', '.shipping-order-card, .shipped-order-card');
-    filterContainerElements('#branchOrdersContainer', '.shipping-action-card');
-    filterContainerElements('#reservationsContainer', '.shipping-action-card');
-    filterContainerElements('#zonesGridContainer', '.zone-grid-card');
+    filterContainerElements('#branchOrdersContainer', '.shipping-order-card');
+    filterContainerElements('#reservationsContainer', '.shipping-order-card');
+    filterContainerElements('#zonesGridContainer', '.shipping-order-card');
 }
 
 function handleSendWaManifest() {
