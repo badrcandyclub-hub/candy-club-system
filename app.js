@@ -5955,17 +5955,58 @@ function renderCatalog() {
 
         // Convert to Order listener
         card.querySelector('.btn-cat-order').addEventListener('click', () => {
+            if (typeof addProductRow === 'function') {
+                const isOfferActive = p.isOffer === true || p.isOffer === 'true' || p.isOffer === 1;
+                const offerPriceVal = (isOfferActive && parseFloat(p.offerPrice) > 0) ? p.offerPrice : '';
+                const basePriceVal = parseFloat(p.price) || 0;
+
+                // 1. تحقق مما إذا كان المنتج مضافاً بالفعل في صفوف الفاتورة لزيادة الكمية
+                const existingRows = Array.from(document.querySelectorAll('.product-row'));
+                let foundRow = null;
+                for (const row of existingRows) {
+                    const nInput = row.querySelector('.product-name-input');
+                    if (nInput && nInput.value.trim().toLowerCase() === p.name.trim().toLowerCase()) {
+                        foundRow = row;
+                        break;
+                    }
+                }
+
+                if (foundRow) {
+                    const qInput = foundRow.querySelector('.product-qty-input');
+                    if (qInput) {
+                        qInput.value = (parseFloat(qInput.value) || 1) + 1;
+                    }
+                } else {
+                    // إزالة أي صف فارغ وغير مؤكد لتجنب الفوضى
+                    let emptyRows = Array.from(document.querySelectorAll('.product-row:not(.confirmed)')).filter(r => !r.querySelector('.product-name-input').value.trim());
+                    if (emptyRows.length > 0) {
+                        emptyRows[0].parentElement.remove();
+                    }
+
+                    // إضافة صف المنتج مؤكداً
+                    addProductRow(p.name, basePriceVal, "1", true, offerPriceVal);
+
+                    // التأكد من توفر صف فارغ للإدخال التالي
+                    if (document.querySelectorAll('.product-row:not(.confirmed)').length === 0) {
+                        addProductRow();
+                    }
+                }
+
+                if (typeof calculateTotal === 'function') calculateTotal();
+                if (typeof window.playSuccessBeep === 'function') window.playSuccessBeep();
+            }
+
+            // 2. الانتقال إلى تاب إنشاء الأوردر
             const createBtn = document.querySelector('button.nav-item[data-target="create-tab"]');
             if (createBtn) createBtn.click();
-            
+
             setTimeout(() => {
-                const prodSearchInput = document.getElementById('searchProduct') || document.getElementById('productSearchInput');
-                if (prodSearchInput) {
-                    prodSearchInput.value = p.name;
-                    prodSearchInput.dispatchEvent(new Event('input'));
+                const prodsContainer = document.getElementById('productsContainer');
+                if (prodsContainer) {
+                    prodsContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
-                showToast(`<i class="fa-solid fa-cart-plus"></i> تم تحديد (${p.name}) للأوردر`, 'success');
-            }, 100);
+                showToast(`<i class="fa-solid fa-cart-plus"></i> تمت إضافة (${p.name}) إلى الفاتورة بنجاح`, 'success');
+            }, 150);
         });
 
         fragment.appendChild(card);
