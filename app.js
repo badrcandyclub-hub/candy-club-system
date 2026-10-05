@@ -5564,16 +5564,26 @@ window.pushCatalogUpdate = function (name, price, isOffer, offerPrice, barcode =
     }
 
     // مزامنة مع Supabase (إذا كان جدول catalog متاحاً)
-    if (typeof supabase !== 'undefined') {
-        supabase.from('catalog').upsert([{
-            product_name: cleanName,
-            price: parseFloat(price) || 0,
-            is_offer: isOffer,
-            offer_price: parseFloat(offerPrice) || 0,
-            barcode: barcode || null
-        }], { onConflict: 'product_name' }).catch(err => {
-            console.warn("Supabase catalog upsert warning:", err);
-        });
+    if (typeof supabase !== 'undefined' && supabase && typeof supabase.from === 'function') {
+        try {
+            const query = supabase.from('catalog').upsert([{
+                product_name: cleanName,
+                price: parseFloat(price) || 0,
+                is_offer: isOffer,
+                offer_price: parseFloat(offerPrice) || 0,
+                barcode: barcode || null
+            }], { onConflict: 'product_name' });
+
+            if (query && typeof query.then === 'function') {
+                query.then(({ data, error }) => {
+                    if (error) console.warn("Supabase catalog upsert warning:", error);
+                }, err => {
+                    console.warn("Supabase catalog upsert rejected:", err);
+                });
+            }
+        } catch (e) {
+            console.warn("Supabase catalog upsert error:", e);
+        }
     }
 };
 
@@ -5902,12 +5912,9 @@ function renderCatalog() {
                 </div>
             </div>
 
-            <!-- Footer Action Buttons -->
-            <div style="display: flex; gap: 8px; border-top: 1px solid #f1f5f9; padding-top: 12px;">
-                <button type="button" class="btn-cat-edit interactive-btn" style="flex: 1; background: #f8fafc; color: #334155; border: 1px solid #cbd5e1; padding: 8px 10px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                    <i class="fa-solid fa-pen-to-square" style="color: #9b59b6;"></i> تعديل
-                </button>
-                <button type="button" class="btn-cat-order interactive-btn" style="flex: 1.2; background: linear-gradient(135deg, #9b59b6, #8e44ad); color: white; border: none; padding: 8px 10px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 10px rgba(155, 89, 182, 0.25);">
+            <!-- Footer Action Button -->
+            <div style="border-top: 1px solid #f1f5f9; padding-top: 12px;">
+                <button type="button" class="btn-cat-order interactive-btn" style="width: 100%; background: linear-gradient(135deg, #9b59b6, #8e44ad); color: white; border: none; padding: 10px 14px; border-radius: 10px; font-weight: 800; font-size: 0.92rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(155, 89, 182, 0.25);">
                     <i class="fa-solid fa-cart-plus"></i> عمل أوردر
                 </button>
             </div>
@@ -5946,11 +5953,6 @@ function renderCatalog() {
                 window.pushCatalogUpdate(p.name, p.price, newState, currentOffer, p.barcode);
                 showToast(newState ? "<i class='fa-solid fa-check'></i> تم تفعيل العرض" : "<i class='fa-solid fa-xmark'></i> تم إيقاف العرض", "success");
             }
-        });
-
-        // Edit Button listener
-        card.querySelector('.btn-cat-edit').addEventListener('click', () => {
-            openCatalogModalForEdit(p);
         });
 
         // Convert to Order listener
