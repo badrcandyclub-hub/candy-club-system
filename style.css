@@ -2192,14 +2192,8 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
     }
 
     #shipping-tab.active {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 24px;
-        align-items: start;
-    }
-
-    #shipping-tab .shipping-actions-row {
-        grid-column: 1 / -1;
+        display: block;
+        width: 100%;
     }
 
     #catalog-tab.active {

@@ -863,9 +863,14 @@ async function handleSupabaseRequest(url, options) {
             case 'addShipping':
                 await supabase.from('settings_shipping').insert([{ zone_name: params.name, price: params.price, zone_type: params.zoneType === 'alex' ? 'alex' : 'govs', delivery_type: params.deliveryType, duration: params.duration }]);
                 break;
-            case 'editShipping':
-                await supabase.from('settings_shipping').update({ price: params.price, delivery_type: params.deliveryType, duration: params.duration }).eq('zone_name', params.name).eq('zone_type', params.zoneType === 'alex' ? 'alex' : 'govs');
+            case 'editShipping': {
+                let targetName = params.originalName || params.name;
+                let updData = { price: params.price, delivery_type: params.deliveryType, duration: params.duration };
+                if (params.name) updData.zone_name = params.name;
+                if (params.zoneType) updData.zone_type = params.zoneType === 'alex' ? 'alex' : 'govs';
+                await supabase.from('settings_shipping').update(updData).eq('zone_name', targetName);
                 break;
+            }
             case 'addDriver':
                 await supabase.from('couriers').insert([{ name: params.name, phone: params.phone }]);
                 break;
@@ -1883,6 +1888,10 @@ document.querySelectorAll('.nav-item').forEach(btn => {
             if (typeof renderModeratorsDashboard === 'function') {
                 renderModeratorsDashboard();
             }
+        } else if (btn.getAttribute('data-target') === 'shipping-tab') {
+            if (typeof renderShippingRoom === 'function') {
+                renderShippingRoom();
+            }
         } else {
             // Memory cleanup: Clear expiryData when leaving the tab to free up memory
             if (typeof expiryData !== 'undefined' && expiryData.length > 0) {
@@ -2727,6 +2736,10 @@ async function loadDataFromServer(customDate = null) {
         govZones.forEach(z => renderZoneItem(z, 'govs', zonesGovList));
 
         window.latestServerData = { alex: alexZones.map(z => ({name: z.zone_name, price: z.price, type: z.delivery_type, duration: z.duration})), govs: govZones.map(z => ({name: z.zone_name, price: z.price, type: z.delivery_type, duration: z.duration})) };
+        window.allShippingZones = rawShipping || [];
+        if (typeof window.renderZonesGrid === 'function') {
+            window.renderZonesGrid();
+        }
         window.updateGovernoratesDropdown();
         if (govSelect && currentGov) govSelect.value = currentGov;
 
@@ -4567,7 +4580,7 @@ window.deleteItem = async function (action, name, zoneType = '') {
     customConfirm(`هل أنت متأكد من حذف (${name}) نهائياً؟`, async () => {
         showToast("<i class='fa-solid fa-hourglass-half'></i> جاري الحذف...", "warning");
         try {
-            if (action === 'deleteShipping') {
+            if (action === 'deleteShipping' || action === 'deleteZone') {
                 await window.secureDelete('settings_shipping', 'zone_name', name);
             } else if (action === 'deleteDriver') {
                 await window.secureDelete('couriers', 'name', name);
@@ -4585,12 +4598,59 @@ window.deleteItem = async function (action, name, zoneType = '') {
     });
 };
 
-window.editZoneUI = function (name, price, type, duration) {
-    if (document.getElementById('newZoneName')) document.getElementById('newZoneName').value = name;
-    if (document.getElementById('newZonePrice')) document.getElementById('newZonePrice').value = price;
-    if (document.getElementById('newZoneType')) document.getElementById('newZoneType').value = type;
-    if (document.getElementById('newZoneDuration')) document.getElementById('newZoneDuration').value = duration;
-    showToast("قم بتعديل البيانات واضغط حفظ", "success");
+window.resetZoneForm = function () {
+    const nameInput = document.getElementById('newZoneName');
+    const priceInput = document.getElementById('newZonePrice');
+    const typeInput = document.getElementById('newZoneType');
+    const durationInput = document.getElementById('newZoneDuration');
+    const heading = document.getElementById('zoneFormHeading');
+    const addBtn = document.getElementById('addZoneBtn');
+    const cancelBtn = document.getElementById('cancelZoneEditBtn');
+
+    if (nameInput) nameInput.value = "";
+    if (priceInput) priceInput.value = "";
+    if (durationInput) durationInput.value = "";
+    if (typeInput) typeInput.value = "same_day";
+
+    window._editingZoneOriginalName = null;
+
+    if (heading) heading.innerHTML = "إضافة أو تعديل منطقة شحن";
+    if (addBtn) addBtn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> حفظ المنطقة`;
+    if (cancelBtn) cancelBtn.style.display = 'none';
+};
+
+window.editZoneUI = function (name, price, type, duration, zoneType) {
+    if (typeof window.switchShippingSubTab === 'function') {
+        window.switchShippingSubTab('shipping-zones');
+    }
+
+    const nameInput = document.getElementById('newZoneName');
+    const priceInput = document.getElementById('newZonePrice');
+    const typeInput = document.getElementById('newZoneType');
+    const durationInput = document.getElementById('newZoneDuration');
+    const heading = document.getElementById('zoneFormHeading');
+    const addBtn = document.getElementById('addZoneBtn');
+    const cancelBtn = document.getElementById('cancelZoneEditBtn');
+
+    if (nameInput) nameInput.value = name;
+    if (priceInput) priceInput.value = price;
+    if (typeInput) typeInput.value = type || (zoneType === 'govs' ? 'gov' : 'same_day');
+    if (durationInput) durationInput.value = duration;
+
+    window._editingZoneOriginalName = name;
+
+    if (heading) {
+        heading.innerHTML = `<span style="color: #9b59b6;"><i class="fa-solid fa-pen-to-square"></i> تعديل منطقة:</span> <span style="color: #0284c7;">${name}</span>`;
+    }
+    if (addBtn) {
+        addBtn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> حفظ التعديل`;
+    }
+    if (cancelBtn) {
+        cancelBtn.style.display = 'inline-block';
+    }
+
+    heading?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    showToast("قم بتعديل البيانات واضغط حفظ التعديل", "success");
 };
 
 window.editDriverUI = function (name, phone) {
@@ -4605,16 +4665,21 @@ if (newZoneTypeEl && newZoneDurationEl) {
     newZoneTypeEl.addEventListener('change', () => {
         if (newZoneTypeEl.value === 'next_day') {
             newZoneDurationEl.value = 'تاني يوم';
-            newZoneDurationEl.setAttribute('readonly', true);
         } else if (newZoneTypeEl.value === 'gov') {
             newZoneDurationEl.value = 'من 3 لـ 4 أيام';
-            newZoneDurationEl.setAttribute('readonly', true);
-        } else {
-            newZoneDurationEl.value = '';
-            newZoneDurationEl.removeAttribute('readonly');
+        } else if (newZoneTypeEl.value === 'same_day') {
+            newZoneDurationEl.value = 'من 45 دقيقة لساعة';
         }
     });
 }
+
+let cancelZoneEditBtn = document.getElementById('cancelZoneEditBtn');
+if (cancelZoneEditBtn) {
+    cancelZoneEditBtn.addEventListener('click', () => {
+        if (typeof window.resetZoneForm === 'function') window.resetZoneForm();
+    });
+}
+
 let addZoneBtnAction = document.getElementById('addZoneBtn');
 if (addZoneBtnAction) {
     addZoneBtnAction.addEventListener('click', () => {
@@ -4624,25 +4689,25 @@ if (addZoneBtnAction) {
         let duration = document.getElementById('newZoneDuration') ? document.getElementById('newZoneDuration').value : "";
         if (!name || !price) { showToast("البيانات ناقصة!", "error"); return; }
 
-        let isExisting = shippingData[name] !== undefined;
-        if (isExisting && shippingData[name].price == price) {
-            showToast("المنطقة دي مسجلة مسبقاً", "warning"); return;
-        }
+        let originalName = window._editingZoneOriginalName;
+        let isEditing = !!originalName;
+        let isExisting = isEditing || (shippingData && shippingData[name] !== undefined);
 
         setBtnLoading(addZoneBtnAction, true);
         let formData = new URLSearchParams();
         formData.append('action', isExisting ? 'editShipping' : 'addShipping');
         formData.append('zoneType', type === 'gov' ? 'govs' : 'alex');
         formData.append('name', name);
+        if (originalName) formData.append('originalName', originalName);
         formData.append('price', price);
         formData.append('deliveryType', type);
         formData.append('duration', duration);
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
-                showToast(`<i class=\'fa-solid fa-check\'></i> تم ${isExisting ? 'تعديل' : 'إضافة'} المنطقة!`, "success");
+                showToast(`<i class="fa-solid fa-check"></i> تم ${isExisting ? 'تعديل' : 'إضافة'} المنطقة بنجاح!`, "success");
                 setBtnLoading(addZoneBtnAction, false, "حفظ المنطقة");
-                document.getElementById('newZoneName').value = ""; document.getElementById('newZonePrice').value = ""; document.getElementById('newZoneDuration').value = "";
+                if (typeof window.resetZoneForm === 'function') window.resetZoneForm();
                 loadDataFromServer();
             }).catch(() => { setBtnLoading(addZoneBtnAction, false, "حفظ المنطقة"); });
     });
@@ -4699,124 +4764,453 @@ if (addModeratorBtn) {
 
 
 // ==========================================
-// 11. غرفة عمليات الشحن والداشبورد
+// 11. غرفة عمليات ومركز إدارة الشحن والتوصيل (Shipping Hub)
 // ==========================================
-function renderShippingRoom(history) {
-    const pendingContainer = document.getElementById('pendingOrdersContainer');
-    const branchContainer = document.getElementById('branchOrdersContainer');
-    const resContainer = document.getElementById('reservationsContainer');
 
-    if (pendingContainer && resContainer) {
-        const pendingOrders = window.pendingOrdersData.filter(o => o.orderType !== 'استلام من الفرع' && (!o.orderType || !o.orderType.includes('حجز')));
-        const resOrders = window.pendingOrdersData.filter(o => o.orderType && o.orderType.includes('حجز'));
+window._currentShippingSearchQuery = '';
+window._currentZoneFilter = 'all';
+window._activeShippingSubtab = 'shipping-dispatch';
 
-        // <i class=\'fa-solid fa-star\'></i> Update Reservations Badge
-        const resBadge = document.getElementById('reservationsCountBadge');
-        if (resBadge) {
-            resBadge.innerText = `العدد: ${resOrders.length}`;
-            resBadge.style.display = 'inline-block';
-        }
+function normalizeArabicText(str) {
+    if (!str) return '';
+    return String(str)
+        .trim()
+        .toLowerCase()
+        .replace(/[إأآا]/g, 'ا')
+        .replace(/ة/g, 'ه')
+        .replace(/ى/g, 'ي')
+        .replace(/[\u064B-\u065F]/g, '');
+}
 
-        pendingContainer.innerHTML = '';
-        if (pendingOrders.length === 0) pendingContainer.innerHTML = '<p class="empty-msg">لا يوجد أوردرات شحن قيد التجهيز.</p>';
-        else pendingOrders.forEach(o => {
-            let badgeClass = "normal";
-            let typeText = o.orderType || "توصيل منزلي";
-            if(typeText.includes("محافظات") || typeText === "gov_shipping") { badgeClass = "gov"; typeText = "محافظات"; }
-            
-            // محاولة جلب اسم المنطقة فقط بدلاً من العنوان الكامل
-            let shortAddress = o.gov || o.zone || o.governorate || "";
-            if (!shortAddress && o.address) {
-                // نأخذ الجزء الأول قبل أي فاصلة أو شرطة أو سطر جديد
-                shortAddress = (o.address ? String(o.address).split(/[-،,\n]/)[0] : '').trim();
-            }
-            if (!shortAddress) shortAddress = "بدون عنوان";
+window.switchShippingSubTab = function(subtabId) {
+    const pills = document.querySelectorAll('#shippingSubTabs .shipping-subtab-pill');
+    pills.forEach(p => {
+        if (p.dataset.subtab === subtabId) p.classList.add('active');
+        else p.classList.remove('active');
+    });
 
-            pendingContainer.innerHTML += `
-                <label class="shipping-order-card">
-                    <input type="checkbox" class="soc-checkbox pending-checkbox" value="${o.id}">
-                    <div class="soc-body">
-                        <div class="soc-top">
-                            <span class="soc-id">#${o.id}</span>
-                            <span class="soc-type-badge ${badgeClass}">${typeText}</span>
-                        </div>
-                        <div class="soc-name">${o.name}</div>
-                        <div class="soc-info-row">
-                            <div class="soc-info-item highlight"><i class=\'fa-solid fa-mobile-screen\'></i> ${o.phone}</div>
-                            <div class="soc-info-item money"><i class=\'fa-solid fa-money-bill-wave\'></i> ${o.total} ج.م</div>
-                            <div class="soc-info-item"><i class=\'fa-solid fa-location-dot\'></i> ${shortAddress}</div>
-                        </div>
-                    </div>
-                </label>`;
-        });
+    const subtabs = document.querySelectorAll('.shipping-subtab-content');
+    subtabs.forEach(st => {
+        st.style.display = 'none';
+    });
 
-        resContainer.innerHTML = '';
-        if (resOrders.length === 0) resContainer.innerHTML = '<p class="empty-msg">لا يوجد حجوزات قادمة.</p>';
-        else resOrders.forEach(o => {
-            resContainer.innerHTML += `
-                <div class="shipping-action-card" style="border-right: 4px solid var(--primary);">
-                    <div class="sac-header">
-                        <span class="sac-name">${o.name}</span>
-                        <span class="sac-id">#${o.id}</span>
-                    </div>
-                    <div class="sac-finance-row">
-                        <div class="sac-date"><i class=\'fa-regular fa-calendar-days\'></i> ${o.date || 'حجز'}</div>
-                        <div class="sac-phone"><i class=\'fa-solid fa-mobile-screen\'></i> ${o.phone}</div>
-                        <div class="sac-total">الإجمالي: ${o.total}ج</div>
-                        <div class="sac-remain">المتبقي: ${o.remaining}ج</div>
-                    </div>
-                    <div class="sac-actions">
-                        <button class="sac-btn-deliver interactive-btn" onclick="settleBranchOrder('${o.id}', this)">تم التسليم <i class=\'fa-solid fa-check\'></i></button>
-                        <button class="sac-btn-convert interactive-btn" onclick="convertToNormalDelivery('${o.id}', this)">تحويل لعادي <i class=\'fa-solid fa-truck-fast\'></i></button>
-                    </div>
-                </div>`;
-        });
+    const targetEl = document.getElementById('subtab-' + subtabId);
+    if (targetEl) {
+        targetEl.style.display = 'block';
     }
-
-    // <i class=\'fa-solid fa-star\'></i> قسم أوردرات الفرع (المنفصلة تماماً عن المندوبين)
-    if (branchContainer) {
-        const branchOrders = window.pendingOrdersData.filter(o => o.orderType === 'استلام من الفرع' && o.status !== 'تم التوصيل ومُحاسب');
-
-        // <i class=\'fa-solid fa-star\'></i> Update Branch Badge
-        const branchBadge = document.getElementById('branchCountBadge');
-        if (branchBadge) {
-            branchBadge.innerText = `جاهز للاستلام: ${branchOrders.length}`;
-            branchBadge.style.display = 'inline-block';
-        }
-
-        branchContainer.innerHTML = '';
-        if (branchOrders.length === 0) branchContainer.innerHTML = '<p class="empty-msg">لا يوجد أوردرات استلام فرع حالياً.</p>';
-        else branchOrders.forEach(o => {
-            branchContainer.innerHTML += `
-                <div class="shipping-action-card" style="border-right: 4px solid var(--warning);">
-                    <div class="sac-header">
-                        <span class="sac-name">${o.name}</span>
-                        <span class="sac-id">#${o.id}</span>
-                    </div>
-                    <div class="sac-finance-row">
-                        <div class="sac-phone"><i class=\'fa-solid fa-mobile-screen\'></i> ${o.phone}</div>
-                        <div class="sac-total">الإجمالي: ${o.total}ج</div>
-                        <div class="sac-remain">المتبقي: ${o.remaining}ج</div>
-                    </div>
-                    <div class="sac-actions">
-                        <button class="sac-btn-deliver interactive-btn" style="width: 100%;" onclick="settleBranchOrder('${o.id}', this)">تم تسليم الفرع <i class=\'fa-solid fa-check\'></i></button>
-                    </div>
-                </div>`;
-        });
+    window._activeShippingSubtab = subtabId;
+    if (typeof applyShippingLiveSearch === 'function') {
+        applyShippingLiveSearch();
     }
+};
 
-    // <i class=\'fa-solid fa-star\'></i> Update Out Orders Badge
-    const outOrdersBadge = document.getElementById('outOrdersCountBadge');
-    if (outOrdersBadge && window.latestServerData && window.latestServerData.shippedOrders) {
-        let outCount = window.latestServerData.shippedOrders.length;
-        outOrdersBadge.innerText = `الاوردرات في الخارج حالياً: ${outCount}`;
-        outOrdersBadge.style.display = 'inline-block';
+window.toggleOrderCardSelection = function(card, event) {
+    if (event.target.tagName === 'INPUT' || event.target.tagName === 'BUTTON' || event.target.tagName === 'A' || event.target.closest('a') || event.target.closest('button')) {
+        return;
+    }
+    const cb = card.querySelector('input[type="checkbox"]');
+    if (cb) {
+        cb.checked = !cb.checked;
+        if (cb.checked) card.classList.add('selected-card');
+        else card.classList.remove('selected-card');
+
+        if (cb.classList.contains('pending-checkbox')) {
+            updatePendingSelectedSummary();
+        } else if (cb.classList.contains('shipped-checkbox')) {
+            updateShippedSelectedSummary();
+        }
+    }
+};
+
+function updatePendingSelectedSummary() {
+    const checked = Array.from(document.querySelectorAll('#pendingOrdersContainer .pending-checkbox:checked'));
+    let sum = 0;
+    checked.forEach(cb => {
+        const orderId = cb.value;
+        const o = (window.pendingOrdersData || []).find(x => String(x.id) === String(orderId))
+               || (window.orderHistoryData || []).find(x => String(x.id) === String(orderId));
+        if (o) {
+            sum += parseFloat(o.remaining !== undefined && o.remaining !== null && o.remaining !== "" ? o.remaining : o.total) || 0;
+        }
+    });
+
+    const summaryText = document.getElementById('selectedPendingSummaryText');
+    if (summaryText) {
+        summaryText.innerText = `المحدد: ${checked.length} أوردر | الإجمالي: ${Math.round(sum).toLocaleString('ar-EG')} ج.م`;
     }
 }
 
-// <i class=\'fa-solid fa-star\'></i> دالة تسليم الفرع الفورية
+function updateShippedSelectedSummary() {
+    const checked = Array.from(document.querySelectorAll('#shippedOrdersContainer .shipped-checkbox:checked'));
+    let sum = 0;
+    checked.forEach(cb => {
+        const orderId = cb.value;
+        const o = (window.shippedOrdersData || []).find(x => String(x.id) === String(orderId))
+               || (window.orderHistoryData || []).find(x => String(x.id) === String(orderId));
+        if (o) {
+            sum += parseFloat(o.remaining !== undefined && o.remaining !== null && o.remaining !== "" ? o.remaining : o.total) || 0;
+        }
+    });
+
+    const display = document.getElementById('driverSelectedSettleDisplay');
+    if (display) {
+        display.innerText = `${Math.round(sum).toLocaleString('ar-EG')} ج.م`;
+    }
+}
+
+function setupShippingHub() {
+    if (window._shippingHubInitialized) return;
+    window._shippingHubInitialized = true;
+
+    // Subtab navigation pills
+    const subtabButtons = document.querySelectorAll('#shippingSubTabs .shipping-subtab-pill');
+    subtabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetSubtab = btn.dataset.subtab;
+            if (targetSubtab) window.switchShippingSubTab(targetSubtab);
+        });
+    });
+
+    // Refresh Shipping Button
+    const refreshBtn = document.getElementById('refreshShippingBtn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', () => {
+            const icon = refreshBtn.querySelector('i');
+            if (icon) icon.classList.add('fa-spin');
+            if (typeof loadDataFromServer === 'function') {
+                loadDataFromServer();
+            }
+            setTimeout(() => {
+                if (icon) icon.classList.remove('fa-spin');
+                showToast("<i class='fa-solid fa-check'></i> تم تحديث بيانات الشحن بنجاح", "success");
+            }, 1000);
+        });
+    }
+
+    // Live search input
+    const searchInput = document.getElementById('shippingSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            window._currentShippingSearchQuery = e.target.value.trim();
+            applyShippingLiveSearch();
+        });
+    }
+
+    // Zone Filter Pills
+    const zoneFilterPills = document.querySelectorAll('#zonesFilterPills .shipping-subtab-pill');
+    zoneFilterPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+            zoneFilterPills.forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            window._currentZoneFilter = pill.dataset.zonefilter || 'all';
+            renderZonesGrid();
+        });
+    });
+
+    // Select All Pending
+    const selectAllPendingBtn = document.getElementById('selectAllPendingBtn');
+    if (selectAllPendingBtn) {
+        selectAllPendingBtn.addEventListener('click', () => {
+            const checkboxes = Array.from(document.querySelectorAll('#pendingOrdersContainer .pending-checkbox'));
+            if (checkboxes.length === 0) return;
+            const allChecked = checkboxes.every(cb => cb.checked);
+            checkboxes.forEach(cb => {
+                cb.checked = !allChecked;
+                const card = cb.closest('.shipping-order-card');
+                if (card) {
+                    if (!allChecked) card.classList.add('selected-card');
+                    else card.classList.remove('selected-card');
+                }
+            });
+            updatePendingSelectedSummary();
+        });
+    }
+
+    // Select All Shipped
+    const selectAllShippedBtn = document.getElementById('selectAllShippedBtn');
+    if (selectAllShippedBtn) {
+        selectAllShippedBtn.addEventListener('click', () => {
+            const checkboxes = Array.from(document.querySelectorAll('#shippedOrdersContainer .shipped-checkbox'));
+            if (checkboxes.length === 0) return;
+            const allChecked = checkboxes.every(cb => cb.checked);
+            checkboxes.forEach(cb => {
+                cb.checked = !allChecked;
+                const card = cb.closest('.shipping-order-card') || cb.closest('.shipped-order-card');
+                if (card) {
+                    if (!allChecked) card.classList.add('selected-card');
+                    else card.classList.remove('selected-card');
+                }
+            });
+            updateShippedSelectedSummary();
+        });
+    }
+
+    // Close Driver Select change
+    const closeDriverSelect = document.getElementById('closeDriverSelect');
+    if (closeDriverSelect) {
+        closeDriverSelect.addEventListener('change', () => {
+            renderDriverShippedOrders(closeDriverSelect.value);
+        });
+    }
+
+    const loadDriverOrdersBtn = document.getElementById('loadDriverOrdersBtn');
+    if (loadDriverOrdersBtn && closeDriverSelect) {
+        loadDriverOrdersBtn.addEventListener('click', () => {
+            renderDriverShippedOrders(closeDriverSelect.value);
+        });
+    }
+
+    // WhatsApp Manifest
+    const sendWaDriverBtn = document.getElementById('sendWaDriverBtn');
+    if (sendWaDriverBtn) {
+        sendWaDriverBtn.addEventListener('click', handleSendWaManifest);
+    }
+
+    // Assign to Driver
+    const assignBtn = document.getElementById('assignToDriverBtn');
+    if (assignBtn) {
+        assignBtn.addEventListener('click', () => {
+            let driver = document.getElementById('assignDriverSelect')?.value;
+            if (!driver) { showToast("اختر المندوب أولاً!", "error"); return; }
+            processStatusUpdate(assignBtn, 'pending-checkbox', 'في الشحن', driver);
+        });
+    }
+
+    // Mark Delivered and Mark Returned
+    const markDelivBtn = document.getElementById('markDeliveredBtn');
+    if (markDelivBtn) {
+        markDelivBtn.addEventListener('click', () => {
+            const driver = document.getElementById('closeDriverSelect')?.value || "";
+            processStatusUpdate(markDelivBtn, 'shipped-checkbox', 'تم التوصيل', driver);
+        });
+    }
+
+    const markRetBtn = document.getElementById('markReturnedBtn');
+    if (markRetBtn) {
+        markRetBtn.addEventListener('click', () => {
+            const driver = document.getElementById('closeDriverSelect')?.value || "";
+            processStatusUpdate(markRetBtn, 'shipped-checkbox', 'مرتجع', driver);
+        });
+    }
+
+    // Checkbox change event delegation
+    const shippingTab = document.getElementById('shipping-tab');
+    if (shippingTab) {
+        shippingTab.addEventListener('change', (e) => {
+            if (e.target.classList.contains('pending-checkbox')) {
+                const card = e.target.closest('.shipping-order-card');
+                if (card) {
+                    if (e.target.checked) card.classList.add('selected-card');
+                    else card.classList.remove('selected-card');
+                }
+                updatePendingSelectedSummary();
+            } else if (e.target.classList.contains('shipped-checkbox')) {
+                const card = e.target.closest('.shipping-order-card') || e.target.closest('.shipped-order-card');
+                if (card) {
+                    if (e.target.checked) card.classList.add('selected-card');
+                    else card.classList.remove('selected-card');
+                }
+                updateShippedSelectedSummary();
+            }
+        });
+    }
+}
+
+function renderShippingRoom(history) {
+    setupShippingHub();
+
+    const pendingContainer = document.getElementById('pendingOrdersContainer');
+    const branchContainer = document.getElementById('branchOrdersContainer');
+    const resContainer = document.getElementById('reservationsContainer');
+    const closeDriverSelect = document.getElementById('closeDriverSelect');
+
+    const pendingAll = window.pendingOrdersData || [];
+    const pendingOrders = pendingAll.filter(o => o.orderType !== 'استلام من الفرع' && (!o.orderType || !o.orderType.includes('حجز')));
+    const branchOrders = pendingAll.filter(o => o.orderType === 'استلام من الفرع' && o.status !== 'تم التوصيل ومُحاسب');
+    const resOrders = pendingAll.filter(o => o.orderType && o.orderType.includes('حجز'));
+
+    const shippedOrders = window.shippedOrdersData || (window.latestServerData && window.latestServerData.shippedOrders) || [];
+    const allZones = window.allShippingZones || [];
+
+    // Calculate Totals for KPIs
+    let pendingMoney = 0;
+    pendingOrders.forEach(o => {
+        pendingMoney += parseFloat(o.remaining !== undefined && o.remaining !== null && o.remaining !== "" ? o.remaining : o.total) || 0;
+    });
+
+    let shippedMoney = 0;
+    shippedOrders.forEach(o => {
+        shippedMoney += parseFloat(o.remaining !== undefined && o.remaining !== null && o.remaining !== "" ? o.remaining : o.total) || 0;
+    });
+
+    const branchAndResCount = branchOrders.length + resOrders.length;
+    const totalZonesCount = allZones.length || Object.keys(shippingData || {}).length || 0;
+
+    // Update Top KPI Cards
+    const kpiPendingCount = document.getElementById('shippingKpiPendingCount');
+    if (kpiPendingCount) kpiPendingCount.innerText = pendingOrders.length;
+
+    const kpiPendingMoney = document.getElementById('shippingKpiPendingMoney');
+    if (kpiPendingMoney) kpiPendingMoney.innerText = `${Math.round(pendingMoney).toLocaleString('ar-EG')} ج.م مطلوب تحصيلها`;
+
+    const kpiShippedCount = document.getElementById('shippingKpiShippedCount');
+    if (kpiShippedCount) kpiShippedCount.innerText = shippedOrders.length;
+
+    const kpiShippedMoney = document.getElementById('shippingKpiShippedMoney');
+    if (kpiShippedMoney) kpiShippedMoney.innerText = `${Math.round(shippedMoney).toLocaleString('ar-EG')} ج.م عهدة في الشارع`;
+
+    const kpiBranchAndRes = document.getElementById('shippingKpiBranchAndResCount');
+    if (kpiBranchAndRes) kpiBranchAndRes.innerText = branchAndResCount;
+
+    const kpiZonesCount = document.getElementById('shippingKpiZonesCount');
+    if (kpiZonesCount) kpiZonesCount.innerText = totalZonesCount;
+
+    // Update Sub-Tab Badges
+    const badgeDispatch = document.getElementById('tabBadgeDispatch');
+    if (badgeDispatch) badgeDispatch.innerText = pendingOrders.length;
+
+    const badgeSettlement = document.getElementById('tabBadgeSettlement');
+    if (badgeSettlement) badgeSettlement.innerText = shippedOrders.length;
+
+    const badgePickups = document.getElementById('tabBadgePickups');
+    if (badgePickups) badgePickups.innerText = branchAndResCount;
+
+    const badgeZones = document.getElementById('tabBadgeZones');
+    if (badgeZones) badgeZones.innerText = totalZonesCount;
+
+    // Render Subtab 1: Pending Orders
+    if (pendingContainer) {
+        pendingContainer.innerHTML = '';
+        if (pendingOrders.length === 0) {
+            pendingContainer.innerHTML = `
+                <div style="grid-column: 1 / -1; text-align: center; padding: 45px 20px; background: white; border-radius: 16px; border: 1px dashed #cbd5e1;">
+                    <i class="fa-solid fa-box-open" style="font-size: 2.2rem; color: #94a3b8; margin-bottom: 10px; display: block;"></i>
+                    <p style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #64748b;">لا يوجد أوردرات شحن قيد التجهيز حالياً.</p>
+                </div>`;
+        } else {
+            pendingOrders.forEach(o => {
+                let badgeClass = "normal";
+                let typeText = o.orderType || "توصيل منزلي";
+                if (typeText.includes("محافظات") || typeText === "gov_shipping") {
+                    badgeClass = "gov";
+                    typeText = "محافظات";
+                }
+
+                let shortAddress = o.gov || o.zone || o.governorate || "";
+                if (!shortAddress && o.address) {
+                    shortAddress = (String(o.address).split(/[-،,\n]/)[0] || '').trim();
+                }
+                if (!shortAddress) shortAddress = "بدون عنوان";
+
+                const cashAmount = parseFloat(o.remaining !== undefined && o.remaining !== null && o.remaining !== "" ? o.remaining : o.total) || 0;
+                const searchData = `${o.id} ${o.name} ${o.phone} ${shortAddress} ${o.address || ''} ${o.products || ''}`;
+
+                pendingContainer.innerHTML += `
+                    <div class="shipping-order-card interactive-card" data-order-id="${o.id}" data-search="${searchData.replace(/"/g, '&quot;')}" onclick="toggleOrderCardSelection(this, event)">
+                        <input type="checkbox" class="soc-checkbox pending-checkbox" value="${o.id}">
+                        <div class="soc-body" style="flex: 1; min-width: 0;">
+                            <div class="soc-top" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <span class="soc-id" style="font-weight: 800; color: #0284c7; font-size: 0.95rem;">#${o.id}</span>
+                                <span class="soc-type-badge ${badgeClass}">${typeText}</span>
+                            </div>
+                            <div class="soc-name" style="font-size: 1.05rem; font-weight: 800; color: #0f172a; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${o.name}</div>
+                            <div class="soc-info-row" style="margin-bottom: 6px;">
+                                <div class="soc-info-item highlight"><i class="fa-solid fa-mobile-screen"></i> ${o.phone}</div>
+                                <div class="soc-info-item money"><i class="fa-solid fa-money-bill-wave"></i> ${cashAmount} ج.م</div>
+                                <div class="soc-info-item" style="color: #64748b;"><i class="fa-solid fa-location-dot"></i> ${shortAddress}</div>
+                            </div>
+                            ${o.products ? `<div style="font-size: 0.78rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: #f8fafc; padding: 4px 8px; border-radius: 6px;"><i class="fa-solid fa-bag-shopping" style="color: #94a3b8;"></i> ${o.products.replace(/\n/g, ', ')}</div>` : ''}
+                        </div>
+                    </div>`;
+            });
+        }
+        updatePendingSelectedSummary();
+    }
+
+    // Render Subtab 3: Branch Orders
+    if (branchContainer) {
+        const branchBadge = document.getElementById('branchCountBadge');
+        if (branchBadge) branchBadge.innerText = `جاهز: ${branchOrders.length}`;
+
+        branchContainer.innerHTML = '';
+        if (branchOrders.length === 0) {
+            branchContainer.innerHTML = '<p class="empty-msg" style="text-align: center; padding: 25px; background: white; border-radius: 12px;">لا يوجد أوردرات استلام فرع حالياً.</p>';
+        } else {
+            branchOrders.forEach(o => {
+                const searchData = `${o.id} ${o.name} ${o.phone}`;
+                branchContainer.innerHTML += `
+                    <div class="shipping-action-card" style="border-right: 4px solid #e91e63;" data-search="${searchData.replace(/"/g, '&quot;')}">
+                        <div class="sac-header">
+                            <span class="sac-name">${o.name}</span>
+                            <span class="sac-id" style="color: #e91e63; font-weight: 800;">#${o.id}</span>
+                        </div>
+                        <div class="sac-finance-row">
+                            <div class="sac-phone"><i class="fa-solid fa-mobile-screen"></i> ${o.phone}</div>
+                            <div class="sac-total">الإجمالي: ${o.total}ج</div>
+                            <div class="sac-remain">المتبقي: ${o.remaining}ج</div>
+                        </div>
+                        <div class="sac-actions">
+                            <button type="button" class="interactive-btn" style="width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; border-radius: 10px; padding: 10px; font-weight: 800; font-size: 0.92rem; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="settleBranchOrder('${o.id}', this)">
+                                <i class="fa-solid fa-circle-check"></i> تم تسليم الفرع
+                            </button>
+                        </div>
+                    </div>`;
+            });
+        }
+    }
+
+    // Render Subtab 3: Upcoming Reservations
+    if (resContainer) {
+        const resBadge = document.getElementById('reservationsCountBadge');
+        if (resBadge) resBadge.innerText = `العدد: ${resOrders.length}`;
+
+        resContainer.innerHTML = '';
+        if (resOrders.length === 0) {
+            resContainer.innerHTML = '<p class="empty-msg" style="text-align: center; padding: 25px; background: white; border-radius: 12px;">لا يوجد حجوزات قادمة.</p>';
+        } else {
+            resOrders.forEach(o => {
+                const searchData = `${o.id} ${o.name} ${o.phone} ${o.date || ''}`;
+                resContainer.innerHTML += `
+                    <div class="shipping-action-card" style="border-right: 4px solid #9b59b6;" data-search="${searchData.replace(/"/g, '&quot;')}">
+                        <div class="sac-header">
+                            <span class="sac-name">${o.name}</span>
+                            <span class="sac-id" style="color: #9b59b6; font-weight: 800;">#${o.id}</span>
+                        </div>
+                        <div class="sac-finance-row">
+                            <div class="sac-date"><i class="fa-regular fa-calendar-days"></i> ${o.date || 'حجز'}</div>
+                            <div class="sac-phone"><i class="fa-solid fa-mobile-screen"></i> ${o.phone}</div>
+                            <div class="sac-total">الإجمالي: ${o.total}ج</div>
+                            <div class="sac-remain">المتبقي: ${o.remaining}ج</div>
+                        </div>
+                        <div class="sac-actions">
+                            <button type="button" class="interactive-btn" style="flex: 1; background: #10b981; color: white; border: none; border-radius: 10px; padding: 8px 12px; font-weight: 700; font-size: 0.88rem; display: flex; align-items: center; justify-content: center; gap: 5px;" onclick="settleBranchOrder('${o.id}', this)">
+                                <i class="fa-solid fa-circle-check"></i> تم التسليم
+                            </button>
+                            <button type="button" class="interactive-btn" style="flex: 1; background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; border-radius: 10px; padding: 8px 12px; font-weight: 700; font-size: 0.88rem; display: flex; align-items: center; justify-content: center; gap: 5px;" onclick="convertToNormalDelivery('${o.id}', this)">
+                                <i class="fa-solid fa-truck-fast"></i> تحويل لعادي
+                            </button>
+                        </div>
+                    </div>`;
+            });
+        }
+    }
+
+    // Refresh Shipped Orders if Driver is Selected
+    if (closeDriverSelect && closeDriverSelect.value) {
+        renderDriverShippedOrders(closeDriverSelect.value);
+    }
+
+    // Render Subtab 4: Zones Grid
+    renderZonesGrid();
+
+    // Re-apply any active search
+    if (window._currentShippingSearchQuery) {
+        applyShippingLiveSearch();
+    }
+}
+
 window.settleBranchOrder = function (orderId, btn) {
-    let order = window.pendingOrdersData.find(o => String(o.id) === String(orderId));
+    let order = (window.pendingOrdersData || []).find(o => String(o.id) === String(orderId));
     customSinglePrompt('الرجاء إدخال المبلغ المدفوع لاستلام الفرع:', order ? order.remaining : 0, (amountPaidText) => {
         if (!amountPaidText) return;
 
@@ -4828,15 +5222,14 @@ window.settleBranchOrder = function (orderId, btn) {
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
-                showToast(`<i class=\'fa-solid fa-check\'></i> تم التسليم وتصفية مبلغ (${amountPaidText} ج.م) بنجاح!`, "success");
+                showToast(`<i class="fa-solid fa-check"></i> تم التسليم وتصفية مبلغ (${amountPaidText} ج.م) بنجاح!`, "success");
                 if (order) order.status = 'تم التوصيل ومُحاسب';
                 renderShippingRoom();
-                setTimeout(() => loadDataFromServer(), 3000);
-            }).catch(() => setBtnLoading(btn, false, "تم التسليم ✅"));
+                setTimeout(() => loadDataFromServer(), 2000);
+            }).catch(() => setBtnLoading(btn, false, "تم التسليم"));
     });
 };
 
-// <i class=\'fa-solid fa-star\'></i> دالة تحويل الحجز لتوصيل عادي
 window.convertToNormalDelivery = function (orderId, btn) {
     customConfirm('هل أنت متأكد من تحويل هذا الحجز إلى توصيل فوري عادي؟', () => {
         setBtnLoading(btn, true);
@@ -4848,70 +5241,315 @@ window.convertToNormalDelivery = function (orderId, btn) {
 
         fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
             .then(() => {
-                showToast("<i class=\'fa-solid fa-check\'></i> تم التحويل لتوصيل فوري بنجاح!", "success");
-                let order = window.pendingOrdersData.find(o => String(o.id) === String(orderId));
+                showToast("<i class='fa-solid fa-check'></i> تم التحويل لتوصيل فوري بنجاح!", "success");
+                let order = (window.pendingOrdersData || []).find(o => String(o.id) === String(orderId));
                 if (order) {
                     order.status = 'قيد التجهيز';
                     order.orderType = 'توصيل منزلي عادي';
                 }
                 renderShippingRoom();
-                setTimeout(() => loadDataFromServer(), 3000);
-            }).catch(() => setBtnLoading(btn, false, "تحويل لتوصيل عادي 🚚"));
+                setTimeout(() => loadDataFromServer(), 2000);
+            }).catch(() => setBtnLoading(btn, false, "تحويل لعادي"));
     });
 };
 
-// <i class=\'fa-solid fa-star\'></i> حماية زرار (تقفيل المندوبين)
-const loadDriverOrdersBtn = document.getElementById('loadDriverOrdersBtn');
-const shippedContainer = document.getElementById('shippedOrdersContainer');
+function renderDriverShippedOrders(driver) {
+    const shippedContainer = document.getElementById('shippedOrdersContainer');
+    const outCountDisplay = document.getElementById('driverOutCountDisplay');
+    const outTotalDisplay = document.getElementById('driverOutTotalDisplay');
+    const selectedSettleDisplay = document.getElementById('driverSelectedSettleDisplay');
 
-if (loadDriverOrdersBtn && shippedContainer) {
-    loadDriverOrdersBtn.addEventListener('click', () => {
-        const driver = document.getElementById('closeDriverSelect').value;
-        if (!driver) {
-            showToast("الرجاء اختيار المندوب أولاً!", "error");
-            shippedContainer.innerHTML = '<p class="empty-msg">برجاء اختيار المندوب والضغط على "عرض العهدة"</p>';
-            return;
-        }
+    if (!shippedContainer) return;
 
-        shippedContainer.innerHTML = '<p class="empty-msg"><i class=\'fa-solid fa-hourglass-half\'></i> جاري تحميل عهدة المندوب...</p>';
+    if (!driver) {
+        shippedContainer.innerHTML = '<p class="empty-msg" style="grid-column: 1 / -1; text-align: center; padding: 40px; background: white; border-radius: 14px;">برجاء اختيار المندوب لعرض أوردرات عهدته.</p>';
+        if (outCountDisplay) outCountDisplay.innerText = '0 أوردر';
+        if (outTotalDisplay) outTotalDisplay.innerText = '0 ج.م';
+        if (selectedSettleDisplay) selectedSettleDisplay.innerText = '0 ج.م';
+        return;
+    }
 
-        // <i class=\'fa-solid fa-star\'></i> Fix: استخدام shippedOrdersData من Supabase
-        let shippedOrders = [];
-        if (window.shippedOrdersData) {
-            shippedOrders = window.shippedOrdersData.filter(o => o.driver === driver);
-        }
+    let shippedOrders = [];
+    if (window.shippedOrdersData) {
+        shippedOrders = window.shippedOrdersData.filter(o => o.driver === driver);
+    } else if (window.latestServerData && window.latestServerData.shippedOrders) {
+        shippedOrders = window.latestServerData.shippedOrders.filter(o => o.driver === driver);
+    }
 
-        if (shippedOrders.length === 0) {
-            shippedContainer.innerHTML = '<p class="empty-msg">لا توجد أوردرات في الشحن لهذا المندوب حالياً.</p>';
-        } else {
-            renderDriverShippedOrders(shippedOrders, shippedContainer);
-        }
+    let driverTotalCash = 0;
+    shippedOrders.forEach(o => {
+        driverTotalCash += parseFloat(o.remaining !== undefined && o.remaining !== null && o.remaining !== "" ? o.remaining : o.total) || 0;
     });
-}
 
-// <i class=\'fa-solid fa-star\'></i> دالة مساعدة لعرض أوردرات المندوب المشحونة
-function renderDriverShippedOrders(shippedOrders, container) {
-    container.innerHTML = '';
+    if (outCountDisplay) outCountDisplay.innerText = `${shippedOrders.length} أوردر`;
+    if (outTotalDisplay) outTotalDisplay.innerText = `${Math.round(driverTotalCash).toLocaleString('ar-EG')} ج.م`;
+    if (selectedSettleDisplay) selectedSettleDisplay.innerText = '0 ج.م';
+
+    shippedContainer.innerHTML = '';
     if (shippedOrders.length === 0) {
-        container.innerHTML = '<p class="empty-msg">لا توجد أوردرات في الشحن لهذا المندوب.</p>';
+        shippedContainer.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 45px 20px; background: white; border-radius: 16px; border: 1px dashed #cbd5e1;">
+                <i class="fa-solid fa-circle-check" style="font-size: 2.2rem; color: #10b981; margin-bottom: 10px; display: block;"></i>
+                <p style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #1e293b;">لا توجد أوردرات في الشحن للمندوب (${driver}) حالياً.</p>
+                <span style="font-size: 0.85rem; color: #64748b;">عهدة المندوب متصفية بالكامل.</span>
+            </div>`;
     } else {
         shippedOrders.forEach(o => {
-            container.innerHTML += `
-                <label class="shipped-order-card">
+            const amount = parseFloat(o.remaining !== undefined && o.remaining !== null && o.remaining !== "" ? o.remaining : o.total) || 0;
+            const searchData = `${o.id} ${o.name} ${o.phone} ${o.address || ''}`;
+
+            shippedContainer.innerHTML += `
+                <div class="shipping-order-card interactive-card" data-order-id="${o.id}" data-search="${searchData.replace(/"/g, '&quot;')}" onclick="toggleOrderCardSelection(this, event)">
                     <input type="checkbox" class="soc-checkbox shipped-checkbox" value="${o.id}">
-                    <div class="soc-body">
-                        <div class="soc-top">
-                            <span class="soc-id">#${o.id}</span>
-                            <span class="soc-name" style="font-size: 0.95rem;">${o.name}</span>
+                    <div class="soc-body" style="flex: 1; min-width: 0;">
+                        <div class="soc-top" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <span class="soc-id" style="font-weight: 800; color: #10b981; font-size: 0.95rem;">#${o.id}</span>
+                            <span class="soc-name" style="font-size: 1rem; font-weight: 800; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${o.name}</span>
                         </div>
-                        <div class="soc-info-row">
-                            <div class="soc-info-item highlight"><i class=\'fa-solid fa-mobile-screen\'></i> ${o.phone}</div>
-                            <div class="soc-info-item remaining"><i class=\'fa-solid fa-money-bill-wave\'></i> عهدة: ${o.remaining} ج.م</div>
+                        <div class="soc-info-row" style="margin-bottom: 6px;">
+                            <div class="soc-info-item highlight"><i class="fa-solid fa-mobile-screen"></i> ${o.phone}</div>
+                            <div class="soc-info-item remaining" style="color: #047857;"><i class="fa-solid fa-money-bill-wave"></i> عهدة: ${amount} ج.م</div>
                         </div>
+                        ${o.address ? `<div style="font-size: 0.8rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><i class="fa-solid fa-location-dot"></i> ${o.address}</div>` : ''}
                     </div>
-                </label>`;
+                </div>`;
         });
     }
+
+    if (window._currentShippingSearchQuery) {
+        applyShippingLiveSearch();
+    }
+}
+
+window.renderZonesGrid = function() {
+    const container = document.getElementById('zonesGridContainer');
+    if (!container) return;
+
+    let zones = window.allShippingZones || [];
+    if (zones.length === 0 && window.latestServerData) {
+        const alex = (window.latestServerData.alex || []).map(z => ({ zone_name: z.name, price: z.price, delivery_type: z.type, duration: z.duration, zone_type: 'alex' }));
+        const govs = (window.latestServerData.govs || []).map(z => ({ zone_name: z.name, price: z.price, delivery_type: z.type, duration: z.duration, zone_type: 'govs' }));
+        zones = [...alex, ...govs];
+        window.allShippingZones = zones;
+    }
+
+    let sameDayCount = 0;
+    let nextDayCount = 0;
+    let govsCount = 0;
+
+    zones.forEach(z => {
+        if (z.delivery_type === 'same_day' || (!z.delivery_type && z.zone_type === 'alex')) {
+            sameDayCount++;
+        } else if (z.delivery_type === 'next_day') {
+            nextDayCount++;
+        } else if (z.zone_type === 'govs' || z.delivery_type === 'gov') {
+            govsCount++;
+        }
+    });
+
+    const allCount = zones.length;
+
+    const pillAll = document.getElementById('zonePillAll');
+    if (pillAll) pillAll.innerText = allCount;
+
+    const pillAlexSame = document.getElementById('zonePillAlexSame');
+    if (pillAlexSame) pillAlexSame.innerText = sameDayCount;
+
+    const pillAlexNext = document.getElementById('zonePillAlexNext');
+    if (pillAlexNext) pillAlexNext.innerText = nextDayCount;
+
+    const pillGov = document.getElementById('zonePillGov');
+    if (pillGov) pillGov.innerText = govsCount;
+
+    const totalDisplay = document.getElementById('zonesTotalCounterDisplay');
+    if (totalDisplay) totalDisplay.innerText = allCount;
+
+    const kpiZones = document.getElementById('shippingKpiZonesCount');
+    if (kpiZones) kpiZones.innerText = allCount;
+
+    const badgeZones = document.getElementById('tabBadgeZones');
+    if (badgeZones) badgeZones.innerText = allCount;
+
+    const currentFilter = window._currentZoneFilter || 'all';
+    let filtered = zones.filter(z => {
+        if (currentFilter === 'same_day') {
+            return z.delivery_type === 'same_day' || (!z.delivery_type && z.zone_type === 'alex');
+        } else if (currentFilter === 'next_day') {
+            return z.delivery_type === 'next_day';
+        } else if (currentFilter === 'govs') {
+            return z.zone_type === 'govs' || z.delivery_type === 'gov';
+        }
+        return true;
+    });
+
+    container.innerHTML = '';
+    if (filtered.length === 0) {
+        container.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 45px 20px; background: white; border-radius: 16px; border: 1px dashed #cbd5e1;">
+                <i class="fa-solid fa-map-location-dot" style="font-size: 2.2rem; color: #94a3b8; margin-bottom: 10px; display: block;"></i>
+                <p style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #64748b;">لا توجد مناطق تطابق الفلتر المختار.</p>
+            </div>`;
+        return;
+    }
+
+    filtered.forEach(z => {
+        let typeLabel = "إسكندرية (نفس اليوم)";
+        let typeColor = "#0284c7";
+        let typeBg = "rgba(2, 132, 199, 0.1)";
+
+        if (z.delivery_type === 'next_day') {
+            typeLabel = "إسكندرية (تاني يوم)";
+            typeColor = "#9b59b6";
+            typeBg = "rgba(155, 89, 182, 0.1)";
+        } else if (z.zone_type === 'govs' || z.delivery_type === 'gov') {
+            typeLabel = "المحافظات";
+            typeColor = "#f59e0b";
+            typeBg = "rgba(245, 158, 11, 0.1)";
+        }
+
+        const safeName = (z.zone_name || '').replace(/'/g, "\\'");
+        const safeDuration = (z.duration || '').replace(/'/g, "\\'");
+        const safePrice = z.price || 0;
+        const safeType = z.delivery_type || (z.zone_type === 'govs' ? 'gov' : 'same_day');
+        const safeZoneType = z.zone_type || 'alex';
+        const searchData = `${z.zone_name} ${typeLabel} ${z.price} ${z.duration || ''}`;
+
+        container.innerHTML += `
+            <div class="zone-grid-card" data-search="${searchData.replace(/"/g, '&quot;')}" style="border-right: 4px solid ${typeColor}; background: #ffffff; border-radius: 14px; padding: 14px 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px;">
+                        <h4 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-location-dot" style="color: ${typeColor};"></i> ${z.zone_name}
+                        </h4>
+                        <span style="font-size: 1.15rem; font-weight: 900; color: #10b981; white-space: nowrap;">${z.price} ج.م</span>
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 10px;">
+                        <span style="font-size: 0.76rem; font-weight: 700; padding: 3px 8px; border-radius: 10px; background: ${typeBg}; color: ${typeColor};">
+                            ${typeLabel}
+                        </span>
+                        <span style="font-size: 0.76rem; font-weight: 600; padding: 3px 8px; border-radius: 10px; background: #f1f5f9; color: #475569; display: flex; align-items: center; gap: 4px;">
+                            <i class="fa-regular fa-clock" style="color: #94a3b8;"></i> ${z.duration || 'غير محدد'}
+                        </span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px; border-top: 1px solid #f1f5f9; padding-top: 10px;">
+                    <button type="button" class="interactive-btn" style="flex: 1; background: #f8fafc; color: #334155; border: 1px solid #cbd5e1; padding: 7px 10px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 5px;" onclick="window.editZoneUI('${safeName}', '${safePrice}', '${safeType}', '${safeDuration}', '${safeZoneType}')">
+                        <i class="fa-solid fa-pencil"></i> تعديل
+                    </button>
+                    <button type="button" class="interactive-btn" style="background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; padding: 7px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 5px;" onclick="window.deleteItem('deleteZone', '${safeName}')">
+                        <i class="fa-solid fa-trash-can"></i> حذف
+                    </button>
+                </div>
+            </div>`;
+    });
+};
+
+function applyShippingLiveSearch() {
+    const rawQuery = window._currentShippingSearchQuery || '';
+    const query = normalizeArabicText(rawQuery);
+
+    const filterContainerElements = (containerSelector, itemSelector) => {
+        const container = document.querySelector(containerSelector);
+        if (!container) return;
+        const items = container.querySelectorAll(itemSelector);
+        let visibleCount = 0;
+
+        items.forEach(item => {
+            if (!query) {
+                item.style.display = '';
+                visibleCount++;
+                return;
+            }
+            const searchData = normalizeArabicText(item.dataset.search || item.innerText);
+            if (searchData.includes(query)) {
+                item.style.display = '';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        let emptySearchMsg = container.querySelector('.empty-search-msg');
+        if (query && visibleCount === 0 && items.length > 0) {
+            if (!emptySearchMsg) {
+                emptySearchMsg = document.createElement('div');
+                emptySearchMsg.className = 'empty-search-msg';
+                emptySearchMsg.style.cssText = 'grid-column: 1 / -1; text-align: center; padding: 30px; background: white; border-radius: 12px; color: #64748b; font-weight: 700;';
+                emptySearchMsg.innerHTML = '<i class="fa-solid fa-magnifying-glass" style="margin-left: 6px;"></i> لا توجد نتائج مطابقة لبحثك';
+                container.appendChild(emptySearchMsg);
+            }
+            emptySearchMsg.style.display = 'block';
+        } else if (emptySearchMsg) {
+            emptySearchMsg.style.display = 'none';
+        }
+    };
+
+    filterContainerElements('#pendingOrdersContainer', '.shipping-order-card');
+    filterContainerElements('#shippedOrdersContainer', '.shipping-order-card, .shipped-order-card');
+    filterContainerElements('#branchOrdersContainer', '.shipping-action-card');
+    filterContainerElements('#reservationsContainer', '.shipping-action-card');
+    filterContainerElements('#zonesGridContainer', '.zone-grid-card');
+}
+
+function handleSendWaManifest() {
+    const driverSelect = document.getElementById('assignDriverSelect');
+    const driver = driverSelect ? driverSelect.value : "";
+    if (!driver) {
+        showToast("اختر المندوب أولاً!", "error");
+        return;
+    }
+    const selected = Array.from(document.querySelectorAll('#pendingOrdersContainer .pending-checkbox:checked')).map(cb => cb.value);
+    if (selected.length === 0) {
+        showToast("حدد أوردر واحد على الأقل!", "warning");
+        return;
+    }
+
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    let text = `*بيان شحنات المندوب:* ${driver}\n`;
+    text += `*التاريخ:* ${dateStr}\n`;
+    text += `*عدد الشحنات:* ${selected.length} أوردر\n`;
+    text += `------------------------------------\n\n`;
+
+    let totalCash = 0;
+    selected.forEach((orderId, idx) => {
+        const o = (window.pendingOrdersData || []).find(x => String(x.id) === String(orderId)) 
+               || (window.orderHistoryData || []).find(x => String(x.id) === String(orderId));
+        if (o) {
+            const amount = parseFloat(o.remaining !== undefined && o.remaining !== null && o.remaining !== "" ? o.remaining : o.total) || 0;
+            totalCash += amount;
+
+            let cleanPhone = String(o.phone || '').trim();
+            let cleanAddress = String(o.address || o.gov || o.zone || 'بدون عنوان').trim();
+            let prods = o.products ? String(o.products).replace(/\n/g, ', ') : 'لا يوجد تفاصيل';
+
+            text += `*${idx + 1}) أوردر #${o.id} - ${o.name}*\n`;
+            text += `• رقم الهاتف: ${cleanPhone}\n`;
+            text += `• العنوان: ${cleanAddress}\n`;
+            text += `• المطلوب تحصيله: *${amount} ج.م*\n`;
+            text += `• المنتجات: ${prods}\n`;
+            text += `------------------------------------\n\n`;
+        }
+    });
+
+    text += `*إجمالي المبلغ المطلوب تحصيله بالكامل: ${totalCash} ج.م*\n`;
+    text += `Candy Club System - نظام إدارة الشحن`;
+
+    let courierPhone = "";
+    if (window.driversList && window.driversList.length > 0) {
+        const c = window.driversList.find(d => d.name === driver);
+        if (c && c.phone) {
+            courierPhone = String(c.phone).replace(/[^0-9]/g, '');
+            if (courierPhone.startsWith('01')) courierPhone = '2' + courierPhone;
+        }
+    }
+
+    const waUrl = courierPhone 
+        ? `https://wa.me/${courierPhone}?text=${encodeURIComponent(text)}`
+        : `https://wa.me/?text=${encodeURIComponent(text)}`;
+
+    window.open(waUrl, '_blank');
 }
 
 function processStatusUpdate(btn, checkboxesClass, newStatus, driverName = "") {
@@ -4931,53 +5569,13 @@ function processStatusUpdate(btn, checkboxesClass, newStatus, driverName = "") {
             .then(() => {
                 completed++;
                 if (completed === selected.length) {
-                    showToast(`<i class=\'fa-solid fa-check\'></i> تم التحديث لـ "${newStatus}"`, "success");
+                    showToast(`<i class="fa-solid fa-check"></i> تم التحديث لـ "${newStatus}"`, "success");
                     setBtnLoading(btn, false, btn.dataset.origText);
                     loadDataFromServer();
                 }
             }).catch(() => { setBtnLoading(btn, false, btn.dataset.origText); });
     });
 }
-
-let assignBtn = document.getElementById('assignToDriverBtn');
-if (assignBtn) assignBtn.addEventListener('click', () => {
-    let driver = document.getElementById('assignDriverSelect').value;
-    if (!driver) { showToast("اختر المندوب أولاً!", "error"); return; }
-    processStatusUpdate(assignBtn, 'pending-checkbox', 'في الشحن', driver);
-});
-
-let sendWaDriverBtn = document.getElementById('sendWaDriverBtn');
-if (sendWaDriverBtn) sendWaDriverBtn.addEventListener('click', () => {
-    let driver = document.getElementById('assignDriverSelect').value;
-    if (!driver) { showToast("اختر المندوب أولاً!", "error"); return; }
-
-    let courierPhone = "";
-    if (shippingData && window.financialsData) {
-        let courier = shippingData[driver] || window.financialsData.find(f => f.name === driver); // fallback search
-    }
-    // We can also just send it to WhatsApp with empty phone and user selects the contact
-    let ordersListText = `أوردرات المندوب: ${driver} 🏍️\n\n`;
-    let totalCash = 0;
-
-    const selected = Array.from(document.querySelectorAll('.pending-checkbox:checked')).map(cb => cb.value);
-    if (selected.length === 0) { showToast("حدد أوردر واحد على الأقل!", "warning"); return; }
-
-    selected.forEach((orderId, idx) => {
-        let o = orderHistoryData.find(x => x.id === orderId);
-        if (o) {
-            ordersListText += `${idx + 1}. العميل: ${o.name}\n📱 ${o.phone}\n📍 العنوان: ${o.address}\n💰 المطلوب: ${o.remaining} ج.م\n🛒 المنتجات: ${o.products.replace(/\n/g, ', ')}\n\n`;
-            totalCash += parseFloat(o.remaining) || 0;
-        }
-    });
-    ordersListText += `🔥 الإجمالي المطلوب تحصيله: ${totalCash} ج.م\n`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(ordersListText)}`, '_blank');
-});
-
-let markDelivBtn = document.getElementById('markDeliveredBtn');
-if (markDelivBtn) markDelivBtn.addEventListener('click', () => processStatusUpdate(markDelivBtn, 'shipped-checkbox', 'تم التوصيل'));
-
-let markRetBtn = document.getElementById('markReturnedBtn');
-if (markRetBtn) markRetBtn.addEventListener('click', () => processStatusUpdate(markRetBtn, 'shipped-checkbox', 'مرتجع'));
 
 function updateAdvancedDashboard(history) {
     let completedToday = 0;

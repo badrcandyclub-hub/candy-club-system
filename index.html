@@ -910,74 +910,397 @@
         </section>
 
         <section id="shipping-tab" class="tab-pane">
-            <div class="shipping-actions-row mb-15">
-                <button id="openZoneModalBtn" class="btn-outline interactive-btn">المناطق واسعار الشحن <i class="fa-solid fa-plus"></i></button>
+            <style>
+                .shipping-kpi-card {
+                    background: #ffffff;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 16px;
+                    padding: 16px 20px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+                    transition: transform 0.2s ease, box-shadow 0.2s ease;
+                }
+                .shipping-kpi-card:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+                }
+                .shipping-subtab-pill {
+                    padding: 10px 18px;
+                    border-radius: 12px;
+                    border: 1px solid #e2e8f0;
+                    background: #ffffff;
+                    color: #475569;
+                    font-size: 0.92rem;
+                    font-weight: 800;
+                    cursor: pointer;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    transition: all 0.2s ease;
+                    font-family: inherit;
+                }
+                .shipping-subtab-pill:hover {
+                    background: #f8fafc;
+                    border-color: #cbd5e1;
+                    color: #0f172a;
+                }
+                .shipping-subtab-pill.active {
+                    background: linear-gradient(135deg, #f59e0b, #d97706);
+                    color: white;
+                    border-color: #f59e0b;
+                    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+                }
+                .shipping-subtab-pill[data-subtab="shipping-dispatch"].active {
+                    background: linear-gradient(135deg, #0284c7, #0369a1);
+                    border-color: #0284c7;
+                    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+                }
+                .shipping-subtab-pill[data-subtab="shipping-settlement"].active {
+                    background: linear-gradient(135deg, #10b981, #059669);
+                    border-color: #10b981;
+                    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+                }
+                .shipping-subtab-pill[data-subtab="shipping-pickups"].active {
+                    background: linear-gradient(135deg, #e91e63, #be185d);
+                    border-color: #e91e63;
+                    box-shadow: 0 4px 12px rgba(233, 30, 99, 0.25);
+                }
+                .shipping-subtab-pill[data-subtab="shipping-zones"].active {
+                    background: linear-gradient(135deg, #9b59b6, #8e44ad);
+                    border-color: #9b59b6;
+                    box-shadow: 0 4px 12px rgba(155, 89, 182, 0.25);
+                }
+                .shipping-order-card {
+                    background: #ffffff;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 14px;
+                    padding: 14px 16px;
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 12px;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                    position: relative;
+                }
+                .shipping-order-card:hover {
+                    border-color: #cbd5e1;
+                    box-shadow: 0 6px 16px rgba(0,0,0,0.05);
+                }
+                .shipping-order-card.selected-card {
+                    border-color: #0284c7;
+                    background: #f0f9ff;
+                }
+                .shipping-order-card input[type="checkbox"] {
+                    width: 18px;
+                    height: 18px;
+                    margin-top: 3px;
+                    cursor: pointer;
+                    accent-color: #0284c7;
+                }
+                .zone-grid-card {
+                    background: #ffffff;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 14px;
+                    padding: 14px 16px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+                    transition: transform 0.2s, box-shadow 0.2s;
+                }
+                .zone-grid-card:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+                    border-color: #cbd5e1;
+                }
+            </style>
+
+            <!-- Header & KPI Bar -->
+            <div class="section-card" style="margin-bottom: 20px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.05), rgba(2, 132, 199, 0.05)); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 16px;">
+                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px;">
+                    <div>
+                        <h2 style="color: #b45309; margin: 0 0 5px 0; display: flex; align-items: center; gap: 10px; font-size: 1.5rem; font-weight: 800;">
+                            <i class="fa-solid fa-truck-fast" style="color: #f59e0b;"></i> مركز إدارة الشحن والتوصيل
+                        </h2>
+                        <p style="margin: 0; color: #64748b; font-size: 0.95rem;">
+                            متابعة وتوزيع شحنات المناديب، استلامات الفرع، الحجوزات، وضبط أسعار المناطق بنقرة واحدة
+                        </p>
+                    </div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button type="button" id="refreshShippingBtn" class="interactive-btn" style="background: white; color: #475569; border: 1px solid #cbd5e1; padding: 10px 18px; border-radius: 12px; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-rotate"></i> تحديث الشحن
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 4 KPI Cards -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 20px;">
+                    <div class="shipping-kpi-card" style="border-right: 4px solid #0284c7;">
+                        <div>
+                            <span style="font-size: 0.85rem; color: #64748b; font-weight: 700;">جاهز للتسليم للمناديب</span>
+                            <div id="shippingKpiPendingCount" style="font-size: 1.6rem; font-weight: 900; color: #0284c7; margin-top: 4px;">0</div>
+                            <span id="shippingKpiPendingMoney" style="font-size: 0.8rem; color: #64748b; font-weight: 600;">0 ج.م مطلوب تحصيلها</span>
+                        </div>
+                        <div style="width: 46px; height: 46px; border-radius: 12px; background: rgba(2, 132, 199, 0.1); color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+                            <i class="fa-solid fa-box-open"></i>
+                        </div>
+                    </div>
+
+                    <div class="shipping-kpi-card" style="border-right: 4px solid #10b981;">
+                        <div>
+                            <span style="font-size: 0.85rem; color: #64748b; font-weight: 700;">في الطريق مع المناديب</span>
+                            <div id="shippingKpiShippedCount" style="font-size: 1.6rem; font-weight: 900; color: #10b981; margin-top: 4px;">0</div>
+                            <span id="shippingKpiShippedMoney" style="font-size: 0.8rem; color: #64748b; font-weight: 600;">0 ج.م عهدة في الشارع</span>
+                        </div>
+                        <div style="width: 46px; height: 46px; border-radius: 12px; background: rgba(16, 185, 129, 0.1); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+                            <i class="fa-solid fa-motorcycle"></i>
+                        </div>
+                    </div>
+
+                    <div class="shipping-kpi-card" style="border-right: 4px solid #e91e63;">
+                        <div>
+                            <span style="font-size: 0.85rem; color: #64748b; font-weight: 700;">استلام الفرع والحجوزات</span>
+                            <div id="shippingKpiBranchAndResCount" style="font-size: 1.6rem; font-weight: 900; color: #e91e63; margin-top: 4px;">0</div>
+                            <span style="font-size: 0.8rem; color: #64748b; font-weight: 600;">طلبات فرع + حجوزات قادمة</span>
+                        </div>
+                        <div style="width: 46px; height: 46px; border-radius: 12px; background: rgba(233, 30, 99, 0.1); color: #e91e63; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+                            <i class="fa-solid fa-store"></i>
+                        </div>
+                    </div>
+
+                    <div class="shipping-kpi-card" style="border-right: 4px solid #9b59b6;">
+                        <div>
+                            <span style="font-size: 0.85rem; color: #64748b; font-weight: 700;">مناطق الشحن المسجلة</span>
+                            <div id="shippingKpiZonesCount" style="font-size: 1.6rem; font-weight: 900; color: #9b59b6; margin-top: 4px;">0</div>
+                            <span style="font-size: 0.8rem; color: #64748b; font-weight: 600;">إسكندرية والمحافظات</span>
+                        </div>
+                        <div style="width: 46px; height: 46px; border-radius: 12px; background: rgba(155, 89, 182, 0.1); color: #9b59b6; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+                            <i class="fa-solid fa-map-location-dot"></i>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="section-card" style="border-right: 4px solid var(--secondary);">
-                <h3 class="section-title"><i class="fa-solid fa-truck-ramp-box"></i> تحميل المناديب (توصيل)</h3>
-                <label>اختر المندوب للاستلام:</label>
-                <select id="assignDriverSelect">
-                    <option value="">-- اختر المندوب --</option>
-                </select>
-                <div id="pendingOrdersContainer" class="data-list-container mt-10" style="min-height: 100px;">
-                    <p class="empty-msg">جاري تحميل الأوردرات...</p>
-                </div>
-                <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
-                    <button type="button" id="assignToDriverBtn" class="btn-save interactive-btn"
-                        style="flex: 1 1 180px; font-size: 1rem;">تسليم للمندوب <i class="fa-solid fa-truck-fast"></i></button>
-                    <button type="button" id="sendWaDriverBtn" class="btn-whatsapp interactive-btn"
-                        style="flex: 1 1 100px; font-size: 0.9rem;">إرسال واتس <i class="fa-brands fa-whatsapp"></i></button>
+            <!-- Toolbar: Search Bar + 4 Subtabs Navigation -->
+            <div class="section-card" style="margin-bottom: 20px; border-radius: 16px; padding: 16px 20px;">
+                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px;">
+                    <!-- Live Search Input -->
+                    <div style="flex: 1 1 280px; position: relative;">
+                        <i class="fa-solid fa-magnifying-glass" style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8;"></i>
+                        <input type="text" id="shippingSearchInput" placeholder="بحث فوري برقم الأوردر، اسم العميل، الهاتف، أو المنطقة..." style="width: 100%; padding: 10px 40px 10px 15px; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 0.95rem; margin-bottom: 0; background: #f8fafc;">
+                    </div>
+
+                    <!-- 4 Sub-Tabs Navigation Pills -->
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;" id="shippingSubTabs">
+                        <button type="button" class="shipping-subtab-pill active" data-subtab="shipping-dispatch">
+                            <i class="fa-solid fa-truck-ramp-box"></i> تسليم المناديب (<span id="tabBadgeDispatch">0</span>)
+                        </button>
+                        <button type="button" class="shipping-subtab-pill" data-subtab="shipping-settlement">
+                            <i class="fa-solid fa-hand-holding-dollar"></i> تقفيل اليوم والعهدة (<span id="tabBadgeSettlement">0</span>)
+                        </button>
+                        <button type="button" class="shipping-subtab-pill" data-subtab="shipping-pickups">
+                            <i class="fa-solid fa-store"></i> استلام الفرع والحجوزات (<span id="tabBadgePickups">0</span>)
+                        </button>
+                        <button type="button" class="shipping-subtab-pill" data-subtab="shipping-zones">
+                            <i class="fa-solid fa-map-location-dot"></i> مناطق وأسعار الشحن (<span id="tabBadgeZones">0</span>)
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <!-- ⭐ قسم الحجوزات -->
-            <div class="section-card" style="border-right: 4px solid var(--primary);">
-                <h3 class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
-                    <span><i class="fa-solid fa-calendar-check"></i> طلبات الحجوزات القادمة</span>
-                    <span id="reservationsCountBadge" style="font-size: 0.85rem; background: var(--primary); color: white; padding: 4px 10px; border-radius: 12px; font-weight: bold;">العدد: 0</span>
-                </h3>
-                <div id="reservationsContainer" class="data-list-container mt-10"
-                    style="min-height: 100px; max-height: 250px; overflow-y: auto;">
-                    <p class="empty-msg">لا يوجد حجوزات قادمة...</p>
+            <!-- ========================================== -->
+            <!-- SUB-TAB 1: تحميل وتسليم المناديب (Dispatch) -->
+            <!-- ========================================== -->
+            <div id="subtab-shipping-dispatch" class="shipping-subtab-content" style="display: block;">
+                <div class="section-card" style="margin-bottom: 20px; border-radius: 16px; border-right: 4px solid #0284c7;">
+                    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 15px;">
+                        <div style="flex: 1 1 260px;">
+                            <label style="display: block; font-size: 0.9rem; font-weight: 700; color: #334155; margin-bottom: 6px;">
+                                <i class="fa-solid fa-motorcycle" style="color: #0284c7;"></i> اختر المندوب للاستلام:
+                            </label>
+                            <select id="assignDriverSelect" style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid #cbd5e1; font-weight: 700; font-size: 0.95rem; background: white; margin-bottom: 0;">
+                                <option value="">-- اختر المندوب --</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end;">
+                            <button type="button" id="selectAllPendingBtn" class="interactive-btn" style="background: #f8fafc; color: #334155; border: 1px solid #cbd5e1; padding: 10px 14px; border-radius: 10px; font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
+                                <i class="fa-solid fa-check-double"></i> تحديد الكل
+                            </button>
+                            <button type="button" id="assignToDriverBtn" class="interactive-btn" style="background: linear-gradient(135deg, #0284c7, #0369a1); color: white; border: none; padding: 10px 18px; border-radius: 10px; font-weight: 800; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);">
+                                <i class="fa-solid fa-truck-fast"></i> تسليم للمندوب
+                            </button>
+                            <button type="button" id="sendWaDriverBtn" class="interactive-btn" style="background: linear-gradient(135deg, #25d366, #128c7e); color: white; border: none; padding: 10px 18px; border-radius: 10px; font-weight: 800; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.25);">
+                                <i class="fa-brands fa-whatsapp"></i> إرسال مانيفست واتساب
+                            </button>
+                        </div>
+                    </div>
+                    <div id="pendingOrdersSummaryStrip" style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 8px 14px; font-size: 0.88rem; color: #0369a1; font-weight: 700; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                        <span><i class="fa-solid fa-info-circle"></i> حدد الأوردرات المطلوب تسليمها ثم اضغط "تسليم للمندوب" أو أرسل له المانيفست.</span>
+                        <span id="selectedPendingSummaryText">المحدد: 0 أوردر | الإجمالي: 0 ج.م</span>
+                    </div>
+                </div>
+
+                <div id="pendingOrdersContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px;">
+                    <p class="empty-msg" style="grid-column: 1 / -1; text-align: center; padding: 40px; background: white; border-radius: 14px;">جاري تحميل الأوردرات...</p>
                 </div>
             </div>
 
-            <!-- ⭐ قسم استلام الفرع المنفصل -->
-            <div class="section-card" style="border-right: 4px solid var(--warning);">
-                <h3 class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
-                    <span><i class="fa-solid fa-store"></i> أوردرات استلام الفرع</span>
-                    <span id="branchCountBadge" style="font-size: 0.85rem; background: var(--warning); color: #000; padding: 4px 10px; border-radius: 12px; font-weight: bold;">العدد: 0</span>
-                </h3>
-                <div id="branchOrdersContainer" class="data-list-container mt-10" style="min-height: 100px;">
-                    <p class="empty-msg">جاري التحميل...</p>
+            <!-- ========================================== -->
+            <!-- SUB-TAB 2: تقفيل اليوم والعهدة (Settlement) -->
+            <!-- ========================================== -->
+            <div id="subtab-shipping-settlement" class="shipping-subtab-content" style="display: none;">
+                <div class="section-card" style="margin-bottom: 20px; border-radius: 16px; border-right: 4px solid #10b981;">
+                    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 15px;">
+                        <div style="flex: 1 1 260px;">
+                            <label style="display: block; font-size: 0.9rem; font-weight: 700; color: #334155; margin-bottom: 6px;">
+                                <i class="fa-solid fa-motorcycle" style="color: #10b981;"></i> اختر المندوب لعرض وتصفية عهدته:
+                            </label>
+                            <div style="display: flex; gap: 8px;">
+                                <select id="closeDriverSelect" style="flex: 1; padding: 10px 14px; border-radius: 10px; border: 1px solid #cbd5e1; font-weight: 700; font-size: 0.95rem; background: white; margin-bottom: 0;">
+                                    <option value="">-- اختر المندوب --</option>
+                                </select>
+                                <button type="button" id="loadDriverOrdersBtn" class="interactive-btn" style="background: #10b981; color: white; border: none; padding: 10px 16px; border-radius: 10px; font-weight: 700;">
+                                    <i class="fa-solid fa-rotate"></i> عرض العهدة
+                                </button>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end;">
+                            <button type="button" id="selectAllShippedBtn" class="interactive-btn" style="background: #f8fafc; color: #334155; border: 1px solid #cbd5e1; padding: 10px 14px; border-radius: 10px; font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
+                                <i class="fa-solid fa-check-double"></i> تحديد الكل
+                            </button>
+                            <button type="button" id="markDeliveredBtn" class="interactive-btn" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 10px 18px; border-radius: 10px; font-weight: 800; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);">
+                                <i class="fa-solid fa-circle-check"></i> تم التوصيل
+                            </button>
+                            <button type="button" id="markReturnedBtn" class="interactive-btn" style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; border: none; padding: 10px 18px; border-radius: 10px; font-weight: 800; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);">
+                                <i class="fa-solid fa-circle-xmark"></i> مرتجع
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Live Cash Settlement Summary Box -->
+                    <div id="driverSettlementSummaryBox" style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 12px; padding: 12px 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: center;">
+                        <div>
+                            <span style="font-size: 0.8rem; color: #047857; font-weight: 700;">الأوردرات المسلمة له حالياً:</span>
+                            <div id="driverOutCountDisplay" style="font-size: 1.35rem; font-weight: 900; color: #065f46; margin-top: 2px;">0 أوردر</div>
+                        </div>
+                        <div>
+                            <span style="font-size: 0.8rem; color: #047857; font-weight: 700;">إجمالي المطلوب تحصيله:</span>
+                            <div id="driverOutTotalDisplay" style="font-size: 1.35rem; font-weight: 900; color: #065f46; margin-top: 2px;">0 ج.م</div>
+                        </div>
+                        <div>
+                            <span style="font-size: 0.8rem; color: #047857; font-weight: 700;">المحدد للتقفيل الآن:</span>
+                            <div id="driverSelectedSettleDisplay" style="font-size: 1.35rem; font-weight: 900; color: #047857; margin-top: 2px;">0 ج.م</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="shippedOrdersContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px;">
+                    <p class="empty-msg" style="grid-column: 1 / -1; text-align: center; padding: 40px; background: white; border-radius: 14px;">برجاء اختيار المندوب لعرض أوردرات عهدته.</p>
                 </div>
             </div>
 
-            <div class="section-card" style="border-right: 4px solid var(--success);">
-                <h3 class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
-                    <span><i class="fa-solid fa-check-double"></i> تقفيل اليوم (حالة التوصيل)</span>
-                    <span id="outOrdersCountBadge" style="font-size: 0.85rem; background: var(--success); color: white; padding: 4px 10px; border-radius: 12px; font-weight: bold;">الاوردرات في الخارج حالياً: 0</span>
-                </h3>
-                <label>اختر المندوب لعرض عهدته:</label>
-                <!-- ⭐ زرار التأكيد الجديد لمنع العشوائية -->
-                <div style="display:flex; gap:10px; margin-bottom:10px;">
-                    <select id="closeDriverSelect" style="margin-bottom:0; flex:1;">
-                        <option value="">-- اختر المندوب --</option>
-                    </select>
-                    <button type="button" id="loadDriverOrdersBtn" class="btn-search interactive-btn"
-                        style="padding: 0 15px;">عرض العهدة <i class="fa-solid fa-check"></i></button>
+            <!-- ========================================== -->
+            <!-- SUB-TAB 3: استلام الفرع والحجوزات (Pickups) -->
+            <!-- ========================================== -->
+            <div id="subtab-shipping-pickups" class="shipping-subtab-content" style="display: none;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; align-items: start;">
+                    <!-- Branch Orders Column -->
+                    <div class="section-card" style="border-right: 4px solid #e91e63; border-radius: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
+                            <h3 style="margin: 0; color: #be185d; font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-store"></i> أوردرات استلام الفرع
+                            </h3>
+                            <span id="branchCountBadge" style="font-size: 0.85rem; background: #fdf2f8; color: #be185d; border: 1px solid #fbcfe8; padding: 4px 10px; border-radius: 20px; font-weight: 800;">جاهز: 0</span>
+                        </div>
+                        <div id="branchOrdersContainer" style="display: flex; flex-direction: column; gap: 12px; min-height: 120px;">
+                            <p class="empty-msg">جاري تحميل أوردرات الفرع...</p>
+                        </div>
+                    </div>
+
+                    <!-- Upcoming Reservations Column -->
+                    <div class="section-card" style="border-right: 4px solid #9b59b6; border-radius: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
+                            <h3 style="margin: 0; color: #6c3483; font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-calendar-check"></i> طلبات الحجوزات القادمة
+                            </h3>
+                            <span id="reservationsCountBadge" style="font-size: 0.85rem; background: #f3e8ff; color: #6c3483; border: 1px solid #e9d5ff; padding: 4px 10px; border-radius: 20px; font-weight: 800;">العدد: 0</span>
+                        </div>
+                        <div id="reservationsContainer" style="display: flex; flex-direction: column; gap: 12px; min-height: 120px; max-height: 520px; overflow-y: auto;">
+                            <p class="empty-msg">لا يوجد حجوزات قادمة...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- SUB-TAB 4: إدارة المناطق وأسعار الشحن (Zones Hub) -->
+            <!-- ========================================== -->
+            <div id="subtab-shipping-zones" class="shipping-subtab-content" style="display: none;">
+                <!-- Quick Add / Edit Zone Box -->
+                <div class="section-card" style="margin-bottom: 20px; border-radius: 16px; border-right: 4px solid #9b59b6; background: linear-gradient(135deg, rgba(155, 89, 182, 0.04), rgba(2, 132, 199, 0.04));">
+                    <h3 style="margin: 0 0 14px 0; color: #6c3483; font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-location-dot" style="color: #9b59b6;"></i> <span id="zoneFormHeading">إضافة أو تعديل منطقة شحن</span>
+                    </h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: flex-end;">
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #475569; margin-bottom: 5px;">نوع المنطقة:</label>
+                            <select id="newZoneType" style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-weight: 700; background: white; margin-bottom: 0;">
+                                <option value="same_day">إسكندرية (نفس اليوم)</option>
+                                <option value="next_day">إسكندرية (تاني يوم)</option>
+                                <option value="gov">محافظات</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #475569; margin-bottom: 5px;">اسم المنطقة:</label>
+                            <input type="text" id="newZoneName" placeholder="مثال: سموحة، المنتزه، الدقي..." style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-weight: 600; background: white; margin-bottom: 0;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #475569; margin-bottom: 5px;">سعر الشحن (ج.م):</label>
+                            <input type="number" id="newZonePrice" placeholder="مثال: 40" style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-weight: 700; background: white; margin-bottom: 0;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #475569; margin-bottom: 5px;">مدة التوصيل:</label>
+                            <input type="text" id="newZoneDuration" placeholder="مثال: من 45 دقيقة لساعة" style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-weight: 600; background: white; margin-bottom: 0;">
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" id="addZoneBtn" class="interactive-btn" style="flex: 1; background: linear-gradient(135deg, #9b59b6, #8e44ad); color: white; border: none; padding: 10px 16px; border-radius: 10px; font-weight: 800; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(155, 89, 182, 0.25);">
+                                <i class="fa-solid fa-floppy-disk"></i> حفظ المنطقة
+                            </button>
+                            <button type="button" id="cancelZoneEditBtn" class="interactive-btn" style="display: none; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 10px 14px; border-radius: 10px; font-weight: 700;">
+                                إلغاء
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
-                <div id="shippedOrdersContainer" class="data-list-container mt-10" style="min-height: 100px;">
-                    <p class="empty-msg">برجاء اختيار المندوب والضغط على "عرض العهدة"</p>
+                <!-- Zones Filter Pills -->
+                <div class="section-card" style="margin-bottom: 20px; border-radius: 16px; padding: 14px 20px;">
+                    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;">
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;" id="zonesFilterPills">
+                            <button type="button" class="shipping-subtab-pill active" data-zonefilter="all" style="padding: 7px 14px; font-size: 0.85rem;">
+                                <i class="fa-solid fa-map"></i> الكل (<span id="zonePillAll">0</span>)
+                            </button>
+                            <button type="button" class="shipping-subtab-pill" data-zonefilter="same_day" style="padding: 7px 14px; font-size: 0.85rem;">
+                                <i class="fa-solid fa-bolt"></i> إسكندرية نفس اليوم (<span id="zonePillAlexSame">0</span>)
+                            </button>
+                            <button type="button" class="shipping-subtab-pill" data-zonefilter="next_day" style="padding: 7px 14px; font-size: 0.85rem;">
+                                <i class="fa-solid fa-calendar-day"></i> إسكندرية تاني يوم (<span id="zonePillAlexNext">0</span>)
+                            </button>
+                            <button type="button" class="shipping-subtab-pill" data-zonefilter="govs" style="padding: 7px 14px; font-size: 0.85rem;">
+                                <i class="fa-solid fa-truck-fast"></i> المحافظات (<span id="zonePillGov">0</span>)
+                            </button>
+                        </div>
+                        <div style="font-size: 0.85rem; color: #64748b; font-weight: 700;">
+                            إجمالي: <span id="zonesTotalCounterDisplay" style="color: #9b59b6; font-size: 1rem;">0</span> منطقة مسجلة
+                        </div>
+                    </div>
                 </div>
-                <div class="action-grid mt-10">
-                    <button type="button" id="markDeliveredBtn" class="btn-save interactive-btn" style="flex:1;">تم
-                        التوصيل <i class="fa-solid fa-check"></i></button>
-                    <button type="button" id="markReturnedBtn" class="interactive-btn"
-                        style="flex:1; background-color: var(--danger); color: white; border: none; border-radius: 12px; font-weight: bold; font-family: 'Cairo', sans-serif;">مرتجع
-                        <i class="fa-solid fa-xmark"></i></button>
+
+                <!-- Zones Cards Grid -->
+                <div id="zonesGridContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px;">
+                    <p class="empty-msg" style="grid-column: 1 / -1; text-align: center; padding: 40px; background: white; border-radius: 14px;">جاري تحميل مناطق وأسعار الشحن...</p>
                 </div>
             </div>
         </section>
@@ -2751,55 +3074,7 @@
         </div>
     </div>
 
-    <div id="zoneModal" class="modal-overlay">
-        <div class="modal-content" style="width: 95vw; max-width: 1400px; max-height: 95vh; display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; padding: 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 15px; margin-bottom: 20px;">
-                <h2 style="color: var(--primary); margin: 0; font-size: 1.8rem;"><i class="fa-solid fa-location-dot"></i> إدارة المناطق واسعار الشحن</h2>
-                <button id="closeZoneModal" class="btn-cancel" style="padding: 10px 20px; font-size: 1.1rem; border-radius: 8px;">إغلاق <i class="fa-solid fa-xmark"></i></button>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; background: var(--bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border);">
-                <div>
-                    <label style="display:block; margin-bottom: 5px; font-weight: bold; color: var(--text-main);">نوع المنطقة:</label>
-                    <select id="newZoneType" style="margin-bottom: 0; width: 100%; padding: 12px; font-size: 1.05rem;">
-                        <option value="same_day">إسكندرية (نفس اليوم)</option>
-                        <option value="next_day">إسكندرية (تاني يوم)</option>
-                        <option value="gov">محافظات</option>
-                    </select>
-                </div>
-                <div>
-                    <label style="display:block; margin-bottom: 5px; font-weight: bold; color: var(--text-main);">اسم المنطقة:</label>
-                    <input type="text" id="newZoneName" placeholder="اسم المنطقة" style="margin-bottom: 0; width: 100%; padding: 12px; font-size: 1.05rem;">
-                </div>
-                <div>
-                    <label style="display:block; margin-bottom: 5px; font-weight: bold; color: var(--text-main);">سعر الشحن:</label>
-                    <input type="number" id="newZonePrice" placeholder="سعر الشحن" style="margin-bottom: 0; width: 100%; padding: 12px; font-size: 1.05rem;">
-                </div>
-                <div>
-                    <label style="display:block; margin-bottom: 5px; font-weight: bold; color: var(--text-main);">مدة التوصيل:</label>
-                    <input type="text" id="newZoneDuration" placeholder="مدة التوصيل" style="margin-bottom: 0; width: 100%; padding: 12px; font-size: 1.05rem;">
-                </div>
-                <div style="display: flex; align-items: flex-end;">
-                    <button id="addZoneBtn" class="btn-confirm" style="width: 100%; padding: 12px; font-size: 1.1rem; border-radius: 8px;">حفظ المنطقة <i class="fa-solid fa-floppy-disk"></i></button>
-                </div>
-            </div>
 
-            <div class="zones-lists-container">
-                <details class="zone-details" open>
-                    <summary class="zone-summary"><span style="color: var(--secondary);"><i class="fa-solid fa-anchor"></i> مناطق الإسكندرية</span> <span class="arrow">▼</span></summary>
-                    <div style="background: #FAFBFF; padding: 15px; border-radius: 0 0 12px 12px; border: 1px solid var(--border); border-top: none;">
-                        <div id="zonesAlexList" class="data-list-container zone-list-grid" style="overflow-y: visible; max-height: none; padding: 0;"></div>
-                    </div>
-                </details>
-                <details class="zone-details">
-                    <summary class="zone-summary"><span style="color: var(--warning);"><i class="fa-solid fa-truck-fast"></i> المحافظات</span> <span class="arrow">▼</span></summary>
-                    <div style="background: #FAFBFF; padding: 15px; border-radius: 0 0 12px 12px; border: 1px solid var(--border); border-top: none;">
-                        <div id="zonesGovList" class="data-list-container zone-list-grid" style="overflow-y: visible; max-height: none; padding: 0;"></div>
-                    </div>
-                </details>
-            </div>
-        </div>
-    </div>
 
     <!-- مودال إضافة وتعديل صنف في الكتالوج -->
     <div id="editCatalogModal" class="modal-overlay" style="display: none; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 999999; animation: fadeIn 0.2s ease;">
