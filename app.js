@@ -5508,7 +5508,20 @@ function syncAndMergeCatalogData(freshRawCatalog) {
         }
     });
 
-    catalogData = Array.from(mergedMap.values());
+    catalogData = Array.from(mergedMap.values()).sort((a, b) => {
+        const aOffer = a.isOffer === true || a.isOffer === 'true' || a.isOffer === 1;
+        const bOffer = b.isOffer === true || b.isOffer === 'true' || b.isOffer === 1;
+        if (aOffer && !bOffer) return -1;
+        if (!aOffer && bOffer) return 1;
+
+        const aStock = parseFloat(a.stock) || 0;
+        const bStock = parseFloat(b.stock) || 0;
+        if (aStock > 0 && bStock <= 0) return -1;
+        if (aStock <= 0 && bStock > 0) return 1;
+        if (aStock > 0 && bStock > 0) return bStock - aStock;
+
+        return String(a.name || '').localeCompare(String(b.name || ''), 'ar');
+    });
     renderCatalog();
 }
 window.syncAndMergeCatalogData = syncAndMergeCatalogData;
@@ -5614,33 +5627,7 @@ function setupCatalogEventListeners() {
         });
     }
 
-    // 4. زر تحديث البيانات
-    const refBtn = document.getElementById('refreshCatalogBtn');
-    if (refBtn && !refBtn._boundCatalog) {
-        refBtn._boundCatalog = true;
-        refBtn.addEventListener('click', async () => {
-            setBtnLoading(refBtn, true);
-            if (typeof loadDataFromServer === 'function') {
-                await loadDataFromServer();
-            }
-            if (typeof syncAndMergeCatalogData === 'function') {
-                syncAndMergeCatalogData();
-            }
-            setBtnLoading(refBtn, false, '<i class="fa-solid fa-rotate"></i> تحديث');
-            showToast("<i class='fa-solid fa-check'></i> تم تحديث بيانات الكتالوج", "success");
-        });
-    }
-
-    // 5. زر إضافة صنف جديد
-    const addModalBtn = document.getElementById('openAddCatalogModalBtn');
-    if (addModalBtn && !addModalBtn._boundCatalog) {
-        addModalBtn._boundCatalog = true;
-        addModalBtn.addEventListener('click', () => {
-            openCatalogModalForAdd();
-        });
-    }
-
-    // 6. أحداث مودال التعديل / الإضافة
+    // أحداث مودال التعديل
     const closeBtn = document.getElementById('closeEditCatModal');
     const cancelBtn = document.getElementById('cancelEditCatBtn');
     const modal = document.getElementById('editCatalogModal');
@@ -5670,26 +5657,6 @@ function setupCatalogEventListeners() {
         saveBtn._boundCatalog = true;
         saveBtn.addEventListener('click', handleSaveCatalogModal);
     }
-}
-
-function openCatalogModalForAdd() {
-    const modal = document.getElementById('editCatalogModal');
-    if (!modal) return;
-    document.getElementById('editCatalogModalTitle').innerHTML = '<i class="fa-solid fa-plus" style="color: #9b59b6;"></i> إضافة صنف جديد للكتالوج';
-    document.getElementById('editCatOldName').value = '';
-    document.getElementById('editCatName').value = '';
-    document.getElementById('editCatName').readOnly = false;
-    document.getElementById('editCatName').style.background = '#ffffff';
-    document.getElementById('editCatName').style.cursor = 'text';
-    document.getElementById('editCatBarcode').value = '';
-    document.getElementById('editCatPrice').value = '';
-    const offerCheckbox = document.getElementById('editCatIsOffer');
-    if (offerCheckbox) offerCheckbox.checked = false;
-    const offerPriceGroup = document.getElementById('editCatOfferPriceGroup');
-    if (offerPriceGroup) offerPriceGroup.style.display = 'none';
-    document.getElementById('editCatOfferPrice').value = '';
-
-    modal.style.display = 'flex';
 }
 
 function openCatalogModalForEdit(p) {
@@ -5760,26 +5727,17 @@ function renderCatalog() {
     // 1. حساب الإحصائيات (KPIs)
     const totalCount = allItems.length;
     let offersCount = 0;
-    let inStockCount = 0;
-    let outOfStockCount = 0;
 
     allItems.forEach(p => {
         const isOffer = p.isOffer === true || p.isOffer === 'true' || p.isOffer === 1;
-        const stock = parseFloat(p.stock) || 0;
         if (isOffer) offersCount++;
-        if (stock > 0) inStockCount++;
-        else outOfStockCount++;
     });
 
     if (document.getElementById('catalogKpiTotal')) document.getElementById('catalogKpiTotal').innerText = totalCount;
     if (document.getElementById('catalogKpiOffers')) document.getElementById('catalogKpiOffers').innerText = offersCount;
-    if (document.getElementById('catalogKpiInStock')) document.getElementById('catalogKpiInStock').innerText = inStockCount;
-    if (document.getElementById('catalogKpiOutOfStock')) document.getElementById('catalogKpiOutOfStock').innerText = outOfStockCount;
 
     if (document.getElementById('catPillAll')) document.getElementById('catPillAll').innerText = totalCount;
     if (document.getElementById('catPillOffers')) document.getElementById('catPillOffers').innerText = offersCount;
-    if (document.getElementById('catPillInStock')) document.getElementById('catPillInStock').innerText = inStockCount;
-    if (document.getElementById('catPillOut')) document.getElementById('catPillOut').innerText = outOfStockCount;
 
     // 2. الفلترة
     let filtered = allItems.filter(p => {
@@ -5787,10 +5745,6 @@ function renderCatalog() {
         if (catalogActiveFilter === 'offers') {
             const isOffer = p.isOffer === true || p.isOffer === 'true' || p.isOffer === 1;
             if (!isOffer) return false;
-        } else if (catalogActiveFilter === 'instock') {
-            if ((parseFloat(p.stock) || 0) <= 0) return false;
-        } else if (catalogActiveFilter === 'out') {
-            if ((parseFloat(p.stock) || 0) > 0) return false;
         }
 
         // فلتر البحث
@@ -5850,63 +5804,90 @@ function renderCatalog() {
         let barcodeHtml = '';
         if (p.barcode && String(p.barcode).trim()) {
             barcodeHtml = `
-                <span class="catalog-barcode-pill" data-barcode="${p.barcode}" title="اضغط لنسخ الباركود" style="display: inline-flex; align-items: center; gap: 5px; background: #f1f5f9; color: #475569; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; border: 1px solid #e2e8f0;">
+                <span class="catalog-barcode-pill" data-barcode="${p.barcode}" title="اضغط لنسخ الباركود" style="display: inline-flex; align-items: center; gap: 5px; background: #f1f5f9; color: #475569; padding: 4px 9px; border-radius: 8px; font-size: 0.78rem; font-weight: 700; cursor: pointer; border: 1px solid #e2e8f0;">
                     <i class="fa-solid fa-barcode" style="color: #0284c7;"></i> ${p.barcode} <i class="fa-solid fa-copy" style="font-size: 0.7rem; color: #94a3b8;"></i>
                 </span>
             `;
-        }
-
-        let stockBadgeHtml = '';
-        if (isInStock) {
-            stockBadgeHtml = `
-                <span style="display: inline-flex; align-items: center; gap: 5px; background: #dcfce7; color: #15803d; border: 1px solid #86efac; padding: 3px 9px; border-radius: 20px; font-size: 0.78rem; font-weight: 800;">
-                    <i class="fa-solid fa-circle-check"></i> متوفر (${stock} ق)
-                </span>
-            `;
         } else {
-            stockBadgeHtml = `
-                <span style="display: inline-flex; align-items: center; gap: 5px; background: #f1f5f9; color: #64748b; padding: 3px 9px; border-radius: 20px; font-size: 0.78rem; font-weight: 700;">
-                    <i class="fa-solid fa-box-open"></i> غير متوفر
+            barcodeHtml = `
+                <span style="display: inline-flex; align-items: center; gap: 4px; color: #94a3b8; font-size: 0.76rem; font-weight: 600;">
+                    <i class="fa-solid fa-barcode"></i> بدون باركود
                 </span>
             `;
         }
 
+        let offerTagHtml = '';
+        if (isOfferActive) {
+            offerTagHtml = `
+                <span style="background: linear-gradient(135deg, #e91e63, #c2185b); color: white; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(233, 30, 99, 0.25);">
+                    <i class="fa-solid fa-fire"></i> عرض خاص
+                </span>
+            `;
+        }
+
+        // Price Block
         let priceHtml = '';
         if (isOfferActive && offerPrice > 0) {
             priceHtml = `
-                <div style="display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;">
-                    <span style="font-size: 1.35rem; font-weight: 900; color: #e91e63;">${offerPrice} ج.م</span>
-                    <del style="font-size: 0.95rem; color: #94a3b8; font-weight: 600;">${price} ج.م</del>
+                <div style="display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap;">
+                    <span style="font-size: 1.25rem; font-weight: 900; color: #e11d48;">${offerPrice} ج.م</span>
+                    <del style="font-size: 0.85rem; color: #94a3b8; font-weight: 600;">${price} ج.م</del>
                     ${discountPercent > 0 ? `
-                        <span style="background: #fee2e2; color: #ef4444; font-size: 0.78rem; font-weight: 800; padding: 2px 7px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
-                            <i class="fa-solid fa-tag"></i> خصم ${discountPercent}%
+                        <span style="background: #ffe4e6; color: #e11d48; font-size: 0.72rem; font-weight: 800; padding: 1px 6px; border-radius: 4px;">
+                            -${discountPercent}%
                         </span>
                     ` : ''}
                 </div>
             `;
         } else {
             priceHtml = `
-                <div style="font-size: 1.35rem; font-weight: 900; color: #0f172a;">${price} ج.م</div>
+                <div style="font-size: 1.25rem; font-weight: 900; color: #0f172a;">${price > 0 ? price + ' ج.م' : 'غير محدد'}</div>
+            `;
+        }
+
+        // Stock / Quantity Block
+        let stockHtml = '';
+        if (isInStock) {
+            stockHtml = `
+                <div style="font-size: 1.1rem; font-weight: 800; color: #15803d; display: flex; align-items: center; gap: 5px;">
+                    <i class="fa-solid fa-circle-check" style="font-size: 0.85rem;"></i> ${stock} قطعة
+                </div>
+            `;
+        } else {
+            stockHtml = `
+                <div style="font-size: 0.95rem; font-weight: 700; color: #dc2626; display: flex; align-items: center; gap: 5px;">
+                    <i class="fa-solid fa-circle-xmark" style="font-size: 0.85rem;"></i> 0 قطعة
+                </div>
             `;
         }
 
         card.innerHTML = `
             <div>
-                <!-- Top Header: Stock & Barcode -->
-                <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px;">
-                    <div>${stockBadgeHtml}</div>
+                <!-- Top Header: Barcode & Offer Badge -->
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px;">
                     <div>${barcodeHtml}</div>
+                    <div>${offerTagHtml}</div>
                 </div>
 
                 <!-- Product Name -->
-                <div style="font-size: 1.05rem; font-weight: 800; color: #1e293b; margin-bottom: 10px; line-height: 1.35; min-height: 42px;">
+                <div style="font-size: 1rem; font-weight: 800; color: #1e293b; margin-bottom: 12px; line-height: 1.4; min-height: 38px;" title="${p.name}">
                     ${p.name}
                 </div>
 
-                <!-- Price Box -->
-                <div style="background: ${isOfferActive ? 'rgba(253, 242, 248, 0.7)' : '#f8fafc'}; border: 1px solid ${isOfferActive ? '#fbcfe8' : '#f1f5f9'}; border-radius: 12px; padding: 10px 12px; margin-bottom: 12px;">
-                    <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 4px; font-weight: 600;">سعر البيع الحالي:</div>
-                    ${priceHtml}
+                <!-- Price and Quantity Info Grid (السعر والكمية) -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: ${isOfferActive ? '#fff1f2' : '#f8fafc'}; border: 1px solid ${isOfferActive ? '#fecdd3' : '#e2e8f0'}; border-radius: 12px; padding: 10px 12px; margin-bottom: 12px;">
+                    <div>
+                        <div style="font-size: 0.78rem; color: #64748b; font-weight: 700; margin-bottom: 3px;">
+                            <i class="fa-solid fa-money-bill-wave" style="color: #10b981;"></i> السعر:
+                        </div>
+                        ${priceHtml}
+                    </div>
+                    <div>
+                        <div style="font-size: 0.78rem; color: #64748b; font-weight: 700; margin-bottom: 3px;">
+                            <i class="fa-solid fa-boxes-stacked" style="color: #0284c7;"></i> الكمية:
+                        </div>
+                        ${stockHtml}
+                    </div>
                 </div>
 
                 <!-- Quick Offer Switch -->
