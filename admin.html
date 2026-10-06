@@ -108,10 +108,12 @@
                 <p style="color: #64748b; font-size: 1.1rem; margin-bottom: 30px;">من هنا يمكنك التحكم الكامل في النظام، إدارة المستخدمين، متابعة الإحصائيات والأرباح.</p>
                 
                 <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 15px;">
+                    <button class="interactive-btn" onclick="document.querySelector('.nav-item[data-target=\'branch-settings-tab\']').click()" style="background: linear-gradient(135deg, #0284c7, #0369a1); color: white; border: none; padding: 15px 25px; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 10px rgba(2,132,199,0.3);">
+                        <i class="fa-solid fa-store"></i> إعدادات الفرع والـ GPS
+                    </button>
                     <button class="interactive-btn" onclick="document.querySelector('.nav-item[data-target=\'users-tab\']').click()" style="background: #e91e63; color: white; border: none; padding: 15px 25px; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 10px rgba(233,30,99,0.3);">
                         <i class="fa-solid fa-user-shield"></i> إدارة المستخدمين والصلاحيات
                     </button>
-
                 </div>
             </div>
         </section>
@@ -648,6 +650,122 @@
             </div>
         </section>
 
+        <!-- ⭐ قسم إعدادات الفرع والـ GPS والواتساب -->
+        <section id="branch-settings-tab" class="tab-pane">
+            <div class="section-card" style="background: #ffffff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); border: 1px solid #e2e8f0; padding: 25px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #f1f5f9; flex-wrap: wrap; gap: 12px;">
+                    <div>
+                        <h2 style="color: #0f172a; margin: 0 0 6px 0; font-size: 1.5rem; display: flex; align-items: center; gap: 10px;">
+                            <i class="fa-solid fa-store" style="color: #0284c7;"></i> إعدادات الفرع والـ GPS
+                        </h2>
+                        <p style="margin: 0; color: #64748b; font-size: 0.92rem;">تهيئة بيانات الفرع، الموقع الجغرافي لحضور وانصراف الموظفين، ورابط جروب الواتساب للأوردرات الخارجية.</p>
+                    </div>
+                    <button type="button" class="interactive-btn" onclick="window.loadBranchSettingsAdmin()" style="background: #f0f9ff; color: #0284c7; border: 1px solid #bae6fd; padding: 9px 16px; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                        <i class="fa-solid fa-rotate"></i> إعادة تحميل البيانات
+                    </button>
+                </div>
+
+                <form id="adminBranchSettingsForm" onsubmit="window.handleSaveBranchSettingsAdmin(event)">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; margin-bottom: 25px;">
+                        
+                        <!-- العمود الأيمن: بيانات الفرع والواتساب والنطاق -->
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 20px;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">
+                                <i class="fa-solid fa-id-card-clip" style="color: #0284c7; font-size: 1.1rem;"></i>
+                                <span style="font-weight: 800; font-size: 1rem; color: #1e293b;">بيانات وهوية الفرع</span>
+                            </div>
+
+                            <div style="margin-bottom: 18px;">
+                                <label style="display: block; font-weight: 700; font-size: 0.9rem; margin-bottom: 8px; color: #334155;">
+                                    <i class="fa-solid fa-store" style="color: #64748b; margin-left: 4px;"></i> اسم الفرع
+                                </label>
+                                <input type="text" id="adminBranchName" class="form-input" placeholder="مثال: الفرع الرئيسي / فرع سموحة" required style="width: 100%; padding: 12px 14px; border-radius: 10px; border: 1.5px solid #cbd5e1; font-family: inherit; font-size: 0.95rem; box-sizing: border-box; background: #ffffff;">
+                            </div>
+
+                            <div style="margin-bottom: 18px;">
+                                <label style="display: block; font-weight: 700; font-size: 0.9rem; margin-bottom: 8px; color: #334155;">
+                                    <i class="fa-brands fa-whatsapp" style="color: #16a34a; font-size: 1.1rem; margin-left: 4px;"></i> رابط جروب واتساب الأوردرات الخارجية
+                                </label>
+                                <div style="display: flex; gap: 8px;">
+                                    <input type="url" id="adminBranchWhatsapp" class="form-input" placeholder="https://chat.whatsapp.com/..." style="flex: 1; padding: 12px 14px; border-radius: 10px; border: 1.5px solid #cbd5e1; font-family: inherit; font-size: 0.92rem; box-sizing: border-box; background: #ffffff; direction: ltr; text-align: left;">
+                                    <button type="button" class="interactive-btn" onclick="const u=document.getElementById('adminBranchWhatsapp').value; if(u) window.open(u, '_blank'); else showToast('اكتب الرابط أولاً للتجربة', 'warning');" style="padding: 10px 14px; background: #dcfce7; color: #15803d; border: 1px solid #86efac; border-radius: 10px; cursor: pointer; font-weight: 700;" title="تجربة فتح الرابط">
+                                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                    </button>
+                                </div>
+                                <span style="display: block; font-size: 0.8rem; color: #64748b; margin-top: 5px;">يستخدم هذا الرابط لإرسال ومشاركة تفاصيل الفواتير مباشرة لجروب الواتساب الخاص بالفرع.</span>
+                            </div>
+
+                            <div style="margin-bottom: 14px;">
+                                <label style="display: block; font-weight: 700; font-size: 0.9rem; margin-bottom: 8px; color: #334155;">
+                                    <i class="fa-solid fa-bullseye" style="color: #64748b; margin-left: 4px;"></i> نطاق السماح بالحضور والانصراف (بالمتر)
+                                </label>
+                                <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
+                                    <input type="number" id="adminBranchRadius" min="10" max="5000" step="10" value="100" required style="flex: 1; padding: 10px 12px; border-radius: 10px; border: 1.5px solid #cbd5e1; font-family: inherit; font-size: 1.1rem; font-weight: 800; text-align: center; box-sizing: border-box; background: #ffffff; color: #0f172a;">
+                                    <span style="color: #64748b; font-weight: 700; font-size: 0.9rem; min-width: 32px;">متر</span>
+                                </div>
+                                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;">
+                                    <button type="button" onclick="document.getElementById('adminBranchRadius').value=50" class="interactive-btn" style="padding: 7px 4px; font-size: 0.82rem; font-weight: 700; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; color: #334155;">50م</button>
+                                    <button type="button" onclick="document.getElementById('adminBranchRadius').value=100" class="interactive-btn" style="padding: 7px 4px; font-size: 0.82rem; font-weight: 700; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; color: #334155;">100م</button>
+                                    <button type="button" onclick="document.getElementById('adminBranchRadius').value=200" class="interactive-btn" style="padding: 7px 4px; font-size: 0.82rem; font-weight: 700; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; color: #334155;">200م</button>
+                                    <button type="button" onclick="document.getElementById('adminBranchRadius').value=500" class="interactive-btn" style="padding: 7px 4px; font-size: 0.82rem; font-weight: 700; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; color: #334155;">500م</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- العمود الأيسر: إحداثيات المقر (GPS) والتقاط الموقع -->
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
+                            <div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <i class="fa-solid fa-satellite-dish" style="color: #0284c7; font-size: 1.1rem;"></i>
+                                        <span style="font-weight: 800; font-size: 1rem; color: #1e293b;">إحداثيات المقر (GPS)</span>
+                                    </div>
+                                    <span id="adminBranchStatusBadge" style="font-size: 0.75rem; padding: 4px 10px; border-radius: 6px; background: #fef3c7; color: #92400e; font-weight: 700;">
+                                        <i class="fa-solid fa-circle-exclamation"></i> غير محدد
+                                    </span>
+                                </div>
+
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                                    <div>
+                                        <label style="display: block; font-size: 0.82rem; font-weight: 700; margin-bottom: 4px; color: #475569;">خط العرض (Latitude)</label>
+                                        <input type="number" step="any" id="adminBranchLat" placeholder="31.209774" required style="width: 100%; padding: 10px; border-radius: 10px; border: 1.5px solid #cbd5e1; font-family: monospace; font-size: 0.92rem; text-align: center; background: #ffffff; box-sizing: border-box;" oninput="window.updateAdminBranchMapPreview()">
+                                    </div>
+                                    <div>
+                                        <label style="display: block; font-size: 0.82rem; font-weight: 700; margin-bottom: 4px; color: #475569;">خط الطول (Longitude)</label>
+                                        <input type="number" step="any" id="adminBranchLng" placeholder="29.935520" required style="width: 100%; padding: 10px; border-radius: 10px; border: 1.5px solid #cbd5e1; font-family: monospace; font-size: 0.92rem; text-align: center; background: #ffffff; box-sizing: border-box;" oninput="window.updateAdminBranchMapPreview()">
+                                    </div>
+                                </div>
+
+                                <button type="button" class="interactive-btn pulse-btn" onclick="window.captureAdminBranchLocation()" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #0284c7, #0369a1); color: white; border: none; border-radius: 10px; font-weight: 800; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);">
+                                    <i class="fa-solid fa-location-crosshairs"></i> التقاط موقع الفرع الحالي (GPS)
+                                </button>
+                                <div id="adminBranchGpsNotice" style="font-size: 0.82rem; margin-top: 10px; min-height: 22px; text-align: center;"></div>
+
+                                <div id="adminBranchMapLinkContainer" style="margin-top: 10px; text-align: center; display: none;">
+                                    <a id="adminBranchMapLink" href="#" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; color: #0284c7; text-decoration: none; font-size: 0.84rem; font-weight: 700; padding: 7px 14px; background: #e0f2fe; border-radius: 8px;">
+                                        <i class="fa-solid fa-map-location-dot"></i> معاينة الموقع على خرائط جوجل
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; margin-top: 15px;">
+                                <p style="margin: 0; font-size: 0.78rem; color: #64748b; line-height: 1.5; display: flex; align-items: flex-start; gap: 6px;">
+                                    <i class="fa-solid fa-shield-halved" style="color: #10b981; font-size: 0.95rem; margin-top: 2px;"></i>
+                                    <span>نظام الحماية الجغرافية: يتم اعتماد هذا الموقع لضبط حضور وانصراف موظفي الفرع تلقائياً.</span>
+                                </p>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end;">
+                        <button type="submit" id="btnSaveAdminBranchSettings" class="interactive-btn" style="min-width: 250px; padding: 14px 28px; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 1.05rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);">
+                            <i class="fa-solid fa-floppy-disk"></i> حفظ وتطبيق إعدادات الفرع
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
 
         <!-- ⭐ قسم قاعدة العملاء (Dashboard) -->
         <section id="customers-tab" class="tab-pane">
@@ -1424,6 +1542,9 @@
                 <div class="menu-group-items" style="display: block;">
                     <button class="nav-item active" data-target="dashboard-tab" style="color: #1a237e;">
                         <span class="icon"><i class="fa-solid fa-house"></i></span><span class="label">الرئيسية</span>
+                    </button>
+                    <button class="nav-item" data-target="branch-settings-tab" style="color: #0284c7;">
+                        <span class="icon"><i class="fa-solid fa-store"></i></span><span class="label">إعدادات الفرع</span>
                     </button>
                     <button class="nav-item" data-target="users-tab" style="color: #e91e63;">
                         <span class="icon"><i class="fa-solid fa-user-shield"></i></span><span class="label">إدارة المستخدمين</span>

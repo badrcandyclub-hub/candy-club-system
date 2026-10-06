@@ -1769,7 +1769,7 @@ window.MODULE_GROUPS = {
     'products': { name: 'المنتجات', icon: 'fa-solid fa-tags fa-beat', tabs: ['price-tags-tab', 'shortages-tab', 'expiry-tab', 'inventory-transfers-tab'], req: 'catalog,drafts,users,expiries' },
     'hr': { name: 'شئون الموظفين', icon: 'fa-solid fa-id-card-clip fa-flip', tabs: ['hr-tab', 'hr-admin-tab'], req: 'attendance,users' },
     'gifts': { name: 'قسم الهدايا والبوكيهات', icon: 'fa-solid fa-wand-magic-sparkles', tabs: ['gifts-tab', 'gifts-reports-tab'], req: 'gifts,gifts_reports' },
-    'admin': { name: 'الإدارة والتقارير', icon: 'fa-solid fa-chart-pie fa-spin', tabs: ['reports-tab', 'moderators-tab', 'users-tab'], req: 'orders,users,customers,shipping,financials,shortages' }
+    'admin': { name: 'الإدارة والتقارير', icon: 'fa-solid fa-chart-pie fa-spin', tabs: ['reports-tab', 'moderators-tab', 'users-tab', 'branch-settings-tab'], req: 'orders,users,customers,shipping,financials,shortages' }
 };
 
 window.currentActiveModuleGroup = null;
@@ -1831,6 +1831,8 @@ document.querySelectorAll('.nav-item').forEach(btn => {
         // ⭐ V16: تحميل المستخدمين إذا تم فتح التاب
         if (targetId === 'users-tab') {
             loadUsersList();
+        } else if (targetId === 'branch-settings-tab') {
+            if (typeof window.loadBranchSettingsAdmin === 'function') window.loadBranchSettingsAdmin();
         }
         if (targetId === 'waitlist-tab') {
             if (typeof initWaitlistTab === 'function') initWaitlistTab();
@@ -4327,6 +4329,69 @@ if (suspendBtn) {
                 resetForm(); updateSuspendedCount();
                 setBtnLoading(suspendBtn, false, "⏸️ تعليق الطلب");
             }).catch(() => { setBtnLoading(suspendBtn, false, "⏸️ تعليق الطلب"); });
+    });
+}
+
+// زر مشاركة الأوردر لجروب الواتساب الخاص بالفرع
+const shareToBranchGroupBtn = document.getElementById('shareToBranchGroupBtn');
+if (shareToBranchGroupBtn) {
+    shareToBranchGroupBtn.addEventListener('click', async () => {
+        let groupUrl = localStorage.getItem('cc_branch_whatsapp_group') || (hrBranchData && hrBranchData.whatsapp_group_url ? hrBranchData.whatsapp_group_url : '');
+        if (!groupUrl || !String(groupUrl).trim()) {
+            showToast("يرجى ضبط رابط جروب واتساب الفرع من لوحة تحكم المدير أولاً ⚙️", "warning");
+            return;
+        }
+
+        let cName = (document.getElementById('customerName')?.value || '').trim();
+        let cPhone = (document.getElementById('customerPhone')?.value || '').trim();
+        let cPhone2 = (document.getElementById('phone2')?.value || '').trim();
+        let dType = document.getElementById('deliveryType')?.value || 'normal';
+        let gov = (document.getElementById('governorate')?.value || '').trim();
+        let addr = (document.getElementById('address')?.value || '').trim();
+        let pMethod = (document.getElementById('paymentMethod')?.value || '').trim();
+        let remAmt = document.getElementById('remainingAmountDisplay')?.innerText || '0';
+        let shipCost = document.getElementById('shippingCostDisplay')?.innerText || '0';
+
+        let prodsList = [];
+        document.querySelectorAll('#productsContainer .product-row.confirmed').forEach(r => {
+            let n = r.querySelector('.product-name-input')?.value || '';
+            let p = r.querySelector('.product-offer-input')?.value || r.querySelector('.product-price-input')?.value || '0';
+            let q = r.querySelector('.product-qty-input')?.value || '1';
+            if (n) prodsList.push(`- ${n} (الكمية: ${q}) [${p} ج.م]`);
+        });
+
+        if (!cName && prodsList.length === 0) {
+            showToast("يرجى كتابة بيانات الأوردر أو إضافة منتجات أولاً", "warning");
+            return;
+        }
+
+        let typeText = "توصيل منزلي";
+        if (dType === "branch") typeText = "استلام من الفرع";
+        else if (dType === "gov_shipping") typeText = "شحن محافظات";
+        else if (dType === "special_date") typeText = "حجز لتاريخ معين";
+
+        let branchNameStr = hrBranchData?.branch_name || 'الفرع';
+
+        let text = `🧾 *طلب جديد - ${branchNameStr}*\n`;
+        text += `*نوع الطلب:* ${typeText}\n`;
+        text += `👤 *العميل:* ${cName || 'غير محدد'}\n`;
+        if (cPhone) text += `📱 *الموبايل:* ${cPhone}\n`;
+        if (cPhone2) text += `📱 *رقم بديل:* ${cPhone2}\n`;
+        if (dType !== "branch" && (gov || addr)) text += `📍 *العنوان:* ${gov ? gov + ' - ' : ''}${addr}\n`;
+        if (pMethod) text += `💳 *طريقة الدفع:* ${pMethod}\n`;
+        text += `\n📦 *المنتجات:*\n${prodsList.length > 0 ? prodsList.join('\n') : 'لا توجد منتجات'}\n\n`;
+        if (parseFloat(shipCost) > 0) text += `🚚 *الشحن:* ${shipCost} ج.م\n`;
+        text += `💰 *المطلوب دفعه:* ${remAmt} ج.م\n`;
+
+        try {
+            await navigator.clipboard.writeText(text);
+            showToast("تم نسخ بيانات الأوردر للحافظة! جاري فتح جروب الواتساب... 📋", "success");
+        } catch(e) {
+            showToast("جاري فتح جروب الواتساب... 📋", "info");
+        }
+        setTimeout(() => {
+            window.open(groupUrl.trim(), '_blank');
+        }, 300);
     });
 }
 
@@ -14678,11 +14743,11 @@ function applyPermissions() {
         if (permKey === "inventory-transfers") permKey = "inventory";
         if (permKey === "price-tags") permKey = "pricetags";
         if (permKey === "whatsapp-campaign") permKey = "whatsapp";
-        if (permKey === "gifts-reports") permKey = "gifts_reports";
-        if (permKey === "users") { btn.style.display = window.location.pathname.toLowerCase().includes("admin.html") ? "flex" : "none"; if (btn.style.display==="flex") btn.onclick=null; return; }
-        
-        
-        
+        if (permKey === "users" || permKey === "branch-settings") { 
+            btn.style.display = window.location.pathname.toLowerCase().includes("admin.html") ? "flex" : "none"; 
+            if (btn.style.display==="flex") { btn.classList.remove('locked-nav-item'); btn.onclick=null; } 
+            return; 
+        }
         let allowed = hasPerm(permKey) || isFullAccess;
         if (allowed) {
             btn.style.display = "flex";
@@ -15322,9 +15387,11 @@ window.loadBranchLocation = async function() {
                 HR_BRANCH_LAT = parseFloat(data[0].latitude);
                 HR_BRANCH_LNG = parseFloat(data[0].longitude);
                 HR_RADIUS_METERS = parseInt(data[0].radius_meters) || 100;
-                hrBranchData = data[0];
-                localStorage.setItem('cc_branch_data', JSON.stringify(data[0]));
-                console.log("Branch location loaded from Supabase:", { lat: HR_BRANCH_LAT, lng: HR_BRANCH_LNG, radius: HR_RADIUS_METERS });
+                let groupUrl = data[0].whatsapp_group_url || localStorage.getItem('cc_branch_whatsapp_group') || '';
+                hrBranchData = { ...data[0], whatsapp_group_url: groupUrl };
+                localStorage.setItem('cc_branch_data', JSON.stringify(hrBranchData));
+                if (groupUrl) localStorage.setItem('cc_branch_whatsapp_group', groupUrl);
+                console.log("Branch location loaded from Supabase:", { lat: HR_BRANCH_LAT, lng: HR_BRANCH_LNG, radius: HR_RADIUS_METERS, whatsapp: groupUrl });
                 return hrBranchData;
             } else {
                 HR_BRANCH_LAT = null;
@@ -15347,7 +15414,8 @@ window.loadBranchLocation = async function() {
                 HR_BRANCH_LAT = parseFloat(parsed.latitude);
                 HR_BRANCH_LNG = parseFloat(parsed.longitude);
                 HR_RADIUS_METERS = parseInt(parsed.radius_meters) || 100;
-                hrBranchData = parsed;
+                let groupUrl = parsed.whatsapp_group_url || localStorage.getItem('cc_branch_whatsapp_group') || '';
+                hrBranchData = { ...parsed, whatsapp_group_url: groupUrl };
                 return hrBranchData;
             }
         }
@@ -15582,6 +15650,219 @@ window.handleSaveBranchLocation = async function(e) {
         if (saveBtn) {
             saveBtn.disabled = false;
             saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> حفظ وتطبيق المقر الجغرافي';
+        }
+    }
+};
+
+// ============================================================
+// ADMIN MODULE: شاشة إعدادات الفرع (المقر، النطاق، والواتساب)
+// ============================================================
+window.updateAdminBranchMapPreview = function() {
+    const latInput = document.getElementById('adminBranchLat');
+    const lngInput = document.getElementById('adminBranchLng');
+    const mapLinkContainer = document.getElementById('adminBranchMapLinkContainer');
+    const mapLink = document.getElementById('adminBranchMapLink');
+    const badge = document.getElementById('adminBranchStatusBadge');
+    
+    const lat = latInput ? parseFloat(latInput.value) : null;
+    const lng = lngInput ? parseFloat(lngInput.value) : null;
+    
+    if (lat && !isNaN(lat) && lng && !isNaN(lng)) {
+        if (mapLinkContainer && mapLink) {
+            mapLinkContainer.style.display = 'block';
+            mapLink.href = 'https://www.google.com/maps?q=' + lat + ',' + lng;
+        }
+        if (badge) {
+            badge.style.background = '#e0f2fe';
+            badge.style.color = '#0369a1';
+            badge.innerHTML = '<i class="fa-solid fa-location-dot"></i> إحداثيات جاهزة للحفظ';
+        }
+    } else {
+        if (mapLinkContainer) mapLinkContainer.style.display = 'none';
+        if (badge) {
+            badge.style.background = '#fef3c7';
+            badge.style.color = '#92400e';
+            badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> غير محدد بعد';
+        }
+    }
+};
+
+window.captureAdminBranchLocation = function() {
+    const btn = event ? event.currentTarget : null;
+    const notice = document.getElementById('adminBranchGpsNotice');
+    const latInput = document.getElementById('adminBranchLat');
+    const lngInput = document.getElementById('adminBranchLng');
+    
+    if (!navigator.geolocation) {
+        if (notice) notice.innerHTML = '<span style="color:#dc2626;"><i class="fa-solid fa-circle-xmark"></i> متصفحك لا يدعم تحديد الموقع الجغرافي.</span>';
+        return;
+    }
+    
+    if (notice) notice.innerHTML = '<span style="color:#0284c7;"><i class="fa-solid fa-spinner fa-spin"></i> جاري قراءة الأقمار الصناعية والـ GPS بدقة عالية...</span>';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الالتقاط...';
+    }
+    
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const lat = Number(position.coords.latitude.toFixed(6));
+            const lng = Number(position.coords.longitude.toFixed(6));
+            const acc = Math.round(position.coords.accuracy);
+            
+            if (latInput) latInput.value = lat;
+            if (lngInput) lngInput.value = lng;
+            
+            window.updateAdminBranchMapPreview();
+            
+            if (notice) {
+                notice.innerHTML = '<span style="color:#16a34a; font-weight:700;"><i class="fa-solid fa-circle-check"></i> تم التقاط الموقع بنجاح! نسبة الدقة: ±' + acc + ' متر</span>';
+            }
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> تحديث موقع الفرع الحالي (GPS)';
+            }
+            if (typeof showToast === 'function') showToast("تم التقاط الموقع بنجاح بنسبة دقة ±" + acc + "م", "success");
+        },
+        (err) => {
+            console.error("Admin GPS Capture Error:", err);
+            if (notice) {
+                let msg = 'فشل تحديد الموقع. يرجى تفعيل الـ GPS وإعطاء الإذن للمتصفح.';
+                if (err.code === 1) msg = 'تم رفض الإذن. يرجى تفعيل إذن الموقع للمتصفح من الإعدادات.';
+                notice.innerHTML = '<span style="color:#dc2626; font-weight:600;"><i class="fa-solid fa-circle-xmark"></i> ' + msg + '</span>';
+            }
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> التقاط موقع الفرع الحالي (GPS)';
+            }
+        },
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+    );
+};
+
+window.loadBranchSettingsAdmin = async function() {
+    const nameInp = document.getElementById('adminBranchName');
+    const waInp = document.getElementById('adminBranchWhatsapp');
+    const radInp = document.getElementById('adminBranchRadius');
+    const latInp = document.getElementById('adminBranchLat');
+    const lngInp = document.getElementById('adminBranchLng');
+    const notice = document.getElementById('adminBranchGpsNotice');
+    
+    if (notice) notice.innerHTML = '';
+    
+    const bData = await window.loadBranchLocation();
+    const currentWa = localStorage.getItem('cc_branch_whatsapp_group') || (bData && bData.whatsapp_group_url ? bData.whatsapp_group_url : '');
+    
+    if (nameInp) nameInp.value = (bData && bData.branch_name) ? bData.branch_name : 'الفرع الرئيسي';
+    if (waInp) waInp.value = currentWa;
+    if (radInp) radInp.value = (bData && bData.radius_meters) ? bData.radius_meters : 100;
+    if (latInp) latInp.value = (bData && bData.latitude) ? bData.latitude : '';
+    if (lngInp) lngInp.value = (bData && bData.longitude) ? bData.longitude : '';
+    
+    window.updateAdminBranchMapPreview();
+};
+
+window.handleSaveBranchSettingsAdmin = async function(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    
+    const saveBtn = document.getElementById('btnSaveAdminBranchSettings');
+    const nameInput = document.getElementById('adminBranchName');
+    const waInput = document.getElementById('adminBranchWhatsapp');
+    const latInput = document.getElementById('adminBranchLat');
+    const lngInput = document.getElementById('adminBranchLng');
+    const radiusInput = document.getElementById('adminBranchRadius');
+    
+    const branchName = nameInput ? nameInput.value.trim() : 'الفرع الرئيسي';
+    const waUrl = waInput ? waInput.value.trim() : '';
+    const lat = latInput ? parseFloat(latInput.value) : null;
+    const lng = lngInput ? parseFloat(lngInput.value) : null;
+    const radius = radiusInput ? parseInt(radiusInput.value) : 100;
+    
+    if (!lat || isNaN(lat) || !lng || isNaN(lng)) {
+        showToast("يرجى التقاط الموقع الجغرافي أو إدخال الإحداثيات يدوياً", "warning");
+        return;
+    }
+    
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري حفظ وتطبيق الإعدادات...';
+    }
+    
+    // حفظ الرابط محلياً أولاً لضمان الفاعلية الفورية
+    if (waUrl) {
+        localStorage.setItem('cc_branch_whatsapp_group', waUrl);
+    } else {
+        localStorage.removeItem('cc_branch_whatsapp_group');
+    }
+    
+    try {
+        const nowIso = new Date().toISOString();
+        let payload = {
+            branch_code: hrBranchData ? (hrBranchData.branch_code || 'main') : 'main',
+            branch_name: branchName,
+            latitude: lat,
+            longitude: lng,
+            radius_meters: radius,
+            whatsapp_group_url: waUrl,
+            updated_at: nowIso
+        };
+        
+        // 1. فحص وجود الفرع في جدول branches
+        const { data: existingBranches, error: chkErr } = await supabase.from('branches').select('id').limit(1);
+        
+        let saveErr = null;
+        if (!chkErr && existingBranches && existingBranches.length > 0) {
+            const res = await supabase.from('branches').update(payload).eq('id', existingBranches[0].id);
+            if (res.error && res.error.message && res.error.message.includes('whatsapp_group_url')) {
+                // في حال عدم وجود عمود whatsapp_group_url في سوبابيز يتم الحفظ بدونه مع الاحتفاظ به محلياً
+                delete payload.whatsapp_group_url;
+                const retryRes = await supabase.from('branches').update(payload).eq('id', existingBranches[0].id);
+                saveErr = retryRes.error;
+            } else {
+                saveErr = res.error;
+            }
+        } else {
+            const res = await supabase.from('branches').insert([payload]);
+            if (res.error && res.error.message && res.error.message.includes('whatsapp_group_url')) {
+                delete payload.whatsapp_group_url;
+                const retryRes = await supabase.from('branches').insert([payload]);
+                saveErr = retryRes.error;
+            } else {
+                saveErr = res.error;
+            }
+        }
+        
+        if (saveErr) throw saveErr;
+        
+        HR_BRANCH_LAT = lat;
+        HR_BRANCH_LNG = lng;
+        HR_RADIUS_METERS = radius;
+        hrBranchData = { ...payload, whatsapp_group_url: waUrl, id: existingBranches && existingBranches[0] ? existingBranches[0].id : 1 };
+        localStorage.setItem('cc_branch_data', JSON.stringify(hrBranchData));
+        
+        if (typeof window.bumpSystemActivity === 'function') {
+            window.bumpSystemActivity();
+        }
+        
+        showToast("تم حفظ وتطبيق كافة إعدادات الفرع بنجاح 🏬", "success");
+        window.updateAdminBranchMapPreview();
+        
+        if (typeof initHrGps === 'function') {
+            initHrGps();
+        }
+    } catch(err) {
+        console.error("Admin save branch error:", err);
+        // حتى لو فشل الاتصال بالسيرفر، يتم الحفظ في الكاش المحلي
+        HR_BRANCH_LAT = lat;
+        HR_BRANCH_LNG = lng;
+        HR_RADIUS_METERS = radius;
+        hrBranchData = { branch_name: branchName, latitude: lat, longitude: lng, radius_meters: radius, whatsapp_group_url: waUrl };
+        localStorage.setItem('cc_branch_data', JSON.stringify(hrBranchData));
+        showToast("تم حفظ الإعدادات محلياً في هذا المتصفح بنجاح", "success");
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> حفظ وتطبيق إعدادات الفرع';
         }
     }
 };
