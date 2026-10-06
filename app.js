@@ -2983,6 +2983,13 @@ async function loadDataFromServer(customDate = null) {
         }
         localStorage.setItem('cc_last_system_activity', String(window.lastKnownSystemVersion));
 
+        // ⭐ مزامنة رابط جروب واتساب الفرع السحابي من Supabase تلقائياً
+        const branchWaRow = (rawShipping || []).find(r => r.zone_name === '_BRANCH_WHATSAPP_' && r.zone_type === 'system');
+        if (branchWaRow && branchWaRow.delivery_type) {
+            localStorage.setItem('cc_branch_whatsapp_group', branchWaRow.delivery_type);
+            if (hrBranchData) hrBranchData.whatsapp_group_url = branchWaRow.delivery_type;
+        }
+
         // ⭐ مزامنة وتحديث بوكيهات قسم الهدايا تلقائياً مع السيرفر إن كان الموديول مفتوحاً
         if (window.GiftsApp && typeof window.GiftsApp.loadBouquets === 'function') {
             window.GiftsApp.loadBouquets().then(() => {
@@ -15370,27 +15377,40 @@ let HR_BRANCH_LNG = null;
 let HR_RADIUS_METERS = 100; // Geofencing radius
 let hrBranchData = null;
 
-// تحميل بيانات موقع الفرع من جدول branches في Supabase
+// تحميل بيانات موقع الفرع ورابط الواتساب من جدول branches وجدول settings_shipping في Supabase
 window.loadBranchLocation = async function() {
     try {
-        const { data, error } = await supabase.from('branches').select('*').limit(1);
-        if (!error) {
-            if (data && data.length > 0 && data[0].latitude && data[0].longitude) {
-                HR_BRANCH_LAT = parseFloat(data[0].latitude);
-                HR_BRANCH_LNG = parseFloat(data[0].longitude);
-                HR_RADIUS_METERS = parseInt(data[0].radius_meters) || 100;
-                let groupUrl = data[0].whatsapp_group_url || localStorage.getItem('cc_branch_whatsapp_group') || '';
-                hrBranchData = { ...data[0], whatsapp_group_url: groupUrl };
+        const [branchRes, waRes] = await Promise.all([
+            supabase.from('branches').select('*').limit(1),
+            supabase.from('settings_shipping').select('*').eq('zone_name', '_BRANCH_WHATSAPP_').eq('zone_type', 'system').limit(1)
+        ]);
+
+        let groupUrl = '';
+        if (waRes && waRes.data && waRes.data.length > 0 && waRes.data[0].delivery_type) {
+            groupUrl = waRes.data[0].delivery_type;
+        }
+        if (!groupUrl) {
+            groupUrl = localStorage.getItem('cc_branch_whatsapp_group') || '';
+        }
+
+        if (branchRes && !branchRes.error && branchRes.data && branchRes.data.length > 0) {
+            const b = branchRes.data[0];
+            if (b.latitude && b.longitude) {
+                HR_BRANCH_LAT = parseFloat(b.latitude);
+                HR_BRANCH_LNG = parseFloat(b.longitude);
+                HR_RADIUS_METERS = parseInt(b.radius_meters) || 100;
+                hrBranchData = { ...b, whatsapp_group_url: groupUrl };
                 localStorage.setItem('cc_branch_data', JSON.stringify(hrBranchData));
                 if (groupUrl) localStorage.setItem('cc_branch_whatsapp_group', groupUrl);
-                console.log("Branch location loaded from Supabase:", { lat: HR_BRANCH_LAT, lng: HR_BRANCH_LNG, radius: HR_RADIUS_METERS, whatsapp: groupUrl });
+                console.log("Branch location & WhatsApp loaded from Supabase:", { lat: HR_BRANCH_LAT, lng: HR_BRANCH_LNG, radius: HR_RADIUS_METERS, whatsapp: groupUrl });
                 return hrBranchData;
             } else {
                 HR_BRANCH_LAT = null;
                 HR_BRANCH_LNG = null;
-                hrBranchData = null;
-                localStorage.removeItem('cc_branch_data');
-                return null;
+                hrBranchData = { ...b, whatsapp_group_url: groupUrl };
+                localStorage.setItem('cc_branch_data', JSON.stringify(hrBranchData));
+                if (groupUrl) localStorage.setItem('cc_branch_whatsapp_group', groupUrl);
+                return hrBranchData;
             }
         }
     } catch(e) {
@@ -15795,36 +15815,51 @@ window.handleSaveBranchSettingsAdmin = async function(e) {
             latitude: lat,
             longitude: lng,
             radius_meters: radius,
-            whatsapp_group_url: waUrl,
             updated_at: nowIso
         };
         
-        // 1. فحص وجود الفرع في جدول branches
+        // 1. حفظ وتحديث بيانات الفرع والموقع الجغرافي (GPS) في جدول branches في Supabase
         const { data: existingBranches, error: chkErr } = await supabase.from('branches').select('id').limit(1);
         
         let saveErr = null;
         if (!chkErr && existingBranches && existingBranches.length > 0) {
             const res = await supabase.from('branches').update(payload).eq('id', existingBranches[0].id);
-            if (res.error && res.error.message && res.error.message.includes('whatsapp_group_url')) {
-                // في حال عدم وجود عمود whatsapp_group_url في سوبابيز يتم الحفظ بدونه مع الاحتفاظ به محلياً
-                delete payload.whatsapp_group_url;
-                const retryRes = await supabase.from('branches').update(payload).eq('id', existingBranches[0].id);
-                saveErr = retryRes.error;
-            } else {
-                saveErr = res.error;
-            }
+            saveErr = res.error;
         } else {
             const res = await supabase.from('branches').insert([payload]);
-            if (res.error && res.error.message && res.error.message.includes('whatsapp_group_url')) {
-                delete payload.whatsapp_group_url;
-                const retryRes = await supabase.from('branches').insert([payload]);
-                saveErr = retryRes.error;
-            } else {
-                saveErr = res.error;
-            }
+            saveErr = res.error;
         }
         
         if (saveErr) throw saveErr;
+
+        // 2. حفظ رابط جروب الواتساب في سوبابيز داخل جدول settings_shipping كإعداد سحابي دائم
+        try {
+            const { data: existingWa } = await supabase
+                .from('settings_shipping')
+                .select('id')
+                .eq('zone_name', '_BRANCH_WHATSAPP_')
+                .eq('zone_type', 'system')
+                .limit(1);
+
+            if (existingWa && existingWa.length > 0) {
+                await supabase
+                    .from('settings_shipping')
+                    .update({ delivery_type: waUrl, duration: branchName })
+                    .eq('id', existingWa[0].id);
+            } else {
+                await supabase
+                    .from('settings_shipping')
+                    .insert([{
+                        zone_name: '_BRANCH_WHATSAPP_',
+                        zone_type: 'system',
+                        delivery_type: waUrl,
+                        duration: branchName,
+                        price: 0
+                    }]);
+            }
+        } catch(waErr) {
+            console.warn("Could not save whatsapp url to settings_shipping in Supabase:", waErr);
+        }
         
         HR_BRANCH_LAT = lat;
         HR_BRANCH_LNG = lng;
