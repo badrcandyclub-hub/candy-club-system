@@ -3857,15 +3857,272 @@ if (phoneInput) phoneInput.addEventListener('change', performPhoneSearch);
 
 const productsContainer = document.getElementById('productsContainer');
 
-// <i class=\'fa-solid fa-star\'></i> دالة إضافة المنتجات (وإصلاح قفل الخانات عند الاسترجاع)
-function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = false, offerVal = "") {
+// ==========================================
+// دالة التحقق من الحالة الفارغة لقائمة منتجات الفاتورة
+// ==========================================
+function checkOrderProductsEmptyState() {
+    if (!productsContainer) return;
+    const rows = productsContainer.querySelectorAll('.product-row');
+    let emptyEl = productsContainer.querySelector('.order-products-empty-state');
+    if (rows.length === 0) {
+        if (!emptyEl) {
+            emptyEl = document.createElement('div');
+            emptyEl.className = 'order-products-empty-state';
+            emptyEl.innerHTML = `
+                <i class="fa-solid fa-basket-shopping"></i>
+                <div style="font-weight: 700; margin-bottom: 4px;">لا توجد منتجات مضافة بعد</div>
+                <div style="font-size: 0.85rem;">ابحث باسم المنتج أو امسح الباركود في الأعلى لإضافته للفاتورة</div>
+            `;
+            productsContainer.appendChild(emptyEl);
+        }
+    } else {
+        if (emptyEl) emptyEl.remove();
+    }
+}
+
+// ==========================================
+// محرك البحث الحي في الكتالوج والباركود
+// ==========================================
+function searchAllCatalogProducts(query) {
+    if (!query) return [];
+    const q = String(query).trim().toLowerCase();
+    const results = [];
+    const seenNames = new Set();
+
+    // 1. البحث في catalogData (Supabase + عروض)
+    if (typeof catalogData !== 'undefined' && Array.isArray(catalogData)) {
+        for (const item of catalogData) {
+            if (!item || !item.name) continue;
+            const nameLower = item.name.toLowerCase();
+            const barcodeStr = String(item.barcode || '').toLowerCase();
+            if (nameLower.includes(q) || barcodeStr.includes(q)) {
+                seenNames.add(nameLower);
+                results.push({
+                    name: item.name,
+                    price: parseFloat(item.price) || 0,
+                    isOffer: !!item.isOffer,
+                    offerPrice: parseFloat(item.offerPrice) || 0,
+                    barcode: item.barcode || '',
+                    stock: item.stock !== undefined ? item.stock : ''
+                });
+            }
+            if (results.length >= 25) break;
+        }
+    }
+
+    // 2. البحث في barcodeCatalogData (Firebase)
+    if (results.length < 25 && typeof barcodeCatalogData !== 'undefined' && Array.isArray(barcodeCatalogData)) {
+        for (const item of barcodeCatalogData) {
+            if (!item || !item.name) continue;
+            const nameLower = item.name.toLowerCase();
+            if (seenNames.has(nameLower)) continue;
+            const barcodeStr = String(item.barcode || '').toLowerCase();
+            if (nameLower.includes(q) || barcodeStr.includes(q)) {
+                seenNames.add(nameLower);
+                results.push({
+                    name: item.name,
+                    price: parseFloat(item.price) || 0,
+                    isOffer: false,
+                    offerPrice: 0,
+                    barcode: item.barcode || '',
+                    stock: item.stock !== undefined ? item.stock : ''
+                });
+            }
+            if (results.length >= 25) break;
+        }
+    }
+
+    return results;
+}
+
+// تهيئة قائمة البحث الحية لخانة إدخال المنتجات
+function initOrderProductSearch() {
+    const input = document.getElementById('orderBarcodeInput');
+    const resultsContainer = document.getElementById('orderProductSearchResults');
+    const searchBtn = document.getElementById('orderSearchBarcodeBtn');
+    if (!input || !resultsContainer) return;
+
+    let highlightedIndex = -1;
+
+    function renderResults(query) {
+        const list = searchAllCatalogProducts(query);
+        if (list.length === 0) {
+            resultsContainer.innerHTML = `
+                <div style="padding: 16px; text-align: center; color: #94a3b8; font-size: 0.9rem;">
+                    <i class="fa-solid fa-circle-exclamation" style="margin-left: 6px;"></i> لا توجد أصناف مطابقة لـ "${query}"
+                </div>`;
+            resultsContainer.style.display = 'block';
+            highlightedIndex = -1;
+            return;
+        }
+
+        resultsContainer.innerHTML = list.map((item, idx) => {
+            const hasOffer = item.isOffer && item.offerPrice > 0;
+            const priceHtml = hasOffer
+                ? `<span class="order-search-item-offer">${item.offerPrice} ج.م</span><del style="color:#94a3b8; font-size:0.75rem;">${item.price} ج.م</del>`
+                : `<span class="order-search-item-price">${item.price} ج.م</span>`;
+            const barcodeBadge = item.barcode ? `<span style="font-family:monospace; background:#e2e8f0; padding:2px 6px; border-radius:4px; font-size:0.75rem;">${item.barcode}</span>` : '';
+            const stockBadge = (item.stock !== '' && !isNaN(Number(item.stock))) ? `<span style="color:#64748b; font-size:0.75rem;">مخزون: ${item.stock}</span>` : '';
+            return `
+                <div class="order-search-item" data-index="${idx}" data-name="${item.name}" data-price="${item.price}" data-offer="${hasOffer ? item.offerPrice : ''}">
+                    <div class="order-search-item-info">
+                        <span class="order-search-item-name">${item.name}</span>
+                        <div class="order-search-item-meta">${barcodeBadge} ${stockBadge}</div>
+                    </div>
+                    <div class="order-search-item-price-box">
+                        ${priceHtml}
+                    </div>
+                </div>
+            `;
+        }).join('');
+        resultsContainer.style.display = 'block';
+        highlightedIndex = -1;
+
+        resultsContainer.querySelectorAll('.order-search-item').forEach(el => {
+            el.addEventListener('click', () => {
+                const name = el.getAttribute('data-name');
+                const price = el.getAttribute('data-price');
+                const offer = el.getAttribute('data-offer');
+                addProductRow(name, price, "1", true, offer);
+                input.value = '';
+                resultsContainer.style.display = 'none';
+                input.focus();
+            });
+        });
+    }
+
+    input.addEventListener('input', () => {
+        const val = input.value.trim();
+        if (typeof parseScaleBarcode === 'function') {
+            const scaleInfo = parseScaleBarcode(val);
+            if (scaleInfo) {
+                if (typeof handleBarcodeMatch === 'function') {
+                    if (typeof currentScannerMode !== 'undefined') currentScannerMode = 'order';
+                    handleBarcodeMatch(val);
+                    input.value = '';
+                    resultsContainer.style.display = 'none';
+                    return;
+                }
+            }
+        }
+        if (!val) {
+            resultsContainer.style.display = 'none';
+            return;
+        }
+        renderResults(val);
+    });
+
+    input.addEventListener('keydown', (e) => {
+        const items = resultsContainer.querySelectorAll('.order-search-item');
+        if (resultsContainer.style.display === 'block' && items.length > 0) {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                highlightedIndex = (highlightedIndex + 1) % items.length;
+                updateHighlight(items);
+                return;
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                highlightedIndex = (highlightedIndex - 1 + items.length) % items.length;
+                updateHighlight(items);
+                return;
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (highlightedIndex >= 0 && items[highlightedIndex]) {
+                    items[highlightedIndex].click();
+                } else if (items.length > 0) {
+                    items[0].click();
+                } else if (searchBtn) {
+                    searchBtn.click();
+                }
+                return;
+            } else if (e.key === 'Escape') {
+                resultsContainer.style.display = 'none';
+                return;
+            }
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (searchBtn) searchBtn.click();
+        }
+    });
+
+    function updateHighlight(items) {
+        items.forEach((it, idx) => {
+            if (idx === highlightedIndex) {
+                it.classList.add('highlighted');
+                it.scrollIntoView({ block: 'nearest' });
+            } else {
+                it.classList.remove('highlighted');
+            }
+        });
+    }
+
+    document.addEventListener('click', (e) => {
+        if (!input.contains(e.target) && !resultsContainer.contains(e.target)) {
+            resultsContainer.style.display = 'none';
+        }
+    });
+}
+
+// ==========================================
+// دالة إضافة المنتجات للفاتورة (مقيدة بالكتالوج والباركود)
+// ==========================================
+function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = true, offerVal = "") {
     if (!productsContainer) return;
 
-    if (!document.getElementById('smartProductsList')) {
-        let dl = document.createElement('datalist');
-        dl.id = 'smartProductsList';
-        document.body.appendChild(dl);
-        updateSmartProductsList();
+    // منع إضافة صف فارغ بدون اختيار منتج محدد
+    if (!nameVal || String(nameVal).trim() === "") {
+        const sInp = document.getElementById('orderBarcodeInput');
+        if (sInp) {
+            sInp.focus();
+            sInp.select();
+        }
+        showToast("يرجى البحث باسم المنتج أو مسح الباركود أولاً", "info");
+        return;
+    }
+
+    const cleanName = String(nameVal).trim();
+
+    // 1. زيادة الكمية تلقائياً إذا كان الصنف مضافاً مسبقاً في الفاتورة
+    const existingRows = Array.from(productsContainer.querySelectorAll('.product-row'));
+    let foundRow = existingRows.find(row => {
+        const inp = row.querySelector('.product-name-input');
+        return inp && inp.value.trim().toLowerCase() === cleanName.toLowerCase();
+    });
+
+    if (foundRow) {
+        const qInp = foundRow.querySelector('.product-qty-input');
+        if (qInp) {
+            const currentQty = parseFloat(qInp.value) || 0;
+            const addedQty = parseFloat(qtyVal) || 1;
+            qInp.value = currentQty + addedQty;
+            qInp.dispatchEvent(new Event('input'));
+        }
+        foundRow.style.transition = 'all 0.3s ease';
+        foundRow.style.boxShadow = '0 0 0 2px #10b981';
+        setTimeout(() => { if (foundRow) foundRow.style.boxShadow = ''; }, 700);
+        calculateTotal();
+        if (typeof window.playSuccessBeep === 'function') window.playSuccessBeep();
+        showToast(`تمت زيادة كمية (${cleanName}) بنجاح`, "success");
+        return;
+    }
+
+    // إزالة رسالة الحالة الفارغة
+    const emptyEl = productsContainer.querySelector('.order-products-empty-state');
+    if (emptyEl) emptyEl.remove();
+
+    // استكمال السعر الأساسي وسعر العرض من الكتالوج إن لم يمررا
+    let basePrice = (priceVal !== "" && priceVal !== undefined) ? priceVal : "";
+    let offerPrice = (offerVal !== "" && offerVal !== undefined) ? offerVal : "";
+
+    if (basePrice === "" || basePrice === undefined) {
+        const catMatch = (typeof catalogData !== 'undefined' && Array.isArray(catalogData) ? catalogData.find(p => p.name === cleanName) : null) ||
+                         (typeof barcodeCatalogData !== 'undefined' && Array.isArray(barcodeCatalogData) ? barcodeCatalogData.find(p => p.name === cleanName) : null);
+        if (catMatch) {
+            basePrice = parseFloat(catMatch.price) || 0;
+            if (catMatch.isOffer && parseFloat(catMatch.offerPrice) > 0) {
+                offerPrice = parseFloat(catMatch.offerPrice) || 0;
+            }
+        }
     }
 
     const wrapper = document.createElement('div');
@@ -3874,139 +4131,61 @@ function addProductRow(nameVal = "", priceVal = "", qtyVal = "1", isConfirmed = 
     wrapper.style.marginBottom = '10px';
 
     const div = document.createElement('div');
-    div.className = 'product-row';
-    if (isConfirmed) div.classList.add('confirmed');
-
-
-    let rOnly = isConfirmed ? 'readonly' : '';
+    div.className = 'product-row confirmed';
 
     div.innerHTML = `
-        <input type="text" list="smartProductsList" class="product-name-input" placeholder="اسم المنتج..." value="${nameVal}" required ${rOnly}>
-        <input type="number" class="product-price-input" placeholder="السعر" value="${priceVal}" required ${rOnly}>
-        <input type="number" class="product-offer-input" placeholder="سعر العرض" value="${offerVal}" ${rOnly}>
-        <input type="number" class="product-qty-input" placeholder="الكمية" value="${qtyVal}" min="1" required ${rOnly}>
+        <div class="product-col-name" style="position: relative; display: flex; align-items: center;">
+            <span class="product-name-title" title="${cleanName}">${cleanName}</span>
+            <input type="hidden" class="product-name-input" value="${cleanName}" required>
+        </div>
+        <input type="number" class="product-price-input" placeholder="السعر" value="${basePrice}" readonly required title="السعر الأساسي مقفل من الكتالوج">
+        <input type="number" class="product-offer-input" placeholder="سعر العرض" value="${offerPrice}" step="any" title="يمكن تعديل سعر العرض أو الخصم لهذا الأوردر">
+        <input type="number" class="product-qty-input" placeholder="الكمية" value="${qtyVal}" min="1" step="any" required>
         <div class="product-row-actions">
-            <button type="button" class="btn-confirm-pro interactive-btn">✔️</button>
-            <button type="button" class="remove-product-btn interactive-btn"><i class=\'fa-solid fa-xmark\'></i></button>
+            <button type="button" class="remove-product-btn interactive-btn" title="حذف الصنف"><i class="fa-solid fa-trash-can"></i></button>
+            <button type="button" class="btn-confirm-pro interactive-btn" style="display:none;">✔️</button>
         </div>
     `;
 
     wrapper.appendChild(div);
     productsContainer.appendChild(wrapper);
 
-    let nameInput = div.querySelector('.product-name-input');
-    let priceInput = div.querySelector('.product-price-input');
     let offerInput = div.querySelector('.product-offer-input');
     let qtyInput = div.querySelector('.product-qty-input');
-    let confirmBtn = div.querySelector('.btn-confirm-pro');
     let removeBtn = div.querySelector('.remove-product-btn');
 
-    if (isConfirmed) confirmBtn.innerHTML = "<i class=\'fa-solid fa-pencil\'></i>";
-
-    nameInput.addEventListener('input', () => {
-        if (typeof parseScaleBarcode === 'function') {
-            const scaleInfo = parseScaleBarcode(nameInput.value);
-            if (scaleInfo) {
-                let catalogMatch = null;
-                if (typeof catalogData !== 'undefined' && Array.isArray(catalogData)) {
-                    catalogMatch = catalogData.find(p => p.barcode && String(p.barcode).split(/[,|\s]+/).includes(scaleInfo.itemCode));
-                    if (!catalogMatch) {
-                        catalogMatch = catalogData.find(p => p.name && (p.name.trim() === 'كاندي بالوزن' || p.name.trim() === 'كاندي'));
-                    }
-                }
-                // السعر القياسي المعتمد لميزان كاندي كلوب هو 600.00 ج.م للكيلو (كما في استيكر الميزان 600.00 LE/kg = 318 ج.م للـ 530 جم)
-                let ratePerKg = 600;
-                if (catalogMatch && Number(catalogMatch.price) >= 100) {
-                    ratePerKg = Number(catalogMatch.price);
-                }
-                const calculatedPrice = Number(((scaleInfo.weightGrams / 1000) * ratePerKg).toFixed(2));
-                nameInput.value = `كاندي بالوزن (${scaleInfo.weightGrams} جم)`;
-                priceInput.value = calculatedPrice;
-                qtyInput.value = 1;
-                calculateTotal();
-                priceInput.focus();
-                priceInput.select();
-                return;
-            }
-        }
-        let selected = catalogData.find(p => p.name === nameInput.value);
-        if (selected) {
-            let baseP = parseFloat(selected.price) || 0;
-            let offerP = parseFloat(selected.offerPrice) || 0;
-            let isOfferActive = selected.isOffer === true || selected.isOffer === "true" || selected.isOffer === 1 || selected.isOffer === "TRUE";
-
-            priceInput.value = baseP;
-            if (offerP > 0 && isOfferActive) {
-                offerInput.value = offerP;
-            } else {
-                offerInput.value = "";
-            }
-            calculateTotal();
-        }
-    });
-
-    priceInput.addEventListener('input', calculateTotal);
     offerInput.addEventListener('input', calculateTotal);
     qtyInput.addEventListener('input', calculateTotal);
 
-    confirmBtn.addEventListener('click', () => {
-        if (!nameInput.value || priceInput.value === "" || qtyInput.value === "") return;
-
-        if (div.classList.contains('confirmed')) {
-            div.classList.remove('confirmed');
-            confirmBtn.innerHTML = "✔️";
-            nameInput.readOnly = false;
-            priceInput.readOnly = false;
-            offerInput.readOnly = false;
-            qtyInput.readOnly = false;
-        } else {
-            div.classList.add('confirmed');
-            confirmBtn.innerHTML = "<i class=\'fa-solid fa-pencil\'></i>";
-            calculateTotal();
-            if (typeof window.playSuccessBeep === 'function') window.playSuccessBeep();
-            nameInput.readOnly = true;
-            priceInput.readOnly = true;
-            offerInput.readOnly = true;
-            qtyInput.readOnly = true;
-
-            let currentPrice = parseFloat(priceInput.value);
-            let currentOffer = parseFloat(offerInput.value) || 0;
-            let cProd = catalogData.find(p => p.name === nameInput.value);
-
-            if (cProd) {
-                let isOfferActive = cProd.isOffer === true || cProd.isOffer === "true" || cProd.isOffer === 1;
-                let baseP = parseFloat(cProd.price) || 0;
-                let offerP = parseFloat(cProd.offerPrice) || 0;
-
-                if (currentOffer > 0 && currentOffer !== offerP) {
-                    customConfirm("تم تعديل سعر العرض لـ " + currentOffer + " هل تريد حفظه كسعر عرض دائم للمنتج وتفعيله في الكتالوج؟", () => {
-                        window.pushCatalogUpdate(cProd.name, baseP, true, currentOffer);
-                        cProd.offerPrice = currentOffer;
-                        cProd.isOffer = true;
-                    });
-                } else if (currentOffer === 0 && currentPrice !== baseP) {
-                    customConfirm("تم تعديل السعر الأساسي لـ " + currentPrice + " هل تريد حفظه كسعر أساسي دائم في الكتالوج؟", () => {
-                        window.pushCatalogUpdate(cProd.name, currentPrice, false, offerP);
-                        cProd.price = currentPrice;
-                        cProd.isOffer = false;
-                    });
-                }
-            } else {
-                window.pushCatalogUpdate(nameInput.value, currentPrice, currentOffer > 0, currentOffer);
-                catalogData.push({ name: nameInput.value, price: currentPrice, isOffer: currentOffer > 0, offerPrice: currentOffer });
-                updateSmartProductsList();
-            }
-        }
+    removeBtn.addEventListener('click', () => {
+        wrapper.remove();
+        calculateTotal();
+        checkOrderProductsEmptyState();
     });
-    removeBtn.addEventListener('click', () => { wrapper.remove(); calculateTotal(); });
+
+    calculateTotal();
+    if (typeof window.playSuccessBeep === 'function') window.playSuccessBeep();
 }
 
 function updateSmartProductsList() {
-    // <i class=\'fa-solid fa-star\'></i> الاقتراحات تأتي من Firebase أولاً، وإذا لم تتوفر يأخذ من catalogData
-    updateSmartSuggestionsFromFirebase();
+    if (typeof updateSmartSuggestionsFromFirebase === 'function') {
+        updateSmartSuggestionsFromFirebase();
+    }
 }
-if (document.getElementById('addProductBtn')) document.getElementById('addProductBtn').addEventListener('click', () => addProductRow());
-if (productsContainer && productsContainer.children.length === 0) addProductRow();
+
+if (document.getElementById('addProductBtn')) {
+    document.getElementById('addProductBtn').addEventListener('click', () => {
+        const sInp = document.getElementById('orderBarcodeInput');
+        if (sInp) {
+            sInp.focus();
+            sInp.select();
+        }
+        showToast("ابحث باسم المنتج أو امسح الباركود لإضافته للفاتورة", "info");
+    });
+}
+
+checkOrderProductsEmptyState();
+initOrderProductSearch();
 
 // <i class=\'fa-solid fa-star\'></i> نظام العربون والـ NaN
 function calculateTotal() {
@@ -4237,7 +4416,7 @@ function resetForm() {
     let finalDisplay = document.getElementById('finalTotalDisplay'); if (finalDisplay) finalDisplay.innerText = "0";
     let remDisplay = document.getElementById('remainingAmountDisplay'); if (remDisplay) remDisplay.innerText = "0";
 
-    if (productsContainer) { productsContainer.innerHTML = ''; addProductRow(); }
+    if (productsContainer) { productsContainer.innerHTML = ''; checkOrderProductsEmptyState(); }
     isPaymentConfirmed = false;
     if (confirmPaymentBtn) { confirmPaymentBtn.classList.remove('confirmed'); confirmPaymentBtn.innerHTML = "تأكيد ✔️"; }
     if (paymentMethod) { paymentMethod.classList.remove('locked-field', 'payment-cash', 'payment-instapay'); paymentMethod.disabled = false; }
@@ -6064,46 +6243,6 @@ window.shareToWhatsAppGroup = async function (orderId) {
     });
 };
 
-let shareOrderBtn = document.getElementById('shareOrderBtn');
-if (shareOrderBtn) {
-    shareOrderBtn.addEventListener('click', () => {
-        let name = document.getElementById('customerName') ? document.getElementById('customerName').value.trim() : "";
-        if (!name) { showToast("برجاء إدخال بيانات الأوردر أولاً", "error"); return; }
-
-        let gov = document.getElementById('governorate') ? document.getElementById('governorate').value : "";
-        let addressVal = document.getElementById('address') ? document.getElementById('address').value : "";
-        let paymentMethod = document.getElementById('paymentMethod') ? document.getElementById('paymentMethod').value : "";
-        let productsListText = "";
-        document.querySelectorAll('.product-row.confirmed').forEach(row => {
-            let n = row.querySelector('.product-name-input').value;
-            let price = parseFloat(row.querySelector('.product-price-input').value) || 0;
-            let offer = parseFloat(row.querySelector('.product-offer-input').value) || 0;
-            let finalPrice = offer > 0 ? offer : price;
-            let q = parseFloat(row.querySelector('.product-qty-input').value) || 1;
-            productsListText += `${n} - الكمية: ${q} (${finalPrice * q}ج)\n`;
-        });
-        let shipping = document.getElementById('shippingCost') ? document.getElementById('shippingCost').value : 0;
-        let rem = document.getElementById('remainingAmountDisplay') ? document.getElementById('remainingAmountDisplay').innerText : (document.getElementById('finalTotalDisplay') ? document.getElementById('finalTotalDisplay').innerText : 0);
-        let deliveryTypeSelect = document.getElementById('deliveryType');
-        let orderTypeLabel = deliveryTypeSelect ? deliveryTypeSelect.options[deliveryTypeSelect.selectedIndex].text : "توصيل";
-
-        let currentOrderObj = {
-            orderType: orderTypeLabel,
-            date: new Date().toLocaleDateString('ar-EG'),
-            time: new Date().toLocaleTimeString('ar-EG'),
-            name: name,
-            phone: document.getElementById('customerPhone') ? document.getElementById('customerPhone').value.trim() : "",
-            phone2: document.getElementById('phone2') ? document.getElementById('phone2').value.trim() : "",
-            gov: gov,
-            address: addressVal,
-            payment: paymentMethod,
-            products: productsListText,
-            shipping: shipping,
-            remaining: rem
-        };
-        shareToWhatsAppGroup(currentOrderObj);
-    });
-}
 
 
 // ==========================================
@@ -6668,11 +6807,6 @@ function renderCatalog() {
 
                     // إضافة صف المنتج مؤكداً
                     addProductRow(p.name, basePriceVal, "1", true, offerPriceVal);
-
-                    // التأكد من توفر صف فارغ للإدخال التالي
-                    if (document.querySelectorAll('.product-row:not(.confirmed)').length === 0) {
-                        addProductRow();
-                    }
                 }
 
                 if (typeof calculateTotal === 'function') calculateTotal();
@@ -8657,11 +8791,6 @@ if (addToCartBtn) {
                     }, 100);
                 }
 
-                // التأكد من وجود صف فارغ للإدخال اليدوي
-                if (document.querySelectorAll('.product-row:not(.confirmed)').length === 0) {
-                    addProductRow();
-                }
-
                 currentScannedProduct = null;
             } else {
                 showToast("تعذر إضافة المنتج، دالة الفاتورة غير متوفرة", "error");
@@ -8855,16 +8984,42 @@ if (startOrderCameraScannerBtn) {
 const orderSearchBarcodeBtn = document.getElementById('orderSearchBarcodeBtn');
 if (orderSearchBarcodeBtn) {
     orderSearchBarcodeBtn.addEventListener('click', () => {
-        const val = document.getElementById('orderBarcodeInput').value.trim();
+        const inp = document.getElementById('orderBarcodeInput');
+        const val = inp ? inp.value.trim() : '';
         if (!val) {
-            showToast("يرجى كتابة الباركود أولاً", "warning");
+            showToast("يرجى كتابة اسم المنتج أو مسح الباركود أولاً", "warning");
             return;
         }
         if (typeof currentScannerMode !== 'undefined') {
             currentScannerMode = 'order';
         }
-        processBarcodeAction(val);
-        document.getElementById('orderBarcodeInput').value = '';
+
+        const resEl = document.getElementById('orderProductSearchResults');
+        if (resEl) resEl.style.display = 'none';
+
+        // 1. فحص باركود الميزان أو الباركود التجاري
+        const scaleInfo = (typeof parseScaleBarcode === 'function') ? parseScaleBarcode(val) : null;
+        let barcodeMatch = null;
+        if (!scaleInfo && typeof barcodeCatalogData !== 'undefined' && Array.isArray(barcodeCatalogData)) {
+            barcodeMatch = barcodeCatalogData.find(p => String(p.barcode || '').split(',').map(b => b.trim().toLowerCase()).includes(val.toLowerCase()));
+        }
+
+        if (scaleInfo || barcodeMatch) {
+            processBarcodeAction(val);
+            if (inp) inp.value = '';
+            return;
+        }
+
+        // 2. البحث عن اسم المنتج في الكتالوج
+        const matches = (typeof searchAllCatalogProducts === 'function') ? searchAllCatalogProducts(val) : [];
+        if (matches.length > 0) {
+            const chosen = matches[0];
+            addProductRow(chosen.name, chosen.price, "1", true, (chosen.isOffer && chosen.offerPrice > 0) ? chosen.offerPrice : "");
+            if (inp) inp.value = '';
+        } else {
+            processBarcodeAction(val);
+            if (inp) inp.value = '';
+        }
     });
 }
 

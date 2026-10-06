@@ -378,14 +378,18 @@
 
                     <div class="divider"><i class="fa-solid fa-cart-shopping"></i> تفاصيل المنتجات</div>
 
-                    <div style="margin-bottom: 15px; display: flex; gap: 5px; align-items: center; background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #dee2e6;">
-                        <input type="text" id="orderBarcodeInput" placeholder="اكتب أو امسح الباركود..." style="flex: 1; margin: 0; font-family: monospace; letter-spacing: 1px;" onkeypress="if(event.key === 'Enter') { document.getElementById('orderSearchBarcodeBtn').click(); event.preventDefault(); }">
-                        <button type="button" id="orderSearchBarcodeBtn" class="interactive-btn" style="background: #2ecc71; color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold;" title="بحث بالباركود لإضافة المنتج للأوردر">
-                            <i class="fa-solid fa-magnifying-glass"></i>
-                        </button>
-                        <button type="button" id="startOrderCameraScannerBtn" class="interactive-btn pulse-btn" style="background: linear-gradient(135deg, #17a2b8, #0b7dda); color: white; border: none; padding: 8px 15px; border-radius: 8px;" title="مسح بالكاميرا">
-                            <i class="fa-solid fa-camera"></i>
-                        </button>
+                    <div class="order-product-search-wrapper" style="position: relative; margin-bottom: 15px;">
+                        <div style="display: flex; gap: 6px; align-items: center; background: #ffffff; padding: 6px 10px; border-radius: 12px; border: 1.5px solid #cbd5e1; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+                            <i class="fa-solid fa-magnifying-glass" style="color: #94a3b8; font-size: 0.95rem; margin-right: 4px;"></i>
+                            <input type="text" id="orderBarcodeInput" placeholder="ابحث باسم المنتج أو امسح الباركود..." style="flex: 1; margin: 0; font-family: inherit; font-size: 0.95rem; border: none; outline: none; background: transparent; padding: 8px 6px;" autocomplete="off">
+                            <button type="button" id="orderSearchBarcodeBtn" class="interactive-btn" style="background: #10b981; color: white; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;" title="بحث أو إضافة الصنف">
+                                <i class="fa-solid fa-plus"></i> إضافة
+                            </button>
+                            <button type="button" id="startOrderCameraScannerBtn" class="interactive-btn pulse-btn" style="background: linear-gradient(135deg, #0284c7, #0369a1); color: white; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer;" title="مسح الباركود بالكاميرا">
+                                <i class="fa-solid fa-camera"></i>
+                            </button>
+                        </div>
+                        <div id="orderProductSearchResults" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 1050; background: #ffffff; border-radius: 12px; border: 1.5px solid #cbd5e1; box-shadow: 0 12px 30px rgba(0,0,0,0.12); max-height: 280px; overflow-y: auto;"></div>
                     </div>
 
                     <div class="product-header-labels">
@@ -471,9 +475,6 @@
                             <button type="button" id="saveAndPrintBtn" class="btn-save pulse-btn"><i class="fa-solid fa-floppy-disk"></i> حفظ وطباعة
                                 الفاتورة</button>
                         </div>
-                        <button type="button" id="shareOrderBtn" class="interactive-btn"
-                            style="background:#25D366; color:white; border:none; padding:12px; font-weight:bold; border-radius:8px; margin-top:10px; width:100%;">نسخ
-                            للجروب <i class="fa-solid fa-clipboard"></i></button>
                     </div>
                 </form>
             </div>

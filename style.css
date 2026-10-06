@@ -639,13 +639,151 @@ body.dark-mode input[readonly] {
 .product-qty-input   { text-align: center; font-weight: 700; }
 
 .product-row.confirmed {
-    background: var(--success-light);
-    border-color: #a5d6a7;
+    background: #f8fafc;
+    border-color: #cbd5e1;
 }
 
-.product-row.confirmed input {
-    color: #2e7d32;
-    pointer-events: none;
+.product-row.confirmed .product-price-input[readonly] {
+    background: #f1f5f9;
+    color: #64748b;
+    cursor: not-allowed;
+}
+
+.product-row.confirmed .product-offer-input,
+.product-row.confirmed .product-qty-input {
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    cursor: text;
+    pointer-events: auto;
+}
+
+.product-name-title {
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 0.95rem;
+    padding: 7px 10px;
+    background: #f1f5f9;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    user-select: none;
+}
+
+.product-row .product-price-input[readonly] {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    color: #64748b;
+    cursor: not-allowed;
+    font-weight: 800;
+}
+
+.product-row .product-offer-input {
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    color: #e11d48;
+    font-weight: 800;
+}
+
+.product-row .product-offer-input:focus {
+    border-color: #e11d48;
+    box-shadow: 0 0 0 2px rgba(225, 29, 72, 0.15);
+}
+
+.product-row .product-qty-input {
+    background: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    font-weight: 800;
+}
+
+.product-row .product-qty-input:focus {
+    border-color: #10b981;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.15);
+}
+
+.order-products-empty-state {
+    text-align: center;
+    padding: 24px 15px;
+    background: #f8fafc;
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    color: #64748b;
+    margin-bottom: 12px;
+}
+
+.order-products-empty-state i {
+    font-size: 2rem;
+    color: #94a3b8;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.order-search-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.order-search-item:last-child {
+    border-bottom: none;
+}
+
+.order-search-item:hover,
+.order-search-item.highlighted {
+    background: #f0fdf4;
+}
+
+.order-search-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    text-align: right;
+    flex: 1;
+}
+
+.order-search-item-name {
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 0.95rem;
+}
+
+.order-search-item-meta {
+    font-size: 0.8rem;
+    color: #64748b;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.order-search-item-price-box {
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    margin-right: 12px;
+}
+
+.order-search-item-price {
+    font-weight: 800;
+    font-size: 1rem;
+    color: #10b981;
+}
+
+.order-search-item-offer {
+    font-size: 0.8rem;
+    color: #e11d48;
+    font-weight: 700;
 }
 
 .btn-confirm-pro,
@@ -1566,12 +1704,51 @@ body.dark-mode .product-row {
 }
 
 body.dark-mode .product-row.confirmed {
-    background: #1a2e1a;
-    border-color: #2e5e2e;
+    background: #1e2235;
+    border-color: #2e334d;
 }
 
-body.dark-mode .product-row.confirmed input {
-    color: #81c784;
+body.dark-mode .product-name-title {
+    background: #252b45;
+    border-color: #2e334d;
+    color: #f1f5f9;
+}
+
+body.dark-mode .product-row .product-price-input[readonly] {
+    background: #252b45;
+    border-color: #2e334d;
+    color: #94a3b8;
+}
+
+body.dark-mode .product-row .product-offer-input,
+body.dark-mode .product-row .product-qty-input {
+    background: #151726;
+    border-color: #2e334d;
+    color: #f1f5f9;
+}
+
+body.dark-mode #orderProductSearchResults {
+    background: #1e2235;
+    border-color: #2e334d;
+}
+
+body.dark-mode .order-search-item {
+    border-bottom-color: #2e334d;
+}
+
+body.dark-mode .order-search-item:hover,
+body.dark-mode .order-search-item.highlighted {
+    background: #252b45;
+}
+
+body.dark-mode .order-search-item-name {
+    color: #f1f5f9;
+}
+
+body.dark-mode .order-products-empty-state {
+    background: #151726;
+    border-color: #2e334d;
+    color: #94a3b8;
 }
 
 body.dark-mode .bottom-nav {
@@ -2302,7 +2479,7 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
         align-items: stretch;
     }
 
-    .product-name-input { grid-area: name; font-size: 1.1rem !important; }
+    .product-name-input, .product-col-name, .product-name-title { grid-area: name; font-size: 1rem !important; }
     .product-price-input { grid-area: price; }
     .product-offer-input { grid-area: offer; }
     .product-qty-input { grid-area: qty; }
