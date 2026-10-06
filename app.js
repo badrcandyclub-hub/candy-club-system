@@ -3395,7 +3395,7 @@ function renderHistoryList(orders, isLoadMore = false) {
             <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 8px; align-items: center;">
                 <strong style="font-size: 1.05rem;">${order.id} | ${order.name} ${typeBadge}</strong>
                 <div style="display:flex; align-items:center; gap:10px;">
-                    <button class="interactive-btn" onclick="shareToWhatsAppGroup('${order.id}')" style="background:none; border:none; font-size:1.3rem; cursor:pointer;" title="مشاركة للجروب"><i class=\'fa-solid fa-mobile-screen\'></i></button>
+                    <button class="interactive-btn" onclick="shareToWhatsAppGroup('${order.id}')" style="background:none; border:none; font-size:1.35rem; cursor:pointer;" title="نسخ ومشاركة لجروب الواتساب"><i class='fa-brands fa-whatsapp' style='color:#16a34a;'></i></button>
                     <button class="interactive-btn" onclick="printHistoryOrder('${order.id}')" style="background:none; border:none; cursor:pointer;" title="طباعة الفاتورة">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-dark);"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
                     </button>
@@ -4332,69 +4332,6 @@ if (suspendBtn) {
     });
 }
 
-// زر مشاركة الأوردر لجروب الواتساب الخاص بالفرع
-const shareToBranchGroupBtn = document.getElementById('shareToBranchGroupBtn');
-if (shareToBranchGroupBtn) {
-    shareToBranchGroupBtn.addEventListener('click', async () => {
-        let groupUrl = localStorage.getItem('cc_branch_whatsapp_group') || (hrBranchData && hrBranchData.whatsapp_group_url ? hrBranchData.whatsapp_group_url : '');
-        if (!groupUrl || !String(groupUrl).trim()) {
-            showToast("يرجى ضبط رابط جروب واتساب الفرع من لوحة تحكم المدير أولاً ⚙️", "warning");
-            return;
-        }
-
-        let cName = (document.getElementById('customerName')?.value || '').trim();
-        let cPhone = (document.getElementById('customerPhone')?.value || '').trim();
-        let cPhone2 = (document.getElementById('phone2')?.value || '').trim();
-        let dType = document.getElementById('deliveryType')?.value || 'normal';
-        let gov = (document.getElementById('governorate')?.value || '').trim();
-        let addr = (document.getElementById('address')?.value || '').trim();
-        let pMethod = (document.getElementById('paymentMethod')?.value || '').trim();
-        let remAmt = document.getElementById('remainingAmountDisplay')?.innerText || '0';
-        let shipCost = document.getElementById('shippingCostDisplay')?.innerText || '0';
-
-        let prodsList = [];
-        document.querySelectorAll('#productsContainer .product-row.confirmed').forEach(r => {
-            let n = r.querySelector('.product-name-input')?.value || '';
-            let p = r.querySelector('.product-offer-input')?.value || r.querySelector('.product-price-input')?.value || '0';
-            let q = r.querySelector('.product-qty-input')?.value || '1';
-            if (n) prodsList.push(`- ${n} (الكمية: ${q}) [${p} ج.م]`);
-        });
-
-        if (!cName && prodsList.length === 0) {
-            showToast("يرجى كتابة بيانات الأوردر أو إضافة منتجات أولاً", "warning");
-            return;
-        }
-
-        let typeText = "توصيل منزلي";
-        if (dType === "branch") typeText = "استلام من الفرع";
-        else if (dType === "gov_shipping") typeText = "شحن محافظات";
-        else if (dType === "special_date") typeText = "حجز لتاريخ معين";
-
-        let branchNameStr = hrBranchData?.branch_name || 'الفرع';
-
-        let text = `🧾 *طلب جديد - ${branchNameStr}*\n`;
-        text += `*نوع الطلب:* ${typeText}\n`;
-        text += `👤 *العميل:* ${cName || 'غير محدد'}\n`;
-        if (cPhone) text += `📱 *الموبايل:* ${cPhone}\n`;
-        if (cPhone2) text += `📱 *رقم بديل:* ${cPhone2}\n`;
-        if (dType !== "branch" && (gov || addr)) text += `📍 *العنوان:* ${gov ? gov + ' - ' : ''}${addr}\n`;
-        if (pMethod) text += `💳 *طريقة الدفع:* ${pMethod}\n`;
-        text += `\n📦 *المنتجات:*\n${prodsList.length > 0 ? prodsList.join('\n') : 'لا توجد منتجات'}\n\n`;
-        if (parseFloat(shipCost) > 0) text += `🚚 *الشحن:* ${shipCost} ج.م\n`;
-        text += `💰 *المطلوب دفعه:* ${remAmt} ج.م\n`;
-
-        try {
-            await navigator.clipboard.writeText(text);
-            showToast("تم نسخ بيانات الأوردر للحافظة! جاري فتح جروب الواتساب... 📋", "success");
-        } catch(e) {
-            showToast("جاري فتح جروب الواتساب... 📋", "info");
-        }
-        setTimeout(() => {
-            window.open(groupUrl.trim(), '_blank');
-        }, 300);
-    });
-}
-
 let openSuspendedBtn = document.getElementById('openSuspendedBtn');
 if (openSuspendedBtn) {
     openSuspendedBtn.addEventListener('click', () => {
@@ -4800,13 +4737,56 @@ if (saveAndPrintBtn) {
                 let qrImg = document.querySelector('img[alt="QR Code"]');
                 if (qrImg) qrImg.src = 'images/qr-code.png';
 
+                // نسخ بيانات الفاتورة للحافظة وتجهيز فتح جروب الواتساب
+                let orderIdSaved = (data && data.orderId) ? data.orderId : '';
+                let orderTimeNow = new Date().toLocaleTimeString('ar-EG');
+                let orderDateNow = new Date().toLocaleDateString('ar-EG');
+                let p2ValNow = document.getElementById('phone2') ? document.getElementById('phone2').value.trim() : "";
+                let payMethodNow = paymentMethod ? paymentMethod.value : "";
+
+                let waText = `🧾 *رقم الفاتورة:* ${orderIdSaved}\n`;
+                waText += `*نوع الطلب:* ${orderTypeLabel}\n`;
+                if (bookingDatePrint && (orderTypeLabel.includes('حجز') || orderTypeLabel === 'special_date')) {
+                    waText += `📅 *تاريخ التسليم:* ${bookingDatePrint}\n`;
+                }
+                waText += `*تاريخ إنشاء الأوردر:* ${orderDateNow} ⏰ ${orderTimeNow}\n`;
+                waText += `👤 *العميل:* ${name}\n`;
+                if (!orderTypeLabel.includes('استلام') && !orderTypeLabel.includes('فرع') && (gov || addressVal)) {
+                    waText += `📍 *العنوان:* ${gov ? gov + " - " : ""}${addressVal}\n`;
+                }
+                if (phone) waText += `📱 *الموبايل:* ${phone}\n`;
+                if (p2ValNow) waText += `📱 *رقم احتياطي:* ${p2ValNow}\n`;
+                if (payMethodNow) waText += `💳 *طريقة الدفع:* ${payMethodNow}\n\n`;
+                waText += `📦 *المنتجات:*\n${productsListText}\n`;
+                let pTotalValNow = document.getElementById('productsTotal') ? document.getElementById('productsTotal').value : 0;
+                if (parseFloat(pTotalValNow) > 0) waText += `🛍️ *إجمالي المنتجات:* ${pTotalValNow} ج.م\n`;
+                let discValNow = document.getElementById('discount') ? parseFloat(document.getElementById('discount').value) || 0 : 0;
+                if (discValNow > 0) waText += `🏷️ *الخصم:* ${discValNow} ج.م\n`;
+                let shipCostNow = document.getElementById('shippingCost') ? parseFloat(document.getElementById('shippingCost').value) || 0 : 0;
+                if (shipCostNow > 0) waText += `🚚 *الشحن:* ${shipCostNow} ج.م\n`;
+                waText += `💰 *المطلوب دفعه:* ${rem} ج.م\n`;
+
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(waText).catch(e => console.warn("Clipboard copy failed:", e));
+                }
+
+                let groupUrl = localStorage.getItem('cc_branch_whatsapp_group') || (hrBranchData && hrBranchData.whatsapp_group_url ? hrBranchData.whatsapp_group_url : '');
+
                 setTimeout(() => {
+                    let waWin = null;
+                    if (groupUrl && String(groupUrl).trim()) {
+                        waWin = window.open(groupUrl.trim(), '_blank');
+                    }
+                    window.focus();
                     window.print();
                     document.body.classList.remove('print-gov-shipping');
                     resetForm();
                     setBtnLoading(saveAndPrintBtn, false, "💾 حفظ وطباعة الفاتورة");
                     loadDataFromServer();
-                }, 1000);
+                    if (waWin) {
+                        try { waWin.focus(); } catch(e) {}
+                    }
+                }, 800);
 
             }).catch(() => {
                 if (typeof window.hideLoading === 'function') window.hideLoading();
@@ -6301,11 +6281,21 @@ window.shareToWhatsAppGroup = async function (orderId) {
     text += `🚚 *الشحن:* ${_shipping}\n`;
     text += `💰 *الإجمالي النهائي:* ${_remaining}\n`;
 
-    navigator.clipboard.writeText(text).then(() => {
-        showToast("تم نسخ بيانات الأوردر للحافظة بنجاح 📋", "success");
-    }).catch(err => {
-        showToast("فشل في نسخ البيانات", "error");
-    });
+    try {
+        await navigator.clipboard.writeText(text);
+        showToast("تم نسخ بيانات الأوردر للحافظة! جاري فتح جروب الواتساب... 📋", "success");
+    } catch (err) {
+        showToast("جاري فتح جروب الواتساب... 📋", "info");
+    }
+
+    let groupUrl = localStorage.getItem('cc_branch_whatsapp_group') || (hrBranchData && hrBranchData.whatsapp_group_url ? hrBranchData.whatsapp_group_url : '');
+    if (groupUrl && String(groupUrl).trim()) {
+        setTimeout(() => {
+            window.open(groupUrl.trim(), '_blank');
+        }, 150);
+    } else {
+        showToast("يرجى ضبط رابط جروب واتساب الفرع من إعدادات الفرع بالمدير ⚙️", "warning");
+    }
 };
 
 
