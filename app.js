@@ -3395,8 +3395,10 @@ function renderHistoryList(orders, isLoadMore = false) {
             <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 8px; align-items: center;">
                 <strong style="font-size: 1.05rem;">${order.id} | ${order.name} ${typeBadge}</strong>
                 <div style="display:flex; align-items:center; gap:10px;">
-                    <button class="interactive-btn" onclick="shareToWhatsAppGroup('${order.id}')" style="background:none; border:none; font-size:1.35rem; cursor:pointer;" title="نسخ ومشاركة لجروب الواتساب"><i class='fa-brands fa-whatsapp' style='color:#16a34a;'></i></button>
-                    <button class="interactive-btn" onclick="printHistoryOrder('${order.id}')" style="background:none; border:none; cursor:pointer;" title="طباعة الفاتورة">
+                    <button class="interactive-btn" onclick="shareToWhatsAppGroup('${order.id}')" style="background:none; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; padding:0;" title="نسخ ومشاركة لجروب الواتساب">
+                        <i class="fa-brands fa-whatsapp" style="font-size:22px; color:var(--text-dark); line-height:1;"></i>
+                    </button>
+                    <button class="interactive-btn" onclick="printHistoryOrder('${order.id}')" style="background:none; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; padding:0;" title="طباعة الفاتورة">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-dark);"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
                     </button>
                     <span style="background: ${statusColor}15; color: ${statusColor}; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.85rem;">${order.status}</span>
