@@ -5263,7 +5263,7 @@ function renderShippingRoom(history) {
                             <a href="tel:${o.phone}" style="color: #0284c7; text-decoration: none; font-weight: 700;"><i class="fa-solid fa-phone"></i> ${o.phone}</a>
                             <span style="color: #64748b;">الإجمالي: ${o.total} ج</span>
                         </div>
-                        ${o.products ? `<div style="font-size: 0.78rem; color: #64748b; background: #f8fafc; padding: 4px 8px; border-radius: 6px; width: 100%; box-sizing: border-box;"><i class="fa-solid fa-bag-shopping" style="color: #94a3b8;"></i> ${o.products.replace(/\g/g, ', ')}</div>` : ''}
+                        ${o.products ? `<div style="font-size: 0.78rem; color: #64748b; background: #f8fafc; padding: 4px 8px; border-radius: 6px; width: 100%; box-sizing: border-box;"><i class="fa-solid fa-bag-shopping" style="color: #94a3b8;"></i> ${o.products.replace(/\n/g, ', ')}</div>` : ''}
                         <div style="display: flex; gap: 8px; width: 100%; margin-top: 4px;">
                             <button type="button" class="interactive-btn" style="flex: 1; background: #10b981; color: white; border: none; border-radius: 10px; padding: 9px; font-weight: 800; font-size: 0.88rem; display: flex; align-items: center; justify-content: center; gap: 5px;" onclick="settleBranchOrder('${o.id}', this)">
                                 <i class="fa-solid fa-circle-check"></i> تسليم الحجز

@@ -915,13 +915,17 @@
                     width: 100%;
                     max-width: 100%;
                     box-sizing: border-box;
+                    overflow-x: hidden;
                 }
                 .shipping-nav-wrapper {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
                     margin-bottom: 14px;
                     overflow-x: auto;
                     -webkit-overflow-scrolling: touch;
                     scrollbar-width: none;
-                    padding-bottom: 4px;
+                    padding-bottom: 6px;
                 }
                 .shipping-nav-wrapper::-webkit-scrollbar {
                     display: none;
@@ -931,7 +935,6 @@
                     gap: 8px;
                     flex-wrap: nowrap;
                     width: max-content;
-                    min-width: 100%;
                 }
                 .shipping-subtab-pill {
                     padding: 10px 16px;
@@ -949,6 +952,7 @@
                     flex-shrink: 0;
                     transition: all 0.2s ease;
                     font-family: inherit;
+                    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
                 }
                 .shipping-subtab-pill:hover {
                     background: #f8fafc;
@@ -996,6 +1000,9 @@
                 .shipping-search-box {
                     position: relative;
                     margin-bottom: 16px;
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
                 }
                 .shipping-search-box .search-icon {
                     position: absolute;
@@ -1029,7 +1036,10 @@
                     -webkit-overflow-scrolling: touch;
                     scrollbar-width: none;
                     margin-bottom: 10px;
-                    padding-bottom: 2px;
+                    padding-bottom: 4px;
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
                 }
                 .quick-courier-chips::-webkit-scrollbar {
                     display: none;
@@ -1065,12 +1075,9 @@
                     border: 1px solid #e2e8f0;
                     border-radius: 12px;
                     padding: 12px;
-                }
-                @media (max-width: 540px) {
-                    .settlement-summary-grid {
-                        grid-template-columns: 1fr;
-                        gap: 8px;
-                    }
+                    box-sizing: border-box;
+                    width: 100%;
+                    max-width: 100%;
                 }
                 .settle-stat-card {
                     text-align: center;
@@ -1078,6 +1085,7 @@
                     border-radius: 8px;
                     background: #ffffff;
                     border: 1px solid #e2e8f0;
+                    box-sizing: border-box;
                 }
                 .settle-stat-card.highlight {
                     background: #ecfdf5;
@@ -1102,6 +1110,8 @@
                     display: flex;
                     gap: 8px;
                     flex-wrap: wrap;
+                    width: 100%;
+                    box-sizing: border-box;
                 }
                 .settle-actions-bar button {
                     flex: 1 1 100px;
@@ -1137,11 +1147,9 @@
                     display: grid;
                     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
                     gap: 12px;
-                }
-                @media (max-width: 640px) {
-                    .shipping-cards-grid {
-                        grid-template-columns: 1fr;
-                    }
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
                 }
                 .shipping-order-card {
                     background: #ffffff;
@@ -1155,6 +1163,10 @@
                     gap: 12px;
                     user-select: none;
                     box-sizing: border-box;
+                    width: 100%;
+                    max-width: 100%;
+                    min-width: 0;
+                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
                 }
                 .shipping-order-card:hover {
                     border-color: #cbd5e1;
@@ -1163,15 +1175,20 @@
                 .shipping-order-card.selected-card {
                     border-color: #0284c7;
                     background: #f0f9ff;
-                    box-shadow: 0 0 0 1px #0284c7;
+                    box-shadow: 0 0 0 1px #0284c7, 0 4px 12px rgba(2, 132, 199, 0.12);
                 }
                 .shipping-order-card input[type="checkbox"] {
-                    width: 18px;
-                    height: 18px;
+                    width: 20px;
+                    height: 20px;
                     margin-top: 3px;
                     cursor: pointer;
                     accent-color: #0284c7;
                     flex-shrink: 0;
+                }
+                .shipping-order-card .soc-body {
+                    flex: 1;
+                    min-width: 0;
+                    max-width: 100%;
                 }
                 .reservation-date-pill {
                     display: inline-flex;
@@ -1191,8 +1208,11 @@
                     overflow-x: auto;
                     -webkit-overflow-scrolling: touch;
                     scrollbar-width: none;
-                    padding-bottom: 2px;
+                    padding-bottom: 4px;
                     flex-wrap: nowrap;
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
                 }
                 .zones-filter-scroll::-webkit-scrollbar {
                     display: none;
@@ -1201,10 +1221,124 @@
                     display: grid;
                     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
                     gap: 12px;
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
                 }
-                @media (max-width: 580px) {
+
+                /* ========================================================= */
+                /* ⭐ RESPONSIVE MOBILE STYLES FOR SHIPPING HUB (<= 768px)    */
+                /* ========================================================= */
+                @media (max-width: 768px) {
+                    .shipping-subtab-pill {
+                        padding: 8px 12px;
+                        font-size: 0.82rem;
+                        gap: 6px;
+                        border-radius: 10px;
+                    }
+                    .shipping-subtab-pill .tab-badge {
+                        padding: 2px 6px;
+                        font-size: 0.74rem;
+                    }
+                    .shipping-cards-grid {
+                        grid-template-columns: 1fr;
+                        gap: 10px;
+                    }
                     .zones-cards-grid {
                         grid-template-columns: 1fr;
+                        gap: 10px;
+                    }
+                    .shipping-order-card {
+                        padding: 12px 10px;
+                        border-radius: 12px;
+                        gap: 10px;
+                    }
+                    .shipping-order-card .soc-name {
+                        font-size: 0.96rem;
+                    }
+                    .dispatch-actions-bar {
+                        display: grid !important;
+                        grid-template-columns: 1fr 1fr !important;
+                        gap: 8px !important;
+                    }
+                    .dispatch-actions-bar #selectAllPendingBtn {
+                        grid-column: 1 / 2 !important;
+                        width: 100% !important;
+                        min-height: 44px !important;
+                        flex: unset !important;
+                    }
+                    .dispatch-actions-bar #assignToDriverBtn {
+                        grid-column: 2 / 3 !important;
+                        width: 100% !important;
+                        min-height: 44px !important;
+                        flex: unset !important;
+                    }
+                    .dispatch-actions-bar #sendWaDriverBtn {
+                        grid-column: 1 / -1 !important;
+                        width: 100% !important;
+                        min-height: 44px !important;
+                        flex: unset !important;
+                    }
+                    #pendingOrdersSummaryStrip {
+                        flex-direction: column !important;
+                        align-items: stretch !important;
+                        gap: 6px !important;
+                        padding: 8px 12px !important;
+                        font-size: 0.8rem !important;
+                    }
+                    #selectedPendingSummaryText {
+                        display: block !important;
+                        text-align: center !important;
+                        background: #e0f2fe !important;
+                        color: #0369a1 !important;
+                        padding: 4px 8px !important;
+                        border-radius: 8px !important;
+                        font-weight: 800 !important;
+                    }
+                    .settlement-driver-row {
+                        flex-direction: column !important;
+                        gap: 8px !important;
+                    }
+                    .settlement-driver-row #closeDriverSelect {
+                        width: 100% !important;
+                        flex: unset !important;
+                    }
+                    .settlement-driver-row #loadDriverOrdersBtn {
+                        width: 100% !important;
+                        min-height: 44px !important;
+                        justify-content: center !important;
+                    }
+                    .settlement-summary-grid {
+                        grid-template-columns: repeat(3, 1fr) !important;
+                        gap: 6px !important;
+                        padding: 8px 6px !important;
+                        margin-bottom: 10px !important;
+                    }
+                    .settle-stat-card {
+                        padding: 6px 4px !important;
+                    }
+                    .settle-stat-card .stat-label {
+                        font-size: 0.68rem !important;
+                        margin-bottom: 2px !important;
+                    }
+                    .settle-stat-card .stat-val {
+                        font-size: 0.95rem !important;
+                    }
+                    .settle-actions-bar {
+                        display: grid !important;
+                        grid-template-columns: 1fr 1.2fr 1.2fr !important;
+                        gap: 6px !important;
+                    }
+                    .settle-actions-bar button {
+                        flex: unset !important;
+                        padding: 8px 4px !important;
+                        font-size: 0.78rem !important;
+                        min-height: 42px !important;
+                        gap: 4px !important;
+                    }
+                    .zones-add-grid {
+                        grid-template-columns: 1fr !important;
+                        gap: 8px !important;
                     }
                 }
             </style>
@@ -1250,7 +1384,7 @@
                         </select>
                     </div>
                     
-                    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
+                    <div class="dispatch-actions-bar" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
                         <button type="button" id="selectAllPendingBtn" class="interactive-btn" style="flex: 1 1 100px; min-height: 42px; background: #f8fafc; color: #334155; border: 1px solid #cbd5e1; border-radius: 10px; font-weight: 700; font-size: 0.9rem; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
                             <i class="fa-solid fa-check-double"></i> تحديد الكل
                         </button>
@@ -1288,7 +1422,7 @@
                     <!-- Quick Courier Chips for couriers with orders in transit -->
                     <div id="quickCourierChips" class="quick-courier-chips"></div>
 
-                    <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                    <div class="settlement-driver-row" style="display: flex; gap: 8px; margin-bottom: 12px;">
                         <select id="closeDriverSelect" style="flex: 1; padding: 11px 14px; border-radius: 10px; border: 1px solid #cbd5e1; font-weight: 700; font-size: 0.95rem; background: white; margin-bottom: 0;">
                             <option value="">-- اختر المندوب --</option>
                         </select>
@@ -1383,7 +1517,7 @@
                     <h3 style="margin: 0 0 12px 0; color: #b45309; font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
                         <i class="fa-solid fa-location-dot" style="color: #f59e0b;"></i> <span id="zoneFormHeading">إضافة أو تعديل منطقة شحن</span>
                     </h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; align-items: flex-end;">
+                    <div class="zones-add-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; align-items: flex-end;">
                         <div>
                             <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #475569; margin-bottom: 4px;">نوع المنطقة:</label>
                             <select id="newZoneType" style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-weight: 700; background: white; margin-bottom: 0;">
