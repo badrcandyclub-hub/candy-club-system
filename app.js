@@ -15377,8 +15377,30 @@ let HR_BRANCH_LNG = null;
 let HR_RADIUS_METERS = 100; // Geofencing radius
 let hrBranchData = null;
 
-// تحميل بيانات موقع الفرع ورابط الواتساب من جدول branches وجدول settings_shipping في Supabase
+// تحميل بيانات موقع الفرع ورابط الواتساب من جدول branch_settings الموحد في Supabase (مع التوافق مع branches)
 window.loadBranchLocation = async function() {
+    try {
+        // 1. فحص جدول branch_settings الموحد في سوبابيز أولاً
+        const { data: bSettings, error: bSetErr } = await supabase.from('branch_settings').select('*').limit(1);
+        if (!bSetErr && bSettings && bSettings.length > 0) {
+            const b = bSettings[0];
+            if (b.latitude && b.longitude) {
+                HR_BRANCH_LAT = parseFloat(b.latitude);
+                HR_BRANCH_LNG = parseFloat(b.longitude);
+                HR_RADIUS_METERS = parseInt(b.radius_meters) || 100;
+            }
+            let groupUrl = b.whatsapp_group_url || localStorage.getItem('cc_branch_whatsapp_group') || '';
+            hrBranchData = { ...b, whatsapp_group_url: groupUrl };
+            localStorage.setItem('cc_branch_data', JSON.stringify(hrBranchData));
+            if (groupUrl) localStorage.setItem('cc_branch_whatsapp_group', groupUrl);
+            console.log("Branch unified settings loaded from Supabase (branch_settings):", hrBranchData);
+            return hrBranchData;
+        }
+    } catch(e) {
+        // branch_settings may not exist yet, fallback to legacy
+    }
+
+    // 2. التوافق التلقائي مع جدول branches و settings_shipping
     try {
         const [branchRes, waRes] = await Promise.all([
             supabase.from('branches').select('*').limit(1),
@@ -15399,19 +15421,11 @@ window.loadBranchLocation = async function() {
                 HR_BRANCH_LAT = parseFloat(b.latitude);
                 HR_BRANCH_LNG = parseFloat(b.longitude);
                 HR_RADIUS_METERS = parseInt(b.radius_meters) || 100;
-                hrBranchData = { ...b, whatsapp_group_url: groupUrl };
-                localStorage.setItem('cc_branch_data', JSON.stringify(hrBranchData));
-                if (groupUrl) localStorage.setItem('cc_branch_whatsapp_group', groupUrl);
-                console.log("Branch location & WhatsApp loaded from Supabase:", { lat: HR_BRANCH_LAT, lng: HR_BRANCH_LNG, radius: HR_RADIUS_METERS, whatsapp: groupUrl });
-                return hrBranchData;
-            } else {
-                HR_BRANCH_LAT = null;
-                HR_BRANCH_LNG = null;
-                hrBranchData = { ...b, whatsapp_group_url: groupUrl };
-                localStorage.setItem('cc_branch_data', JSON.stringify(hrBranchData));
-                if (groupUrl) localStorage.setItem('cc_branch_whatsapp_group', groupUrl);
-                return hrBranchData;
             }
+            hrBranchData = { ...b, whatsapp_group_url: groupUrl };
+            localStorage.setItem('cc_branch_data', JSON.stringify(hrBranchData));
+            if (groupUrl) localStorage.setItem('cc_branch_whatsapp_group', groupUrl);
+            return hrBranchData;
         }
     } catch(e) {
         console.warn("Could not load branch location from Supabase:", e);
@@ -15426,10 +15440,10 @@ window.loadBranchLocation = async function() {
                 HR_BRANCH_LAT = parseFloat(parsed.latitude);
                 HR_BRANCH_LNG = parseFloat(parsed.longitude);
                 HR_RADIUS_METERS = parseInt(parsed.radius_meters) || 100;
-                let groupUrl = parsed.whatsapp_group_url || localStorage.getItem('cc_branch_whatsapp_group') || '';
-                hrBranchData = { ...parsed, whatsapp_group_url: groupUrl };
-                return hrBranchData;
             }
+            let groupUrl = parsed.whatsapp_group_url || localStorage.getItem('cc_branch_whatsapp_group') || '';
+            hrBranchData = { ...parsed, whatsapp_group_url: groupUrl };
+            return hrBranchData;
         }
     } catch(e) {}
     
@@ -15754,6 +15768,8 @@ window.captureAdminBranchLocation = function() {
 
 window.loadBranchSettingsAdmin = async function() {
     const nameInp = document.getElementById('adminBranchName');
+    const userInp = document.getElementById('adminBranchUser');
+    const addrInp = document.getElementById('adminBranchAddress');
     const waInp = document.getElementById('adminBranchWhatsapp');
     const radInp = document.getElementById('adminBranchRadius');
     const latInp = document.getElementById('adminBranchLat');
@@ -15766,6 +15782,8 @@ window.loadBranchSettingsAdmin = async function() {
     const currentWa = localStorage.getItem('cc_branch_whatsapp_group') || (bData && bData.whatsapp_group_url ? bData.whatsapp_group_url : '');
     
     if (nameInp) nameInp.value = (bData && bData.branch_name) ? bData.branch_name : 'الفرع الرئيسي';
+    if (userInp) userInp.value = (bData && bData.branch_user) ? bData.branch_user : (currentUser ? currentUser.username || currentUser.display_name : '');
+    if (addrInp) addrInp.value = (bData && bData.branch_address) ? bData.branch_address : '';
     if (waInp) waInp.value = currentWa;
     if (radInp) radInp.value = (bData && bData.radius_meters) ? bData.radius_meters : 100;
     if (latInp) latInp.value = (bData && bData.latitude) ? bData.latitude : '';
@@ -15779,12 +15797,16 @@ window.handleSaveBranchSettingsAdmin = async function(e) {
     
     const saveBtn = document.getElementById('btnSaveAdminBranchSettings');
     const nameInput = document.getElementById('adminBranchName');
+    const userInput = document.getElementById('adminBranchUser');
+    const addrInput = document.getElementById('adminBranchAddress');
     const waInput = document.getElementById('adminBranchWhatsapp');
     const latInput = document.getElementById('adminBranchLat');
     const lngInput = document.getElementById('adminBranchLng');
     const radiusInput = document.getElementById('adminBranchRadius');
     
     const branchName = nameInput ? nameInput.value.trim() : 'الفرع الرئيسي';
+    const branchUser = userInput ? userInput.value.trim() : '';
+    const branchAddress = addrInput ? addrInput.value.trim() : '';
     const waUrl = waInput ? waInput.value.trim() : '';
     const lat = latInput ? parseFloat(latInput.value) : null;
     const lng = lngInput ? parseFloat(lngInput.value) : null;
@@ -15809,30 +15831,51 @@ window.handleSaveBranchSettingsAdmin = async function(e) {
     
     try {
         const nowIso = new Date().toISOString();
-        let payload = {
+        let unifiedPayload = {
             branch_code: hrBranchData ? (hrBranchData.branch_code || 'main') : 'main',
             branch_name: branchName,
+            branch_user: branchUser,
+            branch_address: branchAddress,
+            whatsapp_group_url: waUrl,
             latitude: lat,
             longitude: lng,
             radius_meters: radius,
             updated_at: nowIso
         };
         
-        // 1. حفظ وتحديث بيانات الفرع والموقع الجغرافي (GPS) في جدول branches في Supabase
-        const { data: existingBranches, error: chkErr } = await supabase.from('branches').select('id').limit(1);
-        
-        let saveErr = null;
-        if (!chkErr && existingBranches && existingBranches.length > 0) {
-            const res = await supabase.from('branches').update(payload).eq('id', existingBranches[0].id);
-            saveErr = res.error;
-        } else {
-            const res = await supabase.from('branches').insert([payload]);
-            saveErr = res.error;
+        // 1. الحفظ في جدول branch_settings الموحد في Supabase
+        try {
+            const { data: existingSet, error: setChkErr } = await supabase.from('branch_settings').select('id').limit(1);
+            if (!setChkErr) {
+                if (existingSet && existingSet.length > 0) {
+                    await supabase.from('branch_settings').update(unifiedPayload).eq('id', existingSet[0].id);
+                } else {
+                    await supabase.from('branch_settings').insert([unifiedPayload]);
+                }
+            }
+        } catch (e) {
+            console.warn("Unified branch_settings save:", e);
         }
-        
-        if (saveErr) throw saveErr;
 
-        // 2. حفظ رابط جروب الواتساب في سوبابيز داخل جدول settings_shipping كإعداد سحابي دائم
+        // 2. تحديث جدول branches لضمان التوافق مع نظام الحضور والـ GPS
+        try {
+            const legacyPayload = {
+                branch_code: 'main',
+                branch_name: branchName,
+                latitude: lat,
+                longitude: lng,
+                radius_meters: radius,
+                updated_at: nowIso
+            };
+            const { data: existingBranches, error: chkErr } = await supabase.from('branches').select('id').limit(1);
+            if (!chkErr && existingBranches && existingBranches.length > 0) {
+                await supabase.from('branches').update(legacyPayload).eq('id', existingBranches[0].id);
+            } else {
+                await supabase.from('branches').insert([legacyPayload]);
+            }
+        } catch(e) {}
+
+        // 3. تحديث جدول settings_shipping كنسخة احتياطية سحابية للرابط
         try {
             const { data: existingWa } = await supabase
                 .from('settings_shipping')
@@ -15842,36 +15885,29 @@ window.handleSaveBranchSettingsAdmin = async function(e) {
                 .limit(1);
 
             if (existingWa && existingWa.length > 0) {
-                await supabase
-                    .from('settings_shipping')
-                    .update({ delivery_type: waUrl, duration: branchName })
-                    .eq('id', existingWa[0].id);
+                await supabase.from('settings_shipping').update({ delivery_type: waUrl, duration: branchName }).eq('id', existingWa[0].id);
             } else {
-                await supabase
-                    .from('settings_shipping')
-                    .insert([{
-                        zone_name: '_BRANCH_WHATSAPP_',
-                        zone_type: 'system',
-                        delivery_type: waUrl,
-                        duration: branchName,
-                        price: 0
-                    }]);
+                await supabase.from('settings_shipping').insert([{
+                    zone_name: '_BRANCH_WHATSAPP_',
+                    zone_type: 'system',
+                    delivery_type: waUrl,
+                    duration: branchName,
+                    price: 0
+                }]);
             }
-        } catch(waErr) {
-            console.warn("Could not save whatsapp url to settings_shipping in Supabase:", waErr);
-        }
+        } catch(waErr) {}
         
         HR_BRANCH_LAT = lat;
         HR_BRANCH_LNG = lng;
         HR_RADIUS_METERS = radius;
-        hrBranchData = { ...payload, whatsapp_group_url: waUrl, id: existingBranches && existingBranches[0] ? existingBranches[0].id : 1 };
+        hrBranchData = { ...unifiedPayload, id: 1 };
         localStorage.setItem('cc_branch_data', JSON.stringify(hrBranchData));
         
         if (typeof window.bumpSystemActivity === 'function') {
             window.bumpSystemActivity();
         }
         
-        showToast("تم حفظ وتطبيق كافة إعدادات الفرع بنجاح 🏬", "success");
+        showToast("تم حفظ وتطبيق كافة بيانات الفرع والمستخدم سحابياً بنجاح 🏬", "success");
         window.updateAdminBranchMapPreview();
         
         if (typeof initHrGps === 'function') {
@@ -15879,11 +15915,10 @@ window.handleSaveBranchSettingsAdmin = async function(e) {
         }
     } catch(err) {
         console.error("Admin save branch error:", err);
-        // حتى لو فشل الاتصال بالسيرفر، يتم الحفظ في الكاش المحلي
         HR_BRANCH_LAT = lat;
         HR_BRANCH_LNG = lng;
         HR_RADIUS_METERS = radius;
-        hrBranchData = { branch_name: branchName, latitude: lat, longitude: lng, radius_meters: radius, whatsapp_group_url: waUrl };
+        hrBranchData = { branch_name: branchName, branch_user: branchUser, branch_address: branchAddress, latitude: lat, longitude: lng, radius_meters: radius, whatsapp_group_url: waUrl };
         localStorage.setItem('cc_branch_data', JSON.stringify(hrBranchData));
         showToast("تم حفظ الإعدادات محلياً في هذا المتصفح بنجاح", "success");
     } finally {
