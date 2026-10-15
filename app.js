@@ -379,15 +379,49 @@ function escapeMarketplaceArchiveHtml(value) {
 
 window.marketplaceArchiveFilteredData = [];
 window.marketplaceArchivePage = 1;
+window.marketplaceRecentlyEditedKeys = new Set();
 const MARKETPLACE_ARCHIVE_PAGE_SIZE = 50;
+
+window.updateMarketplaceKpis = function() {
+    const month = document.getElementById('marketplaceArchiveMonth')?.value || '';
+    let tPresent = 0, tAbsent = 0, tUnknown = 0;
+    let iPresent = 0, iAbsent = 0, iUnknown = 0;
+
+    (window.receiptsArchiveData || []).forEach(item => {
+        const entryMonth = String(item.regDate || '').slice(0, 7);
+        if (month && entryMonth !== month) return;
+        const ts = window.normalizeMarketplaceStatus(item.talabatStatus);
+        const is = window.normalizeMarketplaceStatus(item.instashopStatus);
+        if (ts === 'present') tPresent++; else if (ts === 'absent') tAbsent++; else tUnknown++;
+        if (is === 'present') iPresent++; else if (is === 'absent') iAbsent++; else iUnknown++;
+    });
+
+    const elTalPresent = document.getElementById('kpiTalabatPresent');
+    const elTalAbsent = document.getElementById('kpiTalabatAbsent');
+    const elTalUnknown = document.getElementById('kpiTalabatUnknown');
+    const elInsPresent = document.getElementById('kpiInstashopPresent');
+    const elInsAbsent = document.getElementById('kpiInstashopAbsent');
+    const elInsUnknown = document.getElementById('kpiInstashopUnknown');
+
+    if (elTalPresent) elTalPresent.textContent = tPresent;
+    if (elTalAbsent) elTalAbsent.textContent = tAbsent;
+    if (elTalUnknown) elTalUnknown.textContent = tUnknown;
+    if (elInsPresent) elInsPresent.textContent = iPresent;
+    if (elInsAbsent) elInsAbsent.textContent = iAbsent;
+    if (elInsUnknown) elInsUnknown.textContent = iUnknown;
+};
+
 window.renderMarketplaceArchive = function() {
     const tbody = document.getElementById('marketplaceArchiveTableBody');
     if (!tbody) return;
+
+    window.updateMarketplaceKpis();
 
     const month = document.getElementById('marketplaceArchiveMonth')?.value || '';
     const query = (document.getElementById('marketplaceArchiveSearch')?.value || '').trim().toLowerCase();
     const talabatFilter = document.getElementById('marketplaceArchiveTalabatFilter')?.value || 'all';
     const instashopFilter = document.getElementById('marketplaceArchiveInstashopFilter')?.value || 'all';
+
     const rows = (window.receiptsArchiveData || []).filter(item => {
         const entryMonth = String(item.regDate || '').slice(0, 7);
         const matchesMonth = !month || entryMonth === month;
@@ -395,7 +429,13 @@ window.renderMarketplaceArchive = function() {
         const matchesQuery = !query || searchable.includes(query);
         const matchesTalabat = talabatFilter === 'all' || window.normalizeMarketplaceStatus(item.talabatStatus) === talabatFilter;
         const matchesInstashop = instashopFilter === 'all' || window.normalizeMarketplaceStatus(item.instashopStatus) === instashopFilter;
-        return matchesMonth && matchesQuery && matchesTalabat && matchesInstashop;
+
+        // ثبات الصف: إذا قام المستخدم بتعديل هذا الصنف في الجلسة الحالية، يظل ظاهراً حتى لا يختفي قبل تعديل المنصة الأخرى
+        const itemKey = item.barcode ? `barcode:${String(item.barcode).trim().toLowerCase()}` : `id:${item.id}`;
+        const isRecentlyModified = window.marketplaceRecentlyEditedKeys && window.marketplaceRecentlyEditedKeys.has(itemKey);
+        const matchesFilter = (matchesTalabat && matchesInstashop) || isRecentlyModified;
+
+        return matchesMonth && matchesQuery && matchesFilter;
     });
 
     window.marketplaceArchiveFilteredData = rows;
@@ -406,7 +446,7 @@ window.renderMarketplaceArchive = function() {
     const count = document.getElementById('marketplaceArchiveCount');
     const pageInfo = document.getElementById('marketplaceArchivePageInfo');
     if (count) count.textContent = `${rows.length} منتج`;
-    if (pageInfo) pageInfo.textContent = `صفحة ${window.marketplaceArchivePage} من ${pageCount}`;
+    if (pageInfo) pageInfo.innerHTML = `<span>صفحة <b class="page-current">${window.marketplaceArchivePage}</b> من <b class="page-total">${pageCount}</b></span>`;
     const previousButton = document.getElementById('marketplaceArchivePrevBtn');
     const nextButton = document.getElementById('marketplaceArchiveNextBtn');
     if (previousButton) previousButton.disabled = window.marketplaceArchivePage <= 1;
@@ -416,10 +456,37 @@ window.renderMarketplaceArchive = function() {
         return;
     }
 
-    const statusOptions = status => `
-        <option value="unknown" ${status === 'unknown' ? 'selected' : ''}>غير محدد</option>
-        <option value="present" ${status === 'present' ? 'selected' : ''}>موجود</option>
-        <option value="absent" ${status === 'absent' ? 'selected' : ''}>غير موجود</option>`;
+    const renderMarketplaceCustomSelect = (id, barcode, name, platform, status) => {
+        const safeName = escapeMarketplaceArchiveHtml(name || '');
+        const currentLabel = window.marketplaceStatusLabel(status);
+        return `
+            <div class="marketplace-custom-select marketplace-custom-select--${platform}" 
+                data-archive-id="${id}" 
+                data-archive-barcode="${barcode}" 
+                data-archive-name="${safeName}" 
+                data-marketplace-status="${platform}" 
+                data-status="${status}">
+                <button type="button" class="marketplace-custom-select__btn" aria-haspopup="listbox" aria-expanded="false" title="تغيير حالة ${platform === 'talabat' ? 'طلبات' : 'InstaShop'}">
+                    <span class="marketplace-status-dot dot--${status}"></span>
+                    <span class="marketplace-status-text">${currentLabel}</span>
+                    <i class="fa-solid fa-chevron-down marketplace-custom-select__arrow"></i>
+                </button>
+                <div class="marketplace-custom-select__menu" role="listbox">
+                    <div class="marketplace-custom-select__option option--present ${status === 'present' ? 'is-selected' : ''}" data-value="present" role="option">
+                        <span class="marketplace-status-dot dot--present"></span>
+                        <span class="option-label">موجود</span>
+                    </div>
+                    <div class="marketplace-custom-select__option option--absent ${status === 'absent' ? 'is-selected' : ''}" data-value="absent" role="option">
+                        <span class="marketplace-status-dot dot--absent"></span>
+                        <span class="option-label">غير موجود</span>
+                    </div>
+                    <div class="marketplace-custom-select__option option--unknown ${status === 'unknown' ? 'is-selected' : ''}" data-value="unknown" role="option">
+                        <span class="marketplace-status-dot dot--unknown"></span>
+                        <span class="option-label">غير محدد</span>
+                    </div>
+                </div>
+            </div>`;
+    };
 
     tbody.innerHTML = visibleRows.map(item => {
         const id = escapeMarketplaceArchiveHtml(item.id || '');
@@ -427,50 +494,104 @@ window.renderMarketplaceArchive = function() {
         const talabatStatus = window.normalizeMarketplaceStatus(item.talabatStatus);
         const instashopStatus = window.normalizeMarketplaceStatus(item.instashopStatus);
         const registrationDate = escapeMarketplaceArchiveHtml(item.regDate || '-');
+        const itemKey = barcode ? `barcode:${barcode.toLowerCase()}` : `id:${id}`;
+        const isRecentlyModified = window.marketplaceRecentlyEditedKeys && window.marketplaceRecentlyEditedKeys.has(itemKey);
+
         return `
-            <tr>
-                <td class="marketplace-product-name">${escapeMarketplaceArchiveHtml(item.name || 'اسم غير مسجل')}</td>
-                <td class="marketplace-barcode" dir="ltr">${barcode || '-'}</td>
-                <td dir="ltr">${registrationDate}</td>
-                <td>
-                    <select class="marketplace-status-select marketplace-status-select--talabat" data-archive-id="${id}" data-archive-barcode="${barcode}" data-marketplace-status="talabat" data-previous-value="${talabatStatus}" aria-label="حالة طلبات للمنتج ${escapeMarketplaceArchiveHtml(item.name || '')}">
-                        ${statusOptions(talabatStatus)}
-                    </select>
+            <tr class="${isRecentlyModified ? 'marketplace-row--recently-modified' : ''}" data-row-key="${itemKey}">
+                <td class="marketplace-product-name" data-label="المنتج">
+                    <div class="marketplace-prod-name-wrap">
+                        <span class="marketplace-name-text">${escapeMarketplaceArchiveHtml(item.name || 'اسم غير مسجل')}</span>
+                        ${isRecentlyModified ? '<span class="marketplace-modified-tag" title="تم تعديل هذا المنتج ويظل ظاهراً حتى تغيير الفلتر"><i class="fa-solid fa-clock-rotate-left"></i> مُعدّل مؤقتاً</span>' : ''}
+                    </div>
                 </td>
-                <td>
-                    <select class="marketplace-status-select marketplace-status-select--instashop" data-archive-id="${id}" data-archive-barcode="${barcode}" data-marketplace-status="instashop" data-previous-value="${instashopStatus}" aria-label="حالة InstaShop للمنتج ${escapeMarketplaceArchiveHtml(item.name || '')}">
-                        ${statusOptions(instashopStatus)}
-                    </select>
+                <td class="marketplace-barcode" data-label="الباركود" dir="ltr">
+                    ${barcode ? `
+                        <button type="button" class="marketplace-barcode-pill" data-barcode="${barcode}" title="انقر لنسخ الباركود">
+                            <span class="barcode-pill-text">${barcode}</span>
+                            <i class="fa-regular fa-copy barcode-pill-icon"></i>
+                        </button>
+                    ` : '<span class="marketplace-no-barcode">-</span>'}
+                </td>
+                <td class="marketplace-reg-date" data-label="تاريخ التسجيل" dir="ltr">${registrationDate}</td>
+                <td class="marketplace-col-talabat" data-label="طلبات">
+                    ${renderMarketplaceCustomSelect(id, barcode, item.name, 'talabat', talabatStatus)}
+                </td>
+                <td class="marketplace-col-instashop" data-label="InstaShop">
+                    ${renderMarketplaceCustomSelect(id, barcode, item.name, 'instashop', instashopStatus)}
                 </td>
             </tr>`;
     }).join('');
 };
 
-async function saveMarketplaceArchiveStatus(select) {
-    const platform = select.dataset.marketplaceStatus;
-    const barcode = String(select.dataset.archiveBarcode || '').trim();
-    const id = select.dataset.archiveId;
-    const status = window.normalizeMarketplaceStatus(select.value);
+async function saveMarketplaceArchiveStatus(customSelect, targetStatus) {
+    const platform = customSelect.dataset.marketplaceStatus;
+    const barcode = String(customSelect.dataset.archiveBarcode || '').trim();
+    const productName = String(customSelect.dataset.archiveName || '').trim();
+    const id = customSelect.dataset.archiveId;
+    const status = window.normalizeMarketplaceStatus(targetStatus);
     const field = platform === 'talabat' ? 'talabat_status' : platform === 'instashop' ? 'instashop_status' : '';
     if (!field) throw new Error('منصة غير معروفة لتحديث الحالة.');
-    if (!barcode && !id) throw new Error('لا يوجد باركود أو معرّف لهذا السجل.');
+    if (!barcode && !id && !productName) throw new Error('لا يوجد باركود أو معرّف لهذا السجل.');
 
+    // حفظ في قاعدة بيانات Supabase
     let query = supabase.from('expiry_receipts_log').update({ [field]: status });
-    query = barcode ? query.eq('barcode', barcode) : query.eq('id', id);
+    if (barcode) {
+        query = query.eq('barcode', barcode);
+    } else if (id) {
+        query = query.eq('id', id);
+    } else {
+        query = query.eq('product_name', productName);
+    }
     const { error } = await query;
     if (error) throw error;
 
+    // تسجيل الصنف كمُعدّل لمنع اختفائه أثناء الفلترة
+    const itemKey = barcode ? `barcode:${barcode.toLowerCase()}` : `id:${id}`;
+    if (!window.marketplaceRecentlyEditedKeys) window.marketplaceRecentlyEditedKeys = new Set();
+    window.marketplaceRecentlyEditedKeys.add(itemKey);
+
+    // تحديث ذاكرة السجلات الحالية
     const normalizedBarcode = barcode.toLowerCase();
     (window.receiptsArchiveData || []).forEach(item => {
         const matches = barcode
             ? String(item.barcode || '').trim().toLowerCase() === normalizedBarcode
-            : String(item.id) === String(id);
+            : (id && String(item.id) === String(id)) || (productName && String(item.name || '').trim() === productName);
         if (matches) {
             if (platform === 'talabat') item.talabatStatus = status;
             else item.instashopStatus = status;
         }
     });
-    window.renderMarketplaceArchive();
+
+    // تحديث عناصر القائمة المخصصة الحالية
+    customSelect.dataset.status = status;
+    const btn = customSelect.querySelector('.marketplace-custom-select__btn');
+    if (btn) {
+        const textSpan = btn.querySelector('.marketplace-status-text');
+        const dotSpan = btn.querySelector('.marketplace-status-dot');
+        if (textSpan) textSpan.textContent = window.marketplaceStatusLabel(status);
+        if (dotSpan) dotSpan.className = `marketplace-status-dot dot--${status}`;
+    }
+    customSelect.querySelectorAll('.marketplace-custom-select__option').forEach(opt => {
+        opt.classList.toggle('is-selected', opt.dataset.value === status);
+    });
+
+    // إظهار شارة التعديل على الصف في حال عدم وجودها
+    const row = customSelect.closest('tr');
+    if (row && !row.classList.contains('marketplace-row--recently-modified')) {
+        row.classList.add('marketplace-row--recently-modified');
+        const nameWrap = row.querySelector('.marketplace-prod-name-wrap');
+        if (nameWrap && !nameWrap.querySelector('.marketplace-modified-tag')) {
+            const tag = document.createElement('span');
+            tag.className = 'marketplace-modified-tag';
+            tag.title = 'تم تعديل هذا المنتج ويظل ظاهراً حتى تغيير الفلتر';
+            tag.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i> مُعدّل مؤقتاً';
+            nameWrap.appendChild(tag);
+        }
+    }
+
+    // تحديث شريط الإحصائيات الحية
+    window.updateMarketplaceKpis();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -479,45 +600,123 @@ document.addEventListener('DOMContentLoaded', () => {
         const now = new Date();
         monthInput.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     }
+
+    // تصفير قائمة المعدّلات مؤقتاً عند تعديل أي فلتر يدوي للبحث
     ['marketplaceArchiveMonth', 'marketplaceArchiveSearch', 'marketplaceArchiveTalabatFilter', 'marketplaceArchiveInstashopFilter']
         .forEach(id => document.getElementById(id)?.addEventListener('input', () => {
+            if (window.marketplaceRecentlyEditedKeys) window.marketplaceRecentlyEditedKeys.clear();
             window.marketplaceArchivePage = 1;
             window.renderMarketplaceArchive();
         }));
+
     document.getElementById('marketplaceArchivePrevBtn')?.addEventListener('click', () => {
         window.marketplaceArchivePage -= 1;
         window.renderMarketplaceArchive();
+        document.querySelector('.marketplace-archive-table-wrap')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
     document.getElementById('marketplaceArchiveNextBtn')?.addEventListener('click', () => {
         window.marketplaceArchivePage += 1;
         window.renderMarketplaceArchive();
+        document.querySelector('.marketplace-archive-table-wrap')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
-    document.getElementById('marketplaceArchiveTableBody')?.addEventListener('change', async event => {
-        const select = event.target;
-        if (!(select instanceof HTMLSelectElement) || !select.classList.contains('marketplace-status-select')) return;
-        const oldValue = select.dataset.previousValue || 'unknown';
-        select.disabled = true;
-        try {
-            await saveMarketplaceArchiveStatus(select);
-            if (typeof window.showToast === 'function') window.showToast('تم تحديث حالة المنصة في الأرشيف لكل سجلات الباركود.', 'success');
-        } catch (error) {
-            console.error('Marketplace archive status update failed:', error);
-            select.value = oldValue;
-            if (typeof window.showToast === 'function') {
-                window.showToast(`تعذر تحديث الحالة في الأرشيف: ${error.message || 'خطأ غير معروف'}`, 'error');
+
+    // استماع النقرات على جدول المتابعة (النسخ والقوائم المنسدلة)
+    document.getElementById('marketplaceArchiveTableBody')?.addEventListener('click', event => {
+        // 1. نسخ الباركود من الكبسولة التفاعلية
+        const barcodeBtn = event.target.closest('.marketplace-barcode-pill');
+        if (barcodeBtn) {
+            event.preventDefault();
+            const barcode = barcodeBtn.dataset.barcode;
+            if (barcode) {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(barcode).then(() => {
+                        barcodeBtn.classList.add('copied');
+                        const icon = barcodeBtn.querySelector('.barcode-pill-icon');
+                        if (icon) icon.className = 'fa-solid fa-check barcode-pill-icon';
+                        setTimeout(() => {
+                            barcodeBtn.classList.remove('copied');
+                            if (icon) icon.className = 'fa-regular fa-copy barcode-pill-icon';
+                        }, 1200);
+                        if (typeof window.showToast === 'function') window.showToast(`تم نسخ الباركود (${barcode}) إلى الحافظة`, 'info');
+                    }).catch(() => {
+                        window.prompt('انسخ الباركود:', barcode);
+                    });
+                } else {
+                    window.prompt('انسخ الباركود:', barcode);
+                }
             }
-        } finally {
-            select.disabled = false;
+            return;
+        }
+
+        // 2. فتح/إغلاق القائمة المنسدلة المخصصة
+        const customSelectBtn = event.target.closest('.marketplace-custom-select__btn');
+        if (customSelectBtn) {
+            event.preventDefault();
+            const customSelect = customSelectBtn.closest('.marketplace-custom-select');
+            const willOpen = !customSelect.classList.contains('is-open');
+            document.querySelectorAll('.marketplace-custom-select.is-open').forEach(el => {
+                if (el !== customSelect) {
+                    el.classList.remove('is-open');
+                    el.querySelector('.marketplace-custom-select__btn')?.setAttribute('aria-expanded', 'false');
+                }
+            });
+            customSelect.classList.toggle('is-open', willOpen);
+            customSelectBtn.setAttribute('aria-expanded', String(willOpen));
+            return;
+        }
+
+        // 3. اختيار حالة من القائمة المنسدلة المخصصة
+        const option = event.target.closest('.marketplace-custom-select__option');
+        if (option) {
+            event.preventDefault();
+            const customSelect = option.closest('.marketplace-custom-select');
+            const targetValue = option.dataset.value;
+            customSelect.classList.remove('is-open');
+            customSelect.querySelector('.marketplace-custom-select__btn')?.setAttribute('aria-expanded', 'false');
+
+            const previousStatus = customSelect.dataset.status;
+            if (targetValue === previousStatus) return;
+
+            const btn = customSelect.querySelector('.marketplace-custom-select__btn');
+            if (btn) btn.disabled = true;
+
+            saveMarketplaceArchiveStatus(customSelect, targetValue)
+                .then(() => {
+                    if (typeof window.showToast === 'function') window.showToast('تم حفظ الحالة بنجاح.', 'success');
+                })
+                .catch(error => {
+                    console.error('Marketplace status update failed:', error);
+                    if (typeof window.showToast === 'function') {
+                        window.showToast(`تعذر حفظ الحالة: ${error.message || 'خطأ غير معروف'}`, 'error');
+                    }
+                })
+                .finally(() => {
+                    if (btn) btn.disabled = false;
+                });
+            return;
         }
     });
+
+    // إغلاق أي قائمة منسدلة مفتوحة عند النقر خارجها
+    document.addEventListener('click', event => {
+        if (!event.target.closest('.marketplace-custom-select')) {
+            document.querySelectorAll('.marketplace-custom-select.is-open').forEach(el => {
+                el.classList.remove('is-open');
+                el.querySelector('.marketplace-custom-select__btn')?.setAttribute('aria-expanded', 'false');
+            });
+        }
+    });
+
+    // زر التحديث اليدوي
     document.getElementById('refreshMarketplaceArchiveBtn')?.addEventListener('click', async event => {
         const button = event.currentTarget;
         button.disabled = true;
         try {
+            if (window.marketplaceRecentlyEditedKeys) window.marketplaceRecentlyEditedKeys.clear();
             const loaded = await window.loadReceiptsArchiveData();
             if (!loaded) throw new Error('لم يتم تحميل بيانات الأرشيف من قاعدة البيانات.');
             window.renderMarketplaceArchive();
-            if (typeof window.showToast === 'function') window.showToast('تم تحديث أرشيف المنصات.', 'success');
+            if (typeof window.showToast === 'function') window.showToast('تم تحديث أرشيف المنصات بنجاح.', 'success');
         } catch (error) {
             console.error('Marketplace archive refresh failed:', error);
             if (typeof window.showToast === 'function') window.showToast('تعذر تحديث أرشيف المنصات.', 'error');
@@ -525,6 +724,7 @@ document.addEventListener('DOMContentLoaded', () => {
             button.disabled = false;
         }
     });
+
     window.renderMarketplaceArchive();
 });
 
@@ -656,6 +856,7 @@ async function handleSupabaseRequest(url, options) {
                     suspend_time: timeStr,
                     moderator_name: draftJsonObj.moderator || 'غير محدد',
                     customer_name: draftJsonObj.customerName || 'بدون اسم',
+                    draft_id: String(params.draftId),
                     draft_json: params.draftJson || '{}'
                 };
 
@@ -664,9 +865,11 @@ async function handleSupabaseRequest(url, options) {
                     .select();
 
                 if (dftErr) {
+                    console.error('Error suspending order in Supabase:', dftErr);
                     responseData = { success: false, error: dftErr.message };
                 } else {
                     responseData = { success: true, data: drafted[0] };
+                    responseData = { success: true, data: drafted ? drafted[0] : null };
                 }
                 break;
             }
@@ -2601,8 +2804,13 @@ async function loadDataFromServer(customDate = null) {
 
         // Suspended orders
         window.suspendedOrdersData = (rawSuspended || []).map(s => {
-            let parsed = typeof s.draft_json === 'string' ? JSON.parse(s.draft_json) : s.draft_json;
-            return { ...parsed, _supabaseId: s.id, draftId: s.draft_id };
+            let parsed = {};
+            try {
+                parsed = typeof s.draft_json === 'string' ? JSON.parse(s.draft_json) : (s.draft_json || {});
+            } catch(e) {
+                console.warn('Error parsing draft_json:', e);
+            }
+            return { ...parsed, _supabaseId: s.id, draftId: s.draft_id, id: s.draft_id };
         });
         updateSuspendedCount();
 
@@ -4291,38 +4499,85 @@ if (confirmPaymentBtn) {
 
 function updateSuspendedCount() {
     let count = window.suspendedOrdersData ? window.suspendedOrdersData.length : 0;
-    if (document.getElementById('suspendedCount')) document.getElementById('suspendedCount').innerText = count;
+    let countEl = document.getElementById('suspendedCount');
+    let btn = document.getElementById('openSuspendedBtn');
+    if (countEl) countEl.innerText = count;
+    if (btn) {
+        let icon = btn.querySelector('.btn-suspended-icon');
+        if (count > 0) {
+            btn.classList.add('has-items');
+            btn.classList.remove('is-empty');
+            if (icon) icon.className = 'fa-solid fa-folder-open btn-suspended-icon';
+        } else {
+            btn.classList.remove('has-items');
+            btn.classList.add('is-empty');
+            if (icon) icon.className = 'fa-solid fa-folder-closed btn-suspended-icon';
+        }
+    }
 }
 
 let suspendBtn = document.getElementById('suspendBtn');
 if (suspendBtn) {
-    suspendBtn.addEventListener('click', () => {
-        setBtnLoading(suspendBtn, true); // <i class='fa-solid fa-star'></i> منع تكرار الأوردرات
-        let nameEl = document.getElementById('customerName'); let name = nameEl && nameEl.value ? nameEl.value : "بدون اسم";
+    suspendBtn.addEventListener('click', async () => {
+        let nameEl = document.getElementById('customerName');
+        let name = nameEl && nameEl.value.trim() ? nameEl.value.trim() : "";
+        let phoneEl = document.getElementById('customerPhone');
+        let phone = phoneEl && phoneEl.value.trim() ? phoneEl.value.trim() : "";
+
         let prods = [];
         document.querySelectorAll('.product-row').forEach(row => {
-            let n = row.querySelector('.product-name-input').value, 
-                p = row.querySelector('.product-price-input').value, 
-                o = row.querySelector('.product-offer-input').value, 
-                q = row.querySelector('.product-qty-input').value, 
-                c = row.classList.contains('confirmed');
+            let nEl = row.querySelector('.product-name-input');
+            let pEl = row.querySelector('.product-price-input');
+            let oEl = row.querySelector('.product-offer-input');
+            let qEl = row.querySelector('.product-qty-input');
+            let n = nEl ? nEl.value.trim() : "";
+            let p = pEl ? pEl.value : "";
+            let o = oEl ? oEl.value : "";
+            let q = qEl ? qEl.value : "1";
+            let c = row.classList.contains('confirmed');
             if (n) prods.push({ name: n, price: p, offer: o, qty: q, confirmed: c });
         });
 
-        // <i class='fa-solid fa-star'></i> V14.2: Timestamp-based ID لمنع التكرار نهائياً
-        let draftId = "DRAFT-" + Date.now().toString().slice(-5);
+        if (!name && !phone && prods.length === 0) {
+            showToast("لا توجد بيانات لتعليقها!", "warning");
+            if (typeof window.playErrorBeep === 'function') window.playErrorBeep();
+            return;
+        }
+
+        setBtnLoading(suspendBtn, true);
+
+        let draftId = "DRAFT-" + Date.now().toString().slice(-6);
+        let now = new Date();
+        let timeStr = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+
+        let moderatorSelect = document.getElementById('moderatorSelect');
+        let selectedModerator = moderatorSelect ? moderatorSelect.value : "";
+
         let draft = {
-            id: draftId, date: new Date().toLocaleTimeString('ar-EG'),
-            platform: document.getElementById('platform') ? document.getElementById('platform').value : "", name: name,
-            phone: document.getElementById('customerPhone') ? document.getElementById('customerPhone').value : "",
+            id: draftId,
+            draftId: draftId,
+            date: timeStr,
+            time: timeStr,
+            customerName: name || "بدون اسم",
+            name: name || "بدون اسم",
+            phone: phone,
             phone2: document.getElementById('phone2') ? document.getElementById('phone2').value : "",
-            delType: document.getElementById('deliveryType') ? document.getElementById('deliveryType').value : "",
+            platform: document.getElementById('platform') ? document.getElementById('platform').value : "",
+            moderator: selectedModerator,
+            delType: deliveryTypeSelect ? deliveryTypeSelect.value : "normal",
             spDate: document.getElementById('specialDateInput') ? document.getElementById('specialDateInput').value : "",
             gov: document.getElementById('governorate') ? document.getElementById('governorate').value : "",
             address: document.getElementById('address') ? document.getElementById('address').value : "",
             discount: document.getElementById('discount') ? document.getElementById('discount').value : "",
+            shippingCost: document.getElementById('shippingCost') ? document.getElementById('shippingCost').value : "0",
+            productsTotal: document.getElementById('productsTotal') ? document.getElementById('productsTotal').value : "0",
+            finalTotal: document.getElementById('finalTotalDisplay') ? document.getElementById('finalTotalDisplay').innerText : "0",
+            payMethod: paymentMethod ? paymentMethod.value : "",
+            isPaymentConfirmed: isPaymentConfirmed || false,
+            depositAmount: document.getElementById('depositAmount') ? document.getElementById('depositAmount').value : "",
             notes: document.getElementById('notes') ? document.getElementById('notes').value : "",
-            gift: document.getElementById('isGiftCheckbox') ? document.getElementById('isGiftCheckbox').checked : false, prods: prods
+            gift: document.getElementById('isGiftCheckbox') ? document.getElementById('isGiftCheckbox').checked : false,
+            prods: prods
         };
 
         let formData = new URLSearchParams();
@@ -4330,12 +4585,27 @@ if (suspendBtn) {
         formData.append('draftId', draftId);
         formData.append('draftJson', JSON.stringify(draft));
 
-        fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData })
-            .then(() => {
+        try {
+            let res = await fetch(GOOGLE_SHEETS_URL, { method: 'POST', body: formData });
+            let resData = await res.json();
+            if (resData && resData.success === false) {
+                showToast("فشل تعليق الفاتورة: " + (resData.error || ''), "error");
+            } else {
                 showToast("⏸️ تم تعليق الفاتورة بنجاح!", "warning");
-                resetForm(); updateSuspendedCount();
-                setBtnLoading(suspendBtn, false, "⏸️ تعليق الطلب");
-            }).catch(() => { setBtnLoading(suspendBtn, false, "⏸️ تعليق الطلب"); });
+                if (typeof window.playSuccessBeep === 'function') window.playSuccessBeep();
+                
+                // Add to memory list
+                window.suspendedOrdersData = window.suspendedOrdersData || [];
+                window.suspendedOrdersData.unshift(draft);
+                updateSuspendedCount();
+                resetForm();
+            }
+        } catch (e) {
+            console.error('Suspend error:', e);
+            showToast("حدث خطأ أثناء تعليق الفاتورة", "error");
+        } finally {
+            setBtnLoading(suspendBtn, false, "⏸️ تعليق الطلب");
+        }
     });
 }
 
@@ -4345,82 +4615,194 @@ if (openSuspendedBtn) {
         let drafts = window.suspendedOrdersData || [];
         let list = document.getElementById('suspendedOrdersList'); if (!list) return;
         list.innerHTML = '';
-        if (drafts.length === 0) { list.innerHTML = '<p class="empty-msg">لا توجد طلبات معلقة <i class="fa-regular fa-folder-open" style="color:var(--primary); margin-right:5px;"></i></p>'; return; }
-
-        drafts.forEach(d => {
-            let div = document.createElement('div'); div.className = 'data-row';
-            div.innerHTML = `
-                <div style="flex:1;"><strong>${d.name}</strong> <br> <small style="color:#777"><i class="fa-regular fa-clock"></i> ${d.time || d.date}</small></div>
-                <div style="display:flex; gap:5px;">
-                    <button class="btn-search interactive-btn restore-btn" style="padding: 5px 10px; font-size:0.8rem">استرجاع <i class=\'fa-solid fa-rotate\'></i></button>
-                    <button class="interactive-btn delete-btn" style="padding: 5px 10px; font-size:0.8rem; background-color:var(--danger); color:white; border:none; border-radius:8px; cursor:pointer;">حذف <i class=\'fa-solid fa-xmark\'></i></button>
+        if (drafts.length === 0) {
+            list.innerHTML = `
+                <div style="text-align:center; padding:45px 15px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                    <div style="width:76px; height:76px; border-radius:22px; background:linear-gradient(135deg, rgba(236,72,153,0.15), rgba(219,39,119,0.06)); display:flex; align-items:center; justify-content:center; color:#db2777; font-size:2.2rem; margin-bottom:14px; animation: floatEmptyFolder 3s ease-in-out infinite; box-shadow:0 8px 20px rgba(219,39,119,0.12);">
+                        <i class="fa-solid fa-box-open"></i>
+                    </div>
+                    <h4 style="margin:0; font-size:1.1rem; font-weight:800; color:#1e293b; font-family:'Cairo',sans-serif;">لا توجد طلبات معلقة حالياً</h4>
+                    <p style="margin:6px 0 0 0; font-size:0.85rem; color:#64748b; font-weight:600; max-width:260px; line-height:1.4;">المكان جاهز لحفظ أي طلب ترغب في استكماله لاحقاً بكل سهولة!</p>
                 </div>
             `;
+            return;
+        }
+
+        const platformIcons = {
+            'واتساب': { icon: 'fa-whatsapp', color: '#25D366' },
+            'فيسبوك': { icon: 'fa-facebook', color: '#1877F2' },
+            'إنستجرام': { icon: 'fa-instagram', color: '#E1306C' },
+            'تيك توك': { icon: 'fa-tiktok', color: '#000000' }
+        };
+
+        drafts.forEach(d => {
+            let prodsCount = (d.prods && Array.isArray(d.prods)) ? d.prods.length : 0;
+            let pTotal = d.finalTotal || d.total || '0';
+            let platInfo = platformIcons[d.platform] || { icon: 'fa-layer-group', color: '#888' };
+            let custName = d.customerName || d.name || 'بدون اسم';
+            let custPhone = d.phone ? `<span style="direction:ltr; display:inline-block; font-size:0.82rem; color:#666;"><i class="fa-solid fa-phone" style="font-size:0.75rem;"></i> ${d.phone}</span>` : '<span style="color:#aaa; font-size:0.8rem;">بدون هاتف</span>';
+
+            let div = document.createElement('div');
+            div.className = 'suspended-order-card';
+            div.style.cssText = 'background:#ffffff; border:1.5px solid #f1f5f9; border-radius:16px; padding:14px 16px; box-shadow:0 3px 10px rgba(0,0,0,0.03); display:flex; flex-direction:column; gap:12px; transition:all 0.2s ease;';
+
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span style="display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:10px; background:${platInfo.color}15; color:${platInfo.color}; font-size:1.15rem;">
+                            <i class="${platInfo.icon.includes('layer') ? 'fa-solid ' + platInfo.icon : 'fa-brands ' + platInfo.icon}"></i>
+                        </span>
+                        <div>
+                            <strong style="font-size:1.02rem; color:#0f172a; display:block;">${custName}</strong>
+                            ${custPhone}
+                        </div>
+                    </div>
+                    <div style="text-align:left;">
+                        <span style="font-size:1.05rem; font-weight:800; color:var(--primary); display:block;">${pTotal} ج.م</span>
+                        <span style="font-size:0.75rem; color:#94a3b8; font-weight:600;"><i class="fa-regular fa-clock" style="margin-left:2px;"></i> ${d.time || d.date || ''}</span>
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; padding-top:10px; border-top:1px dashed #e2e8f0;">
+                    <div style="display:flex; align-items:center; gap:8px; font-size:0.82rem; color:#475569; font-weight:700;">
+                        <span style="background:#f8fafc; padding:3px 8px; border-radius:6px; border:1px solid #e2e8f0;"><i class="fa-solid fa-basket-shopping" style="color:#ec4899; margin-left:3px;"></i> ${prodsCount} منتج</span>
+                        ${d.moderator ? `<span style="background:#f8fafc; padding:3px 8px; border-radius:6px; border:1px solid #e2e8f0;"><i class="fa-solid fa-user-tie" style="color:#6366f1; margin-left:3px;"></i> ${d.moderator}</span>` : ''}
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button class="interactive-btn restore-btn" style="padding:7px 16px; font-size:0.85rem; font-weight:800; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; border-radius:10px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 6px rgba(16,185,129,0.3);">
+                            استرجاع <i class="fa-solid fa-rotate-left"></i>
+                        </button>
+                        <button class="interactive-btn delete-btn" style="padding:7px 12px; font-size:0.85rem; background:#fef2f2; color:#ef4444; border:1px solid #fee2e2; border-radius:10px; cursor:pointer;" title="حذف">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+
             div.querySelector('.restore-btn').addEventListener('click', () => {
-                restoreDraft(d); deleteSuspendedDraft(d.id); document.getElementById('suspendedModal').classList.remove('active');
+                restoreDraft(d);
+                deleteSuspendedDraft(d.id || d.draftId);
+                let modal = document.getElementById('suspendedModal');
+                if (modal) modal.classList.remove('active');
             });
+
             div.querySelector('.delete-btn').addEventListener('click', () => {
-                deleteSuspendedDraft(d.id); div.remove();
-                if (list.children.length === 0) list.innerHTML = '<p class="empty-msg">لا توجد طلبات معلقة <i class="fa-regular fa-folder-open" style="color:var(--primary); margin-right:5px;"></i></p>';
-                showToast("<i class=\'fa-solid fa-trash\'></i> تم حذف المسودة", "success");
+                deleteSuspendedDraft(d.id || d.draftId);
+                div.remove();
+                if (list.children.length === 0) {
+                    list.innerHTML = `
+                        <div style="text-align:center; padding:45px 15px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                            <div style="width:76px; height:76px; border-radius:22px; background:linear-gradient(135deg, rgba(236,72,153,0.15), rgba(219,39,119,0.06)); display:flex; align-items:center; justify-content:center; color:#db2777; font-size:2.2rem; margin-bottom:14px; animation: floatEmptyFolder 3s ease-in-out infinite; box-shadow:0 8px 20px rgba(219,39,119,0.12);">
+                                <i class="fa-solid fa-box-open"></i>
+                            </div>
+                            <h4 style="margin:0; font-size:1.1rem; font-weight:800; color:#1e293b; font-family:'Cairo',sans-serif;">لا توجد طلبات معلقة حالياً</h4>
+                            <p style="margin:6px 0 0 0; font-size:0.85rem; color:#64748b; font-weight:600; max-width:260px; line-height:1.4;">المكان جاهز لحفظ أي طلب ترغب في استكماله لاحقاً بكل سهولة!</p>
+                        </div>
+                    `;
+                }
+                showToast("<i class='fa-solid fa-trash'></i> تم حذف الفاتورة المعلقة", "success");
             });
+
             list.appendChild(div);
         });
     });
 }
 
 function deleteSuspendedDraft(draftId) {
+    if (!draftId) return;
     if (window.suspendedOrdersData) {
-        window.suspendedOrdersData = window.suspendedOrdersData.filter(item => item.id !== draftId);
+        window.suspendedOrdersData = window.suspendedOrdersData.filter(item => (item.id !== draftId && item.draftId !== draftId));
     }
     updateSuspendedCount();
-    supabase.from('suspended_orders').delete().eq('draft_id', draftId).then(() => {});
+    supabase.from('suspended_orders').delete().eq('draft_id', draftId).then(({ error }) => {
+        if (error) console.error("Error deleting suspended draft from Supabase:", error);
+    });
 }
 
 function restoreDraft(d) {
+    if (!d) return;
+
+    // Platform
     if (document.getElementById('platform')) {
         document.getElementById('platform').value = d.platform || "";
-        if(window.syncPlatformUI) window.syncPlatformUI(d.platform || "واتساب");
+        if (window.syncPlatformUI) window.syncPlatformUI(d.platform || "");
     }
-    if (document.getElementById('customerName')) document.getElementById('customerName').value = d.name || "";
+
+    // Customer Info
+    if (document.getElementById('customerName')) document.getElementById('customerName').value = d.customerName || d.name || "";
     if (document.getElementById('customerPhone')) document.getElementById('customerPhone').value = d.phone || "";
     if (document.getElementById('phone2')) document.getElementById('phone2').value = d.phone2 || "";
-    if (document.getElementById('deliveryType')) document.getElementById('deliveryType').value = d.delType || "";
+
+    // Moderator
+    let moderatorSelect = document.getElementById('moderatorSelect');
+    if (moderatorSelect && d.moderator) moderatorSelect.value = d.moderator;
+
+    // Delivery details
+    if (deliveryTypeSelect) {
+        deliveryTypeSelect.value = d.delType || "normal";
+        deliveryTypeSelect.dispatchEvent(new Event('change'));
+    }
     if (document.getElementById('specialDateInput')) document.getElementById('specialDateInput').value = d.spDate || "";
-    if (document.getElementById('governorate')) document.getElementById('governorate').value = d.gov || "";
+    if (document.getElementById('governorate')) {
+        document.getElementById('governorate').value = d.gov || "";
+        document.getElementById('governorate').dispatchEvent(new Event('change'));
+    }
     if (document.getElementById('address')) document.getElementById('address').value = d.address || "";
+
+    // Financials
     if (document.getElementById('discount')) document.getElementById('discount').value = d.discount || "";
+    if (document.getElementById('shippingCost') && d.shippingCost !== undefined) document.getElementById('shippingCost').value = d.shippingCost;
+    if (document.getElementById('depositAmount')) document.getElementById('depositAmount').value = d.depositAmount || "";
+
+    // Payment method
+    if (paymentMethod && d.payMethod) {
+        paymentMethod.value = d.payMethod;
+    }
+    if (d.isPaymentConfirmed && confirmPaymentBtn) {
+        isPaymentConfirmed = true;
+        confirmPaymentBtn.classList.add('confirmed');
+        confirmPaymentBtn.innerHTML = "تأكيد ✔️";
+        if (paymentMethod) paymentMethod.classList.add('locked-field');
+    } else if (confirmPaymentBtn) {
+        isPaymentConfirmed = false;
+        confirmPaymentBtn.classList.remove('confirmed');
+        confirmPaymentBtn.innerHTML = "تأكيد ✔️";
+        if (paymentMethod) paymentMethod.classList.remove('locked-field');
+    }
+
+    // Notes & Gift
     if (document.getElementById('notes')) document.getElementById('notes').value = d.notes || "";
     if (document.getElementById('isGiftCheckbox')) document.getElementById('isGiftCheckbox').checked = d.gift || false;
 
-    if (d.prods) { // If restored from local format
-        if (productsContainer) {
-            productsContainer.innerHTML = '';
-            if (d.prods.length > 0) d.prods.forEach(p => addProductRow(p.name, p.price, p.qty, p.confirmed, p.offer || ""));
-            else addProductRow();
-        }
-    } else if (d.products) { // If restored from Google Sheets
-        if (productsContainer) {
-            productsContainer.innerHTML = '';
+    // Restore Products WITH THEIR EXACT OFFERS!
+    if (productsContainer) {
+        productsContainer.innerHTML = '';
+        if (d.prods && Array.isArray(d.prods) && d.prods.length > 0) {
+            d.prods.forEach(p => {
+                addProductRow(p.name, p.price, p.qty, p.confirmed !== false, (p.offer !== undefined && p.offer !== null) ? p.offer : "");
+            });
+        } else if (d.products) {
             let lines = typeof d.products === 'string' ? d.products.split('\n') : (Array.isArray(d.products) ? d.products.map(p => typeof p === 'object' ? `${p.name || ''} - الكمية: ${p.qty || 1}` : String(p)) : []);
-            let hasProds = false;
             lines.forEach(line => {
                 let match = line.match(/(.*) - الكمية: (\d+)/);
                 if (match) {
-                    addProductRow(match[1].trim(), "", match[2], true);
-                    hasProds = true;
+                    addProductRow(match[1].trim(), "", match[2], true, "");
                 }
             });
-            if (!hasProds) addProductRow();
         }
-        if (document.getElementById('discount')) document.getElementById('discount').value = d.discount || "";
+        checkOrderProductsEmptyState();
     }
-    if (deliveryTypeSelect) deliveryTypeSelect.dispatchEvent(new Event('change'));
-    showToast("<i class=\'fa-solid fa-check\'></i> تم استرجاع الفاتورة!", "success");
+
+    calculateTotal();
+    showToast("<i class='fa-solid fa-check'></i> تم استرجاع الفاتورة بالكامل!", "success");
+    if (typeof window.playSuccessBeep === 'function') window.playSuccessBeep();
 }
 
 function resetForm() {
     let form = document.getElementById('orderForm'); if (form) form.reset();
+    let pInput = document.getElementById('platform');
+    if (pInput) pInput.value = '';
+    if (window.syncPlatformUI) window.syncPlatformUI('');
     let infoSpan = document.querySelector('#deliveryInfo span'); if (infoSpan) infoSpan.innerText = "--";
     let finalDisplay = document.getElementById('finalTotalDisplay'); if (finalDisplay) finalDisplay.innerText = "0";
     let remDisplay = document.getElementById('remainingAmountDisplay'); if (remDisplay) remDisplay.innerText = "0";
@@ -4549,6 +4931,16 @@ if (saveAndPrintBtn) {
             showToast("تأكيد طريقة الدفع <i class=\'fa-solid fa-lock\'></i>", "error"); 
             if (typeof window.playErrorBeep === 'function') window.playErrorBeep();
             return; 
+        }
+
+        let platformVal = document.getElementById('platform') ? document.getElementById('platform').value.trim() : "";
+        if (!platformVal) {
+            if (typeof window.triggerPlatformError === 'function') {
+                window.triggerPlatformError();
+            }
+            showToast("يرجى اختيار المنصة أولاً!", "error");
+            if (typeof window.playErrorBeep === 'function') window.playErrorBeep();
+            return;
         }
 
         let phone = document.getElementById('customerPhone') ? document.getElementById('customerPhone').value.trim() : "";
@@ -18149,10 +18541,26 @@ window.runSyncNow = async function() {
 };
 
 window.togglePlatformDropdown = function() {
-    document.getElementById('customPlatformSelect').classList.toggle('open');
+    let customSelect = document.getElementById('customPlatformSelect');
+    if(customSelect) customSelect.classList.toggle('open');
+};
+
+window.triggerPlatformError = function() {
+    let container = document.getElementById('customPlatformSelect');
+    if (!container) return;
+    container.classList.remove('platform-error');
+    void container.offsetWidth; // force reflow to restart animation
+    container.classList.add('platform-error');
+    container.scrollIntoView({ behavior: 'smooth', block: 'center' });
 };
 
 window.selectPlatform = function(name, iconClass, colorHex) {
+    let container = document.getElementById('customPlatformSelect');
+    if(container) {
+        container.classList.remove('platform-error');
+        container.classList.remove('open');
+    }
+
     let hiddenInput = document.getElementById('platform');
     if(hiddenInput) {
         hiddenInput.value = name;
@@ -18163,16 +18571,16 @@ window.selectPlatform = function(name, iconClass, colorHex) {
     let textSpan = document.getElementById('platformText');
     let iconSpan = document.getElementById('platformIcon');
     
+    if(selectedBox) {
+        selectedBox.classList.remove('is-placeholder');
+        selectedBox.style.borderColor = colorHex;
+        selectedBox.style.boxShadow = `0 4px 10px ${colorHex}33`;
+    }
     if(textSpan) textSpan.textContent = name;
     if(iconSpan) {
         iconSpan.className = `fa-brands ${iconClass} platform-icon`;
         iconSpan.style.color = colorHex;
     }
-    if(selectedBox) {
-        selectedBox.style.borderColor = colorHex;
-        selectedBox.style.boxShadow = `0 4px 10px ${colorHex}33`;
-    }
-    document.getElementById('customPlatformSelect').classList.remove('open');
 };
 
 document.addEventListener('click', function(event) {
@@ -18189,20 +18597,35 @@ window.syncPlatformUI = function(value) {
         'إنستجرام': { icon: 'fa-instagram', color: '#E1306C' },
         'تيك توك': { icon: 'fa-tiktok', color: '#000000' }
     };
+    let selectedBox = document.getElementById('platformSelected');
+    let textSpan = document.getElementById('platformText');
+    let iconSpan = document.getElementById('platformIcon');
+    let container = document.getElementById('customPlatformSelect');
+
     if(platforms[value]) {
         let p = platforms[value];
-        let selectedBox = document.getElementById('platformSelected');
-        let textSpan = document.getElementById('platformText');
-        let iconSpan = document.getElementById('platformIcon');
-        
+        if(container) container.classList.remove('platform-error');
+        if(selectedBox) {
+            selectedBox.classList.remove('is-placeholder');
+            selectedBox.style.borderColor = p.color;
+            selectedBox.style.boxShadow = `0 4px 10px ${p.color}33`;
+        }
         if(textSpan) textSpan.textContent = value;
         if(iconSpan) {
             iconSpan.className = `fa-brands ${p.icon} platform-icon`;
             iconSpan.style.color = p.color;
         }
+    } else {
+        // Reset to placeholder state
         if(selectedBox) {
-            selectedBox.style.borderColor = p.color;
-            selectedBox.style.boxShadow = `0 4px 10px ${p.color}33`;
+            selectedBox.classList.add('is-placeholder');
+            selectedBox.style.borderColor = '';
+            selectedBox.style.boxShadow = '';
+        }
+        if(textSpan) textSpan.textContent = 'اختر المنصة...';
+        if(iconSpan) {
+            iconSpan.className = 'fa-solid fa-layer-group platform-icon';
+            iconSpan.style.color = '#94a3b8';
         }
     }
 };
