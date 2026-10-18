@@ -6567,3 +6567,269 @@ body.dark-mode .close-x-btn {
     background: #242842;
     color: #94a3b8;
 }
+
+/* ==========================================
+   Custom In-App Month Picker (Firefox & Cross-Browser)
+   ========================================== */
+.custom-month-picker-wrapper {
+    position: relative;
+    flex: 1;
+    min-width: 170px;
+}
+
+.custom-month-display-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 38px;
+    padding: 8px 14px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #0f172a;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+    user-select: none;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+.custom-month-display-btn:hover {
+    border-color: #ec4899;
+    box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.12);
+}
+
+.custom-month-display-btn.is-active {
+    border-color: #ec4899;
+    box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.2);
+}
+
+.custom-month-display-btn .cmp-placeholder {
+    color: #94a3b8;
+    font-weight: 600;
+}
+
+.custom-month-display-btn .cmp-selected-value {
+    color: #be185d;
+    font-weight: 800;
+}
+
+.custom-month-clear-btn {
+    display: none;
+    background: #f1f5f9;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 14px;
+    line-height: 1;
+    color: #64748b;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    transition: 0.15s;
+    margin-left: 4px;
+}
+
+.custom-month-clear-btn:hover {
+    background: #fee2e2;
+    color: #ef4444;
+}
+
+.custom-month-popover {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 10010;
+    width: 290px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 14px;
+    box-shadow: 0 20px 40px -12px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.06);
+    direction: rtl;
+    font-family: 'Cairo', sans-serif;
+    box-sizing: border-box;
+    animation: cmpFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes cmpFadeIn {
+    from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.cmp-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.cmp-year-nav {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    transition: all 0.15s;
+}
+
+.cmp-year-nav:hover {
+    background: #fdf2f8;
+    color: #ec4899;
+    border-color: #fbcfe8;
+}
+
+.cmp-year-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: 0.5px;
+}
+
+.cmp-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.cmp-month-btn {
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+    border-radius: 10px;
+    padding: 8px 4px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #334155;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.18s;
+    user-select: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+}
+
+.cmp-month-btn .cmp-m-num {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    font-weight: 600;
+}
+
+.cmp-month-btn:hover {
+    background: #fdf2f8;
+    border-color: #fbcfe8;
+    color: #be185d;
+    transform: translateY(-1px);
+}
+
+.cmp-month-btn.is-selected {
+    background: linear-gradient(135deg, #ec4899, #d946ef) !important;
+    border-color: transparent !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.35);
+}
+
+.cmp-month-btn.is-selected .cmp-m-num {
+    color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.cmp-month-btn.is-current:not(.is-selected) {
+    border-color: #cbd5e1;
+    box-shadow: inset 0 0 0 1.5px #3b82f6;
+    color: #1d4ed8;
+}
+
+.cmp-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.cmp-btn-action {
+    flex: 1;
+    padding: 7px 10px;
+    border-radius: 8px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: 0.15s;
+}
+
+.cmp-btn-today {
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
+}
+
+.cmp-btn-today:hover {
+    background: #dbeafe;
+}
+
+.cmp-btn-clear {
+    background: #f8fafc;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+}
+
+.cmp-btn-clear:hover {
+    background: #fee2e2;
+    color: #ef4444;
+    border-color: #fecaca;
+}
+
+/* Dark mode support */
+body.dark-mode .custom-month-display-btn {
+    background: #242740;
+    color: var(--text-main);
+    border-color: var(--border);
+}
+body.dark-mode .custom-month-popover {
+    background: #1e2238;
+    border-color: #2e3650;
+    box-shadow: 0 20px 40px -12px rgba(0,0,0,0.5);
+}
+body.dark-mode .cmp-header {
+    border-bottom-color: #2e3650;
+}
+body.dark-mode .cmp-year-nav {
+    background: #242842;
+    border-color: #2e3650;
+    color: #94a3b8;
+}
+body.dark-mode .cmp-year-title {
+    color: #f1f5f9;
+}
+body.dark-mode .cmp-month-btn {
+    background: #242842;
+    border-color: #2e3650;
+    color: #cbd5e1;
+}
+body.dark-mode .cmp-footer {
+    border-top-color: #2e3650;
+}
+

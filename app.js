@@ -1130,9 +1130,10 @@ async function handleSupabaseRequest(url, options) {
                         offer_price: params.offerPrice || '',
                         status: params.status || ''
                     };
-                    await supabase.from('expiry_receipts_log').insert([arcRow]);
+                    const { data: insArc } = await supabase.from('expiry_receipts_log').insert([arcRow]).select('id').single();
                     if (Array.isArray(window.receiptsArchiveData)) {
                         window.receiptsArchiveData.push({
+                            id: insArc ? insArc.id : undefined,
                             name: arcRow.product_name,
                             qty: arcRow.quantity,
                             expiryDate: arcRow.expiry_date,
@@ -10568,32 +10569,38 @@ window.toggleExpirySelection = function(idString, isChecked) {
     }
 };
 
-window.openEditExpiryModal = function(id) {
-    if (!id && id !== 0) return;
-    const idStr = String(id).trim();
+window.openEditExpiryModal = function(id, batchIndex = null) {
+    if (!id && id !== 0 && batchIndex === null && batchIndex === undefined) return;
+    const idStr = (id !== undefined && id !== null) ? String(id).trim() : '';
     let item = null;
     let isArchiveItem = false;
     
-    // 1. Check in expiryData
-    if (Array.isArray(expiryData)) {
-        item = expiryData.find(i => String(i.id) === idStr || String(i.dbId) === idStr);
+    // 0. Priority: if opened from an active batch modal with known index
+    if (batchIndex !== null && batchIndex !== undefined && Array.isArray(window._currentBatchItems) && window._currentBatchItems[batchIndex]) {
+        item = window._currentBatchItems[batchIndex];
+        isArchiveItem = true;
+    }
+
+    // 1. Search in current batch items by ID
+    if (!item && Array.isArray(window._currentBatchItems)) {
+        item = window._currentBatchItems.find(it => String(it.id) === idStr);
+        if (item) isArchiveItem = true;
     }
     
-    // 2. Check in window.receiptsArchiveData (used by receipts batches)
+    // 2. Search in window.receiptsArchiveData (used by receipts batches)
     if (!item && Array.isArray(window.receiptsArchiveData)) {
         item = window.receiptsArchiveData.find(i => String(i.id) === idStr);
         if (item) isArchiveItem = true;
     }
+
+    // 3. Search in expiryData
+    if (!item && Array.isArray(expiryData)) {
+        item = expiryData.find(i => String(i.id) === idStr || String(i.dbId) === idStr);
+    }
     
-    // 3. Check in window.expiriesData
+    // 4. Search in window.expiriesData
     if (!item && Array.isArray(window.expiriesData)) {
         item = window.expiriesData.find(i => String(i.id) === idStr || String(i.dbId) === idStr);
-    }
-
-    // 4. Check in current batch items if present
-    if (!item && Array.isArray(window._currentBatchItems)) {
-        item = window._currentBatchItems.find(i => String(i.id) === idStr);
-        if (item) isArchiveItem = true;
     }
 
     // 5. Try composite match (name|qty|date or name|qty|date|dbId)
@@ -10604,18 +10611,24 @@ window.openEditExpiryModal = function(id) {
         let pExp = parts[2];
         let pDbId = parts[3];
         
-        if (Array.isArray(expiryData)) {
-            item = expiryData.find(i => (pDbId && String(i.dbId) === pDbId) || (i.name === pName && i.expiryDate === pExp));
+        if (Array.isArray(window._currentBatchItems)) {
+            item = window._currentBatchItems.find(i => (pDbId && String(i.id) === pDbId) || (i.name === pName && i.expiryDate === pExp));
+            if (item) isArchiveItem = true;
         }
         if (!item && Array.isArray(window.receiptsArchiveData)) {
             item = window.receiptsArchiveData.find(i => (pDbId && String(i.id) === pDbId) || (i.name === pName && i.expiryDate === pExp));
             if (item) isArchiveItem = true;
         }
+        if (!item && Array.isArray(expiryData)) {
+            item = expiryData.find(i => (pDbId && String(i.dbId) === pDbId) || (i.name === pName && i.expiryDate === pExp));
+        }
     }
 
     // 6. Fallback: match from DOM card in open batch modal
     if (!item) {
-        const batchCard = document.querySelector(`.batch-item-card[data-item-id="${id}"]`);
+        const batchCard = (batchIndex !== null && batchIndex !== undefined)
+            ? document.querySelector(`.batch-item-card[data-batch-index="${batchIndex}"]`)
+            : document.querySelector(`.batch-item-card[data-item-id="${id}"]`);
         if (batchCard) {
             const nameEl = batchCard.querySelector('.batch-item-name');
             const cardName = nameEl ? nameEl.innerText.replace(/[\n\r]+/g, ' ').trim() : '';
@@ -10641,10 +10654,11 @@ window.openEditExpiryModal = function(id) {
     }
 
     const idInput = document.getElementById('editExpiryId');
-    idInput.value = item.id;
+    idInput.value = item.id !== undefined ? item.id : idStr;
     idInput.dataset.itemKey = idStr;
+    idInput.dataset.batchIndex = (batchIndex !== null && batchIndex !== undefined) ? String(batchIndex) : '';
     idInput.dataset.isArchive = isArchiveItem ? "true" : "false";
-    idInput.dataset.archiveId = (isArchiveItem || /^\d+$/.test(idStr)) ? idStr : (item.dbId || '');
+    idInput.dataset.archiveId = (isArchiveItem || /^\d+$/.test(idStr)) ? (item.id || idStr) : (item.dbId || '');
     idInput.dataset.origName = item.name || '';
     idInput.dataset.origQty = item.qty !== undefined ? item.qty : '';
     idInput.dataset.origExpiry = item.expiryDate || '';
@@ -10696,6 +10710,7 @@ window.saveEditExpiryModal = async function() {
     
     const id = idInput.value;
     const itemKey = idInput.dataset.itemKey || id;
+    const batchIndex = idInput.dataset.batchIndex || '';
     const archiveId = idInput.dataset.archiveId;
     const origName = idInput.dataset.origName || '';
     const origExpiry = idInput.dataset.origExpiry || '';
@@ -10802,15 +10817,17 @@ window.saveEditExpiryModal = async function() {
 
         // B) window._currentBatchItems (live batch array)
         if (Array.isArray(window._currentBatchItems)) {
-            let bItem = window._currentBatchItems.find(it => 
-                String(it.id) === String(id) || 
-                String(it.id) === String(itemKey) || 
-                String(it.id) === String(archiveId) || 
-                (it.name === origName && it.expiryDate === origExpiry)
-            );
+            let bItem = (batchIndex !== '' && window._currentBatchItems[parseInt(batchIndex, 10)])
+                ? window._currentBatchItems[parseInt(batchIndex, 10)]
+                : window._currentBatchItems.find(it => 
+                    String(it.id) === String(id) || 
+                    String(it.id) === String(itemKey) || 
+                    String(it.id) === String(archiveId) || 
+                    (it.name === origName && it.expiryDate === origExpiry)
+                );
             if (bItem) {
                 if (prodName) bItem.name = prodName;
-                bItem.qty = qty;
+                bItem.qty = parseFloat(qty) || 0;
                 bItem.expiryDate = date;
                 bItem.receiver = receiver;
                 bItem.location = location || '';
@@ -10858,7 +10875,9 @@ window.saveEditExpiryModal = async function() {
         }
 
         // 4. Update the card in the open batch edit modal live
-        const batchCard = document.querySelector(`.batch-item-card[data-item-id="${id}"], .batch-item-card[data-item-id="${itemKey}"]`);
+        const batchCard = (batchIndex !== '')
+            ? document.querySelector(`.batch-item-card[data-batch-index="${batchIndex}"]`)
+            : document.querySelector(`.batch-item-card[data-item-id="${id}"], .batch-item-card[data-item-id="${itemKey}"]`);
         if (batchCard) {
             const nameEl = batchCard.querySelector('.batch-item-name');
             if (nameEl && prodName) {
@@ -10884,11 +10903,15 @@ window.saveEditExpiryModal = async function() {
         const totalQtyBadge = document.getElementById('batchModalTotalQty');
         if (totalQtyBadge) {
             let totalSum = 0;
-            document.querySelectorAll('.batch-item-card').forEach(card => {
-                let text = card.innerText || '';
-                let m = text.match(/الكمية:\s*([\d.]+)/);
-                if (m) totalSum += parseFloat(m[1]) || 0;
-            });
+            if (Array.isArray(window._currentBatchItems) && window._currentBatchItems.length > 0) {
+                totalSum = window._currentBatchItems.reduce((acc, it) => acc + (parseFloat(it.qty) || 0), 0);
+            } else {
+                document.querySelectorAll('.batch-item-card').forEach(card => {
+                    let text = card.innerText || '';
+                    let m = text.match(/الكمية:\s*([\d.]+)/);
+                    if (m) totalSum += parseFloat(m[1]) || 0;
+                });
+            }
             totalQtyBadge.innerText = `${totalSum} قطعة`;
         }
 
@@ -11615,12 +11638,12 @@ window.showBatchEditModal = function(bId, items, pdfTitleDate) {
         <div style="display: flex; flex-direction: column; gap: 10px; max-height: 48vh; overflow-y: auto; padding-left: 5px; padding-right: 2px;">
     `;
 
-    items.forEach(item => {
+    items.forEach((item, index) => {
         let expFormatted = item.expiryDate || 'بدون تاريخ';
         let recFormatted = item.receiver || 'غير محدد';
-        let safeId = String(item.id).replace(/'/g, "\\'");
+        let safeId = String(item.id !== undefined ? item.id : index).replace(/'/g, "\\'");
         html += `
-            <div class="batch-item-card" data-item-id="${item.id}" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+            <div class="batch-item-card" data-batch-index="${index}" data-item-id="${item.id !== undefined ? item.id : index}" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
                 <div style="display: flex; flex-direction: column; gap: 7px; flex: 1;">
                     <div class="batch-item-name" style="font-weight: 800; color: #0f172a; font-size: 0.98rem; display: flex; align-items: center; gap: 8px;">
                         <i class="fa-solid fa-box-open" style="color: #ec4899; font-size: 0.9rem;"></i> ${item.name || 'بدون اسم'}
@@ -11637,7 +11660,7 @@ window.showBatchEditModal = function(bId, items, pdfTitleDate) {
                         </span>
                     </div>
                 </div>
-                <button class="interactive-btn batch-item-edit-btn" data-id="${item.id}" style="background: linear-gradient(135deg, #2563eb, #0284c7); color: white; border: none; padding: 9px 16px; border-radius: 10px; cursor: pointer; font-size: 0.9rem; font-weight: 700; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2); white-space: nowrap;" onclick="openEditExpiryModal('${safeId}')">
+                <button class="interactive-btn batch-item-edit-btn" data-batch-index="${index}" data-id="${item.id !== undefined ? item.id : index}" style="background: linear-gradient(135deg, #2563eb, #0284c7); color: white; border: none; padding: 9px 16px; border-radius: 10px; cursor: pointer; font-size: 0.9rem; font-weight: 700; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2); white-space: nowrap;" onclick="openEditExpiryModal('${safeId}', ${index})">
                     <i class="fa-solid fa-pen-to-square"></i> تعديل
                 </button>
             </div>
@@ -11666,17 +11689,6 @@ window.showBatchEditModal = function(bId, items, pdfTitleDate) {
     document.body.appendChild(overlay);
 
     window._currentBatchItems = items;
-
-    // Attach direct listeners for edit buttons
-    modal.querySelectorAll('.batch-item-edit-btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            const id = this.getAttribute('data-id');
-            if (typeof openEditExpiryModal === 'function') {
-                openEditExpiryModal(id);
-            }
-        });
-    });
 
     const closeModal = () => {
         if (overlay.parentNode) document.body.removeChild(overlay);
@@ -18980,4 +18992,204 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    if (typeof window.initCustomMonthPicker === 'function') {
+        window.initCustomMonthPicker();
+    }
 });
+
+// ==========================================
+// Custom In-App Month Picker (Firefox & Cross-Browser)
+// ==========================================
+window.initCustomMonthPicker = function() {
+    const input = document.getElementById('exportMonthInput');
+    const display = document.getElementById('exportMonthDisplay');
+    const displayText = document.getElementById('exportMonthDisplayText');
+    const clearBtn = document.getElementById('clearExportMonthBtn');
+    const popover = document.getElementById('customMonthPickerPopover');
+    const yearDisplay = document.getElementById('cmpYearDisplay');
+    const prevYearBtn = document.getElementById('cmpPrevYear');
+    const nextYearBtn = document.getElementById('cmpNextYear');
+    const monthsGrid = document.getElementById('cmpMonthsGrid');
+    const todayBtn = document.getElementById('cmpCurrentMonthBtn');
+    const clearPopBtn = document.getElementById('cmpClearBtn');
+
+    if (!input || !display || !popover || !monthsGrid) return;
+
+    const AR_MONTHS = [
+        "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
+        "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"
+    ];
+
+    const today = new Date();
+    const realYear = today.getFullYear();
+    const realMonth = today.getMonth() + 1; // 1-12
+
+    let viewingYear = realYear;
+    let selectedYear = null;
+    let selectedMonth = null;
+
+    // Check initial value if present
+    if (input.value && /^\d{4}-\d{2}$/.test(input.value)) {
+        const parts = input.value.split('-');
+        selectedYear = parseInt(parts[0], 10);
+        selectedMonth = parseInt(parts[1], 10);
+        viewingYear = selectedYear;
+    } else {
+        selectedYear = realYear;
+        selectedMonth = realMonth;
+        viewingYear = realYear;
+        const padM = String(selectedMonth).padStart(2, '0');
+        input.value = `${selectedYear}-${padM}`;
+    }
+
+    function updateDisplayUI() {
+        if (selectedYear && selectedMonth && selectedMonth >= 1 && selectedMonth <= 12) {
+            const mName = AR_MONTHS[selectedMonth - 1];
+            displayText.innerHTML = `<span class="cmp-selected-value">${mName} ${selectedYear}</span>`;
+            displayText.classList.remove('cmp-placeholder');
+            if (clearBtn) clearBtn.style.display = 'inline-flex';
+        } else {
+            displayText.innerHTML = 'تحديد شهر الانتهاء...';
+            displayText.classList.add('cmp-placeholder');
+            if (clearBtn) clearBtn.style.display = 'none';
+        }
+    }
+
+    function renderMonthsGrid() {
+        if (yearDisplay) yearDisplay.textContent = viewingYear;
+        monthsGrid.innerHTML = '';
+
+        for (let m = 1; m <= 12; m++) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'cmp-month-btn';
+            
+            const isSelected = (selectedYear === viewingYear && selectedMonth === m);
+            const isCurrent = (realYear === viewingYear && realMonth === m);
+
+            if (isSelected) btn.classList.add('is-selected');
+            if (isCurrent) btn.classList.add('is-current');
+
+            const padNum = String(m).padStart(2, '0');
+            btn.innerHTML = `<span>${AR_MONTHS[m - 1]}</span><span class="cmp-m-num">${padNum}</span>`;
+
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                selectMonth(viewingYear, m);
+            });
+
+            monthsGrid.appendChild(btn);
+        }
+    }
+
+    function selectMonth(year, month) {
+        selectedYear = year;
+        selectedMonth = month;
+        const padM = String(month).padStart(2, '0');
+        input.value = `${year}-${padM}`;
+        updateDisplayUI();
+        closePopover();
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    function clearMonth() {
+        selectedYear = null;
+        selectedMonth = null;
+        input.value = '';
+        updateDisplayUI();
+        renderMonthsGrid();
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    function openPopover() {
+        viewingYear = selectedYear || realYear;
+        renderMonthsGrid();
+        popover.style.display = 'block';
+        display.classList.add('is-active');
+    }
+
+    function closePopover() {
+        popover.style.display = 'none';
+        display.classList.remove('is-active');
+    }
+
+    display.addEventListener('click', (e) => {
+        if (e.target.closest('#clearExportMonthBtn')) return;
+        if (popover.style.display === 'block') {
+            closePopover();
+        } else {
+            openPopover();
+        }
+    });
+
+    display.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            if (popover.style.display === 'block') closePopover();
+            else openPopover();
+        }
+    });
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            clearMonth();
+            closePopover();
+        });
+    }
+
+    if (prevYearBtn) {
+        prevYearBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            viewingYear--;
+            renderMonthsGrid();
+        });
+    }
+
+    if (nextYearBtn) {
+        nextYearBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            viewingYear++;
+            renderMonthsGrid();
+        });
+    }
+
+    if (todayBtn) {
+        todayBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectMonth(realYear, realMonth);
+        });
+    }
+
+    if (clearPopBtn) {
+        clearPopBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            clearMonth();
+            closePopover();
+        });
+    }
+
+    // Close on outside click
+    document.addEventListener('click', (e) => {
+        if (!display.contains(e.target) && !popover.contains(e.target)) {
+            closePopover();
+        }
+    });
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && popover.style.display === 'block') {
+            closePopover();
+        }
+    });
+
+    // Initial render
+    updateDisplayUI();
+};
+
+if (document.readyState !== 'loading') {
+    window.initCustomMonthPicker();
+}

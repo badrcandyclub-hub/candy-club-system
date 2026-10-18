@@ -1094,8 +1094,29 @@
                                     style="background: #E91E8C; color: white; border: none; padding: 8px 15px; border-radius: 8px; flex-shrink: 0; font-weight: bold;"><i class="fa-solid fa-print"></i> طباعة PDF</button>
                                 <button id="btnExportMonth" class="interactive-btn"
                                     style="background: #27ae60; color: white; border: none; padding: 8px 15px; border-radius: 8px; flex-shrink: 0;"><i class="fa-solid fa-file-excel"></i> إكسيل</button>
-                                <input type="month" id="exportMonthInput" dir="ltr"
-                                    style="flex: 1; min-width: 150px; padding: 8px; border-radius: 8px; border: 1px solid #ccc; margin: 0;">
+                                <div class="custom-month-picker-wrapper">
+                                    <input type="hidden" id="exportMonthInput" value="">
+                                    <div id="exportMonthDisplay" class="custom-month-display-btn" tabindex="0" role="button" aria-haspopup="dialog" title="اضغط لاختيار شهر الانتهاء">
+                                        <span id="exportMonthDisplayText" class="cmp-placeholder">تحديد شهر الانتهاء...</span>
+                                        <div style="display: flex; align-items: center; gap: 6px;">
+                                            <button type="button" id="clearExportMonthBtn" class="custom-month-clear-btn" title="مسح الاختيار">&times;</button>
+                                            <i class="fa-solid fa-calendar-days" style="color: #ec4899; font-size: 1rem;"></i>
+                                        </div>
+                                    </div>
+                                    <!-- Popover -->
+                                    <div id="customMonthPickerPopover" class="custom-month-popover" style="display: none;">
+                                        <div class="cmp-header">
+                                            <button type="button" class="cmp-year-nav" id="cmpPrevYear" title="السنة السابقة"><i class="fa-solid fa-chevron-right"></i></button>
+                                            <span class="cmp-year-title" id="cmpYearDisplay">2026</span>
+                                            <button type="button" class="cmp-year-nav" id="cmpNextYear" title="السنة التالية"><i class="fa-solid fa-chevron-left"></i></button>
+                                        </div>
+                                        <div class="cmp-grid" id="cmpMonthsGrid"></div>
+                                        <div class="cmp-footer">
+                                            <button type="button" class="cmp-btn-action cmp-btn-today" id="cmpCurrentMonthBtn"><i class="fa-solid fa-clock-rotate-left"></i> هذا الشهر</button>
+                                            <button type="button" class="cmp-btn-action cmp-btn-clear" id="cmpClearBtn"><i class="fa-solid fa-trash-can"></i> مسح</button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div style="flex: 1 1 100%;">
