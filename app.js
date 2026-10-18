@@ -19728,6 +19728,19 @@ window.selectProductForOffer = function(encodedItem) {
         if (stockNum) stockNum.textContent = stock;
         if (stockBox) stockBox.style.display = 'flex';
 
+        // ضبط الكمية المخصصة والمتبقي الافتراضي بناءً على رصيد المحل
+        const isEditing = Boolean(document.getElementById('offerEditId')?.value);
+        const initQtyInp = document.getElementById('offerInitialQty');
+        const remQtyInp = document.getElementById('offerRemainingQty');
+        if (initQtyInp) initQtyInp.max = stock > 0 ? stock : 1;
+        if (!isEditing) {
+            if (initQtyInp) initQtyInp.value = stock > 0 ? stock : '';
+            if (remQtyInp) remQtyInp.value = stock > 0 ? stock : 0;
+            if (typeof window.handleOfferInitialQtyChange === 'function') {
+                window.handleOfferInitialQtyChange(stock > 0 ? stock : '');
+            }
+        }
+
         window.updateBundleOriginalTotal();
 
         const mode = document.getElementById('offerPricingMode')?.value || 'single';
@@ -19761,8 +19774,44 @@ window.openOfferCameraScanner = function() {
 window.handleOfferInitialQtyChange = function(val) {
     const editId = document.getElementById('offerEditId')?.value;
     const remainingEl = document.getElementById('offerRemainingQty');
-    if (!editId && remainingEl) {
-        remainingEl.value = val || '';
+    const inputEl = document.getElementById('offerInitialQty');
+    const warnEl = document.getElementById('offerQtyWarning');
+    const stockNum = parseInt(document.getElementById('offerCurrentStockNumber')?.textContent) || 0;
+    const numVal = parseInt(val);
+
+    if (!val || isNaN(numVal) || numVal <= 0) {
+        if (!editId && remainingEl) remainingEl.value = 0;
+        if (inputEl) {
+            inputEl.style.borderColor = '#ef4444';
+            inputEl.style.backgroundColor = '#fff5f5';
+        }
+        if (warnEl) {
+            warnEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> يرجى كتابة كمية صحيحة (1 قطعة على الأقل)';
+            warnEl.style.display = 'flex';
+        }
+        return;
+    }
+
+    if (stockNum > 0 && numVal > stockNum) {
+        if (!editId && remainingEl) remainingEl.value = 0;
+        if (inputEl) {
+            inputEl.style.borderColor = '#ef4444';
+            inputEl.style.backgroundColor = '#fff5f5';
+        }
+        if (warnEl) {
+            warnEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> لا يمكن تفعيل العرض: الكمية المخصصة (${numVal}) أكبر من رصيد المحل المتوفر (${stockNum} قطعة)!`;
+            warnEl.style.display = 'flex';
+        }
+    } else {
+        if (!editId && remainingEl) remainingEl.value = numVal;
+        if (inputEl) {
+            inputEl.style.borderColor = '#10b981';
+            inputEl.style.backgroundColor = '#ffffff';
+        }
+        if (warnEl) {
+            warnEl.style.display = 'none';
+            warnEl.innerHTML = '';
+        }
     }
 };
 
@@ -19834,6 +19883,26 @@ window.updateBundleOriginalTotal = function() {
 window.handleOfferQtyModeChange = function(mode) {
     const customBox = document.getElementById('offerCustomQtyBox');
     if (customBox) customBox.style.display = (mode === 'custom') ? 'block' : 'none';
+
+    if (mode === 'custom') {
+        const isEditing = Boolean(document.getElementById('offerEditId')?.value);
+        const initQtyInp = document.getElementById('offerInitialQty');
+        const remQtyInp = document.getElementById('offerRemainingQty');
+        const stockNum = parseInt(document.getElementById('offerCurrentStockNumber')?.textContent) || 0;
+        
+        if (initQtyInp) initQtyInp.max = stockNum > 0 ? stockNum : 1;
+
+        if (!isEditing && (!initQtyInp.value || parseInt(initQtyInp.value) <= 0)) {
+            if (stockNum > 0) {
+                initQtyInp.value = stockNum;
+                if (remQtyInp) remQtyInp.value = stockNum;
+            } else {
+                initQtyInp.value = '';
+                if (remQtyInp) remQtyInp.value = 0;
+            }
+        }
+        window.handleOfferInitialQtyChange(initQtyInp?.value || '');
+    }
 };
 
 window.setOfferDatePreset = function(preset) {
@@ -19978,6 +20047,13 @@ window.openNewOfferModal = function() {
 
     const stockBox = document.getElementById('offerProductStockBox');
     if (stockBox) stockBox.style.display = 'none';
+
+    const warnEl = document.getElementById('offerQtyWarning');
+    if (warnEl) { warnEl.style.display = 'none'; warnEl.innerHTML = ''; }
+    const initQtyInp = document.getElementById('offerInitialQty');
+    if (initQtyInp) { initQtyInp.value = ''; initQtyInp.style.borderColor = ''; initQtyInp.style.backgroundColor = ''; }
+    const remQtyInp = document.getElementById('offerRemainingQty');
+    if (remQtyInp) remQtyInp.value = '';
     
     window.setOfferPricingMode('single');
     window.setBundleQuantity(2);
@@ -20009,6 +20085,11 @@ window.openEditOfferModal = function(id) {
     if (searchInp) searchInp.value = offer.product_name || '';
     const searchRes = document.getElementById('offerProductSearchResults');
     if (searchRes) { searchRes.style.display = 'none'; searchRes.innerHTML = ''; }
+
+    const warnEl = document.getElementById('offerQtyWarning');
+    if (warnEl) { warnEl.style.display = 'none'; warnEl.innerHTML = ''; }
+    const initQtyInp = document.getElementById('offerInitialQty');
+    if (initQtyInp) { initQtyInp.style.borderColor = ''; initQtyInp.style.backgroundColor = ''; }
     
     // رصيد الصنف المتوفر
     const allProds = (typeof window.getOffersAvailableProducts === 'function') ? window.getOffersAvailableProducts() : [];
@@ -20020,6 +20101,7 @@ window.openEditOfferModal = function(id) {
     if (stockVal) stockVal.textContent = stock;
     if (stockNum) stockNum.textContent = stock;
     if (stockBox) stockBox.style.display = 'flex';
+    if (initQtyInp) initQtyInp.max = stock > 0 ? stock : 1;
     
     // Bundle vs Single
     const isBundle = Boolean(offer.bundle_price && offer.bundle_qty);
@@ -20138,14 +20220,36 @@ window.handleOfferSubmit = async function(e) {
         
         if (expiryType === 'quantity') {
             qtyMode = document.querySelector('input[name="offerQtyMode"]:checked')?.value || 'stock';
+            const stockNum = parseInt(document.getElementById('offerCurrentStockNumber')?.textContent) || 0;
+            
+            if (stockNum <= 0) {
+                showToast('لا يمكن حفظ وتفعيل العرض: رصيد الصنف المتوفر في المحل 0 قطعة', 'warning');
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = origBtnHtml;
+                return;
+            }
+
             if (qtyMode === 'stock') {
-                const stockNum = parseInt(document.getElementById('offerCurrentStockNumber')?.textContent) || 0;
-                initialQty = stockNum > 0 ? stockNum : 1;
-                remainingQty = initialQty;
+                initialQty = stockNum;
+                remainingQty = stockNum;
             } else {
-                initialQty = parseInt(document.getElementById('offerInitialQty').value) || 1;
+                initialQty = parseInt(document.getElementById('offerInitialQty').value) || 0;
+                if (initialQty <= 0) {
+                    showToast('يرجى تحديد عدد القطع المخصصة للعرض (1 على الأقل)', 'warning');
+                    document.getElementById('offerInitialQty')?.focus();
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = origBtnHtml;
+                    return;
+                }
+                if (initialQty > stockNum) {
+                    showToast(`لا يمكن تفعيل العرض: الكمية المخصصة (${initialQty}) أكبر من رصيد المحل المتوفر (${stockNum} قطعة)`, 'warning');
+                    document.getElementById('offerInitialQty')?.focus();
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = origBtnHtml;
+                    return;
+                }
                 remainingQty = parseInt(document.getElementById('offerRemainingQty').value);
-                if (isNaN(remainingQty)) remainingQty = initialQty;
+                if (isNaN(remainingQty) || remainingQty <= 0) remainingQty = initialQty;
             }
         } else if (expiryType === 'date') {
             expiryDate = document.getElementById('offerEndDate').value;
@@ -20222,6 +20326,30 @@ window.handleOfferSubmit = async function(e) {
 window.toggleOfferActive = async function(id) {
     const offer = window.offersData.find(o => String(o.id) === String(id));
     if (!offer) return;
+    
+    // إذا كان يريد التفعيل (الانتقال من متوقف إلى نشط)
+    if (!offer.is_active) {
+        if (offer.expiry_type === 'quantity') {
+            const allProds = (typeof window.getOffersAvailableProducts === 'function') ? window.getOffersAvailableProducts() : [];
+            const prod = allProds.find(p => (offer.barcode && p.barcode === offer.barcode) || p.name === offer.product_name);
+            const currentStock = prod ? (Number(prod.stock) || 0) : 0;
+            
+            if (currentStock <= 0) {
+                showToast(`لا يمكن تفعيل العرض: رصيد صنف (${offer.product_name}) بالمحل 0 قطعة`, 'warning');
+                return;
+            }
+            if (offer.quantity_mode === 'custom' && Number(offer.remaining_quantity) <= 0) {
+                showToast(`لا يمكن تفعيل العرض: نفدت الكمية المخصصة للعرض (المتبقي 0)`, 'warning');
+                return;
+            }
+        } else if (offer.expiry_type === 'date' && offer.expiry_date) {
+            const expTime = new Date(offer.expiry_date).getTime();
+            if (!isNaN(expTime) && expTime <= Date.now()) {
+                showToast('لا يمكن تفعيل العرض: تاريخ سريان العرض منتهي', 'warning');
+                return;
+            }
+        }
+    }
     
     offer.is_active = !offer.is_active;
     await window.saveOffersDataLocallyAndRemote();
