@@ -8963,6 +8963,41 @@ function processBarcodeAction(val) {
             ledgerProdBarcode.focus();
             ledgerProdBarcode.select();
         }
+    } else if (currentScannerMode === 'offer') {
+        let found = null;
+        if (scaleInfo) {
+            let catMatch = null;
+            if (typeof barcodeCatalogData !== 'undefined' && Array.isArray(barcodeCatalogData)) {
+                catMatch = barcodeCatalogData.find(p => String(p.barcode || '').split(/[,|\s]+/).includes(scaleInfo.itemCode) || (scaleInfo.itemCode === '000001' && p.name && p.name.includes('كاندي')));
+            }
+            if (!catMatch && typeof catalogData !== 'undefined' && Array.isArray(catalogData)) {
+                catMatch = catalogData.find(p => String(p.barcode || '').split(/[,|\s]+/).includes(scaleInfo.itemCode));
+            }
+            let ratePerKg = (catMatch && Number(catMatch.price) >= 100) ? Number(catMatch.price) : 600;
+            let calcPrice = Number(((scaleInfo.weightGrams / 1000) * ratePerKg).toFixed(2));
+            found = {
+                name: `كاندي بالوزن (${scaleInfo.weightGrams} جم)`,
+                price: calcPrice,
+                barcode: val,
+                stock: catMatch ? catMatch.stock : 'متاح'
+            };
+        }
+        if (!found && typeof barcodeCatalogData !== 'undefined' && Array.isArray(barcodeCatalogData)) {
+            found = barcodeCatalogData.find(p => String(p.barcode || '').split(',').map(b=>b.trim().toLowerCase()).includes(val.toLowerCase()));
+        }
+        if (!found && typeof catalogData !== 'undefined' && Array.isArray(catalogData)) {
+            found = catalogData.find(p => String(p.barcode || '').split(',').map(b=>b.trim().toLowerCase()).includes(val.toLowerCase()));
+        }
+
+        if (found) {
+            window.selectProductForOffer(encodeURIComponent(JSON.stringify(found)));
+            showToast(`<i class='fa-solid fa-check'></i> تم مسح واختيار (${found.name}) للعرض`, "success");
+        } else {
+            const bInp = document.getElementById('offerBarcode');
+            if (bInp) bInp.value = val;
+            showToast("<i class='fa-solid fa-triangle-exclamation'></i> الباركود (" + val + ") غير مسجل بالمنتجات", "warning");
+        }
+        playBeepSound();
     } else {
         handleBarcodeMatch(val);
     }
@@ -19240,7 +19275,7 @@ window.ensureOffersAdminPermCard = function() {
     let card = document.createElement('label');
     card.className = 'perm-card';
     card.setAttribute('onclick', 'togglePermCard(this)');
-    card.innerHTML = '<input type="checkbox" name="u-perms" value="offers"> <span class="perm-icon" style="color: #d97706;"><i class="fa-solid fa-tags"></i></span> <span class="perm-text">عروض المحل</span>';
+    card.innerHTML = '<input type="checkbox" name="u-perms" value="offers"> <span class="perm-icon" style="color: #ea580c;"><i class="fa-solid fa-fire-flame-curved"></i></span> <span class="perm-text">عروض المحل</span>';
 
     if (targetCard && targetCard.parentNode) {
         targetCard.parentNode.insertBefore(card, targetCard.nextSibling);
@@ -19298,7 +19333,8 @@ window.checkOffersExpiryConditions = function() {
         // فحص الانتهاء بالكمية
         if (offer.expiry_type === 'quantity') {
             if (offer.quantity_mode === 'stock') {
-                const itemInCat = (window.catalogData || []).find(c => (offer.barcode && c.barcode === offer.barcode) || c.name === offer.product_name);
+                const allProds = (typeof window.getOffersAvailableProducts === 'function') ? window.getOffersAvailableProducts() : [];
+                const itemInCat = allProds.find(c => (offer.barcode && c.barcode === offer.barcode) || c.name === offer.product_name);
                 if (itemInCat && Number(itemInCat.stock) <= 0) {
                     offer.is_active = false;
                     offer.status_reason = 'نفدت الكمية بالمحل';
@@ -19531,53 +19567,133 @@ window.renderOffersGrid = function() {
 };
 
 // 7. اختيار المنتجات بالبحث أو الباركود في نافذة العرض
+window.getOffersAvailableProducts = function() {
+    const list = [];
+    const seen = new Set();
+    
+    // 1. منتجات Firebase (barcodeCatalogData) أولاً ومباشرة
+    if (typeof barcodeCatalogData !== 'undefined' && Array.isArray(barcodeCatalogData)) {
+        for (const item of barcodeCatalogData) {
+            if (!item || !item.name) continue;
+            const cleanName = String(item.name).trim();
+            const lowerName = cleanName.toLowerCase();
+            if (!seen.has(lowerName)) {
+                seen.add(lowerName);
+                list.push({
+                    name: cleanName,
+                    barcode: item.barcode ? String(item.barcode).trim() : '',
+                    price: parseFloat(item.price) || 0,
+                    stock: item.stock !== undefined ? item.stock : 0
+                });
+            }
+        }
+    }
+    
+    // 2. الكتالوج المدمج (catalogData)
+    const cat = (typeof catalogData !== 'undefined' && Array.isArray(catalogData)) ? catalogData : ((typeof window.catalogData !== 'undefined' && Array.isArray(window.catalogData)) ? window.catalogData : []);
+    for (const item of cat) {
+        if (!item || !item.name) continue;
+        const cleanName = String(item.name).trim();
+        const lowerName = cleanName.toLowerCase();
+        if (!seen.has(lowerName)) {
+            seen.add(lowerName);
+            list.push({
+                name: cleanName,
+                barcode: item.barcode ? String(item.barcode).trim() : '',
+                price: parseFloat(item.price) || 0,
+                stock: item.stock !== undefined ? item.stock : 0
+            });
+        }
+    }
+    return list;
+};
+
 window.initOfferProductSearchAutocomplete = function() {
     const input = document.getElementById('offerProductSearch');
     const results = document.getElementById('offerProductSearchResults');
     if (!input || !results) return;
     
-    input.addEventListener('input', (e) => {
-        const query = e.target.value.trim().toLowerCase();
-        if (!query) {
+    if (input._hasOfferSearchInit) return;
+    input._hasOfferSearchInit = true;
+
+    const normalizeAr = (s) => String(s || '').toLowerCase()
+        .replace(/[أإآ]/g, 'ا')
+        .replace(/ة/g, 'ه')
+        .replace(/ى/g, 'ي')
+        .replace(/[\s\-_]/g, '');
+
+    const doSearch = (query) => {
+        const qTrim = (query || '').trim();
+        if (!qTrim) {
             results.style.display = 'none';
             results.innerHTML = '';
             return;
         }
-        
-        let matches = [];
-        if (Array.isArray(window.catalogData)) {
-            matches = window.catalogData.filter(item => {
-                const name = (item.name || '').toLowerCase();
-                const barcode = (item.barcode || '').toLowerCase();
-                return name.includes(query) || barcode.includes(query);
-            }).slice(0, 8);
-        }
-        
+
+        const qNorm = normalizeAr(qTrim);
+        const allItems = window.getOffersAvailableProducts();
+        const matches = allItems.filter(item => {
+            const nameNorm = normalizeAr(item.name);
+            const barcodeStr = String(item.barcode || '').trim().toLowerCase();
+            return nameNorm.includes(qNorm) || barcodeStr.includes(qTrim.toLowerCase()) || barcodeStr.includes(qNorm);
+        }).slice(0, 15);
+
         if (matches.length === 0) {
-            results.style.display = 'none';
+            results.innerHTML = `<div style="padding: 14px; text-align: center; color: #94a3b8; font-size: 0.88rem;">لا توجد منتجات مطابقة لـ "${qTrim}"</div>`;
+            results.style.display = 'block';
             return;
         }
-        
+
         results.innerHTML = matches.map(item => `
             <div class="offer-search-item" onclick="window.selectProductForOffer('${encodeURIComponent(JSON.stringify(item))}')">
-                <div>
-                    <strong style="color: #0f172a; font-size: 0.95rem;">${item.name}</strong>
-                    <div style="font-size: 0.8rem; color: #64748b;">${item.barcode ? `باركود: ${item.barcode}` : 'بدون باركود'}</div>
+                <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+                    <strong style="color: #0f172a; font-size: 0.95rem; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${item.name}</strong>
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        ${item.barcode ? `<span class="offer-search-barcode-badge"><i class="fa-solid fa-barcode"></i> ${item.barcode}</span>` : '<span style="color:#94a3b8; font-size:0.75rem;">بدون باركود</span>'}
+                        <span class="offer-search-stock-badge"><i class="fa-solid fa-boxes-stacked"></i> متاح بالمحل: ${item.stock}</span>
+                    </div>
                 </div>
-                <span style="font-weight: 800; color: #d97706;">${item.price || 0} ج</span>
+                <span style="font-weight: 900; color: #ea580c; font-size: 1.05rem; white-space: nowrap;">${item.price || 0} ج.م</span>
             </div>
         `).join('');
         results.style.display = 'block';
+    };
+
+    input.addEventListener('input', (e) => {
+        doSearch(e.target.value);
+    });
+
+    input.addEventListener('focus', (e) => {
+        if (e.target.value.trim()) {
+            doSearch(e.target.value);
+        }
+    });
+
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const val = input.value.trim();
+            if (!val) return;
+            const allItems = window.getOffersAvailableProducts();
+            let match = allItems.find(i => i.barcode && i.barcode.toLowerCase() === val.toLowerCase());
+            if (!match) {
+                match = allItems.find(i => normalizeAr(i.name) === normalizeAr(val)) || allItems.find(i => normalizeAr(i.name).includes(normalizeAr(val)));
+            }
+            if (match) {
+                window.selectProductForOffer(encodeURIComponent(JSON.stringify(match)));
+                showToast(`تم اختيار (${match.name})`, 'success');
+            } else {
+                showToast(`لم يتم العثور على صنف مطابق لـ: ${val}`, 'warning');
+            }
+        }
     });
     
-    // إخفاء القائمة عند النقر خارجها
     document.addEventListener('click', (e) => {
         if (!input.contains(e.target) && !results.contains(e.target)) {
             results.style.display = 'none';
         }
     });
 
-    // مراقبة كتابة سعر الباندل للتحديث الفوري للملخص
     document.getElementById('offerBundlePrice')?.addEventListener('input', () => {
         window.updateBundleOriginalTotal();
     });
@@ -19585,11 +19701,24 @@ window.initOfferProductSearchAutocomplete = function() {
 
 window.selectProductForOffer = function(encodedItem) {
     try {
-        const item = JSON.parse(decodeURIComponent(encodedItem));
-        document.getElementById('offerProductName').value = item.name || '';
-        document.getElementById('offerBarcode').value = item.barcode || '';
-        document.getElementById('offerOriginalPrice').value = item.price || 0;
-        
+        let item = encodedItem;
+        if (typeof encodedItem === 'string') {
+            item = JSON.parse(decodeURIComponent(encodedItem));
+        }
+        if (!item) return;
+
+        const nameInp = document.getElementById('offerProductName');
+        const barcodeInp = document.getElementById('offerBarcode');
+        const origPriceInp = document.getElementById('offerOriginalPrice');
+        const searchInp = document.getElementById('offerProductSearch');
+        const searchRes = document.getElementById('offerProductSearchResults');
+
+        if (nameInp) nameInp.value = item.name || '';
+        if (barcodeInp) barcodeInp.value = item.barcode || '';
+        if (origPriceInp) origPriceInp.value = item.price || 0;
+        if (searchInp) searchInp.value = item.name || '';
+        if (searchRes) { searchRes.style.display = 'none'; searchRes.innerHTML = ''; }
+
         // رصيد الصنف المتوفر بالمحل
         const stock = Number(item.stock) || 0;
         const stockVal = document.getElementById('offerCurrentStockVal');
@@ -19598,36 +19727,42 @@ window.selectProductForOffer = function(encodedItem) {
         if (stockVal) stockVal.textContent = stock;
         if (stockNum) stockNum.textContent = stock;
         if (stockBox) stockBox.style.display = 'flex';
-        
-        document.getElementById('offerProductSearchResults').style.display = 'none';
-        document.getElementById('offerProductSearch').value = item.name || '';
-        
+
         window.updateBundleOriginalTotal();
-        
+
         const mode = document.getElementById('offerPricingMode')?.value || 'single';
-        if (mode === 'single') {
-            document.getElementById('offerPrice')?.focus();
-        } else {
-            document.getElementById('offerBundlePrice')?.focus();
-        }
+        setTimeout(() => {
+            if (mode === 'single') {
+                document.getElementById('offerPrice')?.focus();
+            } else {
+                document.getElementById('offerBundlePrice')?.focus();
+            }
+        }, 80);
     } catch(e) {
         console.error('Error selecting product for offer:', e);
     }
 };
 
 window.openOfferCameraScanner = function() {
-    if (typeof window.startOrderScanner === 'function') {
-        window.startOrderScanner((scannedBarcode) => {
-            const item = (window.catalogData || []).find(c => String(c.barcode).trim() === String(scannedBarcode).trim());
-            if (item) {
-                window.selectProductForOffer(encodeURIComponent(JSON.stringify(item)));
-            } else {
-                document.getElementById('offerBarcode').value = scannedBarcode;
-                showToast(`تم قراءة الباركود: ${scannedBarcode}`, 'info');
-            }
-        });
+    if (typeof currentScannerMode !== 'undefined') {
+        currentScannerMode = 'offer';
+    }
+    const scannerModal = document.getElementById('scannerModal');
+    if (scannerModal) {
+        openModalWithHistory('scannerModal');
+        if (typeof startBarcodeScanner === 'function') {
+            startBarcodeScanner();
+        }
     } else {
-        showToast('الكاميرا غير متاحة حالياً', 'warning');
+        showToast('نافذة الكاميرا غير متوفرة', 'warning');
+    }
+};
+
+window.handleOfferInitialQtyChange = function(val) {
+    const editId = document.getElementById('offerEditId')?.value;
+    const remainingEl = document.getElementById('offerRemainingQty');
+    if (!editId && remainingEl) {
+        remainingEl.value = val || '';
     }
 };
 
@@ -19833,9 +19968,14 @@ window.handleExpiryTypeChange = function(type) {
 window.openNewOfferModal = function() {
     document.getElementById('offerEditId').value = '';
     document.getElementById('offerForm').reset();
-    document.getElementById('offerModalTitle').innerHTML = '<i class="fa-solid fa-tags" style="color: #d97706;"></i> إضافة عرض جديد';
+    document.getElementById('offerModalTitle').innerHTML = '<i class="fa-solid fa-fire-flame-curved" style="color: #ea580c;"></i> إضافة عرض جديد';
     window.removeOfferPhoto();
     
+    const searchInp = document.getElementById('offerProductSearch');
+    if (searchInp) searchInp.value = '';
+    const searchRes = document.getElementById('offerProductSearchResults');
+    if (searchRes) { searchRes.style.display = 'none'; searchRes.innerHTML = ''; }
+
     const stockBox = document.getElementById('offerProductStockBox');
     if (stockBox) stockBox.style.display = 'none';
     
@@ -19850,6 +19990,9 @@ window.openNewOfferModal = function() {
     if (dateDisplay) dateDisplay.textContent = 'اضغط لاختيار التاريخ من الروزنامة...';
     
     document.getElementById('offerModal').style.display = 'flex';
+    setTimeout(() => {
+        searchInp?.focus();
+    }, 120);
 };
 
 window.openEditOfferModal = function(id) {
@@ -19857,13 +20000,19 @@ window.openEditOfferModal = function(id) {
     if (!offer) return;
     
     document.getElementById('offerEditId').value = offer.id;
-    document.getElementById('offerModalTitle').innerHTML = '<i class="fa-solid fa-tags" style="color: #d97706;"></i> تعديل بيانات العرض';
+    document.getElementById('offerModalTitle').innerHTML = '<i class="fa-solid fa-fire-flame-curved" style="color: #ea580c;"></i> تعديل بيانات العرض';
     document.getElementById('offerProductName').value = offer.product_name || '';
     document.getElementById('offerBarcode').value = offer.barcode || '';
     document.getElementById('offerOriginalPrice').value = offer.original_price || '';
+
+    const searchInp = document.getElementById('offerProductSearch');
+    if (searchInp) searchInp.value = offer.product_name || '';
+    const searchRes = document.getElementById('offerProductSearchResults');
+    if (searchRes) { searchRes.style.display = 'none'; searchRes.innerHTML = ''; }
     
     // رصيد الصنف المتوفر
-    const itemInCat = (window.catalogData || []).find(c => (offer.barcode && c.barcode === offer.barcode) || c.name === offer.product_name);
+    const allProds = (typeof window.getOffersAvailableProducts === 'function') ? window.getOffersAvailableProducts() : [];
+    const itemInCat = allProds.find(c => (offer.barcode && c.barcode === offer.barcode) || c.name === offer.product_name);
     const stock = itemInCat ? (Number(itemInCat.stock) || 0) : 0;
     const stockVal = document.getElementById('offerCurrentStockVal');
     const stockNum = document.getElementById('offerCurrentStockNumber');

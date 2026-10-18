@@ -2861,7 +2861,7 @@
                 <div class="offers-header-row">
                     <div class="offers-header-text">
                         <h2 class="offers-title">
-                            <span class="offers-title-icon"><i class="fa-solid fa-tags"></i></span>
+                            <span class="offers-title-icon"><i class="fa-solid fa-fire-flame-curved"></i></span>
                             عروض المحل
                         </h2>
                         <p class="offers-subtitle">إدارة وتوثيق عروض المحل بالصور، تصدير ستوري المنصات (إنستغرام وفيسبوك)، وكتالوج العروض للعملاء.</p>
@@ -2921,7 +2921,7 @@
 
                 <!-- حالة عدم وجود عروض -->
                 <div id="offersEmptyState" class="offers-empty-state" style="display: none;">
-                    <div class="offers-empty-icon"><i class="fa-solid fa-tags"></i></div>
+                    <div class="offers-empty-icon"><i class="fa-solid fa-fire-flame-curved"></i></div>
                     <h3>لا توجد عروض مسجلة حالياً</h3>
                     <p>قم بإضافة عروض جديدة وتوثيقها بالصور لتظهر لطاقم البيع وتكون جاهزة للنشر الفوري كستوري.</p>
                     <button type="button" class="interactive-btn btn-new-offer" onclick="window.openNewOfferModal()">
@@ -2936,7 +2936,7 @@
             <div class="modal-content offer-modal-content">
                 <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #f1f5f9; padding-bottom: 14px; margin-bottom: 16px;">
                     <h3 id="offerModalTitle" style="margin: 0; font-size: 1.25rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
-                        <i class="fa-solid fa-tags" style="color: #d97706;"></i> إضافة عرض جديد
+                        <i class="fa-solid fa-fire-flame-curved" style="color: #ea580c;"></i> إضافة عرض جديد
                     </h3>
                     <button type="button" class="offer-modal-close-btn" onclick="window.closeOfferModal()" title="إغلاق">
                         <i class="fa-solid fa-xmark"></i>
@@ -2975,7 +2975,7 @@
                                         <label for="offerBarcode" style="font-weight: 700; color: #475569; font-size: 0.85rem; display: flex; align-items: center; gap: 5px;">
                                             <i class="fa-solid fa-barcode" style="color: #94a3b8;"></i> الباركود
                                         </label>
-                                        <input type="text" id="offerBarcode" class="form-input" placeholder="اختياري" readonly style="background: #f1f5f9; color: #64748b; font-family: monospace; font-weight: 700; cursor: not-allowed;">
+                                        <input type="text" id="offerBarcode" class="form-input" placeholder="باركود الصنف" readonly style="background: #f1f5f9; color: #64748b; font-family: monospace; font-weight: 700; cursor: not-allowed;">
                                     </div>
                                 </div>
 
@@ -2991,7 +2991,7 @@
                             <!-- تحديد نوع العرض والتسعير ("يا ده يا ده") -->
                             <div class="offer-type-selector-card">
                                 <label style="font-weight: 800; color: #0f172a; margin-bottom: 8px; display: block; font-size: 0.95rem;">
-                                    <i class="fa-solid fa-tags" style="color: #d97706;"></i> نوع العرض والتسعير:
+                                    <i class="fa-solid fa-fire-flame-curved" style="color: #ea580c;"></i> نوع العرض والتسعير:
                                 </label>
                                 
                                 <div class="offer-type-pills">
@@ -3102,12 +3102,16 @@
                                     <div id="offerCustomQtyBox" style="display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #6ee7b7;">
                                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                                             <div>
-                                                <label for="offerInitialQty" style="font-size: 0.85rem; font-weight: 700; color: #065f46;">عدد القطع المخصصة للعرض</label>
-                                                <input type="number" id="offerInitialQty" class="form-input" min="1" placeholder="مثال: 20" oninput="if(!document.getElementById('offerEditId').value) document.getElementById('offerRemainingQty').value=this.value;">
+                                                <label for="offerInitialQty" style="font-size: 0.85rem; font-weight: 700; color: #065f46; display: flex; align-items: center; gap: 5px;">
+                                                    <i class="fa-solid fa-boxes-stacked" style="color: #059669;"></i> عدد القطع المخصصة للعرض
+                                                </label>
+                                                <input type="number" id="offerInitialQty" class="form-input" min="1" placeholder="مثال: 20" oninput="window.handleOfferInitialQtyChange(this.value)">
                                             </div>
                                             <div>
-                                                <label for="offerRemainingQty" style="font-size: 0.85rem; font-weight: 700; color: #065f46;">المتبقي حالياً</label>
-                                                <input type="number" id="offerRemainingQty" class="form-input" min="0" placeholder="مثال: 20">
+                                                <label for="offerRemainingQty" style="font-size: 0.85rem; font-weight: 700; color: #065f46; display: flex; align-items: center; gap: 5px;">
+                                                    <i class="fa-solid fa-lock" style="color: #94a3b8;"></i> المتبقي حالياً <small style="color: #64748b;">(تلقائي)</small>
+                                                </label>
+                                                <input type="number" id="offerRemainingQty" class="form-input" min="0" readonly placeholder="0" style="background: #f1f5f9; color: #334155; font-weight: 800; cursor: not-allowed;">
                                             </div>
                                         </div>
                                     </div>
@@ -3667,8 +3671,8 @@
                     <i class="fa-solid fa-chevron-down chevron-icon" style="transition: transform 0.3s; font-size: 0.8rem;"></i>
                 </h4>
                 <div class="menu-group-items" style="display: none;">
-                    <button id="openOffersBtn" class="nav-item" data-target="offers-tab" style="color: #d97706;">
-                        <span class="icon"><i class="fa-solid fa-tags"></i></span><span class="label">عروض المحل</span>
+                    <button id="openOffersBtn" class="nav-item" data-target="offers-tab" style="color: #ea580c;">
+                        <span class="icon"><i class="fa-solid fa-fire-flame-curved"></i></span><span class="label">عروض المحل</span>
                     </button>
                     <button id="openPriceTagsBtn" class="nav-item" data-target="price-tags-tab" style="color: #00bcd4;">
                         <span class="icon"><i class="fa-solid fa-tags"></i></span><span class="label">كروت الأسعار</span>

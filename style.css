@@ -6869,13 +6869,13 @@ body.dark-mode .cmp-footer {
     width: 44px;
     height: 44px;
     border-radius: 12px;
-    background: linear-gradient(135deg, #fef3c7, #fde68a);
-    color: #d97706;
+    background: linear-gradient(135deg, #fef3c7, #fed7aa);
+    color: #ea580c;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.3rem;
-    box-shadow: 0 4px 12px rgba(217, 119, 6, 0.18);
+    font-size: 1.35rem;
+    box-shadow: 0 4px 14px rgba(234, 88, 12, 0.22);
 }
 
 .offers-subtitle {
@@ -7368,16 +7368,17 @@ body.dark-mode .cmp-footer {
 }
 
 .offers-empty-icon {
-    width: 64px;
-    height: 64px;
+    width: 68px;
+    height: 68px;
     border-radius: 50%;
-    background: #fef3c7;
-    color: #d97706;
+    background: linear-gradient(135deg, #fef3c7, #ffedd5);
+    color: #ea580c;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.8rem;
+    font-size: 2rem;
     margin-bottom: 16px;
+    box-shadow: 0 6px 18px rgba(234, 88, 12, 0.15);
 }
 
 .offers-empty-state h3 {
@@ -7761,23 +7762,56 @@ body.dark-mode .cmp-footer {
     background: #ffffff;
     border: 1.5px solid #cbd5e1;
     border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
-    max-height: 220px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.15);
+    max-height: 250px;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .offer-search-item {
-    padding: 10px 14px;
+    padding: 11px 14px;
     border-bottom: 1px solid #f1f5f9;
     cursor: pointer;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    transition: background 0.15s;
+    gap: 10px;
+    transition: background 0.15s ease;
+    user-select: none;
 }
 
-.offer-search-item:hover {
-    background: #fdf2f8;
+.offer-search-item:last-child {
+    border-bottom: none;
+}
+
+.offer-search-item:hover,
+.offer-search-item:active {
+    background: #fff7ed;
+}
+
+.offer-search-barcode-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    color: #64748b;
+    background: #f1f5f9;
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-weight: 700;
+}
+
+.offer-search-stock-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    color: #047857;
+    background: #ecfdf5;
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-weight: 700;
 }
 
 /* Active Offers Order Picker */
