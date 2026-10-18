@@ -18977,7 +18977,16 @@ window.confirmCustomDate = function() {
         let lastDay = new Date(parseInt(y), parseInt(m), 0).getDate();
         let finalD = parseInt(d) > lastDay ? lastDay.toString().padStart(2, '0') : d.toString().padStart(2, '0');
         
-        customDatePickerTarget.value = `${y}-${m}-${finalD}`;
+        const dateVal = `${y}-${m}-${finalD}`;
+        customDatePickerTarget.value = dateVal;
+
+        if (customDatePickerTarget.id === 'offerEndDate') {
+            const displayEl = document.getElementById('offerEndDateFormattedText');
+            if (displayEl) {
+                const dateObj = new Date(`${dateVal}T23:59:59`);
+                displayEl.textContent = dateObj.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            }
+        }
     }
     closeCustomDatePicker();
 };
@@ -19231,7 +19240,7 @@ window.ensureOffersAdminPermCard = function() {
     let card = document.createElement('label');
     card.className = 'perm-card';
     card.setAttribute('onclick', 'togglePermCard(this)');
-    card.innerHTML = '<input type="checkbox" name="u-perms" value="offers"> <span class="perm-icon" style="color: #d97706;"><i class="fa-solid fa-badge-percent"></i></span> <span class="perm-text">عروض المحل</span>';
+    card.innerHTML = '<input type="checkbox" name="u-perms" value="offers"> <span class="perm-icon" style="color: #d97706;"><i class="fa-solid fa-tags"></i></span> <span class="perm-text">عروض المحل</span>';
 
     if (targetCard && targetCard.parentNode) {
         targetCard.parentNode.insertBefore(card, targetCard.nextSibling);
@@ -19278,7 +19287,7 @@ window.saveOffersDataLocallyAndRemote = async function() {
     }
 };
 
-// 3. التحقق التلقائي من انتهاء العروض بالكمية أو التاريخ
+// 3. التحقق التلقائي من انتهاء العروض بالكمية أو التاريخ (بدون أي مساس برصيد المحل)
 window.checkOffersExpiryConditions = function() {
     const now = new Date().getTime();
     let changed = false;
@@ -19288,11 +19297,20 @@ window.checkOffersExpiryConditions = function() {
         
         // فحص الانتهاء بالكمية
         if (offer.expiry_type === 'quantity') {
-            const remaining = Number(offer.remaining_quantity);
-            if (!isNaN(remaining) && remaining <= 0) {
-                offer.is_active = false;
-                offer.status_reason = 'نفدت الكمية';
-                changed = true;
+            if (offer.quantity_mode === 'stock') {
+                const itemInCat = (window.catalogData || []).find(c => (offer.barcode && c.barcode === offer.barcode) || c.name === offer.product_name);
+                if (itemInCat && Number(itemInCat.stock) <= 0) {
+                    offer.is_active = false;
+                    offer.status_reason = 'نفدت الكمية بالمحل';
+                    changed = true;
+                }
+            } else {
+                const remaining = Number(offer.remaining_quantity);
+                if (!isNaN(remaining) && remaining <= 0) {
+                    offer.is_active = false;
+                    offer.status_reason = 'نفدت الكمية';
+                    changed = true;
+                }
             }
         }
         
@@ -19399,9 +19417,28 @@ window.renderOffersGrid = function() {
     if (emptyState) emptyState.style.display = 'none';
     
     grid.innerHTML = list.map(item => {
-        const origPrice = Number(item.original_price) || 0;
-        const offerPrice = Number(item.offer_price) || 0;
-        const discountPercent = origPrice > offerPrice ? Math.round(((origPrice - offerPrice) / origPrice) * 100) : 0;
+        const isBundle = Boolean(item.bundle_price && item.bundle_qty);
+        const origUnit = Number(item.original_price) || 0;
+        
+        let currentPriceDisplay = 0;
+        let origPriceDisplay = 0;
+        let discountPercent = 0;
+        let bundleHtml = '';
+        
+        if (isBundle) {
+            currentPriceDisplay = Number(item.bundle_price) || 0;
+            origPriceDisplay = origUnit * Number(item.bundle_qty);
+            if (origPriceDisplay > currentPriceDisplay && origPriceDisplay > 0) {
+                discountPercent = Math.round(((origPriceDisplay - currentPriceDisplay) / origPriceDisplay) * 100);
+            }
+            bundleHtml = `<div class="offer-bundle-pill"><i class="fa-solid fa-layer-group"></i> عرض <strong>${item.bundle_qty} قطع معاً</strong> بـ <strong>${item.bundle_price} ج</strong></div>`;
+        } else {
+            currentPriceDisplay = Number(item.offer_price) || 0;
+            origPriceDisplay = origUnit;
+            if (origPriceDisplay > currentPriceDisplay && origPriceDisplay > 0) {
+                discountPercent = Math.round(((origPriceDisplay - currentPriceDisplay) / origPriceDisplay) * 100);
+            }
+        }
         
         // شريط الكمية
         let qtyHtml = '';
@@ -19456,12 +19493,6 @@ window.renderOffersGrid = function() {
         // صورة العرض
         const photoSrc = item.image_url || 'https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?auto=format&fit=crop&w=600&q=80';
         
-        // عرض القطعتين (Bundle) إن وجد
-        let bundleHtml = '';
-        if (item.bundle_text && item.bundle_price) {
-            bundleHtml = `<div class="offer-bundle-pill"><i class="fa-solid fa-layer-group"></i> ${item.bundle_text}: <strong>${item.bundle_price} ج</strong></div>`;
-        }
-        
         return `
             <div class="offer-card ${!item.is_active ? 'is-inactive' : ''}" data-id="${item.id}">
                 <div class="offer-card-media">
@@ -19474,8 +19505,8 @@ window.renderOffersGrid = function() {
                 <div class="offer-card-body">
                     <h3 class="offer-card-title">${item.product_name}</h3>
                     <div class="offer-pricing-row">
-                        <span class="offer-price-current">${offerPrice} <small>ج.م</small></span>
-                        ${origPrice > 0 ? `<span class="offer-price-original">${origPrice} ج</span>` : ''}
+                        <span class="offer-price-current">${currentPriceDisplay} <small>ج.م</small></span>
+                        ${origPriceDisplay > 0 ? `<span class="offer-price-original">${origPriceDisplay} ج</span>` : ''}
                     </div>
                     ${bundleHtml}
                     ${qtyHtml}
@@ -19545,6 +19576,11 @@ window.initOfferProductSearchAutocomplete = function() {
             results.style.display = 'none';
         }
     });
+
+    // مراقبة كتابة سعر الباندل للتحديث الفوري للملخص
+    document.getElementById('offerBundlePrice')?.addEventListener('input', () => {
+        window.updateBundleOriginalTotal();
+    });
 };
 
 window.selectProductForOffer = function(encodedItem) {
@@ -19552,10 +19588,28 @@ window.selectProductForOffer = function(encodedItem) {
         const item = JSON.parse(decodeURIComponent(encodedItem));
         document.getElementById('offerProductName').value = item.name || '';
         document.getElementById('offerBarcode').value = item.barcode || '';
-        document.getElementById('offerOriginalPrice').value = item.price || '';
+        document.getElementById('offerOriginalPrice').value = item.price || 0;
+        
+        // رصيد الصنف المتوفر بالمحل
+        const stock = Number(item.stock) || 0;
+        const stockVal = document.getElementById('offerCurrentStockVal');
+        const stockNum = document.getElementById('offerCurrentStockNumber');
+        const stockBox = document.getElementById('offerProductStockBox');
+        if (stockVal) stockVal.textContent = stock;
+        if (stockNum) stockNum.textContent = stock;
+        if (stockBox) stockBox.style.display = 'flex';
+        
         document.getElementById('offerProductSearchResults').style.display = 'none';
         document.getElementById('offerProductSearch').value = item.name || '';
-        document.getElementById('offerPrice').focus();
+        
+        window.updateBundleOriginalTotal();
+        
+        const mode = document.getElementById('offerPricingMode')?.value || 'single';
+        if (mode === 'single') {
+            document.getElementById('offerPrice')?.focus();
+        } else {
+            document.getElementById('offerBundlePrice')?.focus();
+        }
     } catch(e) {
         console.error('Error selecting product for offer:', e);
     }
@@ -19577,7 +19631,113 @@ window.openOfferCameraScanner = function() {
     }
 };
 
-// 8. التعامل مع الصور وضغطها
+// 8. اختيار نوع العرض والتسعير ("يا ده يا ده")
+window.setOfferPricingMode = function(mode) {
+    const hidden = document.getElementById('offerPricingMode');
+    if (hidden) hidden.value = mode;
+    
+    const pillSingle = document.getElementById('pillOfferSingle');
+    const pillBundle = document.getElementById('pillOfferBundle');
+    const secSingle = document.getElementById('offerSinglePricingSection');
+    const secBundle = document.getElementById('offerBundlePricingSection');
+    
+    if (mode === 'single') {
+        if (pillSingle) pillSingle.classList.add('active');
+        if (pillBundle) pillBundle.classList.remove('active');
+        if (secSingle) secSingle.style.display = 'grid';
+        if (secBundle) secBundle.style.display = 'none';
+        document.getElementById('offerPrice')?.focus();
+    } else {
+        if (pillSingle) pillSingle.classList.remove('active');
+        if (pillBundle) pillBundle.classList.add('active');
+        if (secSingle) secSingle.style.display = 'none';
+        if (secBundle) secBundle.style.display = 'block';
+        window.updateBundleOriginalTotal();
+        document.getElementById('offerBundlePrice')?.focus();
+    }
+};
+
+window.setBundleQuantity = function(qty) {
+    const qtyInput = document.getElementById('offerBundleQtyInput');
+    if (qtyInput) qtyInput.value = qty;
+    
+    document.querySelectorAll('.bundle-qty-btn').forEach(btn => {
+        btn.classList.toggle('active', Number(btn.dataset.qty) === Number(qty));
+    });
+    window.updateBundleOriginalTotal();
+};
+
+window.handleCustomBundleQty = function(val) {
+    const qty = parseInt(val) || 2;
+    document.querySelectorAll('.bundle-qty-btn').forEach(btn => {
+        btn.classList.toggle('active', Number(btn.dataset.qty) === qty);
+    });
+    window.updateBundleOriginalTotal();
+};
+
+window.updateBundleOriginalTotal = function() {
+    const unitPrice = parseFloat(document.getElementById('offerOriginalPrice')?.value) || 0;
+    const qty = parseInt(document.getElementById('offerBundleQtyInput')?.value) || 2;
+    const totalOrig = unitPrice * qty;
+    
+    const totalInput = document.getElementById('offerBundleOriginalTotal');
+    if (totalInput) totalInput.value = `${totalOrig} ج.م (${qty} × ${unitPrice} ج)`;
+    
+    const summaryBox = document.getElementById('offerBundleComputedSummary');
+    if (summaryBox) {
+        const bundleOfferPrice = parseFloat(document.getElementById('offerBundlePrice')?.value) || 0;
+        if (bundleOfferPrice > 0 && totalOrig > bundleOfferPrice) {
+            const savings = totalOrig - bundleOfferPrice;
+            summaryBox.innerHTML = `عرض <strong>${qty} قطع معاً</strong> بسعر <strong>${bundleOfferPrice} ج</strong> (توفير ${savings} ج.م بدلاً من ${totalOrig} ج)`;
+        } else {
+            summaryBox.textContent = `عرض ${qty} قطع معاً (السعر الأصلي: ${totalOrig} ج.م)`;
+        }
+    }
+};
+
+// 9. التعامل مع شروط انتهاء العرض (الكمية والتاريخ المخصص)
+window.handleOfferQtyModeChange = function(mode) {
+    const customBox = document.getElementById('offerCustomQtyBox');
+    if (customBox) customBox.style.display = (mode === 'custom') ? 'block' : 'none';
+};
+
+window.setOfferDatePreset = function(preset) {
+    const target = new Date();
+    
+    if (preset === 'today') {
+        target.setHours(23, 59, 59, 999);
+    } else if (preset === 'tomorrow') {
+        target.setDate(target.getDate() + 1);
+        target.setHours(23, 59, 59, 999);
+    } else if (preset === '3days') {
+        target.setDate(target.getDate() + 3);
+        target.setHours(23, 59, 59, 999);
+    } else if (preset === 'weekend') {
+        const day = target.getDay(); // 0 is Sun, 4 is Thu, 5 is Fri
+        let daysUntilThu = (4 - day + 7) % 7;
+        if (daysUntilThu === 0) daysUntilThu = 7;
+        target.setDate(target.getDate() + daysUntilThu);
+        target.setHours(23, 59, 59, 999);
+    } else if (preset === 'week') {
+        target.setDate(target.getDate() + 7);
+        target.setHours(23, 59, 59, 999);
+    }
+    
+    const y = target.getFullYear();
+    const m = String(target.getMonth() + 1).padStart(2, '0');
+    const d = String(target.getDate()).padStart(2, '0');
+    const isoVal = `${y}-${m}-${d}`;
+    
+    const hiddenInput = document.getElementById('offerEndDate');
+    if (hiddenInput) hiddenInput.value = isoVal;
+    
+    const displayEl = document.getElementById('offerEndDateFormattedText');
+    if (displayEl) {
+        displayEl.textContent = target.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    }
+};
+
+// 10. التعامل مع الصور وضغطها
 window.handleOfferPhotoSelected = function(e) {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
@@ -19640,7 +19800,7 @@ window.openOfferPhotoCamera = function() {
     }
 };
 
-// 9. رفع الصورة إلى Google Drive Apps Script تلقائياً
+// 11. رفع الصورة إلى Google Drive Apps Script تلقائياً
 window.uploadOfferPhotoToGoogleDrive = async function(base64Image, filename) {
     try {
         const res = await fetch(OFFERS_DEFAULT_DRIVE_URL, {
@@ -19661,12 +19821,7 @@ window.uploadOfferPhotoToGoogleDrive = async function(base64Image, filename) {
     return null;
 };
 
-// 10. تبديل الحقول في الفورم
-window.toggleBundleFields = function(checked) {
-    const fields = document.getElementById('offerBundleFields');
-    if (fields) fields.style.display = checked ? 'grid' : 'none';
-};
-
+// 12. تبديل الحقول في الفورم
 window.handleExpiryTypeChange = function(type) {
     const qtyFields = document.getElementById('offerQtyFields');
     const dateFields = document.getElementById('offerDateFields');
@@ -19674,14 +19829,26 @@ window.handleExpiryTypeChange = function(type) {
     if (dateFields) dateFields.style.display = (type === 'date') ? 'block' : 'none';
 };
 
-// 11. فتح وغلق النوافذ
+// 13. فتح وغلق النوافذ
 window.openNewOfferModal = function() {
     document.getElementById('offerEditId').value = '';
     document.getElementById('offerForm').reset();
-    document.getElementById('offerModalTitle').innerHTML = '<i class="fa-solid fa-badge-percent" style="color: #d97706;"></i> إضافة عرض جديد';
+    document.getElementById('offerModalTitle').innerHTML = '<i class="fa-solid fa-tags" style="color: #d97706;"></i> إضافة عرض جديد';
     window.removeOfferPhoto();
+    
+    const stockBox = document.getElementById('offerProductStockBox');
+    if (stockBox) stockBox.style.display = 'none';
+    
+    window.setOfferPricingMode('single');
+    window.setBundleQuantity(2);
     window.handleExpiryTypeChange('unlimited');
-    window.toggleBundleFields(false);
+    window.handleOfferQtyModeChange('stock');
+    
+    const hiddenDate = document.getElementById('offerEndDate');
+    if (hiddenDate) hiddenDate.value = '';
+    const dateDisplay = document.getElementById('offerEndDateFormattedText');
+    if (dateDisplay) dateDisplay.textContent = 'اضغط لاختيار التاريخ من الروزنامة...';
+    
     document.getElementById('offerModal').style.display = 'flex';
 };
 
@@ -19690,18 +19857,32 @@ window.openEditOfferModal = function(id) {
     if (!offer) return;
     
     document.getElementById('offerEditId').value = offer.id;
-    document.getElementById('offerModalTitle').innerHTML = '<i class="fa-solid fa-pen" style="color: #d97706;"></i> تعديل بيانات العرض';
+    document.getElementById('offerModalTitle').innerHTML = '<i class="fa-solid fa-tags" style="color: #d97706;"></i> تعديل بيانات العرض';
     document.getElementById('offerProductName').value = offer.product_name || '';
     document.getElementById('offerBarcode').value = offer.barcode || '';
     document.getElementById('offerOriginalPrice').value = offer.original_price || '';
-    document.getElementById('offerPrice').value = offer.offer_price || '';
     
-    // Bundle
-    const hasBundle = !!(offer.bundle_text && offer.bundle_price);
-    document.getElementById('offerEnableBundle').checked = hasBundle;
-    window.toggleBundleFields(hasBundle);
-    document.getElementById('offerBundleText').value = offer.bundle_text || '';
-    document.getElementById('offerBundlePrice').value = offer.bundle_price || '';
+    // رصيد الصنف المتوفر
+    const itemInCat = (window.catalogData || []).find(c => (offer.barcode && c.barcode === offer.barcode) || c.name === offer.product_name);
+    const stock = itemInCat ? (Number(itemInCat.stock) || 0) : 0;
+    const stockVal = document.getElementById('offerCurrentStockVal');
+    const stockNum = document.getElementById('offerCurrentStockNumber');
+    const stockBox = document.getElementById('offerProductStockBox');
+    if (stockVal) stockVal.textContent = stock;
+    if (stockNum) stockNum.textContent = stock;
+    if (stockBox) stockBox.style.display = 'flex';
+    
+    // Bundle vs Single
+    const isBundle = Boolean(offer.bundle_price && offer.bundle_qty);
+    if (isBundle) {
+        window.setOfferPricingMode('bundle');
+        window.setBundleQuantity(offer.bundle_qty || 2);
+        document.getElementById('offerBundlePrice').value = offer.bundle_price || '';
+        window.updateBundleOriginalTotal();
+    } else {
+        window.setOfferPricingMode('single');
+        document.getElementById('offerPrice').value = offer.offer_price || '';
+    }
     
     // Expiry
     const expType = offer.expiry_type || 'unlimited';
@@ -19709,10 +19890,29 @@ window.openEditOfferModal = function(id) {
     if (radio) radio.checked = true;
     window.handleExpiryTypeChange(expType);
     
-    document.getElementById('offerInitialQty').value = offer.initial_quantity || '';
-    document.getElementById('offerRemainingQty').value = offer.remaining_quantity || '';
+    // إذا كان محدد بالكمية
+    if (expType === 'quantity') {
+        const qtyMode = offer.quantity_mode || 'stock';
+        const qRadio = document.querySelector(`input[name="offerQtyMode"][value="${qtyMode}"]`);
+        if (qRadio) qRadio.checked = true;
+        window.handleOfferQtyModeChange(qtyMode);
+        document.getElementById('offerInitialQty').value = offer.initial_quantity || '';
+        document.getElementById('offerRemainingQty').value = offer.remaining_quantity || '';
+    }
+    
+    // إذا كان محدد بتاريخ
     if (offer.expiry_date) {
-        document.getElementById('offerEndDate').value = offer.expiry_date.slice(0, 16);
+        const hiddenDate = document.getElementById('offerEndDate');
+        if (hiddenDate) hiddenDate.value = offer.expiry_date.slice(0, 10);
+        const dateDisplay = document.getElementById('offerEndDateFormattedText');
+        if (dateDisplay) {
+            try {
+                const d = new Date(offer.expiry_date);
+                dateDisplay.textContent = d.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            } catch(e) {
+                dateDisplay.textContent = offer.expiry_date;
+            }
+        }
     }
     
     // Photo
@@ -19733,7 +19933,7 @@ window.closeOfferModal = function() {
     document.getElementById('offerModal').style.display = 'none';
 };
 
-// 12. حفظ أو تحديث العرض
+// 14. حفظ أو تحديث العرض
 window.handleOfferSubmit = async function(e) {
     e.preventDefault();
     const btnSubmit = document.getElementById('btnSaveOfferSubmit');
@@ -19746,23 +19946,66 @@ window.handleOfferSubmit = async function(e) {
         const productName = document.getElementById('offerProductName').value.trim();
         const barcode = document.getElementById('offerBarcode').value.trim();
         const originalPrice = parseFloat(document.getElementById('offerOriginalPrice').value) || 0;
-        const offerPrice = parseFloat(document.getElementById('offerPrice').value) || 0;
         
-        const enableBundle = document.getElementById('offerEnableBundle').checked;
-        const bundleText = enableBundle ? document.getElementById('offerBundleText').value.trim() : '';
-        const bundlePrice = enableBundle ? (parseFloat(document.getElementById('offerBundlePrice').value) || 0) : null;
+        if (!productName) {
+            showToast('يرجى اختيار المنتج من الكتالوج أولاً بالبحث أو الباركود', 'warning');
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = origBtnHtml;
+            return;
+        }
+        
+        const pricingMode = document.getElementById('offerPricingMode').value || 'single';
+        let offerPrice = 0;
+        let bundleQty = null;
+        let bundlePrice = null;
+        let bundleText = null;
+        
+        if (pricingMode === 'single') {
+            offerPrice = parseFloat(document.getElementById('offerPrice').value) || 0;
+            if (offerPrice <= 0) {
+                showToast('يرجى كتابة سعر العرض للقطعة الواحدة', 'warning');
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = origBtnHtml;
+                return;
+            }
+        } else {
+            bundlePrice = parseFloat(document.getElementById('offerBundlePrice').value) || 0;
+            bundleQty = parseInt(document.getElementById('offerBundleQtyInput').value) || 2;
+            if (bundlePrice <= 0) {
+                showToast('يرجى كتابة سعر عرض المجموعة معاً', 'warning');
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = origBtnHtml;
+                return;
+            }
+            bundleText = `عرض ${bundleQty} قطع معاً`;
+            offerPrice = Math.round((bundlePrice / bundleQty) * 100) / 100;
+        }
         
         const expiryType = document.querySelector('input[name="offerExpiryType"]:checked')?.value || 'unlimited';
         let initialQty = null;
         let remainingQty = null;
+        let qtyMode = null;
         let expiryDate = null;
         
         if (expiryType === 'quantity') {
-            initialQty = parseInt(document.getElementById('offerInitialQty').value) || 1;
-            remainingQty = parseInt(document.getElementById('offerRemainingQty').value);
-            if (isNaN(remainingQty)) remainingQty = initialQty;
+            qtyMode = document.querySelector('input[name="offerQtyMode"]:checked')?.value || 'stock';
+            if (qtyMode === 'stock') {
+                const stockNum = parseInt(document.getElementById('offerCurrentStockNumber')?.textContent) || 0;
+                initialQty = stockNum > 0 ? stockNum : 1;
+                remainingQty = initialQty;
+            } else {
+                initialQty = parseInt(document.getElementById('offerInitialQty').value) || 1;
+                remainingQty = parseInt(document.getElementById('offerRemainingQty').value);
+                if (isNaN(remainingQty)) remainingQty = initialQty;
+            }
         } else if (expiryType === 'date') {
             expiryDate = document.getElementById('offerEndDate').value;
+            if (!expiryDate) {
+                showToast('يرجى تحديد تاريخ انتهاء العرض', 'warning');
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = origBtnHtml;
+                return;
+            }
         }
         
         let photoUrl = document.getElementById('offerPhotoUrl').value;
@@ -19787,9 +20030,12 @@ window.handleOfferSubmit = async function(e) {
             barcode: barcode,
             original_price: originalPrice,
             offer_price: offerPrice,
-            bundle_text: bundleText,
+            pricing_mode: pricingMode,
+            bundle_qty: bundleQty,
             bundle_price: bundlePrice,
+            bundle_text: bundleText,
             expiry_type: expiryType,
+            quantity_mode: qtyMode,
             initial_quantity: initialQty,
             remaining_quantity: remainingQty,
             expiry_date: expiryDate,
@@ -19823,7 +20069,7 @@ window.handleOfferSubmit = async function(e) {
     }
 };
 
-// 13. تفعيل أو إيقاف العرض
+// 15. تفعيل أو إيقاف العرض
 window.toggleOfferActive = async function(id) {
     const offer = window.offersData.find(o => String(o.id) === String(id));
     if (!offer) return;
@@ -19835,7 +20081,7 @@ window.toggleOfferActive = async function(id) {
     showToast(offer.is_active ? 'تم تفعيل العرض' : 'تم إيقاف العرض مؤقتاً', 'info');
 };
 
-// 14. حذف العرض
+// 16. حذف العرض
 window.deleteOffer = function(id) {
     const offer = window.offersData.find(o => String(o.id) === String(id));
     if (!offer) return;
@@ -19854,7 +20100,7 @@ window.deleteOffer = function(id) {
     });
 };
 
-// 15. توليد صورة ستوري احترافية بمقاس 9:16 (1080x1920)
+// 17. توليد صورة ستوري احترافية بمقاس 9:16 (1080x1920)
 window.downloadOfferStoryImage = async function(id) {
     const offer = window.offersData.find(o => String(o.id) === String(id));
     if (!offer) return;
@@ -19927,11 +20173,22 @@ window.downloadOfferStoryImage = async function(id) {
         ctx.roundRect(imgX, imgY, imgW, imgH, 40);
         ctx.stroke();
         
+        const isBundle = Boolean(offer.bundle_price && offer.bundle_qty);
+        const origUnit = Number(offer.original_price) || 0;
+        let currentPrice = 0;
+        let origTotal = 0;
+        
+        if (isBundle) {
+            currentPrice = Number(offer.bundle_price) || 0;
+            origTotal = origUnit * Number(offer.bundle_qty);
+        } else {
+            currentPrice = Number(offer.offer_price) || 0;
+            origTotal = origUnit;
+        }
+        
         // نسبة الخصم
-        const origPrice = Number(offer.original_price) || 0;
-        const offerPrice = Number(offer.offer_price) || 0;
-        if (origPrice > offerPrice) {
-            const disc = Math.round(((origPrice - offerPrice) / origPrice) * 100);
+        if (origTotal > currentPrice && origTotal > 0) {
+            const disc = Math.round(((origTotal - currentPrice) / origTotal) * 100);
             ctx.fillStyle = '#f59e0b';
             ctx.roundRect(imgX + 40, imgY + 40, 260, 80, 20);
             ctx.fill();
@@ -19960,13 +20217,13 @@ window.downloadOfferStoryImage = async function(id) {
         // السعر بعد العرض باللون الذهبي
         ctx.fillStyle = '#fbbf24';
         ctx.font = 'bold 88px Cairo, sans-serif';
-        ctx.fillText(`${offerPrice} ج.م`, 540, 1370);
+        ctx.fillText(`${currentPrice} ج.م`, 540, 1370);
         
         // السعر قبل الخصم مشطوب
-        if (origPrice > 0) {
+        if (origTotal > 0) {
             ctx.fillStyle = '#94a3b8';
             ctx.font = 'bold 42px Cairo, sans-serif';
-            const oldPriceText = `بدلاً من ${origPrice} ج`;
+            const oldPriceText = isBundle ? `بدلاً من ${origTotal} ج (${offer.bundle_qty} قطع)` : `بدلاً من ${origTotal} ج`;
             ctx.fillText(oldPriceText, 540, 1440);
             
             // خط الشطب
@@ -19980,10 +20237,10 @@ window.downloadOfferStoryImage = async function(id) {
         }
         
         // عرض المجموعة / القطعتين إن وجد
-        if (offer.bundle_text && offer.bundle_price) {
+        if (isBundle) {
             ctx.fillStyle = '#38bdf8';
             ctx.font = 'bold 44px Cairo, sans-serif';
-            ctx.fillText(`${offer.bundle_text}: ${offer.bundle_price} ج.م فقط`, 540, 1560);
+            ctx.fillText(`عرض ${offer.bundle_qty} قطع معاً بسعر خاص`, 540, 1560);
         }
         
         // فوتر الستوري ودعوة للطلب
@@ -20154,11 +20411,20 @@ window.addOfferToOrderCart = function(id) {
     if (!offer) return;
     
     if (typeof window.addProductRow === 'function') {
-        const row = window.addProductRow(offer.product_name, offer.original_price || offer.offer_price, 1, true, offer.offer_price);
+        const isBundle = Boolean(offer.bundle_price && offer.bundle_qty);
+        let row;
+        if (isBundle) {
+            const qty = Number(offer.bundle_qty) || 2;
+            const unitOfferPrice = Math.round((Number(offer.bundle_price) / qty) * 100) / 100;
+            row = window.addProductRow(offer.product_name, offer.original_price || unitOfferPrice, qty, true, unitOfferPrice);
+            showToast(`تم إدراج عرض (${offer.product_name}) - ${offer.bundle_qty} قطع بإجمالي ${offer.bundle_price} ج`, 'success');
+        } else {
+            row = window.addProductRow(offer.product_name, offer.original_price || offer.offer_price, 1, true, offer.offer_price);
+            showToast(`تم إدراج عرض (${offer.product_name}) بسعر ${offer.offer_price} ج.م`, 'success');
+        }
         if (row) {
             row.dataset.offerId = offer.id;
         }
-        showToast(`تم إدراج عرض (${offer.product_name}) بسعر ${offer.offer_price} ج.م`, 'success');
         window.closeActiveOffersOrderModal();
     }
 };
@@ -20184,11 +20450,11 @@ window.decrementOffersFromOrderProducts = async function() {
             targetOffer = window.offersData.find(o => o.is_active && o.product_name.trim().toLowerCase() === name.toLowerCase());
         }
         
-        if (targetOffer && targetOffer.expiry_type === 'quantity' && targetOffer.remaining_quantity !== null) {
+        if (targetOffer && targetOffer.expiry_type === 'quantity' && targetOffer.quantity_mode === 'custom' && targetOffer.remaining_quantity !== null) {
             targetOffer.remaining_quantity = Math.max(0, targetOffer.remaining_quantity - qty);
             if (targetOffer.remaining_quantity <= 0) {
                 targetOffer.is_active = false;
-                targetOffer.status_reason = 'نفدت الكمية';
+                targetOffer.status_reason = 'نفدت الكمية المخصصة';
             }
             modified = true;
         }
