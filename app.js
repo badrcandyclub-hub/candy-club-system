@@ -1088,8 +1088,34 @@ async function handleSupabaseRequest(url, options) {
                 responseData = { success: true };
                 break;
             case 'addExpiry': {
-                const expRow = { product_name: params.name, qty: params.qty, expiry_date: params.expiryDate, location: params.location, registrar_name: params.regDate, receiver: params.receiver, notes: params.notes, original_price: params.originalPrice, offer_price: params.offerPrice, status: params.status, barcode: params.barcode };
-                await supabase.from('expiries').insert([expRow]);
+                let existingZero = null;
+                try {
+                    const { data: matchedRows } = await supabase.from('expiries')
+                        .select('id, qty, status')
+                        .eq('product_name', params.name)
+                        .eq('expiry_date', params.expiryDate)
+                        .limit(5);
+                    if (matchedRows && matchedRows.length > 0) {
+                        existingZero = matchedRows.find(r => parseFloat(r.qty) <= 0 || r.status === 'نافد');
+                    }
+                } catch(e) {}
+
+                if (existingZero) {
+                    const newQty = parseFloat(params.qty) || 0;
+                    await supabase.from('expiries').update({
+                        qty: newQty,
+                        status: params.status || 'مش في عرض',
+                        location: params.location || '',
+                        receiver: params.receiver || '',
+                        notes: params.notes || '',
+                        barcode: params.barcode || '',
+                        reg_date: params.regDate || ''
+                    }).eq('id', existingZero.id);
+                } else {
+                    const expRow = { product_name: params.name, qty: params.qty, expiry_date: params.expiryDate, location: params.location, registrar_name: params.regDate, receiver: params.receiver, notes: params.notes, original_price: params.originalPrice, offer_price: params.offerPrice, status: params.status, barcode: params.barcode };
+                    await supabase.from('expiries').insert([expRow]);
+                }
+
                 try {
                     const arcRow = {
                         product_name: params.name,
@@ -1128,7 +1154,6 @@ async function handleSupabaseRequest(url, options) {
             }
             case 'addExpiriesBatch': {
                 const batchItems = JSON.parse(params.batchData);
-                const expRows = batchItems.map(item => ({ product_name: item.name, qty: item.qty, expiry_date: item.expiryDate, location: item.location, reg_date: item.regDate, receiver: item.receiver, notes: item.notes, status: item.status, barcode: item.barcode }));
                 const archiveRows = batchItems.map(item => ({
                     product_name: item.name,
                     barcode: item.barcode || '',
@@ -1152,22 +1177,55 @@ async function handleSupabaseRequest(url, options) {
                     break;
                 }
 
-                const { error: expiryInsertError } = await supabase.from('expiries').insert(expRows);
-                if (expiryInsertError) {
-                    const insertedIds = (insertedArchiveRows || []).map(row => row.id).filter(id => id !== undefined && id !== null);
-                    let rollbackError = null;
-                    if (insertedIds.length) {
-                        const { error } = await supabase.from('expiry_receipts_log').delete().in('id', insertedIds);
-                        rollbackError = error;
+                // Restock zero-balance rows or insert new
+                const expRowsToInsert = [];
+                for (const item of batchItems) {
+                    let updatedExisting = false;
+                    try {
+                        const { data: existingRows } = await supabase.from('expiries')
+                            .select('id, qty, status')
+                            .eq('product_name', item.name)
+                            .eq('expiry_date', item.expiryDate)
+                            .limit(5);
+                        if (existingRows && existingRows.length > 0) {
+                            const zeroRow = existingRows.find(r => parseFloat(r.qty) <= 0 || r.status === 'نافد');
+                            if (zeroRow) {
+                                await supabase.from('expiries').update({
+                                    qty: parseFloat(item.qty) || 0,
+                                    status: item.status || 'مش في عرض',
+                                    location: item.location || '',
+                                    receiver: item.receiver || '',
+                                    notes: item.notes || '',
+                                    barcode: item.barcode || '',
+                                    reg_date: item.regDate || ''
+                                }).eq('id', zeroRow.id);
+                                updatedExisting = true;
+                            }
+                        }
+                    } catch(e) {}
+                    if (!updatedExisting) {
+                        expRowsToInsert.push({ product_name: item.name, qty: item.qty, expiry_date: item.expiryDate, location: item.location, reg_date: item.regDate, receiver: item.receiver, notes: item.notes, status: item.status, barcode: item.barcode });
                     }
-                    responseData = {
-                        success: false,
-                        partial: Boolean(rollbackError),
-                        error: rollbackError
-                            ? `فشل حفظ الصلاحيات (${expiryInsertError.message}) وتعذر التراجع عن سجل الأرشيف (${rollbackError.message}). راجع الأرشيف قبل إعادة المحاولة.`
-                            : `تعذر حفظ الصلاحيات الأساسية: ${expiryInsertError.message}`
-                    };
-                    break;
+                }
+
+                if (expRowsToInsert.length > 0) {
+                    const { error: expiryInsertError } = await supabase.from('expiries').insert(expRowsToInsert);
+                    if (expiryInsertError) {
+                        const insertedIds = (insertedArchiveRows || []).map(row => row.id).filter(id => id !== undefined && id !== null);
+                        let rollbackError = null;
+                        if (insertedIds.length) {
+                            const { error } = await supabase.from('expiry_receipts_log').delete().in('id', insertedIds);
+                            rollbackError = error;
+                        }
+                        responseData = {
+                            success: false,
+                            partial: Boolean(rollbackError),
+                            error: rollbackError
+                                ? `فشل حفظ الصلاحيات (${expiryInsertError.message}) وتعذر التراجع عن سجل الأرشيف (${rollbackError.message}). راجع الأرشيف قبل إعادة المحاولة.`
+                                : `تعذر حفظ الصلاحيات الأساسية: ${expiryInsertError.message}`
+                        };
+                        break;
+                    }
                 }
 
                 const latestStatusByBarcode = new Map();
@@ -1257,15 +1315,18 @@ async function handleSupabaseRequest(url, options) {
                 const statParts = params.id ? String(params.id).split('|') : [];
                 const tName = statParts[0] || params.id;
                 let updates = { status: params.status };
+                if (params.newQty !== undefined) updates.qty = params.newQty;
+                else if (params.qty !== undefined) updates.qty = params.qty;
                 if (params.originalPrice) updates.original_price = params.originalPrice;
                 if (params.offerPrice) updates.offer_price = params.offerPrice;
                 
                 let q2 = supabase.from('expiries').update(updates);
-                if (statParts.length >= 4 && statParts[3]) {
+                if (params.dbId) {
+                    q2 = q2.eq('id', params.dbId);
+                } else if (statParts.length >= 4 && statParts[3]) {
                     q2 = q2.eq('id', statParts[3]);
                 } else {
                     q2 = q2.eq('product_name', tName);
-                    if (statParts[1]) q2 = q2.eq('quantity', statParts[1]);
                     if (statParts[2]) q2 = q2.eq('expiry_date', statParts[2]);
                 }
                 await q2;
@@ -9681,10 +9742,17 @@ function renderExpiryDashboard() {
     let countFar = 0;
     let countExpired = 0;
     let countNoExpiry = 0;
+    let countZeroStock = 0;
 
     let activeItems = expiryData.filter(item => item.status !== 'Deleted');
 
     activeItems.forEach(item => {
+        const itemQty = parseFloat(item.qty) || 0;
+        if (itemQty <= 0 || item.status === 'نافد') {
+            countZeroStock++;
+            return; // لا تحسب في كروت التنبيهات الخاصة بالبضاعة الموجودة فعلياً على الأرفف
+        }
+
         countTotal++;
         if (item.status === 'في عرض') countOffers++;
         const daysRemaining = getDaysRemaining(item.expiryDate);
@@ -9708,6 +9776,7 @@ function renderExpiryDashboard() {
 
     if (document.getElementById('expOffersItems')) document.getElementById('expOffersItems').innerText = countOffers;
     if (document.getElementById('expTotalItems')) document.getElementById('expTotalItems').innerText = countTotal;
+    if (document.getElementById('expZeroStockItems')) document.getElementById('expZeroStockItems').innerText = countZeroStock;
     if (document.getElementById('expExpiredItems')) {
         document.getElementById('expExpiredItems').innerText = countExpired;
         let sidebarTab = document.querySelector('button.nav-item[data-target="expiry-tab"]');
@@ -9760,11 +9829,18 @@ window.showExpiryDetails = function (category, resetPage = true) {
         let tempFiltered = [];
         activeItems.forEach(item => {
             const daysRemaining = getDaysRemaining(item.expiryDate);
+            const itemQty = parseFloat(item.qty) || 0;
+            const isZero = (itemQty <= 0 || item.status === 'نافد');
             let matches = false;
 
             if (category === 'Total') {
                 matches = true;
                 title = "<i class=\'fa-solid fa-box\'></i> إجمالي الأصناف المسجلة";
+            } else if (category === 'ZeroStock') {
+                if (isZero) {
+                    matches = true;
+                    title = "<i class=\'fa-solid fa-boxes-packing\'></i> أصناف نافدة الرصيد (0)";
+                }
             } else if (category === 'Offers' && item.status === 'في عرض') {
                 matches = true;
                 title = "<i class=\'fa-solid fa-gift\'></i> العروض النشطة";
@@ -9775,25 +9851,25 @@ window.showExpiryDetails = function (category, resetPage = true) {
                     matches = true;
                     title = `<i class=\'fa-solid fa-magnifying-glass\'></i> نتائج البحث عن: "${searchTerm}"`;
                 }
-            } else if (category === 'Expired' && daysRemaining !== 'NoExpiry' && daysRemaining < 0) {
+            } else if (!isZero && category === 'Expired' && daysRemaining !== 'NoExpiry' && daysRemaining < 0) {
                 matches = true;
-                title = "<i class=\'fa-solid fa-skull\'></i> انتهت الصلاحية";
-            } else if (category === 'NoExpiry' && daysRemaining === 'NoExpiry') {
+                title = "<i class=\'fa-solid fa-skull\'></i> انتهت الصلاحية (مخزون فعلي)";
+            } else if (!isZero && category === 'NoExpiry' && daysRemaining === 'NoExpiry') {
                 matches = true;
                 title = "<i class=\'fa-solid fa-infinity\'></i> بدون تاريخ صلاحية";
-            } else if (category === 'Critical' && daysRemaining !== 'NoExpiry' && daysRemaining >= 0 && daysRemaining < 7) {
+            } else if (!isZero && category === 'Critical' && daysRemaining !== 'NoExpiry' && daysRemaining >= 0 && daysRemaining < 7) {
                 matches = true;
                 title = "<i class=\'fa-solid fa-circle text-danger\'></i> حرج جداً (أقل من 7 أيام)";
-            } else if (category === 'Alert' && daysRemaining >= 7 && daysRemaining < 30) {
+            } else if (!isZero && category === 'Alert' && daysRemaining >= 7 && daysRemaining < 30) {
                 matches = true;
                 title = "<i class=\'fa-solid fa-circle text-warning\'></i> تنبيه سريع (أقل من 30 يوم)";
-            } else if (category === 'Attention' && daysRemaining >= 30 && daysRemaining <= 90) {
+            } else if (!isZero && category === 'Attention' && daysRemaining >= 30 && daysRemaining <= 90) {
                 matches = true;
                 title = "<i class=\'fa-solid fa-circle text-warning\'></i> انتباه ومراقبة (1 إلى 3 شهور)";
-            } else if (category === 'Safe' && daysRemaining > 90 && daysRemaining <= 180) {
+            } else if (!isZero && category === 'Safe' && daysRemaining > 90 && daysRemaining <= 180) {
                 matches = true;
                 title = "<i class=\'fa-solid fa-circle text-success\'></i> مخزون آمن (3 إلى 6 شهور)";
-            } else if (category === 'Far' && daysRemaining > 180) {
+            } else if (!isZero && category === 'Far' && daysRemaining > 180) {
                 matches = true;
                 title = "<i class=\'fa-brands fa-facebook\'></i> تاريخ بعيد (أكثر من 6 شهور)";
             } else if (category === 'ByEntryDate') {
@@ -9882,6 +9958,11 @@ window.showExpiryDetails = function (category, resetPage = true) {
             let parentDiv = document.createElement('div');
             parentDiv.className = 'expiry-item-row batch-parent-row';
             let uniqueId = 'batch_' + expiryCurrentPage + '_' + gIndex;
+            let isParentZero = group.totalQty <= 0;
+            let parentQtyBadge = isParentZero
+                ? `<span style="font-size: 0.95rem; color: #dc2626; font-weight: bold; background: #fee2e2; padding: 3px 10px; border-radius: 8px;"><i class="fa-solid fa-battery-empty"></i> 0 (نافد)</span>`
+                : `<span style="font-size: 1rem; color: var(--text-main); font-weight: bold;">إجمالي: ${group.totalQty}</span>`;
+
             parentDiv.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                     <div style="display: flex; align-items: center; gap: 10px;">
@@ -9892,7 +9973,7 @@ window.showExpiryDetails = function (category, resetPage = true) {
                         </span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 15px;">
-                        <span style="font-size: 1rem; color: var(--text-main); font-weight: bold;">إجمالي: ${group.totalQty}</span>
+                        ${parentQtyBadge}
                         <i class="fa-solid fa-chevron-down" id="icon_${uniqueId}" style="transition: transform 0.3s; color: var(--text-color);"></i>
                     </div>
                 </div>
@@ -9917,9 +9998,13 @@ window.showExpiryDetails = function (category, resetPage = true) {
             fragment.appendChild(parentDiv);
             
             group.batches.forEach(item => {
+            let isZero = (parseFloat(item.qty) <= 0 || item.status === 'نافد');
             let daysColor = "";
             let daysText = "";
-            if (item.daysRemaining === 'NoExpiry') {
+            if (isZero) {
+                daysColor = "#dc2626";
+                daysText = "نافد الرصيد <i class=\'fa-solid fa-battery-empty\'></i>";
+            } else if (item.daysRemaining === 'NoExpiry') {
                 daysColor = "#7f8c8d";
                 daysText = "بدون تاريخ صلاحية <i class=\'fa-solid fa-infinity\'></i>";
             } else if (item.daysRemaining < 0) {
@@ -9941,9 +10026,11 @@ window.showExpiryDetails = function (category, resetPage = true) {
 
             let rowClass = "expiry-item-row";
             let activeOfferStyle = "";
-            if (item.status === 'في عرض') {
+            if (item.status === 'في عرض' && !isZero) {
                 rowClass += " active-offer";
                 activeOfferStyle = 'style="border: 2px solid #ffeb3b; background: #fffde7;"';
+            } else if (isZero) {
+                activeOfferStyle = 'style="border: 1px dashed #cbd5e1; background: #f8fafc; opacity: 0.9;"';
             }
 
             const offerBtnText = item.status === 'في عرض' ? "إلغاء العرض ⏸" : "إضافة للعروض 🔥";
@@ -9954,7 +10041,7 @@ window.showExpiryDetails = function (category, resetPage = true) {
             formattedDate = isNaN(formattedDate.getTime()) ? item.expiryDate : formattedDate.toLocaleDateString('ar-EG');
 
             let pricesHtml = "";
-            if (item.status === 'في عرض') {
+            if (item.status === 'في عرض' && !isZero) {
                 pricesHtml = `
                     <div style="background: #fdf2e9; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px dashed #e67e22; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                         <div style="flex: 1; min-width: 120px;">
@@ -9972,11 +10059,23 @@ window.showExpiryDetails = function (category, resetPage = true) {
 
             let itemDiv = document.createElement('div');
             itemDiv.className = rowClass;
-            if (item.status === 'في عرض') {
+            if (item.status === 'في عرض' && !isZero) {
                 itemDiv.style.border = '2px solid #ffeb3b';
                 itemDiv.style.background = '#fffde7';
+            } else if (isZero) {
+                itemDiv.style.border = '1px dashed #cbd5e1';
+                itemDiv.style.background = '#f8fafc';
             }
             let isChecked = item.mergedIds && item.mergedIds.every(singleId => selectedExpiryItems.has(String(singleId))) ? "checked" : (selectedExpiryItems.has(item.id) ? "checked" : "");
+            
+            let qtyDisplayHtml = isZero
+                ? `<span style="background: #fee2e2; color: #dc2626; padding: 3px 8px; border-radius: 6px; font-weight: 900;"><i class="fa-solid fa-battery-empty"></i> 0 (نافد الرصيد)</span>`
+                : `<span>الكمية: <strong>${item.qty}</strong></span>`;
+
+            let actionHtml = isZero
+                ? `<span style="background: #f1f5f9; color: #64748b; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; flex: 1; text-align: center;"><i class="fa-solid fa-check-double"></i> تم بيع هذه الدفعة بالكامل (أرشيف)</span>`
+                : `<button class="btn-activate-offer interactive-btn" style="background: ${offerBtnColor}; flex: 1;" onclick="${item.status === 'في عرض' ? `changeExpiryStatus('${item.id}', '${offerBtnAction}')` : `promptNewOffer('${item.id}')`}">${offerBtnText}</button>`;
+
             itemDiv.innerHTML = `
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; background: #f8f9fa; padding: 5px 10px; border-radius: 8px;">
                     <input type="checkbox" class="expiry-item-checkbox" data-id="${item.id}" ${isChecked} onchange="toggleExpirySelection('${item.id}', this.checked)" style="width: 20px; height: 20px; cursor: pointer;">
@@ -9986,7 +10085,7 @@ window.showExpiryDetails = function (category, resetPage = true) {
                     </h4>
                 </div>
                 <div class="expiry-item-details">
-                    <span>الكمية: ${item.qty}</span>
+                    ${qtyDisplayHtml}
                     <span style="color: ${daysColor}; font-weight: bold;">${daysText}</span>
                 </div>
                 <div class="expiry-item-metadata" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; background: #fff; padding: 12px; border-radius: 8px; border: 1px solid #e0e0e0; margin-top: 5px;">
@@ -10012,7 +10111,7 @@ window.showExpiryDetails = function (category, resetPage = true) {
                 </div>
                 ${pricesHtml}
                 <div class="expiry-item-actions" style="flex-wrap: wrap; gap: 5px;">
-                    <button class="btn-activate-offer interactive-btn" style="background: ${offerBtnColor}; flex: 1;" onclick="${item.status === 'في عرض' ? `changeExpiryStatus('${item.id}', '${offerBtnAction}')` : `promptNewOffer('${item.id}')`}">${offerBtnText}</button>
+                    ${actionHtml}
                 </div>
             `;
                 itemDiv.classList.add('batch-child-row');
@@ -10350,11 +10449,17 @@ function executeStatusUpdate(idString, newStatus, soldQty = null) {
             let item = expiryData.find(i => String(i.id) === String(id));
             if (!item) continue;
             let itemQty = Number(item.qty) || 0;
+            if (itemQty <= 0) continue;
             let qtyToSubtract = Math.min(itemQty, remainingSoldQty);
+            let nextQty = Math.max(0, itemQty - qtyToSubtract);
+            let nextStatus = nextQty === 0 ? 'نافد' : (item.status === 'نافد' ? 'مش في عرض' : item.status);
+
             let formData = new URLSearchParams();
             formData.append('action', 'updateExpiryStatus');
             formData.append('id', id);
-            formData.append('status', newStatus);
+            if (item.dbId) formData.append('dbId', item.dbId);
+            formData.append('status', nextStatus);
+            formData.append('newQty', nextQty);
             formData.append('soldQty', qtyToSubtract);
             promises.push(fetch(GOOGLE_SHEETS_URL, { method: 'POST', mode: 'no-cors', body: formData }));
             remainingSoldQty -= qtyToSubtract;
@@ -10366,20 +10471,19 @@ function executeStatusUpdate(idString, newStatus, soldQty = null) {
                 let item = expiryData.find(i => String(i.id) === String(id));
                 if (item) {
                     let itemQty = Number(item.qty) || 0;
+                    if (itemQty <= 0) continue;
                     let qtyToSubtract = Math.min(itemQty, remainingSoldQtyLocal);
-                    if (qtyToSubtract < itemQty) {
-                        item.qty = itemQty - qtyToSubtract;
-                    } else {
-                        item.status = newStatus;
-                    }
+                    let nextQty = Math.max(0, itemQty - qtyToSubtract);
+                    item.qty = nextQty;
+                    item.status = nextQty === 0 ? 'نافد' : (item.status === 'نافد' ? 'مش في عرض' : item.status);
                     remainingSoldQtyLocal -= qtyToSubtract;
                 }
             }
-            showToast("<i class=\'fa-solid fa-check\'></i> تم تحديث الحالة بنجاح", "success");
+            showToast("<i class=\'fa-solid fa-check\'></i> تم خصم الكمية وتحديث الرصيد بنجاح", "success");
             renderExpiryDashboard();
             updateCatalogWithOffers();
             if (document.getElementById('expiryDetailsSection').style.display === 'block') {
-                closeExpiryDetails();
+                showExpiryDetails(expiryCurrentCategory, false);
             }
         }).catch(() => {
             showToast("<i class=\'fa-solid fa-xmark\'></i> خطأ في الاتصال بالإنترنت", "error");
@@ -11923,6 +12027,9 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
         return dateA - dateB;
     });
 
+    let totalPieces = finalData.reduce((acc, curr) => acc + (parseFloat(curr.qty) || 0), 0);
+    let zeroCount = finalData.filter(i => (parseFloat(i.qty) <= 0 || i.status === 'نافد')).length;
+
     let baseUrl = window.location.href.split('?')[0].replace(/[^/]*$/, '');
     let logoUrl = baseUrl + 'favicon.png';
 
@@ -12088,16 +12195,22 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
                 </div>
             </div>
             
-            <div class="info-section">
-                <div class="info-card" style="display: flex; align-items: center; justify-content: center;">
-                    <div class="info-row" style="justify-content: center; font-size: 18px; margin: 0;">
-                        <span class="info-label" style="font-size: 22px;">شهر الانتهاء:</span>
-                        <span class="info-value" style="color: #E91E8C; margin-right: 15px; font-size: 22px;" dir="ltr">${monthVal}</span>
-                    </div>
+            <div class="info-section" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px;">
+                <div class="info-card" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; text-align: center;">
+                    <span class="info-label" style="font-size: 13px; color: #64748b; font-weight: bold; display: block; margin-bottom: 4px;">شهر الانتهاء</span>
+                    <span class="info-value" style="font-size: 18px; font-weight: 900; color: #E91E8C;" dir="ltr">${monthVal}</span>
                 </div>
-                <div class="info-card" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
-                    <span class="info-label" style="margin-bottom: 8px;">إجمالي الأصناف المجمعة</span>
-                    <span id="totalItemsCount" class="info-value" style="font-size: 32px; color: #E91E8C; line-height: 1;">${finalData.length}</span>
+                <div class="info-card" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; text-align: center;">
+                    <span class="info-label" style="font-size: 13px; color: #64748b; font-weight: bold; display: block; margin-bottom: 4px;">إجمالي الأصناف</span>
+                    <span id="totalItemsCount" class="info-value" style="font-size: 18px; font-weight: 900; color: #2563eb;">${finalData.length}</span>
+                </div>
+                <div class="info-card" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; text-align: center;">
+                    <span class="info-label" style="font-size: 13px; color: #64748b; font-weight: bold; display: block; margin-bottom: 4px;">إجمالي القطع المتوفرة</span>
+                    <span class="info-value" style="font-size: 18px; font-weight: 900; color: #059669;">${totalPieces} قطعة</span>
+                </div>
+                <div class="info-card" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; text-align: center;">
+                    <span class="info-label" style="font-size: 13px; color: #64748b; font-weight: bold; display: block; margin-bottom: 4px;">أصناف نافدة (رصيد 0)</span>
+                    <span class="info-value" style="font-size: 18px; font-weight: 900; color: #dc2626;">${zeroCount}</span>
                 </div>
             </div>
 
@@ -12113,6 +12226,7 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
                 </thead>
                 <tbody>
                     ${finalData.map((item, index) => {
+                        let isZero = (parseFloat(item.qty) <= 0 || item.status === 'نافد');
                         let barcodeHtml = '-';
                         let bCode = item.barcode ? String(item.barcode).trim() : '';
                         if (bCode !== '') {
@@ -12134,12 +12248,18 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
                             `;
                         }
 
+                        let qtyDisplay = isZero
+                            ? `<span style="display: inline-block; background: #fee2e2; color: #dc2626; padding: 2px 8px; border-radius: 6px; font-weight: 900; font-size: 13px;">0 (نافد)</span>`
+                            : `<span style="font-weight: 900; font-size: 14px; color: #0f172a;">${item.qty}</span>`;
+
+                        let rowBg = isZero ? 'style="background-color: #f8fafc;"' : '';
+
                         return `
-                        <tr>
+                        <tr ${rowBg}>
                             <td style="text-align: center; font-weight: bold; color: #64748b;"><button class="btn-del-row no-print" onclick="deleteReportRow(this)" title="حذف هذا الصنف من التقرير">&times;</button><span class="row-num">${index + 1}</span></td>
                             <td style="font-weight: 900; font-size: 15px;">${item.name || '-'}</td>
                             <td class="no-edit" dir="ltr" style="text-align: center;">${barcodeHtml}</td>
-                            <td class="qty-cell">${item.qty || '-'}</td>
+                            <td class="qty-cell" style="text-align: center;">${qtyDisplay}</td>
                             <td dir="ltr" style="text-align: right; color: #475569; font-weight: bold;">${item.formattedExp}</td>
                         </tr>
                         `;
@@ -12445,6 +12565,7 @@ function generatePDFReceipt(filteredData, pdfTitleDate) {
                 </thead>
                 <tbody>
                     ${filteredData.map((item, index) => {
+                        let isZero = (parseFloat(item.qty) <= 0 || item.status === 'نافد');
                         let expDate = new Date(item.expiryDate);
                         let formattedExp = isNaN(expDate.getTime()) ? item.expiryDate : expDate.toLocaleDateString('ar-EG');
                         
@@ -12464,12 +12585,18 @@ function generatePDFReceipt(filteredData, pdfTitleDate) {
                             `;
                         }
 
+                        let qtyDisplay = isZero
+                            ? `<span style="display: inline-block; background: #fee2e2; color: #dc2626; padding: 2px 8px; border-radius: 6px; font-weight: 900; font-size: 13px;">0 (نافد)</span>`
+                            : `<span style="font-weight: 900; font-size: 14px; color: #0f172a;">${item.qty}</span>`;
+
+                        let rowBg = isZero ? 'style="background-color: #f8fafc;"' : '';
+
                         return `
-                        <tr>
+                        <tr ${rowBg}>
                             <td style="text-align: center; font-weight: bold; color: #64748b;"><button class="btn-del-row no-print" onclick="deleteReportRow(this)" title="حذف هذا الصنف من التقرير">&times;</button><span class="row-num">${index + 1}</span></td>
                             <td style="font-weight: 900; font-size: 15px;">${item.name || '-'}</td>
                             <td class="no-edit" dir="ltr" style="text-align: center;">${barcodeHtml}</td>
-                            <td class="qty-cell">${item.qty || '-'}</td>
+                            <td class="qty-cell" style="text-align: center;">${qtyDisplay}</td>
                             <td dir="ltr" style="text-align: right; color: #475569;">${formattedExp || '-'}</td>
                             <td style="color: #475569;">${item.location || '-'}</td>
                             <td style="color: #94a3b8; font-size: 12px;">${item.notes || '-'}</td>
