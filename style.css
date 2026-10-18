@@ -7232,63 +7232,6 @@ body.dark-mode .cmp-footer {
     gap: 6px;
 }
 
-.offer-card-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 6px;
-    padding-top: 12px;
-    border-top: 1px solid #f1f5f9;
-    margin-top: auto;
-}
-
-.offer-action-btn {
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: 1px solid #cbd5e1;
-    background: #f8fafc;
-    color: #334155;
-    font-family: inherit;
-    font-size: 0.82rem;
-    font-weight: 700;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    transition: all 0.15s;
-}
-
-.offer-action-btn:hover {
-    background: #ffffff;
-    border-color: #94a3b8;
-    color: #0f172a;
-}
-
-.offer-action-story {
-    background: linear-gradient(135deg, #f59e0b, #d97706);
-    color: #ffffff;
-    border-color: transparent;
-}
-
-.offer-action-story:hover {
-    background: linear-gradient(135deg, #d97706, #b45309);
-    color: #ffffff;
-}
-
-.offer-action-delete {
-    color: #dc2626;
-    border-color: #fecaca;
-    background: #fff5f5;
-}
-
-.offer-action-delete:hover {
-    background: #fee2e2;
-}
-    align-items: center;
-    gap: 6px;
-}
-
 .offer-progress-box {
     margin-bottom: 14px;
 }
@@ -7355,6 +7298,27 @@ body.dark-mode .cmp-footer {
     background: #ffffff;
     border-color: #94a3b8;
     color: #0f172a;
+}
+
+.offer-action-story {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #ffffff;
+    border-color: transparent;
+}
+
+.offer-action-story:hover {
+    background: linear-gradient(135deg, #d97706, #b45309);
+    color: #ffffff;
+}
+
+.offer-action-delete {
+    color: #dc2626;
+    border-color: #fecaca;
+    background: #fff5f5;
+}
+
+.offer-action-delete:hover {
+    background: #fee2e2;
 }
 
 /* Empty State */
