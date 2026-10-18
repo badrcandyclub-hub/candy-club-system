@@ -19728,14 +19728,15 @@ window.selectProductForOffer = function(encodedItem) {
         if (stockNum) stockNum.textContent = stock;
         if (stockBox) stockBox.style.display = 'flex';
 
-        // ضبط الكمية المخصصة والمتبقي الافتراضي بناءً على رصيد المحل
+        // رصيد الصنف المتوفر بالمحل (يظل ثابتاً في حقل رصيد المحل الفعلي)
+        const remQtyInp = document.getElementById('offerRemainingQty');
+        if (remQtyInp) remQtyInp.value = stock;
+
         const isEditing = Boolean(document.getElementById('offerEditId')?.value);
         const initQtyInp = document.getElementById('offerInitialQty');
-        const remQtyInp = document.getElementById('offerRemainingQty');
         if (initQtyInp) initQtyInp.max = stock > 0 ? stock : 1;
         if (!isEditing) {
             if (initQtyInp) initQtyInp.value = stock > 0 ? stock : '';
-            if (remQtyInp) remQtyInp.value = stock > 0 ? stock : 0;
             if (typeof window.handleOfferInitialQtyChange === 'function') {
                 window.handleOfferInitialQtyChange(stock > 0 ? stock : '');
             }
@@ -19772,15 +19773,17 @@ window.openOfferCameraScanner = function() {
 };
 
 window.handleOfferInitialQtyChange = function(val) {
-    const editId = document.getElementById('offerEditId')?.value;
     const remainingEl = document.getElementById('offerRemainingQty');
     const inputEl = document.getElementById('offerInitialQty');
     const warnEl = document.getElementById('offerQtyWarning');
     const stockNum = parseInt(document.getElementById('offerCurrentStockNumber')?.textContent) || 0;
+    
+    // رصيد المحل الفعلي يظل ثابتاً تماماً ولا ينقص ولا يتحرك عند تغيير كمية العرض
+    if (remainingEl) remainingEl.value = stockNum;
+
     const numVal = parseInt(val);
 
     if (!val || isNaN(numVal) || numVal <= 0) {
-        if (!editId && remainingEl) remainingEl.value = 0;
         if (inputEl) {
             inputEl.style.borderColor = '#ef4444';
             inputEl.style.backgroundColor = '#fff5f5';
@@ -19793,7 +19796,6 @@ window.handleOfferInitialQtyChange = function(val) {
     }
 
     if (stockNum > 0 && numVal > stockNum) {
-        if (!editId && remainingEl) remainingEl.value = 0;
         if (inputEl) {
             inputEl.style.borderColor = '#ef4444';
             inputEl.style.backgroundColor = '#fff5f5';
@@ -19803,7 +19805,6 @@ window.handleOfferInitialQtyChange = function(val) {
             warnEl.style.display = 'flex';
         }
     } else {
-        if (!editId && remainingEl) remainingEl.value = numVal;
         if (inputEl) {
             inputEl.style.borderColor = '#10b981';
             inputEl.style.backgroundColor = '#ffffff';
@@ -19890,15 +19891,15 @@ window.handleOfferQtyModeChange = function(mode) {
         const remQtyInp = document.getElementById('offerRemainingQty');
         const stockNum = parseInt(document.getElementById('offerCurrentStockNumber')?.textContent) || 0;
         
+        // رصيد المحل الفعلي يظل ثابتاً كما هو
+        if (remQtyInp) remQtyInp.value = stockNum;
         if (initQtyInp) initQtyInp.max = stockNum > 0 ? stockNum : 1;
 
         if (!isEditing && (!initQtyInp.value || parseInt(initQtyInp.value) <= 0)) {
             if (stockNum > 0) {
                 initQtyInp.value = stockNum;
-                if (remQtyInp) remQtyInp.value = stockNum;
             } else {
                 initQtyInp.value = '';
-                if (remQtyInp) remQtyInp.value = 0;
             }
         }
         window.handleOfferInitialQtyChange(initQtyInp?.value || '');
@@ -20128,7 +20129,7 @@ window.openEditOfferModal = function(id) {
         if (qRadio) qRadio.checked = true;
         window.handleOfferQtyModeChange(qtyMode);
         document.getElementById('offerInitialQty').value = offer.initial_quantity || '';
-        document.getElementById('offerRemainingQty').value = offer.remaining_quantity || '';
+        document.getElementById('offerRemainingQty').value = stock;
     }
     
     // إذا كان محدد بتاريخ
@@ -20248,8 +20249,13 @@ window.handleOfferSubmit = async function(e) {
                     btnSubmit.innerHTML = origBtnHtml;
                     return;
                 }
-                remainingQty = parseInt(document.getElementById('offerRemainingQty').value);
-                if (isNaN(remainingQty) || remainingQty <= 0) remainingQty = initialQty;
+                if (editId) {
+                    const existingOffer = window.offersData.find(o => String(o.id) === String(editId));
+                    remainingQty = (existingOffer && existingOffer.remaining_quantity !== undefined && existingOffer.remaining_quantity !== null) ? existingOffer.remaining_quantity : initialQty;
+                    if (remainingQty > initialQty) remainingQty = initialQty;
+                } else {
+                    remainingQty = initialQty;
+                }
             }
         } else if (expiryType === 'date') {
             expiryDate = document.getElementById('offerEndDate').value;

@@ -3079,42 +3079,46 @@
                                 </div>
 
                                 <!-- حقول الكمية (بدون خصم من المخزن الرئيسي) -->
-                                <div id="offerQtyFields" style="display: none; margin-top: 10px; background: #ecfdf5; padding: 14px; border-radius: 12px; border: 1.5px solid #a7f3d0;">
-                                    <div style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; border: 1px solid #6ee7b7; padding: 8px 12px; border-radius: 8px; margin-bottom: 10px;">
-                                        <span style="font-size: 0.86rem; color: #334155; font-weight: 700;">رصيد الصنف المتوفر في المحل حالياً:</span>
-                                        <span style="font-size: 1.1rem; color: #047857; font-weight: 900;"><span id="offerCurrentStockNumber">0</span> قطعة</span>
+                                <div id="offerQtyFields" style="display: none; margin-top: 10px; background: #f8fafc; padding: 14px; border-radius: 12px; border: 1.5px solid #cbd5e1;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; border: 1.5px solid #10b981; padding: 8px 14px; border-radius: 10px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.08);">
+                                        <span style="font-size: 0.88rem; color: #065f46; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                                            <i class="fa-solid fa-circle-check" style="color: #10b981;"></i> رصيد الصنف المتوفر في المحل حالياً:
+                                        </span>
+                                        <span style="font-size: 1.15rem; color: #047857; font-weight: 900;"><span id="offerCurrentStockNumber">0</span> قطعة</span>
                                     </div>
 
-                                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                                        <label class="offer-sub-radio-label">
+                                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                                        <label class="offer-sub-radio-label offer-qty-mode-stock">
                                             <input type="radio" name="offerQtyMode" value="stock" checked onchange="window.handleOfferQtyModeChange('stock')">
-                                            <span><strong>حسب رصيد المحل الفعلي</strong> (ينتهي العرض عند وصول رصيد الصنف إلى 0)</span>
+                                            <span style="font-size: 1.1rem; color: #2563eb;"><i class="fa-solid fa-warehouse"></i></span>
+                                            <span><strong>حسب رصيد المحل الفعلي</strong> <span style="font-size: 0.82rem; opacity: 0.85;">(ينتهي العرض تلقائياً عند وصول رصيد الصنف إلى 0)</span></span>
                                         </label>
-                                        <label class="offer-sub-radio-label">
+                                        <label class="offer-sub-radio-label offer-qty-mode-custom">
                                             <input type="radio" name="offerQtyMode" value="custom" onchange="window.handleOfferQtyModeChange('custom')">
-                                            <span><strong>تحديد كمية مخصصة للعرض</strong> (ينتهي العرض عند نفاذ هذه الكمية)</span>
+                                            <span style="font-size: 1.1rem; color: #ea580c;"><i class="fa-solid fa-boxes-stacked"></i></span>
+                                            <span><strong>تحديد كمية مخصصة للعرض</strong> <span style="font-size: 0.82rem; opacity: 0.85;">(ينتهي العرض عند نفاذ هذه الكمية المحددة)</span></span>
                                         </label>
                                     </div>
 
-                                    <div id="offerCustomQtyBox" style="display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #6ee7b7;">
-                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                    <div id="offerCustomQtyBox" style="display: none; margin-top: 12px; padding: 12px; background: #fff7ed; border-radius: 10px; border: 1.5px solid #fed7aa;">
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                                             <div>
-                                                <label for="offerInitialQty" style="font-size: 0.85rem; font-weight: 700; color: #065f46; display: flex; align-items: center; gap: 5px;">
-                                                    <i class="fa-solid fa-boxes-stacked" style="color: #059669;"></i> عدد القطع المخصصة للعرض
+                                                <label for="offerInitialQty" style="font-size: 0.85rem; font-weight: 700; color: #7c2d12; display: flex; align-items: center; gap: 5px; margin-bottom: 5px;">
+                                                    <i class="fa-solid fa-fire-flame-curved" style="color: #ea580c;"></i> عدد القطع المخصصة للعرض
                                                 </label>
-                                                <input type="number" id="offerInitialQty" class="form-input" min="1" placeholder="مثال: 20" oninput="window.handleOfferInitialQtyChange(this.value)">
+                                                <input type="number" id="offerInitialQty" class="form-input" min="1" placeholder="مثال: 18" oninput="window.handleOfferInitialQtyChange(this.value)" style="border-color: #fdba74; font-weight: 800; font-size: 1rem;">
                                             </div>
                                             <div>
-                                                <label for="offerRemainingQty" style="font-size: 0.85rem; font-weight: 700; color: #065f46; display: flex; align-items: center; gap: 5px;">
-                                                    <i class="fa-solid fa-lock" style="color: #94a3b8;"></i> المتبقي حالياً <small style="color: #64748b;">(تلقائي)</small>
+                                                <label for="offerRemainingQty" style="font-size: 0.85rem; font-weight: 700; color: #1e3a8a; display: flex; align-items: center; gap: 5px; margin-bottom: 5px;">
+                                                    <i class="fa-solid fa-warehouse" style="color: #2563eb;"></i> رصيد المحل الفعلي حالياً <small style="color: #64748b;">(ثابت)</small>
                                                 </label>
-                                                <input type="number" id="offerRemainingQty" class="form-input" min="0" readonly placeholder="0" style="background: #f1f5f9; color: #334155; font-weight: 800; cursor: not-allowed;">
+                                                <input type="number" id="offerRemainingQty" class="form-input" min="0" readonly placeholder="0" style="background: #ffffff; border-color: #93c5fd; color: #1e3a8a; font-weight: 900; font-size: 1.05rem; cursor: not-allowed;">
                                             </div>
                                         </div>
-                                        <div id="offerQtyWarning" style="display: none; margin-top: 8px; padding: 8px 12px; border-radius: 8px; background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; font-size: 0.85rem; font-weight: 700; align-items: center; gap: 6px;"></div>
+                                        <div id="offerQtyWarning" style="display: none; margin-top: 10px; padding: 8px 12px; border-radius: 8px; background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; font-size: 0.85rem; font-weight: 700; align-items: center; gap: 6px;"></div>
                                     </div>
 
-                                    <small style="color: #64748b; display: block; margin-top: 8px; font-weight: 600;">
+                                    <small style="color: #64748b; display: block; margin-top: 10px; font-weight: 600;">
                                         <i class="fa-solid fa-shield-halved" style="color: #10b981;"></i> لا يتم المساس برصيد المخزن الرئيسي. ينتهي العرض ويختفي تلقائياً عند نفاذ الكمية أو رصيد الصنف.
                                     </small>
                                 </div>
