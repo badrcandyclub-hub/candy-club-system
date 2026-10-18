@@ -392,6 +392,9 @@
                             <button type="button" id="startOrderCameraScannerBtn" class="interactive-btn pulse-btn" style="background: linear-gradient(135deg, #0284c7, #0369a1); color: white; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer;" title="مسح الباركود بالكاميرا">
                                 <i class="fa-solid fa-camera"></i>
                             </button>
+                            <button type="button" id="btnOpenActiveOffersModal" class="interactive-btn" onclick="window.openActiveOffersOrderModal()" style="background: linear-gradient(135deg, #f43f5e, #e11d48); color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; white-space: nowrap;" title="إدراج صنف من عروض المحل النشطة">
+                                <i class="fa-solid fa-fire-flame-curved"></i> العروض النشطة
+                            </button>
                         </div>
                         <div id="orderProductSearchResults" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 1050; background: #ffffff; border-radius: 12px; border: 1.5px solid #cbd5e1; box-shadow: 0 12px 30px rgba(0,0,0,0.12); max-height: 280px; overflow-y: auto;"></div>
                     </div>
@@ -2849,6 +2852,343 @@
             </div>
         </div>
 
+        <!-- ========================================== -->
+        <!-- قسم عروض المحل والستوري (Offers & Stories Tab) -->
+        <!-- ========================================== -->
+        <section id="offers-tab" class="tab-pane">
+            <div class="section-card offers-section-card">
+                <!-- شريط العنوان والوظائف السريعة -->
+                <div class="offers-header-row">
+                    <div class="offers-header-text">
+                        <h2 class="offers-title">
+                            <span class="offers-title-icon"><i class="fa-solid fa-fire-flame-curved"></i></span>
+                            عروض المحل والستوري
+                        </h2>
+                        <p class="offers-subtitle">إدارة وتوثيق عروض المحل بالصور، تصدير ستوري المنصات (إنستغرام وفيسبوك)، وكتالوج العروض للعملاء.</p>
+                    </div>
+                    <div class="offers-header-actions">
+                        <button type="button" id="btnNewOffer" class="interactive-btn btn-new-offer" onclick="window.openNewOfferModal()">
+                            <i class="fa-solid fa-plus"></i> إضافة عرض جديد
+                        </button>
+                        <button type="button" id="btnExportCustomerPdf" class="interactive-btn btn-export-offers-pdf" onclick="window.generateCustomerOffersPdf()">
+                            <i class="fa-solid fa-file-pdf"></i> كتالوج PDF للعملاء
+                        </button>
+                        <button type="button" id="btnOffersSettings" class="interactive-btn btn-offers-settings" onclick="window.openOffersSettingsModal()" title="إعدادات درايف والأتمتة">
+                            <i class="fa-solid fa-gear"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- إحصائيات سريعة للعروض -->
+                <div class="offers-stats-grid">
+                    <div class="offers-stat-card offers-stat-total">
+                        <div class="offers-stat-info">
+                            <span class="offers-stat-label">إجمالي العروض المسجلة</span>
+                            <span class="offers-stat-value" id="statTotalOffers">0</span>
+                        </div>
+                        <div class="offers-stat-icon"><i class="fa-solid fa-boxes-stacked"></i></div>
+                    </div>
+                    <div class="offers-stat-card offers-stat-active">
+                        <div class="offers-stat-info">
+                            <span class="offers-stat-label">العروض النشطة الحالية</span>
+                            <span class="offers-stat-value" id="statActiveOffers">0</span>
+                        </div>
+                        <div class="offers-stat-icon"><i class="fa-solid fa-bolt"></i></div>
+                    </div>
+                    <div class="offers-stat-card offers-stat-expiring">
+                        <div class="offers-stat-info">
+                            <span class="offers-stat-label">قاربت على الانتهاء / كمية منخفضة</span>
+                            <span class="offers-stat-value" id="statExpiringOffers">0</span>
+                        </div>
+                        <div class="offers-stat-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+                    </div>
+                    <div class="offers-stat-card offers-stat-ended">
+                        <div class="offers-stat-info">
+                            <span class="offers-stat-label">عروض منتهية / نفدت</span>
+                            <span class="offers-stat-value" id="statEndedOffers">0</span>
+                        </div>
+                        <div class="offers-stat-icon"><i class="fa-solid fa-circle-xmark"></i></div>
+                    </div>
+                </div>
+
+                <!-- شريط التصفية والبحث -->
+                <div class="offers-toolbar">
+                    <div class="offers-search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="offersSearchInput" placeholder="بحث باسم العرض أو الباركود..." oninput="window.filterOffersList()">
+                    </div>
+                    <div class="offers-filter-pills">
+                        <button type="button" class="offers-filter-pill active" data-filter="all" onclick="window.setOffersFilter('all')">الكل</button>
+                        <button type="button" class="offers-filter-pill" data-filter="active" onclick="window.setOffersFilter('active')">النشطة فقط</button>
+                        <button type="button" class="offers-filter-pill" data-filter="quantity" onclick="window.setOffersFilter('quantity')">حسب الكمية</button>
+                        <button type="button" class="offers-filter-pill" data-filter="date" onclick="window.setOffersFilter('date')">حسب المدة</button>
+                        <button type="button" class="offers-filter-pill" data-filter="expired" onclick="window.setOffersFilter('expired')">المنتهية</button>
+                    </div>
+                </div>
+
+                <!-- شبكة كروت العروض -->
+                <div id="offersGrid" class="offers-grid">
+                    <!-- سيتم توليد البطاقات ديناميكياً -->
+                </div>
+
+                <!-- حالة عدم وجود عروض -->
+                <div id="offersEmptyState" class="offers-empty-state" style="display: none;">
+                    <div class="offers-empty-icon"><i class="fa-solid fa-fire-flame-curved"></i></div>
+                    <h3>لا توجد عروض مسجلة حالياً</h3>
+                    <p>قم بإضافة عروض جديدة وتوثيقها بالصور لتظهر لطاقم البيع وتكون جاهزة للنشر الفوري كستوري.</p>
+                    <button type="button" class="interactive-btn btn-new-offer" onclick="window.openNewOfferModal()">
+                        <i class="fa-solid fa-plus"></i> إضافة أول عرض الآن
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- نافذة إضافة / تعديل عرض (Offer Modal) -->
+        <div id="offerModal" class="modal-overlay" style="display: none;">
+            <div class="modal-content offer-modal-content">
+                <div class="modal-header">
+                    <h3 id="offerModalTitle"><i class="fa-solid fa-fire-flame-curved" style="color: #f43f5e;"></i> إضافة عرض جديد</h3>
+                    <button type="button" class="close-modal-btn" onclick="window.closeOfferModal()"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <form id="offerForm" onsubmit="window.handleOfferSubmit(event)">
+                    <input type="hidden" id="offerEditId" value="">
+                    
+                    <div class="offer-form-layout">
+                        <!-- القسم الأيمن: بيانات الصنف والأسعار والانتهاء -->
+                        <div class="offer-form-fields">
+                            <!-- اختيار المنتج بالباركود أو البحث -->
+                            <div class="form-group" style="position: relative;">
+                                <label for="offerProductSearch">
+                                    <i class="fa-solid fa-barcode"></i> اختيار المنتج (امسح الباركود أو ابحث بالاسم) <span style="color:red">*</span>
+                                </label>
+                                <div style="display: flex; gap: 8px;">
+                                    <input type="text" id="offerProductSearch" class="form-input" placeholder="اكتب اسم المنتج أو امسح الباركود..." autocomplete="off">
+                                    <button type="button" class="interactive-btn" onclick="window.openOfferCameraScanner()" style="background: #0284c7; color: white; border: none; padding: 0 14px; border-radius: 8px;" title="مسح باركود بالكاميرا">
+                                        <i class="fa-solid fa-camera"></i>
+                                    </button>
+                                </div>
+                                <div id="offerProductSearchResults" class="offer-search-dropdown" style="display: none;"></div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;">
+                                <div class="form-group">
+                                    <label for="offerProductName">اسم المنتج في العرض <span style="color:red">*</span></label>
+                                    <input type="text" id="offerProductName" class="form-input" required placeholder="مثال: شوكولاتة نوتيلا 350 جم">
+                                </div>
+                                <div class="form-group">
+                                    <label for="offerBarcode">الباركود</label>
+                                    <input type="text" id="offerBarcode" class="form-input" placeholder="اختياري">
+                                </div>
+                            </div>
+
+                            <!-- الأسعار -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: #fdf2f8; padding: 12px; border-radius: 10px; border: 1px solid #fbcfe8;">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="offerOriginalPrice" style="color: #64748b;">السعر الأصلي (ج.م)</label>
+                                    <input type="number" step="0.5" id="offerOriginalPrice" class="form-input" placeholder="0">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="offerPrice" style="color: #be185d; font-weight: 800;">سعر العرض للقطعة <span style="color:red">*</span></label>
+                                    <input type="number" step="0.5" id="offerPrice" class="form-input" required placeholder="مثال: 45" style="border-color: #f43f5e; font-weight: 800; color: #be185d;">
+                                </div>
+                            </div>
+
+                            <!-- خيار عرض القطعتين / الباندل -->
+                            <div style="margin-top: 10px; background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0;">
+                                <label style="display: flex; align-items: center; gap: 8px; font-weight: 700; cursor: pointer; margin-bottom: 8px;">
+                                    <input type="checkbox" id="offerEnableBundle" onchange="window.toggleBundleFields(this.checked)">
+                                    <span>تفعيل عرض القطعتين أو المجموعة (Combo / Bundle)</span>
+                                </label>
+                                <div id="offerBundleFields" style="display: none; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                    <div>
+                                        <label for="offerBundleText" style="font-size: 0.82rem; color: #64748b;">وصف المجموعة</label>
+                                        <input type="text" id="offerBundleText" class="form-input" placeholder="مثال: القطعتين أو 3 قطع">
+                                    </div>
+                                    <div>
+                                        <label for="offerBundlePrice" style="font-size: 0.82rem; color: #64748b;">سعر المجموعة (ج.م)</label>
+                                        <input type="number" step="0.5" id="offerBundlePrice" class="form-input" placeholder="مثال: 80">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- شروط ومحددات انتهاء العرض -->
+                            <div style="margin-top: 12px;">
+                                <label style="font-weight: 800; display: block; margin-bottom: 8px; color: #1e293b;">
+                                    <i class="fa-solid fa-clock-rotate-left" style="color: #0284c7;"></i> شروط سريان وانتهاء العرض
+                                </label>
+                                <div class="offer-expiry-options">
+                                    <label class="offer-radio-label">
+                                        <input type="radio" name="offerExpiryType" value="unlimited" checked onchange="window.handleExpiryTypeChange('unlimited')">
+                                        <span>مفتوح المدة (ينتهي يدوياً عند إيقافه)</span>
+                                    </label>
+                                    <label class="offer-radio-label">
+                                        <input type="radio" name="offerExpiryType" value="quantity" onchange="window.handleExpiryTypeChange('quantity')">
+                                        <span>محدد بالكمية المتبقية (ينتهي تلقائياً عند نفاذ القطع)</span>
+                                    </label>
+                                    <label class="offer-radio-label">
+                                        <input type="radio" name="offerExpiryType" value="date" onchange="window.handleExpiryTypeChange('date')">
+                                        <span>محدد بتاريخ ووقت انتهاء (ينتهي تلقائياً عند الموعد)</span>
+                                    </label>
+                                </div>
+
+                                <!-- حقول الكمية -->
+                                <div id="offerQtyFields" style="display: none; margin-top: 10px; background: #ecfdf5; padding: 10px; border-radius: 8px; border: 1px solid #a7f3d0;">
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                        <div>
+                                            <label for="offerInitialQty" style="font-size: 0.85rem; font-weight: 700; color: #065f46;">الكمية الكلية بالعرض</label>
+                                            <input type="number" id="offerInitialQty" class="form-input" min="1" placeholder="مثال: 50" oninput="if(!document.getElementById('offerEditId').value) document.getElementById('offerRemainingQty').value=this.value;">
+                                        </div>
+                                        <div>
+                                            <label for="offerRemainingQty" style="font-size: 0.85rem; font-weight: 700; color: #065f46;">الكمية المتبقية حالياً</label>
+                                            <input type="number" id="offerRemainingQty" class="form-input" min="0" placeholder="مثال: 50">
+                                        </div>
+                                    </div>
+                                    <small style="color: #047857; display: block; margin-top: 4px;">يتم خصم الكمية تلقائياً عند إضافة العرض في أي أوردر مبيعات.</small>
+                                </div>
+
+                                <!-- حقل التاريخ والوقت -->
+                                <div id="offerDateFields" style="display: none; margin-top: 10px; background: #eff6ff; padding: 10px; border-radius: 8px; border: 1px solid #bfdbfe;">
+                                    <label for="offerEndDate" style="font-size: 0.85rem; font-weight: 700; color: #1e40af;">تاريخ ووقت انتهاء العرض</label>
+                                    <input type="datetime-local" id="offerEndDate" class="form-input" style="font-family: inherit;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- القسم الأيسر: رفع ومعاينة صورة العرض والستوري -->
+                        <div class="offer-form-photo">
+                            <label style="font-weight: 800; display: block; margin-bottom: 8px; color: #1e293b;">
+                                <i class="fa-solid fa-image" style="color: #ec4899;"></i> صورة العرض والستوري (3:4 أو 9:16)
+                            </label>
+                            
+                            <div class="offer-photo-uploader" id="offerPhotoUploader">
+                                <input type="file" id="offerPhotoInput" accept="image/*" style="display: none;" onchange="window.handleOfferPhotoSelected(event)">
+                                <div id="offerPhotoPlaceholder" class="offer-photo-placeholder" onclick="document.getElementById('offerPhotoInput').click()">
+                                    <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2.2rem; color: #ec4899; margin-bottom: 8px;"></i>
+                                    <span style="font-weight: 700; font-size: 0.95rem;">اضغط لاختيار صورة أو اسحبها هنا</span>
+                                    <span style="font-size: 0.8rem; color: #94a3b8; margin-top: 4px;">يتم ضغط الصورة تلقائياً لأقل من 500KB</span>
+                                </div>
+                                <div id="offerPhotoPreviewWrapper" class="offer-photo-preview-wrapper" style="display: none;">
+                                    <img id="offerPhotoPreview" src="" alt="معاينة صورة العرض">
+                                    <button type="button" class="btn-remove-photo" onclick="window.removeOfferPhoto()" title="إزالة الصورة">&times;</button>
+                                </div>
+                            </div>
+
+                            <input type="hidden" id="offerPhotoBase64" value="">
+                            <input type="hidden" id="offerPhotoUrl" value="">
+                            <input type="hidden" id="offerDriveFileId" value="">
+
+                            <div style="margin-top: 10px; display: flex; gap: 8px;">
+                                <button type="button" class="interactive-btn" onclick="document.getElementById('offerPhotoInput').click()" style="flex: 1; background: #f8fafc; border: 1px solid #cbd5e1; padding: 8px; border-radius: 8px; font-weight: 700; font-size: 0.85rem;">
+                                    <i class="fa-solid fa-folder-open"></i> تصفح جهازك
+                                </button>
+                                <button type="button" class="interactive-btn" onclick="window.openOfferPhotoCamera()" style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 8px 12px; border-radius: 8px; font-weight: 700; font-size: 0.85rem;" title="التقاط صورة بالكاميرا">
+                                    <i class="fa-solid fa-camera"></i>
+                                </button>
+                            </div>
+
+                            <div id="offerUploadStatus" style="display: none; margin-top: 8px; font-size: 0.82rem; padding: 6px 10px; border-radius: 6px; font-weight: 700;"></div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button type="button" class="btn-outline interactive-btn" onclick="window.closeOfferModal()">إلغاء</button>
+                        <button type="submit" id="btnSaveOfferSubmit" class="btn-primary interactive-btn" style="background: linear-gradient(135deg, #f43f5e, #e11d48); border: none; padding: 10px 24px; font-weight: 800;">
+                            <i class="fa-solid fa-check"></i> حفظ ونشر العرض
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- نافذة إعدادات Google Drive والأتمتة الـ Webhook -->
+        <div id="offersSettingsModal" class="modal-overlay" style="display: none;">
+            <div class="modal-content" style="max-width: 520px;">
+                <div class="modal-header">
+                    <h3><i class="fa-solid fa-gear" style="color: #64748b;"></i> إعدادات سحابة العروض والـ Webhook</h3>
+                    <button type="button" class="close-modal-btn" onclick="window.closeOffersSettingsModal()"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div style="padding: 10px 0;">
+                    <div class="form-group">
+                        <label for="offersGoogleDriveUrl">
+                            <i class="fa-brands fa-google-drive" style="color: #34a853;"></i> رابط Google Apps Script لرفع صور العروض
+                        </label>
+                        <input type="url" id="offersGoogleDriveUrl" class="form-input" placeholder="https://script.google.com/macros/s/.../exec" style="direction: ltr; text-align: left; font-size: 0.88rem;">
+                        <small style="color: #64748b; display: block; margin-top: 4px;">يمكنك ترك هذا الحقل فارغاً لاستخدام نفس سكريبت كاندي كلوب المعتمد في الهدايا تلقائياً.</small>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 15px;">
+                        <label for="offersWebhookUrl">
+                            <i class="fa-solid fa-bolt" style="color: #eab308;"></i> رابط Webhook للأتمتة الخارجية (Make / Zapier / Buffer)
+                        </label>
+                        <input type="url" id="offersWebhookUrl" class="form-input" placeholder="https://hook.eu1.make.com/..." style="direction: ltr; text-align: left; font-size: 0.88rem;">
+                        <small style="color: #64748b; display: block; margin-top: 4px;">عند الضغط على "نشر ستوري تلقائي" يتم إرسال بيانات العرض ورابط الصورة فوراً للـ Webhook لنشره مجدولاً.</small>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button type="button" class="interactive-btn" onclick="window.testOffersWebhook()" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; padding: 10px 14px; border-radius: 8px; font-weight: 700; flex: 1;">
+                            <i class="fa-solid fa-satellite-dish"></i> تجربة إرسال Webhook
+                        </button>
+                        <button type="button" class="interactive-btn" onclick="window.saveOffersSettings()" style="background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 800;">
+                            <i class="fa-solid fa-check"></i> حفظ الإعدادات
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- نافذة اختيار العروض النشطة لشاشة الأوردرات (Active Offers Picker Modal) -->
+        <div id="activeOffersOrderModal" class="modal-overlay" style="display: none; z-index: 10030;">
+            <div class="modal-content" style="max-width: 720px; max-height: 85vh; display: flex; flex-direction: column;">
+                <div class="modal-header" style="flex-shrink: 0;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="background: #ffe4e6; color: #e11d48; width: 36px; height: 36px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                            <i class="fa-solid fa-fire-flame-curved"></i>
+                        </span>
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.15rem; color: #0f172a;">عروض المحل النشطة</h3>
+                            <small style="color: #64748b;">اختر العرض لإدراجه في الفاتورة بسعره المخفض بنقرة واحدة</small>
+                        </div>
+                    </div>
+                    <button type="button" class="close-modal-btn" onclick="window.closeActiveOffersOrderModal()"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                
+                <div style="padding: 10px 0; flex-shrink: 0;">
+                    <input type="text" id="orderOffersSearchInput" class="form-input" placeholder="بحث سريع في العروض..." oninput="window.filterOrderActiveOffersList()" style="width: 100%; box-sizing: border-box; margin: 0;">
+                </div>
+
+                <div id="orderOffersListGrid" class="order-offers-picker-grid" style="flex: 1; overflow-y: auto; padding-right: 4px;">
+                    <!-- سيتم توليد كروت العروض المتاحة هنا -->
+                </div>
+            </div>
+        </div>
+
+        <!-- حاوية طباعة وتصدير كتالوج العروض للعملاء (PDF Template) -->
+        <div id="customerOffersPdfContainer" style="display: none;">
+            <div class="copdf-wrapper">
+                <div class="copdf-header">
+                    <div class="copdf-brand">
+                        <img id="copdfLogo" src="" alt="Candy Club" class="copdf-logo">
+                        <div>
+                            <h1 class="copdf-title">كاندي كلوب - Candy Club</h1>
+                            <p class="copdf-tagline">كتالوج العروض الحصرية والأسعار المميزة</p>
+                        </div>
+                    </div>
+                    <div class="copdf-contact">
+                        <span id="copdfDate"></span>
+                        <span id="copdfBranch">الفرع الرئيسي</span>
+                    </div>
+                </div>
+
+                <div id="copdfGrid" class="copdf-grid">
+                    <!-- سيتم توليد الأصناف بصورها وأسعارها فقط بدون باركود -->
+                </div>
+
+                <div class="copdf-footer">
+                    <p>العروض سارية حتى نفاذ الكمية أو انتهاء مدة العرض في فروع كاندي كلوب.</p>
+                </div>
+            </div>
+        </div>
+
         <section id="price-tags-tab" class="tab-pane">
             <div class="section-card" style="display: flex; flex-direction: column; min-height: calc(100vh - 100px);">
                 <h3 style="margin-bottom: 20px; color: var(--primary); flex-shrink: 0; font-size: 1.5rem; border-bottom: 2px solid var(--border); padding-bottom: 10px;"><i class="fa-solid fa-tags"></i> طباعة كروت الأسعار</h3>
@@ -3272,6 +3612,9 @@
                     <i class="fa-solid fa-chevron-down chevron-icon" style="transition: transform 0.3s; font-size: 0.8rem;"></i>
                 </h4>
                 <div class="menu-group-items" style="display: none;">
+                    <button id="openOffersBtn" class="nav-item" data-target="offers-tab" style="color: #f43f5e;">
+                        <span class="icon"><i class="fa-solid fa-fire-flame-curved"></i></span><span class="label">عروض المحل والستوري</span>
+                    </button>
                     <button id="openPriceTagsBtn" class="nav-item" data-target="price-tags-tab" style="color: #00bcd4;">
                         <span class="icon"><i class="fa-solid fa-tags"></i></span><span class="label">كروت الأسعار</span>
                     </button>
@@ -3825,6 +4168,7 @@
                         <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u-perms" value="gifts"> قسم الهدايا والبوكيهات</label>
                         <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u-perms" value="gifts_reports"> تقارير الهدايا والبوكيهات</label>
                         <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u-perms" value="waitlist"> نواقص العملاء (الانتظار)</label>
+                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal;"><input type="checkbox" name="u-perms" value="offers"> عروض المحل والستوري</label>
                     </div>
                 </div>
 

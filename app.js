@@ -2031,7 +2031,7 @@ function setBtnLoading(btn, isLoading, originalText = "") {
 window.MODULE_GROUPS = {
     'orders': { name: 'إدارة الأوردرات', icon: 'fa-solid fa-box fa-bounce', tabs: ['create-tab', 'catalog-tab', 'shipping-tab', 'history-tab', 'financials-tab', 'suspended-tab'], req: 'orders,customers,shipping,catalog,financials,shortages,drafts,users' },
     'marketing': { name: 'العملاء والتسويق', icon: 'fa-solid fa-users-viewfinder fa-fade', tabs: ['customers-tab', 'whatsapp-campaign-tab', 'waitlist-tab'], req: 'customers,users,orders,out_of_stock' },
-    'products': { name: 'المنتجات', icon: 'fa-solid fa-tags fa-beat', tabs: ['price-tags-tab', 'shortages-tab', 'expiry-tab', 'inventory-transfers-tab'], req: 'catalog,drafts,users,expiries' },
+    'products': { name: 'المنتجات', icon: 'fa-solid fa-tags fa-beat', tabs: ['offers-tab', 'price-tags-tab', 'shortages-tab', 'expiry-tab', 'inventory-transfers-tab'], req: 'catalog,drafts,users,expiries,offers' },
     'hr': { name: 'شئون الموظفين', icon: 'fa-solid fa-id-card-clip fa-flip', tabs: ['hr-tab', 'hr-admin-tab'], req: 'attendance,users' },
     'gifts': { name: 'قسم الهدايا والبوكيهات', icon: 'fa-solid fa-wand-magic-sparkles', tabs: ['gifts-tab', 'gifts-reports-tab'], req: 'gifts,gifts_reports' },
     'admin': { name: 'الإدارة والتقارير', icon: 'fa-solid fa-chart-pie fa-spin', tabs: ['reports-tab', 'moderators-tab', 'users-tab', 'branch-settings-tab'], req: 'orders,users,customers,shipping,financials,shortages' }
@@ -2146,6 +2146,10 @@ document.querySelectorAll('.nav-item').forEach(btn => {
                 let mm = String(today.getMonth() + 1).padStart(2, '0');
                 let dd = String(today.getDate()).padStart(2, '0');
                 regDateInput.value = `${yyyy}-${mm}-${dd}`;
+            }
+        } else if (btn.getAttribute('data-target') === 'offers-tab') {
+            if (typeof window.initOffersTab === 'function') {
+                window.initOffersTab();
             }
         } else if (btn.getAttribute('data-target') === 'price-tags-tab') {
             if (typeof initPriceTagsTab === 'function') {
@@ -5241,6 +5245,9 @@ if (saveAndPrintBtn) {
                     window.focus();
                     window.print();
                     document.body.classList.remove('print-gov-shipping');
+                    if (typeof window.decrementOffersFromOrderProducts === 'function') {
+                        window.decrementOffersFromOrderProducts();
+                    }
                     resetForm();
                     setBtnLoading(saveAndPrintBtn, false, "💾 حفظ وطباعة الفاتورة");
                     loadDataFromServer();
@@ -15379,6 +15386,9 @@ window.openAddUserModal = function() {
     if (typeof window.ensureWaitlistAdminPermCard === 'function') {
         window.ensureWaitlistAdminPermCard();
     }
+    if (typeof window.ensureOffersAdminPermCard === 'function') {
+        window.ensureOffersAdminPermCard();
+    }
     document.getElementById('user-mode').value = 'add';
     document.getElementById('u-username').value = '';
     document.getElementById('u-username').readOnly = false;
@@ -15404,6 +15414,9 @@ window.openEditUserModal = function(username, displayName, permsStr, status, pas
     }
     if (typeof window.ensureWaitlistAdminPermCard === 'function') {
         window.ensureWaitlistAdminPermCard();
+    }
+    if (typeof window.ensureOffersAdminPermCard === 'function') {
+        window.ensureOffersAdminPermCard();
     }
     document.getElementById('user-mode').value = 'edit';
     document.getElementById('u-username').value = username;
@@ -19192,4 +19205,1106 @@ window.initCustomMonthPicker = function() {
 
 if (document.readyState !== 'loading') {
     window.initCustomMonthPicker();
-}
+}
+
+// ==========================================
+// 🌟 نظام عروض المحل والستوري (Offers & Stories Module)
+// ==========================================
+
+window.offersData = [];
+window.activeOffersFilter = 'all';
+window.currentStoryOffer = null;
+
+const OFFERS_DEFAULT_DRIVE_URL = 'https://script.google.com/macros/s/AKfycbwx-tcJs67wcNR9adRLE70meZUjpeWSVpmDGIY1qJj5owFbIfWt5Sq8y6Kd3CYr7jdb/exec';
+
+// 1. استرجاع إعدادات الرفع والأتمتة
+window.getOffersSettings = function() {
+    try {
+        const raw = localStorage.getItem('candy_club_offers_settings');
+        if (raw) return JSON.parse(raw);
+    } catch(e) {}
+    return {
+        googleDriveUrl: OFFERS_DEFAULT_DRIVE_URL,
+        webhookUrl: ''
+    };
+};
+
+window.saveOffersSettings = function() {
+    const driveUrl = document.getElementById('offersGoogleDriveUrl').value.trim() || OFFERS_DEFAULT_DRIVE_URL;
+    const webhookUrl = document.getElementById('offersWebhookUrl').value.trim();
+    localStorage.setItem('candy_club_offers_settings', JSON.stringify({ googleDriveUrl: driveUrl, webhookUrl }));
+    showToast('تم حفظ إعدادات العروض والـ Webhook بنجاح', 'success');
+    window.closeOffersSettingsModal();
+};
+
+window.openOffersSettingsModal = function() {
+    const s = window.getOffersSettings();
+    const driveInput = document.getElementById('offersGoogleDriveUrl');
+    const webhookInput = document.getElementById('offersWebhookUrl');
+    if (driveInput) driveInput.value = s.googleDriveUrl || '';
+    if (webhookInput) webhookInput.value = s.webhookUrl || '';
+    const modal = document.getElementById('offersSettingsModal');
+    if (modal) modal.style.display = 'flex';
+};
+
+window.closeOffersSettingsModal = function() {
+    const modal = document.getElementById('offersSettingsModal');
+    if (modal) modal.style.display = 'none';
+};
+
+// 2. فحص وتحديث الصلاحيات
+window.ensureOffersAdminPermCard = function() {
+    let modal = document.getElementById('userModal');
+    if (!modal) return;
+    if (modal.querySelector('input[name="u-perms"][value="offers"]')) return;
+    
+    let targetCard = modal.querySelector('input[name="u-perms"][value="waitlist"]')?.closest('.perm-card') || 
+                    modal.querySelector('input[name="u-perms"][value="gifts_reports"]')?.closest('.perm-card') || 
+                    modal.querySelector('input[name="u-perms"][value="gifts"]')?.closest('.perm-card') || 
+                    modal.querySelector('input[name="u-perms"][value="waitlist"]')?.closest('label');
+                    
+    let card = document.createElement('label');
+    card.className = 'perm-card';
+    card.setAttribute('onclick', 'togglePermCard(this)');
+    card.innerHTML = '<input type="checkbox" name="u-perms" value="offers"> <span class="perm-icon" style="color: #f43f5e;"><i class="fa-solid fa-fire-flame-curved"></i></span> <span class="perm-text">عروض المحل والستوري</span>';
+
+    if (targetCard && targetCard.parentNode) {
+        targetCard.parentNode.insertBefore(card, targetCard.nextSibling);
+    } else {
+        let grid = modal.querySelector('.perms-grid') || modal.querySelector('[style*="grid"]');
+        if (grid) grid.appendChild(card);
+    }
+};
+
+// 3. تحميل العروض من السيرفر / التخزين المحلي
+window.loadOffersData = async function() {
+    try {
+        if (window.supabase) {
+            const { data, error } = await window.supabase.from('store_offers').select('*').order('created_at', { ascending: false });
+            if (!error && Array.isArray(data)) {
+                window.offersData = data;
+                localStorage.setItem('candy_club_store_offers', JSON.stringify(data));
+                window.checkOffersExpiryConditions();
+                return;
+            }
+        }
+    } catch(err) {
+        console.warn('Supabase store_offers query error:', err);
+    }
+    
+    // Fallback to local storage
+    try {
+        const local = localStorage.getItem('candy_club_store_offers');
+        window.offersData = local ? JSON.parse(local) : [];
+    } catch(e) {
+        window.offersData = [];
+    }
+    window.checkOffersExpiryConditions();
+};
+
+window.saveOffersDataLocallyAndRemote = async function() {
+    localStorage.setItem('candy_club_store_offers', JSON.stringify(window.offersData));
+    if (window.supabase) {
+        try {
+            await window.supabase.from('store_offers').upsert(window.offersData, { onConflict: 'id' });
+        } catch(e) {
+            console.warn('Supabase upsert store_offers error:', e);
+        }
+    }
+};
+
+// 4. التحقق التلقائي من انتهاء العروض بالكمية أو التاريخ
+window.checkOffersExpiryConditions = function() {
+    const now = new Date().getTime();
+    let changed = false;
+    
+    window.offersData.forEach(offer => {
+        if (!offer.is_active) return;
+        
+        // فحص الانتهاء بالكمية
+        if (offer.expiry_type === 'quantity') {
+            const remaining = Number(offer.remaining_quantity);
+            if (!isNaN(remaining) && remaining <= 0) {
+                offer.is_active = false;
+                offer.status_reason = 'نفدت الكمية';
+                changed = true;
+            }
+        }
+        
+        // فحص الانتهاء بالتاريخ
+        if (offer.expiry_type === 'date' && offer.expiry_date) {
+            const expTime = new Date(offer.expiry_date).getTime();
+            if (!isNaN(expTime) && expTime <= now) {
+                offer.is_active = false;
+                offer.status_reason = 'انتهت المدة';
+                changed = true;
+            }
+        }
+    });
+    
+    if (changed) {
+        window.saveOffersDataLocallyAndRemote();
+    }
+};
+
+// 5. تهيئة شاشة العروض
+window.initOffersTab = async function() {
+    await window.loadOffersData();
+    window.updateOffersStats();
+    window.renderOffersGrid();
+    window.initOfferProductSearchAutocomplete();
+};
+
+window.updateOffersStats = function() {
+    const total = window.offersData.length;
+    let active = 0;
+    let expiring = 0;
+    let ended = 0;
+    
+    const now = new Date().getTime();
+    const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
+    
+    window.offersData.forEach(o => {
+        if (o.is_active) {
+            active++;
+            // قاربت على الانتهاء
+            if (o.expiry_type === 'quantity' && Number(o.remaining_quantity) <= 5 && Number(o.remaining_quantity) > 0) {
+                expiring++;
+            } else if (o.expiry_type === 'date' && o.expiry_date) {
+                const diff = new Date(o.expiry_date).getTime() - now;
+                if (diff > 0 && diff <= threeDaysMs) {
+                    expiring++;
+                }
+            }
+        } else {
+            ended++;
+        }
+    });
+    
+    const elTotal = document.getElementById('statTotalOffers');
+    const elActive = document.getElementById('statActiveOffers');
+    const elExpiring = document.getElementById('statExpiringOffers');
+    const elEnded = document.getElementById('statEndedOffers');
+    
+    if (elTotal) elTotal.textContent = total;
+    if (elActive) elActive.textContent = active;
+    if (elExpiring) elExpiring.textContent = expiring;
+    if (elEnded) elEnded.textContent = ended;
+};
+
+// 6. تصفية وبحث العروض
+window.setOffersFilter = function(filter) {
+    window.activeOffersFilter = filter;
+    document.querySelectorAll('.offers-filter-pill').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filter === filter);
+    });
+    window.renderOffersGrid();
+};
+
+window.filterOffersList = function() {
+    window.renderOffersGrid();
+};
+
+// 7. رسم كروت العروض
+window.renderOffersGrid = function() {
+    const grid = document.getElementById('offersGrid');
+    const emptyState = document.getElementById('offersEmptyState');
+    if (!grid) return;
+    
+    const searchVal = (document.getElementById('offersSearchInput')?.value || '').trim().toLowerCase();
+    const filter = window.activeOffersFilter || 'all';
+    
+    let list = window.offersData.filter(item => {
+        // فلتر البحث
+        if (searchVal) {
+            const nameMatch = (item.product_name || '').toLowerCase().includes(searchVal);
+            const barcodeMatch = (item.barcode || '').toLowerCase().includes(searchVal);
+            if (!nameMatch && !barcodeMatch) return false;
+        }
+        
+        // فلتر التبويب
+        if (filter === 'active') return item.is_active;
+        if (filter === 'expired') return !item.is_active;
+        if (filter === 'quantity') return item.expiry_type === 'quantity';
+        if (filter === 'date') return item.expiry_type === 'date';
+        return true;
+    });
+    
+    if (list.length === 0) {
+        grid.innerHTML = '';
+        if (emptyState) emptyState.style.display = 'block';
+        return;
+    }
+    
+    if (emptyState) emptyState.style.display = 'none';
+    
+    grid.innerHTML = list.map(item => {
+        const origPrice = Number(item.original_price) || 0;
+        const offerPrice = Number(item.offer_price) || 0;
+        const discountPercent = origPrice > offerPrice ? Math.round(((origPrice - offerPrice) / origPrice) * 100) : 0;
+        
+        // شريط الكمية
+        let qtyHtml = '';
+        if (item.expiry_type === 'quantity') {
+            const initial = Number(item.initial_quantity) || 1;
+            const remaining = Math.max(0, Number(item.remaining_quantity) || 0);
+            const percent = Math.min(100, Math.round((remaining / initial) * 100));
+            const fillClass = remaining === 0 ? 'out-of-stock' : (remaining <= 5 ? 'low-stock' : '');
+            
+            qtyHtml = `
+                <div class="offer-progress-box">
+                    <div class="offer-progress-labels">
+                        <span>المتبقي: <strong>${remaining}</strong> من ${initial} قطعة</span>
+                        <span>${percent}%</span>
+                    </div>
+                    <div class="offer-progress-bar">
+                        <div class="offer-progress-fill ${fillClass}" style="width: ${percent}%;"></div>
+                    </div>
+                </div>
+            `;
+        } else if (item.expiry_type === 'date' && item.expiry_date) {
+            const expDate = new Date(item.expiry_date);
+            const now = new Date();
+            const diffHours = Math.round((expDate - now) / (1000 * 60 * 60));
+            let timeText = '';
+            if (diffHours < 0) {
+                timeText = 'منتهي الصلاحية';
+            } else if (diffHours <= 24) {
+                timeText = `ينتهي خلال ${diffHours} ساعة`;
+            } else {
+                const days = Math.round(diffHours / 24);
+                timeText = `ينتهي خلال ${days} يوم`;
+            }
+            qtyHtml = `
+                <div class="offer-progress-box">
+                    <div class="offer-progress-labels" style="color: #2563eb;">
+                        <span><i class="fa-solid fa-clock"></i> ${timeText}</span>
+                        <span>${expDate.toLocaleDateString('ar-EG')}</span>
+                    </div>
+                </div>
+            `;
+        } else {
+            qtyHtml = `
+                <div class="offer-progress-box">
+                    <div class="offer-progress-labels" style="color: #059669;">
+                        <span><i class="fa-solid fa-infinity"></i> عرض مفتوح مستمر</span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // صورة العرض
+        const photoSrc = item.image_url || 'https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?auto=format&fit=crop&w=600&q=80';
+        
+        // باندل القطعتين
+        let bundleHtml = '';
+        if (item.bundle_text && item.bundle_price) {
+            bundleHtml = `<div class="offer-bundle-pill"><i class="fa-solid fa-layer-group"></i> ${item.bundle_text}: <strong>${item.bundle_price} ج</strong></div>`;
+        }
+        
+        return `
+            <div class="offer-card ${!item.is_active ? 'is-inactive' : ''}" data-id="${item.id}">
+                <div class="offer-card-media">
+                    <img src="${photoSrc}" alt="${item.product_name}" class="offer-card-img" onerror="this.src='https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?auto=format&fit=crop&w=600&q=80'">
+                    ${discountPercent > 0 ? `<span class="offer-discount-badge"><i class="fa-solid fa-bolt"></i> خصم ${discountPercent}%</span>` : ''}
+                    <span class="offer-status-badge ${item.is_active ? 'status-active' : 'status-ended'}">
+                        ${item.is_active ? '<i class="fa-solid fa-check"></i> نشط' : '<i class="fa-solid fa-xmark"></i> منتهي'}
+                    </span>
+                </div>
+                <div class="offer-card-body">
+                    <h3 class="offer-card-title">${item.product_name}</h3>
+                    <div class="offer-pricing-row">
+                        <span class="offer-price-current">${offerPrice} <small>ج.م</small></span>
+                        ${origPrice > 0 ? `<span class="offer-price-original">${origPrice} ج</span>` : ''}
+                    </div>
+                    ${bundleHtml}
+                    ${qtyHtml}
+                    <div class="offer-card-footer">
+                        <button type="button" class="offer-action-btn offer-action-story" onclick="window.downloadOfferStoryImage('${item.id}')" title="تحميل صورة ستوري 9:16">
+                            <i class="fa-solid fa-camera"></i> ستوري
+                        </button>
+                        <button type="button" class="offer-action-btn offer-action-webhook" onclick="window.triggerOfferWebhook('${item.id}')" title="إرسال Webhook للأتمتة">
+                            <i class="fa-solid fa-share-nodes"></i> أتمتة
+                        </button>
+                        <button type="button" class="offer-action-btn" onclick="window.openEditOfferModal('${item.id}')" title="تعديل العرض">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button type="button" class="offer-action-btn" onclick="window.toggleOfferActive('${item.id}')" title="${item.is_active ? 'إيقاف العرض' : 'تفعيل العرض'}">
+                            <i class="fa-solid ${item.is_active ? 'fa-pause' : 'fa-play'}"></i>
+                        </button>
+                        <button type="button" class="offer-action-btn offer-action-delete" onclick="window.deleteOffer('${item.id}')" title="حذف العرض">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+};
+
+// 8. اختيار المنتجات بالبحث أو الباركود في نافذة العرض
+window.initOfferProductSearchAutocomplete = function() {
+    const input = document.getElementById('offerProductSearch');
+    const results = document.getElementById('offerProductSearchResults');
+    if (!input || !results) return;
+    
+    input.addEventListener('input', (e) => {
+        const query = e.target.value.trim().toLowerCase();
+        if (!query) {
+            results.style.display = 'none';
+            results.innerHTML = '';
+            return;
+        }
+        
+        let matches = [];
+        if (Array.isArray(window.catalogData)) {
+            matches = window.catalogData.filter(item => {
+                const name = (item.name || '').toLowerCase();
+                const barcode = (item.barcode || '').toLowerCase();
+                return name.includes(query) || barcode.includes(query);
+            }).slice(0, 8);
+        }
+        
+        if (matches.length === 0) {
+            results.style.display = 'none';
+            return;
+        }
+        
+        results.innerHTML = matches.map(item => `
+            <div class="offer-search-item" onclick="window.selectProductForOffer('${encodeURIComponent(JSON.stringify(item))}')">
+                <div>
+                    <strong style="color: #0f172a; font-size: 0.95rem;">${item.name}</strong>
+                    <div style="font-size: 0.8rem; color: #64748b;">${item.barcode ? `باركود: ${item.barcode}` : 'بدون باركود'}</div>
+                </div>
+                <span style="font-weight: 800; color: #0284c7;">${item.price || 0} ج</span>
+            </div>
+        `).join('');
+        results.style.display = 'block';
+    });
+    
+    // إخفاء القائمة عند النقر خارجها
+    document.addEventListener('click', (e) => {
+        if (!input.contains(e.target) && !results.contains(e.target)) {
+            results.style.display = 'none';
+        }
+    });
+};
+
+window.selectProductForOffer = function(encodedItem) {
+    try {
+        const item = JSON.parse(decodeURIComponent(encodedItem));
+        document.getElementById('offerProductName').value = item.name || '';
+        document.getElementById('offerBarcode').value = item.barcode || '';
+        document.getElementById('offerOriginalPrice').value = item.price || '';
+        document.getElementById('offerProductSearchResults').style.display = 'none';
+        document.getElementById('offerProductSearch').value = item.name || '';
+        document.getElementById('offerPrice').focus();
+    } catch(e) {
+        console.error('Error selecting product for offer:', e);
+    }
+};
+
+window.openOfferCameraScanner = function() {
+    if (typeof window.startOrderScanner === 'function') {
+        window.startOrderScanner((scannedBarcode) => {
+            const item = (window.catalogData || []).find(c => String(c.barcode).trim() === String(scannedBarcode).trim());
+            if (item) {
+                window.selectProductForOffer(encodeURIComponent(JSON.stringify(item)));
+            } else {
+                document.getElementById('offerBarcode').value = scannedBarcode;
+                showToast(`تم قراءة الباركود: ${scannedBarcode}`, 'info');
+            }
+        });
+    } else {
+        showToast('الكاميرا غير متاحة حالياً', 'warning');
+    }
+};
+
+// 9. التعامل مع الصور وضغطها
+window.handleOfferPhotoSelected = function(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+        const img = new Image();
+        img.onload = function() {
+            // ضغط الصورة عبر Canvas
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 1080;
+            const MAX_HEIGHT = 1440;
+            let width = img.width;
+            let height = img.height;
+            
+            if (width > height) {
+                if (width > MAX_WIDTH) {
+                    height *= MAX_WIDTH / width;
+                    width = MAX_WIDTH;
+                }
+            } else {
+                if (height > MAX_HEIGHT) {
+                    width *= MAX_HEIGHT / height;
+                    height = MAX_HEIGHT;
+                }
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // تصدير جودة 0.82 لضمان حجم < 500KB
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.82);
+            document.getElementById('offerPhotoBase64').value = compressedBase64;
+            document.getElementById('offerPhotoPreview').src = compressedBase64;
+            document.getElementById('offerPhotoPreviewWrapper').style.display = 'flex';
+            document.getElementById('offerPhotoPlaceholder').style.display = 'none';
+        };
+        img.src = evt.target.result;
+    };
+    reader.readAsDataURL(file);
+};
+
+window.removeOfferPhoto = function() {
+    document.getElementById('offerPhotoBase64').value = '';
+    document.getElementById('offerPhotoUrl').value = '';
+    document.getElementById('offerDriveFileId').value = '';
+    document.getElementById('offerPhotoPreview').src = '';
+    document.getElementById('offerPhotoPreviewWrapper').style.display = 'none';
+    document.getElementById('offerPhotoPlaceholder').style.display = 'flex';
+    document.getElementById('offerPhotoInput').value = '';
+};
+
+window.openOfferPhotoCamera = function() {
+    const input = document.getElementById('offerPhotoInput');
+    if (input) {
+        input.setAttribute('capture', 'environment');
+        input.click();
+    }
+};
+
+// 10. رفع الصورة إلى Google Drive Apps Script
+window.uploadOfferPhotoToGoogleDrive = async function(base64Image, filename) {
+    const settings = window.getOffersSettings();
+    const targetUrl = settings.googleDriveUrl || OFFERS_DEFAULT_DRIVE_URL;
+    
+    try {
+        const res = await fetch(targetUrl, {
+            method: 'POST',
+            body: JSON.stringify({
+                image: base64Image,
+                filename: filename || `offer_${Date.now()}.jpg`,
+                folderName: 'Candy Club Offers'
+            })
+        });
+        const result = await res.json();
+        if (result && result.url) {
+            return { url: result.url, fileId: result.fileId };
+        }
+    } catch(err) {
+        console.warn('Google Drive photo upload failed:', err);
+    }
+    return null;
+};
+
+// 11. تبديل الحقول في الفورم
+window.toggleBundleFields = function(checked) {
+    const fields = document.getElementById('offerBundleFields');
+    if (fields) fields.style.display = checked ? 'grid' : 'none';
+};
+
+window.handleExpiryTypeChange = function(type) {
+    const qtyFields = document.getElementById('offerQtyFields');
+    const dateFields = document.getElementById('offerDateFields');
+    if (qtyFields) qtyFields.style.display = (type === 'quantity') ? 'block' : 'none';
+    if (dateFields) dateFields.style.display = (type === 'date') ? 'block' : 'none';
+};
+
+// 12. فتح وغلق النوافذ
+window.openNewOfferModal = function() {
+    document.getElementById('offerEditId').value = '';
+    document.getElementById('offerForm').reset();
+    document.getElementById('offerModalTitle').innerHTML = '<i class="fa-solid fa-fire-flame-curved" style="color: #f43f5e;"></i> إضافة عرض جديد';
+    window.removeOfferPhoto();
+    window.handleExpiryTypeChange('unlimited');
+    window.toggleBundleFields(false);
+    document.getElementById('offerModal').style.display = 'flex';
+};
+
+window.openEditOfferModal = function(id) {
+    const offer = window.offersData.find(o => String(o.id) === String(id));
+    if (!offer) return;
+    
+    document.getElementById('offerEditId').value = offer.id;
+    document.getElementById('offerModalTitle').innerHTML = '<i class="fa-solid fa-pen" style="color: #0284c7;"></i> تعديل بيانات العرض';
+    document.getElementById('offerProductName').value = offer.product_name || '';
+    document.getElementById('offerBarcode').value = offer.barcode || '';
+    document.getElementById('offerOriginalPrice').value = offer.original_price || '';
+    document.getElementById('offerPrice').value = offer.offer_price || '';
+    
+    // Bundle
+    const hasBundle = !!(offer.bundle_text && offer.bundle_price);
+    document.getElementById('offerEnableBundle').checked = hasBundle;
+    window.toggleBundleFields(hasBundle);
+    document.getElementById('offerBundleText').value = offer.bundle_text || '';
+    document.getElementById('offerBundlePrice').value = offer.bundle_price || '';
+    
+    // Expiry
+    const expType = offer.expiry_type || 'unlimited';
+    const radio = document.querySelector(`input[name="offerExpiryType"][value="${expType}"]`);
+    if (radio) radio.checked = true;
+    window.handleExpiryTypeChange(expType);
+    
+    document.getElementById('offerInitialQty').value = offer.initial_quantity || '';
+    document.getElementById('offerRemainingQty').value = offer.remaining_quantity || '';
+    if (offer.expiry_date) {
+        document.getElementById('offerEndDate').value = offer.expiry_date.slice(0, 16);
+    }
+    
+    // Photo
+    if (offer.image_url) {
+        document.getElementById('offerPhotoUrl').value = offer.image_url;
+        document.getElementById('offerDriveFileId').value = offer.drive_file_id || '';
+        document.getElementById('offerPhotoPreview').src = offer.image_url;
+        document.getElementById('offerPhotoPreviewWrapper').style.display = 'flex';
+        document.getElementById('offerPhotoPlaceholder').style.display = 'none';
+    } else {
+        window.removeOfferPhoto();
+    }
+    
+    document.getElementById('offerModal').style.display = 'flex';
+};
+
+window.closeOfferModal = function() {
+    document.getElementById('offerModal').style.display = 'none';
+};
+
+// 13. حفظ أو تحديث العرض
+window.handleOfferSubmit = async function(e) {
+    e.preventDefault();
+    const btnSubmit = document.getElementById('btnSaveOfferSubmit');
+    const origBtnHtml = btnSubmit.innerHTML;
+    btnSubmit.disabled = true;
+    btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري حفظ العرض...';
+    
+    try {
+        const editId = document.getElementById('offerEditId').value;
+        const productName = document.getElementById('offerProductName').value.trim();
+        const barcode = document.getElementById('offerBarcode').value.trim();
+        const originalPrice = parseFloat(document.getElementById('offerOriginalPrice').value) || 0;
+        const offerPrice = parseFloat(document.getElementById('offerPrice').value) || 0;
+        
+        const enableBundle = document.getElementById('offerEnableBundle').checked;
+        const bundleText = enableBundle ? document.getElementById('offerBundleText').value.trim() : '';
+        const bundlePrice = enableBundle ? (parseFloat(document.getElementById('offerBundlePrice').value) || 0) : null;
+        
+        const expiryType = document.querySelector('input[name="offerExpiryType"]:checked')?.value || 'unlimited';
+        let initialQty = null;
+        let remainingQty = null;
+        let expiryDate = null;
+        
+        if (expiryType === 'quantity') {
+            initialQty = parseInt(document.getElementById('offerInitialQty').value) || 1;
+            remainingQty = parseInt(document.getElementById('offerRemainingQty').value);
+            if (isNaN(remainingQty)) remainingQty = initialQty;
+        } else if (expiryType === 'date') {
+            expiryDate = document.getElementById('offerEndDate').value;
+        }
+        
+        let photoUrl = document.getElementById('offerPhotoUrl').value;
+        let driveFileId = document.getElementById('offerDriveFileId').value;
+        const base64 = document.getElementById('offerPhotoBase64').value;
+        
+        // رفع الصورة إذا تم اختيار صورة جديدة
+        if (base64 && base64.startsWith('data:image')) {
+            btnSubmit.innerHTML = '<i class="fa-solid fa-cloud-arrow-up fa-fade"></i> جاري رفع الصورة إلى Google Drive...';
+            const uploadResult = await window.uploadOfferPhotoToGoogleDrive(base64, `offer_${Date.now()}.jpg`);
+            if (uploadResult && uploadResult.url) {
+                photoUrl = uploadResult.url;
+                driveFileId = uploadResult.fileId;
+            } else {
+                // استخدام base64 احتياطياً
+                photoUrl = base64;
+            }
+        }
+        
+        const offerObj = {
+            id: editId || `offer_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+            product_name: productName,
+            barcode: barcode,
+            original_price: originalPrice,
+            offer_price: offerPrice,
+            bundle_text: bundleText,
+            bundle_price: bundlePrice,
+            expiry_type: expiryType,
+            initial_quantity: initialQty,
+            remaining_quantity: remainingQty,
+            expiry_date: expiryDate,
+            image_url: photoUrl,
+            drive_file_id: driveFileId,
+            is_active: true,
+            updated_at: new Date().toISOString(),
+            created_at: editId ? (window.offersData.find(o => o.id === editId)?.created_at || new Date().toISOString()) : new Date().toISOString(),
+            created_by: window.currentUser ? window.currentUser.displayName : 'المدير'
+        };
+        
+        if (editId) {
+            const idx = window.offersData.findIndex(o => String(o.id) === String(editId));
+            if (idx > -1) window.offersData[idx] = offerObj;
+        } else {
+            window.offersData.unshift(offerObj);
+        }
+        
+        await window.saveOffersDataLocallyAndRemote();
+        window.closeOfferModal();
+        window.updateOffersStats();
+        window.renderOffersGrid();
+        showToast('تم حفظ ونشر العرض بنجاح', 'success');
+        
+    } catch(err) {
+        console.error('Error saving offer:', err);
+        showToast('حدث خطأ أثناء حفظ العرض', 'error');
+    } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = origBtnHtml;
+    }
+};
+
+// 14. تفعيل أو إيقاف العرض
+window.toggleOfferActive = async function(id) {
+    const offer = window.offersData.find(o => String(o.id) === String(id));
+    if (!offer) return;
+    
+    offer.is_active = !offer.is_active;
+    await window.saveOffersDataLocallyAndRemote();
+    window.updateOffersStats();
+    window.renderOffersGrid();
+    showToast(offer.is_active ? 'تم تفعيل العرض' : 'تم إيقاف العرض مؤقتاً', 'info');
+};
+
+// 15. حذف العرض
+window.deleteOffer = function(id) {
+    const offer = window.offersData.find(o => String(o.id) === String(id));
+    if (!offer) return;
+    
+    customConfirm(`هل أنت متأكد من حذف عرض (${offer.product_name}) نهائياً؟`, async () => {
+        window.offersData = window.offersData.filter(o => String(o.id) !== String(id));
+        if (window.supabase) {
+            try {
+                await window.supabase.from('store_offers').delete().eq('id', id);
+            } catch(e) {}
+        }
+        await window.saveOffersDataLocallyAndRemote();
+        window.updateOffersStats();
+        window.renderOffersGrid();
+        showToast('تم حذف العرض بنجاح', 'success');
+    });
+};
+
+// 16. توليد صورة ستوري احترافية بمقاس 9:16 (1080x1920)
+window.downloadOfferStoryImage = async function(id) {
+    const offer = window.offersData.find(o => String(o.id) === String(id));
+    if (!offer) return;
+    
+    showToast('جاري رسم وتجهيز قالب الستوري بدقة فائقة 9:16...', 'info');
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = 1080;
+    canvas.height = 1920;
+    const ctx = canvas.getContext('2d');
+    
+    // خلفية متدرجة فخمة
+    const bgGrad = ctx.createLinearGradient(0, 0, 1080, 1920);
+    bgGrad.addColorStop(0, '#0f172a');
+    bgGrad.addColorStop(0.35, '#3b0764');
+    bgGrad.addColorStop(0.7, '#831843');
+    bgGrad.addColorStop(1, '#020617');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, 1080, 1920);
+    
+    // هالة إضاءة دائرية
+    const glow = ctx.createRadialGradient(540, 720, 50, 540, 720, 500);
+    glow.addColorStop(0, 'rgba(244, 63, 94, 0.35)');
+    glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 200, 1080, 1100);
+    
+    // شريط علوي أنيق
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.roundRect(140, 100, 800, 100, 50);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 44px Cairo, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('كاندي كلوب - CANDY CLUB', 540, 166);
+    
+    // شارة العرض الحصري
+    ctx.fillStyle = '#e11d48';
+    ctx.roundRect(340, 240, 400, 70, 35);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 36px Cairo, sans-serif';
+    ctx.fillText('عروض المحل الحصرية', 540, 288);
+    
+    // رسم صورة المنتج
+    const photoSrc = offer.image_url || 'https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?auto=format&fit=crop&w=600&q=80';
+    const prodImg = new Image();
+    prodImg.crossOrigin = 'anonymous';
+    
+    prodImg.onload = function() {
+        // إطار الصورة
+        const imgX = 140;
+        const imgY = 360;
+        const imgW = 800;
+        const imgH = 750;
+        
+        ctx.save();
+        ctx.roundRect(imgX, imgY, imgW, imgH, 40);
+        ctx.clip();
+        ctx.drawImage(prodImg, imgX, imgY, imgW, imgH);
+        ctx.restore();
+        
+        // حد مضيء حول الصورة
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.lineWidth = 6;
+        ctx.roundRect(imgX, imgY, imgW, imgH, 40);
+        ctx.stroke();
+        
+        // نسبة الخصم
+        const origPrice = Number(offer.original_price) || 0;
+        const offerPrice = Number(offer.offer_price) || 0;
+        if (origPrice > offerPrice) {
+            const disc = Math.round(((origPrice - offerPrice) / origPrice) * 100);
+            ctx.fillStyle = '#f59e0b';
+            ctx.roundRect(imgX + 40, imgY + 40, 260, 80, 20);
+            ctx.fill();
+            ctx.fillStyle = '#0f172a';
+            ctx.font = 'bold 42px Cairo, sans-serif';
+            ctx.fillText(`خصم ${disc}%`, imgX + 170, imgY + 95);
+        }
+        
+        // اسم المنتج
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 58px Cairo, sans-serif';
+        ctx.textAlign = 'center';
+        
+        let title = offer.product_name;
+        if (title.length > 32) title = title.substr(0, 30) + '...';
+        ctx.fillText(title, 540, 1200);
+        
+        // بطاقة الأسعار
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+        ctx.roundRect(140, 1260, 800, 240, 30);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(244, 63, 94, 0.4)';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        // السعر بعد العرض
+        ctx.fillStyle = '#fb7185';
+        ctx.font = 'bold 88px Cairo, sans-serif';
+        ctx.fillText(`${offerPrice} ج.م`, 540, 1370);
+        
+        // السعر قبل الخصم مشطوب
+        if (origPrice > 0) {
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = 'bold 42px Cairo, sans-serif';
+            const oldPriceText = `بدلاً من ${origPrice} ج`;
+            ctx.fillText(oldPriceText, 540, 1440);
+            
+            // خط الشطب
+            const textWidth = ctx.measureText(oldPriceText).width;
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(540 - textWidth / 2 - 10, 1426);
+            ctx.lineTo(540 + textWidth / 2 + 10, 1426);
+            ctx.stroke();
+        }
+        
+        // عرض المجموعة / القطعتين إن وجد
+        if (offer.bundle_text && offer.bundle_price) {
+            ctx.fillStyle = '#38bdf8';
+            ctx.font = 'bold 44px Cairo, sans-serif';
+            ctx.fillText(`${offer.bundle_text}: ${offer.bundle_price} ج.م فقط`, 540, 1560);
+        }
+        
+        // فوتر الستوري ودعوة للطلب
+        ctx.fillStyle = '#f43f5e';
+        ctx.roundRect(240, 1640, 600, 100, 50);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 44px Cairo, sans-serif';
+        ctx.fillText('اطلب الآن قبل نفاذ الكمية', 540, 1705);
+        
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = 'bold 30px Cairo, sans-serif';
+        ctx.fillText('متوفر في جميع الفروع - خدمة التوصيل السريع متاحة', 540, 1820);
+        
+        // تحميل الصورة فوراً
+        const dataUrl = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = `story_${offer.product_name.replace(/\s+/g, '_')}_candy_club.png`;
+        link.href = dataUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showToast('تم تحميل صورة الستوري بمقاس 9:16 بجودة فائقة جاهزة للنشر', 'success');
+    };
+    
+    prodImg.onerror = function() {
+        showToast('تعذر تحميل صورة المنتج لإنشاء الستوري', 'error');
+    };
+    
+    prodImg.src = photoSrc;
+};
+
+// 17. إرسال بيانات العرض إلى Webhook
+window.triggerOfferWebhook = async function(id) {
+    const offer = window.offersData.find(o => String(o.id) === String(id));
+    if (!offer) return;
+    
+    const settings = window.getOffersSettings();
+    if (!settings.webhookUrl) {
+        showToast('يرجى كتابة رابط Webhook في إعدادات العروض أولاً', 'warning');
+        window.openOffersSettingsModal();
+        return;
+    }
+    
+    showToast('جاري إرسال العرض إلى الـ Webhook...', 'info');
+    try {
+        await fetch(settings.webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                event: 'candy_club_offer_published',
+                offer_id: offer.id,
+                product_name: offer.product_name,
+                barcode: offer.barcode,
+                original_price: offer.original_price,
+                offer_price: offer.offer_price,
+                bundle_text: offer.bundle_text,
+                bundle_price: offer.bundle_price,
+                image_url: offer.image_url,
+                expiry_type: offer.expiry_type,
+                remaining_quantity: offer.remaining_quantity,
+                expiry_date: offer.expiry_date,
+                timestamp: new Date().toISOString()
+            })
+        });
+        showToast('تم إرسال العرض بنجاح إلى الـ Webhook للأتمتة', 'success');
+    } catch(err) {
+        console.error('Webhook trigger error:', err);
+        showToast('تعذر الاتصال بالـ Webhook، يرجى مراجعة الرابط', 'error');
+    }
+};
+
+window.testOffersWebhook = async function() {
+    const url = document.getElementById('offersWebhookUrl')?.value.trim();
+    if (!url) {
+        showToast('اكتب رابط الـ Webhook أولاً للتجربة', 'warning');
+        return;
+    }
+    try {
+        await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                event: 'test_connection',
+                source: 'Candy Club Offers Module',
+                timestamp: new Date().toISOString()
+            })
+        });
+        showToast('تم إرسال إشارة تجريبية للـ Webhook بنجاح', 'success');
+    } catch(e) {
+        showToast('فشل اختبار الـ Webhook، تأكد من صحة الرابط', 'error');
+    }
+};
+
+// 18. تصدير كتالوج العروض PDF الموجه للعملاء (بدون باركود وبدون كميات)
+window.generateCustomerOffersPdf = async function() {
+    const activeOffers = window.offersData.filter(o => o.is_active);
+    if (activeOffers.length === 0) {
+        showToast('لا توجد عروض نشطة حالياً لتضمينها في الكتالوج', 'warning');
+        return;
+    }
+    
+    showToast('جاري تجهيز كتالوج العروض المصور للعملاء...', 'info');
+    
+    const container = document.getElementById('customerOffersPdfContainer');
+    const grid = document.getElementById('copdfGrid');
+    const logoImg = document.getElementById('copdfLogo');
+    const dateSpan = document.getElementById('copdfDate');
+    const branchSpan = document.getElementById('copdfBranch');
+    
+    if (logoImg) {
+        const headerLogo = document.getElementById('headerLogo');
+        logoImg.src = headerLogo ? headerLogo.src : 'logo.png';
+    }
+    if (dateSpan) dateSpan.textContent = new Date().toLocaleDateString('ar-EG');
+    if (branchSpan) branchSpan.textContent = 'كاندي كلوب';
+    
+    if (grid) {
+        grid.innerHTML = activeOffers.map(item => {
+            const origPrice = Number(item.original_price) || 0;
+            const offerPrice = Number(item.offer_price) || 0;
+            const photoSrc = item.image_url || 'https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?auto=format&fit=crop&w=600&q=80';
+            
+            return `
+                <div class="copdf-item">
+                    <img src="${photoSrc}" alt="${item.product_name}" class="copdf-item-img" crossorigin="anonymous">
+                    <div class="copdf-item-body">
+                        <div class="copdf-item-title">${item.product_name}</div>
+                        <div class="copdf-item-prices">
+                            <span class="copdf-item-price">${offerPrice} ج.م</span>
+                            ${origPrice > 0 ? `<span class="copdf-item-old">${origPrice} ج</span>` : ''}
+                        </div>
+                        ${item.bundle_text && item.bundle_price ? `<div class="copdf-item-bundle">${item.bundle_text}: ${item.bundle_price} ج</div>` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    container.style.display = 'block';
+    
+    if (typeof html2pdf !== 'undefined') {
+        const opt = {
+            margin: 10,
+            filename: `كتالوج_عروض_كاندي_كلوب_${new Date().toISOString().slice(0, 10)}.pdf`,
+            image: { type: 'jpeg', quality: 0.95 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        
+        try {
+            await html2pdf().set(opt).from(container.querySelector('.copdf-wrapper')).save();
+            showToast('تم تحميل كتالوج العروض PDF بنجاح', 'success');
+        } catch(e) {
+            console.error('html2pdf error:', e);
+            window.print();
+        } finally {
+            container.style.display = 'none';
+        }
+    } else {
+        window.print();
+        container.style.display = 'none';
+    }
+};
+
+// 19. الربط مع شاشة إنشاء الأوردرات (create-tab)
+window.openActiveOffersOrderModal = function() {
+    const modal = document.getElementById('activeOffersOrderModal');
+    if (!modal) return;
+    
+    window.renderOrderActiveOffersList();
+    modal.style.display = 'flex';
+};
+
+window.closeActiveOffersOrderModal = function() {
+    const modal = document.getElementById('activeOffersOrderModal');
+    if (modal) modal.style.display = 'none';
+};
+
+window.filterOrderActiveOffersList = function() {
+    window.renderOrderActiveOffersList();
+};
+
+window.renderOrderActiveOffersList = function() {
+    const grid = document.getElementById('orderOffersListGrid');
+    if (!grid) return;
+    
+    const query = (document.getElementById('orderOffersSearchInput')?.value || '').trim().toLowerCase();
+    const activeOffers = window.offersData.filter(o => {
+        if (!o.is_active) return false;
+        if (o.expiry_type === 'quantity' && Number(o.remaining_quantity) <= 0) return false;
+        if (query) {
+            return (o.product_name || '').toLowerCase().includes(query) || (o.barcode || '').toLowerCase().includes(query);
+        }
+        return true;
+    });
+    
+    if (activeOffers.length === 0) {
+        grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #94a3b8; padding: 30px;">لا توجد عروض نشطة متاحة حالياً</div>';
+        return;
+    }
+    
+    grid.innerHTML = activeOffers.map(o => {
+        const photoSrc = o.image_url || 'https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?auto=format&fit=crop&w=400&q=80';
+        return `
+            <div class="order-offer-picker-card">
+                <div class="order-offer-picker-media">
+                    <img src="${photoSrc}" alt="${o.product_name}">
+                    ${o.expiry_type === 'quantity' ? `<span style="position: absolute; bottom: 6px; right: 6px; background: rgba(0,0,0,0.7); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.72rem; font-weight: 700;">متبقي ${o.remaining_quantity}</span>` : ''}
+                </div>
+                <div class="order-offer-picker-body">
+                    <div class="order-offer-picker-title">${o.product_name}</div>
+                    <div class="order-offer-picker-prices">
+                        <span class="order-offer-picker-price">${o.offer_price} ج</span>
+                        ${o.original_price > 0 ? `<span class="order-offer-picker-old">${o.original_price} ج</span>` : ''}
+                    </div>
+                    ${o.bundle_text && o.bundle_price ? `<div style="font-size: 0.78rem; color: #be185d; margin-bottom: 6px;">${o.bundle_text}: ${o.bundle_price} ج</div>` : ''}
+                    <button type="button" class="btn-add-offer-to-order" onclick="window.addOfferToOrderCart('${o.id}')">
+                        <i class="fa-solid fa-plus"></i> إضافة للفاتورة
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+};
+
+window.addOfferToOrderCart = function(id) {
+    const offer = window.offersData.find(o => String(o.id) === String(id));
+    if (!offer) return;
+    
+    if (typeof window.addProductRow === 'function') {
+        const row = window.addProductRow(offer.product_name, offer.original_price || offer.offer_price, 1, true, offer.offer_price);
+        if (row) {
+            row.dataset.offerId = offer.id;
+        }
+        showToast(`تم إدراج عرض (${offer.product_name}) بسعر ${offer.offer_price} ج.م`, 'success');
+        window.closeActiveOffersOrderModal();
+    }
+};
+
+// 20. خصم الكميات من العروض عند حفظ الفاتورة
+window.decrementOffersFromOrderProducts = async function() {
+    const confirmedRows = document.querySelectorAll('.product-row.confirmed');
+    if (!confirmedRows || confirmedRows.length === 0) return;
+    
+    let modified = false;
+    
+    confirmedRows.forEach(row => {
+        const offerId = row.dataset.offerId;
+        const nameInput = row.querySelector('.product-name-input');
+        const qtyInput = row.querySelector('.product-qty-input');
+        const qty = parseInt(qtyInput ? qtyInput.value : 1) || 1;
+        const name = nameInput ? nameInput.value.trim() : '';
+        
+        let targetOffer = null;
+        if (offerId) {
+            targetOffer = window.offersData.find(o => String(o.id) === String(offerId));
+        } else if (name) {
+            targetOffer = window.offersData.find(o => o.is_active && o.product_name.trim().toLowerCase() === name.toLowerCase());
+        }
+        
+        if (targetOffer && targetOffer.expiry_type === 'quantity' && targetOffer.remaining_quantity !== null) {
+            targetOffer.remaining_quantity = Math.max(0, targetOffer.remaining_quantity - qty);
+            if (targetOffer.remaining_quantity <= 0) {
+                targetOffer.is_active = false;
+                targetOffer.status_reason = 'نفدت الكمية';
+            }
+            modified = true;
+        }
+    });
+    
+    if (modified) {
+        await window.saveOffersDataLocallyAndRemote();
+        window.updateOffersStats();
+    }
+};
