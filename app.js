@@ -55,6 +55,51 @@ if (window.supabase) {
     console.error("Supabase CDN is missing!");
 }
 
+// 🛡️ Global Moderator SLA Configuration (Default is OFF)
+window.moderatorSlaConfig = {
+    enabled: false,
+    maxHours: 24,
+    lastUpdated: ''
+};
+
+// 📡 Supabase Realtime Broadcast for Instant SLA Updates across all clients
+try {
+    if (window.supabase && typeof window.supabase.channel === 'function') {
+        window.candySystemRealtimeChannel = window.supabase.channel('candy_system_channel')
+            .on('broadcast', { event: 'sla_config_updated' }, (payload) => {
+                console.log('[Realtime] SLA config broadcast received:', payload);
+                if (payload && payload.payload) {
+                    const wasEnabled = window.moderatorSlaConfig ? !!window.moderatorSlaConfig.enabled : false;
+                    window.moderatorSlaConfig = payload.payload;
+
+                    // إشعار فوري للمودريتور بتغيير حالة الرقابة
+                    if (window.currentUser && window.currentUser.permissions !== 'ALL') {
+                        if (window.moderatorSlaConfig.enabled && !wasEnabled) {
+                            if (typeof showToast === 'function') showToast("⚠️ قامت الإدارة بتفعيل نظام الرقابة على شحن الطلبات المتأخرة.", "warning");
+                        } else if (!window.moderatorSlaConfig.enabled && wasEnabled) {
+                            if (typeof showToast === 'function') showToast("✅ قامت الإدارة بإلغاء قفل إنشاء الطلبات مؤقتاً.", "success");
+                        }
+                    }
+
+                    // إعادة فحص القفل فورياً
+                    if (typeof window.checkModeratorShippingStatus === 'function') {
+                        window.checkModeratorShippingStatus();
+                    }
+
+                    // تحديث واجهة المدير إذا كانت مفتوحة
+                    if (typeof window.syncSlaAdminUI === 'function') {
+                        window.syncSlaAdminUI();
+                    }
+                }
+            })
+            .subscribe((status) => {
+                console.log('[Realtime] candy_system_channel status:', status);
+            });
+    }
+} catch (rtErr) {
+    console.warn('[Realtime] Failed to setup candy_system_channel:', rtErr);
+}
+
 // ==========================================
 // 🏷️ Barcode Aliases & Smart Match Normalizer
 // ==========================================
@@ -2098,6 +2143,8 @@ document.querySelectorAll('.nav-item').forEach(btn => {
             loadUsersList();
         } else if (targetId === 'branch-settings-tab') {
             if (typeof window.loadBranchSettingsAdmin === 'function') window.loadBranchSettingsAdmin();
+        } else if (targetId === 'dashboard-tab') {
+            if (typeof window.loadModeratorSlaAdmin === 'function') window.loadModeratorSlaAdmin();
         }
         if (targetId === 'waitlist-tab') {
             if (typeof initWaitlistTab === 'function') initWaitlistTab();
@@ -2132,6 +2179,11 @@ document.querySelectorAll('.nav-item').forEach(btn => {
         const suspendedBtn = document.getElementById('openSuspendedBtn');
         if (suspendedBtn) {
             suspendedBtn.style.display = (targetId === 'create-tab') ? 'inline-block' : 'none';
+        }
+
+        // 🚨 فحص حالة أوردرات المودريتور فور فتح خانة إنشاء الطلبات
+        if (targetId === 'create-tab' && typeof window.checkModeratorShippingStatus === 'function') {
+            window.checkModeratorShippingStatus();
         }
 
         // Load expiry data every time the tab is opened, with a custom loading screen
@@ -2841,7 +2893,8 @@ async function loadDataFromServer(customDate = null) {
                 moderator: o.moderator_name || "",
                 deposit: o.deposit || 0,
                 remaining: (o.remaining !== undefined && o.remaining !== null && o.remaining !== "") ? o.remaining : o.final_total,
-                raw_remaining: o.remaining
+                raw_remaining: o.remaining,
+                createdAt: o.created_at || (o.order_date ? (o.order_date + 'T' + (o.order_time || '00:00:00')) : '')
             };
         };
 
@@ -3271,6 +3324,17 @@ async function loadDataFromServer(customDate = null) {
             }).catch(e => console.warn("Gifts refresh during loadDataFromServer error:", e));
         }
 
+        // 🚨 فحص حالة شحن وتوصيل أوردرات المودريتور وتطبيق القفل والتحذيرات
+        if (typeof window.fetchModeratorSlaConfig === 'function') {
+            await window.fetchModeratorSlaConfig();
+        }
+        if (typeof window.checkModeratorShippingStatus === 'function') {
+            window.checkModeratorShippingStatus();
+        }
+        if (typeof window.loadModeratorSlaAdmin === 'function' && document.getElementById('adminSlaCard')) {
+            window.loadModeratorSlaAdmin();
+        }
+
     } catch (err) {
         console.error("Supabase Load Error:", err);
         let overlay = document.getElementById('module-loading-overlay');
@@ -3278,6 +3342,565 @@ async function loadDataFromServer(customDate = null) {
         if (syncStatus) { syncStatus.innerText = "خطأ اتصال"; syncStatus.style.color = "red"; }
     }
 }
+
+// ==========================================
+// 🚨 نظام إجبار الشحن والتوصيل الصارم (SLA Enforcement System)
+// ==========================================
+
+// 1. جلب إعدادات الرقابة المخزنة في Supabase (افتراضياً معطل OFF)
+window.fetchModeratorSlaConfig = async function(force = false) {
+    if (!window.supabase) return window.moderatorSlaConfig;
+    try {
+        const { data, error } = await window.supabase
+            .from('settings_shipping')
+            .select('*')
+            .eq('zone_name', '_MODERATOR_SLA_CONFIG_')
+            .eq('zone_type', 'system')
+            .limit(1);
+
+        if (!error && data && data.length > 0) {
+            const row = data[0];
+            window.moderatorSlaConfig = {
+                enabled: row.delivery_type === 'enabled',
+                maxHours: parseFloat(row.price) || 24,
+                lastUpdated: row.duration || ''
+            };
+        } else {
+            window.moderatorSlaConfig = {
+                enabled: false,
+                maxHours: 24,
+                lastUpdated: ''
+            };
+        }
+    } catch (e) {
+        console.warn('[SLA] Error fetching SLA config:', e);
+        if (!window.moderatorSlaConfig) {
+            window.moderatorSlaConfig = { enabled: false, maxHours: 24, lastUpdated: '' };
+        }
+    }
+    return window.moderatorSlaConfig;
+};
+
+// 2. مزامنة عناصر واجهة المدير الإدارية
+window.syncSlaAdminUI = function() {
+    const card = document.getElementById('adminSlaCard');
+    const badge = document.getElementById('adminSlaStatusBadge');
+    const statusText = document.getElementById('adminSlaStatusText');
+    const toggle = document.getElementById('adminSlaToggle');
+    const toggleLabel = document.getElementById('adminSlaToggleLabel');
+    const hoursInp = document.getElementById('adminSlaHoursInput');
+    const lastUpdateEl = document.getElementById('adminSlaLastUpdate');
+
+    const cfg = window.moderatorSlaConfig || { enabled: false, maxHours: 24, lastUpdated: '' };
+
+    if (toggle) toggle.checked = !!cfg.enabled;
+    if (hoursInp) hoursInp.value = cfg.maxHours || 24;
+    if (lastUpdateEl && cfg.lastUpdated) {
+        lastUpdateEl.innerText = `آخر تحديث: ${cfg.lastUpdated}`;
+    }
+
+    if (cfg.enabled) {
+        if (card) { card.classList.remove('is-disabled'); card.classList.add('is-active'); }
+        if (badge) { badge.className = 'sla-status-pill active'; }
+        if (statusText) statusText.innerText = 'مفعل وشغال لحظياً (ON)';
+        if (toggleLabel) {
+            toggleLabel.innerText = 'مفعل (يتم قفل الشاشة عند التأخير)';
+            toggleLabel.style.color = '#059669';
+        }
+    } else {
+        if (card) { card.classList.remove('is-active'); card.classList.add('is-disabled'); }
+        if (badge) { badge.className = 'sla-status-pill disabled'; }
+        if (statusText) statusText.innerText = 'معطل حالياً (OFF)';
+        if (toggleLabel) {
+            toggleLabel.innerText = 'معطل (لن يقفل على أي مودريتور)';
+            toggleLabel.style.color = '#64748b';
+        }
+    }
+};
+
+// 3. التغيير الفوري للمظهر عند لمس المفتاح قبل الحفظ
+window.handleSlaToggleChange = function(checked) {
+    const toggleLabel = document.getElementById('adminSlaToggleLabel');
+    const card = document.getElementById('adminSlaCard');
+    const badge = document.getElementById('adminSlaStatusBadge');
+    const statusText = document.getElementById('adminSlaStatusText');
+
+    if (checked) {
+        if (card) { card.classList.remove('is-disabled'); card.classList.add('is-active'); }
+        if (badge) { badge.className = 'sla-status-pill active'; }
+        if (statusText) statusText.innerText = 'بانتظار الحفظ لتطبيقه...';
+        if (toggleLabel) {
+            toggleLabel.innerText = 'مفعل (اضغط حفظ للتطبيق فوراً)';
+            toggleLabel.style.color = '#059669';
+        }
+    } else {
+        if (card) { card.classList.remove('is-active'); card.classList.add('is-disabled'); }
+        if (badge) { badge.className = 'sla-status-pill disabled'; }
+        if (statusText) statusText.innerText = 'بانتظار الحفظ لإلغائه...';
+        if (toggleLabel) {
+            toggleLabel.innerText = 'معطل (اضغط حفظ للإلغاء فوراً)';
+            toggleLabel.style.color = '#64748b';
+        }
+    }
+};
+
+// 4. حفظ الإعدادات في Supabase والبث اللحظي للجميع
+window.saveModeratorSlaAdmin = async function() {
+    const toggle = document.getElementById('adminSlaToggle');
+    const hoursInp = document.getElementById('adminSlaHoursInput');
+    const saveBtn = document.getElementById('adminSlaSaveBtn');
+
+    const isEnabled = toggle ? toggle.checked : false;
+    const maxHours = hoursInp ? Math.max(1, parseFloat(hoursInp.value) || 24) : 24;
+
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الحفظ والتطبيق...';
+    }
+
+    try {
+        const nowStr = new Date().toLocaleString('ar-EG');
+        const payload = {
+            enabled: isEnabled,
+            maxHours: maxHours,
+            lastUpdated: nowStr
+        };
+
+        // أ) الحفظ في سوبا بيز في جدول settings_shipping الموحد
+        const { data: existing, error: chkErr } = await window.supabase
+            .from('settings_shipping')
+            .select('id')
+            .eq('zone_name', '_MODERATOR_SLA_CONFIG_')
+            .eq('zone_type', 'system')
+            .limit(1);
+
+        if (!chkErr && existing && existing.length > 0) {
+            await window.supabase
+                .from('settings_shipping')
+                .update({
+                    price: maxHours,
+                    delivery_type: isEnabled ? 'enabled' : 'disabled',
+                    duration: nowStr
+                })
+                .eq('id', existing[0].id);
+        } else {
+            await window.supabase
+                .from('settings_shipping')
+                .insert([{
+                    zone_name: '_MODERATOR_SLA_CONFIG_',
+                    zone_type: 'system',
+                    price: maxHours,
+                    delivery_type: isEnabled ? 'enabled' : 'disabled',
+                    duration: nowStr
+                }]);
+        }
+
+        // ب) إرسال بث فوري (Realtime Broadcast) لجميع المتصفحات المفتوحة حالياً
+        if (window.candySystemRealtimeChannel) {
+            try {
+                await window.candySystemRealtimeChannel.send({
+                    type: 'broadcast',
+                    event: 'sla_config_updated',
+                    payload: payload
+                });
+            } catch (bcErr) {
+                console.warn('[Realtime] Broadcast send error:', bcErr);
+            }
+        }
+
+        // ج) تحديث الإعداد المحلي فوراً
+        window.moderatorSlaConfig = payload;
+
+        // د) رفع نشاط النظام لإجبار المزامنة الذكية على التحديث
+        if (typeof window.bumpSystemActivity === 'function') {
+            window.bumpSystemActivity();
+        }
+
+        // هـ) تحديث الواجهة ورسالة تأكيد
+        window.syncSlaAdminUI();
+        if (typeof showToast === 'function') {
+            showToast(isEnabled 
+                ? `✅ تم تفعيل الرقابة بمهلة (${maxHours} ساعة) وتطبيقها لحظياً على الجميع دون خروج!` 
+                : "✅ تم إلغاء تفعيل الرقابة وفتح أجهزة المودريتور لحظياً فوراً!", "success");
+        }
+
+        // و) إعادة فحص وتدقيق الأوردرات المتأخرة في الكارت
+        window.loadModeratorSlaAdmin(false);
+
+    } catch (err) {
+        console.error('[SLA] Save error:', err);
+        if (typeof showToast === 'function') showToast("فشل حفظ إعدادات الرقابة، تحقق من الاتصال", "error");
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fa-solid fa-bolt"></i> حفظ وتطبيق فورياً على الجميع';
+        }
+    }
+};
+
+// 5. تحميل الإعدادات وتدقيق الأوردرات المتأخرة لعرضها في الداشبورد
+window.loadModeratorSlaAdmin = async function(force = false) {
+    await window.fetchModeratorSlaConfig(force);
+    window.syncSlaAdminUI();
+
+    const auditCountEl = document.getElementById('adminSlaAuditCount');
+    const auditListEl = document.getElementById('adminSlaAuditList');
+    if (!auditCountEl || !auditListEl) return;
+
+    const allOrders = window.allOrdersData || [];
+    const now = Date.now();
+    const maxHours = (window.moderatorSlaConfig && window.moderatorSlaConfig.maxHours) ? window.moderatorSlaConfig.maxHours : 24;
+
+    const overdueList = [];
+    allOrders.forEach(o => {
+        if (o.status !== 'قيد التجهيز' && o.status !== 'في الشحن') return;
+        
+        let orderTime = 0;
+        if (o.createdAt) orderTime = new Date(o.createdAt).getTime();
+        else if (o.date) orderTime = new Date(`${o.date} ${o.time || '12:00:00'}`).getTime();
+        if (!orderTime || isNaN(orderTime)) return;
+
+        const hoursElapsed = (now - orderTime) / (1000 * 60 * 60);
+        let limit = (o.status === 'قيد التجهيز') ? maxHours : 240;
+
+        if (hoursElapsed >= limit) {
+            overdueList.push({
+                order: o,
+                hoursElapsed: Math.round(hoursElapsed),
+                moderator: o.moderator || o.seller || 'غير محدد',
+                status: o.status
+            });
+        }
+    });
+
+    if (overdueList.length === 0) {
+        auditCountEl.className = 'sla-audit-count zero';
+        auditCountEl.innerText = '0 أوردر متأخر (كل شيء سليم)';
+        auditListEl.innerHTML = '<div style="text-align: center; color: #059669; padding: 15px; font-weight: 700;"><i class="fa-solid fa-circle-check" style="font-size: 1.5rem; display: block; margin-bottom: 6px;"></i> ممتاز! لا توجد أي أوردرات متأخرة عن الشحن في النظام حالياً.</div>';
+    } else {
+        auditCountEl.className = 'sla-audit-count';
+        auditCountEl.innerText = `${overdueList.length} أوردر متأخر`;
+        let html = '';
+        overdueList.forEach(item => {
+            html += `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 9px 12px; border-bottom: 1px solid #f1f5f9; font-size: 0.88rem;">
+                    <div>
+                        <strong style="color: #0f172a;">#${item.order.id}</strong> - 
+                        <span>${item.order.name || 'بدون اسم'}</span>
+                        <span style="color: #64748b; margin-right: 8px;">(المودريتور: <strong style="color: #2563eb;">${item.moderator}</strong>)</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 6px; font-size: 0.78rem;">${item.status}</span>
+                        <span style="background: #fee2e2; color: #dc2626; padding: 2px 8px; border-radius: 6px; font-weight: 800; font-size: 0.78rem;">مر عليه ${item.hoursElapsed} ساعة</span>
+                    </div>
+                </div>
+            `;
+        });
+        auditListEl.innerHTML = html;
+    }
+};
+
+window.toggleSlaAuditDetails = function() {
+    const details = document.getElementById('adminSlaAuditDetails');
+    const chevron = document.getElementById('adminSlaAuditChevron');
+    if (!details) return;
+    const isHidden = details.style.display === 'none';
+    details.style.display = isHidden ? 'block' : 'none';
+    if (chevron) {
+        chevron.innerHTML = isHidden ? '<i class="fa-solid fa-chevron-up"></i>' : '<i class="fa-solid fa-chevron-down"></i>';
+    }
+};
+
+window.navigateToShippingTab = function() {
+    const shipBtn = document.querySelector('button.nav-item[data-target="shipping-tab"]');
+    if (shipBtn) {
+        shipBtn.click();
+    } else {
+        document.querySelectorAll('.tab-pane').forEach(tp => tp.classList.remove('active'));
+        const shipTab = document.getElementById('shipping-tab');
+        if (shipTab) shipTab.classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(b => {
+            if (b.getAttribute('data-target') === 'shipping-tab') b.classList.add('active');
+            else b.classList.remove('active');
+        });
+    }
+};
+
+window.renderModeratorLockout = function(overdueOrders) {
+    const lockoutCard = document.getElementById('moderatorLockoutCard');
+    const warningBanner = document.getElementById('moderatorWarningBanner');
+    const orderFields = document.getElementById('orderFieldsContainer');
+    const currentName = (window.currentUser && (window.currentUser.displayName || window.currentUser.username)) || 'المودريتور';
+
+    if (warningBanner) warningBanner.style.display = 'none';
+    if (!lockoutCard) return;
+
+    let ordersHtml = '';
+    overdueOrders.forEach(item => {
+        const o = item.order;
+        const delayBadge = item.stage === 1
+            ? `<span class="overdue-order-badge"><i class="fa-solid fa-clock"></i> متأخر عن الشحن (${item.delayHours > 0 ? item.delayHours + ' س إضافية' : Math.round(item.elapsedHours) + ' ساعة'})</span>`
+            : `<span class="overdue-order-badge"><i class="fa-solid fa-truck"></i> في الشحن متأخر (${item.delayText})</span>`;
+
+        ordersHtml += `
+            <div class="overdue-order-row">
+                <div class="overdue-order-meta">
+                    <span class="overdue-order-id">#${o.id}</span>
+                    <span class="overdue-order-name">${o.name || 'بدون اسم'} (${o.phone || 'بدون هاتف'})</span>
+                    <span class="overdue-order-dest"><i class="fa-solid fa-location-dot" style="color:#ef4444; margin-left:3px;"></i>${o.gov || ''} ${o.address ? '- ' + o.address : ''}</span>
+                    <span style="font-size:0.78rem; color:#64748b; font-weight:700;"><i class="fa-solid fa-tag" style="margin-left:3px;"></i>${item.categoryName || (item.stage === 1 ? 'قيد التجهيز' : 'في الشحن')}</span>
+                </div>
+                <div>
+                    ${delayBadge}
+                </div>
+            </div>
+        `;
+    });
+
+    lockoutCard.innerHTML = `
+        <div class="lockout-card-header">
+            <div class="lockout-shield-icon">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <div class="lockout-header-info">
+                <h3><i class="fa-solid fa-lock" style="margin-left:6px;"></i> خانة إنشاء الطلبات موقوفة مؤقتاً لحسابك (${currentName})</h3>
+                <p>لديك <strong>${overdueOrders.length} أوردر(ات) معلقة</strong> تجاوزت المهلة المسموح بها للشحن أو التوصيل. المنظومة تشترط شحن الأوردرات أو إغلاقها في قسم الشحن أولاً لتتمكن من إنشاء طلبات جديدة.</p>
+            </div>
+        </div>
+
+        <div class="overdue-orders-container">
+            ${ordersHtml}
+        </div>
+
+        <div class="lockout-actions-row">
+            <button type="button" class="btn-resolve-shipping interactive-btn" onclick="window.navigateToShippingTab()">
+                <i class="fa-solid fa-truck-fast"></i> الانتقال لقسم الشحن لإسناد / إغلاق الأوردرات فوراً
+            </button>
+        </div>
+    `;
+
+    lockoutCard.style.display = 'block';
+
+    // Disable order creation fields & lock submit
+    if (orderFields) {
+        orderFields.style.opacity = '0.35';
+        orderFields.style.pointerEvents = 'none';
+        orderFields.style.filter = 'grayscale(60%)';
+    }
+
+    const saveBtn = document.getElementById('saveAndPrintBtn');
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.style.opacity = '0.4';
+        saveBtn.style.cursor = 'not-allowed';
+        saveBtn.title = 'موقوف لوجود أوردرات متأخرة';
+    }
+};
+
+window.clearModeratorShippingLock = function() {
+    const lockoutCard = document.getElementById('moderatorLockoutCard');
+    const orderFields = document.getElementById('orderFieldsContainer');
+    const saveBtn = document.getElementById('saveAndPrintBtn');
+
+    if (lockoutCard) {
+        lockoutCard.style.display = 'none';
+        lockoutCard.innerHTML = '';
+    }
+
+    if (orderFields) {
+        orderFields.style.opacity = '1';
+        orderFields.style.pointerEvents = 'auto';
+        orderFields.style.filter = 'none';
+    }
+
+    if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.style.opacity = '1';
+        saveBtn.style.cursor = 'pointer';
+        saveBtn.title = '';
+    }
+};
+
+window.renderModeratorWarning = function(warningOrders) {
+    const warningBanner = document.getElementById('moderatorWarningBanner');
+    if (!warningBanner) return;
+
+    let minMinutes = 60;
+    let closestOrder = null;
+    warningOrders.forEach(w => {
+        if (w.remainingMinutes < minMinutes) {
+            minMinutes = w.remainingMinutes;
+            closestOrder = w.order;
+        }
+    });
+
+    warningBanner.innerHTML = `
+        <div class="warning-banner-content">
+            <div class="warning-banner-icon">
+                <i class="fa-solid fa-hourglass-half"></i>
+            </div>
+            <div class="warning-banner-text">
+                <h4>تنبيه: اقتراب انتهاء مهلة الشحن</h4>
+                <p>لديك أوردر برقم <strong>#${closestOrder ? closestOrder.id : ''}</strong> للعميل (<strong>${closestOrder ? closestOrder.name : ''}</strong>) متبقي له <strong>${minMinutes} دقيقة</strong> قبل قفل خانة إنشاء الطلبات.</p>
+            </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <span class="warning-banner-badge"><i class="fa-solid fa-clock"></i> متبقي ${minMinutes} دقيقة</span>
+            <button type="button" class="interactive-btn" onclick="window.navigateToShippingTab()" style="background:#f59e0b; color:#fff; border:none; padding:7px 14px; border-radius:10px; font-weight:800; cursor:pointer; font-family:inherit; font-size:0.85rem;">
+                شحن الآن <i class="fa-solid fa-arrow-left"></i>
+            </button>
+        </div>
+    `;
+    warningBanner.style.display = 'flex';
+};
+
+window.clearModeratorWarning = function() {
+    const warningBanner = document.getElementById('moderatorWarningBanner');
+    if (warningBanner) {
+        warningBanner.style.display = 'none';
+        warningBanner.innerHTML = '';
+    }
+};
+
+window.checkModeratorShippingStatus = function() {
+    // 0. صمام الأمان: إن كانت الميزة معطلة من لوحة المدير، فك القفل تماماً فوراً
+    if (!window.moderatorSlaConfig || !window.moderatorSlaConfig.enabled) {
+        window.clearModeratorShippingLock();
+        window.clearModeratorWarning();
+        return { locked: false, overdueOrders: [], warningOrders: [] };
+    }
+
+    // 1. المدير العام بصلاحية ALL لا يتم قفل الشاشة له أبداً
+    if (!window.currentUser || window.currentUser.permissions === 'ALL') {
+        window.clearModeratorShippingLock();
+        window.clearModeratorWarning();
+        return { locked: false, overdueOrders: [], warningOrders: [] };
+    }
+
+    const currentModName = (window.currentUser.displayName || window.currentUser.username || '').trim().toLowerCase();
+    if (!currentModName) {
+        window.clearModeratorShippingLock();
+        window.clearModeratorWarning();
+        return { locked: false, overdueOrders: [], warningOrders: [] };
+    }
+
+    const allOrders = window.allOrdersData || [];
+    const now = Date.now();
+    const todayStr = (function() {
+        const d = new Date();
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    })();
+
+    const overdueOrders = [];
+    const warningOrders = [];
+
+    // مهلة السماح المحددة من لوحة المدير بالساعات (الافتراضي 24 ساعة)
+    const stage1Limit = (window.moderatorSlaConfig && window.moderatorSlaConfig.maxHours) ? parseFloat(window.moderatorSlaConfig.maxHours) : 24;
+    const stage1WarningLimit = Math.max(0.5, stage1Limit - 2.0);
+
+    // فحص أوردرات هذا المودريتور
+    allOrders.forEach(o => {
+        const orderMod = (o.moderator || o.seller || '').trim().toLowerCase();
+        if (orderMod !== currentModName) return;
+
+        // حساب وقت إنشاء الطلب
+        let orderTime = 0;
+        if (o.createdAt) {
+            orderTime = new Date(o.createdAt).getTime();
+        } else if (o.date) {
+            orderTime = new Date(`${o.date} ${o.time || '12:00:00'}`).getTime();
+        }
+        if (!orderTime || isNaN(orderTime)) return;
+
+        const hoursElapsed = (now - orderTime) / (1000 * 60 * 60);
+
+        // STAGE 1: قيد التجهيز (لم يتم شحنها للمندوب بعد)
+        if (o.status === 'قيد التجهيز') {
+            const isFutureDate = (o.orderType === 'special_date' || (o.orderType && o.orderType.includes('حجز')) || (o.deliveryDate && o.deliveryDate > todayStr));
+            if (isFutureDate && o.deliveryDate > todayStr) {
+                return;
+            }
+
+            if (hoursElapsed >= stage1Limit) {
+                overdueOrders.push({
+                    order: o,
+                    stage: 1,
+                    type: 'لم يتم شحنه للمندوب',
+                    limitHours: stage1Limit,
+                    elapsedHours: hoursElapsed,
+                    delayHours: Math.round(hoursElapsed - stage1Limit),
+                    badgeText: `متأخر عن الشحن ${Math.round(hoursElapsed)} ساعة`
+                });
+            } else if (hoursElapsed >= stage1WarningLimit) {
+                const remMinutes = Math.max(1, Math.round((stage1Limit - hoursElapsed) * 60));
+                warningOrders.push({
+                    order: o,
+                    stage: 1,
+                    remainingMinutes: remMinutes,
+                    badgeText: `متبقي ${remMinutes} دقيقة للشحن`
+                });
+            }
+        }
+
+        // STAGE 2: في الشحن (خرجت مع المندوب ولم تُسجل كـ تم التوصيل)
+        else if (o.status === 'في الشحن') {
+            let maxHours = 6;
+            let categoryName = 'إسكندرية (نفس اليوم - حد أقصى 6 ساعات)';
+
+            const oType = (o.orderType || '').toLowerCase();
+            const gov = (o.gov || '').trim();
+
+            if (oType === 'gov_shipping' || oType.includes('محافظات') || (gov && gov !== 'الإسكندرية' && !gov.includes('اسكندر'))) {
+                maxHours = 240; // 10 days
+                categoryName = 'شحن محافظات (حد أقصى 10 أيام)';
+            } else if (oType === 'special_date' || oType.includes('حجز') || (o.deliveryDate && o.deliveryDate !== o.date)) {
+                maxHours = 72; // 3 days
+                categoryName = 'إسكندرية ثاني يوم/حجز (حد أقصى 3 أيام)';
+            } else {
+                maxHours = 6; // 6 hours
+                categoryName = 'إسكندرية نفس اليوم (حد أقصى 6 ساعات)';
+            }
+
+            if (hoursElapsed >= maxHours) {
+                const delayHrs = Math.round(hoursElapsed - maxHours);
+                const delayText = delayHrs > 24 ? `${Math.round(delayHrs / 24)} يوم` : `${delayHrs} ساعة`;
+                overdueOrders.push({
+                    order: o,
+                    stage: 2,
+                    type: 'في الشحن مع المندوب ولم يتم إغلاقه',
+                    limitHours: maxHours,
+                    elapsedHours: hoursElapsed,
+                    categoryName: categoryName,
+                    delayText: delayText,
+                    badgeText: `مع المندوب (${o.driver || 'غير محدد'}) متأخر ${delayText}`
+                });
+            }
+        }
+    });
+
+    if (overdueOrders.length > 0) {
+        window.renderModeratorLockout(overdueOrders);
+        return { locked: true, overdueOrders, warningOrders };
+    } else {
+        window.clearModeratorShippingLock();
+        if (warningOrders.length > 0) {
+            window.renderModeratorWarning(warningOrders);
+        } else {
+            window.clearModeratorWarning();
+        }
+        return { locked: false, overdueOrders: [], warningOrders };
+    }
+};
+
+// Periodic background check every 60 seconds
+setInterval(() => {
+    if (typeof window.checkModeratorShippingStatus === 'function') {
+        const createTab = document.getElementById('create-tab');
+        if (createTab && createTab.classList.contains('active')) {
+            window.checkModeratorShippingStatus();
+        }
+    }
+}, 60000);
 
 function checkBookingAlerts() {
     let banner = document.getElementById('booking-alert-banner');
@@ -4585,6 +5208,17 @@ function updateSuspendedCount() {
 let suspendBtn = document.getElementById('suspendBtn');
 if (suspendBtn) {
     suspendBtn.addEventListener('click', async () => {
+        if (typeof window.checkModeratorShippingStatus === 'function') {
+            const lockCheck = window.checkModeratorShippingStatus();
+            if (lockCheck && lockCheck.locked) {
+                showToast("⛔ خانة إنشاء الطلبات موقوفة مؤقتاً لحسابك لوجود أوردرات متأخرة! يرجى شحنها أو إغلاقها أولاً.", "error");
+                if (typeof window.playErrorBeep === 'function') window.playErrorBeep();
+                const card = document.getElementById('moderatorLockoutCard');
+                if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+        }
+
         let nameEl = document.getElementById('customerName');
         let name = nameEl && nameEl.value.trim() ? nameEl.value.trim() : "";
         let phoneEl = document.getElementById('customerPhone');
@@ -4962,6 +5596,17 @@ if (whatsappReviewBtn) {
 let saveAndPrintBtn = document.getElementById('saveAndPrintBtn');
 if (saveAndPrintBtn) {
     saveAndPrintBtn.addEventListener('click', () => {
+        if (typeof window.checkModeratorShippingStatus === 'function') {
+            const lockCheck = window.checkModeratorShippingStatus();
+            if (lockCheck && lockCheck.locked) {
+                showToast("⛔ خانة إنشاء الطلبات موقوفة مؤقتاً لحسابك لوجود أوردرات متأخرة! يرجى شحنها أو إغلاقها أولاً.", "error");
+                if (typeof window.playErrorBeep === 'function') window.playErrorBeep();
+                const card = document.getElementById('moderatorLockoutCard');
+                if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+        }
+
         if (document.querySelectorAll('.product-row:not(.confirmed)').length > 0) { showToast("قم بتأكيد (✔️) المنتجات أولاً!", "error"); return; }
 
         let isGift = document.getElementById('isGiftCheckbox') ? document.getElementById('isGiftCheckbox').checked : false;
@@ -15345,6 +15990,10 @@ function applyPermissions() {
             group.style.display = "block";
         }
     });
+
+    if (typeof window.checkModeratorShippingStatus === 'function') {
+        window.checkModeratorShippingStatus();
+    }
 
     // Find the first UNLOCKED button and click it to open that tab
     let firstUnlockedBtn = Array.from(document.querySelectorAll('.nav-item')).find(btn => 

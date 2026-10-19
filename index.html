@@ -79,7 +79,7 @@
     <link rel="icon" type="image/png" href="favicon.png?v=11">
     <link rel="apple-touch-icon" href="favicon.png?v=11">
     <link rel="manifest" href="app-manifest.json?v=1001">
-    <link rel="stylesheet" href="style.css?v=101.0">
+    <link rel="stylesheet" href="style.css?v=102.0">
     <link rel="stylesheet" href="gifts_module/css/gifts.css?v=21">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap"
         rel="stylesheet">
@@ -381,6 +381,12 @@
         </div>
 
         <section id="create-tab" class="tab-pane">
+            <!-- ⚠️ شريط التحذير الاستباقي قبل انتهاء المهلة -->
+            <div id="moderatorWarningBanner" class="moderator-warning-banner" style="display: none;"></div>
+
+            <!-- ⛔ كارت قفل إنشاء الأوردرات الصارم عند تجاوز المهلة -->
+            <div id="moderatorLockoutCard" class="moderator-lockout-card" style="display: none;"></div>
+
             <div id="orderFieldsContainer" class="section-card">
                 <h3 class="section-title"><i class="fa-solid fa-pen-to-square"></i> إنشاء طلب جديد</h3>
 
@@ -4319,7 +4325,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script src="email_service.js?v=10.0" defer></script>
-    <script src="app.js?v=101.0" charset="UTF-8" defer></script>
+    <script src="app.js?v=102.0" charset="UTF-8" defer></script>
     <script src="update_notice.js?v=5" defer></script>
 
     <!-- Modal: إعداد موقع ونطاق الفرع (GPS Geofencing) -->

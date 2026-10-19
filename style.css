@@ -8100,4 +8100,588 @@ body.dark-mode .offer-action-btn {
     color: #cbd5e1;
 }
 
+/* ===================================================
+   🚨 نظام إجبار الشحن والتوصيل (SLA Lockout & Warnings)
+   =================================================== */
+
+.moderator-warning-banner {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border: 2px solid #f59e0b;
+    border-radius: 16px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    animation: slideDownWarning 0.3s ease;
+}
+
+@keyframes slideDownWarning {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.warning-banner-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.warning-banner-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: #f59e0b;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    animation: pulseWarnIcon 2s infinite ease-in-out;
+}
+
+@keyframes pulseWarnIcon {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+}
+
+.warning-banner-text h4 {
+    margin: 0 0 4px 0;
+    color: #b45309;
+    font-size: 1.05rem;
+    font-weight: 800;
+}
+
+.warning-banner-text p {
+    margin: 0;
+    color: #92400e;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+.warning-banner-badge {
+    background: #d97706;
+    color: #ffffff;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-weight: 800;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 8px rgba(217, 119, 6, 0.25);
+}
+
+/* الكارت الصارم لقفل إنشاء الأوردرات */
+.moderator-lockout-card {
+    background: linear-gradient(145deg, #ffffff 0%, #fff5f5 100%);
+    border: 2px solid #ef4444;
+    border-radius: 24px;
+    padding: 28px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 15px 40px rgba(239, 68, 68, 0.16);
+    position: relative;
+    overflow: hidden;
+    animation: popInLockout 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes popInLockout {
+    from { opacity: 0; transform: scale(0.96) translateY(12px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.lockout-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.lockout-shield-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    box-shadow: 0 8px 24px rgba(239, 68, 68, 0.35);
+    flex-shrink: 0;
+    animation: lockShieldPulse 2.5s infinite;
+}
+
+@keyframes lockShieldPulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 8px 24px rgba(239, 68, 68, 0.35); }
+    50% { transform: scale(1.05); box-shadow: 0 12px 30px rgba(239, 68, 68, 0.5); }
+}
+
+.lockout-header-info h3 {
+    margin: 0 0 6px 0;
+    color: #991b1b;
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+}
+
+.lockout-header-info p {
+    margin: 0;
+    color: #7f1d1d;
+    font-size: 0.93rem;
+    line-height: 1.55;
+    font-weight: 600;
+}
+
+.overdue-orders-container {
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #fee2e2;
+    border-radius: 16px;
+    padding: 14px;
+    margin-bottom: 20px;
+    max-height: 280px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.overdue-order-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fef2f2;
+    border: 1.5px solid #fecaca;
+    border-radius: 12px;
+    padding: 10px 14px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.overdue-order-row:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.12);
+}
+
+.overdue-order-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.overdue-order-id {
+    background: #ef4444;
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 0.85rem;
+    padding: 3px 9px;
+    border-radius: 8px;
+    font-family: monospace;
+}
+
+.overdue-order-name {
+    color: #1e293b;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.overdue-order-dest {
+    color: #64748b;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.overdue-order-badge {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #f87171;
+    font-size: 0.8rem;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+.lockout-actions-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.btn-resolve-shipping {
+    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 14px;
+    padding: 12px 24px;
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.35);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.25s;
+    font-family: inherit;
+}
+
+.btn-resolve-shipping:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(239, 68, 68, 0.5);
+    background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+}
+
+/* بادج أحمر في شاشات الشحن للأوردرات المتأخرة */
+.badge-order-late {
+    background: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #f87171;
+    font-size: 0.76rem;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    animation: latePulse 2s infinite ease-in-out;
+}
+
+@keyframes latePulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.65; }
+}
+
+/* Dark Mode */
+body.dark-mode .moderator-warning-banner {
+    background: linear-gradient(135deg, #2a2215 0%, #3d2d14 100%);
+    border-color: #b45309;
+}
+body.dark-mode .warning-banner-text h4 { color: #fde68a; }
+body.dark-mode .warning-banner-text p { color: #fef3c7; }
+
+body.dark-mode .moderator-lockout-card {
+    background: linear-gradient(145deg, #241416 0%, #2f171b 100%);
+    border-color: #ef4444;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+}
+body.dark-mode .lockout-header-info h3 { color: #fca5a5; }
+body.dark-mode .lockout-header-info p { color: #fecaca; }
+body.dark-mode .overdue-orders-container {
+    background: #1a0f12;
+    border-color: #451a1e;
+}
+body.dark-mode .overdue-order-row {
+    background: #281216;
+    border-color: #4c1d24;
+}
+body.dark-mode .overdue-order-name { color: #f1f5f9; }
+body.dark-mode .overdue-order-dest { color: #94a3b8; }
+
+/* 🛡️ لوحة التحكم في رقابة المودريتور والإلزام بالشحن (Admin SLA Dashboard) */
+.sla-admin-card {
+    background: #ffffff;
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    border: 1.5px solid #e2e8f0;
+    padding: 28px;
+    margin-top: 30px;
+    text-align: right;
+    direction: rtl;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.sla-admin-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 5px;
+    background: linear-gradient(90deg, #3b82f6, #6366f1, #8b5cf6);
+}
+
+.sla-admin-card.is-active::before {
+    background: linear-gradient(90deg, #10b981, #059669, #047857);
+}
+
+.sla-admin-card.is-disabled::before {
+    background: linear-gradient(90deg, #94a3b8, #cbd5e1);
+}
+
+.sla-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #f1f5f9;
+    padding-bottom: 18px;
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.sla-card-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.sla-card-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+    color: #2563eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+    transition: all 0.3s ease;
+}
+
+.sla-admin-card.is-active .sla-card-icon {
+    background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+    color: #059669;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.sla-card-title {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sla-card-desc {
+    margin: 4px 0 0 0;
+    color: #64748b;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* Status Pill Badge */
+.sla-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 30px;
+    font-size: 0.88rem;
+    font-weight: 800;
+    transition: all 0.3s ease;
+}
+
+.sla-status-pill.active {
+    background: #ecfdf5;
+    color: #059669;
+    border: 1.5px solid #a7f3d0;
+}
+
+.sla-status-pill.disabled {
+    background: #f1f5f9;
+    color: #64748b;
+    border: 1.5px solid #cbd5e1;
+}
+
+.sla-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+}
+
+.sla-status-pill.disabled .sla-status-dot {
+    box-shadow: none;
+    background: #94a3b8;
+}
+
+/* iOS Modern Switch */
+.sla-switch-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #f8fafc;
+    padding: 12px 18px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.sla-switch {
+    position: relative;
+    display: inline-block;
+    width: 56px;
+    height: 30px;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.sla-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.sla-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #cbd5e1;
+    transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 34px;
+}
+
+.sla-slider:before {
+    position: absolute;
+    content: "";
+    height: 22px;
+    width: 22px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.sla-switch input:checked + .sla-slider {
+    background-color: #10b981;
+}
+
+.sla-switch input:focus + .sla-slider {
+    box-shadow: 0 0 1px #10b981;
+}
+
+.sla-switch input:checked + .sla-slider:before {
+    transform: translateX(26px);
+}
+
+/* Control Options Grid */
+.sla-controls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 18px;
+    margin-bottom: 22px;
+}
+
+.sla-control-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.sla-control-box label {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sla-input-with-unit {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.sla-input-with-unit input {
+    width: 100%;
+    padding: 10px 14px;
+    padding-left: 55px;
+    border-radius: 10px;
+    border: 1.5px solid #cbd5e1;
+    font-size: 1.05rem;
+    font-weight: 700;
+    font-family: inherit;
+    text-align: center;
+    background: #ffffff;
+    box-sizing: border-box;
+}
+
+.sla-input-with-unit .unit {
+    position: absolute;
+    left: 14px;
+    color: #64748b;
+    font-weight: 700;
+    font-size: 0.88rem;
+    pointer-events: none;
+}
+
+/* Live Audit / Delayed Orders Section */
+.sla-audit-section {
+    background: #fff;
+    border: 1.5px dashed #cbd5e1;
+    border-radius: 14px;
+    padding: 16px;
+    margin-top: 15px;
+}
+
+.sla-audit-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+}
+
+.sla-audit-count {
+    background: #fee2e2;
+    color: #dc2626;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 800;
+}
+
+.sla-audit-count.zero {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+/* Dark mode for admin sla */
+body.dark-mode .sla-admin-card {
+    background: #1e293b;
+    border-color: #334155;
+}
+body.dark-mode .sla-card-title { color: #f8fafc; }
+body.dark-mode .sla-card-desc { color: #94a3b8; }
+body.dark-mode .sla-card-header { border-color: #334155; }
+body.dark-mode .sla-control-box,
+body.dark-mode .sla-switch-container {
+    background: #0f172a;
+    border-color: #334155;
+}
+body.dark-mode .sla-control-box label { color: #cbd5e1; }
+body.dark-mode .sla-input-with-unit input {
+    background: #1e293b;
+    border-color: #475569;
+    color: #f8fafc;
+}
+body.dark-mode .sla-audit-section {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+
 

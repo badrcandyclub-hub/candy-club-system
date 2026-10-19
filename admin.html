@@ -181,6 +181,89 @@
                     </button>
                 </div>
             </div>
+
+            <!-- 🛡️ كارت لوحة التحكم في رقابة المودريتور وإلزام شحن الأوردرات -->
+            <div id="adminSlaCard" class="sla-admin-card is-disabled">
+                <div class="sla-card-header">
+                    <div class="sla-card-title-wrap">
+                        <div class="sla-card-icon">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <div>
+                            <h3 class="sla-card-title">
+                                <span>نظام الرقابة وإلزام المودريتور بشحن الطلبات</span>
+                            </h3>
+                            <p class="sla-card-desc">
+                                عند التفعيل، يُمنع المودريتور تلقائياً ولحظياً من إنشاء أوردرات جديدة إذا تجاوزت طلباته المفتوحة مهلة السماح المحددة دون شحن.
+                            </p>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span id="adminSlaStatusBadge" class="sla-status-pill disabled">
+                            <span class="sla-status-dot"></span>
+                            <span id="adminSlaStatusText">معطل حالياً (OFF)</span>
+                        </span>
+                        <button type="button" class="interactive-btn" onclick="window.loadModeratorSlaAdmin(true)" title="تحديث الفحص والإحصائيات" style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 10px; padding: 8px 12px; cursor: pointer; color: #475569; font-weight: 700;">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="sla-controls-grid">
+                    <!-- المفتاح اللحظي Toggle Switch -->
+                    <div class="sla-control-box">
+                        <label>
+                            <i class="fa-solid fa-power-off" style="color: #6366f1;"></i>
+                            حالة تفعيل النظام الرقابي:
+                        </label>
+                        <div class="sla-switch-container">
+                            <label class="sla-switch">
+                                <input type="checkbox" id="adminSlaToggle" onchange="window.handleSlaToggleChange(this.checked)">
+                                <span class="sla-slider"></span>
+                            </label>
+                            <span id="adminSlaToggleLabel" style="font-weight: 800; font-size: 0.95rem; color: #64748b;">معطل (لن يقفل على أي مودريتور)</span>
+                        </div>
+                    </div>
+
+                    <!-- مهلة السماح بالساعات -->
+                    <div class="sla-control-box">
+                        <label>
+                            <i class="fa-solid fa-hourglass-half" style="color: #f59e0b;"></i>
+                            المهلة القصوى المسموح بها للشحن:
+                        </label>
+                        <div class="sla-input-with-unit">
+                            <input type="number" id="adminSlaHoursInput" value="24" min="1" max="168" step="1">
+                            <span class="unit">ساعة</span>
+                        </div>
+                        <span style="font-size: 0.78rem; color: #94a3b8; margin-top: 6px;">الافتراضي 24 ساعة (يوم كامل من وقت حفظ الطلب)</span>
+                    </div>
+
+                    <!-- زر الحفظ والتطبيق اللحظي -->
+                    <div class="sla-control-box" style="justify-content: flex-end;">
+                        <button type="button" id="adminSlaSaveBtn" class="interactive-btn" onclick="window.saveModeratorSlaAdmin()" style="width: 100%; padding: 14px 20px; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 1.05rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);">
+                            <i class="fa-solid fa-bolt"></i> حفظ وتطبيق فورياً على الجميع
+                        </button>
+                        <div id="adminSlaLastUpdate" style="font-size: 0.78rem; color: #94a3b8; text-align: center; margin-top: 6px;">لم يتم الضبط بعد</div>
+                    </div>
+                </div>
+
+                <!-- Live Audit: الطلبات المتأخرة حالياً في النظام -->
+                <div class="sla-audit-section">
+                    <div class="sla-audit-header" onclick="window.toggleSlaAuditDetails()">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <i class="fa-solid fa-clipboard-check" style="color: #2563eb; font-size: 1.1rem;"></i>
+                            <span style="font-weight: 800; color: #1e293b; font-size: 0.95rem;">فحص مباشر: الطلبات المفتوحة التي تتجاوز المهلة حالياً</span>
+                            <span id="adminSlaAuditCount" class="sla-audit-count zero">0 أوردر</span>
+                        </div>
+                        <span id="adminSlaAuditChevron" style="color: #64748b; font-size: 0.9rem;"><i class="fa-solid fa-chevron-down"></i></span>
+                    </div>
+                    <div id="adminSlaAuditDetails" style="display: none; margin-top: 14px; border-top: 1px solid #e2e8f0; padding-top: 12px;">
+                        <div id="adminSlaAuditList" style="max-height: 250px; overflow-y: auto;">
+                            <!-- يتم ملؤها ديناميكياً -->
+                        </div>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <section id="create-tab" class="tab-pane">
@@ -2219,7 +2302,7 @@
         <div style="text-align: center; color: var(--text-muted); font-size: 12px; margin-bottom: 10px; margin-top: 10px; opacity: 0.7;">الإصدار: V1.5</div>
     <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js?v=101.0" charset="UTF-8" defer></script>
+    <script src="app.js?v=102.0" charset="UTF-8" defer></script>
 </body>
 
 <!-- Inventory Stats Modal -->
