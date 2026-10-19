@@ -6569,8 +6569,41 @@ body.dark-mode .close-x-btn {
 }
 
 /* ==========================================
-   Custom In-App Month Picker (Firefox & Cross-Browser)
+   Month Picker (Native Chromium & Cross-Browser)
    ========================================== */
+#exportMonthInput {
+    flex: 1;
+    min-width: 160px;
+    height: 38px;
+    padding: 6px 12px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    font-family: 'Cairo', 'Tajawal', sans-serif;
+    color: var(--text-color, #0f172a);
+    background: #ffffff;
+    border: 1.5px solid #ec4899;
+    border-radius: 8px;
+    outline: none;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+#exportMonthInput:hover {
+    border-color: #db2777;
+    box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.15);
+}
+#exportMonthInput:focus {
+    border-color: #be185d;
+    box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.25);
+}
+body.dark-mode #exportMonthInput {
+    background: #1e293b;
+    color: #f8fafc;
+    border-color: #ec4899;
+    color-scheme: dark;
+}
+
 .custom-month-picker-wrapper {
     position: relative;
     flex: 1;
