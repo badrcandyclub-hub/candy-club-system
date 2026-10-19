@@ -73,7 +73,7 @@
     <link rel="icon" type="image/png" href="favicon.png?v=11">
     <link rel="apple-touch-icon" href="favicon.png?v=11">
     <link rel="manifest" href="app-manifest.json?v=1001">
-    <link rel="stylesheet" href="style.css?v=101.0">
+    <link rel="stylesheet" href="style.css?v=106.0">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap"
         rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" type="text/javascript" crossorigin="anonymous"></script>
@@ -1244,10 +1244,10 @@
                                     style="background: #27ae60; color: white; border: none; padding: 8px 15px; border-radius: 8px; flex-shrink: 0;"><i class="fa-solid fa-file-excel"></i> إكسيل</button>
                                 <div class="custom-month-picker-wrapper">
                                     <input type="hidden" id="exportMonthInput" value="">
-                                    <div id="exportMonthDisplay" class="custom-month-display-btn" tabindex="0" role="button" aria-haspopup="dialog" title="اضغط لاختيار شهر الانتهاء">
+                                    <div id="exportMonthDisplay" class="custom-month-display-btn" tabindex="0" role="button" aria-haspopup="dialog" title="اضغط لاختيار شهر الانتهاء" onclick="if(window.toggleCustomMonthPicker) window.toggleCustomMonthPicker(event);">
                                         <span id="exportMonthDisplayText" class="cmp-placeholder">تحديد شهر الانتهاء...</span>
                                         <div style="display: flex; align-items: center; gap: 6px;">
-                                            <button type="button" id="clearExportMonthBtn" class="custom-month-clear-btn" title="مسح الاختيار">&times;</button>
+                                            <button type="button" id="clearExportMonthBtn" class="custom-month-clear-btn" title="مسح الاختيار" onclick="if(window.clearCustomMonth) window.clearCustomMonth(event);">&times;</button>
                                             <i class="fa-solid fa-calendar-days" style="color: #ec4899; font-size: 1rem;"></i>
                                         </div>
                                     </div>
@@ -2302,7 +2302,7 @@
         <div style="text-align: center; color: var(--text-muted); font-size: 12px; margin-bottom: 10px; margin-top: 10px; opacity: 0.7;">الإصدار: V1.5</div>
     <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js?v=102.0" charset="UTF-8" defer></script>
+    <script src="app.js?v=106.0" charset="UTF-8" defer></script>
 </body>
 
 <!-- Inventory Stats Modal -->

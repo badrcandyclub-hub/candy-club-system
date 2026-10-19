@@ -6577,6 +6577,10 @@ body.dark-mode .close-x-btn {
     min-width: 170px;
 }
 
+.custom-month-picker-wrapper.is-open {
+    z-index: 100000 !important;
+}
+
 .custom-month-display-btn {
     display: flex;
     align-items: center;
@@ -6644,13 +6648,14 @@ body.dark-mode .close-x-btn {
     position: absolute;
     top: calc(100% + 6px);
     right: 0;
-    z-index: 10010;
-    width: 290px;
+    z-index: 100001;
+    width: 310px;
+    max-width: calc(100vw - 30px);
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 16px;
     padding: 14px;
-    box-shadow: 0 20px 40px -12px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.06);
+    box-shadow: 0 20px 45px -10px rgba(0,0,0,0.25), 0 4px 16px rgba(0,0,0,0.08);
     direction: rtl;
     font-family: 'Cairo', sans-serif;
     box-sizing: border-box;
