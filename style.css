@@ -6578,7 +6578,7 @@ body.dark-mode .close-x-btn {
 }
 
 .custom-month-picker-wrapper.is-open {
-    z-index: 100000 !important;
+    z-index: 999999 !important;
 }
 
 .custom-month-display-btn {
@@ -6648,7 +6648,7 @@ body.dark-mode .close-x-btn {
     position: absolute;
     top: calc(100% + 6px);
     right: 0;
-    z-index: 100001;
+    z-index: 1000000 !important;
     width: 310px;
     max-width: calc(100vw - 30px);
     background: #ffffff;

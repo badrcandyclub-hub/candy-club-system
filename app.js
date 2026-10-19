@@ -9840,6 +9840,9 @@ function loadExpiryData() {
 
     renderExpiryDashboard();
     updateCatalogWithOffers(); // To highlight items on offer in the main cashier view
+    if (typeof window.initCustomMonthPicker === 'function') {
+        window.initCustomMonthPicker();
+    }
 }
 
 let barcodeImageUpload = document.getElementById('barcodeImageUpload');
@@ -19827,12 +19830,17 @@ window.initCustomMonthPicker = function() {
         if (wrapper) wrapper.classList.remove('is-open');
     }
 
+    let lastToggleTime = 0;
     function togglePopover(e) {
         if (e) {
+            if (e.target && e.target.closest('#clearExportMonthBtn')) return;
             e.preventDefault();
             e.stopPropagation();
-            if (e.target && e.target.closest('#clearExportMonthBtn')) return;
         }
+        const now = Date.now();
+        if (now - lastToggleTime < 250) return; // Prevent duplicate rapid toggles
+        lastToggleTime = now;
+
         if (popover.style.display === 'block') {
             closePopover();
         } else {
@@ -19840,8 +19848,99 @@ window.initCustomMonthPicker = function() {
         }
     }
 
-    // Expose helpers globally so they can be called directly or from inline triggers
-    window.toggleCustomMonthPicker = togglePopover;
+    // Direct onclick handlers guarantee exactly one listener
+    display.onclick = togglePopover;
+
+    display.onkeydown = (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            togglePopover(e);
+        }
+    };
+
+    if (clearBtn) {
+        clearBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            clearMonth();
+            closePopover();
+        };
+    }
+
+    // Prevent clicks inside popover from closing it
+    popover.onclick = (e) => {
+        e.stopPropagation();
+    };
+
+    if (prevYearBtn) {
+        prevYearBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            viewingYear--;
+            renderMonthsGrid();
+        };
+    }
+
+    if (nextYearBtn) {
+        nextYearBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            viewingYear++;
+            renderMonthsGrid();
+        };
+    }
+
+    if (todayBtn) {
+        todayBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            selectMonth(realYear, realMonth);
+        };
+    }
+
+    if (clearPopBtn) {
+        clearPopBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            clearMonth();
+            closePopover();
+        };
+    }
+
+    // Close on outside click
+    if (!window._cmpDocClickBound) {
+        window._cmpDocClickBound = true;
+        document.addEventListener('click', (e) => {
+            const p = document.getElementById('customMonthPickerPopover');
+            const d = document.getElementById('exportMonthDisplay');
+            if (p && p.style.display === 'block') {
+                if (d && !d.contains(e.target) && !p.contains(e.target)) {
+                    p.style.display = 'none';
+                    if (d) d.classList.remove('is-active');
+                    const wrp = p.closest('.custom-month-picker-wrapper');
+                    if (wrp) wrp.classList.remove('is-open');
+                }
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const p = document.getElementById('customMonthPickerPopover');
+                const d = document.getElementById('exportMonthDisplay');
+                if (p && p.style.display === 'block') {
+                    p.style.display = 'none';
+                    if (d) d.classList.remove('is-active');
+                    const wrp = p.closest('.custom-month-picker-wrapper');
+                    if (wrp) wrp.classList.remove('is-open');
+                }
+            }
+        });
+    }
+
+    // Expose helpers globally
+    window.toggleCustomMonthPicker = function(e) {
+        togglePopover(e);
+    };
     window.openCustomMonthPicker = openPopover;
     window.closeCustomMonthPicker = closePopover;
     window.selectCustomMonth = selectMonth;
@@ -19854,94 +19953,21 @@ window.initCustomMonthPicker = function() {
         closePopover();
     };
 
-    // If already bound on this DOM instance, refresh display UI and return
-    if (display._cmpBound) {
-        updateDisplayUI();
-        return;
-    }
-    display._cmpBound = true;
-
-    display.addEventListener('click', togglePopover);
-
-    display.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            togglePopover(e);
-        }
-    });
-
-    if (clearBtn) {
-        clearBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            clearMonth();
-            closePopover();
-        });
-    }
-
-    // Prevent clicks inside popover from closing it
-    popover.addEventListener('click', (e) => {
-        e.stopPropagation();
-    });
-
-    if (prevYearBtn) {
-        prevYearBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            viewingYear--;
-            renderMonthsGrid();
-        });
-    }
-
-    if (nextYearBtn) {
-        nextYearBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            viewingYear++;
-            renderMonthsGrid();
-        });
-    }
-
-    if (todayBtn) {
-        todayBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            selectMonth(realYear, realMonth);
-        });
-    }
-
-    if (clearPopBtn) {
-        clearPopBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            clearMonth();
-            closePopover();
-        });
-    }
-
-    // Close on outside click
-    document.addEventListener('click', (e) => {
-        if (popover.style.display === 'block') {
-            if (!display.contains(e.target) && !popover.contains(e.target)) {
-                closePopover();
-            }
-        }
-    });
-
-    // Close on Escape key
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && popover.style.display === 'block') {
-            closePopover();
-        }
-    });
-
     // Initial render
     updateDisplayUI();
 };
 
+// Lifecycle execution
 if (document.readyState !== 'loading') {
     window.initCustomMonthPicker();
+} else {
+    document.addEventListener('DOMContentLoaded', () => {
+        if (window.initCustomMonthPicker) window.initCustomMonthPicker();
+    });
 }
+window.addEventListener('load', () => {
+    if (window.initCustomMonthPicker) window.initCustomMonthPicker();
+});
 
 // ==========================================
 // 🌟 نظام عروض المحل (Store Offers Module)
