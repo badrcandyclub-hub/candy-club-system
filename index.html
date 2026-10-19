@@ -8,11 +8,79 @@
     <meta http-equiv="Expires" content="0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Candy Club System</title>
-    <link rel="icon" type="image/png" href="favicon.png?v=8">
-    <link rel="apple-touch-icon" href="favicon.png?v=8">
-    <link rel="manifest" href="app-manifest.json?v=999">
-    <link rel="stylesheet" href="style.css?v=80.0">
-    <link rel="stylesheet" href="gifts_module/css/gifts.css?v=15">
+    
+    <!-- Cache Buster: Unregister stale Service Workers and clear browser caches -->
+    <script>
+    function forceSystemHardRefresh() {
+        try {
+            if ('caches' in window) {
+                caches.keys().then(function(names) {
+                    names.forEach(function(name) { caches.delete(name); });
+                });
+            }
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    registrations.forEach(function(reg) { reg.unregister(); });
+                });
+            }
+            var keepKeys = ['cc_user', 'candyDarkMode', 'cc_branch_whatsapp_group'];
+            var keysToRemove = [];
+            for (var i = 0; i < localStorage.length; i++) {
+                var k = localStorage.key(i);
+                if (k && keepKeys.indexOf(k) === -1 && !k.startsWith('cc_user')) {
+                    keysToRemove.push(k);
+                }
+            }
+            keysToRemove.forEach(function(k) { localStorage.removeItem(k); });
+            sessionStorage.clear();
+        } catch(e) {}
+        var url = new URL(window.location.href);
+        url.searchParams.set('reload', Date.now());
+        window.location.replace(url.toString());
+    }
+
+    (function() {
+        var APP_VERSION = '1.6.1';
+        var STORED_VER = '';
+        try { STORED_VER = localStorage.getItem('cc_app_version') || ''; } catch(e) {}
+        
+        // If version is missing or changed, clear stale caches
+        if (!STORED_VER || STORED_VER !== APP_VERSION) {
+            try {
+                if ('caches' in window) {
+                    caches.keys().then(function(names) {
+                        names.forEach(function(name) { caches.delete(name); });
+                    });
+                }
+                var keepKeys = ['cc_user', 'candyDarkMode', 'cc_branch_whatsapp_group'];
+                var keysToRemove = [];
+                for (var i = 0; i < localStorage.length; i++) {
+                    var k = localStorage.key(i);
+                    if (k && keepKeys.indexOf(k) === -1 && !k.startsWith('cc_user')) {
+                        keysToRemove.push(k);
+                    }
+                }
+                keysToRemove.forEach(function(k) { localStorage.removeItem(k); });
+            } catch(e) {}
+            try { localStorage.setItem('cc_app_version', APP_VERSION); } catch(e) {}
+        }
+        
+        // Unregister any stale Service Workers unconditionally
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                registrations.forEach(function(registration) {
+                    registration.unregister();
+                });
+            });
+        }
+    })();
+    </script>
+
+    <link rel="icon" type="image/png" href="favicon.png?v=11">
+    <link rel="apple-touch-icon" href="favicon.png?v=11">
+    <link rel="manifest" href="app-manifest.json?v=1001">
+    <link rel="stylesheet" href="style.css?v=101.0">
+    <link rel="stylesheet" href="gifts_module/css/gifts.css?v=21">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap"
         rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" type="text/javascript" crossorigin="anonymous"></script>
@@ -262,10 +330,13 @@
             
             <div id="login-error" class="login-error" style="color:var(--danger); margin-top:15px; font-size:0.95rem; display:none; background: var(--danger-light); border: 1px solid #fca5a5; padding: 12px; border-radius: 8px;"></div>
             
-            <div style="margin-top: 25px; border-top: 1px solid var(--border); padding-top: 15px;">
+            <div style="margin-top: 25px; border-top: 1px solid var(--border); padding-top: 15px; display: flex; flex-direction: column; gap: 12px; align-items: center;">
                 <a href="admin.html" style="color:var(--text-muted); text-decoration: none; font-size: 0.95rem; font-weight: bold; transition: color 0.3s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">
                     الرجوع للمدير <i class="fa-solid fa-arrow-right" style="margin-left: 5px;"></i>
                 </a>
+                <button type="button" onclick="forceSystemHardRefresh()" style="background: none; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 7px 14px; color: #64748b; font-size: 0.82rem; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; font-family: inherit;" onmouseover="this.style.borderColor='var(--primary)'; this.style.color='var(--primary)';" onmouseout="this.style.borderColor='#cbd5e1'; this.style.color='#64748b';" title="مسح ملفات الكاش القديمة وتحديث النظام">
+                    <i class="fa-solid fa-arrows-rotate"></i> حل مشكلة التعليق (تحديث الكاش والذاكرة)
+                </button>
             </div>
         </div>
     </div>
@@ -4247,9 +4318,9 @@
     <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-    <script src="email_service.js?v=5.0" defer></script>
-    <script src="app.js?v=66.0" charset="UTF-8" defer></script>
-    <script src="update_notice.js" defer></script>
+    <script src="email_service.js?v=10.0" defer></script>
+    <script src="app.js?v=101.0" charset="UTF-8" defer></script>
+    <script src="update_notice.js?v=5" defer></script>
 
     <!-- Modal: إعداد موقع ونطاق الفرع (GPS Geofencing) -->
     <div id="branchLocationModal" class="modal-overlay" style="display:none; align-items:center; justify-content:center; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.65); backdrop-filter:blur(8px); z-index:99999;">

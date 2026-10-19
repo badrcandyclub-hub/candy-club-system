@@ -8328,6 +8328,11 @@ if (loadCustomersBtn) {
     });
 }
 
+let barcodeCatalogData = [];
+let html5QrcodeScanner = null;
+const FIREBASE_PRODUCTS_URL = 'https://candyclubsync-default-rtdb.firebaseio.com/products.json';
+const FIREBASE_CACHE_KEY = 'candy_firebase_products_cache';
+
 function fetchCatalogFromFirebase() {
     try {
         const cached = localStorage.getItem(FIREBASE_CACHE_KEY);
@@ -8417,15 +8422,8 @@ if (customerSearchInput) {
 // ==========================================
 
 // ==========================================
-// 14. <i class=\'fa-solid fa-star\'></i> الماسح الضوئي الذكي (Offline Barcode Scanner)
+// 14. <i class='fa-solid fa-star'></i> الماسح الضوئي الذكي (Offline Barcode Scanner)
 // ==========================================
-
-let barcodeCatalogData = [];
-let html5QrcodeScanner = null;
-
-// 1. جلب بيانات المنتجات من Firebase Realtime Database مع Cache ذكي
-const FIREBASE_PRODUCTS_URL = 'https://candyclubsync-default-rtdb.firebaseio.com/products.json';
-const FIREBASE_CACHE_KEY = 'candy_firebase_products_cache';
 
 // تحويل بيانات Firebase الخام إلى مصفوفة منتجات
 function parseFirebaseProducts(data) {
