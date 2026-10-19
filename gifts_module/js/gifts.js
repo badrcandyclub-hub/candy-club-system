@@ -632,7 +632,7 @@
             }
 
             if (existingIndex > -1) {
-                this.state.draft.items[existingIndex].qty += addQty;
+                this.state.draft.items[existingIndex].qty = Number(((parseFloat(this.state.draft.items[existingIndex].qty) || 0) + (parseFloat(addQty) || 1)).toFixed(3));
             } else {
                 this.state.draft.items.push({
                     barcode: product.barcode,
@@ -717,7 +717,11 @@
             // 2. فحص الباركود في الكتالوج العادي والإضافة الفورية للسلة
             let product = this.findProduct(clean);
             if (!product && this.state.currentSearchResults && this.state.currentSearchResults.length > 0) {
-                product = this.state.currentSearchResults[0];
+                // نأخذ أول نتيجة بحث فقط إذا لم يكن الإدخال باركود رقمي صريح (مثلاً مسح مسدس بـ 4 أرقام فأكثر)
+                const isAllDigits = /^\d{4,}$/.test(clean);
+                if (!isAllDigits) {
+                    product = this.state.currentSearchResults[0];
+                }
             }
 
             if (product) {
@@ -773,6 +777,11 @@
             }
             if (!product) return;
 
+            // إذا كان هناك صنف مختار مسبقاً في البطاقة لم يتم تأكيده بعد، نؤكده تلقائياً حتى لا يضيع
+            if (this.state.selectedFoundProduct && this.state.selectedFoundProduct !== product) {
+                this.confirmAddScannedProduct();
+            }
+
             const isScaleScan = !!options.isScaleScan;
             const scannedWeight = (options.weight !== undefined && Number(options.weight) > 0) ? Number(options.weight) : '';
             
@@ -797,6 +806,7 @@
             const priceInput = document.getElementById('gifts-found-price-input');
             const weightInput = document.getElementById('gifts-found-weight-input');
             const qtyEl = document.getElementById('gifts-found-qty');
+            const qtyInput = document.getElementById('gifts-found-qty-input');
             const badgeEl = document.getElementById('gifts-found-stock-badge');
             const dropdown = document.getElementById('gifts-autocomplete-dropdown');
             const searchInput = document.getElementById('gifts-scanner-input');
@@ -811,6 +821,7 @@
             if (titleEl) titleEl.innerText = product.name;
             if (barcodeEl) barcodeEl.innerText = `الباركود: ${product.barcode}`;
             if (qtyEl) qtyEl.innerText = '1';
+            if (qtyInput) qtyInput.value = '1';
 
             if (priceInput) {
                 priceInput.value = initialPrice > 0 ? initialPrice : '';
@@ -891,11 +902,28 @@
         },
 
         updateFoundQty(delta) {
-            let next = this.state.foundProductQty + delta;
-            if (next < 1) next = 1;
-            this.state.foundProductQty = next;
-            const qtyEl = document.getElementById('gifts-found-qty');
-            if (qtyEl) qtyEl.innerText = next;
+            let current = parseFloat(this.state.foundProductQty) || 1;
+            let next = Number((current + delta).toFixed(2));
+            if (next <= 0) next = 1;
+            this.setFoundProductQty(next);
+        },
+
+        onFoundQtyInput(val) {
+            const parsed = parseFloat(val);
+            if (!isNaN(parsed) && parsed > 0) {
+                this.state.foundProductQty = Number(parsed.toFixed(3));
+                const hiddenEl = document.getElementById('gifts-found-qty');
+                if (hiddenEl) hiddenEl.innerText = this.state.foundProductQty;
+                this.updateFoundSubtotal();
+            }
+        },
+
+        setFoundProductQty(qty) {
+            this.state.foundProductQty = Number(qty);
+            const inputEl = document.getElementById('gifts-found-qty-input');
+            if (inputEl) inputEl.value = this.state.foundProductQty;
+            const hiddenEl = document.getElementById('gifts-found-qty');
+            if (hiddenEl) hiddenEl.innerText = this.state.foundProductQty;
             this.updateFoundSubtotal();
         },
 
@@ -903,8 +931,11 @@
             this.state.selectedFoundProduct = null;
             this.state.foundProductCustomPrice = 0;
             this.state.foundProductWeight = '';
+            this.state.foundProductQty = 1;
             const weightInput = document.getElementById('gifts-found-weight-input');
             if (weightInput) weightInput.value = '';
+            const qtyInput = document.getElementById('gifts-found-qty-input');
+            if (qtyInput) qtyInput.value = '1';
             const card = document.getElementById('gifts-found-card');
             if (card) card.style.display = 'none';
         },
@@ -913,7 +944,12 @@
             const product = this.state.selectedFoundProduct;
             if (!product) return;
 
-            const addQty = this.state.foundProductQty || 1;
+            const qtyInput = document.getElementById('gifts-found-qty-input');
+            let addQty = this.state.foundProductQty || 1;
+            if (qtyInput && qtyInput.value !== '') {
+                const parsed = parseFloat(qtyInput.value);
+                if (!isNaN(parsed) && parsed > 0) addQty = Number(parsed.toFixed(3));
+            }
             
             // تحديد سعر الصنف (السعر المخصص إن تم تغييره أو سعر الصنف القياسي)
             const priceInput = document.getElementById('gifts-found-price-input');
@@ -950,7 +986,7 @@
             }
 
             if (existingIndex > -1) {
-                this.state.draft.items[existingIndex].qty += addQty;
+                this.state.draft.items[existingIndex].qty = Number(((parseFloat(this.state.draft.items[existingIndex].qty) || 0) + (parseFloat(addQty) || 1)).toFixed(3));
             } else {
                 this.state.draft.items.push({
                     barcode: product.barcode,
@@ -990,9 +1026,9 @@
                 return;
             }
 
-            // عرض آخر 4 أصناف مضافة مع إمكانية الحذف المباشر
+            // عرض جميع الأصناف المضافة مع ترتيب الأحدث في الأعلى
             const indexedItems = items.map((item, originalIdx) => ({ item, originalIdx }));
-            const reversed = indexedItems.reverse().slice(0, 4);
+            const reversed = indexedItems.reverse();
             container.innerHTML = reversed.map(({ item, originalIdx }) => `
                 <div style="display: flex; justify-content: space-between; align-items: center; background: #FFFFFF; border: 1px solid var(--gifts-border-pink); border-radius: var(--gifts-radius-sm); padding: 8px 12px;">
                     <div style="flex: 1; padding-left: 8px;">
@@ -1239,8 +1275,24 @@
 
         updateItemQtyByIndex(index, delta) {
             if (!this.state.draft.items[index]) return;
-            this.state.draft.items[index].qty += delta;
-            if (this.state.draft.items[index].qty <= 0) {
+            const current = parseFloat(this.state.draft.items[index].qty) || 0;
+            const next = Number((current + delta).toFixed(2));
+            if (next <= 0) {
+                this.state.draft.items.splice(index, 1);
+            } else {
+                this.state.draft.items[index].qty = next;
+            }
+            this.onDraftChanged();
+            this.renderDraftBasket();
+            this.renderRecentAddedList();
+        },
+
+        setBasketItemQty(index, newQty) {
+            if (!this.state.draft.items[index]) return;
+            const parsed = parseFloat(newQty);
+            if (!isNaN(parsed) && parsed > 0) {
+                this.state.draft.items[index].qty = Number(parsed.toFixed(3));
+            } else if (parsed <= 0) {
                 this.state.draft.items.splice(index, 1);
             }
             this.onDraftChanged();
@@ -1287,9 +1339,11 @@
             let totalPrice = 0;
 
             items.forEach(i => {
-                totalUnits += i.qty;
-                totalPrice += (i.price * i.qty);
+                const q = parseFloat(i.qty) || 0;
+                totalUnits += q;
+                totalPrice += (i.price * q);
             });
+            totalUnits = Number(totalUnits.toFixed(2));
 
             if (countEl) countEl.innerText = `${items.length} أصناف`;
             if (unitsEl) unitsEl.innerText = `${totalUnits} قطعة`;
@@ -1320,7 +1374,7 @@
                                 style="width: 75px; padding: 2px 6px; font-weight: 800; font-size: 0.82rem; text-align: center; color: var(--gifts-primary-dark); border-radius: 6px; border: 1px solid var(--gifts-border-pink);" 
                                 onchange="GiftsApp.updateBasketItemPrice(${idx}, this.value)" title="تعديل سعر القطعة">
                             <span style="font-size: 0.8rem;">ج.م</span>
-                            <input type="number" class="gifts-form-control" value="${item.weight || ''}" placeholder="الوزن (جرام)" min="0" step="1" 
+                            <input type="number" class="gifts-form-control" value="${item.weight || ''}" placeholder="الوزن (جرام)" min="0" step="any" 
                                 style="width: 85px; padding: 2px 6px; font-weight: 700; font-size: 0.8rem; text-align: center; color: var(--gifts-primary-dark); border-radius: 6px; border: 1px solid var(--gifts-border-pink); background: #FFF5F9;" 
                                 onchange="GiftsApp.updateBasketItemWeight(${idx}, this.value)" title="الوزن بالجرامات">
                             <span style="font-size: 0.75rem; color: var(--gifts-text-muted);">جم</span>
@@ -1329,7 +1383,10 @@
                     </div>
                     <div class="gifts-basket-actions">
                         <button type="button" class="gifts-stepper-btn" onclick="GiftsApp.updateItemQtyByIndex(${idx}, -1)">-</button>
-                        <span class="gifts-stepper-val">${item.qty}</span>
+                        <input type="number" step="any" min="0.01" class="gifts-basket-qty-input" value="${item.qty}"
+                            style="width: 58px; text-align: center; border: 1.5px solid var(--gifts-border-pink); border-radius: 6px; font-weight: 800; font-size: 0.88rem; color: var(--gifts-primary-dark); padding: 2px 4px; background: #fff;"
+                            onchange="GiftsApp.setBasketItemQty(${idx}, this.value)"
+                            title="تعديل الكمية (يقبل الكسور مثل 3.3 أو 10.5)">
                         <button type="button" class="gifts-stepper-btn" onclick="GiftsApp.updateItemQtyByIndex(${idx}, 1)">+</button>
                         <button type="button" class="gifts-basket-remove" title="حذف" onclick="GiftsApp.removeItemFromDraftByIndex(${idx})">
                             <i class="fa-solid fa-trash-can"></i>
@@ -2141,7 +2198,7 @@
 
             try {
                 const creator = draft.creator.trim() || 'موظف الهدايا';
-                const qty = parseInt(draft.qty) || 1;
+                const qty = parseFloat(draft.qty) || 1;
                 const totalPrice = draft.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
                 const now = new Date().toISOString();
 

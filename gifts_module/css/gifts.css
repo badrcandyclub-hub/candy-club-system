@@ -737,6 +737,25 @@
     color: var(--gifts-text);
 }
 
+.gifts-found-qty-input,
+.gifts-basket-qty-input {
+    font-family: inherit;
+    font-weight: 800;
+    text-align: center;
+    color: var(--gifts-primary-dark);
+    background: #FFFFFF;
+    border: 1.5px solid var(--gifts-border-pink);
+    border-radius: var(--gifts-radius-sm);
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.gifts-found-qty-input:focus,
+.gifts-basket-qty-input:focus {
+    border-color: var(--gifts-primary);
+    box-shadow: 0 0 0 3px rgba(233, 30, 140, 0.15);
+}
+
 .gifts-basket-remove {
     background: none;
     border: none;
