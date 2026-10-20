@@ -40,7 +40,7 @@
     }
 
     (function() {
-        var APP_VERSION = '1.6.2';
+        var APP_VERSION = '1.6.3';
         var STORED_VER = '';
         try { STORED_VER = localStorage.getItem('cc_app_version') || ''; } catch(e) {}
         
@@ -4014,18 +4014,21 @@
                     <input type="date" id="editExpiryDate" dir="ltr" style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid #cbd5e1; background: #f8fafc; font-family: 'Cairo', sans-serif; font-size: 0.95rem; font-weight: 600; color: #0f172a; box-sizing: border-box; transition: 0.2s;">
                 </div>
 
-                <!-- Receiver -->
+                <!-- Receiver (Locked) -->
                 <div>
-                    <label style="display: block; margin-bottom: 5px; font-weight: 700; color: #334155; font-size: 0.88rem;">
-                        <i class="fa-solid fa-user-check" style="color: #6366f1; margin-left: 4px;"></i> اسم المستلم:
+                    <label style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; font-weight: 700; color: #334155; font-size: 0.88rem;">
+                        <span><i class="fa-solid fa-user-check" style="color: #6366f1; margin-left: 4px;"></i> اسم المستلم:</span>
+                        <span style="background: #f1f5f9; color: #64748b; font-size: 0.72rem; padding: 2px 8px; border-radius: 6px; border: 1px solid #cbd5e1; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                            <i class="fa-solid fa-lock" style="font-size: 0.7rem; color: #64748b;"></i> مقفل
+                        </span>
                     </label>
-                    <input type="text" id="editExpiryReceiver" placeholder="اسم المستلم..." style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid #cbd5e1; background: #f8fafc; font-family: 'Cairo', sans-serif; font-size: 0.95rem; font-weight: 600; color: #0f172a; box-sizing: border-box; transition: 0.2s;">
+                    <input type="text" id="editExpiryReceiver" placeholder="اسم المستلم..." readonly disabled style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid #cbd5e1; background: #e2e8f0; font-family: 'Cairo', sans-serif; font-size: 0.95rem; font-weight: 700; color: #475569; box-sizing: border-box; cursor: not-allowed; opacity: 0.95;" title="اسم المستلم محمي ومقفل ولا يمكن تعديله">
                 </div>
 
                 <!-- Location -->
                 <div>
                     <label style="display: block; margin-bottom: 5px; font-weight: 700; color: #334155; font-size: 0.88rem;">
-                        <i class="fa-solid fa-location-dot" style="color: #ef4444; margin-left: 4px;"></i> الرف / المكان:
+                        <i class="fa-solid fa-location-dot" style="color: #ef4444; margin-left: 4px;"></i> المكان:
                     </label>
                     <input type="text" id="editExpiryLocation" placeholder="المكان..." style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid #cbd5e1; background: #f8fafc; font-family: 'Cairo', sans-serif; font-size: 0.95rem; font-weight: 600; color: #0f172a; box-sizing: border-box; transition: 0.2s;">
                 </div>
@@ -4321,7 +4324,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script src="email_service.js?v=10.0" defer></script>
-    <script src="app.js?v=109.0" charset="UTF-8" defer></script>
+    <script src="app.js?v=110.0" charset="UTF-8" defer></script>
     <script src="update_notice.js?v=5" defer></script>
 
     <!-- Modal: إعداد موقع ونطاق الفرع (GPS Geofencing) -->

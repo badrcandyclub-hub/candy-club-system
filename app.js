@@ -11505,7 +11505,8 @@ window.openEditExpiryModal = function(id, batchIndex = null) {
     idInput.dataset.itemKey = idStr;
     idInput.dataset.batchIndex = (batchIndex !== null && batchIndex !== undefined) ? String(batchIndex) : '';
     idInput.dataset.isArchive = isArchiveItem ? "true" : "false";
-    idInput.dataset.archiveId = (isArchiveItem || /^\d+$/.test(idStr)) ? (item.id || idStr) : (item.dbId || '');
+    idInput.dataset.archiveId = (item.id && /^\d+$/.test(String(item.id))) ? String(item.id) : (isArchiveItem && /^\d+$/.test(idStr) ? idStr : (item.dbId && /^\d+$/.test(String(item.dbId)) ? String(item.dbId) : ''));
+    idInput.dataset.dbId = item.dbId ? String(item.dbId) : '';
     idInput.dataset.origName = item.name || '';
     idInput.dataset.origQty = item.qty !== undefined ? item.qty : '';
     idInput.dataset.origExpiry = item.expiryDate || '';
@@ -11529,8 +11530,12 @@ window.openEditExpiryModal = function(id, batchIndex = null) {
         document.getElementById('editExpiryDate').value = item.expiryDate || '';
     }
     
-    if (document.getElementById('editExpiryReceiver')) {
-        document.getElementById('editExpiryReceiver').value = item.receiver || '';
+    // Receiver is strictly locked and cannot be edited
+    const receiverEl = document.getElementById('editExpiryReceiver');
+    if (receiverEl) {
+        receiverEl.value = item.receiver || '';
+        receiverEl.readOnly = true;
+        receiverEl.disabled = true;
     }
     if (document.getElementById('editExpiryLocation')) {
         document.getElementById('editExpiryLocation').value = item.location || '';
@@ -11558,168 +11563,210 @@ window.saveEditExpiryModal = async function() {
     const id = idInput.value;
     const itemKey = idInput.dataset.itemKey || id;
     const batchIndex = idInput.dataset.batchIndex || '';
-    const archiveId = idInput.dataset.archiveId;
+    const archiveId = idInput.dataset.archiveId || '';
+    const origDbId = idInput.dataset.dbId || '';
     const origName = idInput.dataset.origName || '';
     const origExpiry = idInput.dataset.origExpiry || '';
     const origReceiver = idInput.dataset.origReceiver || '';
     const origRegDate = idInput.dataset.regDate || '';
+    const origBarcode = idInput.dataset.origBarcode || '';
 
-    const prodName = document.getElementById('editExpiryName') ? document.getElementById('editExpiryName').value.trim() : '';
-    const qty = document.getElementById('editExpiryQty') ? document.getElementById('editExpiryQty').value.trim() : '';
-    const date = document.getElementById('editExpiryDate') ? document.getElementById('editExpiryDate').value.trim() : '';
-    const receiver = document.getElementById('editExpiryReceiver') ? document.getElementById('editExpiryReceiver').value.trim() : '';
-    const location = document.getElementById('editExpiryLocation') ? document.getElementById('editExpiryLocation').value.trim() : '';
-    const notes = document.getElementById('editExpiryNotes') ? document.getElementById('editExpiryNotes').value.trim() : '';
-    const barcode = document.getElementById('editExpiryBarcode') ? document.getElementById('editExpiryBarcode').value.trim() : '';
+    const prodNameInput = document.getElementById('editExpiryName');
+    const qtyInput = document.getElementById('editExpiryQty');
+    const dateInput = document.getElementById('editExpiryDate');
+    const locationInput = document.getElementById('editExpiryLocation');
+    const notesInput = document.getElementById('editExpiryNotes');
+    const barcodeInput = document.getElementById('editExpiryBarcode');
+
+    const prodName = prodNameInput ? prodNameInput.value.trim() : '';
+    const qty = qtyInput ? qtyInput.value.trim() : '';
+    const date = dateInput ? dateInput.value.trim() : '';
+    // Receiver is locked, strictly keep origReceiver
+    const receiver = origReceiver || (document.getElementById('editExpiryReceiver') ? document.getElementById('editExpiryReceiver').value.trim() : '');
+    const location = locationInput ? locationInput.value.trim() : '';
+    const notes = notesInput ? notesInput.value.trim() : '';
+    const barcode = barcodeInput ? barcodeInput.value.trim() : '';
     
-    if (!qty || !date || !receiver) {
-        showToast("يرجى تعبئة الكمية والتاريخ واسم المستلم", "warning");
+    if (!qty || !date) {
+        showToast("يرجى تعبئة الكمية وتاريخ الانتهاء", "warning");
         return;
     }
-    
-    showToast("جاري حفظ التعديلات في قاعدة البيانات...", "info");
-    
+
+    if (!window.supabase) {
+        showToast("خطأ: تعذر الاتصال بقاعدة البيانات Supabase", "error");
+        return;
+    }
+
+    // Save button loading state
+    const saveBtn = document.querySelector('#editExpiryModal button[onclick="saveEditExpiryModal()"]');
+    const origBtnHtml = saveBtn ? saveBtn.innerHTML : '';
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الحفظ في السيرفر...';
+    }
+
     try {
-        // 1. Update expiry_receipts_log in Supabase (the audit/receipt log)
+        const parsedQty = parseFloat(qty) || 0;
+
+        // 1. UPDATE expiry_receipts_log in Supabase (Receipts Audit Archive)
         const archivePayload = {
-            quantity: parseFloat(qty) || 0,
+            quantity: parsedQty,
             expiry_date: date,
-            receiver: receiver,
             location: location || '',
-            notes: notes || ''
+            notes: notes || '',
+            barcode: barcode || ''
         };
         if (prodName) archivePayload.product_name = prodName;
-        if (barcode) archivePayload.barcode = barcode;
+        if (receiver) archivePayload.receiver = receiver;
 
         let archiveUpdated = false;
+        let arcError = null;
+
         if (archiveId && /^\d+$/.test(String(archiveId).trim())) {
-            const { error: arcErr } = await supabase
+            const { data: updatedRows, error: err } = await supabase
                 .from('expiry_receipts_log')
                 .update(archivePayload)
-                .eq('id', parseInt(archiveId));
-            if (!arcErr) archiveUpdated = true;
-        }
-        
-        if (!archiveUpdated && origName) {
-            let q = supabase.from('expiry_receipts_log').update(archivePayload).eq('product_name', origName);
-            if (origExpiry) q = q.eq('expiry_date', origExpiry);
-            if (origRegDate) q = q.eq('reg_date', origRegDate);
-            await q;
+                .eq('id', parseInt(archiveId))
+                .select('*');
+            if (err) {
+                arcError = err;
+                console.error("Supabase error updating expiry_receipts_log by id:", err);
+            } else if (updatedRows && updatedRows.length > 0) {
+                archiveUpdated = true;
+            }
         }
 
-        // 2. Update expiries table in Supabase (the active inventory)
+        // Fallback: match by product_name + (reg_date or expiry_date)
+        if (!archiveUpdated && origName) {
+            let q = supabase.from('expiry_receipts_log').update(archivePayload).eq('product_name', origName);
+            if (origRegDate) {
+                q = q.eq('reg_date', origRegDate);
+            } else if (origExpiry) {
+                q = q.eq('expiry_date', origExpiry);
+            }
+            const { data: updatedRows2, error: err2 } = await q.select('*');
+            if (err2) {
+                arcError = arcError || err2;
+                console.error("Supabase error updating expiry_receipts_log fallback:", err2);
+            } else if (updatedRows2 && updatedRows2.length > 0) {
+                archiveUpdated = true;
+            }
+        }
+
+        // 2. UPDATE expiries in Supabase (Active Warehouse Inventory)
         const expPayload = {
             qty: String(qty),
             expiry_date: date,
-            receiver: receiver,
             location: location || '',
-            notes: notes || ''
+            notes: notes || '',
+            barcode: barcode || ''
         };
         if (prodName) expPayload.product_name = prodName;
-        if (barcode) expPayload.barcode = barcode;
+        if (receiver) expPayload.receiver = receiver;
 
         let expUpdated = false;
-        let foundExp = (expiryData || []).find(i => String(i.id) === String(id) || String(i.dbId) === String(id) || String(i.id) === String(itemKey));
-        if (foundExp && foundExp.dbId) {
-            const { error: expErr } = await supabase
+
+        // Try updating by origDbId if known
+        if (origDbId && /^\d+$/.test(String(origDbId).trim())) {
+            const { data: uExp, error: expErr0 } = await supabase
                 .from('expiries')
                 .update(expPayload)
-                .eq('id', foundExp.dbId);
-            if (!expErr) expUpdated = true;
+                .eq('id', parseInt(origDbId))
+                .select('*');
+            if (!expErr0 && uExp && uExp.length > 0) expUpdated = true;
         }
-        
-        if (!expUpdated && /^\d+$/.test(String(id).trim()) && !archiveUpdated) {
-            const { error: numErr } = await supabase
-                .from('expiries')
-                .update(expPayload)
-                .eq('id', parseInt(id));
-            if (!numErr) expUpdated = true;
+
+        // Try finding matching item in in-memory expiries
+        if (!expUpdated) {
+            let foundExp = (expiryData || []).find(i => 
+                (origName && i.name === origName && (origExpiry ? i.expiryDate === origExpiry : true)) ||
+                (origRegDate && i.regDate && i.regDate === origRegDate && i.name === origName) ||
+                (String(i.id) === String(id) || String(i.dbId) === String(id) || String(i.id) === String(itemKey))
+            );
+            if (foundExp && foundExp.dbId) {
+                const { data: uExp, error: expErr1 } = await supabase
+                    .from('expiries')
+                    .update(expPayload)
+                    .eq('id', foundExp.dbId)
+                    .select('*');
+                if (!expErr1 && uExp && uExp.length > 0) expUpdated = true;
+            }
         }
-        
+
+        // Fallback: update in expiries by product_name and expiry_date
         if (!expUpdated && origName) {
             let q2 = supabase.from('expiries').update(expPayload).eq('product_name', origName);
             if (origExpiry) q2 = q2.eq('expiry_date', origExpiry);
-            await q2;
+            const { data: uExp2, error: expErr2 } = await q2.select('*');
+            if (!expErr2 && uExp2 && uExp2.length > 0) expUpdated = true;
+        }
+
+        // Check if both updates failed and an error was thrown
+        if (!archiveUpdated && !expUpdated && arcError) {
+            throw new Error(arcError.message || "تعذر التعديل في السيرفر");
         }
 
         // 3. Update in-memory collections:
         // A) window.receiptsArchiveData
         if (Array.isArray(window.receiptsArchiveData)) {
             let arcItem = window.receiptsArchiveData.find(i => 
+                (archiveId && String(i.id) === String(archiveId)) ||
                 String(i.id) === String(id) || 
                 String(i.id) === String(itemKey) || 
-                String(i.id) === String(archiveId) ||
-                (i.name === origName && i.expiryDate === origExpiry)
+                (origName && i.name === origName && (origExpiry ? i.expiryDate === origExpiry : true))
             );
             if (arcItem) {
                 if (prodName) arcItem.name = prodName;
-                arcItem.qty = parseFloat(qty) || 0;
+                arcItem.qty = parsedQty;
                 arcItem.expiryDate = date;
                 arcItem.receiver = receiver;
                 arcItem.location = location || '';
                 arcItem.notes = notes || '';
-                if (barcode) arcItem.barcode = barcode;
+                if (barcode !== undefined) arcItem.barcode = barcode;
             }
         }
 
-        // B) window._currentBatchItems (live batch array)
+        // B) window._currentBatchItems (live batch modal items)
         if (Array.isArray(window._currentBatchItems)) {
             let bItem = (batchIndex !== '' && window._currentBatchItems[parseInt(batchIndex, 10)])
                 ? window._currentBatchItems[parseInt(batchIndex, 10)]
                 : window._currentBatchItems.find(it => 
+                    (archiveId && String(it.id) === String(archiveId)) ||
                     String(it.id) === String(id) || 
                     String(it.id) === String(itemKey) || 
-                    String(it.id) === String(archiveId) || 
-                    (it.name === origName && it.expiryDate === origExpiry)
+                    (origName && it.name === origName && (origExpiry ? it.expiryDate === origExpiry : true))
                 );
             if (bItem) {
                 if (prodName) bItem.name = prodName;
-                bItem.qty = parseFloat(qty) || 0;
+                bItem.qty = parsedQty;
                 bItem.expiryDate = date;
                 bItem.receiver = receiver;
                 bItem.location = location || '';
                 bItem.notes = notes || '';
-                if (barcode) bItem.barcode = barcode;
+                if (barcode !== undefined) bItem.barcode = barcode;
             }
         }
 
-        // C) expiryData
-        if (Array.isArray(expiryData)) {
-            let item = expiryData.find(i => 
-                String(i.id) === String(id) || 
-                String(i.id) === String(itemKey) || 
-                String(i.dbId) === String(id) ||
-                (i.name === origName && i.expiryDate === origExpiry)
-            );
-            if (item) {
-                if (prodName) item.name = prodName;
-                item.qty = qty;
-                item.expiryDate = date;
-                item.receiver = receiver;
-                item.location = location || '';
-                item.notes = notes || '';
-                if (barcode) item.barcode = barcode;
+        // C) expiryData & window.expiriesData
+        [expiryData, window.expiriesData].forEach(arr => {
+            if (Array.isArray(arr)) {
+                let item = arr.find(i => 
+                    (origDbId && String(i.dbId) === String(origDbId)) ||
+                    String(i.id) === String(id) || 
+                    String(i.id) === String(itemKey) || 
+                    (origName && i.name === origName && (origExpiry ? i.expiryDate === origExpiry : true))
+                );
+                if (item) {
+                    if (prodName) item.name = prodName;
+                    item.qty = String(qty);
+                    item.expiryDate = date;
+                    item.receiver = receiver;
+                    item.location = location || '';
+                    item.notes = notes || '';
+                    if (barcode !== undefined) item.barcode = barcode;
+                }
             }
-        }
-
-        // D) window.expiriesData
-        if (Array.isArray(window.expiriesData)) {
-            let winItem = window.expiriesData.find(i => 
-                String(i.id) === String(id) || 
-                String(i.id) === String(itemKey) || 
-                String(i.dbId) === String(id) ||
-                (i.name === origName && i.expiryDate === origExpiry)
-            );
-            if (winItem) {
-                if (prodName) winItem.name = prodName;
-                winItem.qty = qty;
-                winItem.expiryDate = date;
-                winItem.receiver = receiver;
-                winItem.location = location || '';
-                winItem.notes = notes || '';
-                if (barcode) winItem.barcode = barcode;
-            }
-        }
+        });
 
         // 4. Update the card in the open batch edit modal live
         const batchCard = (batchIndex !== '')
@@ -11742,6 +11789,10 @@ window.saveEditExpiryModal = async function() {
                     <span style="background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">
                         <i class="fa-solid fa-user-check"></i> المستلم: <strong>${receiver}</strong>
                     </span>
+                    ${location ? `
+                    <span style="background: #f1f5f9; color: #0284c7; border: 1px solid #bae6fd; padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">
+                        <i class="fa-solid fa-location-dot"></i> المكان: <strong>${location}</strong>
+                    </span>` : ''}
                 `;
             }
         }
@@ -11762,18 +11813,26 @@ window.saveEditExpiryModal = async function() {
             totalQtyBadge.innerText = `${totalSum} قطعة`;
         }
 
-        showToast("<i class='fa-solid fa-check'></i> تم حفظ التعديلات وتحديث قاعدة البيانات بنجاح", "success");
+        showToast("<i class='fa-solid fa-check'></i> تم حفظ التعديلات وتحديث السيرفر بنجاح", "success");
         closeEditExpiryModal();
 
         if (typeof renderExpiryDashboard === 'function') {
             renderExpiryDashboard();
+        }
+        if (typeof window.renderExpiryCalendarDots === 'function') {
+            window.renderExpiryCalendarDots();
         }
         if (document.getElementById('expiryDetailsSection') && document.getElementById('expiryDetailsSection').style.display === 'block') {
             showExpiryDetails(expiryCurrentCategory, false);
         }
     } catch(err) {
         console.error("Error saving expiry:", err);
-        showToast("حدث خطأ أثناء حفظ التعديلات: " + (err.message || err), "error");
+        showToast("حدث خطأ أثناء حفظ التعديلات في السيرفر: " + (err.message || err), "error");
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = origBtnHtml || '<i class="fa-solid fa-check"></i> حفظ التعديلات في السيرفر';
+        }
     }
 };
 
