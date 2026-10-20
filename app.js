@@ -1733,6 +1733,12 @@ async function handleSupabaseRequest(url, options) {
                         const name = String(item.Name || '').trim();
                         const stock = parseFloat(item.Stock) || 0;
                         const price = parseFloat(item.Price) || 0;
+
+                        let canonicalKey = '';
+                        if (Array.isArray(b) && b.length > 0) canonicalKey = String(b[0]).trim();
+                        else if (b) canonicalKey = String(b).trim();
+                        if (!canonicalKey) canonicalKey = name;
+
                         const addBarcodeEntry = (code) => {
                             if (!code) return;
                             const parts = String(code).split(',');
@@ -1742,8 +1748,8 @@ async function handleSupabaseRequest(url, options) {
                                     fbStockMap[clean] = stock;
                                     fbStockMap[clean.toLowerCase()] = stock;
                                     if (name) {
-                                        fbProductMap.set(clean, { name, price, stock });
-                                        fbProductMap.set(clean.toLowerCase(), { name, price, stock });
+                                        fbProductMap.set(clean, { name, price, stock, canonicalKey });
+                                        fbProductMap.set(clean.toLowerCase(), { name, price, stock, canonicalKey });
                                     }
                                 }
                             }
@@ -1836,16 +1842,97 @@ async function handleSupabaseRequest(url, options) {
                         console.warn("Could not sync names to expiry_receipts_log:", e);
                     }
 
-                    // ملاحظة هامة: المزامنة في هذه الصفحة تقتصر حصراً على تصحيح ومطابقة أسماء المنتجات مع الكاشير
-                    // ولا تقوم بتعديل أي كميات أو تطبيق خصومات FIFO حفاظاً على دقة الأرصدة
-                    let msg = '';
-                    const totalUpdated = namesUpdatedCount + archiveUpdatedCount;
-                    if (totalUpdated > 0) {
-                        msg = `تم بنجاح تحديث وتصحيح أسماء ${totalUpdated} منتج في الصلاحيات وسجل الاستلامات طبقاً لبيانات الكاشير`;
-                    } else {
-                        msg = 'البيانات وأسماء المنتجات متطابقة تماماً مع الكاشير';
+                    // 4. تطبيق نظام التخصيم التلقائي للمبيعات (FIFO) حصرياً على جدول الصلاحيات الحية (expiries)
+                    // ملاحظة هامة: سجل الأرشيف (expiry_receipts_log) يظل ثابتاً تماماً دون أي مساس بكمياته
+                    let deductedProductsCount = 0;
+                    let totalDeductedPieces = 0;
+
+                    if (gsData && gsData.length > 0) {
+                        const productBatchesMap = new Map();
+
+                        gsData.forEach(row => {
+                            const bcode = String(row.barcode || '').trim();
+                            if (!bcode) return;
+                            const match = findFbProduct(bcode);
+                            if (!match) return;
+
+                            const prodKey = match.canonicalKey || bcode;
+                            if (!productBatchesMap.has(prodKey)) {
+                                productBatchesMap.set(prodKey, {
+                                    fbStock: match.stock,
+                                    prodName: match.name,
+                                    rows: []
+                                });
+                            }
+                            const entry = productBatchesMap.get(prodKey);
+                            entry.rows.push({
+                                id: row.id,
+                                qty: parseFloat(row.qty) || 0,
+                                expiryDate: row.expiry_date || '',
+                                name: row.product_name
+                            });
+                        });
+
+                        for (const [prodKey, prodInfo] of productBatchesMap.entries()) {
+                            const totalSystemQty = prodInfo.rows.reduce((sum, r) => sum + r.qty, 0);
+                            const fbStock = prodInfo.fbStock;
+
+                            // إذا كان رصيد الكاشير أقل من المسجل بالصلاحيات = تم بيع بضاعة
+                            const diff = totalSystemQty - fbStock;
+                            if (diff > 0.0001) {
+                                let qtyToDeduct = diff;
+                                let productHadDeduction = false;
+
+                                // ترتيب الدفعات حسب تاريخ الانتهاء تصاعدياً (الأقرب انتهاءً أولاً FIFO)
+                                const sortedRows = prodInfo.rows.sort((a, b) => {
+                                    const dateA = new Date(a.expiryDate);
+                                    const dateB = new Date(b.expiryDate);
+                                    const timeA = isNaN(dateA.getTime()) ? 9999999999999 : dateA.getTime();
+                                    const timeB = isNaN(dateB.getTime()) ? 9999999999999 : dateB.getTime();
+                                    return timeA - timeB;
+                                });
+
+                                for (const r of sortedRows) {
+                                    if (qtyToDeduct <= 0) break;
+                                    if (r.qty > 0) {
+                                        const deductFromThisRow = Math.min(r.qty, qtyToDeduct);
+                                        const newQty = Number(Math.max(0, r.qty - deductFromThisRow).toFixed(3));
+                                        qtyToDeduct -= deductFromThisRow;
+
+                                        // تحديث الكمية في سوبابيز بدون حذف السطر (ليظل مسجلاً برصيد 0 نافد للتقارير)
+                                        await supabase.from('expiries').update({ qty: String(newQty) }).eq('id', r.id);
+
+                                        // تحديث الكاش المحلي بالذاكرة إن وجد
+                                        if (typeof expiryData !== 'undefined' && Array.isArray(expiryData)) {
+                                            let inMem = expiryData.find(e => String(e.id || '').endsWith(String(r.id)));
+                                            if (inMem) inMem.qty = String(newQty);
+                                        }
+
+                                        productHadDeduction = true;
+                                        totalDeductedPieces += deductFromThisRow;
+                                    }
+                                }
+
+                                if (productHadDeduction) {
+                                    deductedProductsCount++;
+                                }
+                            }
+                            // في حال زيادة الرصيد (diff < 0) لا يتم زيادة الدفعات القديمة تلقائياً، بل يُسجل الاستلام بتاريخه الجديد
+                        }
                     }
-                    responseData = { success: true, message: msg };
+
+                    let msgParts = [];
+                    const totalNamesUpdated = namesUpdatedCount + archiveUpdatedCount;
+                    if (totalNamesUpdated > 0) {
+                        msgParts.push(`تم تحديث أسماء ${totalNamesUpdated} منتج`);
+                    }
+                    if (deductedProductsCount > 0) {
+                        msgParts.push(`تم تخصيم مبيعات ${totalDeductedPieces} قطعة لـ ${deductedProductsCount} صنف (الأقرب انتهاءً أولاً)`);
+                    }
+                    if (msgParts.length === 0) {
+                        msgParts.push('الأرصدة وأسماء المنتجات متطابقة تماماً مع الكاشير');
+                    }
+                    responseData = { success: true, message: msgParts.join(' | ') };
                 } catch (fbErr) {
                     responseData = { success: false, error: 'فشل الاتصال بقاعدة بيانات الفايربيز: ' + fbErr.message };
                 }
@@ -19363,7 +19450,7 @@ window.runSyncNow = async function() {
             showToast(msg, 'success');
             
             if (typeof loadDataFromServer === 'function') {
-                loadDataFromServer();
+                await loadDataFromServer();
             }
         } else {
             showToast(data.error || 'حدث خطأ في المزامنة', 'error');
