@@ -10990,18 +10990,37 @@ window.closeExpiryDetails = function () {
     document.getElementById('expiryDetailsSection').style.display = 'none';
 };
 
-window.openReceiptModalByEntryDate = function (dateStr) {
+window.openReceiptModalByEntryDate = async function (dateStr) {
     if (!dateStr || dateStr === '-') return;
     
-    let dateOnly = dateStr.split(' ')[0];
-    
-    let filtered = expiryData.filter(item => {
+    // Ensure receipts archive is loaded from database
+    if (!Array.isArray(window.receiptsArchiveData) || window.receiptsArchiveData.length === 0) {
+        if (typeof window.loadReceiptsArchiveData === 'function') {
+            await window.loadReceiptsArchiveData();
+        }
+    }
+
+    let targetDateKey = (typeof getCalendarDateKey === 'function') ? getCalendarDateKey(dateStr) : null;
+    let dateOnly = dateStr.split(' ')[0].trim();
+
+    // 1. Fetch strictly from the immutable archive (contains original registered quantity e.g. 60)
+    let filtered = (window.receiptsArchiveData || []).filter(item => {
         if (!item.regDate) return false;
+        if (targetDateKey && getCalendarDateKey(item.regDate) === targetDateKey) return true;
         return item.regDate.startsWith(dateOnly);
     });
-    
+
+    // Fallback to expiryData only if archive has no record for this date
+    if (filtered.length === 0 && Array.isArray(expiryData)) {
+        filtered = expiryData.filter(item => {
+            if (!item.regDate) return false;
+            if (targetDateKey && getCalendarDateKey(item.regDate) === targetDateKey) return true;
+            return item.regDate.startsWith(dateOnly);
+        });
+    }
+
     if (filtered.length === 0) {
-        showToast("لا توجد بيانات مسجلة في هذا اليوم", "warning");
+        showToast("لا توجد بيانات مسجلة في هذا اليوم في الأرشيف", "warning");
         return;
     }
 
@@ -11031,14 +11050,16 @@ window.openReceiptModalByEntryDate = function (dateStr) {
     Object.keys(legacyBatches).forEach(k => batches[k] = legacyBatches[k]);
 
     let specificBatch = {};
-    if (batches[dateStr]) {
-        specificBatch[dateStr] = batches[dateStr];
+    let matchedBatchKey = Object.keys(batches).find(k => k === dateStr || (k.includes(':') && dateStr.includes(':') && k.split(' ').slice(1).join(' ') === dateStr.split(' ').slice(1).join(' ')));
+    if (matchedBatchKey) {
+        specificBatch[matchedBatchKey] = batches[matchedBatchKey];
     } else {
         specificBatch = batches; 
     }
 
+    let pdfTitleDate = targetDateKey || dateOnly;
     if (typeof showBatchSelectionModal === 'function') {
-        showBatchSelectionModal(specificBatch, [], dateOnly);
+        showBatchSelectionModal(specificBatch, [], pdfTitleDate);
     }
 };
 
@@ -12043,7 +12064,16 @@ function normalizeCalendarDate(value) {
         return `${compactMatch[1]}-${compactMatch[2]}-${compactMatch[3]}`;
     }
 
-    const parsed = new Date(raw);
+    const dmyMatch = raw.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+    if (dmyMatch) {
+        const d = String(dmyMatch[1]).padStart(2, '0');
+        const m = String(dmyMatch[2]).padStart(2, '0');
+        const y = dmyMatch[3];
+        return `${y}-${m}-${d}`;
+    }
+
+    const cleanStr = raw.replace(/[^\d\s\:\-\/]/g, '').trim();
+    const parsed = new Date(cleanStr || raw);
     if (!isNaN(parsed.getTime())) {
         const year = parsed.getFullYear();
         const month = String(parsed.getMonth() + 1).padStart(2, '0');
@@ -12147,11 +12177,17 @@ if (btnExportMonthPDF) {
 
 const btnExportDate = document.getElementById('btnExportDate');
 if (btnExportDate) {
-    btnExportDate.addEventListener('click', () => {
+    btnExportDate.addEventListener('click', async () => {
         const dateValStr = document.getElementById('exportDateInput').value;
         if (!dateValStr) {
             showToast("يرجى تحديد أيام التصدير أولاً", "warning");
             return;
+        }
+
+        if (!Array.isArray(window.receiptsArchiveData) || window.receiptsArchiveData.length === 0) {
+            if (typeof window.loadReceiptsArchiveData === 'function') {
+                await window.loadReceiptsArchiveData();
+            }
         }
 
         let selectedDates = dateValStr.split(', ');
@@ -12173,11 +12209,17 @@ if (btnExportDate) {
 
 const btnExportDatePDF = document.getElementById('btnExportDatePDF');
 if (btnExportDatePDF) {
-    btnExportDatePDF.addEventListener('click', () => {
+    btnExportDatePDF.addEventListener('click', async () => {
         const dateValStr = document.getElementById('exportDateInput').value;
         if (!dateValStr) {
             showToast("يرجى تحديد أيام التصدير أولاً", "warning");
             return;
+        }
+
+        if (!Array.isArray(window.receiptsArchiveData) || window.receiptsArchiveData.length === 0) {
+            if (typeof window.loadReceiptsArchiveData === 'function') {
+                await window.loadReceiptsArchiveData();
+            }
         }
 
         let selectedDates = dateValStr.split(', ');
