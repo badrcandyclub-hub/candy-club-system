@@ -1713,6 +1713,10 @@ async function handleSupabaseRequest(url, options) {
             }
             case 'syncFirebaseInventory': {
                 try {
+                    if (typeof window.updateSyncProgress === 'function') {
+                        window.updateSyncProgress(15, '<i class="fa-solid fa-cloud-arrow-down"></i> جاري جلب بضاعة الكاشير من الفايربيز...');
+                    }
+
                     // 1. Fetch Firebase data
                     const fbResp = await fetch('https://candyclubsync-default-rtdb.firebaseio.com/products.json');
                     const fbDataRaw = await fbResp.json();
@@ -1794,9 +1798,15 @@ async function handleSupabaseRequest(url, options) {
                         return null;
                     };
 
+                    if (typeof window.updateSyncProgress === 'function') {
+                        window.updateSyncProgress(30, `<i class="fa-solid fa-boxes-stacked"></i> تم تحميل ${fbItems.length} صنف، جاري فحص الصلاحيات...`);
+                    }
+
                     // 2. Fetch Supabase expiries
                     const { data: gsData } = await fetchAllSupabaseRows(supabase.from('expiries').select('*'));
                     let namesUpdatedCount = 0;
+                    const expiriesNamesToUpdate = [];
+
                     if (gsData && gsData.length > 0) {
                         for (const row of gsData) {
                             const bcode = String(row.barcode || '').trim();
@@ -1805,9 +1815,23 @@ async function handleSupabaseRequest(url, options) {
 
                             const match = findFbProduct(bcode);
                             if (match && match.name && match.name.trim() && match.name.trim() !== currentName) {
-                                await supabase.from('expiries').update({ product_name: match.name.trim() }).eq('id', row.id);
-                                row.product_name = match.name.trim();
+                                expiriesNamesToUpdate.push({ id: row.id, newName: match.name.trim(), row });
+                            }
+                        }
+                    }
+
+                    // تحديث أسماء الأصناف في جدول الصلاحيات بشكل متوازي سريع (حزم من 15)
+                    if (expiriesNamesToUpdate.length > 0) {
+                        for (let i = 0; i < expiriesNamesToUpdate.length; i += 15) {
+                            const chunk = expiriesNamesToUpdate.slice(i, i + 15);
+                            await Promise.all(chunk.map(async item => {
+                                await supabase.from('expiries').update({ product_name: item.newName }).eq('id', item.id);
+                                item.row.product_name = item.newName;
                                 namesUpdatedCount++;
+                            }));
+                            const pct = Math.min(55, 30 + Math.round((i / expiriesNamesToUpdate.length) * 25));
+                            if (typeof window.updateSyncProgress === 'function') {
+                                window.updateSyncProgress(pct, `<i class="fa-solid fa-pen"></i> جاري تحديث أسماء الصلاحيات (${namesUpdatedCount} / ${expiriesNamesToUpdate.length})...`);
                             }
                         }
                     }
@@ -1822,6 +1846,7 @@ async function handleSupabaseRequest(url, options) {
                                 .neq('barcode', '')
                         );
                         if (!arcErr && Array.isArray(archiveRows)) {
+                            const archiveNamesToUpdate = [];
                             for (const arcRow of archiveRows) {
                                 const bcode = String(arcRow.barcode || '').trim();
                                 const curName = String(arcRow.product_name || '').trim();
@@ -1829,12 +1854,20 @@ async function handleSupabaseRequest(url, options) {
 
                                 const match = findFbProduct(bcode);
                                 if (match && match.name && match.name.trim() && match.name.trim() !== curName) {
-                                    await supabase.from('expiry_receipts_log').update({ product_name: match.name.trim() }).eq('id', arcRow.id);
-                                    if (Array.isArray(window.receiptsArchiveData)) {
-                                        let winItem = window.receiptsArchiveData.find(i => String(i.id) === String(arcRow.id));
-                                        if (winItem) winItem.name = match.name.trim();
-                                    }
-                                    archiveUpdatedCount++;
+                                    archiveNamesToUpdate.push({ id: arcRow.id, newName: match.name.trim() });
+                                }
+                            }
+                            if (archiveNamesToUpdate.length > 0) {
+                                for (let i = 0; i < archiveNamesToUpdate.length; i += 15) {
+                                    const chunk = archiveNamesToUpdate.slice(i, i + 15);
+                                    await Promise.all(chunk.map(async item => {
+                                        await supabase.from('expiry_receipts_log').update({ product_name: item.newName }).eq('id', item.id);
+                                        if (Array.isArray(window.receiptsArchiveData)) {
+                                            let winItem = window.receiptsArchiveData.find(w => String(w.id) === String(item.id));
+                                            if (winItem) winItem.name = item.newName;
+                                        }
+                                        archiveUpdatedCount++;
+                                    }));
                                 }
                             }
                         }
@@ -1846,6 +1879,10 @@ async function handleSupabaseRequest(url, options) {
                     // ملاحظة هامة: سجل الأرشيف (expiry_receipts_log) يظل ثابتاً تماماً دون أي مساس بكمياته
                     let deductedProductsCount = 0;
                     let totalDeductedPieces = 0;
+
+                    if (typeof window.updateSyncProgress === 'function') {
+                        window.updateSyncProgress(65, '<i class="fa-solid fa-calculator"></i> جاري مقارنة وتخصيم المبيعات بنظام FIFO...');
+                    }
 
                     if (gsData && gsData.length > 0) {
                         const productBatchesMap = new Map();
@@ -1873,6 +1910,8 @@ async function handleSupabaseRequest(url, options) {
                             });
                         });
 
+                        const batchesToUpdate = [];
+
                         for (const [prodKey, prodInfo] of productBatchesMap.entries()) {
                             const totalSystemQty = prodInfo.rows.reduce((sum, r) => sum + r.qty, 0);
                             const fbStock = prodInfo.fbStock;
@@ -1899,15 +1938,7 @@ async function handleSupabaseRequest(url, options) {
                                         const newQty = Number(Math.max(0, r.qty - deductFromThisRow).toFixed(3));
                                         qtyToDeduct -= deductFromThisRow;
 
-                                        // تحديث الكمية في سوبابيز بدون حذف السطر (ليظل مسجلاً برصيد 0 نافد للتقارير)
-                                        await supabase.from('expiries').update({ qty: String(newQty) }).eq('id', r.id);
-
-                                        // تحديث الكاش المحلي بالذاكرة إن وجد
-                                        if (typeof expiryData !== 'undefined' && Array.isArray(expiryData)) {
-                                            let inMem = expiryData.find(e => String(e.id || '').endsWith(String(r.id)));
-                                            if (inMem) inMem.qty = String(newQty);
-                                        }
-
+                                        batchesToUpdate.push({ id: r.id, newQty, row: r });
                                         productHadDeduction = true;
                                         totalDeductedPieces += deductFromThisRow;
                                     }
@@ -1917,7 +1948,24 @@ async function handleSupabaseRequest(url, options) {
                                     deductedProductsCount++;
                                 }
                             }
-                            // في حال زيادة الرصيد (diff < 0) لا يتم زيادة الدفعات القديمة تلقائياً، بل يُسجل الاستلام بتاريخه الجديد
+                        }
+
+                        // تنفيذ تحديثات التخصيم بالتوازي بحزم سريعة
+                        if (batchesToUpdate.length > 0) {
+                            for (let i = 0; i < batchesToUpdate.length; i += 15) {
+                                const chunk = batchesToUpdate.slice(i, i + 15);
+                                await Promise.all(chunk.map(async b => {
+                                    await supabase.from('expiries').update({ qty: String(b.newQty) }).eq('id', b.id);
+                                    if (typeof expiryData !== 'undefined' && Array.isArray(expiryData)) {
+                                        let inMem = expiryData.find(e => String(e.id || '').endsWith(String(b.id)));
+                                        if (inMem) inMem.qty = String(b.newQty);
+                                    }
+                                }));
+                                const pct = Math.min(90, 65 + Math.round((i / batchesToUpdate.length) * 25));
+                                if (typeof window.updateSyncProgress === 'function') {
+                                    window.updateSyncProgress(pct, `<i class="fa-solid fa-arrow-down-short-wide"></i> جاري حفظ التخصيم (${Math.min(i + 15, batchesToUpdate.length)} / ${batchesToUpdate.length} دفعة)...`);
+                                }
+                            }
                         }
                     }
 
@@ -19312,19 +19360,41 @@ async function setupFirebaseSync() {
     }
 }
 
+// Function to update progress overlay
+window.updateSyncProgress = function(percent, detailHtml, mainText) {
+    const bar = document.getElementById('syncProgressBar');
+    const pct = document.getElementById('syncProgressPercent');
+    const detail = document.getElementById('syncProgressDetail');
+    const main = document.getElementById('syncLoadingText');
+    if (bar && percent !== undefined) bar.style.width = Math.min(100, Math.max(0, percent)) + '%';
+    if (pct && percent !== undefined) pct.innerText = Math.min(100, Math.max(0, percent)) + '%';
+    if (detail && detailHtml) detail.innerHTML = detailHtml;
+    if (main && mainText) main.innerText = mainText;
+};
+
 // Add global function for manual trigger if needed
 window.runSyncNow = async function() {
     const btn = document.getElementById('manualSyncBtn');
     const originalText = btn ? btn.innerHTML : '';
     
     const overlay = document.getElementById('syncLoadingOverlay');
-    const textEl = document.getElementById('syncLoadingText');
-    const subtextEl = document.getElementById('syncLoadingSubtext');
-    
+    const timerText = document.getElementById('syncTimerText');
+    let syncSeconds = 0;
+    let syncTimerInterval = null;
+
     if (overlay) {
         overlay.style.display = 'flex';
-        if (textEl) textEl.innerText = 'جاري المزامنة مع الكاشير...';
-        if (subtextEl) subtextEl.innerText = 'الرجاء الانتظار وعدم الخروج من الصفحة لضمان سلامة الداتا';
+        if (timerText) timerText.innerText = '00:00';
+        syncTimerInterval = setInterval(() => {
+            syncSeconds++;
+            const m = String(Math.floor(syncSeconds / 60)).padStart(2, '0');
+            const s = String(syncSeconds % 60).padStart(2, '0');
+            if (timerText) timerText.innerText = `${m}:${s}`;
+        }, 1000);
+    }
+
+    if (typeof window.updateSyncProgress === 'function') {
+        window.updateSyncProgress(5, '<i class="fa-solid fa-spinner fa-spin"></i> جاري الاتصال بالخادم وقراءة بيانات الكاشير...', 'جاري المزامنة مع الكاشير...');
     }
 
     if (btn) {
@@ -19340,92 +19410,8 @@ window.runSyncNow = async function() {
         const data = await r.json();
         
         if (data.success) {
-            if (textEl) textEl.innerText = 'جاري مطابقة وتحديث أسماء المنتجات مع الكاشير...';
-            
-            // Retroactive barcode matching with full Firebase catalog
-            let updatedCount = 0;
-            let fullCatalog = (typeof barcodeCatalogData !== 'undefined' && barcodeCatalogData.length > 0) ? barcodeCatalogData : null;
-            if (!fullCatalog || fullCatalog.length === 0) {
-                try {
-                    const fbRes = await fetch(FIREBASE_PRODUCTS_URL);
-                    const fbJson = await fbRes.json();
-                    fullCatalog = parseFirebaseProducts(fbJson);
-                    barcodeCatalogData = fullCatalog;
-                } catch(e) {
-                    console.warn("Could not fetch Firebase catalog during sync:", e);
-                }
-            }
-
-            if (fullCatalog && fullCatalog.length > 0) {
-                const findCatalogMatch = (rawBc) => {
-                    if (!rawBc) return null;
-                    const variants = (typeof window.getBarcodeVariants === 'function')
-                        ? window.getBarcodeVariants(rawBc)
-                        : String(rawBc).split(',').map(b => b.trim().toLowerCase()).filter(Boolean);
-                    return fullCatalog.find(c => {
-                        if (!c) return false;
-                        const catVariants = (typeof window.getBarcodeVariants === 'function')
-                            ? window.getBarcodeVariants(c.barcode)
-                            : String(c.barcode || '').split(',').map(b => b.trim().toLowerCase()).filter(Boolean);
-                        return variants.some(v => catVariants.includes(v));
-                    });
-                };
-
-                const { data: allExpiriesWithBarcode } = await fetchAllSupabaseRows(
-                    supabase.from('expiries')
-                        .select('id, barcode, product_name')
-                        .not('barcode', 'is', null)
-                        .neq('barcode', '')
-                );
-                
-                if (allExpiriesWithBarcode && allExpiriesWithBarcode.length > 0) {
-                    for (let exp of allExpiriesWithBarcode) {
-                        const curName = String(exp.product_name || '').trim();
-                        const rawBc = String(exp.barcode || '').trim();
-                        if (!rawBc) continue;
-                        
-                        const catalogMatch = findCatalogMatch(rawBc);
-                        if (catalogMatch && catalogMatch.name && catalogMatch.name.trim() && catalogMatch.name.trim() !== curName) {
-                            await supabase.from('expiries').update({ product_name: catalogMatch.name.trim() }).eq('id', exp.id);
-                            exp.product_name = catalogMatch.name.trim();
-                            if (typeof expiryData !== 'undefined' && Array.isArray(expiryData)) {
-                                let inMem = expiryData.find(e => String(e.id || '').endsWith(String(exp.id)) || (e.barcode && String(e.barcode).trim() === rawBc));
-                                if (inMem) inMem.name = catalogMatch.name.trim();
-                            }
-                            updatedCount++;
-                        }
-                    }
-                }
-
-                // Also update product names in expiry_receipts_log without touching quantities
-                try {
-                    const { data: allArchiveWithBarcode } = await fetchAllSupabaseRows(
-                        supabase.from('expiry_receipts_log')
-                            .select('id, barcode, product_name')
-                            .not('barcode', 'is', null)
-                            .neq('barcode', '')
-                    );
-                    if (allArchiveWithBarcode && allArchiveWithBarcode.length > 0) {
-                        for (let arc of allArchiveWithBarcode) {
-                            const curName = String(arc.product_name || '').trim();
-                            const rawBc = String(arc.barcode || '').trim();
-                            if (!rawBc) continue;
-                            
-                            const catalogMatch = findCatalogMatch(rawBc);
-                            if (catalogMatch && catalogMatch.name && catalogMatch.name.trim() && catalogMatch.name.trim() !== curName) {
-                                await supabase.from('expiry_receipts_log').update({ product_name: catalogMatch.name.trim() }).eq('id', arc.id);
-                                arc.product_name = catalogMatch.name.trim();
-                                if (Array.isArray(window.receiptsArchiveData)) {
-                                    let winArc = window.receiptsArchiveData.find(i => String(i.id) === String(arc.id));
-                                    if (winArc) winArc.name = catalogMatch.name.trim();
-                                }
-                                updatedCount++;
-                            }
-                        }
-                    }
-                } catch(e) {
-                    console.warn("Could not sync archive names in runSyncNow:", e);
-                }
+            if (typeof window.updateSyncProgress === 'function') {
+                window.updateSyncProgress(92, '<i class="fa-solid fa-spinner fa-spin"></i> جاري تحديث الشاشات والمربعات بالأرصدة الجديدة...');
             }
 
             // Immediately refresh views and calendar
@@ -19442,16 +19428,22 @@ window.runSyncNow = async function() {
                 await window.loadReceiptsArchiveData();
             }
 
-            let msg = data.message || 'تمت المزامنة بنجاح';
-            if (updatedCount > 0 && !msg.includes('تحديث أسماء') && !msg.includes('تصحيح أسماء')) {
-                msg += `<br><b>تم تحديث وتصحيح أسماء ${updatedCount} منتج طبقاً للكاشير بنجاح</b>`;
-            }
-            
-            showToast(msg, 'success');
-            
             if (typeof loadDataFromServer === 'function') {
+                if (typeof window.updateSyncProgress === 'function') {
+                    window.updateSyncProgress(96, '<i class="fa-solid fa-spinner fa-spin"></i> جاري تحميل الأرصدة المحدثة من السيرفر...');
+                }
                 await loadDataFromServer();
             }
+
+            if (typeof window.updateSyncProgress === 'function') {
+                window.updateSyncProgress(100, '<i class="fa-solid fa-check"></i> اكتملت المزامنة بنجاح!', 'تمت المزامنة بنجاح!');
+            }
+
+            let msg = data.message || 'تمت المزامنة بنجاح';
+            showToast(msg, 'success');
+            
+            // Wait 600ms so user sees 100% completion before overlay closes
+            await new Promise(res => setTimeout(res, 600));
         } else {
             showToast(data.error || 'حدث خطأ في المزامنة', 'error');
         }
@@ -19459,6 +19451,9 @@ window.runSyncNow = async function() {
         console.error(err);
         showToast('حدث خطأ في الاتصال بالخادم', 'error');
     } finally {
+        if (syncTimerInterval) {
+            clearInterval(syncTimerInterval);
+        }
         if (btn) {
             btn.innerHTML = originalText;
             btn.disabled = false;

@@ -4164,10 +4164,25 @@
     </div>
     
     <!-- شاشة المزامنة الخاصة -->
-    <div id="syncLoadingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.85); z-index: 100000; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
-        <div style="border: 6px solid #f3f3f3; border-top: 6px solid #3498db; border-radius: 50%; width: 70px; height: 70px; animation: spin 1s linear infinite; margin-bottom: 25px; box-shadow: 0 0 15px rgba(52, 152, 219, 0.5);"></div>
-        <h2 id="syncLoadingText" style="color: white; font-weight: bold; font-family: 'Cairo', sans-serif; text-shadow: 0 2px 4px rgba(0,0,0,0.5); text-align: center;">جاري المزامنة مع الكاشير...</h2>
-        <p id="syncLoadingSubtext" style="color: #90caf9; font-size: 1rem; margin-top: 10px; text-align: center; max-width: 80%;">الرجاء الانتظار وعدم الخروج من الصفحة لضمان سلامة الداتا</p>
+    <div id="syncLoadingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.88); z-index: 100000; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(8px); padding: 20px;">
+        <div style="border: 5px solid rgba(255,255,255,0.15); border-top: 5px solid #38bdf8; border-radius: 50%; width: 65px; height: 65px; animation: spin 1s linear infinite; margin-bottom: 20px; box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);"></div>
+        
+        <div id="syncTimerBadge" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.35); padding: 5px 16px; border-radius: 20px; color: #38bdf8; font-weight: bold; font-size: 0.95rem; margin-bottom: 12px; font-family: monospace;">
+            <i class="fa-solid fa-stopwatch"></i> الوقت المستغرق: <span id="syncTimerText">00:00</span>
+        </div>
+
+        <h2 id="syncLoadingText" style="color: white; font-weight: bold; font-family: 'Cairo', sans-serif; text-shadow: 0 2px 4px rgba(0,0,0,0.5); text-align: center; margin: 0 0 8px 0; font-size: 1.4rem;">جاري المزامنة مع الكاشير...</h2>
+        <p id="syncLoadingSubtext" style="color: #94a3b8; font-size: 0.95rem; margin: 0 0 20px 0; text-align: center; max-width: 90%;">الرجاء الانتظار وعدم إغلاق الصفحة لضمان سلامة وتحديث الداتا</p>
+
+        <!-- شريط التقدم الفعلي والنسبة المئوية -->
+        <div style="width: 90%; max-width: 420px; background: rgba(255,255,255,0.1); border-radius: 12px; height: 12px; overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,0.15); box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);">
+            <div id="syncProgressBar" style="width: 5%; height: 100%; background: linear-gradient(90deg, #38bdf8, #818cf8, #a855f7); border-radius: 12px; transition: width 0.3s ease; box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);"></div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 90%; max-width: 420px; margin-top: 8px; color: #cbd5e1; font-size: 0.85rem; font-family: 'Cairo', sans-serif;">
+            <span id="syncProgressDetail"><i class="fa-solid fa-spinner fa-spin"></i> جاري الاتصال بالخادم...</span>
+            <span id="syncProgressPercent" style="color: #38bdf8; font-weight: bold; font-family: monospace; font-size: 0.95rem;">5%</span>
+        </div>
     </div>
 
     <input type="file" id="ocrImageInput" accept="image/*" style="display: none;">
