@@ -4432,24 +4432,24 @@ function renderHistoryList(orders, isLoadMore = false) {
         } catch(e) {}
 
         div.innerHTML = `
-            <div class="history-item-header" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; width: 100%; margin-bottom: 8px;">
-                <div class="history-item-identity" style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px; flex: 1 1 220px; min-width: 0;">
-                    <strong style="font-size: 1.02rem; color: var(--text-dark); word-break: break-word;">${order.id} | ${order.name}</strong>
+            <div class="history-item-header">
+                <div class="history-item-identity">
+                    <strong style="font-size: 0.98rem; color: var(--text-dark); word-break: break-word;">${order.id} | ${order.name}</strong>
                     <div style="display: inline-flex; flex-wrap: wrap; gap: 4px; align-items: center;">
                         ${typeBadge}
                     </div>
                 </div>
-                <div class="history-item-actions-cluster" style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; margin-right: auto;">
+                <div class="history-item-actions-cluster">
                     <button type="button" class="order-action-icon-btn whatsapp-action-btn" onclick="shareToWhatsAppGroup('${order.id}')" title="نسخ ومشاركة لجروب الواتساب" aria-label="مشاركة واتساب">
                         <i class="fa-brands fa-whatsapp"></i>
                     </button>
                     <button type="button" class="order-action-icon-btn print-action-btn" onclick="printHistoryOrder('${order.id}')" title="طباعة الفاتورة" aria-label="طباعة الفاتورة">
                         <i class="fa-solid fa-print"></i>
                     </button>
-                    <span class="order-status-pill" style="background: ${statusColor}18; color: ${statusColor}; border: 1px solid ${statusColor}40; padding: 4px 10px; border-radius: 8px; font-weight: 800; font-size: 0.82rem; white-space: nowrap;">${order.status}</span>
+                    <span class="order-status-pill" style="background: ${statusColor}18; color: ${statusColor}; border: 1px solid ${statusColor}40;">${order.status}</span>
                 </div>
             </div>
-            <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px; width: 100%; font-size: 0.9rem; color: #666; background: var(--bg-body); padding: 8px 12px; border-radius: 8px;">
+            <div class="history-item-subbar">
                 <span>⏰ ${timeStr}</span>
                 <span><i class=\'fa-solid fa-mobile-screen\'></i> ${order.phone}${((order.phone2 || order.secondPhone || order.backupPhone || order.altPhone || order.customerPhone2 || order.otherPhone) && String(order.phone2 || order.secondPhone || order.backupPhone || order.altPhone || order.customerPhone2 || order.otherPhone).trim() !== '') ? ' | <i class=\'fa-solid fa-mobile-screen\'></i> ' + String(order.phone2 || order.secondPhone || order.backupPhone || order.altPhone || order.customerPhone2 || order.otherPhone).trim() : ''}</span>
                 <span style="font-weight:bold; color: var(--text-dark);"><i class=\'fa-solid fa-money-bill-wave\'></i> ${order.total} ج.م</span>

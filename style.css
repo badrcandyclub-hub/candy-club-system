@@ -164,18 +164,24 @@ h1, h2, h3, h4, h5 {
 }
 
 .btn-suspended {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-weight: 700;
-    font-family: 'Cairo', sans-serif;
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    position: relative;
-    user-select: none;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    padding: 5px 12px !important;
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+    font-family: 'Cairo', sans-serif !important;
+    font-size: 0.82rem !important;
+    height: 34px !important;
+    max-height: 34px !important;
+    cursor: pointer !important;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    position: relative !important;
+    user-select: none !important;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
+    flex-shrink: 0 !important;
 }
 
 .status-indicator {
@@ -2548,9 +2554,9 @@ body.dark-mode .catalog-price { color: var(--text-muted); }
         padding: 12px 10px !important;
     }
 
-    .interactive-btn:not(.order-action-icon-btn):not(.icon-only) {
-        padding: 14px !important;
-        font-size: 1.1rem !important;
+    .interactive-btn:not(.order-action-icon-btn):not(.icon-only):not(.btn-suspended):not(.restore-btn):not(.delete-btn):not(.btn-search):not(#menuToggleBtn):not(#quickRefreshBtn):not(.order-status-pill) {
+        padding: 12px 16px !important;
+        font-size: 1.02rem !important;
     }
 
     .toast-container { top: 72px; }
@@ -2582,11 +2588,15 @@ body.dark-mode .invoice-offer-bar {
     background: var(--card); 
     border: 1px solid var(--border);
     border-radius: 12px;
-    padding: 15px;
-    margin-bottom: 20px; 
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    transition: transform 0.2s;
-    border-right: 5px solid var(--primary); 
+    padding: 10px 14px;
+    margin-bottom: 10px; 
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    transition: transform 0.2s, box-shadow 0.2s;
+    border-right: 4px solid var(--primary);
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    box-sizing: border-box;
 }
 
 /* Dynamic Status Backgrounds */
@@ -2705,32 +2715,106 @@ body.dark-mode .order-action-icon-btn.print-action-btn svg {
     color: #e2e8f0 !important;
 }
 
-/* Responsive adjustment for Mobile & iPhone */
-.history-item {
-    overflow: visible !important;
+/* ========================================================= */
+/* ⭐ Order History Card - Compact & Balanced Modern Design  */
+/* ========================================================= */
+.history-item-header {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 8px 12px !important;
+    width: 100% !important;
+    margin: 0 !important;
+    flex-wrap: wrap !important;
 }
 
-@media (max-width: 650px) {
-    .history-item-header {
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: 8px !important;
-    }
-    .history-item-identity {
-        width: 100% !important;
-    }
-    .history-item-actions-cluster {
-        width: 100% !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: flex-end !important;
-        gap: 8px !important;
-        padding-top: 6px !important;
-        border-top: 1px dashed rgba(0, 0, 0, 0.08) !important;
-    }
-    body.dark-mode .history-item-actions-cluster {
-        border-top-color: rgba(255, 255, 255, 0.1) !important;
-    }
+.history-item-identity {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    flex-wrap: wrap !important;
+    margin: 0 !important;
+}
+
+.history-item-identity strong {
+    font-size: 0.98rem !important;
+    font-weight: 700 !important;
+    color: var(--text-dark, #0f172a);
+    word-break: break-word;
+    line-height: 1.3;
+}
+
+.history-item-actions-cluster {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 6px !important;
+    flex-shrink: 0 !important;
+    margin-inline-start: auto !important;
+    padding: 0 !important;
+    border: none !important;
+}
+
+.order-status-pill {
+    padding: 3px 9px !important;
+    border-radius: 7px !important;
+    font-weight: 800 !important;
+    font-size: 0.78rem !important;
+    white-space: nowrap !important;
+    line-height: 1.2 !important;
+}
+
+.history-item-subbar {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 6px 12px !important;
+    width: 100% !important;
+    font-size: 0.84rem !important;
+    color: var(--text-muted, #64748b) !important;
+    background: var(--bg-body, rgba(0,0,0,0.025)) !important;
+    padding: 6px 10px !important;
+    border-radius: 8px !important;
+    box-sizing: border-box !important;
+}
+
+body.dark-mode .history-item-subbar {
+    background: rgba(255, 255, 255, 0.04) !important;
+    color: var(--text-muted, #94a3b8) !important;
+}
+
+/* Suspended orders card compact design */
+.suspended-order-card {
+    background: var(--card, #ffffff) !important;
+    border: 1px solid var(--border, #e2e8f0) !important;
+    border-radius: 12px !important;
+    padding: 10px 14px !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.03) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    margin-bottom: 8px !important;
+    box-sizing: border-box !important;
+}
+
+.suspended-order-card .restore-btn,
+.suspended-order-card .delete-btn {
+    padding: 5px 12px !important;
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    border-radius: 8px !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    line-height: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    box-sizing: border-box !important;
 }
 
 @keyframes subtlePulse {
