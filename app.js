@@ -10205,25 +10205,391 @@ function applyLedgerMarketplaceDefaults(barcode) {
 
 setupLedgerCustomMarketplaceSelects();
 
+// ========================================================
+// CUSTOM LOCATION PICKER (المخازن، الفروع، الموردين)
+// ========================================================
+window.CLP_CATEGORIES = [
+    {
+        id: 'warehouse',
+        title: 'المستودعات والمخازن',
+        icon: 'fa-solid fa-warehouse',
+        headerClass: 'group-warehouse',
+        iconClass: 'clp-icon-warehouse',
+        badgeClass: 'clp-badge-warehouse',
+        badgeText: 'مستودع',
+        items: [
+            { id: 'المخزن', name: 'المخزن' }
+        ]
+    },
+    {
+        id: 'branch',
+        title: 'الفروع ومنافذ البيع',
+        icon: 'fa-solid fa-store',
+        headerClass: 'group-branch',
+        iconClass: 'clp-icon-branch',
+        badgeClass: 'clp-badge-branch',
+        badgeText: 'فرع',
+        items: [
+            { id: 'كاندي كلوب سموحة', name: 'كاندي كلوب سموحة' },
+            { id: 'جوز ولوز سموحة', name: 'جوز ولوز سموحة' },
+            { id: 'جوز ولوز هندسة', name: 'جوز ولوز هندسة' },
+            { id: 'جوز ولوز جليم', name: 'جوز ولوز جليم' }
+        ]
+    },
+    {
+        id: 'supplier',
+        title: 'الشركات والموردين',
+        icon: 'fa-solid fa-truck-moving',
+        headerClass: 'group-supplier',
+        iconClass: 'clp-icon-supplier',
+        badgeClass: 'clp-badge-supplier',
+        badgeText: 'مورد',
+        items: [
+            { id: 'شركة جالاكسي', name: 'شركة جالاكسي' },
+            { id: 'شركة كورونا', name: 'شركة كورونا' },
+            { id: 'شركة كلاس اي', name: 'شركة كلاس اي' },
+            { id: 'شركة كادبوري', name: 'شركة كادبوري' },
+            { id: 'شركة كولد ستون', name: 'شركة كولد ستون' },
+            { id: 'شركة V7', name: 'شركة V7' }
+        ]
+    }
+];
+
+window.customLocationPickers = window.customLocationPickers || {};
+
+window.setupCustomLocationPicker = function (cfg) {
+    const { selectId, inputId, placeholder = '-- اختر الجهة --', accent = 'blue', onChange } = cfg;
+    const selectEl = document.getElementById(selectId);
+    const inputEl = document.getElementById(inputId);
+    if (!selectEl) return null;
+
+    // Check if already mounted
+    let existingWrapper = document.getElementById('clp_wrapper_' + selectId);
+    if (existingWrapper) existingWrapper.remove();
+
+    // Hide native select and input
+    selectEl.style.display = 'none';
+    if (inputEl) inputEl.style.display = 'none';
+
+    function findCategoryItem(name) {
+        if (!name) return null;
+        for (const cat of window.CLP_CATEGORIES) {
+            const found = cat.items.find(it => it.name === name || it.id === name);
+            if (found) return { item: found, category: cat };
+        }
+        return null;
+    }
+
+    const wrapper = document.createElement('div');
+    wrapper.id = 'clp_wrapper_' + selectId;
+    wrapper.className = `clp-wrapper clp-accent-${accent}`;
+
+    // Main view (Trigger + Dropdown)
+    const mainView = document.createElement('div');
+    mainView.className = 'clp-main-view';
+
+    // Trigger
+    const triggerBtn = document.createElement('button');
+    triggerBtn.type = 'button';
+    triggerBtn.className = 'clp-trigger';
+    triggerBtn.setAttribute('aria-haspopup', 'listbox');
+    triggerBtn.setAttribute('aria-expanded', 'false');
+
+    const triggerContent = document.createElement('div');
+    triggerContent.className = 'clp-trigger-content';
+    triggerContent.innerHTML = `<span class="clp-trigger-placeholder">${placeholder}</span>`;
+
+    const triggerArrow = document.createElement('i');
+    triggerArrow.className = 'fa-solid fa-chevron-down clp-arrow';
+
+    triggerBtn.appendChild(triggerContent);
+    triggerBtn.appendChild(triggerArrow);
+    mainView.appendChild(triggerBtn);
+
+    // Dropdown
+    const dropdown = document.createElement('div');
+    dropdown.className = 'clp-dropdown';
+
+    // Search Box
+    const searchBox = document.createElement('div');
+    searchBox.className = 'clp-search-box';
+    searchBox.innerHTML = `
+        <i class="fa-solid fa-magnifying-glass clp-search-icon"></i>
+        <input type="text" class="clp-search-input" placeholder="بحث سريع في المخازن والفروع والموردين..." autocomplete="off">
+    `;
+    const searchInput = searchBox.querySelector('.clp-search-input');
+    dropdown.appendChild(searchBox);
+
+    // List container
+    const listContainer = document.createElement('div');
+    listContainer.className = 'clp-list';
+
+    // Populate categories & items
+    window.CLP_CATEGORIES.forEach(cat => {
+        const groupHeader = document.createElement('div');
+        groupHeader.className = `clp-group-header ${cat.headerClass}`;
+        groupHeader.innerHTML = `<i class="${cat.icon}"></i> <span>${cat.title}</span>`;
+        groupHeader.dataset.category = cat.id;
+        listContainer.appendChild(groupHeader);
+
+        cat.items.forEach(it => {
+            const itemRow = document.createElement('div');
+            itemRow.className = 'clp-item';
+            itemRow.dataset.value = it.name;
+            itemRow.dataset.category = cat.id;
+            itemRow.innerHTML = `
+                <div class="clp-item-left">
+                    <span class="clp-item-icon ${cat.iconClass}"><i class="${cat.icon}"></i></span>
+                    <span class="clp-item-text">${it.name}</span>
+                </div>
+                <span class="clp-badge ${cat.badgeClass}">${cat.badgeText}</span>
+            `;
+
+            itemRow.addEventListener('click', (e) => {
+                e.stopPropagation();
+                controller.setValue(it.name);
+                closeDropdown();
+                if (typeof onChange === 'function') onChange(it.name, false);
+            });
+
+            listContainer.appendChild(itemRow);
+        });
+    });
+
+    // Empty search message
+    const emptyNotice = document.createElement('div');
+    emptyNotice.className = 'clp-no-results';
+    emptyNotice.style.display = 'none';
+    emptyNotice.textContent = 'لا توجد جهة مطابقة للبحث';
+    listContainer.appendChild(emptyNotice);
+
+    dropdown.appendChild(listContainer);
+
+    // Footer with Manual Entry Button (Pure CSS Plus Icon, NO Emoji)
+    const footer = document.createElement('div');
+    footer.className = 'clp-footer';
+    footer.innerHTML = `
+        <button type="button" class="clp-manual-btn">
+            <span class="clp-plus-icon-box"><i class="fa-solid fa-plus"></i></span>
+            <span>جهة أخرى (إدخال يدوي مخصص)</span>
+        </button>
+    `;
+    const manualBtn = footer.querySelector('.clp-manual-btn');
+    manualBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeDropdown();
+        controller.switchToManual();
+    });
+    dropdown.appendChild(footer);
+    mainView.appendChild(dropdown);
+    wrapper.appendChild(mainView);
+
+    // Manual Input Mode Container
+    const manualBox = document.createElement('div');
+    manualBox.className = 'clp-manual-active-box';
+    manualBox.style.display = 'none';
+    manualBox.innerHTML = `
+        <input type="text" class="clp-manual-active-input" placeholder="اكتب اسم الجهة أو المورد هنا..." autocomplete="off">
+        <button type="button" class="clp-revert-btn" title="العودة للاختيار من القائمة">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    `;
+    const manualInput = manualBox.querySelector('.clp-manual-active-input');
+    const revertBtn = manualBox.querySelector('.clp-revert-btn');
+
+    manualInput.addEventListener('input', () => {
+        const val = manualInput.value.trim();
+        selectEl.value = '__custom__';
+        if (inputEl) {
+            inputEl.value = val;
+            inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        if (typeof onChange === 'function') onChange(val, true);
+    });
+
+    revertBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        controller.reset();
+    });
+
+    wrapper.appendChild(manualBox);
+
+    // Insert wrapper right after selectEl
+    selectEl.parentNode.insertBefore(wrapper, selectEl.nextSibling);
+
+    // Dropdown open/close
+    function openDropdown() {
+        document.querySelectorAll('.clp-wrapper.clp-open').forEach(w => {
+            if (w !== wrapper) w.classList.remove('clp-open');
+        });
+        wrapper.classList.add('clp-open');
+        triggerBtn.setAttribute('aria-expanded', 'true');
+        searchInput.value = '';
+        filterItems('');
+        setTimeout(() => searchInput.focus(), 60);
+    }
+
+    function closeDropdown() {
+        wrapper.classList.remove('clp-open');
+        triggerBtn.setAttribute('aria-expanded', 'false');
+    }
+
+    triggerBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (wrapper.classList.contains('clp-open')) {
+            closeDropdown();
+        } else {
+            openDropdown();
+        }
+    });
+
+    // Live search filtering
+    function filterItems(query) {
+        const q = query.trim().toLowerCase();
+        let anyVisible = false;
+
+        window.CLP_CATEGORIES.forEach(cat => {
+            let catHasVisible = false;
+            const items = listContainer.querySelectorAll(`.clp-item[data-category="${cat.id}"]`);
+            items.forEach(it => {
+                const val = (it.dataset.value || '').toLowerCase();
+                const matches = !q || val.includes(q);
+                it.style.display = matches ? 'flex' : 'none';
+                if (matches) {
+                    catHasVisible = true;
+                    anyVisible = true;
+                }
+            });
+            const header = listContainer.querySelector(`.clp-group-header[data-category="${cat.id}"]`);
+            if (header) {
+                header.style.display = catHasVisible ? 'flex' : 'none';
+            }
+        });
+
+        emptyNotice.style.display = anyVisible ? 'none' : 'block';
+    }
+
+    searchInput.addEventListener('input', (e) => {
+        filterItems(e.target.value);
+    });
+
+    // Controller Object
+    const controller = {
+        getValue: () => {
+            if (manualBox.style.display !== 'none') {
+                return manualInput.value.trim();
+            }
+            return (selectEl.value && selectEl.value !== '__custom__') ? selectEl.value : '';
+        },
+        setValue: (val) => {
+            val = (val || '').trim();
+            if (!val) {
+                controller.reset();
+                return;
+            }
+
+            const catInfo = findCategoryItem(val);
+            if (catInfo) {
+                manualBox.style.display = 'none';
+                mainView.style.display = 'block';
+
+                triggerContent.innerHTML = `
+                    <div class="clp-trigger-value">
+                        <span class="clp-item-icon ${catInfo.category.iconClass}"><i class="${catInfo.category.icon}"></i></span>
+                        <span class="clp-trigger-text">${val}</span>
+                        <span class="clp-badge ${catInfo.category.badgeClass}">${catInfo.category.badgeText}</span>
+                    </div>
+                `;
+
+                listContainer.querySelectorAll('.clp-item').forEach(it => {
+                    it.classList.toggle('clp-selected', it.dataset.value === val);
+                });
+
+                selectEl.value = val;
+                selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+                if (inputEl) {
+                    inputEl.value = val;
+                    inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            } else {
+                controller.switchToManual(val);
+            }
+        },
+        switchToManual: (initVal = '') => {
+            mainView.style.display = 'none';
+            manualBox.style.display = 'flex';
+            manualInput.value = initVal;
+            manualInput.focus();
+
+            selectEl.value = '__custom__';
+            selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+            if (inputEl) {
+                inputEl.value = initVal;
+                inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+            if (typeof onChange === 'function') onChange(initVal, true);
+        },
+        reset: () => {
+            manualBox.style.display = 'none';
+            mainView.style.display = 'block';
+            manualInput.value = '';
+
+            triggerContent.innerHTML = `<span class="clp-trigger-placeholder">${placeholder}</span>`;
+            listContainer.querySelectorAll('.clp-item').forEach(it => it.classList.remove('clp-selected'));
+
+            selectEl.value = '';
+            selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+            if (inputEl) {
+                inputEl.value = '';
+                inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+            if (typeof onChange === 'function') onChange('', false);
+        }
+    };
+
+    window.customLocationPickers[selectId] = controller;
+
+    // Attach global listeners if not already
+    if (!window._clpGlobalListenersAttached) {
+        window._clpGlobalListenersAttached = true;
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.clp-wrapper')) {
+                document.querySelectorAll('.clp-wrapper.clp-open').forEach(w => w.classList.remove('clp-open'));
+            }
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.clp-wrapper.clp-open').forEach(w => w.classList.remove('clp-open'));
+            }
+        });
+    }
+
+    // Set initial value if available
+    const initialVal = (inputEl && inputEl.value) ? inputEl.value.trim() : (selectEl.value && selectEl.value !== '__custom__' ? selectEl.value.trim() : '');
+    if (initialVal) {
+        controller.setValue(initialVal);
+    }
+
+    return controller;
+};
+
 window.handleLedgerLocationChange = function (selectEl) {
     if (!selectEl) return;
     const customInp = document.getElementById('ledgerReceiptLocationCustom');
     const hiddenProdLoc = document.getElementById('ledgerProdLocation');
     if (selectEl.value === '__custom__') {
-        if (customInp) {
-            customInp.style.display = 'block';
-            customInp.focus();
-            if (hiddenProdLoc) hiddenProdLoc.value = customInp.value.trim();
-        }
+        const val = customInp ? customInp.value.trim() : '';
+        if (hiddenProdLoc) hiddenProdLoc.value = val;
     } else {
-        if (customInp) {
-            customInp.style.display = 'none';
-        }
         if (hiddenProdLoc) hiddenProdLoc.value = selectEl.value;
     }
 };
 
 window.getLedgerReceiptLocation = function () {
+    const picker = window.customLocationPickers ? window.customLocationPickers['ledgerReceiptLocationSelect'] : null;
+    if (picker) {
+        return picker.getValue() || 'المخزن';
+    }
     const selectEl = document.getElementById('ledgerReceiptLocationSelect');
     if (!selectEl) return (document.getElementById('ledgerProdLocation')?.value || '').trim() || 'المخزن';
     if (selectEl.value === '__custom__') {
@@ -15159,8 +15525,8 @@ window.searchDriverOrder = async function() {
     
     // الأوفلاين كاش: حفظ واسترجاع الاستلامات
     function saveInvToCache() {
-        let from = document.getElementById('invFrom') ? document.getElementById('invFrom').value : '';
-        let to = document.getElementById('invTo') ? document.getElementById('invTo').value : '';
+        let from = (window.customLocationPickers?.['invFromSelect']?.getValue() || document.getElementById('invFrom')?.value || '');
+        let to = (window.customLocationPickers?.['invToSelect']?.getValue() || document.getElementById('invTo')?.value || '');
         let notes = document.getElementById('invNotes') ? document.getElementById('invNotes').value : '';
         let draft = { invItems, from, to, notes };
         localStorage.setItem('pending_receipt_draft', JSON.stringify(draft));
@@ -15184,9 +15550,62 @@ window.searchDriverOrder = async function() {
         saveInvToCache();
     };
 
+    window.initAllCustomLocationPickers = function () {
+        // 1. Ledger Receipt Location (محاضر استلام البضائع)
+        if (document.getElementById('ledgerReceiptLocationSelect') && typeof window.setupCustomLocationPicker === 'function') {
+            window.setupCustomLocationPicker({
+                selectId: 'ledgerReceiptLocationSelect',
+                inputId: 'ledgerReceiptLocationCustom',
+                placeholder: 'اختر المكان أو المورد...',
+                accent: 'blue',
+                onChange: (val) => {
+                    const hiddenProdLoc = document.getElementById('ledgerProdLocation');
+                    if (hiddenProdLoc) hiddenProdLoc.value = val;
+                }
+            });
+            const ledgerPicker = window.customLocationPickers['ledgerReceiptLocationSelect'];
+            if (ledgerPicker && !ledgerPicker.getValue()) {
+                ledgerPicker.setValue('المخزن');
+            }
+        }
+
+        // 2. Inventory From (حركة المخازن - من الراسل)
+        if (document.getElementById('invFromSelect') && typeof window.setupCustomLocationPicker === 'function') {
+            window.setupCustomLocationPicker({
+                selectId: 'invFromSelect',
+                inputId: 'invFrom',
+                placeholder: '-- اختر جهة الإرسال --',
+                accent: 'blue',
+                onChange: () => {
+                    if (typeof saveInvToCache === 'function') saveInvToCache();
+                }
+            });
+        }
+
+        // 3. Inventory To (حركة المخازن - إلى المستلم)
+        if (document.getElementById('invToSelect') && typeof window.setupCustomLocationPicker === 'function') {
+            window.setupCustomLocationPicker({
+                selectId: 'invToSelect',
+                inputId: 'invTo',
+                placeholder: '-- اختر جهة الاستلام --',
+                accent: 'green',
+                onChange: () => {
+                    if (typeof saveInvToCache === 'function') saveInvToCache();
+                }
+            });
+        }
+    };
+
     window.syncInvLocationDropdown = function (type, val) {
         const isFrom = (type === 'from');
-        const select = document.getElementById(isFrom ? 'invFromSelect' : 'invToSelect');
+        const selectId = isFrom ? 'invFromSelect' : 'invToSelect';
+        const picker = window.customLocationPickers && window.customLocationPickers[selectId];
+        if (picker) {
+            picker.setValue(val || '');
+            return;
+        }
+
+        const select = document.getElementById(selectId);
         const input = document.getElementById(isFrom ? 'invFrom' : 'invTo');
         if (!select || !input) return;
 
@@ -15209,6 +15628,11 @@ window.searchDriverOrder = async function() {
 
     window.loadInvFromCache = function() {
         try {
+            // تفعيل القوائم المنسدلة أولاً
+            if (typeof window.initAllCustomLocationPickers === 'function') {
+                window.initAllCustomLocationPickers();
+            }
+
             let draftStr = localStorage.getItem('pending_receipt_draft');
             if (draftStr) {
                 let draft = null; try { draft = JSON.parse(draftStr); } catch(e) {}
@@ -15223,7 +15647,7 @@ window.searchDriverOrder = async function() {
         } catch(e) {}
     };
     
-    // استدعاء الدالة فوراً عند تحميل الصفحة لاسترجاع الكاش
+    // استدعاء التهيئة واسترجاع الكاش
     window.loadInvFromCache();
 
     // حفظ تلقائي عند الكتابة في الحقول
@@ -15323,9 +15747,9 @@ window.searchDriverOrder = async function() {
 
     if (savePrintInvBtn) {
         savePrintInvBtn.addEventListener('click', async () => {
-            let from = document.getElementById('invFrom').value.trim();
-            let to = document.getElementById('invTo').value.trim();
-            let notes = document.getElementById('invNotes').value.trim();
+            let from = (window.customLocationPickers?.['invFromSelect']?.getValue() || document.getElementById('invFrom')?.value || '').trim();
+            let to = (window.customLocationPickers?.['invToSelect']?.getValue() || document.getElementById('invTo')?.value || '').trim();
+            let notes = (document.getElementById('invNotes')?.value || '').trim();
             
             if (!from || !to) {
                 showToast("برجاء إدخال جهة الإرسال وجهة الاستلام", "warning");
@@ -15401,6 +15825,8 @@ window.searchDriverOrder = async function() {
                 // Clear form
                 invItems = [];
                 renderInvItems();
+                if (window.customLocationPickers?.['invFromSelect']) window.customLocationPickers['invFromSelect'].reset();
+                if (window.customLocationPickers?.['invToSelect']) window.customLocationPickers['invToSelect'].reset();
                 document.getElementById('invFrom').value = '';
                 document.getElementById('invTo').value = '';
                 if (document.getElementById('invFromSelect')) document.getElementById('invFromSelect').value = '';
