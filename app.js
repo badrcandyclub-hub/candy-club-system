@@ -4432,19 +4432,24 @@ function renderHistoryList(orders, isLoadMore = false) {
         } catch(e) {}
 
         div.innerHTML = `
-            <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 8px; align-items: center;">
-                <strong style="font-size: 1.05rem;">${order.id} | ${order.name} ${typeBadge}</strong>
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <button class="interactive-btn" onclick="shareToWhatsAppGroup('${order.id}')" style="background:none; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; padding:0;" title="نسخ ومشاركة لجروب الواتساب">
-                        <i class="fa-brands fa-whatsapp" style="font-size:22px; color:var(--text-dark); line-height:1;"></i>
+            <div class="history-item-header" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; width: 100%; margin-bottom: 8px;">
+                <div class="history-item-identity" style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px; flex: 1 1 220px; min-width: 0;">
+                    <strong style="font-size: 1.02rem; color: var(--text-dark); word-break: break-word;">${order.id} | ${order.name}</strong>
+                    <div style="display: inline-flex; flex-wrap: wrap; gap: 4px; align-items: center;">
+                        ${typeBadge}
+                    </div>
+                </div>
+                <div class="history-item-actions-cluster" style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; margin-right: auto;">
+                    <button type="button" class="order-action-icon-btn whatsapp-action-btn" onclick="shareToWhatsAppGroup('${order.id}')" title="نسخ ومشاركة لجروب الواتساب" aria-label="مشاركة واتساب">
+                        <i class="fa-brands fa-whatsapp"></i>
                     </button>
-                    <button class="interactive-btn" onclick="printHistoryOrder('${order.id}')" style="background:none; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; padding:0;" title="طباعة الفاتورة">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-dark);"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                    <button type="button" class="order-action-icon-btn print-action-btn" onclick="printHistoryOrder('${order.id}')" title="طباعة الفاتورة" aria-label="طباعة الفاتورة">
+                        <i class="fa-solid fa-print"></i>
                     </button>
-                    <span style="background: ${statusColor}15; color: ${statusColor}; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.85rem;">${order.status}</span>
+                    <span class="order-status-pill" style="background: ${statusColor}18; color: ${statusColor}; border: 1px solid ${statusColor}40; padding: 4px 10px; border-radius: 8px; font-weight: 800; font-size: 0.82rem; white-space: nowrap;">${order.status}</span>
                 </div>
             </div>
-            <div style="display: flex; justify-content: space-between; width: 100%; font-size: 0.9rem; color: #666; background: var(--bg-body); padding: 8px; border-radius: 6px;">
+            <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px; width: 100%; font-size: 0.9rem; color: #666; background: var(--bg-body); padding: 8px 12px; border-radius: 8px;">
                 <span>⏰ ${timeStr}</span>
                 <span><i class=\'fa-solid fa-mobile-screen\'></i> ${order.phone}${((order.phone2 || order.secondPhone || order.backupPhone || order.altPhone || order.customerPhone2 || order.otherPhone) && String(order.phone2 || order.secondPhone || order.backupPhone || order.altPhone || order.customerPhone2 || order.otherPhone).trim() !== '') ? ' | <i class=\'fa-solid fa-mobile-screen\'></i> ' + String(order.phone2 || order.secondPhone || order.backupPhone || order.altPhone || order.customerPhone2 || order.otherPhone).trim() : ''}</span>
                 <span style="font-weight:bold; color: var(--text-dark);"><i class=\'fa-solid fa-money-bill-wave\'></i> ${order.total} ج.م</span>
@@ -7532,18 +7537,75 @@ window.shareToWhatsAppGroup = async function (orderId) {
     text += `🚚 *الشحن:* ${_shipping}\n`;
     text += `💰 *الإجمالي النهائي:* ${_remaining}\n`;
 
-    try {
-        await navigator.clipboard.writeText(text);
-        showToast("تم نسخ بيانات الأوردر للحافظة! جاري فتح جروب الواتساب... 📋", "success");
-    } catch (err) {
+    // 📋 نسخ الحافظة بدعم كامل وموثوق لجميع أجهزة iPhone و Android والكمبيوتر
+    let copied = false;
+    if (navigator.clipboard && window.isSecureContext) {
+        try {
+            await navigator.clipboard.writeText(text);
+            copied = true;
+        } catch (clipErr) {
+            console.warn("navigator.clipboard failed, attempting fallback:", clipErr);
+        }
+    }
+    if (!copied) {
+        try {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            ta.style.top = '-9999px';
+            ta.setAttribute('readonly', '');
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            ta.setSelectionRange(0, 99999);
+            copied = document.execCommand('copy');
+            document.body.removeChild(ta);
+        } catch (taErr) {
+            console.warn("Fallback execCommand copy failed:", taErr);
+        }
+    }
+
+    if (copied) {
+        showToast("تم نسخ بيانات الأوردر للحافظة! جاري الانتقال لجروب الواتساب... 📋", "success");
+    } else {
         showToast("جاري فتح جروب الواتساب... 📋", "info");
     }
 
-    let groupUrl = localStorage.getItem('cc_branch_whatsapp_group') || (hrBranchData && hrBranchData.whatsapp_group_url ? hrBranchData.whatsapp_group_url : '');
+    // جلب رابط جروب الواتساب المحدث سحابياً ومحلياً
+    let groupUrl = (hrBranchData && hrBranchData.whatsapp_group_url) || localStorage.getItem('cc_branch_whatsapp_group') || '';
+    if (!groupUrl && window.supabase) {
+        try {
+            const { data: bSettings } = await supabase.from('branch_settings').select('whatsapp_group_url').limit(1);
+            if (bSettings && bSettings.length > 0 && bSettings[0].whatsapp_group_url) {
+                groupUrl = bSettings[0].whatsapp_group_url;
+                if (hrBranchData) hrBranchData.whatsapp_group_url = groupUrl;
+                localStorage.setItem('cc_branch_whatsapp_group', groupUrl);
+            }
+        } catch (e) {}
+    }
+
+    // رابط الفرع الافتراضي المؤكد للحماية القصوى
+    if (!groupUrl) {
+        groupUrl = 'https://chat.whatsapp.com/DNzi41XOlHf4LX4gMfwYAr?s=sw&p=i';
+        localStorage.setItem('cc_branch_whatsapp_group', groupUrl);
+    }
+
     if (groupUrl && String(groupUrl).trim()) {
-        setTimeout(() => {
-            window.open(groupUrl.trim(), '_blank');
-        }, 150);
+        const targetUrl = groupUrl.trim();
+        const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '');
+        if (isMobile) {
+            // على هواتف الموبايل والآيفون، الانتقال المباشر يفتح تطبيق واتساب فوراً وبدون حجب Safari
+            setTimeout(() => {
+                window.location.href = targetUrl;
+            }, 300);
+        } else {
+            // على الكمبيوتر: فتح في تبويب جديد للحفاظ على شاشة النظام
+            const win = window.open(targetUrl, '_blank');
+            if (!win || win.closed || typeof win.closed === 'undefined') {
+                window.location.href = targetUrl;
+            }
+        }
     } else {
         showToast("يرجى ضبط رابط جروب واتساب الفرع من إعدادات الفرع بالمدير ⚙️", "warning");
     }
