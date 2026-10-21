@@ -1023,11 +1023,45 @@
                     </div>
                     <div>
                         <label style="display:block; margin-bottom:5px; font-weight:bold; color:var(--text-main);"><i class="fa-solid fa-truck-arrow-right" style="color:var(--primary);"></i> من (الراسل):</label>
-                        <input type="text" id="invFrom" class="input-field" placeholder="مثال: المخزن الرئيسي" style="margin-bottom:0;">
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <select id="invFromSelect" class="input-field" style="margin-bottom:0; font-weight:bold; border: 1.5px solid #3498db; background:#fff; cursor:pointer;" onchange="handleInvLocationSelectChange('from')">
+                                <option value="" disabled selected>-- اختر جهة الإرسال --</option>
+                                <option value="المخزن">المخزن</option>
+                                <option value="كاندي كلوب سموحة">كاندي كلوب سموحة</option>
+                                <option value="جوز ولوز سموحة">جوز ولوز سموحة</option>
+                                <option value="جوز ولوز هندسة">جوز ولوز هندسة</option>
+                                <option value="جوز ولوز جليم">جوز ولوز جليم</option>
+                                <option value="شركة جالاكسي">شركة جالاكسي</option>
+                                <option value="شركة كورونا">شركة كورونا</option>
+                                <option value="شركة كلاس اي">شركة كلاس اي</option>
+                                <option value="شركة كادبوري">شركة كادبوري</option>
+                                <option value="شركة كولد ستون">شركة كولد ستون</option>
+                                <option value="شركة V7">شركة V7</option>
+                                <option value="__custom__">➕ أخرى (إدخال يدوي)</option>
+                            </select>
+                            <input type="text" id="invFrom" class="input-field" placeholder="اكتب جهة الإرسال..." style="margin-bottom:0; display:none; border: 1.5px solid #e67e22; background: #fffdf9;">
+                        </div>
                     </div>
                     <div>
                         <label style="display:block; margin-bottom:5px; font-weight:bold; color:var(--text-main);"><i class="fa-solid fa-building-circle-check" style="color:var(--primary);"></i> إلى (المستلم):</label>
-                        <input type="text" id="invTo" class="input-field" placeholder="مثال: فرع سموحة" style="margin-bottom:0;">
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <select id="invToSelect" class="input-field" style="margin-bottom:0; font-weight:bold; border: 1.5px solid #2ecc71; background:#fff; cursor:pointer;" onchange="handleInvLocationSelectChange('to')">
+                                <option value="" disabled selected>-- اختر جهة الاستلام --</option>
+                                <option value="المخزن">المخزن</option>
+                                <option value="كاندي كلوب سموحة">كاندي كلوب سموحة</option>
+                                <option value="جوز ولوز سموحة">جوز ولوز سموحة</option>
+                                <option value="جوز ولوز هندسة">جوز ولوز هندسة</option>
+                                <option value="جوز ولوز جليم">جوز ولوز جليم</option>
+                                <option value="شركة جالاكسي">شركة جالاكسي</option>
+                                <option value="شركة كورونا">شركة كورونا</option>
+                                <option value="شركة كلاس اي">شركة كلاس اي</option>
+                                <option value="شركة كادبوري">شركة كادبوري</option>
+                                <option value="شركة كولد ستون">شركة كولد ستون</option>
+                                <option value="شركة V7">شركة V7</option>
+                                <option value="__custom__">➕ أخرى (إدخال يدوي)</option>
+                            </select>
+                            <input type="text" id="invTo" class="input-field" placeholder="اكتب جهة الاستلام..." style="margin-bottom:0; display:none; border: 1.5px solid #e67e22; background: #fffdf9;">
+                        </div>
                     </div>
                 </div>
 
@@ -1471,15 +1505,40 @@
                         <input type="date" id="ledgerRegDate" dir="ltr"
                             style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
                     </div>
-                    <div style="flex: 1 1 100px;">
+                    <div style="flex: 1 1 120px;">
                         <label style="display: block; margin-bottom: 5px; font-weight: bold; color: var(--primary);">اسم المسجِّل <span style="color:red;">*</span></label>
                         <input type="text" id="ledgerRegistrarName" placeholder="الاسم" required
                             style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
                     </div>
-                    <div style="flex: 1 1 100px;">
+                    <div style="flex: 1 1 120px;">
                         <label style="display: block; margin-bottom: 5px; font-weight: bold; color: var(--primary);">اسم المستلم <span style="color:red;">*</span></label>
                         <input type="text" id="ledgerReceiverName" placeholder="الاسم" required
                             style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
+                    </div>
+                    <div style="flex: 1 1 220px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: var(--primary);">
+                            <i class="fa-solid fa-location-dot"></i> المكان / المورد <span style="color:red;">*</span>
+                            <span style="font-size:0.8rem; font-weight:normal; color:#666;">(طوال الاستلامة)</span>
+                        </label>
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <select id="ledgerReceiptLocationSelect" onchange="handleLedgerLocationChange(this)"
+                                style="width: 100%; padding: 10px; border-radius: 8px; border: 1.5px solid #3498db; background: #fff; font-weight: bold; color: #2c3e50; cursor: pointer;">
+                                <option value="المخزن" selected>المخزن</option>
+                                <option value="كاندي كلوب سموحة">كاندي كلوب سموحة</option>
+                                <option value="جوز ولوز سموحة">جوز ولوز سموحة</option>
+                                <option value="جوز ولوز هندسة">جوز ولوز هندسة</option>
+                                <option value="جوز ولوز جليم">جوز ولوز جليم</option>
+                                <option value="شركة جالاكسي">شركة جالاكسي</option>
+                                <option value="شركة كورونا">شركة كورونا</option>
+                                <option value="شركة كلاس اي">شركة كلاس اي</option>
+                                <option value="شركة كادبوري">شركة كادبوري</option>
+                                <option value="شركة كولد ستون">شركة كولد ستون</option>
+                                <option value="شركة V7">شركة V7</option>
+                                <option value="__custom__">➕ أخرى (إدخال يدوي)</option>
+                            </select>
+                            <input type="text" id="ledgerReceiptLocationCustom" placeholder="اكتب اسم المكان أو المورد هنا..."
+                                style="display: none; width: 100%; padding: 8px 10px; border-radius: 8px; border: 1.5px solid #e67e22; background: #fffdf9; font-size: 0.95rem;">
+                        </div>
                     </div>
                 </div>
 
@@ -1500,11 +1559,8 @@
                             <label>تاريخ الانتهاء <span style="color:red;">*</span></label>
                             <input type="date" id="ledgerProdDate" dir="ltr">
                         </div>
-                        <div style="grid-column: span 2;">
-                            <label>المكان / المورد</label>
-                            <input type="text" id="ledgerProdLocation" placeholder="اختياري">
-                        </div>
-                        <div style="grid-column: span 2;">
+                        <input type="hidden" id="ledgerProdLocation" value="المخزن">
+                        <div style="grid-column: span 4;">
                             <label>الباركود</label>
                             <div style="display: flex; gap: 5px;">
                                 <input type="text" id="ledgerProdBarcode" placeholder="اكتب أو امسح الباركود..." style="flex: 1; font-family: monospace; letter-spacing: 1px;" onkeypress="if(event.key === 'Enter') { document.getElementById('ledgerSearchBarcodeBtn').click(); event.preventDefault(); }">
@@ -2305,7 +2361,7 @@
         <div style="text-align: center; color: var(--text-muted); font-size: 12px; margin-bottom: 10px; margin-top: 10px; opacity: 0.7;">الإصدار: V1.5</div>
     <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js?v=110.0" charset="UTF-8" defer></script>
+    <script src="app.js?v=111.0" charset="UTF-8" defer></script>
 </body>
 
 <!-- Inventory Stats Modal -->

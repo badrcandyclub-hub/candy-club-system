@@ -10205,6 +10205,42 @@ function applyLedgerMarketplaceDefaults(barcode) {
 
 setupLedgerCustomMarketplaceSelects();
 
+window.handleLedgerLocationChange = function (selectEl) {
+    if (!selectEl) return;
+    const customInp = document.getElementById('ledgerReceiptLocationCustom');
+    const hiddenProdLoc = document.getElementById('ledgerProdLocation');
+    if (selectEl.value === '__custom__') {
+        if (customInp) {
+            customInp.style.display = 'block';
+            customInp.focus();
+            if (hiddenProdLoc) hiddenProdLoc.value = customInp.value.trim();
+        }
+    } else {
+        if (customInp) {
+            customInp.style.display = 'none';
+        }
+        if (hiddenProdLoc) hiddenProdLoc.value = selectEl.value;
+    }
+};
+
+window.getLedgerReceiptLocation = function () {
+    const selectEl = document.getElementById('ledgerReceiptLocationSelect');
+    if (!selectEl) return (document.getElementById('ledgerProdLocation')?.value || '').trim() || 'المخزن';
+    if (selectEl.value === '__custom__') {
+        const customVal = document.getElementById('ledgerReceiptLocationCustom')?.value.trim();
+        return customVal || 'المخزن';
+    }
+    return selectEl.value.trim() || 'المخزن';
+};
+
+const ledgerCustomLocInput = document.getElementById('ledgerReceiptLocationCustom');
+if (ledgerCustomLocInput) {
+    ledgerCustomLocInput.addEventListener('input', () => {
+        const hiddenProdLoc = document.getElementById('ledgerProdLocation');
+        if (hiddenProdLoc) hiddenProdLoc.value = ledgerCustomLocInput.value.trim();
+    });
+}
+
 const startInvCameraScannerBtn = document.getElementById('startInvCameraScannerBtn');
 if (startInvCameraScannerBtn) {
     startInvCameraScannerBtn.addEventListener('click', () => {
@@ -10372,7 +10408,7 @@ if (addLedgerItemBtn) {
         let name = document.getElementById('ledgerProdName').value;
         const qty = document.getElementById('ledgerProdQty').value;
         const date = document.getElementById('ledgerProdDate').value;
-        const location = document.getElementById('ledgerProdLocation').value;
+        const location = window.getLedgerReceiptLocation();
         const notes = document.getElementById('ledgerProdNotes').value;
         const barcode = document.getElementById('ledgerProdBarcode') ? document.getElementById('ledgerProdBarcode').value.trim() : '';
         const talabatStatus = window.normalizeMarketplaceStatus(document.getElementById('ledgerTalabatStatus')?.value);
@@ -10411,7 +10447,7 @@ if (addLedgerItemBtn) {
         document.getElementById('ledgerProdName').value = '';
         document.getElementById('ledgerProdQty').value = '';
         document.getElementById('ledgerProdDate').value = '';
-        document.getElementById('ledgerProdLocation').value = '';
+        // المكان يظل ثابتاً طوال الاستلامة ولا يتم مسحه
         document.getElementById('ledgerProdNotes').value = '';
         if (document.getElementById('ledgerProdBarcode')) {
             document.getElementById('ledgerProdBarcode').value = '';
@@ -10502,11 +10538,13 @@ if (saveLedgerBtn) {
         // Attach reg info to all items
         let timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
         let finalRegDate = regDate.trim() + " " + timeStr;
+        const batchLocation = window.getLedgerReceiptLocation();
 
         const payload = ledgerCart.map(item => Object.assign({}, item, {
             // Include exact time in regDate to use it as a natural batch grouping ID!
             regDate: finalRegDate,
-            receiver: receiverName
+            receiver: receiverName,
+            location: item.location || batchLocation
         }));
 
         setBtnLoading(saveLedgerBtn, true, "جاري الحفظ...");
@@ -15128,6 +15166,47 @@ window.searchDriverOrder = async function() {
         localStorage.setItem('pending_receipt_draft', JSON.stringify(draft));
     }
 
+    window.handleInvLocationSelectChange = function (type) {
+        const isFrom = (type === 'from');
+        const select = document.getElementById(isFrom ? 'invFromSelect' : 'invToSelect');
+        const input = document.getElementById(isFrom ? 'invFrom' : 'invTo');
+        if (!select || !input) return;
+
+        if (select.value === '__custom__') {
+            input.style.display = 'block';
+            input.value = '';
+            input.placeholder = isFrom ? 'اكتب جهة الإرسال هنا...' : 'اكتب جهة الاستلام هنا...';
+            input.focus();
+        } else {
+            input.style.display = 'none';
+            input.value = select.value;
+        }
+        saveInvToCache();
+    };
+
+    window.syncInvLocationDropdown = function (type, val) {
+        const isFrom = (type === 'from');
+        const select = document.getElementById(isFrom ? 'invFromSelect' : 'invToSelect');
+        const input = document.getElementById(isFrom ? 'invFrom' : 'invTo');
+        if (!select || !input) return;
+
+        input.value = val || '';
+        if (!val) {
+            select.value = '';
+            input.style.display = 'none';
+            return;
+        }
+
+        const exists = Array.from(select.options).some(o => o.value === val);
+        if (exists) {
+            select.value = val;
+            input.style.display = 'none';
+        } else {
+            select.value = '__custom__';
+            input.style.display = 'block';
+        }
+    };
+
     window.loadInvFromCache = function() {
         try {
             let draftStr = localStorage.getItem('pending_receipt_draft');
@@ -15135,8 +15214,8 @@ window.searchDriverOrder = async function() {
                 let draft = null; try { draft = JSON.parse(draftStr); } catch(e) {}
                 if (draft.invItems && draft.invItems.length > 0) {
                     invItems = draft.invItems;
-                    if(document.getElementById('invFrom')) document.getElementById('invFrom').value = draft.from || '';
-                    if(document.getElementById('invTo')) document.getElementById('invTo').value = draft.to || '';
+                    if(document.getElementById('invFrom')) window.syncInvLocationDropdown('from', draft.from || '');
+                    if(document.getElementById('invTo')) window.syncInvLocationDropdown('to', draft.to || '');
                     if(document.getElementById('invNotes')) document.getElementById('invNotes').value = draft.notes || '';
                     renderInvItems();
                 }
@@ -15324,6 +15403,10 @@ window.searchDriverOrder = async function() {
                 renderInvItems();
                 document.getElementById('invFrom').value = '';
                 document.getElementById('invTo').value = '';
+                if (document.getElementById('invFromSelect')) document.getElementById('invFromSelect').value = '';
+                if (document.getElementById('invToSelect')) document.getElementById('invToSelect').value = '';
+                if (document.getElementById('invFrom')) document.getElementById('invFrom').style.display = 'none';
+                if (document.getElementById('invTo')) document.getElementById('invTo').style.display = 'none';
                 document.getElementById('invNotes').value = '';
             } catch (err) {
                 console.error("Error saving inventory log:", err);
