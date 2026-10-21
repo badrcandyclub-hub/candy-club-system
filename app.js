@@ -20495,7 +20495,7 @@ window.offersData = [];
 window.activeOffersFilter = 'all';
 window.currentStoryOffer = null;
 
-const OFFERS_DEFAULT_DRIVE_URL = 'https://script.google.com/macros/s/AKfycbwx-tcJs67wcNR9adRLE70meZUjpeWSVpmDGIY1qJj5owFbIfWt5Sq8y6Kd3CYr7jdb/exec';
+const OFFERS_DEFAULT_DRIVE_URL = 'https://script.google.com/macros/s/AKfycbzZdn2hQ8CBOb4E9JvM6cVr8kg80z3JfLnkLjlgvFiAphAw3EwkzV90bu7jyGW1XgX_2Q/exec';
 
 // 1. فحص وتحديث الصلاحيات
 window.ensureOffersAdminPermCard = function() {
@@ -21241,16 +21241,20 @@ window.openOfferPhotoCamera = function() {
     }
 };
 
-// 11. رفع الصورة إلى Google Drive Apps Script تلقائياً
-window.uploadOfferPhotoToGoogleDrive = async function(base64Image, filename) {
+// 11. رفع وحذف صور العروض عبر Google Drive Apps Script تلقائياً
+window.uploadOfferPhotoToGoogleDrive = async function(base64Image, filename, deleteFileId) {
     try {
+        const payload = {
+            image: base64Image,
+            filename: filename || `offer_${Date.now()}.jpg`,
+            folderName: 'Candy Club Offers'
+        };
+        if (deleteFileId) {
+            payload.deleteFileId = deleteFileId;
+        }
         const res = await fetch(OFFERS_DEFAULT_DRIVE_URL, {
             method: 'POST',
-            body: JSON.stringify({
-                image: base64Image,
-                filename: filename || `offer_${Date.now()}.jpg`,
-                folderName: 'Candy Club Offers'
-            })
+            body: JSON.stringify(payload)
         });
         const result = await res.json();
         if (result && result.url) {
@@ -21260,6 +21264,21 @@ window.uploadOfferPhotoToGoogleDrive = async function(base64Image, filename) {
         console.warn('Google Drive photo upload failed:', err);
     }
     return null;
+};
+
+window.deleteOfferPhotoFromGoogleDrive = async function(fileId) {
+    if (!fileId) return;
+    try {
+        await fetch(OFFERS_DEFAULT_DRIVE_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'delete',
+                fileId: fileId
+            })
+        });
+    } catch(err) {
+        console.warn('Failed to delete offer image from Drive:', err);
+    }
 };
 
 // 12. تبديل الحقول في الفورم
@@ -21510,7 +21529,8 @@ window.handleOfferSubmit = async function(e) {
         // رفع الصورة إذا تم اختيار صورة جديدة
         if (base64 && base64.startsWith('data:image')) {
             btnSubmit.innerHTML = '<i class="fa-solid fa-cloud-arrow-up fa-fade"></i> جاري رفع الصورة إلى Google Drive...';
-            const uploadResult = await window.uploadOfferPhotoToGoogleDrive(base64, `offer_${Date.now()}.jpg`);
+            const oldDriveFileId = driveFileId;
+            const uploadResult = await window.uploadOfferPhotoToGoogleDrive(base64, `offer_${Date.now()}.jpg`, oldDriveFileId);
             if (uploadResult && uploadResult.url) {
                 photoUrl = uploadResult.url;
                 driveFileId = uploadResult.fileId;
@@ -21606,6 +21626,9 @@ window.deleteOffer = function(id) {
     if (!offer) return;
     
     customConfirm(`هل أنت متأكد من حذف عرض (${offer.product_name}) نهائياً؟`, async () => {
+        if (offer.drive_file_id) {
+            window.deleteOfferPhotoFromGoogleDrive(offer.drive_file_id);
+        }
         window.offersData = window.offersData.filter(o => String(o.id) !== String(id));
         if (window.supabase) {
             try {
