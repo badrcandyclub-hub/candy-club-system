@@ -2758,6 +2758,7 @@ window.onload = () => {
 
     // ⭐ V16: تحقق من الجلسة بدلاً من التحميل المباشر
     checkSession();
+    window.__APP_INITIALIZED__ = true;
 };
 
 // ==========================================
@@ -16572,6 +16573,7 @@ window.reprintInvLog = function(logId) {
 
 
 function showLogin() {
+    window.__APP_INITIALIZED__ = true;
     let screen = document.getElementById('login-screen');
     if (screen) screen.style.display = 'flex';
 }
@@ -20596,7 +20598,7 @@ window.publishOfferToFacebookStory = async function(publicImageUrl) {
             access_token: pageToken
         });
         
-        const uploadRes = await fetch(`https://graph.facebook.com/v26.0/${pageId}/photos`, {
+        const uploadRes = await fetch(`https://graph.facebook.com/v19.0/${pageId}/photos`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: uploadPayload.toString()
@@ -20616,7 +20618,7 @@ window.publishOfferToFacebookStory = async function(publicImageUrl) {
             access_token: pageToken
         });
         
-        const storyRes = await fetch(`https://graph.facebook.com/v26.0/${pageId}/photo_stories`, {
+        const storyRes = await fetch(`https://graph.facebook.com/v19.0/${pageId}/photo_stories`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: storyPayload.toString()
@@ -22231,7 +22233,7 @@ window.publishOfferToInstagramStory = async function(id, isAuto = false) {
                 access_token: token
             });
             
-            const createRes = await fetch(`https://graph.instagram.com/v26.0/${INSTAGRAM_ACCOUNT_ID}/media`, {
+            const createRes = await fetch(`https://graph.instagram.com/v19.0/${INSTAGRAM_ACCOUNT_ID}/media`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: createPayload.toString()
@@ -22251,7 +22253,7 @@ window.publishOfferToInstagramStory = async function(id, isAuto = false) {
                     access_token: token
                 });
                 
-                const pubRes = await fetch(`https://graph.instagram.com/v26.0/${INSTAGRAM_ACCOUNT_ID}/media_publish`, {
+                const pubRes = await fetch(`https://graph.instagram.com/v19.0/${INSTAGRAM_ACCOUNT_ID}/media_publish`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: publishPayload.toString()
@@ -22278,7 +22280,7 @@ window.publishOfferToInstagramStory = async function(id, isAuto = false) {
                     const pageId = window.getFacebookPageId();
                     const pageToken = window.getFacebookPageAccessToken();
                     if (pageId && pageToken) {
-                        const fbRes = await fetch(`https://graph.facebook.com/v26.0/${pageId}/photos`, {
+                        const fbRes = await fetch(`https://graph.facebook.com/v19.0/${pageId}/photos`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                             body: new URLSearchParams({

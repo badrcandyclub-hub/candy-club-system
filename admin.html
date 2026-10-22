@@ -40,7 +40,7 @@
     }
 
     (function() {
-        var APP_VERSION = '2.0.0';
+        var APP_VERSION = '2.1.0';
         var STORED_VER = '';
         try { STORED_VER = localStorage.getItem('cc_app_version') || ''; } catch(e) {}
         
@@ -82,33 +82,49 @@
             });
         }
 
-        // 🚨 Watchdog: If app hangs / gets stuck on load for > 5s, show self-healing recovery bar
+        function showEmergencyBar(detail) {
+            try {
+                var bar = document.getElementById('cc-emergency-cache-fix');
+                var mountTarget = document.body || document.documentElement;
+                if (!bar && mountTarget) {
+                    bar = document.createElement('div');
+                    bar.id = 'cc-emergency-cache-fix';
+                    bar.style.cssText = 'position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:9999999; background:#ffffff; color:#0f172a; border:2px solid #ef4444; box-shadow:0 12px 35px rgba(0,0,0,0.3); padding:14px 22px; border-radius:14px; font-family:Cairo,sans-serif; text-align:center; display:flex; align-items:center; gap:14px; font-weight:700;';
+                    bar.innerHTML = '<span>⚠️ يبدو أن لوحة الإدارة معلقة بسبب ملفات كاش قديمة ' + (detail ? '(' + detail + ')' : '') + '</span>' +
+                        '<button onclick="forceSystemHardRefresh()" style="background:#ef4444; color:#fff; border:none; padding:8px 18px; border-radius:8px; font-weight:800; cursor:pointer; font-family:inherit;">تحديث ومسح الكاش الآن 🔄</button>';
+                    mountTarget.appendChild(bar);
+                }
+            } catch(e) {}
+        }
+        window.showEmergencyRecoveryBar = showEmergencyBar;
+
+        window.addEventListener('error', function(e) {
+            if (!window.__APP_INITIALIZED__) {
+                var msg = e.message || '';
+                if (msg && !msg.includes('ResizeObserver') && !msg.includes('Script error')) {
+                    showEmergencyBar('خطأ تحميل ملفات');
+                }
+            }
+        });
+
+        // 🚨 Watchdog: If app hangs / gets stuck on load for > 4.5s
         setTimeout(function() {
             try {
                 var login = document.getElementById('login-screen');
-                var appHeader = document.querySelector('.app-header');
                 var isLoginOpen = login && (login.style.display === 'flex' || login.style.display === 'block');
-                var isAppOpen = appHeader && getComputedStyle(appHeader).display !== 'none';
-                if (!isLoginOpen && !isAppOpen) {
-                    var bar = document.getElementById('cc-emergency-cache-fix');
-                    if (!bar && document.body) {
-                        bar = document.createElement('div');
-                        bar.id = 'cc-emergency-cache-fix';
-                        bar.style.cssText = 'position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:9999999; background:#ffffff; color:#0f172a; border:2px solid #ef4444; box-shadow:0 12px 35px rgba(0,0,0,0.3); padding:14px 22px; border-radius:14px; font-family:Cairo,sans-serif; text-align:center; display:flex; align-items:center; gap:14px; font-weight:700;';
-                        bar.innerHTML = '<span>⚠️ يبدو أن لوحة الإدارة معلقة بسبب ملفات كاش قديمة</span>' +
-                            '<button onclick="forceSystemHardRefresh()" style="background:#ef4444; color:#fff; border:none; padding:8px 18px; border-radius:8px; font-weight:800; cursor:pointer; font-family:inherit;">تحديث ومسح الكاش الآن 🔄</button>';
-                        document.body.appendChild(bar);
-                    }
+                var activeTab = document.querySelector('.tab-pane.active');
+                if (!isLoginOpen && !activeTab && !window.__APP_INITIALIZED__) {
+                    showEmergencyBar();
                 }
             } catch(e) {}
-        }, 5000);
+        }, 4500);
     })();
     </script>
 
-    <link rel="icon" type="image/png" href="favicon.png?v=12">
-    <link rel="apple-touch-icon" href="favicon.png?v=12">
-    <link rel="manifest" href="app-manifest.json?v=1002">
-    <link rel="stylesheet" href="style.css?v=115.0">
+    <link rel="icon" type="image/png" href="favicon.png?v=13">
+    <link rel="apple-touch-icon" href="favicon.png?v=13">
+    <link rel="manifest" href="app-manifest.json?v=1003">
+    <link rel="stylesheet" href="style.css?v=116.0">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap"
         rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" type="text/javascript" crossorigin="anonymous"></script>
@@ -2405,7 +2421,7 @@
     </div>
 </div>
 
-    <script src="app.js?v=115.0" charset="UTF-8" defer></script>
+    <script src="app.js?v=117.0" charset="UTF-8" defer></script>
 </body>
 </html>
 
