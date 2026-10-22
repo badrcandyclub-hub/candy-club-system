@@ -2979,11 +2979,43 @@
                         <p class="offers-subtitle">إدارة وتوثيق عروض المحل بالصور، تصدير ستوري المنصات (إنستغرام وفيسبوك)، وكتالوج العروض للعملاء.</p>
                     </div>
                     <div class="offers-header-actions">
+                        <button type="button" id="btnOffersSocialSettings" class="interactive-btn btn-social-settings" onclick="window.openOffersSocialSettingsModal()" title="إعدادات ربط فيسبوك وإنستجرام">
+                            <i class="fa-solid fa-gear"></i> إعدادات المنصات
+                        </button>
                         <button type="button" id="btnNewOffer" class="interactive-btn btn-new-offer" onclick="window.openNewOfferModal()">
                             <i class="fa-solid fa-plus"></i> إضافة عرض جديد
                         </button>
                         <button type="button" id="btnExportCustomerPdf" class="interactive-btn btn-export-offers-pdf" onclick="window.generateCustomerOffersPdf()">
                             <i class="fa-solid fa-file-pdf"></i> كتالوج PDF للعملاء
+                        </button>
+                    </div>
+                </div>
+
+                <!-- لوحة تحكم النشر التلقائي وعداد الليميت اليومي لستوري إنستجرام وفيسبوك (40 استوري يومياً) -->
+                <div class="offers-stories-limit-bar">
+                    <div class="stories-limit-info-col">
+                        <div class="stories-limit-badge">
+                            <div class="stories-icons-pill">
+                                <i class="fa-brands fa-instagram" style="color: #e1306c;"></i>
+                                <i class="fa-brands fa-facebook" style="color: #1877f2;"></i>
+                            </div>
+                            <span>الحد اليومي للنشر:</span>
+                            <strong id="storiesLimitCount">40 / 40 متبقي</strong>
+                        </div>
+                        <div class="stories-limit-progress-wrap">
+                            <div class="stories-limit-progress-bar" id="storiesLimitProgressBar" style="width: 100%;"></div>
+                        </div>
+                    </div>
+                    <div class="stories-limit-timer-col">
+                        <span class="stories-timer-title"><i class="fa-solid fa-clock-rotate-left"></i> تجديد الليميت بعد:</span>
+                        <span class="stories-timer-digits" id="storiesLimitResetTimer">--:--:--</span>
+                    </div>
+                    <div class="stories-limit-queue-col">
+                        <span class="stories-queue-badge" id="storiesQueueBadge">
+                            <i class="fa-solid fa-list-check"></i> طابور الانتظار: <strong id="storiesQueueCount">0</strong>
+                        </span>
+                        <button type="button" class="btn-stories-sync-now interactive-btn" onclick="window.triggerOffersAutoPublishCycle(true)" title="فحص وتشغيل دورة النشر التلقائي الآن">
+                            <i class="fa-solid fa-bolt"></i> فحص ونشر الآن
                         </button>
                     </div>
                 </div>
@@ -3335,6 +3367,93 @@
                 <div id="orderOffersListGrid" class="order-offers-picker-grid" style="flex: 1; overflow-y: auto; padding-right: 4px;">
                     <!-- سيتم توليد كروت العروض المتاحة هنا -->
                 </div>
+            </div>
+        </div>
+
+        <!-- نافذة إعدادات ربط فيسبوك وإنستجرام للنشر التلقائي للستوري -->
+        <div id="offersSocialSettingsModal" class="modal-overlay" style="display: none; z-index: 10040;">
+            <div class="modal-content" style="max-width: 580px; max-height: 90vh; overflow-y: auto; border-radius: 20px; padding: 24px;">
+                <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #f1f5f9; padding-bottom: 14px; margin-bottom: 18px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #e1306c, #1877f2); color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                            <i class="fa-brands fa-meta"></i>
+                        </span>
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.2rem; color: #0f172a; font-weight: 800;">إعدادات نشر Story (إنستجرام وفيسبوك)</h3>
+                            <small style="color: #64748b;">ضبط ربط الحسابات والحد اليومي للنشر التلقائي</small>
+                        </div>
+                    </div>
+                    <button type="button" class="close-modal-btn" onclick="window.closeOffersSocialSettingsModal()"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+
+                <form id="offersSocialSettingsForm" onsubmit="window.saveOffersSocialSettings(event)">
+                    <!-- قسم إنستجرام -->
+                    <div style="background: #fdf2f8; border: 1.5px solid #fbcfe8; border-radius: 14px; padding: 14px; margin-bottom: 16px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                            <span style="font-weight: 800; color: #9d174d; display: flex; align-items: center; gap: 7px; font-size: 0.95rem;">
+                                <i class="fa-brands fa-instagram" style="font-size: 1.2rem; color: #e1306c;"></i> حساب Instagram
+                            </span>
+                            <span class="badge" style="background: #dcfce7; color: #166534; font-size: 0.78rem; font-weight: 700; padding: 3px 8px; border-radius: 6px;">
+                                <i class="fa-solid fa-circle-check"></i> متصل
+                            </span>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 10px;">
+                            <label style="font-size: 0.85rem; font-weight: 700; color: #475569;">Instagram Business Account ID</label>
+                            <input type="text" id="socialSettingIgId" class="form-input" style="font-family: monospace; font-size: 0.9rem;" value="28655621330773088" readonly>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label style="font-size: 0.85rem; font-weight: 700; color: #475569;">Instagram Access Token</label>
+                            <input type="password" id="socialSettingIgToken" class="form-input" placeholder="Token" style="font-family: monospace; font-size: 0.85rem;">
+                        </div>
+                    </div>
+
+                    <!-- قسم فيسبوك -->
+                    <div style="background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 14px; padding: 14px; margin-bottom: 16px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                            <span style="font-weight: 800; color: #1e40af; display: flex; align-items: center; gap: 7px; font-size: 0.95rem;">
+                                <i class="fa-brands fa-facebook" style="font-size: 1.2rem; color: #1877f2;"></i> صفحة Facebook Page
+                            </span>
+                            <span id="fbConnectionStatusBadge" class="badge" style="background: #f1f5f9; color: #64748b; font-size: 0.78rem; font-weight: 700; padding: 3px 8px; border-radius: 6px;">
+                                لم يتم الربط بعد
+                            </span>
+                        </div>
+                        <p style="font-size: 0.8rem; color: #475569; margin: 0 0 10px 0; line-height: 1.4;">
+                            للنشر التلقائي كـ Story على صفحة فيسبوك كاندي كلوب مع إنستجرام، أدخل Page ID وتوكن الصفحة (Page Access Token):
+                        </p>
+                        <div class="form-group" style="margin-bottom: 10px;">
+                            <label style="font-size: 0.85rem; font-weight: 700; color: #475569;">Facebook Page ID</label>
+                            <input type="text" id="socialSettingFbPageId" class="form-input" placeholder="مثال: 109823475192837" style="font-family: monospace; font-size: 0.9rem;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label style="font-size: 0.85rem; font-weight: 700; color: #475569;">Facebook Page Access Token</label>
+                            <input type="password" id="socialSettingFbToken" class="form-input" placeholder="ألصق توكن صفحة فيسبوك هنا (EAA...)" style="font-family: monospace; font-size: 0.85rem;">
+                        </div>
+                    </div>
+
+                    <!-- إعدادات الليميت اليومي والجدولة -->
+                    <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 14px; margin-bottom: 20px;">
+                        <span style="font-weight: 800; color: #334155; display: flex; align-items: center; gap: 7px; font-size: 0.95rem; margin-bottom: 10px;">
+                            <i class="fa-solid fa-gauge-high" style="color: #f59e0b;"></i> ضوابط الأمان والحد اليومي
+                        </span>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label style="font-size: 0.82rem; font-weight: 700; color: #475569;">الحد الأقصى اليومي (استوري/يوم)</label>
+                                <input type="number" id="socialSettingDailyLimit" class="form-input" min="5" max="100" value="40" style="font-weight: 800; text-align: center;">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label style="font-size: 0.82rem; font-weight: 700; color: #475569;">الفاصل الزمني بين النشر (دقائق)</label>
+                                <input type="number" id="socialSettingIntervalMinutes" class="form-input" min="1" max="120" value="10" style="font-weight: 800; text-align: center;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button type="button" class="btn-outline interactive-btn" onclick="window.closeOffersSocialSettingsModal()" style="padding: 9px 18px;">إلغاء</button>
+                        <button type="submit" class="btn-primary interactive-btn" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); border: none; padding: 9px 24px; font-weight: 800;">
+                            <i class="fa-solid fa-floppy-disk"></i> حفظ الإعدادات
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
 
