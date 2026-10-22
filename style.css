@@ -7565,6 +7565,20 @@ body.dark-mode .cmp-footer {
     color: #ffffff;
 }
 
+.offer-action-instagram {
+    background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
+    color: #ffffff !important;
+    border-color: transparent;
+    box-shadow: 0 2px 6px rgba(225, 48, 108, 0.3);
+}
+
+.offer-action-instagram:hover {
+    background: linear-gradient(135deg, #5b247a, #dc1818, #f59e0b);
+    color: #ffffff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(225, 48, 108, 0.4);
+}
+
 .offer-action-delete {
     color: #dc2626;
     border-color: #fecaca;

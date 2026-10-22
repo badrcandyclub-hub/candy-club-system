@@ -20496,6 +20496,29 @@ window.activeOffersFilter = 'all';
 window.currentStoryOffer = null;
 
 const OFFERS_DEFAULT_DRIVE_URL = 'https://script.google.com/macros/s/AKfycbzZdn2hQ8CBOb4E9JvM6cVr8kg80z3JfLnkLjlgvFiAphAw3EwkzV90bu7jyGW1XgX_2Q/exec';
+const INSTAGRAM_ACCOUNT_ID = '28655621330773088';
+const INSTAGRAM_DEFAULT_ACCESS_TOKEN = 'IGAAhSm9eJFMFBZAGE0MUM0TFVBa05vYmVGLXkwNWpCcXVSRTVvbE9XeG1ra2NPcDU5Vmh2TW5Rek51Ti1Cci0wWEp5YnBEcFg3RGI1a2lvZA2VqSG5mbHlDQ3FpVFNvQ2EydFJaUTg0TmxQc0ptdlIxMENB';
+
+window.getInstagramAccessToken = function() {
+    return localStorage.getItem('candy_club_ig_token') || INSTAGRAM_DEFAULT_ACCESS_TOKEN;
+};
+
+window.refreshInstagramToken = async function() {
+    try {
+        const currentToken = window.getInstagramAccessToken();
+        const res = await fetch(`https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=${currentToken}`);
+        const data = await res.json();
+        if (data && data.access_token) {
+            localStorage.setItem('candy_club_ig_token', data.access_token);
+            localStorage.setItem('candy_club_ig_token_updated', Date.now().toString());
+            console.log('Instagram Access Token refreshed successfully');
+            return data.access_token;
+        }
+    } catch(err) {
+        console.warn('Instagram token auto-refresh note:', err);
+    }
+    return window.getInstagramAccessToken();
+};
 
 // 1. فحص وتحديث الصلاحيات
 window.ensureOffersAdminPermCard = function() {
@@ -20783,8 +20806,11 @@ window.renderOffersGrid = function() {
                     ${bundleHtml}
                     ${qtyHtml}
                     <div class="offer-card-footer">
+                        <button type="button" class="offer-action-btn offer-action-instagram" onclick="window.publishOfferToInstagramStory('${item.id}')" title="نشر استوري تلقائياً على إنستجرام كاندي كلوب وفيسبوك">
+                            <i class="fa-brands fa-instagram"></i> إنستا
+                        </button>
                         <button type="button" class="offer-action-btn offer-action-story" onclick="window.downloadOfferStoryImage('${item.id}')" title="تحميل صورة ستوري 9:16 بجودة عالية">
-                            <i class="fa-solid fa-camera"></i> ستوري
+                            <i class="fa-solid fa-download"></i> صورة
                         </button>
                         <button type="button" class="offer-action-btn" onclick="window.openEditOfferModal('${item.id}')" title="تعديل العرض">
                             <i class="fa-solid fa-pen"></i>
@@ -21642,178 +21668,274 @@ window.deleteOffer = function(id) {
     });
 };
 
-// 17. توليد صورة ستوري احترافية بمقاس 9:16 (1080x1920)
+// 17. توليد ورسم قالب الستوري الاحترافي 9:16 (1080x1920)
+window.generateOfferStoryCanvas = function(offer) {
+    return new Promise((resolve) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1080;
+        canvas.height = 1920;
+        const ctx = canvas.getContext('2d');
+        
+        // خلفية متدرجة فخمة
+        const bgGrad = ctx.createLinearGradient(0, 0, 1080, 1920);
+        bgGrad.addColorStop(0, '#0f172a');
+        bgGrad.addColorStop(0.35, '#3b0764');
+        bgGrad.addColorStop(0.7, '#831843');
+        bgGrad.addColorStop(1, '#020617');
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, 1080, 1920);
+        
+        // هالة إضاءة دائرية
+        const glow = ctx.createRadialGradient(540, 720, 50, 540, 720, 500);
+        glow.addColorStop(0, 'rgba(217, 119, 6, 0.35)');
+        glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = glow;
+        ctx.fillRect(0, 200, 1080, 1100);
+        
+        // شريط علوي أنيق
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.roundRect(140, 100, 800, 100, 50);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 44px Cairo, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('كاندي كلوب - CANDY CLUB', 540, 166);
+        
+        // شارة العرض الحصري باللون الذهبي
+        ctx.fillStyle = '#d97706';
+        ctx.roundRect(340, 240, 400, 70, 35);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 36px Cairo, sans-serif';
+        ctx.fillText('عروض المحل الحصرية', 540, 288);
+        
+        // رسم صورة المنتج
+        const photoSrc = offer.image_url || 'https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?auto=format&fit=crop&w=600&q=80';
+        const prodImg = new Image();
+        prodImg.crossOrigin = 'anonymous';
+        
+        const renderTextAndPricing = () => {
+            const isBundle = Boolean(offer.bundle_price && offer.bundle_qty);
+            const origUnit = Number(offer.original_price) || 0;
+            let currentPrice = 0;
+            let origTotal = 0;
+            
+            if (isBundle) {
+                currentPrice = Number(offer.bundle_price) || 0;
+                origTotal = origUnit * Number(offer.bundle_qty);
+            } else {
+                currentPrice = Number(offer.offer_price) || 0;
+                origTotal = origUnit;
+            }
+            
+            // اسم المنتج
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 58px Cairo, sans-serif';
+            ctx.textAlign = 'center';
+            let title = offer.product_name;
+            if (title.length > 32) title = title.substr(0, 30) + '...';
+            ctx.fillText(title, 540, 1200);
+            
+            // بطاقة الأسعار
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+            ctx.roundRect(140, 1260, 800, 240, 30);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(217, 119, 6, 0.5)';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // السعر بعد العرض باللون الذهبي
+            ctx.fillStyle = '#fbbf24';
+            ctx.font = 'bold 88px Cairo, sans-serif';
+            ctx.fillText(`${currentPrice} ج.م`, 540, 1370);
+            
+            // السعر قبل الخصم مشطوب
+            if (origTotal > 0) {
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = 'bold 42px Cairo, sans-serif';
+                const oldPriceText = isBundle ? `بدلاً من ${origTotal} ج (${offer.bundle_qty} قطع)` : `بدلاً من ${origTotal} ج`;
+                ctx.fillText(oldPriceText, 540, 1440);
+                
+                const textWidth = ctx.measureText(oldPriceText).width;
+                ctx.strokeStyle = '#ef4444';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(540 - textWidth / 2 - 10, 1426);
+                ctx.lineTo(540 + textWidth / 2 + 10, 1426);
+                ctx.stroke();
+            }
+            
+            // عرض المجموعة / القطعتين إن وجد
+            if (isBundle) {
+                ctx.fillStyle = '#38bdf8';
+                ctx.font = 'bold 44px Cairo, sans-serif';
+                ctx.fillText(`عرض ${offer.bundle_qty} قطع معاً بسعر خاص`, 540, 1560);
+            }
+            
+            // فوتر الستوري ودعوة للطلب
+            ctx.fillStyle = '#d97706';
+            ctx.roundRect(240, 1640, 600, 100, 50);
+            ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 44px Cairo, sans-serif';
+            ctx.fillText('اطلب الآن قبل نفاذ الكمية', 540, 1705);
+            
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = 'bold 30px Cairo, sans-serif';
+            ctx.fillText('متوفر في جميع الفروع - خدمة التوصيل السريع متاحة', 540, 1820);
+            
+            resolve(canvas);
+        };
+        
+        prodImg.onload = function() {
+            const imgX = 140;
+            const imgY = 360;
+            const imgW = 800;
+            const imgH = 750;
+            
+            ctx.save();
+            ctx.roundRect(imgX, imgY, imgW, imgH, 40);
+            ctx.clip();
+            ctx.drawImage(prodImg, imgX, imgY, imgW, imgH);
+            ctx.restore();
+            
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.lineWidth = 6;
+            ctx.roundRect(imgX, imgY, imgW, imgH, 40);
+            ctx.stroke();
+            
+            const isBundle = Boolean(offer.bundle_price && offer.bundle_qty);
+            const origUnit = Number(offer.original_price) || 0;
+            let currentPrice = isBundle ? (Number(offer.bundle_price) || 0) : (Number(offer.offer_price) || 0);
+            let origTotal = isBundle ? (origUnit * Number(offer.bundle_qty)) : origUnit;
+            
+            if (origTotal > currentPrice && origTotal > 0) {
+                const disc = Math.round(((origTotal - currentPrice) / origTotal) * 100);
+                ctx.fillStyle = '#f59e0b';
+                ctx.roundRect(imgX + 40, imgY + 40, 260, 80, 20);
+                ctx.fill();
+                ctx.fillStyle = '#0f172a';
+                ctx.font = 'bold 42px Cairo, sans-serif';
+                ctx.fillText(`خصم ${disc}%`, imgX + 170, imgY + 95);
+            }
+            
+            renderTextAndPricing();
+        };
+        
+        prodImg.onerror = function() {
+            renderTextAndPricing();
+        };
+        
+        prodImg.src = photoSrc;
+    });
+};
+
+// تحميل صورة ستوري محلياً
 window.downloadOfferStoryImage = async function(id) {
     const offer = window.offersData.find(o => String(o.id) === String(id));
     if (!offer) return;
     
-    showToast('جاري رسم وتجهيز قالب الستوري بدقة فائقة 9:16...', 'info');
+    showToast('جاري تجهيز وتحميل قالب الستوري 9:16...', 'info');
+    const canvas = await window.generateOfferStoryCanvas(offer);
+    const dataUrl = canvas.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.download = `story_${offer.product_name.replace(/\s+/g, '_')}_candy_club.png`;
+    link.href = dataUrl;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('تم تحميل صورة الستوري بنجاح', 'success');
+};
+
+// النشر التلقائي المباشر على إنستجرام كاندي كلوب وفيسبوك
+window.publishOfferToInstagramStory = async function(id) {
+    const offer = window.offersData.find(o => String(o.id) === String(id));
+    if (!offer) return;
     
-    const canvas = document.createElement('canvas');
-    canvas.width = 1080;
-    canvas.height = 1920;
-    const ctx = canvas.getContext('2d');
-    
-    // خلفية متدرجة فخمة
-    const bgGrad = ctx.createLinearGradient(0, 0, 1080, 1920);
-    bgGrad.addColorStop(0, '#0f172a');
-    bgGrad.addColorStop(0.35, '#3b0764');
-    bgGrad.addColorStop(0.7, '#831843');
-    bgGrad.addColorStop(1, '#020617');
-    ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, 1080, 1920);
-    
-    // هالة إضاءة دائرية
-    const glow = ctx.createRadialGradient(540, 720, 50, 540, 720, 500);
-    glow.addColorStop(0, 'rgba(217, 119, 6, 0.35)');
-    glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    ctx.fillStyle = glow;
-    ctx.fillRect(0, 200, 1080, 1100);
-    
-    // شريط علوي أنيق
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-    ctx.roundRect(140, 100, 800, 100, 50);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 44px Cairo, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('كاندي كلوب - CANDY CLUB', 540, 166);
-    
-    // شارة العرض الحصري باللون الذهبي
-    ctx.fillStyle = '#d97706';
-    ctx.roundRect(340, 240, 400, 70, 35);
-    ctx.fill();
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 36px Cairo, sans-serif';
-    ctx.fillText('عروض المحل الحصرية', 540, 288);
-    
-    // رسم صورة المنتج
-    const photoSrc = offer.image_url || 'https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?auto=format&fit=crop&w=600&q=80';
-    const prodImg = new Image();
-    prodImg.crossOrigin = 'anonymous';
-    
-    prodImg.onload = function() {
-        // إطار الصورة
-        const imgX = 140;
-        const imgY = 360;
-        const imgW = 800;
-        const imgH = 750;
-        
-        ctx.save();
-        ctx.roundRect(imgX, imgY, imgW, imgH, 40);
-        ctx.clip();
-        ctx.drawImage(prodImg, imgX, imgY, imgW, imgH);
-        ctx.restore();
-        
-        // حد مضيء حول الصورة
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-        ctx.lineWidth = 6;
-        ctx.roundRect(imgX, imgY, imgW, imgH, 40);
-        ctx.stroke();
-        
-        const isBundle = Boolean(offer.bundle_price && offer.bundle_qty);
-        const origUnit = Number(offer.original_price) || 0;
-        let currentPrice = 0;
-        let origTotal = 0;
-        
-        if (isBundle) {
-            currentPrice = Number(offer.bundle_price) || 0;
-            origTotal = origUnit * Number(offer.bundle_qty);
-        } else {
-            currentPrice = Number(offer.offer_price) || 0;
-            origTotal = origUnit;
-        }
-        
-        // نسبة الخصم
-        if (origTotal > currentPrice && origTotal > 0) {
-            const disc = Math.round(((origTotal - currentPrice) / origTotal) * 100);
-            ctx.fillStyle = '#f59e0b';
-            ctx.roundRect(imgX + 40, imgY + 40, 260, 80, 20);
-            ctx.fill();
-            ctx.fillStyle = '#0f172a';
-            ctx.font = 'bold 42px Cairo, sans-serif';
-            ctx.fillText(`خصم ${disc}%`, imgX + 170, imgY + 95);
-        }
-        
-        // اسم المنتج
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 58px Cairo, sans-serif';
-        ctx.textAlign = 'center';
-        
-        let title = offer.product_name;
-        if (title.length > 32) title = title.substr(0, 30) + '...';
-        ctx.fillText(title, 540, 1200);
-        
-        // بطاقة الأسعار
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
-        ctx.roundRect(140, 1260, 800, 240, 30);
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(217, 119, 6, 0.5)';
-        ctx.lineWidth = 3;
-        ctx.stroke();
-        
-        // السعر بعد العرض باللون الذهبي
-        ctx.fillStyle = '#fbbf24';
-        ctx.font = 'bold 88px Cairo, sans-serif';
-        ctx.fillText(`${currentPrice} ج.م`, 540, 1370);
-        
-        // السعر قبل الخصم مشطوب
-        if (origTotal > 0) {
-            ctx.fillStyle = '#94a3b8';
-            ctx.font = 'bold 42px Cairo, sans-serif';
-            const oldPriceText = isBundle ? `بدلاً من ${origTotal} ج (${offer.bundle_qty} قطع)` : `بدلاً من ${origTotal} ج`;
-            ctx.fillText(oldPriceText, 540, 1440);
+    customConfirm(`هل تريد نشر عرض (${offer.product_name}) كـ Story تلقائياً على إنستجرام كاندي كلوب وفيسبوك الآن؟`, async () => {
+        let tempFileId = null;
+        try {
+            showToast('جاري رسم قالب الاستوري 9:16 بجودة فائقة...', 'info');
+            const canvas = await window.generateOfferStoryCanvas(offer);
+            if (!canvas) {
+                showToast('تعذر تجهيز قالب الاستوري', 'error');
+                return;
+            }
             
-            // خط الشطب
-            const textWidth = ctx.measureText(oldPriceText).width;
-            ctx.strokeStyle = '#ef4444';
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.moveTo(540 - textWidth / 2 - 10, 1426);
-            ctx.lineTo(540 + textWidth / 2 + 10, 1426);
-            ctx.stroke();
+            showToast('جاري تجهيز الصورة السحابية للنشر...', 'info');
+            const jpegData = canvas.toDataURL('image/jpeg', 0.94);
+            
+            const uploadResult = await window.uploadOfferPhotoToGoogleDrive(jpegData, `story_ig_${Date.now()}.jpg`);
+            if (!uploadResult || !uploadResult.url) {
+                showToast('تعذر رفع صورة الاستوري للنشر على إنستجرام', 'error');
+                return;
+            }
+            tempFileId = uploadResult.fileId;
+            const publicImageUrl = uploadResult.url;
+            
+            showToast('جاري الإرسال إلى Instagram API للنشر كـ Story...', 'info');
+            const token = window.getInstagramAccessToken();
+            
+            // 1. إنشاء حاوية الوسائط للاستوري (Create Media Container)
+            const createPayload = new URLSearchParams({
+                image_url: publicImageUrl,
+                media_type: 'STORIES',
+                access_token: token
+            });
+            
+            const createRes = await fetch(`https://graph.instagram.com/v26.0/${INSTAGRAM_ACCOUNT_ID}/media`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: createPayload.toString()
+            });
+            const createData = await createRes.json();
+            
+            if (!createData || !createData.id) {
+                const errMsg = createData?.error?.message || 'تعذر إنشاء الاستوري على إنستجرام';
+                console.error('Instagram Container Creation Error:', createData);
+                showToast(`خطأ من إنستجرام: ${errMsg}`, 'error', 6000);
+                return;
+            }
+            
+            const creationId = createData.id;
+            
+            // 2. إتمام النشر الرسمي (Publish Container)
+            showToast('جاري إطلاق الاستوري على حساب كاندي كلوب...', 'info');
+            const publishPayload = new URLSearchParams({
+                creation_id: creationId,
+                access_token: token
+            });
+            
+            const pubRes = await fetch(`https://graph.instagram.com/v26.0/${INSTAGRAM_ACCOUNT_ID}/media_publish`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: publishPayload.toString()
+            });
+            const pubData = await pubRes.json();
+            
+            if (pubData && pubData.id) {
+                showToast(`🎉 تم نشر العرض كـ Story بنجاح على إنستجرام كاندي كلوب وفيسبوك!`, 'success', 6000);
+            } else {
+                const errMsg = pubData?.error?.message || 'فشل إتمام النشر';
+                console.error('Instagram Publish Error:', pubData);
+                showToast(`خطأ في النشر: ${errMsg}`, 'error', 6000);
+            }
+        } catch(err) {
+            console.error('Publishing to Instagram Story failed:', err);
+            showToast('حدث خطأ أثناء الاتصال بـ Instagram: ' + err.message, 'error', 5000);
+        } finally {
+            if (tempFileId) {
+                // مسح الصورة المؤقتة بعد النشر لعدم استهلاك مساحة الدرايف
+                setTimeout(() => {
+                    window.deleteOfferPhotoFromGoogleDrive(tempFileId);
+                }, 30000); // إبقاء 30 ثانية لضمان اكتمال معالجة سيرفرات إنستجرام
+            }
         }
-        
-        // عرض المجموعة / القطعتين إن وجد
-        if (isBundle) {
-            ctx.fillStyle = '#38bdf8';
-            ctx.font = 'bold 44px Cairo, sans-serif';
-            ctx.fillText(`عرض ${offer.bundle_qty} قطع معاً بسعر خاص`, 540, 1560);
-        }
-        
-        // فوتر الستوري ودعوة للطلب
-        ctx.fillStyle = '#d97706';
-        ctx.roundRect(240, 1640, 600, 100, 50);
-        ctx.fill();
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 44px Cairo, sans-serif';
-        ctx.fillText('اطلب الآن قبل نفاذ الكمية', 540, 1705);
-        
-        ctx.fillStyle = '#94a3b8';
-        ctx.font = 'bold 30px Cairo, sans-serif';
-        ctx.fillText('متوفر في جميع الفروع - خدمة التوصيل السريع متاحة', 540, 1820);
-        
-        // تحميل الصورة فوراً
-        const dataUrl = canvas.toDataURL('image/png');
-        const link = document.createElement('a');
-        link.download = `story_${offer.product_name.replace(/\s+/g, '_')}_candy_club.png`;
-        link.href = dataUrl;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        showToast('تم تحميل صورة الستوري بمقاس 9:16 بجودة فائقة جاهزة للنشر', 'success');
-    };
-    
-    prodImg.onerror = function() {
-        showToast('تعذر تحميل صورة المنتج لإنشاء الستوري', 'error');
-    };
-    
-    prodImg.src = photoSrc;
+    });
 };
 
 // 18. تصدير كتالوج العروض PDF الموجه للعملاء (بدون باركود وبدون كميات)
