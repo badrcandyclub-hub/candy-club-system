@@ -9700,6 +9700,7 @@ body.dark-mode .clp-revert-btn {
     font-size: 1.4rem;
     background: linear-gradient(45deg, #f09433, #dc2743, #bc1888);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 .story-panel-title i.fa-facebook {
