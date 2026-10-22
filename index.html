@@ -40,11 +40,24 @@
     }
 
     (function() {
-        var APP_VERSION = '1.6.3';
+        var APP_VERSION = '2.0.0';
         var STORED_VER = '';
         try { STORED_VER = localStorage.getItem('cc_app_version') || ''; } catch(e) {}
         
-        // If version is missing or changed, clear stale caches
+        // Validate and clean corrupted cc_user if any
+        try {
+            var rawUser = localStorage.getItem('cc_user');
+            if (rawUser) {
+                var parsedUser = JSON.parse(rawUser);
+                if (!parsedUser || typeof parsedUser !== 'object' || !parsedUser.username) {
+                    localStorage.removeItem('cc_user');
+                }
+            }
+        } catch(uErr) {
+            try { localStorage.removeItem('cc_user'); } catch(e) {}
+        }
+
+        // If version is missing or changed, clear stale caches immediately
         if (!STORED_VER || STORED_VER !== APP_VERSION) {
             try {
                 if ('caches' in window) {
@@ -73,14 +86,35 @@
                 });
             });
         }
+
+        // 🚨 Watchdog: If app hangs / gets stuck on load for > 5s, show self-healing recovery bar
+        setTimeout(function() {
+            try {
+                var login = document.getElementById('login-screen');
+                var appHeader = document.querySelector('.app-header');
+                var isLoginOpen = login && (login.style.display === 'flex' || login.style.display === 'block');
+                var isAppOpen = appHeader && getComputedStyle(appHeader).display !== 'none';
+                if (!isLoginOpen && !isAppOpen) {
+                    var bar = document.getElementById('cc-emergency-cache-fix');
+                    if (!bar && document.body) {
+                        bar = document.createElement('div');
+                        bar.id = 'cc-emergency-cache-fix';
+                        bar.style.cssText = 'position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:9999999; background:#ffffff; color:#0f172a; border:2px solid #ef4444; box-shadow:0 12px 35px rgba(0,0,0,0.3); padding:14px 22px; border-radius:14px; font-family:Cairo,sans-serif; text-align:center; display:flex; align-items:center; gap:14px; font-weight:700;';
+                        bar.innerHTML = '<span>⚠️ يبدو أن الصفحة معلقة بسبب ملفات كاش قديمة</span>' +
+                            '<button onclick="forceSystemHardRefresh()" style="background:#ef4444; color:#fff; border:none; padding:8px 18px; border-radius:8px; font-weight:800; cursor:pointer; font-family:inherit;">تحديث ومسح الكاش الآن 🔄</button>';
+                        document.body.appendChild(bar);
+                    }
+                }
+            } catch(e) {}
+        }, 5000);
     })();
     </script>
 
-    <link rel="icon" type="image/png" href="favicon.png?v=11">
-    <link rel="apple-touch-icon" href="favicon.png?v=11">
-    <link rel="manifest" href="app-manifest.json?v=1001">
-    <link rel="stylesheet" href="style.css?v=114.0">
-    <link rel="stylesheet" href="gifts_module/css/gifts.css?v=22">
+    <link rel="icon" type="image/png" href="favicon.png?v=12">
+    <link rel="apple-touch-icon" href="favicon.png?v=12">
+    <link rel="manifest" href="app-manifest.json?v=1002">
+    <link rel="stylesheet" href="style.css?v=115.0">
+    <link rel="stylesheet" href="gifts_module/css/gifts.css?v=23">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap"
         rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" type="text/javascript" crossorigin="anonymous"></script>
@@ -3408,25 +3442,38 @@
                     </div>
 
                     <!-- قسم فيسبوك -->
-                    <div style="background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 14px; padding: 14px; margin-bottom: 16px;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-                            <span style="font-weight: 800; color: #1e40af; display: flex; align-items: center; gap: 7px; font-size: 0.95rem;">
-                                <i class="fa-brands fa-facebook" style="font-size: 1.2rem; color: #1877f2;"></i> صفحة Facebook Page
+                    <div style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 14px; padding: 16px; margin-bottom: 16px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                            <span style="font-weight: 800; color: #166534; display: flex; align-items: center; gap: 7px; font-size: 0.95rem;">
+                                <i class="fa-brands fa-facebook" style="font-size: 1.25rem; color: #1877f2;"></i> صفحة Facebook الرسمية
                             </span>
-                            <span id="fbConnectionStatusBadge" class="badge" style="background: #f1f5f9; color: #64748b; font-size: 0.78rem; font-weight: 700; padding: 3px 8px; border-radius: 6px;">
-                                لم يتم الربط بعد
+                            <span id="fbConnectionStatusBadge" class="badge" style="background: #dcfce7; color: #15803d; border: 1px solid #86efac; font-size: 0.78rem; font-weight: 700; padding: 4px 10px; border-radius: 6px;">
+                                <i class="fa-solid fa-circle-check"></i> متصل ومفعّل (Candy Club - EG)
                             </span>
                         </div>
-                        <p style="font-size: 0.8rem; color: #475569; margin: 0 0 10px 0; line-height: 1.4;">
-                            للنشر التلقائي كـ Story على صفحة فيسبوك كاندي كلوب مع إنستجرام، أدخل Page ID وتوكن الصفحة (Page Access Token):
-                        </p>
+                        
+                        <div style="background: #ffffff; border: 1px solid #bbf7d0; border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+                            <div>
+                                <div style="font-weight: 800; color: #1e293b; font-size: 0.9rem;"><i class="fa-solid fa-store" style="color: #16a34a; margin-left: 5px;"></i> Candy Club - EG</div>
+                                <div style="font-size: 0.78rem; color: #64748b;">صفحة فيسبوك الرسمية • أكثر من 59,800 متابع • النشر التلقائي جاهز</div>
+                            </div>
+                            <button type="button" class="btn-sm interactive-btn" onclick="window.testFacebookConnection()" style="background: #16a34a; color: white; border: none; font-size: 0.78rem; font-weight: 700; padding: 6px 12px; border-radius: 6px; cursor: pointer;">
+                                <i class="fa-solid fa-bolt"></i> اختبار الاتصال الآن
+                            </button>
+                        </div>
+
                         <div class="form-group" style="margin-bottom: 10px;">
-                            <label style="font-size: 0.85rem; font-weight: 700; color: #475569;">Facebook Page ID</label>
-                            <input type="text" id="socialSettingFbPageId" class="form-input" placeholder="مثال: 109823475192837" style="font-family: monospace; font-size: 0.9rem;">
+                            <label style="font-size: 0.82rem; font-weight: 700; color: #374151;">Facebook Page ID</label>
+                            <input type="text" id="socialSettingFbPageId" class="form-input" value="356148687583666" style="font-family: monospace; font-size: 0.9rem; font-weight: 700; background: #ffffff;">
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label style="font-size: 0.85rem; font-weight: 700; color: #475569;">Facebook Page Access Token</label>
-                            <input type="password" id="socialSettingFbToken" class="form-input" placeholder="ألصق توكن صفحة فيسبوك هنا (EAA...)" style="font-family: monospace; font-size: 0.85rem;">
+                            <label style="font-size: 0.82rem; font-weight: 700; color: #374151;">Facebook Page Access Token</label>
+                            <div style="position: relative;">
+                                <input type="password" id="socialSettingFbToken" class="form-input" value="EAAQXelKvXdEBS9zQKBYthQmfZBcP6NOefjPMhZBZAZBrfQZCREK9J7iftKdPAaNyZBWVZAUf9wier6GiJcWUutxciTgLkzhkZCOo4poSANVSCO4BIonluzvWYeaBZChd4rK3cCvzcUhi5ZB7ZAxiZCg7RtZBNu5CjoctgHrqb5IYP7HfpMqPv9C4HNAprtEOe9iyT5pRRpAcK7bpjnvvqa8TCLJMTshWwb5JjZBjmtlwUZCZBQuRfiZB5lavcEH7cgy40BDoZD" style="font-family: monospace; font-size: 0.85rem; padding-left: 38px;">
+                                <button type="button" onclick="const f=document.getElementById('socialSettingFbToken'); f.type = (f.type === 'password' ? 'text' : 'password');" style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); border: none; background: none; color: #64748b; cursor: pointer; padding: 4px; font-size: 0.9rem;" title="إظهار / إخفاء التوكن">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -4500,8 +4547,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script src="email_service.js?v=10.0" defer></script>
-    <script src="app.js?v=114.0" charset="UTF-8" defer></script>
-    <script src="update_notice.js?v=5" defer></script>
+    <script src="app.js?v=115.0" charset="UTF-8" defer></script>
+    <script src="update_notice.js?v=6" defer></script>
 
     <!-- Modal: إعداد موقع ونطاق الفرع (GPS Geofencing) -->
     <div id="branchLocationModal" class="modal-overlay" style="display:none; align-items:center; justify-content:center; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.65); backdrop-filter:blur(8px); z-index:99999;">

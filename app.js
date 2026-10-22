@@ -16203,6 +16203,9 @@ function checkSession() {
     if (stored) {
         try {
             currentUser = JSON.parse(stored);
+            if (!currentUser || typeof currentUser !== 'object') {
+                throw new Error("Invalid stored user object");
+            }
             
             let isAdminPage = window.location.pathname.toLowerCase().includes('admin.html');
             if (isAdminPage && currentUser.permissions !== "ALL") {
@@ -16210,6 +16213,11 @@ function checkSession() {
                 localStorage.removeItem('cc_user');
                 currentUser = null;
                 showLogin();
+                let err = document.getElementById('login-error');
+                if (err) {
+                    err.innerText = "عذراً، هذا حساب موظف. هذه اللوحة مخصصة للمديرين فقط.";
+                    err.style.display = 'block';
+                }
                 return;
             }
             if (!isAdminPage && currentUser.permissions === "ALL") {
@@ -16217,11 +16225,22 @@ function checkSession() {
                 localStorage.removeItem('cc_user');
                 currentUser = null;
                 showLogin();
+                let err = document.getElementById('login-error');
+                if (err) {
+                    err.innerText = "عذراً، هذا حساب مدير. يرجى تسجيل الدخول من بوابة المدير.";
+                    err.style.display = 'block';
+                }
                 return;
             }
             
-            document.getElementById('login-screen').style.display = 'none';
-            applyPermissions();
+            let loginScreen = document.getElementById('login-screen');
+            if (loginScreen) loginScreen.style.display = 'none';
+            
+            try {
+                applyPermissions();
+            } catch(permErr) {
+                console.error("applyPermissions error in checkSession:", permErr);
+            }
             
             // Sync user permissions in background to immediately reflect admin changes
             if (currentUser && currentUser.username && window.supabase) {
@@ -16239,15 +16258,16 @@ function checkSession() {
                             }
                             if (updated) {
                                 localStorage.setItem('cc_user', JSON.stringify(currentUser));
-                                applyPermissions();
+                                try { applyPermissions(); } catch(e) {}
                             }
                         }
                     }).catch(err => console.warn("Permission sync background check:", err));
             }
-            // تمت إزالة التحميل التلقائي لتفعيل الـ Lazy Loading
             if (typeof updateSuspendedCount === 'function') updateSuspendedCount();
         } catch (e) {
             console.error("Invalid session", e);
+            localStorage.removeItem('cc_user');
+            currentUser = null;
             showLogin();
         }
     } else {
@@ -16551,56 +16571,9 @@ window.reprintInvLog = function(logId) {
 };;;
 
 
-// ==========================================
-// ⭐ V16: نظام الجلسات وإدارة المستخدمين
-// ==========================================
-function checkSession() {
-    let stored = localStorage.getItem('cc_user');
-    if (stored) {
-        try {
-            currentUser = JSON.parse(stored);
-            
-            let isAdminPage = window.location.pathname.toLowerCase().includes('admin.html');
-            if (isAdminPage && currentUser.permissions !== "ALL") {
-                console.warn("Unauthorized access to admin panel.");
-                localStorage.removeItem('cc_user');
-                currentUser = null;
-                showLogin();
-                let err = document.getElementById('login-error');
-                if (err) {
-                    err.innerText = "عذراً، هذا حساب موظف. هذه اللوحة مخصصة للمديرين فقط.";
-                    err.style.display = 'block';
-                }
-                return;
-            }
-            if (!isAdminPage && currentUser.permissions === "ALL") {
-                console.warn("Admin account cannot be used in the employee portal.");
-                localStorage.removeItem('cc_user');
-                currentUser = null;
-                showLogin();
-                let err = document.getElementById('login-error');
-                if (err) {
-                    err.innerText = "عذراً، هذا حساب مدير. يرجى تسجيل الدخول من بوابة المدير.";
-                    err.style.display = 'block';
-                }
-                return;
-            }
-            
-            document.getElementById('login-screen').style.display = 'none';
-            applyPermissions();
-            // تمت إزالة التحميل التلقائي لتفعيل الـ Lazy Loading
-            if (typeof updateSuspendedCount === 'function') updateSuspendedCount();
-        } catch (e) {
-            console.error("Invalid session", e);
-            showLogin();
-        }
-    } else {
-        showLogin();
-    }
-}
-
 function showLogin() {
-    document.getElementById('login-screen').style.display = 'flex';
+    let screen = document.getElementById('login-screen');
+    if (screen) screen.style.display = 'flex';
 }
 
 window.handleLogin = function(e) {
@@ -20520,12 +20493,24 @@ window.getOffersStoryIntervalMinutes = function() {
     return (!isNaN(val) && val > 0) ? val : OFFERS_STORY_PUBLISH_INTERVAL_MIN;
 };
 
+const FACEBOOK_DEFAULT_PAGE_ID = '356148687583666';
+const FACEBOOK_DEFAULT_PAGE_ACCESS_TOKEN = 'EAAQXelKvXdEBS9zQKBYthQmfZBcP6NOefjPMhZBZAZBrfQZCREK9J7iftKdPAaNyZBWVZAUf9wier6GiJcWUutxciTgLkzhkZCOo4poSANVSCO4BIonluzvWYeaBZChd4rK3cCvzcUhi5ZB7ZAxiZCg7RtZBNu5CjoctgHrqb5IYP7HfpMqPv9C4HNAprtEOe9iyT5pRRpAcK7bpjnvvqa8TCLJMTshWwb5JjZBjmtlwUZCZBQuRfiZB5lavcEH7cgy40BDoZD';
+
+try {
+    if (!localStorage.getItem('candy_club_fb_page_id')) {
+        localStorage.setItem('candy_club_fb_page_id', FACEBOOK_DEFAULT_PAGE_ID);
+    }
+    if (!localStorage.getItem('candy_club_fb_page_token')) {
+        localStorage.setItem('candy_club_fb_page_token', FACEBOOK_DEFAULT_PAGE_ACCESS_TOKEN);
+    }
+} catch(e) {}
+
 window.getFacebookPageId = function() {
-    return localStorage.getItem('candy_club_fb_page_id') || '';
+    return localStorage.getItem('candy_club_fb_page_id') || FACEBOOK_DEFAULT_PAGE_ID;
 };
 
 window.getFacebookPageAccessToken = function() {
-    return localStorage.getItem('candy_club_fb_page_token') || '';
+    return localStorage.getItem('candy_club_fb_page_token') || FACEBOOK_DEFAULT_PAGE_ACCESS_TOKEN;
 };
 
 window.formatSecondsToTimer = function(totalSeconds) {
@@ -20594,7 +20579,7 @@ window.getOffersStoryDailyUsage = function() {
     };
 };
 
-// نشر ستوري على صفحة فيسبوك كاندي كلوب (Facebook Page Stories API)
+// نشر ستوري على صفحة فيسبوك كاندي كلوب (Facebook Page Stories API الرسمية)
 window.publishOfferToFacebookStory = async function(publicImageUrl) {
     const pageId = window.getFacebookPageId();
     const pageToken = window.getFacebookPageAccessToken();
@@ -20604,23 +20589,45 @@ window.publishOfferToFacebookStory = async function(publicImageUrl) {
     }
     
     try {
-        const payload = new URLSearchParams({
-            photo_url: publicImageUrl,
+        // الخطوة 1: رفع الصورة كـ Unpublished Photo لصفحة فيسبوك
+        const uploadPayload = new URLSearchParams({
+            url: publicImageUrl,
+            published: 'false',
             access_token: pageToken
         });
         
-        const res = await fetch(`https://graph.facebook.com/v26.0/${pageId}/photo_stories`, {
+        const uploadRes = await fetch(`https://graph.facebook.com/v26.0/${pageId}/photos`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: payload.toString()
+            body: uploadPayload.toString()
         });
         
-        const data = await res.json();
-        if (data && data.id) {
-            return { success: true, id: data.id };
+        const uploadData = await uploadRes.json();
+        if (!uploadData || !uploadData.id) {
+            console.warn('Facebook upload photo error:', uploadData);
+            return { success: false, error: uploadData?.error?.message || 'تعذر رفع الصورة لفيسبوك' };
+        }
+        
+        const photoId = uploadData.id;
+        
+        // الخطوة 2: إنشاء الستوري على صفحة فيسبوك باستخدام photo_id
+        const storyPayload = new URLSearchParams({
+            photo_id: photoId,
+            access_token: pageToken
+        });
+        
+        const storyRes = await fetch(`https://graph.facebook.com/v26.0/${pageId}/photo_stories`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: storyPayload.toString()
+        });
+        
+        const storyData = await storyRes.json();
+        if (storyData && (storyData.success || storyData.post_id || storyData.id)) {
+            return { success: true, id: storyData.post_id || storyData.id || photoId };
         } else {
-            console.warn('Facebook Page Story API response error:', data);
-            return { success: false, error: data?.error?.message || 'تعذر النشر على صفحة فيسبوك' };
+            console.warn('Facebook Page Story API response error:', storyData);
+            return { success: false, error: storyData?.error?.message || 'تعذر نشر الستوري على صفحة فيسبوك' };
         }
     } catch(err) {
         console.error('Facebook Story network error:', err);
@@ -20704,7 +20711,7 @@ window.openOffersSocialSettingsModal = function() {
         if (hasFb) {
             statusBadge.style.background = '#dbeafe';
             statusBadge.style.color = '#1e40af';
-            statusBadge.innerHTML = '<i class="fa-solid fa-circle-check"></i> متصل وجاهز للنشر';
+            statusBadge.innerHTML = '<i class="fa-solid fa-circle-check"></i> معرف الصفحة والتوكن محفوظان. يمكنك الضغط على فحص الاتصال للتأكد.';
         } else {
             statusBadge.style.background = '#f1f5f9';
             statusBadge.style.color = '#64748b';
@@ -20718,6 +20725,53 @@ window.openOffersSocialSettingsModal = function() {
 window.closeOffersSocialSettingsModal = function() {
     const modal = document.getElementById('offersSocialSettingsModal');
     if (modal) modal.style.display = 'none';
+};
+
+window.testFacebookConnection = async function() {
+    const pageId = (document.getElementById('socialSettingFbPageId')?.value || window.getFacebookPageId() || '').trim();
+    const token = (document.getElementById('socialSettingFbToken')?.value || window.getFacebookPageAccessToken() || '').trim();
+    const statusBadge = document.getElementById('fbConnectionStatusBadge');
+    
+    if (!pageId || !token) {
+        if (typeof showToast === 'function') showToast('برجاء إدخال Page ID و Page Access Token أولاً', 'warning');
+        return;
+    }
+    
+    if (statusBadge) {
+        statusBadge.style.background = '#fef3c7';
+        statusBadge.style.color = '#92400e';
+        statusBadge.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري فحص الاتصال بـ Facebook Graph API...';
+    }
+    
+    try {
+        const url = `https://graph.facebook.com/v19.0/${encodeURIComponent(pageId)}?fields=id,name,link&access_token=${encodeURIComponent(token)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        
+        if (data && data.id && !data.error) {
+            if (statusBadge) {
+                statusBadge.style.background = '#dcfce7';
+                statusBadge.style.color = '#15803d';
+                statusBadge.innerHTML = `<i class="fa-solid fa-circle-check"></i> متصل بنجاح بصفحة: <strong>${data.name}</strong> (ID: ${data.id})`;
+            }
+            if (typeof showToast === 'function') showToast(`تم التحقق بنجاح! متصل بصفحة: ${data.name}`, 'success');
+        } else {
+            const errMsg = data.error?.message || 'تعذر التحقق من الصفحة، تأكد من صحة التوكن والمعرف';
+            if (statusBadge) {
+                statusBadge.style.background = '#fee2e2';
+                statusBadge.style.color = '#b91c1c';
+                statusBadge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> فشل الاتصال: ${errMsg}`;
+            }
+            if (typeof showToast === 'function') showToast(`فشل الاتصال: ${errMsg}`, 'error');
+        }
+    } catch(err) {
+        if (statusBadge) {
+            statusBadge.style.background = '#fee2e2';
+            statusBadge.style.color = '#b91c1c';
+            statusBadge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> خطأ في الاتصال بالإنترنت أثناء فحص فيسبوك`;
+        }
+        if (typeof showToast === 'function') showToast('حدث خطأ في الشبكة أثناء فحص الاتصال', 'error');
+    }
 };
 
 window.saveOffersSocialSettings = function(e) {
@@ -20735,10 +20789,10 @@ window.saveOffersSocialSettings = function(e) {
     if (!isNaN(limit) && limit > 0) localStorage.setItem('candy_club_story_daily_limit', limit.toString());
     if (!isNaN(interval) && interval > 0) localStorage.setItem('candy_club_story_interval_min', interval.toString());
     
-    showToast('تم حفظ إعدادات نشر إنستجرام وفيسبوك بنجاح', 'success');
+    if (typeof showToast === 'function') showToast('تم حفظ إعدادات نشر إنستجرام وفيسبوك بنجاح', 'success');
     window.closeOffersSocialSettingsModal();
-    window.updateOffersStorySchedulerUI();
-    window.renderOffersGrid();
+    if (typeof window.updateOffersStorySchedulerUI === 'function') window.updateOffersStorySchedulerUI();
+    if (typeof window.renderOffersGrid === 'function') window.renderOffersGrid();
 };
 
 window.refreshInstagramToken = async function() {
@@ -22213,24 +22267,35 @@ window.publishOfferToInstagramStory = async function(id, isAuto = false) {
                 console.error('Instagram Container Creation Error:', createData);
             }
 
-            // 3. محاولة النشر الموازي على صفحة فيسبوك كاندي كلوب
+            // 3. النشر الموازي كـ Story على صفحة فيسبوك كاندي كلوب
             try {
-                const fbRes = await fetch(`https://graph.facebook.com/v26.0/${FACEBOOK_PAGE_ID}/photos`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({
-                        url: publicImageUrl,
-                        published: 'true',
-                        caption: `عرض حصري من كاندي كلوب: ${offer.product_name} 🔥 متوفر الآن بالفرع!`,
-                        access_token: token
-                    }).toString()
-                });
-                const fbData = await fbRes.json();
-                if (fbData && fbData.id) {
+                const fbStoryRes = await window.publishOfferToFacebookStory(publicImageUrl);
+                if (fbStoryRes && fbStoryRes.success) {
                     fbSuccess = true;
+                } else {
+                    console.warn('Facebook Page Story result:', fbStoryRes);
+                    // محاولة النشر كبوست صورة على الصفحة كخيار بديل إذا تعذر الستوري
+                    const pageId = window.getFacebookPageId();
+                    const pageToken = window.getFacebookPageAccessToken();
+                    if (pageId && pageToken) {
+                        const fbRes = await fetch(`https://graph.facebook.com/v26.0/${pageId}/photos`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: new URLSearchParams({
+                                url: publicImageUrl,
+                                published: 'true',
+                                caption: `عرض حصري من كاندي كلوب: ${offer.product_name} 🔥 متوفر الآن بالفرع!`,
+                                access_token: pageToken
+                            }).toString()
+                        });
+                        const fbData = await fbRes.json();
+                        if (fbData && fbData.id) {
+                            fbSuccess = true;
+                        }
+                    }
                 }
             } catch(e) {
-                console.warn('Facebook post attempt:', e);
+                console.warn('Facebook story publish error:', e);
             }
             
             if (igSuccess || fbSuccess) {
