@@ -20942,14 +20942,17 @@ window.initOffersTab = async function() {
 };
 
 window.updateOffersStats = function() {
-    const total = window.offersData.length;
+    const productOffers = (window.offersData || []).filter(o => o.pricing_mode !== 'recurring_story');
+    const recurringStories = (window.offersData || []).filter(o => o.pricing_mode === 'recurring_story');
+
+    const total = productOffers.length;
     let quantityCount = 0;
     let expiring = 0;
     
     const now = new Date().getTime();
     const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
     
-    window.offersData.forEach(o => {
+    productOffers.forEach(o => {
         if (o.expiry_type === 'quantity') {
             quantityCount++;
         }
@@ -20973,6 +20976,12 @@ window.updateOffersStats = function() {
     if (elTotal) elTotal.textContent = total;
     if (elQty) elQty.textContent = quantityCount;
     if (elExpiring) elExpiring.textContent = expiring;
+
+    // تحديث عدادات شريط التبويبات العلوي
+    const subOffersCount = document.getElementById('subtabOffersCount');
+    const subRecurringCount = document.getElementById('subtabRecurringCount');
+    if (subOffersCount) subOffersCount.textContent = total;
+    if (subRecurringCount) subRecurringCount.textContent = recurringStories.length;
 };
 
 // 5. تصفية وبحث العروض (3 فلاتر فقط: الكل - حسب الكمية - محددة بالمدة)
@@ -20997,7 +21006,10 @@ window.renderOffersGrid = function() {
     const searchVal = (document.getElementById('offersSearchInput')?.value || '').trim().toLowerCase();
     const filter = window.activeOffersFilter || 'all';
     
-    let list = window.offersData.filter(item => {
+    let list = (window.offersData || []).filter(item => {
+        // استبعاد الستوري المتكرر من شبكة كروت عروض المحل
+        if (item.pricing_mode === 'recurring_story') return false;
+
         // فلتر البحث
         if (searchVal) {
             const nameMatch = (item.product_name || '').toLowerCase().includes(searchVal);
@@ -21011,9 +21023,14 @@ window.renderOffersGrid = function() {
         return true;
     });
     
+    if (emptyState) {
+        const totalProductOffers = (window.offersData || []).filter(item => item.pricing_mode !== 'recurring_story').length;
+        emptyState.style.display = (totalProductOffers === 0) ? 'block' : 'none';
+    }
+
     if (list.length === 0) {
-        grid.innerHTML = '';
-        if (emptyState) emptyState.style.display = 'block';
+        grid.innerHTML = (emptyState && emptyState.style.display === 'block') ? '' : '<div style="grid-column: 1/-1; text-align: center; color: #94a3b8; padding: 40px;">لا توجد عروض تطابق معايير البحث</div>';
+        window.updateOffersSelectedCount();
         return;
     }
     
@@ -21179,6 +21196,488 @@ window.renderOffersGrid = function() {
     // مزامنة شريط الليميت والعدادات وحالة التحديد
     window.updateOffersStorySchedulerUI();
     window.updateOffersSelectedCount();
+};
+
+// ==========================================
+// 🔁 إدارة الستوري المتكرر والتبويبات الفرعية
+// ==========================================
+window.activeOffersSubtab = 'offers'; // 'offers' | 'recurring'
+window.activeRecurringFilter = 'all';
+
+window.switchOffersSubtab = function(subtab) {
+    window.activeOffersSubtab = subtab;
+    const btnOffers = document.getElementById('subtabOffersBtn');
+    const btnRecurring = document.getElementById('subtabRecurringBtn');
+    const viewOffers = document.getElementById('offersViewContainer');
+    const viewRecurring = document.getElementById('recurringStoriesViewContainer');
+    const btnMainAction = document.getElementById('btnNewOffer');
+    const btnMainActionText = document.getElementById('btnNewOfferText');
+
+    if (subtab === 'offers') {
+        if (btnOffers) btnOffers.classList.add('active');
+        if (btnRecurring) btnRecurring.classList.remove('active');
+        if (viewOffers) viewOffers.style.display = 'block';
+        if (viewRecurring) viewRecurring.style.display = 'none';
+        if (btnMainActionText) btnMainActionText.textContent = 'إضافة عرض جديد';
+        if (btnMainAction) {
+            btnMainAction.style.background = '';
+            btnMainAction.title = 'إضافة عرض جديد بالباركود والأسعار';
+        }
+        window.renderOffersGrid();
+    } else {
+        if (btnOffers) btnOffers.classList.remove('active');
+        if (btnRecurring) btnRecurring.classList.add('active');
+        if (viewOffers) viewOffers.style.display = 'none';
+        if (viewRecurring) viewRecurring.style.display = 'block';
+        if (btnMainActionText) btnMainActionText.textContent = 'إضافة ستوري متكرر';
+        if (btnMainAction) {
+            btnMainAction.style.background = 'linear-gradient(135deg, #e11d48, #be185d)';
+            btnMainAction.title = 'إضافة ستوري متكرر بصورة فقط بدون باركود';
+        }
+        window.renderRecurringStoriesGrid();
+    }
+    window.updateOffersStats();
+};
+
+window.handleOffersMainAction = function() {
+    if (window.activeOffersSubtab === 'recurring') {
+        window.openNewRecurringStoryModal();
+    } else {
+        window.openNewOfferModal();
+    }
+};
+
+window.setRecurringStoriesFilter = function(filter) {
+    window.activeRecurringFilter = filter;
+    document.querySelectorAll('#recurringStoriesViewContainer .offers-filter-pill').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filter === filter);
+    });
+    window.renderRecurringStoriesGrid();
+};
+
+window.filterRecurringStoriesList = function() {
+    window.renderRecurringStoriesGrid();
+};
+
+// رسم كروت الستوري المتكرر
+window.renderRecurringStoriesGrid = function() {
+    const grid = document.getElementById('recurringStoriesGrid');
+    const emptyState = document.getElementById('recurringStoriesEmptyState');
+    if (!grid) return;
+
+    const searchVal = (document.getElementById('recurringSearchInput')?.value || '').trim().toLowerCase();
+    const filter = window.activeRecurringFilter || 'all';
+    const now = Date.now();
+    const usage = window.getOffersStoryDailyUsage();
+
+    let list = (window.offersData || []).filter(item => {
+        if (item.pricing_mode !== 'recurring_story') return false;
+
+        if (searchVal) {
+            const nameMatch = (item.product_name || '').toLowerCase().includes(searchVal);
+            if (!nameMatch) return false;
+        }
+
+        if (filter === 'unlimited') return item.expiry_type === 'unlimited';
+        if (filter === 'count') return item.expiry_type === 'count';
+        if (filter === 'date') return item.expiry_type === 'date';
+        return true;
+    });
+
+    if (emptyState) {
+        const totalRecurring = (window.offersData || []).filter(item => item.pricing_mode === 'recurring_story').length;
+        emptyState.style.display = (totalRecurring === 0) ? 'block' : 'none';
+    }
+
+    if (list.length === 0) {
+        grid.innerHTML = (emptyState && emptyState.style.display === 'block') ? '' : '<div style="grid-column: 1/-1; text-align: center; color: #94a3b8; padding: 40px;">لا توجد قصص متكررة تطابق معايير البحث</div>';
+        window.updateRecurringSelectedCount();
+        return;
+    }
+
+    grid.innerHTML = list.map(item => {
+        const photoSrc = item.image_url || 'https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?auto=format&fit=crop&w=600&q=80';
+        let storyBadgeHtml = '';
+
+        if (item.is_active) {
+            const hasPublished = Boolean(item.last_story_published_at);
+            if (hasPublished) {
+                const nextPublishTs = Number(item.last_story_published_at) + (24 * 60 * 60 * 1000);
+                if (now < nextPublishTs) {
+                    const diffSec = Math.max(0, Math.floor((nextPublishTs - now) / 1000));
+                    storyBadgeHtml = `
+                        <div class="offer-story-badge is-scheduled" title="نُشر الستوري وسيتكرر النشر التلقائي بعد انتهاء الـ 24 ساعة">
+                            <i class="fa-solid fa-clock"></i> نشر تلقائي بعد: <span class="story-timer-digit" data-target-ts="${nextPublishTs}">${window.formatSecondsToTimer(diffSec)}</span>
+                        </div>
+                    `;
+                } else {
+                    storyBadgeHtml = `
+                        <div class="offer-story-badge is-due" style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0;" title="حان موعد النشر التلقائي الدوري (24 ساعة)">
+                            <i class="fa-solid fa-bolt"></i> مستحق للنشر التلقائي الآن
+                        </div>
+                    `;
+                }
+            } else if (usage.isLimitReached) {
+                storyBadgeHtml = `
+                    <div class="offer-story-badge is-queued" title="تم استهلاك حد الـ 40 استوري اليوم - في طابور الأولوية">
+                        <i class="fa-solid fa-hourglass-half"></i> في طابور الانتظار (تجاوز الليميت)
+                    </div>
+                `;
+            } else {
+                storyBadgeHtml = `
+                    <div class="offer-story-badge is-new" style="background:#fffbeb; color:#d97706; border:1px solid #fde68a;" title="ستوري جديد جاهز للنشر">
+                        <i class="fa-solid fa-sparkles"></i> ستوري جديد - بانتظار أول نشر
+                    </div>
+                `;
+            }
+        }
+
+        // شارة نوع التكرار / الصلاحية
+        let cycleBadgeHtml = '';
+        if (item.expiry_type === 'count') {
+            const rem = (item.remaining_quantity !== undefined && item.remaining_quantity !== null) ? item.remaining_quantity : (item.initial_quantity || 0);
+            cycleBadgeHtml = `<span style="display:inline-flex; align-items:center; gap:5px; background:#fffbeb; color:#b45309; border:1px solid #fde68a; padding:4px 8px; border-radius:8px; font-size:0.78rem; font-weight:800;"><i class="fa-solid fa-arrow-down-1-9"></i> متبقي ${rem} مرات نشر</span>`;
+        } else if (item.expiry_type === 'date' && item.expiry_date) {
+            cycleBadgeHtml = `<span style="display:inline-flex; align-items:center; gap:5px; background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; padding:4px 8px; border-radius:8px; font-size:0.78rem; font-weight:800;"><i class="fa-solid fa-calendar"></i> ينتهي: ${item.expiry_date}</span>`;
+        } else {
+            cycleBadgeHtml = `<span style="display:inline-flex; align-items:center; gap:5px; background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; padding:4px 8px; border-radius:8px; font-size:0.78rem; font-weight:800;"><i class="fa-solid fa-infinity"></i> مستمر يومياً كل 24 ساعة</span>`;
+        }
+
+        const safeTitle = (item.product_name || 'ستوري كاندي كلوب').replace(/'/g, "\\'");
+
+        return `
+            <div class="recurring-story-card ${!item.is_active ? 'is-inactive' : ''}" data-id="${item.id}">
+                <div class="recurring-card-media">
+                    <label class="offer-card-select-label" onclick="event.stopPropagation()" title="تحديد للنشر الجماعي">
+                        <input type="checkbox" class="offer-card-checkbox recurring-card-checkbox" data-offer-id="${item.id}" onchange="window.updateRecurringSelectedCount()">
+                    </label>
+                    <img src="${photoSrc}" alt="${item.product_name}" class="recurring-card-img" onclick="window.openOfferImageLightbox('${photoSrc}', '${safeTitle}')" style="cursor: zoom-in;" title="اضغط لمعاينة الستوري بالحجم الكامل" onerror="this.src='https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?auto=format&fit=crop&w=600&q=80'">
+                    <button type="button" class="offer-img-preview-btn" onclick="event.stopPropagation(); window.openOfferImageLightbox('${photoSrc}', '${safeTitle}')" title="معاينة بالحجم الكامل">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                    <span class="offer-status-badge ${item.is_active ? 'status-active' : 'status-ended'}">
+                        ${item.is_active ? '<i class="fa-solid fa-check"></i> نشط' : '<i class="fa-solid fa-xmark"></i> متوقف'}
+                    </span>
+                </div>
+                <div class="recurring-card-body">
+                    <h3 class="recurring-card-title">${item.product_name || 'ستوري كاندي كلوب'}</h3>
+                    <div>${cycleBadgeHtml}</div>
+                    ${storyBadgeHtml}
+                    <div class="recurring-card-footer">
+                        <button type="button" class="offer-action-btn" onclick="window.openEditRecurringStoryModal('${item.id}')" title="تعديل الستوري" style="flex: 1;">
+                            <i class="fa-solid fa-pen"></i> تعديل
+                        </button>
+                        <button type="button" class="offer-action-btn" onclick="window.toggleOfferActive('${item.id}')" title="${item.is_active ? 'إيقاف الستوري مؤقتاً' : 'تفعيل الستوري'}" style="flex: 1;">
+                            <i class="fa-solid ${item.is_active ? 'fa-pause' : 'fa-play'}"></i> ${item.is_active ? 'إيقاف' : 'تفعيل'}
+                        </button>
+                        <button type="button" class="offer-action-btn offer-action-delete" onclick="window.deleteOffer('${item.id}')" title="حذف الستوري نهائياً ومسح صورته من Google Drive">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    window.updateOffersStorySchedulerUI();
+    window.updateRecurringSelectedCount();
+};
+
+// النوافذ وعمليات إضافة وتعديل الستوري المتكرر
+window.openNewRecurringStoryModal = function() {
+    const modal = document.getElementById('recurringStoryModal');
+    if (!modal) return;
+
+    document.getElementById('recurringStoryEditId').value = '';
+    document.getElementById('recurringStoryBase64').value = '';
+    document.getElementById('recurringStoryPhotoUrl').value = '';
+    document.getElementById('recurringStoryDriveFileId').value = '';
+    document.getElementById('recurringStoryTitle').value = '';
+    document.getElementById('recurringStoryModalTitle').innerHTML = '<i class="fa-solid fa-repeat" style="color: #e11d48;"></i> إضافة ستوري متكرر جديد';
+    document.getElementById('btnSubmitRecurringStoryText').textContent = 'حفظ ونشر الستوري الآن';
+
+    // مسح الصورة
+    window.removeRecurringStoryPhoto();
+
+    // ضبط النوع الافتراضي: مستمر يومياً
+    const unlimitedRadio = document.querySelector('input[name="recurringExpiryType"][value="unlimited"]');
+    if (unlimitedRadio) {
+        unlimitedRadio.checked = true;
+        window.handleRecurringExpiryTypeChange('unlimited');
+    }
+
+    modal.style.display = 'flex';
+};
+
+window.closeRecurringStoryModal = function() {
+    const modal = document.getElementById('recurringStoryModal');
+    if (modal) modal.style.display = 'none';
+};
+
+window.openEditRecurringStoryModal = function(id) {
+    const item = (window.offersData || []).find(o => String(o.id) === String(id));
+    if (!item) return;
+
+    const modal = document.getElementById('recurringStoryModal');
+    if (!modal) return;
+
+    document.getElementById('recurringStoryEditId').value = item.id;
+    document.getElementById('recurringStoryBase64').value = '';
+    document.getElementById('recurringStoryPhotoUrl').value = item.image_url || '';
+    document.getElementById('recurringStoryDriveFileId').value = item.drive_file_id || '';
+    document.getElementById('recurringStoryTitle').value = item.product_name || '';
+    document.getElementById('recurringStoryModalTitle').innerHTML = '<i class="fa-solid fa-pen" style="color: #e11d48;"></i> تعديل الستوري المتكرر';
+    document.getElementById('btnSubmitRecurringStoryText').textContent = 'حفظ التعديلات';
+
+    // إظهار الصورة الحالية
+    if (item.image_url) {
+        const preview = document.getElementById('recurringPhotoPreview');
+        const previewWrapper = document.getElementById('recurringPhotoPreviewWrapper');
+        const placeholder = document.getElementById('recurringPhotoPlaceholder');
+        if (preview) preview.src = item.image_url;
+        if (previewWrapper) previewWrapper.style.display = 'block';
+        if (placeholder) placeholder.style.display = 'none';
+    } else {
+        window.removeRecurringStoryPhoto();
+    }
+
+    // نوع التكرار
+    const expiryType = item.expiry_type || 'unlimited';
+    const radio = document.querySelector(`input[name="recurringExpiryType"][value="${expiryType}"]`);
+    if (radio) {
+        radio.checked = true;
+        window.handleRecurringExpiryTypeChange(expiryType);
+    }
+    if (expiryType === 'count') {
+        const countInput = document.getElementById('recurringStoryPublishCount');
+        if (countInput) countInput.value = item.remaining_quantity || item.initial_quantity || 5;
+    } else if (expiryType === 'date') {
+        const dateInput = document.getElementById('recurringStoryEndDate');
+        if (dateInput) dateInput.value = item.expiry_date || '';
+    }
+
+    modal.style.display = 'flex';
+};
+
+window.handleRecurringExpiryTypeChange = function(type) {
+    ['unlimited', 'count', 'date'].forEach(t => {
+        const card = document.getElementById(`cycleCard_${t}`);
+        if (card) {
+            card.classList.toggle('active', t === type);
+            card.style.borderColor = (t === type) ? (t === 'unlimited' ? '#10b981' : (t === 'count' ? '#d97706' : '#2563eb')) : '#cbd5e1';
+            card.style.background = (t === type) ? (t === 'unlimited' ? '#ecfdf5' : (t === 'count' ? '#fffbeb' : '#eff6ff')) : '#f8fafc';
+        }
+    });
+
+    const countBox = document.getElementById('recurringCountBox');
+    const dateBox = document.getElementById('recurringDateBox');
+    if (countBox) countBox.style.display = (type === 'count') ? 'block' : 'none';
+    if (dateBox) dateBox.style.display = (type === 'date') ? 'block' : 'none';
+};
+
+window.handleRecurringStoryPhotoSelected = function(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 1080;
+            const MAX_HEIGHT = 1920;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+                if (width > MAX_WIDTH) {
+                    height *= MAX_WIDTH / width;
+                    width = MAX_WIDTH;
+                }
+            } else {
+                if (height > MAX_HEIGHT) {
+                    width *= MAX_HEIGHT / height;
+                    height = MAX_HEIGHT;
+                }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+            document.getElementById('recurringStoryBase64').value = compressedBase64;
+            
+            const preview = document.getElementById('recurringPhotoPreview');
+            const previewWrapper = document.getElementById('recurringPhotoPreviewWrapper');
+            const placeholder = document.getElementById('recurringPhotoPlaceholder');
+            if (preview) preview.src = compressedBase64;
+            if (previewWrapper) previewWrapper.style.display = 'block';
+            if (placeholder) placeholder.style.display = 'none';
+        };
+        img.src = evt.target.result;
+    };
+    reader.readAsDataURL(file);
+};
+
+window.removeRecurringStoryPhoto = function() {
+    const input = document.getElementById('recurringStoryPhotoInput');
+    const base64Input = document.getElementById('recurringStoryBase64');
+    const urlInput = document.getElementById('recurringStoryPhotoUrl');
+    const preview = document.getElementById('recurringPhotoPreview');
+    const previewWrapper = document.getElementById('recurringPhotoPreviewWrapper');
+    const placeholder = document.getElementById('recurringPhotoPlaceholder');
+
+    if (input) input.value = '';
+    if (base64Input) base64Input.value = '';
+    if (urlInput) urlInput.value = '';
+    if (preview) preview.src = '';
+    if (previewWrapper) previewWrapper.style.display = 'none';
+    if (placeholder) placeholder.style.display = 'flex';
+};
+
+window.openRecurringStoryCamera = function() {
+    const input = document.getElementById('recurringStoryPhotoInput');
+    if (input) {
+        input.setAttribute('capture', 'environment');
+        input.click();
+    }
+};
+
+window.handleRecurringStorySubmit = async function(e) {
+    if (e && e.preventDefault) e.preventDefault();
+
+    const btnSubmit = document.getElementById('btnSubmitRecurringStory');
+    const origBtnHtml = btnSubmit ? btnSubmit.innerHTML : '';
+    if (btnSubmit) {
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري حفظ ونشر الستوري...';
+    }
+
+    try {
+        const editId = document.getElementById('recurringStoryEditId')?.value || '';
+        const title = (document.getElementById('recurringStoryTitle')?.value || '').trim() || 'ستوري كاندي كلوب';
+        const base64Image = document.getElementById('recurringStoryBase64')?.value || '';
+        let photoUrl = document.getElementById('recurringStoryPhotoUrl')?.value || '';
+        let driveFileId = document.getElementById('recurringStoryDriveFileId')?.value || '';
+
+        const selectedRadio = document.querySelector('input[name="recurringExpiryType"]:checked');
+        const expiryType = selectedRadio ? selectedRadio.value : 'unlimited';
+        let countVal = parseInt(document.getElementById('recurringStoryPublishCount')?.value) || 5;
+        let dateVal = document.getElementById('recurringStoryEndDate')?.value || null;
+
+        if (!base64Image && !photoUrl) {
+            showToast('يرجى اختيار أو رفع صورة للستوري أولاً', 'warning');
+            return;
+        }
+
+        // رفع الصورة إلى Google Drive إذا كانت صورة جديدة
+        if (base64Image) {
+            showToast('جاري رفع صورة الستوري إلى Google Drive...', 'info');
+            const uploadResult = await window.uploadOfferPhotoToGoogleDrive(base64Image, `recurring_${Date.now()}.jpg`, driveFileId);
+            if (uploadResult && uploadResult.url) {
+                photoUrl = uploadResult.url;
+                driveFileId = uploadResult.fileId;
+            } else {
+                photoUrl = base64Image;
+            }
+        }
+
+        const existing = editId ? window.offersData.find(o => String(o.id) === String(editId)) : null;
+
+        const storyObj = {
+            id: editId || `rec_story_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+            product_name: title,
+            barcode: null,
+            original_price: 0,
+            offer_price: 0,
+            pricing_mode: 'recurring_story',
+            expiry_type: expiryType,
+            quantity_mode: (expiryType === 'count') ? 'publish_count' : null,
+            initial_quantity: (expiryType === 'count') ? countVal : null,
+            remaining_quantity: (expiryType === 'count') ? (existing && existing.remaining_quantity !== undefined ? existing.remaining_quantity : countVal) : null,
+            expiry_date: (expiryType === 'date') ? dateVal : null,
+            image_url: photoUrl,
+            drive_file_id: driveFileId,
+            is_active: true,
+            updated_at: new Date().toISOString(),
+            created_at: editId ? (existing?.created_at || new Date().toISOString()) : new Date().toISOString(),
+            created_by: window.currentUser ? window.currentUser.displayName : 'المدير',
+            last_story_published_at: existing?.last_story_published_at || null,
+            story_publish_count: existing?.story_publish_count || 0
+        };
+
+        if (editId) {
+            const idx = window.offersData.findIndex(o => String(o.id) === String(editId));
+            if (idx > -1) window.offersData[idx] = storyObj;
+        } else {
+            window.offersData.unshift(storyObj);
+        }
+
+        await window.saveOffersDataLocallyAndRemote();
+        window.closeRecurringStoryModal();
+        window.updateOffersStats();
+        window.renderRecurringStoriesGrid();
+        showToast('تم حفظ الستوري بنجاح', 'success');
+
+        // إطلاق فوري لأول مرة عند إضافة ستوري جديد
+        if (!editId) {
+            showToast(`🚀 جاري نشر ستوري (${storyObj.product_name}) تلقائياً على إنستجرام وفيسبوك...`, 'info', 5000);
+            setTimeout(async () => {
+                try {
+                    const res = await window.publishSingleOfferStoryCore(storyObj);
+                    if (res && res.success) {
+                        showToast(`🎉 تم نشر ستوري (${storyObj.product_name}) بنجاح! بدأ عداد الـ 24 ساعة التلقائي.`, 'success', 6000);
+                        await window.saveOffersDataLocallyAndRemote();
+                        window.renderRecurringStoriesGrid();
+                    }
+                } catch(pubErr) {
+                    console.error('Initial recurring story publish error:', pubErr);
+                }
+            }, 600);
+        }
+
+    } catch(err) {
+        console.error('Error saving recurring story:', err);
+        showToast('حدث خطأ أثناء حفظ الستوري', 'error');
+    } finally {
+        if (btnSubmit) {
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = origBtnHtml;
+        }
+    }
+};
+
+window.toggleSelectAllRecurringStories = function(isChecked) {
+    const checkboxes = document.querySelectorAll('.recurring-card-checkbox');
+    checkboxes.forEach(cb => {
+        cb.checked = isChecked;
+    });
+    window.updateRecurringSelectedCount();
+};
+
+window.updateRecurringSelectedCount = function() {
+    const checkboxes = document.querySelectorAll('.recurring-card-checkbox');
+    const checked = Array.from(checkboxes).filter(cb => cb.checked);
+    const countBadge = document.getElementById('selectedRecurringCountBadge');
+    const btnBatch = document.getElementById('btnPublishSelectedRecurring');
+    const selectAllCb = document.getElementById('selectAllRecurringCheckbox');
+
+    const count = checked.length;
+    if (countBadge) {
+        countBadge.textContent = `المحدد: ${count} ستوري`;
+        countBadge.classList.toggle('has-selected', count > 0);
+    }
+    if (btnBatch) {
+        btnBatch.disabled = (count === 0);
+        btnBatch.style.opacity = (count === 0) ? '0.6' : '1';
+        btnBatch.style.cursor = (count === 0) ? 'not-allowed' : 'pointer';
+    }
+    if (selectAllCb) {
+        selectAllCb.checked = (checkboxes.length > 0 && count === checkboxes.length);
+        selectAllCb.indeterminate = (count > 0 && count < checkboxes.length);
+    }
 };
 
 // 7. اختيار المنتجات بالبحث أو الباركود في نافذة العرض
@@ -22361,11 +22860,24 @@ window.publishSingleOfferStoryCore = async function(offer) {
         window.recordOfferStoryPublish(offer.id);
         offer.last_story_published_at = Date.now();
         offer.story_publish_count = (offer.story_publish_count || 0) + 1;
+
+        // إذا كان العرض محدد بعدد مرات نشر (مثل الستوري المتكرر)
+        if (offer.quantity_mode === 'publish_count' && offer.remaining_quantity !== null && offer.remaining_quantity !== undefined) {
+            offer.remaining_quantity = Math.max(0, Number(offer.remaining_quantity) - 1);
+            if (offer.remaining_quantity <= 0) {
+                offer.is_active = false;
+                offer.status_reason = 'انتهت مرات النشر المحددة';
+            }
+        }
+
         if (window.supabase) {
             try {
                 await window.supabase.from('store_offers').update({
                     last_story_published_at: offer.last_story_published_at,
-                    story_publish_count: offer.story_publish_count
+                    story_publish_count: offer.story_publish_count,
+                    remaining_quantity: offer.remaining_quantity,
+                    is_active: offer.is_active,
+                    status_reason: offer.status_reason || null
                 }).eq('id', offer.id);
             } catch(e) {
                 console.warn('Supabase offer update error:', e);
@@ -22494,15 +23006,29 @@ window.publishSelectedOffersStories = async function() {
         selectAllCb.checked = false;
         selectAllCb.indeterminate = false;
     }
+    const selectAllRecCb = document.getElementById('selectAllRecurringCheckbox');
+    if (selectAllRecCb) {
+        selectAllRecCb.checked = false;
+        selectAllRecCb.indeterminate = false;
+    }
     await window.saveOffersDataLocallyAndRemote();
     window.updateOffersSelectedCount();
-    window.renderOffersGrid();
+    window.updateRecurringSelectedCount();
+    if (window.activeOffersSubtab === 'recurring') {
+        window.renderRecurringStoriesGrid();
+    } else {
+        window.renderOffersGrid();
+    }
 };
 
 window.closeBatchPublishModal = function() {
     const modal = document.getElementById('offerBatchPublishModal');
     if (modal) modal.style.display = 'none';
-    window.renderOffersGrid();
+    if (window.activeOffersSubtab === 'recurring') {
+        window.renderRecurringStoriesGrid();
+    } else {
+        window.renderOffersGrid();
+    }
 };
 
 // 4. التحكم في التحديد الجماعي
@@ -22603,7 +23129,7 @@ window.checkAndAutoPublishNextOfferStory = async function() {
 
 // 18. تصدير كتالوج العروض PDF الموجه للعملاء (بدون باركود وبدون كميات)
 window.generateCustomerOffersPdf = async function() {
-    const activeOffers = window.offersData.filter(o => o.is_active);
+    const activeOffers = (window.offersData || []).filter(o => o.is_active && o.pricing_mode !== 'recurring_story');
     if (activeOffers.length === 0) {
         showToast('لا توجد عروض نشطة حالياً لتضمينها في الكتالوج', 'warning');
         return;

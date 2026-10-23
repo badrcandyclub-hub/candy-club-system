@@ -268,6 +268,17 @@ async function main() {
             story_publish_count: (Number(targetOffer.story_publish_count) || 0) + 1
         };
 
+        // إذا كان العرض محدد بعدد مرات نشر معينة
+        if (targetOffer.quantity_mode === 'publish_count' && targetOffer.remaining_quantity !== null && targetOffer.remaining_quantity !== undefined) {
+            const newRem = Math.max(0, Number(targetOffer.remaining_quantity) - 1);
+            updatePayload.remaining_quantity = newRem;
+            if (newRem <= 0) {
+                updatePayload.is_active = false;
+                updatePayload.status_reason = 'انتهت مرات النشر المحددة';
+                console.log(`[Publish Count Ended] Offer ${targetOffer.id} reached 0 remaining stories. Deactivating.`);
+            }
+        }
+
         const patchRes = await supabaseRequest(`/rest/v1/store_offers?id=eq.${targetOffer.id}`, 'PATCH', updatePayload);
         if (patchRes.status >= 200 && patchRes.status < 300) {
             console.log(`✅ [Supabase Updated] Offer ${targetOffer.id} timestamp updated to ${now}.`);

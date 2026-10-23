@@ -3024,19 +3024,19 @@
                     <div class="offers-header-text">
                         <h2 class="offers-title">
                             <span class="offers-title-icon"><i class="fa-solid fa-fire-flame-curved"></i></span>
-                            عروض المحل
+                            عروض المحل والستوري
                         </h2>
-                        <p class="offers-subtitle">إدارة وتوثيق عروض المحل بالصور، تصدير ستوري المنصات (إنستغرام وفيسبوك)، وكتالوج العروض للعملاء.</p>
+                        <p class="offers-subtitle">إدارة وتوثيق عروض المحل والقصص الإعلانية اليومية، تصدير ستوري المنصات (إنستغرام وفيسبوك)، وكتالوج العروض للعملاء.</p>
                     </div>
                     <div class="offers-header-actions">
                         <button type="button" id="btnOffersSocialSettings" class="interactive-btn btn-social-settings" onclick="window.openOffersSocialSettingsModal()" title="إعدادات ربط فيسبوك وإنستجرام">
                             <i class="fa-solid fa-gear"></i> إعدادات المنصات
                         </button>
-                        <button type="button" id="btnNewOffer" class="interactive-btn btn-new-offer" onclick="window.openNewOfferModal()">
-                            <i class="fa-solid fa-plus"></i> إضافة عرض جديد
+                        <button type="button" id="btnNewOffer" class="interactive-btn btn-new-offer" onclick="window.handleOffersMainAction()">
+                            <i class="fa-solid fa-plus"></i> <span id="btnNewOfferText">إضافة عرض جديد</span>
                         </button>
                         <button type="button" id="btnExportCustomerPdf" class="interactive-btn btn-export-offers-pdf" onclick="window.generateCustomerOffersPdf()">
-                            <i class="fa-solid fa-file-pdf"></i> كتالوج PDF للعملاء
+                            <i class="fa-solid fa-file-pdf"></i> كتالوج عروض PDF للعملاء
                         </button>
                     </div>
                 </div>
@@ -3070,75 +3070,142 @@
                     </div>
                 </div>
 
-                <!-- إحصائيات سريعة للعروض (3 كروت فقط) -->
-                <div class="offers-stats-grid">
-                    <div class="offers-stat-card offers-stat-total">
-                        <div class="offers-stat-info">
-                            <span class="offers-stat-label">إجمالي العروض المسجلة</span>
-                            <span class="offers-stat-value" id="statTotalOffers">0</span>
-                        </div>
-                        <div class="offers-stat-icon"><i class="fa-solid fa-boxes-stacked"></i></div>
-                    </div>
-                    <div class="offers-stat-card offers-stat-quantity">
-                        <div class="offers-stat-info">
-                            <span class="offers-stat-label">عروض محددة بالكمية</span>
-                            <span class="offers-stat-value" id="statQuantityOffers">0</span>
-                        </div>
-                        <div class="offers-stat-icon"><i class="fa-solid fa-cubes-stacked"></i></div>
-                    </div>
-                    <div class="offers-stat-card offers-stat-expiring">
-                        <div class="offers-stat-info">
-                            <span class="offers-stat-label">قاربت على الانتهاء / كمية منخفضة</span>
-                            <span class="offers-stat-value" id="statExpiringOffers">0</span>
-                        </div>
-                        <div class="offers-stat-icon"><i class="fa-solid fa-hourglass-half"></i></div>
-                    </div>
+                <!-- شريط التبويبات الفخم: عروض المحل المصورة | الستوري المتكرر -->
+                <div class="offers-subtabs-bar" id="offersSubtabsBar">
+                    <button type="button" class="offers-subtab-btn active" id="subtabOffersBtn" onclick="window.switchOffersSubtab('offers')">
+                        <i class="fa-solid fa-tags"></i>
+                        <span>عروض المحل المصورة</span>
+                        <span class="subtab-counter-badge" id="subtabOffersCount">0</span>
+                    </button>
+                    <button type="button" class="offers-subtab-btn" id="subtabRecurringBtn" onclick="window.switchOffersSubtab('recurring')">
+                        <i class="fa-solid fa-repeat"></i>
+                        <span>الستوري المتكرر</span>
+                        <span class="subtab-counter-badge" id="subtabRecurringCount">0</span>
+                    </button>
                 </div>
 
-                <!-- شريط التصفية والبحث -->
-                <div class="offers-toolbar">
-                    <div class="offers-search-box">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" id="offersSearchInput" placeholder="بحث باسم العرض أو الباركود..." oninput="window.filterOffersList()">
+                <!-- 1. قسم عروض المحل المصورة (Offers View) -->
+                <div id="offersViewContainer" class="offers-subview-panel">
+                    <!-- إحصائيات سريعة للعروض (3 كروت فقط) -->
+                    <div class="offers-stats-grid">
+                        <div class="offers-stat-card offers-stat-total">
+                            <div class="offers-stat-info">
+                                <span class="offers-stat-label">إجمالي العروض المسجلة</span>
+                                <span class="offers-stat-value" id="statTotalOffers">0</span>
+                            </div>
+                            <div class="offers-stat-icon"><i class="fa-solid fa-boxes-stacked"></i></div>
+                        </div>
+                        <div class="offers-stat-card offers-stat-quantity">
+                            <div class="offers-stat-info">
+                                <span class="offers-stat-label">عروض محددة بالكمية</span>
+                                <span class="offers-stat-value" id="statQuantityOffers">0</span>
+                            </div>
+                            <div class="offers-stat-icon"><i class="fa-solid fa-cubes-stacked"></i></div>
+                        </div>
+                        <div class="offers-stat-card offers-stat-expiring">
+                            <div class="offers-stat-info">
+                                <span class="offers-stat-label">قاربت على الانتهاء / كمية منخفضة</span>
+                                <span class="offers-stat-value" id="statExpiringOffers">0</span>
+                            </div>
+                            <div class="offers-stat-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+                        </div>
                     </div>
-                    <div class="offers-filter-pills">
-                        <button type="button" class="offers-filter-pill active" data-filter="all" onclick="window.setOffersFilter('all')">الكل</button>
-                        <button type="button" class="offers-filter-pill" data-filter="quantity" onclick="window.setOffersFilter('quantity')">حسب الكمية</button>
-                        <button type="button" class="offers-filter-pill" data-filter="date" onclick="window.setOffersFilter('date')">محددة بالمدة</button>
-                    </div>
-                </div>
 
-                <!-- شريط التحديد والنشر الجماعي للستوري -->
-                <div class="offers-batch-bar" id="offersBatchBar">
-                    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                        <label class="offers-select-all-label">
-                            <input type="checkbox" id="selectAllOffersCheckbox" onchange="window.toggleSelectAllOffers(this.checked)">
-                            <span>تحديد الكل</span>
-                        </label>
-                        <span id="selectedOffersCountBadge" class="selected-count-badge">المحدد: 0 عرض</span>
+                    <!-- شريط التصفية والبحث -->
+                    <div class="offers-toolbar">
+                        <div class="offers-search-box">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="offersSearchInput" placeholder="بحث باسم العرض أو الباركود..." oninput="window.filterOffersList()">
+                        </div>
+                        <div class="offers-filter-pills">
+                            <button type="button" class="offers-filter-pill active" data-filter="all" onclick="window.setOffersFilter('all')">الكل</button>
+                            <button type="button" class="offers-filter-pill" data-filter="quantity" onclick="window.setOffersFilter('quantity')">حسب الكمية</button>
+                            <button type="button" class="offers-filter-pill" data-filter="date" onclick="window.setOffersFilter('date')">محددة بالمدة</button>
+                        </div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <button type="button" id="btnPublishSelectedOffers" class="btn-primary interactive-btn btn-publish-batch" onclick="window.publishSelectedOffersStories()" style="background: linear-gradient(135deg, #e1306c, #1877f2); border: none; font-weight: 800; padding: 8px 18px; border-radius: 10px; display: flex; align-items: center; gap: 8px; color: white; cursor: pointer; transition: all 0.2s ease; opacity: 0.6;" disabled>
-                            <i class="fa-brands fa-instagram"></i>
-                            <i class="fa-brands fa-facebook"></i>
-                            <span id="btnPublishSelectedOffersText">نشر العروض المحددة كـ Story</span>
+
+                    <!-- شريط التحديد والنشر الجماعي للستوري -->
+                    <div class="offers-batch-bar" id="offersBatchBar">
+                        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                            <label class="offers-select-all-label">
+                                <input type="checkbox" id="selectAllOffersCheckbox" onchange="window.toggleSelectAllOffers(this.checked)">
+                                <span>تحديد الكل</span>
+                            </label>
+                            <span id="selectedOffersCountBadge" class="selected-count-badge">المحدد: 0 عرض</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <button type="button" id="btnPublishSelectedOffers" class="btn-primary interactive-btn btn-publish-batch" onclick="window.publishSelectedOffersStories()" style="background: linear-gradient(135deg, #e1306c, #1877f2); border: none; font-weight: 800; padding: 8px 18px; border-radius: 10px; display: flex; align-items: center; gap: 8px; color: white; cursor: pointer; transition: all 0.2s ease; opacity: 0.6;" disabled>
+                                <i class="fa-brands fa-instagram"></i>
+                                <i class="fa-brands fa-facebook"></i>
+                                <span id="btnPublishSelectedOffersText">نشر العروض المحددة كـ Story</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- شبكة كروت العروض -->
+                    <div id="offersGrid" class="offers-grid">
+                        <!-- سيتم توليد البطاقات ديناميكياً -->
+                    </div>
+
+                    <!-- حالة عدم وجود عروض -->
+                    <div id="offersEmptyState" class="offers-empty-state" style="display: none;">
+                        <div class="offers-empty-icon"><i class="fa-solid fa-fire-flame-curved"></i></div>
+                        <h3>لا توجد عروض مسجلة حالياً</h3>
+                        <p>قم بإضافة عروض جديدة وتوثيقها بالصور لتظهر لطاقم البيع وتكون جاهزة للنشر الفوري كستوري.</p>
+                        <button type="button" class="interactive-btn btn-new-offer" onclick="window.openNewOfferModal()">
+                            <i class="fa-solid fa-plus"></i> إضافة أول عرض الآن
                         </button>
                     </div>
                 </div>
 
-                <!-- شبكة كروت العروض -->
-                <div id="offersGrid" class="offers-grid">
-                    <!-- سيتم توليد البطاقات ديناميكياً -->
-                </div>
+                <!-- 2. قسم الستوري المتكرر (Recurring Stories View) -->
+                <div id="recurringStoriesViewContainer" class="offers-subview-panel" style="display: none;">
+                    <!-- شريط التصفية والبحث الخاص بالستوري المتكرر -->
+                    <div class="offers-toolbar">
+                        <div class="offers-search-box">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="recurringSearchInput" placeholder="بحث بعنوان الستوري أو الوصف..." oninput="window.filterRecurringStoriesList()">
+                        </div>
+                        <div class="offers-filter-pills">
+                            <button type="button" class="offers-filter-pill active" data-filter="all" onclick="window.setRecurringStoriesFilter('all')">الكل</button>
+                            <button type="button" class="offers-filter-pill" data-filter="unlimited" onclick="window.setRecurringStoriesFilter('unlimited')">مستمر يومياً</button>
+                            <button type="button" class="offers-filter-pill" data-filter="count" onclick="window.setRecurringStoriesFilter('count')">بعدد مرات</button>
+                            <button type="button" class="offers-filter-pill" data-filter="date" onclick="window.setRecurringStoriesFilter('date')">محدد بتاريخ</button>
+                        </div>
+                    </div>
 
-                <!-- حالة عدم وجود عروض -->
-                <div id="offersEmptyState" class="offers-empty-state" style="display: none;">
-                    <div class="offers-empty-icon"><i class="fa-solid fa-fire-flame-curved"></i></div>
-                    <h3>لا توجد عروض مسجلة حالياً</h3>
-                    <p>قم بإضافة عروض جديدة وتوثيقها بالصور لتظهر لطاقم البيع وتكون جاهزة للنشر الفوري كستوري.</p>
-                    <button type="button" class="interactive-btn btn-new-offer" onclick="window.openNewOfferModal()">
-                        <i class="fa-solid fa-plus"></i> إضافة أول عرض الآن
-                    </button>
+                    <!-- شريط التحديد والنشر الجماعي للستوري المتكرر -->
+                    <div class="offers-batch-bar" id="recurringBatchBar">
+                        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                            <label class="offers-select-all-label">
+                                <input type="checkbox" id="selectAllRecurringCheckbox" onchange="window.toggleSelectAllRecurringStories(this.checked)">
+                                <span>تحديد الكل</span>
+                            </label>
+                            <span id="selectedRecurringCountBadge" class="selected-count-badge">المحدد: 0 ستوري</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <button type="button" id="btnPublishSelectedRecurring" class="btn-primary interactive-btn btn-publish-batch" onclick="window.publishSelectedOffersStories()" style="background: linear-gradient(135deg, #e1306c, #1877f2); border: none; font-weight: 800; padding: 8px 18px; border-radius: 10px; display: flex; align-items: center; gap: 8px; color: white; cursor: pointer; transition: all 0.2s ease; opacity: 0.6;" disabled>
+                                <i class="fa-brands fa-instagram"></i>
+                                <i class="fa-brands fa-facebook"></i>
+                                <span>نشر القصص المحددة كـ Story</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- شبكة كروت الستوري المتكرر -->
+                    <div id="recurringStoriesGrid" class="offers-grid recurring-stories-grid">
+                        <!-- سيتم توليد كروت الستوري المتكرر ديناميكياً -->
+                    </div>
+
+                    <!-- حالة عدم وجود قصص متكررة -->
+                    <div id="recurringStoriesEmptyState" class="offers-empty-state" style="display: none;">
+                        <div class="offers-empty-icon" style="color: #e11d48;"><i class="fa-solid fa-repeat"></i></div>
+                        <h3>لا توجد قصص متكررة مسجلة حالياً</h3>
+                        <p>أضف قصص وإعلانات المحل اليومية (بدون باركود أو أسعار) ليتم نشرها تلقائياً على إنستجرام وفيسبوك كل 24 ساعة.</p>
+                        <button type="button" class="interactive-btn btn-new-offer" onclick="window.openNewRecurringStoryModal()" style="background: linear-gradient(135deg, #e11d48, #be185d);">
+                            <i class="fa-solid fa-plus"></i> إضافة أول ستوري متكرر الآن
+                        </button>
+                    </div>
                 </div>
             </div>
         </section>
@@ -3574,6 +3641,135 @@
                 <button type="button" id="btnBatchPublishClose" class="btn-primary" onclick="window.closeBatchPublishModal()" style="display: none; width: 100%; padding: 10px; border-radius: 10px; font-weight: 800; cursor: pointer;">
                     إغلاق
                 </button>
+            </div>
+        </div>
+
+        <!-- نافذة إضافة / تعديل ستوري متكرر (Recurring Story Modal) -->
+        <div id="recurringStoryModal" class="modal-overlay" style="display: none; z-index: 10040;">
+            <div class="modal-content" style="max-width: 580px; border-radius: 20px; padding: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
+                <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #f1f5f9; padding-bottom: 14px; margin-bottom: 18px;">
+                    <h3 id="recurringStoryModalTitle" style="margin: 0; font-size: 1.25rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-repeat" style="color: #e11d48;"></i> إضافة ستوري متكرر
+                    </h3>
+                    <button type="button" class="offer-modal-close-btn" onclick="window.closeRecurringStoryModal()" title="إغلاق">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <form id="recurringStoryForm" onsubmit="window.handleRecurringStorySubmit(event)">
+                    <input type="hidden" id="recurringStoryEditId" value="">
+                    <input type="hidden" id="recurringStoryBase64" value="">
+                    <input type="hidden" id="recurringStoryPhotoUrl" value="">
+                    <input type="hidden" id="recurringStoryDriveFileId" value="">
+                    <input type="file" id="recurringStoryPhotoInput" accept="image/*" style="display: none;" onchange="window.handleRecurringStoryPhotoSelected(event)">
+
+                    <!-- رفع ومعاينة صورة الستوري -->
+                    <div class="form-group" style="margin-bottom: 18px;">
+                        <label style="font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                            <i class="fa-solid fa-image" style="color: #e11d48;"></i> صورة الستوري (1080x1920 أو أي صورة) <span style="color:red">*</span>
+                        </label>
+                        
+                        <!-- صندوق الرفع التفاعلي -->
+                        <div id="recurringStoryPhotoDropzone" class="recurring-photo-dropzone" onclick="document.getElementById('recurringStoryPhotoInput').click()" style="border: 2px dashed #cbd5e1; border-radius: 14px; background: #f8fafc; cursor: pointer; transition: all 0.2s ease;">
+                            <div id="recurringPhotoPlaceholder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 30px 15px; color: #64748b; text-align: center;">
+                                <div style="width: 54px; height: 54px; border-radius: 50%; background: #fff1f2; color: #e11d48; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                                </div>
+                                <span style="font-weight: 800; font-size: 0.95rem; color: #1e293b;">اضغط لاختيار صورة أو اسحبها هنا</span>
+                                <small style="color: #94a3b8; font-size: 0.8rem;">تُرفع تلقائياً بجودة ممتازة لمقاس Story على إنستجرام وفيسبوك</small>
+                            </div>
+                            <div id="recurringPhotoPreviewWrapper" style="display: none; position: relative; width: 100%; height: 260px; border-radius: 14px; overflow: hidden;">
+                                <img id="recurringPhotoPreview" src="" alt="معاينة الستوري" style="width: 100%; height: 100%; object-fit: contain; background: #0f172a; border-radius: 14px;">
+                                <button type="button" onclick="event.stopPropagation(); window.removeRecurringStoryPhoto();" style="position: absolute; top: 10px; right: 10px; background: rgba(220,38,38,0.9); color: white; border: none; width: 34px; height: 34px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="حذف واختيار صورة أخرى">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                                <button type="button" onclick="event.stopPropagation(); window.openOfferImageLightbox(document.getElementById('recurringPhotoPreview').src, 'معاينة الستوري');" style="position: absolute; bottom: 10px; right: 10px; background: rgba(15,23,42,0.85); color: white; border: none; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 0.82rem; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                                    <i class="fa-solid fa-eye"></i> معاينة بالحجم الكامل
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- أزرار اختيار سريعة -->
+                        <div style="display: flex; gap: 8px; margin-top: 8px;">
+                            <button type="button" class="interactive-btn" onclick="document.getElementById('recurringStoryPhotoInput').removeAttribute('capture'); document.getElementById('recurringStoryPhotoInput').click();" style="flex: 1; padding: 8px; font-size: 0.85rem; border-radius: 8px; background: #f8fafc; border: 1px solid #cbd5e1; color: #334155; font-weight: 700; cursor: pointer;">
+                                <i class="fa-solid fa-folder-open"></i> تصفح جهازك
+                            </button>
+                            <button type="button" class="interactive-btn" onclick="window.openRecurringStoryCamera();" style="flex: 1; padding: 8px; font-size: 0.85rem; border-radius: 8px; background: #f8fafc; border: 1px solid #cbd5e1; color: #334155; font-weight: 700; cursor: pointer;">
+                                <i class="fa-solid fa-camera"></i> التقاط بالكاميرا
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- عنوان أو وصف اختياري للستوري -->
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label for="recurringStoryTitle" style="font-weight: 800; color: #1e293b; display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                            <span><i class="fa-solid fa-heading" style="color: #64748b;"></i> عنوان أو وصف الستوري</span>
+                            <small style="color: #94a3b8; font-weight: 600;">(اختياري)</small>
+                        </label>
+                        <input type="text" id="recurringStoryTitle" class="form-input" placeholder="مثال: ستوري الصباح، إعلان فرع كذا، كاندي مكس..." style="height: 44px; border-radius: 10px; font-size: 0.92rem;">
+                    </div>
+
+                    <!-- دورة وشروط تكرار النشر -->
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label style="font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 6px; margin-bottom: 10px;">
+                            <i class="fa-solid fa-clock-rotate-left" style="color: #2563eb;"></i> دورة وتكرار النشر التلقائي (كل 24 ساعة)
+                        </label>
+
+                        <div class="recurring-cycle-options" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                            <label class="cycle-opt-label" style="cursor: pointer;">
+                                <input type="radio" name="recurringExpiryType" value="unlimited" checked onchange="window.handleRecurringExpiryTypeChange(this.value)" style="display: none;">
+                                <div class="cycle-opt-card active" id="cycleCard_unlimited" style="border: 2px solid #10b981; border-radius: 12px; padding: 10px; text-align: center; background: #ecfdf5; transition: all 0.2s ease;">
+                                    <div style="font-weight: 800; font-size: 0.88rem; color: #047857; margin-bottom: 4px;"><i class="fa-solid fa-infinity"></i> مستمر يومياً</div>
+                                    <small style="font-size: 0.72rem; color: #065f46; display: block; line-height: 1.3;">كل 24 ساعة دائماً حتى إيقافه</small>
+                                </div>
+                            </label>
+
+                            <label class="cycle-opt-label" style="cursor: pointer;">
+                                <input type="radio" name="recurringExpiryType" value="count" onchange="window.handleRecurringExpiryTypeChange(this.value)" style="display: none;">
+                                <div class="cycle-opt-card" id="cycleCard_count" style="border: 1.5px solid #cbd5e1; border-radius: 12px; padding: 10px; text-align: center; background: #f8fafc; transition: all 0.2s ease;">
+                                    <div style="font-weight: 800; font-size: 0.88rem; color: #d97706; margin-bottom: 4px;"><i class="fa-solid fa-arrow-down-1-9"></i> بعدد مرات نشر</div>
+                                    <small style="font-size: 0.72rem; color: #78350f; display: block; line-height: 1.3;">ينشر مرة يومياً حتى ينتهي</small>
+                                </div>
+                            </label>
+
+                            <label class="cycle-opt-label" style="cursor: pointer;">
+                                <input type="radio" name="recurringExpiryType" value="date" onchange="window.handleRecurringExpiryTypeChange(this.value)" style="display: none;">
+                                <div class="cycle-opt-card" id="cycleCard_date" style="border: 1.5px solid #cbd5e1; border-radius: 12px; padding: 10px; text-align: center; background: #f8fafc; transition: all 0.2s ease;">
+                                    <div style="font-weight: 800; font-size: 0.88rem; color: #2563eb; margin-bottom: 4px;"><i class="fa-solid fa-calendar-xmark"></i> محدد بتاريخ</div>
+                                    <small style="font-size: 0.72rem; color: #1e3a8a; display: block; line-height: 1.3;">يتوقف بعد تاريخ معين</small>
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- حقل عدد مرات النشر -->
+                        <div id="recurringCountBox" style="display: none; margin-top: 12px; background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 12px; padding: 12px;">
+                            <label style="font-weight: 800; font-size: 0.88rem; color: #92400e; display: block; margin-bottom: 6px;">
+                                حدد إجمالي عدد مرات النشر المطلوبة:
+                            </label>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <input type="number" id="recurringStoryPublishCount" min="1" max="365" value="5" class="form-input" style="width: 120px; height: 42px; text-align: center; font-weight: 900; font-size: 1.1rem; border-radius: 8px;">
+                                <span style="font-weight: 700; color: #78350f; font-size: 0.9rem;">مرات نشر (مرة كل 24 ساعة)</span>
+                            </div>
+                        </div>
+
+                        <!-- حقل تاريخ الانتهاء -->
+                        <div id="recurringDateBox" style="display: none; margin-top: 12px; background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 12px; padding: 12px;">
+                            <label style="font-weight: 800; font-size: 0.88rem; color: #1e40af; display: block; margin-bottom: 6px;">
+                                حدد تاريخ انتهاء العرض:
+                            </label>
+                            <input type="date" id="recurringStoryEndDate" class="form-input" style="height: 42px; border-radius: 8px; font-weight: 700; color: #1e3a8a;">
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button type="submit" id="btnSubmitRecurringStory" class="btn-primary" style="flex: 2; padding: 12px; border-radius: 12px; font-weight: 800; font-size: 1rem; background: linear-gradient(135deg, #e1306c, #1877f2); border: none; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <i class="fa-solid fa-paper-plane"></i>
+                            <span id="btnSubmitRecurringStoryText">حفظ ونشر الستوري الآن</span>
+                        </button>
+                        <button type="button" class="btn-secondary" onclick="window.closeRecurringStoryModal()" style="flex: 1; padding: 12px; border-radius: 12px; font-weight: 700; cursor: pointer;">
+                            إلغاء
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
 
@@ -4028,7 +4224,7 @@
                 </h4>
                 <div class="menu-group-items" style="display: none;">
                     <button id="openOffersBtn" class="nav-item" data-target="offers-tab" style="color: #ea580c;">
-                        <span class="icon"><i class="fa-solid fa-fire-flame-curved"></i></span><span class="label">عروض المحل</span>
+                        <span class="icon"><i class="fa-solid fa-fire-flame-curved"></i></span><span class="label">عروض المحل والستوري</span>
                     </button>
                     <button id="openPriceTagsBtn" class="nav-item" data-target="price-tags-tab" style="color: #00bcd4;">
                         <span class="icon"><i class="fa-solid fa-tags"></i></span><span class="label">كروت الأسعار</span>
