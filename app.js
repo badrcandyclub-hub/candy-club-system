@@ -22209,25 +22209,31 @@ window.publishOfferToInstagramStory = async function(id, isAuto = false) {
         window._isPublishingStoryInProgress = true;
         let tempFileId = null;
         try {
-            showToast(`جاري تجهيز استوري (${offer.product_name}) 9:16 بجودة فائقة...`, 'info');
-            const canvas = await window.generateOfferStoryCanvas(offer);
-            if (!canvas) {
-                showToast('تعذر تجهيز قالب الاستوري', 'error');
+            showToast(`جاري تجهيز استوري (${offer.product_name})...`, 'info');
+            
+            let publicImageUrl = offer.image_url;
+            
+            // إذا كانت الصورة مخزنة محلياً كـ base64 وليست رابطاً سحابياً بعد، نرفعها
+            if (!publicImageUrl || !publicImageUrl.startsWith('http')) {
+                if (offer.image_url && offer.image_url.startsWith('data:image')) {
+                    showToast('جاري تجهيز رابط صورة المنتج...', 'info');
+                    const uploadResult = await window.uploadOfferPhotoToGoogleDrive(offer.image_url, `offer_${Date.now()}.jpg`);
+                    if (uploadResult && uploadResult.url) {
+                        publicImageUrl = uploadResult.url;
+                        offer.image_url = publicImageUrl;
+                        if (typeof window.saveOffersDataLocallyAndRemote === 'function') {
+                            window.saveOffersDataLocallyAndRemote();
+                        }
+                    }
+                }
+            }
+            
+            if (!publicImageUrl || !publicImageUrl.startsWith('http')) {
+                showToast('تعذر العثور على رابط صورة صالح للمنتج لنشره كـ Story', 'error');
                 return;
             }
             
-            showToast('جاري رفع الصورة السحابية مؤقتاً...', 'info');
-            const jpegData = canvas.toDataURL('image/jpeg', 0.94);
-            
-            const uploadResult = await window.uploadOfferPhotoToGoogleDrive(jpegData, `story_ig_${Date.now()}.jpg`);
-            if (!uploadResult || !uploadResult.url) {
-                showToast('تعذر رفع صورة الاستوري للنشر على إنستجرام وفيسبوك', 'error');
-                return;
-            }
-            tempFileId = uploadResult.fileId;
-            const publicImageUrl = uploadResult.url;
-            
-            showToast('جاري الإرسال إلى Instagram Graph API للنشر كـ Story...', 'info');
+            showToast('جاري الإرسال إلى Meta API للنشر كـ Story...', 'info');
             const token = window.getInstagramAccessToken();
             
             // 1. إنشاء حاوية الوسائط للاستوري في إنستجرام (Create Media Container)
