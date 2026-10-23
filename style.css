@@ -8061,7 +8061,7 @@ body.dark-mode .cmp-footer {
     margin-top: 15px;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 768px) {
     .offer-form-layout {
         grid-template-columns: 1.35fr 0.85fr;
         gap: 24px;
@@ -10139,4 +10139,378 @@ body.dark-mode .recurring-card-title {
 }
 body.dark-mode .recurring-card-footer {
     border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+/* ========================================================
+   📱 تحسينات العرض وتجربة المستخدم على الموبايل (Mobile UX)
+   قسم عروض المحل والستوري المتكرر والنوافذ المنبثقة
+   ======================================================== */
+@media (max-width: 768px) {
+    /* 1. كارت قسم العروض والترويسة */
+    .offers-section-card {
+        padding: 14px 12px !important;
+        border-radius: 14px !important;
+    }
+
+    .offers-header-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding-bottom: 14px;
+        margin-bottom: 14px;
+    }
+
+    .offers-title {
+        font-size: 1.25rem;
+        gap: 8px;
+    }
+
+    .offers-title-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 1.1rem;
+        border-radius: 10px;
+    }
+
+    .offers-subtitle {
+        font-size: 0.8rem;
+        line-height: 1.45;
+    }
+
+    /* وضع أزرار الترويسة بنظام شبكي مريح للموبايل */
+    .offers-header-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        width: 100%;
+    }
+
+    /* زر الإضافة الرئيسي يأخذ الأولوية والواجهة كاملة للموبايل */
+    .offers-header-actions .btn-new-offer {
+        grid-column: span 2;
+        width: 100%;
+        justify-content: center;
+        padding: 12px 16px;
+        font-size: 0.98rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 14px rgba(217, 119, 6, 0.35);
+    }
+
+    /* الأزرار الإضافية كصف ثنائي أنيق أسفل الزر الرئيسي */
+    .offers-header-actions .btn-social-settings,
+    .offers-header-actions .btn-export-offers-pdf {
+        padding: 9px 10px;
+        font-size: 0.82rem;
+        border-radius: 10px;
+        justify-content: center;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* 2. شريط ليميت النشر التلقائي - مريح ومضغوط للموبايل */
+    .offers-stories-limit-bar {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 12px 14px;
+        border-radius: 14px;
+        margin-bottom: 14px;
+    }
+
+    .stories-limit-info-col {
+        width: 100%;
+    }
+
+    .stories-limit-badge {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.86rem;
+    }
+
+    .stories-limit-badge strong {
+        font-size: 0.82rem;
+        padding: 2px 8px;
+    }
+
+    .stories-limit-progress-wrap {
+        height: 6px;
+        margin-top: 4px;
+    }
+
+    /* مؤقت التجديد في سطر مدمج */
+    .stories-limit-timer-col {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 12px;
+        border-radius: 10px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .stories-timer-title {
+        font-size: 0.78rem;
+    }
+
+    .stories-timer-digits {
+        font-size: 1.1rem;
+    }
+
+    /* طابور الانتظار وزر الفحص والنشر جنباً إلى جنب */
+    .stories-limit-queue-col {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        gap: 8px;
+    }
+
+    .stories-queue-badge {
+        flex: 1;
+        justify-content: center;
+        padding: 7px 10px;
+        font-size: 0.8rem;
+    }
+
+    .btn-stories-sync-now {
+        flex: 1;
+        justify-content: center;
+        padding: 7px 12px;
+        font-size: 0.82rem;
+    }
+
+    /* 3. شريط التبويبات الفخم: عروض المحل | الستوري المتكرر */
+    .offers-subtabs-bar {
+        gap: 6px;
+        padding: 4px;
+        margin: 12px 0 16px 0;
+        border-radius: 12px;
+    }
+
+    .offers-subtab-btn {
+        padding: 9px 6px;
+        gap: 5px;
+        font-size: 0.82rem;
+        font-weight: 800;
+        white-space: nowrap;
+        border-radius: 9px;
+    }
+
+    .offers-subtab-btn i {
+        font-size: 0.88rem;
+    }
+
+    .subtab-counter-badge {
+        font-size: 0.72rem;
+        padding: 1px 6px;
+        min-width: 18px;
+        text-align: center;
+    }
+
+    /* 4. كروت الإحصائيات السريعة - 2 عمود مع كارت إجمالي عريض */
+    .offers-stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+
+    .offers-stat-card {
+        padding: 10px 12px;
+        border-radius: 12px;
+    }
+
+    .offers-stat-card.offers-stat-total {
+        grid-column: span 2;
+        padding: 12px 14px;
+    }
+
+    .offers-stat-label {
+        font-size: 0.75rem;
+        margin-bottom: 2px;
+    }
+
+    .offers-stat-value {
+        font-size: 1.35rem;
+    }
+
+    .offers-stat-icon {
+        width: 34px;
+        height: 34px;
+        font-size: 1rem;
+        border-radius: 9px;
+    }
+
+    /* 5. شريط البحث والتصفية */
+    .offers-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+
+    .offers-search-box {
+        min-width: 100%;
+    }
+
+    .offers-search-box input {
+        height: 42px;
+        font-size: 0.88rem;
+        padding-right: 38px;
+    }
+
+    .offers-search-box i {
+        font-size: 0.88rem;
+        right: 12px;
+    }
+
+    .offers-filter-pills {
+        width: 100%;
+        gap: 6px;
+        padding-bottom: 4px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .offers-filter-pill {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+        border-radius: 16px;
+    }
+
+    /* 6. شريط التحديد والنشر الجماعي */
+    .offers-batch-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        margin-bottom: 16px;
+    }
+
+    .offers-batch-bar > div:first-child {
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .offers-batch-bar .btn-publish-batch {
+        width: 100%;
+        justify-content: center;
+        padding: 10px 14px;
+        font-size: 0.9rem;
+        border-radius: 10px;
+    }
+
+    /* 7. شبكات كروت العروض والستوري */
+    .offers-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .recurring-stories-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .recurring-card-media {
+        height: 280px;
+    }
+
+    .offer-card-footer,
+    .recurring-card-footer {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .offer-action-btn {
+        padding: 7px 10px;
+        font-size: 0.8rem;
+        min-height: 36px;
+    }
+
+    /* 8. النوافذ المنبثقة على الموبايل (Offer Modal & Recurring Story Modal) */
+    .offer-modal-content {
+        width: 95% !important;
+        max-width: 95% !important;
+        max-height: 94vh !important;
+        padding: 16px 14px !important;
+        border-radius: 16px !important;
+    }
+
+    .offer-modal-content .modal-header {
+        margin-bottom: 12px !important;
+        padding-bottom: 10px !important;
+    }
+
+    .offer-modal-content .modal-header h3 {
+        font-size: 1.05rem !important;
+    }
+
+    .offer-modal-close-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
+    }
+
+    .offer-form-layout {
+        grid-template-columns: 1fr !important;
+        gap: 14px !important;
+        margin-top: 10px !important;
+    }
+
+    /* خيارات تكرار الستوري في نافذة الإضافة */
+    .recurring-cycle-options {
+        gap: 6px !important;
+    }
+
+    .cycle-opt-card {
+        padding: 8px 4px !important;
+        border-radius: 10px !important;
+    }
+
+    .cycle-opt-card > div {
+        font-size: 0.8rem !important;
+        margin-bottom: 2px !important;
+    }
+
+    .cycle-opt-card small {
+        font-size: 0.68rem !important;
+        line-height: 1.25 !important;
+    }
+
+    /* رافع الصورة والمعاينة على الموبايل */
+    .offer-photo-uploader {
+        min-height: 170px !important;
+    }
+
+    .offer-photo-placeholder {
+        padding: 18px 10px !important;
+    }
+
+    .offer-photo-preview-wrapper {
+        max-height: 240px !important;
+    }
+
+    .offer-photo-preview-wrapper img {
+        max-height: 240px !important;
+    }
+
+    /* أزرار نافذة الإضافة في الأسفل */
+    .offer-modal-content .modal-footer {
+        margin-top: 16px !important;
+        padding-top: 12px !important;
+        gap: 8px !important;
+    }
+
+    .offer-modal-content .modal-footer button {
+        flex: 1;
+        justify-content: center;
+        padding: 10px 14px !important;
+        font-size: 0.88rem !important;
+    }
+
+    .offer-modal-content .modal-footer button[type="submit"] {
+        flex: 1.8;
+    }
 }
