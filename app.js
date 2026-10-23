@@ -4630,6 +4630,29 @@ function renderHistoryList(orders, isLoadMore = false) {
     }
 }
 
+// دالة تنظيف الملاحظات للفواتير المطبوعة لمنع طباعة وسوم HTML أو نصوص الهدايا التلقائية
+window.cleanNotesForReceipt = function(notesStr) {
+    if (!notesStr) return "";
+    let clean = String(notesStr)
+        // إزالة أي وسوم HTML مثل <i class='...'></i>
+        .replace(/<[^>]*>?/gm, '')
+        // إزالة وسوم وألفاظ الهدايا التلقائية بجميع أشكالها
+        .replace(/\[\s*أوردر\s*هدية\s*\]/gi, '')
+        .replace(/\[\s*هدية\s*\]/gi, '')
+        .replace(/أوردر\s*هدية\s*[-–—:]?/gi, '')
+        .replace(/هدية\s*[-–—:]?/gi, '')
+        // تنظيف الشُرط والفواصل والمسافات الزائدة من الأطراف
+        .replace(/^[\s\-–—:،,.]+/g, '')
+        .replace(/[\s\-–—:،,.]+$/g, '')
+        .trim();
+
+    let checkContent = clean.replace(/[\s\-_.:،,]/g, '');
+    if (!checkContent || clean === "لا توجد ملاحظات" || clean === "بدون ملاحظات") {
+        return "";
+    }
+    return clean;
+};
+
 window.printHistoryOrder = function (orderId) {
     // <i class=\'fa-solid fa-star\'></i> Fix: String() comparison to prevent type mismatch (string vs number)
     let findFn = o => String(o.id) === String(orderId);
@@ -4837,15 +4860,15 @@ window.printHistoryOrder = function (orderId) {
         if (document.getElementById('print-shipping')) document.getElementById('print-shipping').innerText = isOldGift ? "***" : shipVal;
     }
 
-    // طباعة الملاحظات فقط في حال وجود ملاحظات فعلية
+    // طباعة الملاحظات فقط في حال وجود ملاحظات يدوية فعلية مدخلة من العميل (مع استبعاد وسم الهدية التلقائي ووسوم HTML)
     let orderNotes = String(order.notes || order.customerNotes || "").trim();
     let printNotesRow = document.querySelector('.print-notes-row');
     let printNotesEl = document.getElementById('print-notes');
+    let printableNotes = (typeof window.cleanNotesForReceipt === 'function') ? window.cleanNotesForReceipt(orderNotes) : orderNotes.replace(/<[^>]*>?/gm, '').trim();
     if (printNotesRow) {
-        let cleanNotes = orderNotes.replace(/[\s\-_]/g, '');
-        if (orderNotes && cleanNotes !== "" && orderNotes !== "لا توجد ملاحظات" && orderNotes !== "بدون ملاحظات") {
+        if (printableNotes) {
             printNotesRow.style.display = 'block';
-            if (printNotesEl) printNotesEl.innerText = orderNotes;
+            if (printNotesEl) printNotesEl.innerText = printableNotes;
         } else {
             printNotesRow.style.display = 'none';
             if (printNotesEl) printNotesEl.innerText = '';
@@ -5958,8 +5981,11 @@ if (saveAndPrintBtn) {
             bookingDatePrint = finalExpDate;
         }
 
-        let finalNotes = document.getElementById('notes') ? document.getElementById('notes').value : "";
-        if (isGift) finalNotes = "<i class=\'fa-solid fa-gift\'></i> أوردر هدية - " + finalNotes;
+        let userNotes = document.getElementById('notes') ? document.getElementById('notes').value.trim() : "";
+        let finalNotes = userNotes;
+        if (isGift) {
+            finalNotes = userNotes ? `[أوردر هدية] - ${userNotes}` : "[أوردر هدية]";
+        }
 
         let finalTotalVal = document.getElementById('finalTotalDisplay') ? document.getElementById('finalTotalDisplay').innerText : 0;
 
@@ -6062,15 +6088,18 @@ if (saveAndPrintBtn) {
                     }
                 }
 
-                // طباعة الملاحظات فقط في حال وجود ملاحظات فعلية
-                let finalNotesStr = String(finalNotes || (document.getElementById('notes') ? document.getElementById('notes').value : "")).trim();
+                // طباعة الملاحظات فقط في حال وجود ملاحظات يدوية فعلية مدخلة (إخفاء خانة الملاحظات بالكامل في حال عدم وجود ملاحظات أو في حال أوردر هدية بدون ملاحظات خاصة)
                 let printNotesRow = document.querySelector('.print-notes-row');
                 let printNotesEl = document.getElementById('print-notes');
+                let rawNotes = userNotes || finalNotes || (document.getElementById('notes') ? document.getElementById('notes').value : "");
+                let printableNotes = (typeof window.cleanNotesForReceipt === 'function')
+                    ? window.cleanNotesForReceipt(rawNotes)
+                    : String(rawNotes).replace(/<[^>]*>?/gm, '').replace(/\[\s*أوردر\s*هدية\s*\]/gi, '').trim();
+
                 if (printNotesRow) {
-                    let cleanNotes = finalNotesStr.replace(/[\s\-_]/g, '');
-                    if (finalNotesStr && cleanNotes !== "" && finalNotesStr !== "لا توجد ملاحظات" && finalNotesStr !== "بدون ملاحظات") {
+                    if (printableNotes) {
                         printNotesRow.style.display = 'block';
-                        if (printNotesEl) printNotesEl.innerText = finalNotesStr;
+                        if (printNotesEl) printNotesEl.innerText = printableNotes;
                     } else {
                         printNotesRow.style.display = 'none';
                         if (printNotesEl) printNotesEl.innerText = '';
