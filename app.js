@@ -256,7 +256,11 @@ window.originalFetch = originalFetch;
 
 window.fetch = async function(url, options) {
     // Intercept Google Sheets calls migrated to Supabase, but NEVER intercept Google Drive image uploads or other external web apps
-    const isGoogleDriveUploader = typeof url === 'string' && (url.includes('AKfycbwx-tcJs67wcNR9adRLE70meZUjpeWSVpmDGIY1qJj5owFbIfWt5Sq8y6Kd3CYr7jdb') || url.includes('googleusercontent.com'));
+    const isGoogleDriveUploader = typeof url === 'string' && (
+        url.includes('AKfycbwx-tcJs67wcNR9adRLE70meZUjpeWSVpmDGIY1qJj5owFbIfWt5Sq8y6Kd3CYr7jdb') || 
+        url.includes('AKfycbzZdn2hQ8CBOb4E9JvM6cVr8kg80z3JfLnkLjlgvFiAphAw3EwkzV90bu7jyGW1XgX_2Q') ||
+        url.includes('googleusercontent.com')
+    );
     if (!isGoogleDriveUploader && typeof url === 'string' && (url.includes('DISABLED - MIGRATED TO SUPABASE') || url.includes('script.google.com'))) {
         return handleSupabaseRequest(url, options);
     }
@@ -21617,9 +21621,12 @@ window.uploadOfferPhotoToGoogleDrive = async function(base64Image, filename, del
         if (deleteFileId) {
             payload.deleteFileId = deleteFileId;
         }
-        const res = await fetch(OFFERS_DEFAULT_DRIVE_URL, {
+        const fetchFn = window.originalFetch || fetch;
+        const res = await fetchFn(OFFERS_DEFAULT_DRIVE_URL, {
             method: 'POST',
-            body: JSON.stringify(payload)
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload),
+            redirect: 'follow'
         });
         const result = await res.json();
         if (result && result.url) {
@@ -21634,12 +21641,15 @@ window.uploadOfferPhotoToGoogleDrive = async function(base64Image, filename, del
 window.deleteOfferPhotoFromGoogleDrive = async function(fileId) {
     if (!fileId) return;
     try {
-        await fetch(OFFERS_DEFAULT_DRIVE_URL, {
+        const fetchFn = window.originalFetch || fetch;
+        await fetchFn(OFFERS_DEFAULT_DRIVE_URL, {
             method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({
                 action: 'delete',
                 fileId: fileId
-            })
+            }),
+            redirect: 'follow'
         });
     } catch(err) {
         console.warn('Failed to delete offer image from Drive:', err);
