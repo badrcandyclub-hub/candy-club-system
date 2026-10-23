@@ -20573,9 +20573,15 @@ window.getOffersStoryDailyUsage = function() {
     const remaining = Math.max(0, limit - used);
     const percent = Math.min(100, Math.round((remaining / limit) * 100));
 
-    const now = new Date();
-    const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
-    const msToReset = Math.max(0, midnight.getTime() - now.getTime());
+    const now = Date.now();
+    let msToReset = 24 * 60 * 60 * 1000;
+    if (history.length > 0) {
+        const timestamps = history.map(h => typeof h === 'number' ? h : h?.timestamp).filter(Boolean).sort((a, b) => a - b);
+        if (timestamps.length > 0) {
+            const oldestTs = timestamps[0];
+            msToReset = Math.max(0, (oldestTs + 24 * 60 * 60 * 1000) - now);
+        }
+    }
 
     return {
         limit,
@@ -21096,42 +21102,51 @@ window.renderOffersGrid = function() {
         let storyBadgeHtml = '';
 
         if (item.is_active) {
-            const hasPublishedRecent = item.last_story_published_at && (now - item.last_story_published_at) < 24 * 60 * 60 * 1000;
-            if (hasPublishedRecent) {
-                const nextPublishTs = item.last_story_published_at + 24 * 60 * 60 * 1000;
-                const diffSec = Math.max(0, Math.floor((nextPublishTs - now) / 1000));
-                storyBadgeHtml = `
-                    <div class="offer-story-badge is-published" title="نُشر العرض كـ Story على المنصات اليوم">
-                        <i class="fa-solid fa-circle-check"></i> نُشر اليوم
-                        <span style="font-size:0.75rem; color:#64748b; margin-right:4px;">(يتجدد بعد: <span class="story-timer-digit" data-target-ts="${nextPublishTs}">${window.formatSecondsToTimer(diffSec)}</span>)</span>
-                    </div>
-                `;
+            const hasPublished = Boolean(item.last_story_published_at);
+            if (hasPublished) {
+                const nextPublishTs = Number(item.last_story_published_at) + (24 * 60 * 60 * 1000);
+                if (now < nextPublishTs) {
+                    const diffSec = Math.max(0, Math.floor((nextPublishTs - now) / 1000));
+                    storyBadgeHtml = `
+                        <div class="offer-story-badge is-scheduled" title="نُشر العرض وسيتكرر النشر التلقائي بعد انتهاء الـ 24 ساعة">
+                            <i class="fa-solid fa-clock"></i> نشر تلقائي بعد: <span class="story-timer-digit" data-target-ts="${nextPublishTs}">${window.formatSecondsToTimer(diffSec)}</span>
+                        </div>
+                    `;
+                } else {
+                    storyBadgeHtml = `
+                        <div class="offer-story-badge is-due" style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0;" title="حان موعد النشر التلقائي الدوري (24 ساعة)">
+                            <i class="fa-solid fa-bolt"></i> مستحق للنشر التلقائي الآن
+                        </div>
+                    `;
+                }
             } else if (usage.isLimitReached) {
                 storyBadgeHtml = `
-                    <div class="offer-story-badge is-queued" title="تم استهلاك حد الـ 40 استوري اليوم - العرض في طابور الأولوية وسينشر فور فتح الليميت">
-                        <i class="fa-solid fa-hourglass-half"></i> في طابور الأولوية (تجاوز الليميت)
+                    <div class="offer-story-badge is-queued" title="تم استهلاك حد الـ 40 استوري اليوم - العرض في طابور الأولوية">
+                        <i class="fa-solid fa-hourglass-half"></i> في طابور الانتظار (تجاوز الليميت)
                     </div>
                 `;
             } else {
-                let scheduledTs = item.scheduled_story_ts;
-                if (!scheduledTs || scheduledTs < now - 3600000) {
-                    scheduledTs = now + (15 * 60 * 1000);
-                    item.scheduled_story_ts = scheduledTs;
-                }
-                const diffSec = Math.max(0, Math.floor((scheduledTs - now) / 1000));
                 storyBadgeHtml = `
-                    <div class="offer-story-badge is-scheduled" title="مجدول للنشر التلقائي على إنستجرام وفيسبوك">
-                        <i class="fa-solid fa-clock"></i> نشر تلقائي بعد: <span class="story-timer-digit" data-target-ts="${scheduledTs}">${window.formatSecondsToTimer(diffSec)}</span>
+                    <div class="offer-story-badge is-new" style="background:#fffbeb; color:#d97706; border:1px solid #fde68a;" title="عرض جديد جاهز للنشر">
+                        <i class="fa-solid fa-sparkles"></i> عرض جديد - بانتظار أول نشر
                     </div>
                 `;
             }
         }
 
+        const safeTitle = (item.product_name || '').replace(/'/g, "\\'");
+
         return `
             <div class="offer-card ${!item.is_active ? 'is-inactive' : ''}" data-id="${item.id}">
                 <div class="offer-card-media">
-                    <img src="${photoSrc}" alt="${item.product_name}" class="offer-card-img" onerror="this.src='https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?auto=format&fit=crop&w=600&q=80'">
-                    ${discountPercent > 0 ? `<span class="offer-discount-badge"><i class="fa-solid fa-bolt"></i> خصم ${discountPercent}%</span>` : ''}
+                    <label class="offer-card-select-label" onclick="event.stopPropagation()" title="تحديد العرض للنشر الجماعي">
+                        <input type="checkbox" class="offer-card-checkbox" data-offer-id="${item.id}" onchange="window.updateOffersSelectedCount()">
+                    </label>
+                    <img src="${photoSrc}" alt="${item.product_name}" class="offer-card-img" onclick="window.openOfferImageLightbox('${photoSrc}', '${safeTitle}')" style="cursor: zoom-in;" title="اضغط لمعاينة الصورة بالحجم الكامل" onerror="this.src='https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?auto=format&fit=crop&w=600&q=80'">
+                    <button type="button" class="offer-img-preview-btn" onclick="event.stopPropagation(); window.openOfferImageLightbox('${photoSrc}', '${safeTitle}')" title="معاينة الصورة بالحجم الكامل">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                    ${discountPercent > 0 ? `<span class="offer-discount-badge" style="top: 10px; right: 48px;"><i class="fa-solid fa-bolt"></i> خصم ${discountPercent}%</span>` : ''}
                     <span class="offer-status-badge ${item.is_active ? 'status-active' : 'status-ended'}">
                         ${item.is_active ? '<i class="fa-solid fa-check"></i> نشط' : '<i class="fa-solid fa-xmark"></i> متوقف'}
                     </span>
@@ -21146,19 +21161,13 @@ window.renderOffersGrid = function() {
                     ${qtyHtml}
                     ${storyBadgeHtml}
                     <div class="offer-card-footer">
-                        <button type="button" class="offer-action-btn offer-action-instagram" onclick="window.publishOfferToInstagramStory('${item.id}')" title="نشر استوري تلقائياً على إنستجرام وفيسبوك كاندي كلوب">
-                            <i class="fa-brands fa-instagram"></i> <i class="fa-brands fa-facebook"></i> نشر
+                        <button type="button" class="offer-action-btn" onclick="window.openEditOfferModal('${item.id}')" title="تعديل العرض" style="flex: 1;">
+                            <i class="fa-solid fa-pen"></i> تعديل
                         </button>
-                        <button type="button" class="offer-action-btn offer-action-story" onclick="window.downloadOfferStoryImage('${item.id}')" title="تحميل صورة ستوري 9:16 بجودة عالية">
-                            <i class="fa-solid fa-download"></i> صورة
+                        <button type="button" class="offer-action-btn" onclick="window.toggleOfferActive('${item.id}')" title="${item.is_active ? 'إيقاف العرض مؤقتاً' : 'تفعيل العرض'}" style="flex: 1;">
+                            <i class="fa-solid ${item.is_active ? 'fa-pause' : 'fa-play'}"></i> ${item.is_active ? 'إيقاف' : 'تفعيل'}
                         </button>
-                        <button type="button" class="offer-action-btn" onclick="window.openEditOfferModal('${item.id}')" title="تعديل العرض">
-                            <i class="fa-solid fa-pen"></i>
-                        </button>
-                        <button type="button" class="offer-action-btn" onclick="window.toggleOfferActive('${item.id}')" title="${item.is_active ? 'إيقاف العرض' : 'تفعيل العرض'}">
-                            <i class="fa-solid ${item.is_active ? 'fa-pause' : 'fa-play'}"></i>
-                        </button>
-                        <button type="button" class="offer-action-btn offer-action-delete" onclick="window.deleteOffer('${item.id}')" title="حذف العرض">
+                        <button type="button" class="offer-action-btn offer-action-delete" onclick="window.deleteOffer('${item.id}')" title="حذف العرض نهائياً ومسح صورته من Google Drive">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
@@ -21167,8 +21176,9 @@ window.renderOffersGrid = function() {
         `;
     }).join('');
     
-    // مزامنة شريط الليميت والعدادات
+    // مزامنة شريط الليميت والعدادات وحالة التحديد
     window.updateOffersStorySchedulerUI();
+    window.updateOffersSelectedCount();
 };
 
 // 7. اختيار المنتجات بالبحث أو الباركود في نافذة العرض
@@ -21638,11 +21648,25 @@ window.uploadOfferPhotoToGoogleDrive = async function(base64Image, filename, del
     return null;
 };
 
-window.deleteOfferPhotoFromGoogleDrive = async function(fileId) {
-    if (!fileId) return;
+window.extractGoogleDriveFileId = function(urlOrId) {
+    if (!urlOrId || typeof urlOrId !== 'string') return null;
+    const clean = urlOrId.trim();
+    if (!clean.includes('/') && !clean.includes('.') && clean.length > 15) {
+        return clean;
+    }
+    const m1 = clean.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if (m1 && m1[1]) return m1[1];
+    const m2 = clean.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (m2 && m2[1]) return m2[1];
+    return null;
+};
+
+window.deleteOfferPhotoFromGoogleDrive = async function(fileIdOrUrl) {
+    const fileId = window.extractGoogleDriveFileId(fileIdOrUrl);
+    if (!fileId) return false;
     try {
         const fetchFn = window.originalFetch || fetch;
-        await fetchFn(OFFERS_DEFAULT_DRIVE_URL, {
+        const res = await fetchFn(OFFERS_DEFAULT_DRIVE_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({
@@ -21651,8 +21675,12 @@ window.deleteOfferPhotoFromGoogleDrive = async function(fileId) {
             }),
             redirect: 'follow'
         });
+        const result = await res.json();
+        console.log('[Google Drive] Deleted offer image:', fileId, result);
+        return true;
     } catch(err) {
         console.warn('Failed to delete offer image from Drive:', err);
+        return false;
     }
 };
 
@@ -21948,7 +21976,26 @@ window.handleOfferSubmit = async function(e) {
         window.closeOfferModal();
         window.updateOffersStats();
         window.renderOffersGrid();
-        showToast('تم حفظ ونشر العرض بنجاح', 'success');
+        showToast('تم حفظ العرض بنجاح', 'success');
+
+        // النشر التلقائي الفوري كـ Story لأول مرة عند إضافة عرض جديد
+        if (!editId) {
+            showToast(`🚀 جاري نشر ستوري (${offerObj.product_name}) تلقائياً على إنستجرام وفيسبوك...`, 'info', 5000);
+            setTimeout(async () => {
+                try {
+                    const res = await window.publishSingleOfferStoryCore(offerObj);
+                    if (res && res.success) {
+                        showToast(`🎉 تم نشر ستوري (${offerObj.product_name}) بنجاح! بدأ عداد الـ 24 ساعة التلقائي.`, 'success', 6000);
+                        await window.saveOffersDataLocallyAndRemote();
+                        window.renderOffersGrid();
+                    } else {
+                        console.warn('Initial story auto-publish note:', res);
+                    }
+                } catch(pubErr) {
+                    console.error('Initial story auto-publish error:', pubErr);
+                }
+            }, 600);
+        }
         
     } catch(err) {
         console.error('Error saving offer:', err);
@@ -22000,20 +22047,27 @@ window.deleteOffer = function(id) {
     const offer = window.offersData.find(o => String(o.id) === String(id));
     if (!offer) return;
     
-    customConfirm(`هل أنت متأكد من حذف عرض (${offer.product_name}) نهائياً؟`, async () => {
-        if (offer.drive_file_id) {
-            window.deleteOfferPhotoFromGoogleDrive(offer.drive_file_id);
+    customConfirm(`هل أنت متأكد من حذف عرض (${offer.product_name}) نهائياً ومسح صورته من Google Drive؟`, async () => {
+        showToast('جاري حذف العرض ومسح صورته من Google Drive...', 'info');
+        
+        // استخراج معرف الصورة وحذفها نهائياً من درايف
+        const fileId = offer.drive_file_id || window.extractGoogleDriveFileId(offer.image_url);
+        if (fileId) {
+            await window.deleteOfferPhotoFromGoogleDrive(fileId);
         }
+        
         window.offersData = window.offersData.filter(o => String(o.id) !== String(id));
         if (window.supabase) {
             try {
                 await window.supabase.from('store_offers').delete().eq('id', id);
-            } catch(e) {}
+            } catch(e) {
+                console.warn('Supabase delete error:', e);
+            }
         }
         await window.saveOffersDataLocallyAndRemote();
         window.updateOffersStats();
         window.renderOffersGrid();
-        showToast('تم حذف العرض بنجاح', 'success');
+        showToast('تم حذف العرض ومسح صورته تماماً من Google Drive بنجاح', 'success');
     });
 };
 
@@ -22200,151 +22254,164 @@ window.downloadOfferStoryImage = async function(id) {
     showToast('تم تحميل صورة الستوري بنجاح', 'success');
 };
 
-// النشر التلقائي المباشر على إنستجرام كاندي كلوب وفيسبوك
+// ==========================================
+// 🚀 محرك النشر للستوري (Instagram & Facebook Stories Engine)
+// ==========================================
+
+// 1. الدالة الأساسية لنشر استوري لعرض واحد (Core Story Publisher)
+window.publishSingleOfferStoryCore = async function(offer) {
+    if (!offer) return { success: false, error: 'عرض غير موجود' };
+    
+    let publicImageUrl = offer.image_url;
+    
+    // إذا كانت الصورة base64 نرفعها فوراً إلى Google Drive
+    if (!publicImageUrl || !publicImageUrl.startsWith('http')) {
+        if (offer.image_url && offer.image_url.startsWith('data:image')) {
+            const uploadResult = await window.uploadOfferPhotoToGoogleDrive(offer.image_url, `offer_${Date.now()}.jpg`);
+            if (uploadResult && uploadResult.url) {
+                publicImageUrl = uploadResult.url;
+                offer.image_url = publicImageUrl;
+                offer.drive_file_id = uploadResult.fileId;
+                if (typeof window.saveOffersDataLocallyAndRemote === 'function') {
+                    await window.saveOffersDataLocallyAndRemote();
+                }
+            }
+        }
+    }
+    
+    if (!publicImageUrl || !publicImageUrl.startsWith('http')) {
+        return { success: false, error: 'رابط الصورة غير صالح' };
+    }
+    
+    const token = window.getInstagramAccessToken();
+    let igSuccess = false;
+    let fbSuccess = false;
+    let igError = null;
+    let fbError = null;
+    
+    // أ) إنستجرام: حاوية الوسائط ثم الانتظار ثم إطلاق الستوري
+    try {
+        const createPayload = new URLSearchParams({
+            image_url: publicImageUrl,
+            media_type: 'STORIES',
+            access_token: token
+        });
+        
+        const createRes = await fetch(`https://graph.instagram.com/v19.0/${INSTAGRAM_ACCOUNT_ID}/media`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: createPayload.toString()
+        });
+        const createData = await createRes.json();
+        
+        if (createData && createData.id) {
+            const creationId = createData.id;
+            // انتظار خوادم إنستجرام حتى تنتهي من المعالجة
+            for (let i = 0; i < 7; i++) {
+                await new Promise(r => setTimeout(r, 1500));
+                try {
+                    const statusRes = await fetch(`https://graph.instagram.com/v19.0/${creationId}?fields=status_code,status&access_token=${token}`);
+                    const statusData = await statusRes.json();
+                    if (statusData?.status_code === 'FINISHED') {
+                        break;
+                    }
+                    if (statusData?.status_code === 'ERROR') {
+                        igError = 'Instagram container status error';
+                        break;
+                    }
+                } catch(e) {}
+            }
+            
+            const publishPayload = new URLSearchParams({
+                creation_id: creationId,
+                access_token: token
+            });
+            
+            const pubRes = await fetch(`https://graph.instagram.com/v19.0/${INSTAGRAM_ACCOUNT_ID}/media_publish`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: publishPayload.toString()
+            });
+            const pubData = await pubRes.json();
+            if (pubData && pubData.id) {
+                igSuccess = true;
+            } else {
+                igError = pubData?.error?.message || 'Instagram publish failed';
+            }
+        } else {
+            igError = createData?.error?.message || 'Instagram create container failed';
+        }
+    } catch(err) {
+        igError = err.message;
+    }
+    
+    // ب) فيسبوك: رفع صورة Unpublished ثم إنشاء Story فقط (لا ينشر بوست أبداً)
+    try {
+        const fbStoryRes = await window.publishOfferToFacebookStory(publicImageUrl);
+        if (fbStoryRes && fbStoryRes.success) {
+            fbSuccess = true;
+        } else {
+            fbError = fbStoryRes?.error || 'Facebook story failed';
+        }
+    } catch(err) {
+        fbError = err.message;
+    }
+    
+    if (igSuccess || fbSuccess) {
+        window.recordOfferStoryPublish(offer.id);
+        offer.last_story_published_at = Date.now();
+        offer.story_publish_count = (offer.story_publish_count || 0) + 1;
+        if (window.supabase) {
+            try {
+                await window.supabase.from('store_offers').update({
+                    last_story_published_at: offer.last_story_published_at,
+                    story_publish_count: offer.story_publish_count
+                }).eq('id', offer.id);
+            } catch(e) {
+                console.warn('Supabase offer update error:', e);
+            }
+        }
+    }
+    
+    return {
+        success: (igSuccess || fbSuccess),
+        igSuccess,
+        fbSuccess,
+        igError,
+        fbError,
+        offer
+    };
+};
+
+// 2. النشر الفردي للستوري
 window.publishOfferToInstagramStory = async function(id, isAuto = false) {
     const offer = window.offersData.find(o => String(o.id) === String(id));
     if (!offer) return;
     
-    const usage = window.getOffersStoryDailyUsage();
-    if (usage.isLimitReached && !isAuto) {
-        const proceed = confirm(`⚠️ تنبيه الحد اليومي: تم نشر ${usage.publishedToday} استوري اليوم من أصل ${usage.maxDaily} استوري مسموح بها. متابعة النشر الآن قد تؤدي لحظر مؤقت أو رفض من خوادم إنستجرام. هل تريد المتابعة على أية حال؟`);
-        if (!proceed) return;
-    }
-
     const runPublish = async () => {
         if (window._isPublishingStoryInProgress) {
             showToast('هناك استوري أخرى قيد النشر حالياً، يرجى الانتظار ثوانٍ...', 'warning');
             return;
         }
         window._isPublishingStoryInProgress = true;
-        let tempFileId = null;
         try {
-            showToast(`جاري تجهيز استوري (${offer.product_name})...`, 'info');
-            
-            let publicImageUrl = offer.image_url;
-            
-            // إذا كانت الصورة مخزنة محلياً كـ base64 وليست رابطاً سحابياً بعد، نرفعها
-            if (!publicImageUrl || !publicImageUrl.startsWith('http')) {
-                if (offer.image_url && offer.image_url.startsWith('data:image')) {
-                    showToast('جاري تجهيز رابط صورة المنتج...', 'info');
-                    const uploadResult = await window.uploadOfferPhotoToGoogleDrive(offer.image_url, `offer_${Date.now()}.jpg`);
-                    if (uploadResult && uploadResult.url) {
-                        publicImageUrl = uploadResult.url;
-                        offer.image_url = publicImageUrl;
-                        if (typeof window.saveOffersDataLocallyAndRemote === 'function') {
-                            window.saveOffersDataLocallyAndRemote();
-                        }
-                    }
-                }
-            }
-            
-            if (!publicImageUrl || !publicImageUrl.startsWith('http')) {
-                showToast('تعذر العثور على رابط صورة صالح للمنتج لنشره كـ Story', 'error');
-                return;
-            }
-            
-            showToast('جاري الإرسال إلى Meta API للنشر كـ Story...', 'info');
-            const token = window.getInstagramAccessToken();
-            
-            // 1. إنشاء حاوية الوسائط للاستوري في إنستجرام (Create Media Container)
-            const createPayload = new URLSearchParams({
-                image_url: publicImageUrl,
-                media_type: 'STORIES',
-                access_token: token
-            });
-            
-            const createRes = await fetch(`https://graph.instagram.com/v19.0/${INSTAGRAM_ACCOUNT_ID}/media`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: createPayload.toString()
-            });
-            const createData = await createRes.json();
-            
-            let igSuccess = false;
-            let fbSuccess = false;
-
-            if (createData && createData.id) {
-                const creationId = createData.id;
-                showToast('جاري معالجة صورة الاستوري في إنستجرام...', 'info');
-                
-                // انتظار انتهاء خوادم إنستجرام من معالجة وتجهيز الصورة (Poll status until FINISHED)
-                let isReady = false;
-                for (let i = 0; i < 7; i++) {
-                    await new Promise(r => setTimeout(r, 1500));
-                    try {
-                        const statusRes = await fetch(`https://graph.instagram.com/v19.0/${creationId}?fields=status_code,status&access_token=${token}`);
-                        const statusData = await statusRes.json();
-                        if (statusData?.status_code === 'FINISHED') {
-                            isReady = true;
-                            break;
-                        }
-                        if (statusData?.status_code === 'ERROR') {
-                            console.error('Instagram Container Processing Error:', statusData);
-                            break;
-                        }
-                    } catch(pollErr) {
-                        console.warn('Instagram container polling error:', pollErr);
-                    }
-                }
-                
-                // 2. إتمام النشر الرسمي
-                showToast('جاري إطلاق الاستوري على حساب إنستجرام كاندي كلوب...', 'info');
-                const publishPayload = new URLSearchParams({
-                    creation_id: creationId,
-                    access_token: token
-                });
-                
-                const pubRes = await fetch(`https://graph.instagram.com/v19.0/${INSTAGRAM_ACCOUNT_ID}/media_publish`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: publishPayload.toString()
-                });
-                const pubData = await pubRes.json();
-                
-                if (pubData && pubData.id) {
-                    igSuccess = true;
-                } else {
-                    console.error('Instagram Publish Error:', pubData);
-                }
-            } else {
-                console.error('Instagram Container Creation Error:', createData);
-            }
-
-            // 3. النشر الموازي كـ Story فقط وحصرياً على صفحة فيسبوك كاندي كلوب (ممنوع منعاً باتاً نشر أي بوست)
-            try {
-                const fbStoryRes = await window.publishOfferToFacebookStory(publicImageUrl);
-                if (fbStoryRes && fbStoryRes.success) {
-                    fbSuccess = true;
-                } else {
-                    console.warn('Facebook Page Story publish failed (strictly no post fallback):', fbStoryRes);
-                }
-            } catch(e) {
-                console.warn('Facebook story publish error:', e);
-            }
-            
-            if (igSuccess && fbSuccess) {
-                window.recordOfferStoryPublish(offer.id);
+            showToast(`جاري تجهيز ونشر استوري (${offer.product_name})...`, 'info');
+            const res = await window.publishSingleOfferStoryCore(offer);
+            if (res.igSuccess && res.fbSuccess) {
                 showToast(`🎉 تم نشر ستوري (${offer.product_name}) بنجاح على إنستجرام وفيسبوك معاً!`, 'success', 6000);
-            } else if (igSuccess && !fbSuccess) {
-                window.recordOfferStoryPublish(offer.id);
+            } else if (res.igSuccess && !res.fbSuccess) {
                 showToast(`✅ تم نشر ستوري (${offer.product_name}) على إنستجرام بنجاح (وتعذر فيسبوك)`, 'warning', 6000);
-            } else if (!igSuccess && fbSuccess) {
-                window.recordOfferStoryPublish(offer.id);
+            } else if (!res.igSuccess && res.fbSuccess) {
                 showToast(`✅ تم نشر ستوري (${offer.product_name}) على فيسبوك بنجاح (وتعذر إنستجرام)`, 'warning', 6000);
             } else {
-                const errMsg = createData?.error?.message || 'تعذر استكمال النشر عبر Meta API، تأكد من الاتصال';
-                showToast(`خطأ في النشر: ${errMsg}`, 'error', 6000);
+                showToast(`خطأ في النشر: ${res.igError || res.fbError || 'تعذر الاتصال بـ Meta API'}`, 'error', 6000);
             }
+            window.renderOffersGrid();
         } catch(err) {
             console.error('Publishing to Story failed:', err);
             showToast('حدث خطأ أثناء الاتصال بالمنصات: ' + err.message, 'error', 5000);
         } finally {
             window._isPublishingStoryInProgress = false;
-            if (tempFileId) {
-                setTimeout(() => {
-                    window.deleteOfferPhotoFromGoogleDrive(tempFileId);
-                }, 40000);
-            }
         }
     };
 
@@ -22353,6 +22420,137 @@ window.publishOfferToInstagramStory = async function(id, isAuto = false) {
     } else {
         customConfirm(`هل تريد نشر عرض (${offer.product_name}) كـ Story تلقائياً على إنستجرام وفيسبوك كاندي كلوب الآن؟`, runPublish);
     }
+};
+
+// 3. النشر الجماعي للعروض المحددة مع شريط التقدم الحي (Batch Stories Publishing)
+window.publishSelectedOffersStories = async function() {
+    const checkboxes = document.querySelectorAll('.offer-card-checkbox:checked');
+    const ids = Array.from(checkboxes).map(cb => cb.dataset.offerId).filter(Boolean);
+    const selectedOffers = window.offersData.filter(o => ids.includes(String(o.id)));
+    
+    if (selectedOffers.length === 0) {
+        showToast('يرجى تحديد عرض واحد على الأقل لنشره كـ Story', 'warning');
+        return;
+    }
+    
+    const usage = window.getOffersStoryDailyUsage();
+    if (usage.remaining < selectedOffers.length) {
+        const proceed = confirm(`⚠️ تنبيه الحد اليومي: المتبقي من الليميت اليومي (${usage.remaining}) بينما قمت بتحديد (${selectedOffers.length}) عروض. هل تريد المتابعة على أية حال؟`);
+        if (!proceed) return;
+    }
+    
+    const modal = document.getElementById('offerBatchPublishModal');
+    const progressBar = document.getElementById('batchPublishProgressBar');
+    const countLabel = document.getElementById('batchPublishCountLabel');
+    const percentLabel = document.getElementById('batchPublishPercentLabel');
+    const statusText = document.getElementById('batchPublishStatusText');
+    const details = document.getElementById('batchPublishDetails');
+    const btnClose = document.getElementById('btnBatchPublishClose');
+    
+    if (modal) modal.style.display = 'flex';
+    if (btnClose) btnClose.style.display = 'none';
+    if (statusText) statusText.textContent = 'جاري نشر الستوري على إنستجرام وفيسبوك...';
+    
+    const total = selectedOffers.length;
+    let successCount = 0;
+    
+    for (let i = 0; i < total; i++) {
+        const offer = selectedOffers[i];
+        const currentNum = i + 1;
+        const currentPercent = Math.round(((i) / total) * 100);
+        
+        if (countLabel) countLabel.textContent = `${currentNum} من ${total}`;
+        if (percentLabel) percentLabel.textContent = `${currentPercent}%`;
+        if (progressBar) progressBar.style.width = `${currentPercent}%`;
+        if (details) details.innerHTML = `<i class="fa-solid fa-spinner fa-spin" style="margin-left:8px;"></i> جاري نشر (${currentNum}/${total}): <strong>${offer.product_name}</strong>...`;
+        
+        try {
+            const res = await window.publishSingleOfferStoryCore(offer);
+            if (res && res.success) {
+                successCount++;
+            }
+        } catch(e) {
+            console.error('Batch publish item error:', e);
+        }
+        
+        if (i < total - 1) {
+            await new Promise(r => setTimeout(r, 1600));
+        }
+    }
+    
+    if (progressBar) progressBar.style.width = '100%';
+    if (percentLabel) percentLabel.textContent = '100%';
+    if (countLabel) countLabel.textContent = `${total} من ${total}`;
+    if (statusText) statusText.textContent = '🎉 اكتملت عملية النشر الجماعي!';
+    if (details) {
+        details.innerHTML = `<span style="color:#16a34a; font-weight:800;"><i class="fa-solid fa-circle-check"></i> تم إطلاق (${successCount}) ستوري بنجاح من أصل (${total}) على المنصات. بدأ عداد الـ 24 ساعة التلقائي.</span>`;
+    }
+    if (btnClose) btnClose.style.display = 'block';
+    
+    // فك التحديد ومزامنة التخزين وإعادة الرسم
+    document.querySelectorAll('.offer-card-checkbox').forEach(cb => cb.checked = false);
+    const selectAllCb = document.getElementById('selectAllOffersCheckbox');
+    if (selectAllCb) {
+        selectAllCb.checked = false;
+        selectAllCb.indeterminate = false;
+    }
+    await window.saveOffersDataLocallyAndRemote();
+    window.updateOffersSelectedCount();
+    window.renderOffersGrid();
+};
+
+window.closeBatchPublishModal = function() {
+    const modal = document.getElementById('offerBatchPublishModal');
+    if (modal) modal.style.display = 'none';
+    window.renderOffersGrid();
+};
+
+// 4. التحكم في التحديد الجماعي
+window.toggleSelectAllOffers = function(isChecked) {
+    const checkboxes = document.querySelectorAll('.offer-card-checkbox');
+    checkboxes.forEach(cb => {
+        cb.checked = isChecked;
+    });
+    window.updateOffersSelectedCount();
+};
+
+window.updateOffersSelectedCount = function() {
+    const checkboxes = document.querySelectorAll('.offer-card-checkbox');
+    const checked = Array.from(checkboxes).filter(cb => cb.checked);
+    const countBadge = document.getElementById('selectedOffersCountBadge');
+    const btnBatch = document.getElementById('btnPublishSelectedOffers');
+    const selectAllCb = document.getElementById('selectAllOffersCheckbox');
+
+    const count = checked.length;
+    if (countBadge) {
+        countBadge.textContent = `المحدد: ${count} عرض`;
+        countBadge.classList.toggle('has-selected', count > 0);
+    }
+    if (btnBatch) {
+        btnBatch.disabled = (count === 0);
+        btnBatch.style.opacity = (count === 0) ? '0.6' : '1';
+        btnBatch.style.cursor = (count === 0) ? 'not-allowed' : 'pointer';
+    }
+    if (selectAllCb) {
+        selectAllCb.checked = (checkboxes.length > 0 && count === checkboxes.length);
+        selectAllCb.indeterminate = (count > 0 && count < checkboxes.length);
+    }
+};
+
+// 5. معاينة صورة العرض بالحجم الكامل (Image Lightbox)
+window.openOfferImageLightbox = function(src, title) {
+    const modal = document.getElementById('offerImageLightboxModal');
+    const img = document.getElementById('lightboxImg');
+    const titleEl = document.getElementById('lightboxTitle');
+    if (!modal || !img) return;
+    img.src = src;
+    if (titleEl) titleEl.textContent = title || 'معاينة صورة العرض';
+    modal.style.display = 'flex';
+};
+
+window.closeOfferImageLightbox = function() {
+    const modal = document.getElementById('offerImageLightboxModal');
+    if (modal) modal.style.display = 'none';
 };
 
 // فاحص النشر التلقائي الدوري (Auto-Scheduler Loop)

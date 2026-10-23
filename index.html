@@ -3108,6 +3108,24 @@
                     </div>
                 </div>
 
+                <!-- شريط التحديد والنشر الجماعي للستوري -->
+                <div class="offers-batch-bar" id="offersBatchBar">
+                    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                        <label class="offers-select-all-label">
+                            <input type="checkbox" id="selectAllOffersCheckbox" onchange="window.toggleSelectAllOffers(this.checked)">
+                            <span>تحديد الكل</span>
+                        </label>
+                        <span id="selectedOffersCountBadge" class="selected-count-badge">المحدد: 0 عرض</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <button type="button" id="btnPublishSelectedOffers" class="btn-primary interactive-btn btn-publish-batch" onclick="window.publishSelectedOffersStories()" style="background: linear-gradient(135deg, #e1306c, #1877f2); border: none; font-weight: 800; padding: 8px 18px; border-radius: 10px; display: flex; align-items: center; gap: 8px; color: white; cursor: pointer; transition: all 0.2s ease; opacity: 0.6;" disabled>
+                            <i class="fa-brands fa-instagram"></i>
+                            <i class="fa-brands fa-facebook"></i>
+                            <span id="btnPublishSelectedOffersText">نشر العروض المحددة كـ Story</span>
+                        </button>
+                    </div>
+                </div>
+
                 <!-- شبكة كروت العروض -->
                 <div id="offersGrid" class="offers-grid">
                     <!-- سيتم توليد البطاقات ديناميكياً -->
@@ -3517,6 +3535,45 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+
+        <!-- نافذة معاينة صورة العرض بالحجم الكامل (Image Preview Lightbox) -->
+        <div id="offerImageLightboxModal" class="modal-overlay" style="display: none; z-index: 10060; background: rgba(0, 0, 0, 0.88); backdrop-filter: blur(8px);" onclick="if(event.target === this) window.closeOfferImageLightbox();">
+            <div style="position: relative; max-width: 90vw; max-height: 90vh; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <button type="button" onclick="window.closeOfferImageLightbox()" style="position: absolute; top: -45px; left: 0; background: rgba(255,255,255,0.2); border: none; color: white; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center;" title="إغلاق">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <div id="lightboxTitle" style="color: white; font-weight: 800; font-size: 1.15rem; margin-bottom: 12px; text-shadow: 0 2px 4px rgba(0,0,0,0.6); text-align: center;"></div>
+                <img id="lightboxImg" src="" alt="معاينة العرض" style="max-width: 85vw; max-height: 80vh; object-fit: contain; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+            </div>
+        </div>
+
+        <!-- نافذة شريط تقدم النشر الجماعي للستوري -->
+        <div id="offerBatchPublishModal" class="modal-overlay" style="display: none; z-index: 10050; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(6px);">
+            <div class="modal-content" style="max-width: 480px; border-radius: 20px; padding: 26px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);">
+                <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #e1306c, #1877f2); color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 16px;">
+                    <i class="fa-brands fa-meta fa-beat-fade"></i>
+                </div>
+                <h3 style="margin: 0 0 8px 0; font-size: 1.3rem; font-weight: 800; color: #0f172a;">جاري نشر الستوري على المنصات</h3>
+                <p id="batchPublishStatusText" style="color: #64748b; font-size: 0.95rem; margin: 0 0 20px 0;">جاري تجهيز العروض المحددة...</p>
+                
+                <!-- شريط التقدم -->
+                <div style="background: #f1f5f9; border-radius: 12px; height: 16px; overflow: hidden; margin-bottom: 12px; position: relative;">
+                    <div id="batchPublishProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #ec4899, #3b82f6); transition: width 0.4s ease; border-radius: 12px;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; color: #475569; margin-bottom: 20px;">
+                    <span id="batchPublishCountLabel">0 من 0</span>
+                    <span id="batchPublishPercentLabel">0%</span>
+                </div>
+
+                <div id="batchPublishDetails" style="font-size: 0.85rem; color: #334155; background: #f8fafc; border-radius: 10px; padding: 12px; margin-bottom: 16px; min-height: 44px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-spinner fa-spin" style="margin-left: 8px;"></i> برجاء الانتظار، جاري النشر التلقائي...
+                </div>
+
+                <button type="button" id="btnBatchPublishClose" class="btn-primary" onclick="window.closeBatchPublishModal()" style="display: none; width: 100%; padding: 10px; border-radius: 10px; font-weight: 800; cursor: pointer;">
+                    إغلاق
+                </button>
             </div>
         </div>
 

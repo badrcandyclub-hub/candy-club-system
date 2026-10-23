@@ -7577,6 +7577,142 @@ body.dark-mode .cmp-footer {
     box-shadow: 0 2px 8px rgba(217, 119, 6, 0.35);
 }
 
+/* شريط التحكم والتحديد الجماعي للعروض */
+.offers-batch-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 10px 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+    flex-wrap: wrap;
+}
+
+.offers-select-all-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #1e293b;
+    cursor: pointer;
+    user-select: none;
+}
+
+.offers-select-all-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #e11d48;
+}
+
+.selected-count-badge {
+    background: #f1f5f9;
+    color: #475569;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    transition: all 0.2s;
+}
+
+.selected-count-badge.has-selected {
+    background: #fdf2f8;
+    color: #be185d;
+    border: 1px solid #fbcfe8;
+}
+
+.btn-publish-batch {
+    background: linear-gradient(135deg, #e1306c, #1877f2);
+    border: none;
+    font-weight: 800;
+    padding: 9px 20px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 4px 14px rgba(225, 48, 108, 0.35);
+}
+
+.btn-publish-batch:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(225, 48, 108, 0.5);
+}
+
+.btn-publish-batch:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.offer-card-select-label {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 5;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(4px);
+    border-radius: 8px;
+    padding: 4px 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+.offer-card-select-label:hover {
+    transform: scale(1.1);
+}
+
+.offer-card-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #e11d48;
+    margin: 0;
+}
+
+.offer-img-preview-btn {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    z-index: 4;
+    background: rgba(15, 23, 42, 0.75);
+    color: #ffffff;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    cursor: pointer;
+    opacity: 0;
+    transform: scale(0.85);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.offer-card-media:hover .offer-img-preview-btn {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.offer-img-preview-btn:hover {
+    background: #0f172a;
+    transform: scale(1.15) !important;
+}
+
 /* Offers Grid & Cards */
 .offers-grid {
     display: grid;
