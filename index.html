@@ -2626,11 +2626,39 @@
                             </div>
 
                             <div class="marketplace-archive-controls">
-                                <label>شهر التسجيل
-                                    <input type="month" id="marketplaceArchiveMonth" dir="ltr">
-                                </label>
+                                <!-- تحديد الفترة الزمنية بدقة (من تاريخ / إلى تاريخ) مع كبسولات سريعة -->
+                                <div class="marketplace-date-range-box">
+                                    <div class="marketplace-date-inputs-row">
+                                        <label><i class="fa-solid fa-calendar-day" style="color: #0284c7;"></i> من تاريخ التسجيل
+                                            <input type="date" id="marketplaceArchiveStartDate" dir="ltr">
+                                        </label>
+                                        <label><i class="fa-solid fa-calendar-day" style="color: #0284c7;"></i> إلى تاريخ التسجيل
+                                            <input type="date" id="marketplaceArchiveEndDate" dir="ltr">
+                                        </label>
+                                    </div>
+                                    <div class="marketplace-date-preset-chips">
+                                        <button type="button" class="date-range-preset-chip" data-preset="first-half" onclick="window.setMarketplaceDateRangePreset('first-half')">
+                                            <i class="fa-solid fa-calendar-check"></i> 1 إلى 15 (النصف الأول)
+                                        </button>
+                                        <button type="button" class="date-range-preset-chip" data-preset="second-half" onclick="window.setMarketplaceDateRangePreset('second-half')">
+                                            <i class="fa-solid fa-calendar-check"></i> 16 لنهاية الشهر (النصف الثاني)
+                                        </button>
+                                        <button type="button" class="date-range-preset-chip active" data-preset="full-month" onclick="window.setMarketplaceDateRangePreset('full-month')">
+                                            <i class="fa-solid fa-calendar"></i> الشهر كاملاً
+                                        </button>
+                                    </div>
+                                </div>
+
                                 <label>بحث بالاسم أو الباركود
                                     <input type="search" id="marketplaceArchiveSearch" placeholder="اسم المنتج أو الباركود">
+                                </label>
+                                <label>ترتيب الأصناف
+                                    <select id="marketplaceArchiveSort">
+                                        <option value="name_asc" selected>🔤 أبجدي (أ - ي)</option>
+                                        <option value="name_desc">🔤 أبجدي عكسي (ي - أ)</option>
+                                        <option value="date_desc">📅 الأحدث تسجيلاً</option>
+                                        <option value="date_asc">📅 الأقدم تسجيلاً</option>
+                                    </select>
                                 </label>
                                 <label class="marketplace-filter--talabat">حالة طلبات
                                     <select id="marketplaceArchiveTalabatFilter">

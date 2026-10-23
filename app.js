@@ -431,14 +431,63 @@ window.marketplaceArchivePage = 1;
 window.marketplaceRecentlyEditedKeys = new Set();
 const MARKETPLACE_ARCHIVE_PAGE_SIZE = 50;
 
+function extractMarketplaceItemDate(item) {
+    if (!item || !item.regDate) return '';
+    if (typeof getCalendarDateKey === 'function') {
+        const key = getCalendarDateKey(item.regDate);
+        if (key) return key;
+    }
+    const raw = String(item.regDate).trim();
+    const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) return `${match[1]}-${match[2]}-${match[3]}`;
+    return raw.slice(0, 10);
+}
+
+window.setMarketplaceDateRangePreset = function(preset) {
+    const startInput = document.getElementById('marketplaceArchiveStartDate');
+    const endInput = document.getElementById('marketplaceArchiveEndDate');
+    if (!startInput || !endInput) return;
+
+    let refDate = new Date();
+    if (startInput.value) {
+        const parsed = new Date(startInput.value + 'T00:00:00');
+        if (!isNaN(parsed.getTime())) refDate = parsed;
+    }
+    const year = refDate.getFullYear();
+    const month = refDate.getMonth();
+    const monthStr = String(month + 1).padStart(2, '0');
+    const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
+
+    if (preset === 'first-half') {
+        startInput.value = `${year}-${monthStr}-01`;
+        endInput.value = `${year}-${monthStr}-15`;
+    } else if (preset === 'second-half') {
+        startInput.value = `${year}-${monthStr}-16`;
+        endInput.value = `${year}-${monthStr}-${String(lastDayOfMonth).padStart(2, '0')}`;
+    } else if (preset === 'full-month') {
+        startInput.value = `${year}-${monthStr}-01`;
+        endInput.value = `${year}-${monthStr}-${String(lastDayOfMonth).padStart(2, '0')}`;
+    }
+
+    document.querySelectorAll('.date-range-preset-chip').forEach(chip => {
+        chip.classList.toggle('active', chip.dataset.preset === preset);
+    });
+
+    if (window.marketplaceRecentlyEditedKeys) window.marketplaceRecentlyEditedKeys.clear();
+    window.marketplaceArchivePage = 1;
+    window.renderMarketplaceArchive();
+};
+
 window.updateMarketplaceKpis = function() {
-    const month = document.getElementById('marketplaceArchiveMonth')?.value || '';
+    const startDate = document.getElementById('marketplaceArchiveStartDate')?.value || '';
+    const endDate = document.getElementById('marketplaceArchiveEndDate')?.value || '';
     let tPresent = 0, tAbsent = 0, tUnknown = 0;
     let iPresent = 0, iAbsent = 0, iUnknown = 0;
 
     (window.receiptsArchiveData || []).forEach(item => {
-        const entryMonth = String(item.regDate || '').slice(0, 7);
-        if (month && entryMonth !== month) return;
+        const itemDate = extractMarketplaceItemDate(item);
+        if (startDate && itemDate && itemDate < startDate) return;
+        if (endDate && itemDate && itemDate > endDate) return;
         const ts = window.normalizeMarketplaceStatus(item.talabatStatus);
         const is = window.normalizeMarketplaceStatus(item.instashopStatus);
         if (ts === 'present') tPresent++; else if (ts === 'absent') tAbsent++; else tUnknown++;
@@ -466,14 +515,18 @@ window.renderMarketplaceArchive = function() {
 
     window.updateMarketplaceKpis();
 
-    const month = document.getElementById('marketplaceArchiveMonth')?.value || '';
+    const startDate = document.getElementById('marketplaceArchiveStartDate')?.value || '';
+    const endDate = document.getElementById('marketplaceArchiveEndDate')?.value || '';
     const query = (document.getElementById('marketplaceArchiveSearch')?.value || '').trim().toLowerCase();
+    const sortVal = document.getElementById('marketplaceArchiveSort')?.value || 'name_asc';
     const talabatFilter = document.getElementById('marketplaceArchiveTalabatFilter')?.value || 'all';
     const instashopFilter = document.getElementById('marketplaceArchiveInstashopFilter')?.value || 'all';
 
     const rows = (window.receiptsArchiveData || []).filter(item => {
-        const entryMonth = String(item.regDate || '').slice(0, 7);
-        const matchesMonth = !month || entryMonth === month;
+        const itemDate = extractMarketplaceItemDate(item);
+        if (startDate && itemDate && itemDate < startDate) return false;
+        if (endDate && itemDate && itemDate > endDate) return false;
+
         const searchable = `${item.name || ''} ${item.barcode || ''}`.toLowerCase();
         const matchesQuery = !query || searchable.includes(query);
         const matchesTalabat = talabatFilter === 'all' || window.normalizeMarketplaceStatus(item.talabatStatus) === talabatFilter;
@@ -484,7 +537,27 @@ window.renderMarketplaceArchive = function() {
         const isRecentlyModified = window.marketplaceRecentlyEditedKeys && window.marketplaceRecentlyEditedKeys.has(itemKey);
         const matchesFilter = (matchesTalabat && matchesInstashop) || isRecentlyModified;
 
-        return matchesMonth && matchesQuery && matchesFilter;
+        return matchesQuery && matchesFilter;
+    });
+
+    // 🔤 فرز وترتيب الأصناف (الافتراضي: أبجدي أ - ي لضمان ثبات كامل وعدم تغير أماكن الأصناف بعد التحديد)
+    rows.sort((a, b) => {
+        if (sortVal === 'name_asc') {
+            const cmp = String(a.name || '').localeCompare(String(b.name || ''), 'ar');
+            if (cmp !== 0) return cmp;
+            return String(a.barcode || '').localeCompare(String(b.barcode || ''));
+        } else if (sortVal === 'name_desc') {
+            const cmp = String(b.name || '').localeCompare(String(a.name || ''), 'ar');
+            if (cmp !== 0) return cmp;
+            return String(b.barcode || '').localeCompare(String(a.barcode || ''));
+        } else if (sortVal === 'date_desc') {
+            return (typeof getSortDateValue === 'function' ? getSortDateValue(b.regDate) : 0) -
+                   (typeof getSortDateValue === 'function' ? getSortDateValue(a.regDate) : 0);
+        } else if (sortVal === 'date_asc') {
+            return (typeof getSortDateValue === 'function' ? getSortDateValue(a.regDate) : 0) -
+                   (typeof getSortDateValue === 'function' ? getSortDateValue(b.regDate) : 0);
+        }
+        return 0;
     });
 
     window.marketplaceArchiveFilteredData = rows;
@@ -501,7 +574,7 @@ window.renderMarketplaceArchive = function() {
     if (previousButton) previousButton.disabled = window.marketplaceArchivePage <= 1;
     if (nextButton) nextButton.disabled = window.marketplaceArchivePage >= pageCount;
     if (rows.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="marketplace-archive-empty">لا توجد سجلات مطابقة. جرّب تغيير الشهر أو الفلاتر.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="marketplace-archive-empty">لا توجد سجلات مطابقة. جرّب تغيير الفترة المحددة أو الفلاتر.</td></tr>';
         return;
     }
 
@@ -644,19 +717,47 @@ async function saveMarketplaceArchiveStatus(customSelect, targetStatus) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const monthInput = document.getElementById('marketplaceArchiveMonth');
-    if (monthInput && !monthInput.value) {
+    const startInput = document.getElementById('marketplaceArchiveStartDate');
+    const endInput = document.getElementById('marketplaceArchiveEndDate');
+    if (startInput && endInput && !startInput.value && !endInput.value) {
         const now = new Date();
-        monthInput.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        const monthStr = String(month + 1).padStart(2, '0');
+        const lastDay = new Date(year, month + 1, 0).getDate();
+        startInput.value = `${year}-${monthStr}-01`;
+        endInput.value = `${year}-${monthStr}-${String(lastDay).padStart(2, '0')}`;
     }
 
-    // تصفير قائمة المعدّلات مؤقتاً عند تعديل أي فلتر يدوي للبحث
-    ['marketplaceArchiveMonth', 'marketplaceArchiveSearch', 'marketplaceArchiveTalabatFilter', 'marketplaceArchiveInstashopFilter']
-        .forEach(id => document.getElementById(id)?.addEventListener('input', () => {
-            if (window.marketplaceRecentlyEditedKeys) window.marketplaceRecentlyEditedKeys.clear();
-            window.marketplaceArchivePage = 1;
-            window.renderMarketplaceArchive();
-        }));
+    // تصفير قائمة المعدّلات مؤقتاً عند تعديل أي فلتر يدوي للبحث وتحديث الجدول فورياً
+    ['marketplaceArchiveStartDate', 'marketplaceArchiveEndDate', 'marketplaceArchiveSearch', 'marketplaceArchiveSort', 'marketplaceArchiveTalabatFilter', 'marketplaceArchiveInstashopFilter']
+        .forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const eventName = (el.tagName === 'SELECT' || el.type === 'date') ? 'change' : 'input';
+            el.addEventListener(eventName, () => {
+                if (id === 'marketplaceArchiveStartDate' || id === 'marketplaceArchiveEndDate') {
+                    const s = startInput?.value || '';
+                    const e = endInput?.value || '';
+                    document.querySelectorAll('.date-range-preset-chip').forEach(chip => {
+                        const p = chip.dataset.preset;
+                        let matches = false;
+                        if (s && e) {
+                            const y = s.slice(0, 4);
+                            const m = s.slice(5, 7);
+                            const lastDay = new Date(Number(y), Number(m), 0).getDate();
+                            if (p === 'first-half' && s === `${y}-${m}-01` && e === `${y}-${m}-15`) matches = true;
+                            if (p === 'second-half' && s === `${y}-${m}-16` && e === `${y}-${m}-${String(lastDay).padStart(2, '0')}`) matches = true;
+                            if (p === 'full-month' && s === `${y}-${m}-01` && e === `${y}-${m}-${String(lastDay).padStart(2, '0')}`) matches = true;
+                        }
+                        chip.classList.toggle('active', matches);
+                    });
+                }
+                if (window.marketplaceRecentlyEditedKeys) window.marketplaceRecentlyEditedKeys.clear();
+                window.marketplaceArchivePage = 1;
+                window.renderMarketplaceArchive();
+            });
+        });
 
     document.getElementById('marketplaceArchivePrevBtn')?.addEventListener('click', () => {
         window.marketplaceArchivePage -= 1;
@@ -12388,7 +12489,7 @@ async function generateExcel(dataToExport, reportTitle, options = {}) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        let sortedData = [...dataToExport].sort((a, b) => {
+        let sortedData = (options && options.marketplaceArchive) ? [...dataToExport] : [...dataToExport].sort((a, b) => {
             let da = new Date(a.expiryDate).getTime();
             let db = new Date(b.expiryDate).getTime();
             return da - db;
@@ -12474,9 +12575,9 @@ async function generateExcel(dataToExport, reportTitle, options = {}) {
     }
 }
 
-function generateMarketplaceArchivePdf(rows, month) {
+function generateMarketplaceArchivePdf(rows, periodLabel) {
     if (!rows.length) {
-        showToast('لا توجد سجلات مطابقة للتصدير في هذا الشهر.', 'warning');
+        showToast('لا توجد سجلات مطابقة للتصدير في هذه الفترة.', 'warning');
         return;
     }
     const printWindow = window.open('', '_blank', 'height=800,width=1000');
@@ -12485,10 +12586,11 @@ function generateMarketplaceArchivePdf(rows, month) {
         return;
     }
 
-    const monthLabel = escapeMarketplaceArchiveHtml(month);
-    const rowsHtml = rows.map(item => `
+    const safePeriod = escapeMarketplaceArchiveHtml(periodLabel || 'الفترة المحددة');
+    const rowsHtml = rows.map((item, idx) => `
         <tr>
-            <td>${escapeMarketplaceArchiveHtml(item.name || 'اسم غير مسجل')}</td>
+            <td style="font-weight: bold; width: 45px;">${idx + 1}</td>
+            <td style="text-align: right; font-weight: bold;">${escapeMarketplaceArchiveHtml(item.name || 'اسم غير مسجل')}</td>
             <td dir="ltr">${escapeMarketplaceArchiveHtml(item.barcode || '-')}</td>
             <td dir="ltr">${escapeMarketplaceArchiveHtml(item.regDate || '-')}</td>
             <td class="talabat">${window.marketplaceStatusLabel(item.talabatStatus)}</td>
@@ -12499,25 +12601,39 @@ function generateMarketplaceArchivePdf(rows, month) {
         <html lang="ar" dir="rtl">
         <head>
             <meta charset="utf-8">
-            <title>حالات طلبات وInstaShop - ${monthLabel}</title>
+            <title>حالات طلبات وInstaShop - ${safePeriod}</title>
             <style>
-                body { font-family: Arial, sans-serif; color: #172033; padding: 24px; }
-                h1 { color: #172033; font-size: 22px; margin: 0 0 6px; }
-                p { color: #64748b; margin: 0 0 18px; }
-                table { width: 100%; border-collapse: collapse; }
-                th, td { border: 1px solid #cbd5e1; padding: 9px; text-align: center; }
-                th { color: #fff; background: #334155; }
-                th.talabat, td.talabat { color: #c2410c; background: #fff7ed; }
-                th.instashop, td.instashop { color: #6d28d9; background: #f5f3ff; }
+                body { font-family: 'Tajawal', Arial, sans-serif; color: #172033; padding: 24px; direction: rtl; }
+                .report-header { border-bottom: 2px solid #e2e8f0; padding-bottom: 14px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+                h1 { color: #0f172a; font-size: 20px; margin: 0 0 6px; }
+                .meta { color: #64748b; font-size: 13px; margin: 0; }
+                table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+                th, td { border: 1px solid #cbd5e1; padding: 8px 10px; text-align: center; }
+                th { color: #fff; background: #1e293b; font-weight: bold; }
+                th.talabat, td.talabat { color: #c2410c; background: #fff7ed; font-weight: bold; }
+                th.instashop, td.instashop { color: #be185d; background: #fdf2f8; font-weight: bold; }
                 tbody tr:nth-child(even) { background: #f8fafc; }
                 @media print { body { padding: 0; } }
             </style>
         </head>
         <body>
-            <h1>متابعة المنتجات على طلبات وInstaShop</h1>
-            <p>شهر التسجيل: ${monthLabel} | عدد السجلات: ${rows.length}</p>
+            <div class="report-header">
+                <div>
+                    <h1>متابعة المنتجات على طلبات وInstaShop</h1>
+                    <p class="meta">الفترة المحددة: <strong>${safePeriod}</strong> | عدد السجلات: <strong>${rows.length} منتج</strong> (مرتبة ومطابقة للجدول)</p>
+                </div>
+            </div>
             <table>
-                <thead><tr><th>المنتج</th><th>الباركود</th><th>تاريخ التسجيل</th><th class="talabat">طلبات</th><th class="instashop">InstaShop</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th style="text-align: right;">المنتج</th>
+                        <th>الباركود</th>
+                        <th>تاريخ التسجيل</th>
+                        <th class="talabat">طلبات</th>
+                        <th class="instashop">InstaShop</th>
+                    </tr>
+                </thead>
                 <tbody>${rowsHtml}</tbody>
             </table>
         </body>
@@ -12528,23 +12644,37 @@ function generateMarketplaceArchivePdf(rows, month) {
 }
 
 document.getElementById('exportMarketplaceArchiveExcelBtn')?.addEventListener('click', async event => {
-    const month = document.getElementById('marketplaceArchiveMonth')?.value || '';
-    if (!month) {
-        showToast('اختر شهر التسجيل أولاً.', 'warning');
-        return;
-    }
+    const startDate = document.getElementById('marketplaceArchiveStartDate')?.value || '';
+    const endDate = document.getElementById('marketplaceArchiveEndDate')?.value || '';
     window.renderMarketplaceArchive();
-    await generateExcel(window.marketplaceArchiveFilteredData || [], `حالات_المنصات_${month}`, { marketplaceArchive: true });
+
+    let rangeLabel = 'كل_الفترات';
+    if (startDate && endDate) {
+        rangeLabel = `من_${startDate}_إلى_${endDate}`;
+    } else if (startDate) {
+        rangeLabel = `من_${startDate}`;
+    } else if (endDate) {
+        rangeLabel = `حتى_${endDate}`;
+    }
+
+    await generateExcel(window.marketplaceArchiveFilteredData || [], `حالات_المنصات_${rangeLabel}`, { marketplaceArchive: true });
 });
 
 document.getElementById('exportMarketplaceArchivePdfBtn')?.addEventListener('click', () => {
-    const month = document.getElementById('marketplaceArchiveMonth')?.value || '';
-    if (!month) {
-        showToast('اختر شهر التسجيل أولاً.', 'warning');
-        return;
-    }
+    const startDate = document.getElementById('marketplaceArchiveStartDate')?.value || '';
+    const endDate = document.getElementById('marketplaceArchiveEndDate')?.value || '';
     window.renderMarketplaceArchive();
-    generateMarketplaceArchivePdf(window.marketplaceArchiveFilteredData || [], month);
+
+    let rangeLabel = 'جميع الفترات المسجلة';
+    if (startDate && endDate) {
+        rangeLabel = `من ${startDate} إلى ${endDate}`;
+    } else if (startDate) {
+        rangeLabel = `من تاريخ ${startDate}`;
+    } else if (endDate) {
+        rangeLabel = `حتى تاريخ ${endDate}`;
+    }
+
+    generateMarketplaceArchivePdf(window.marketplaceArchiveFilteredData || [], rangeLabel);
 });
 
 // Export Current List Button (inside Details Section)

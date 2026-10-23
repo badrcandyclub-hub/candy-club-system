@@ -5886,9 +5886,120 @@ body.dark-mode .wheel-picker-container {
 .marketplace-archive-controls {
     display: grid;
     grid-template-columns: repeat(4, minmax(140px, 1fr));
-    gap: 10px;
+    gap: 12px;
     align-items: end;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
+}
+
+/* صندوق تحديد الفترة الزمنية والكبسولات السريعة */
+.marketplace-date-range-box {
+    grid-column: 1 / -1;
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.marketplace-date-inputs-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.marketplace-date-inputs-row > label {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    color: #1e293b;
+    font-size: 0.84rem;
+    font-weight: 800;
+}
+
+.marketplace-date-inputs-row input[type="date"] {
+    min-height: 42px;
+    padding: 7px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 9px;
+    background: #ffffff;
+    font: inherit;
+    font-weight: 700;
+    color: #0f172a;
+    transition: all 0.2s ease;
+}
+
+.marketplace-date-inputs-row input[type="date"]:focus {
+    border-color: #0284c7;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+    outline: none;
+}
+
+.marketplace-date-preset-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.date-range-preset-chip {
+    padding: 7px 14px;
+    border-radius: 20px;
+    border: 1.5px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.date-range-preset-chip:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #94a3b8;
+    transform: translateY(-1px);
+}
+
+.date-range-preset-chip.active {
+    background: linear-gradient(135deg, #0284c7, #0369a1);
+    color: #ffffff;
+    border-color: #0284c7;
+    box-shadow: 0 3px 10px rgba(2, 132, 199, 0.35);
+}
+
+body.dark-mode .marketplace-date-range-box {
+    background: #1e293b;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .marketplace-date-inputs-row > label {
+    color: #cbd5e1;
+}
+
+body.dark-mode .marketplace-date-inputs-row input[type="date"] {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f8fafc;
+}
+
+body.dark-mode .date-range-preset-chip {
+    background: #0f172a;
+    border-color: #334155;
+    color: #94a3b8;
+}
+
+body.dark-mode .date-range-preset-chip.active {
+    background: #0284c7;
+    color: #ffffff;
+    border-color: #0284c7;
 }
 
 .marketplace-archive-controls > label {
@@ -6419,6 +6530,16 @@ tr.marketplace-row--recently-modified {
 
     .marketplace-archive-controls {
         grid-template-columns: 1fr;
+    }
+
+    .marketplace-date-inputs-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    @media (max-width: 480px) {
+        .marketplace-date-inputs-row {
+            grid-template-columns: 1fr;
+        }
     }
 
     .marketplace-archive-actions {
