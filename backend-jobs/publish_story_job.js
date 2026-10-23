@@ -85,7 +85,27 @@ async function publishToInstagramStory(imageUrl) {
         }
 
         const creationId = createData.id;
-        console.log(`[Instagram] Step 2: Publishing container (${creationId})...`);
+        console.log(`[Instagram] Step 2: Waiting for container (${creationId}) processing...`);
+
+        let isReady = false;
+        for (let i = 0; i < 7; i++) {
+            await new Promise(r => setTimeout(r, 1500));
+            try {
+                const sRes = await fetch(`https://graph.instagram.com/v19.0/${creationId}?fields=status_code,status&access_token=${INSTAGRAM_ACCESS_TOKEN}`);
+                const sData = await sRes.json();
+                console.log(`[Instagram] Poll ${i + 1}: ${sData.status_code}`);
+                if (sData.status_code === 'FINISHED') {
+                    isReady = true;
+                    break;
+                }
+                if (sData.status_code === 'ERROR') {
+                    console.error('[Instagram] Container error:', sData);
+                    break;
+                }
+            } catch(e) {}
+        }
+
+        console.log(`[Instagram] Step 3: Publishing container (${creationId})...`);
 
         const pubParams = new URLSearchParams({
             creation_id: creationId,

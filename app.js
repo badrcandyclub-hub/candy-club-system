@@ -22265,8 +22265,29 @@ window.publishOfferToInstagramStory = async function(id, isAuto = false) {
 
             if (createData && createData.id) {
                 const creationId = createData.id;
+                showToast('جاري معالجة صورة الاستوري في إنستجرام...', 'info');
                 
-                // 2. إتمام النشر الرسمي (Publish Container)
+                // انتظار انتهاء خوادم إنستجرام من معالجة وتجهيز الصورة (Poll status until FINISHED)
+                let isReady = false;
+                for (let i = 0; i < 7; i++) {
+                    await new Promise(r => setTimeout(r, 1500));
+                    try {
+                        const statusRes = await fetch(`https://graph.instagram.com/v19.0/${creationId}?fields=status_code,status&access_token=${token}`);
+                        const statusData = await statusRes.json();
+                        if (statusData?.status_code === 'FINISHED') {
+                            isReady = true;
+                            break;
+                        }
+                        if (statusData?.status_code === 'ERROR') {
+                            console.error('Instagram Container Processing Error:', statusData);
+                            break;
+                        }
+                    } catch(pollErr) {
+                        console.warn('Instagram container polling error:', pollErr);
+                    }
+                }
+                
+                // 2. إتمام النشر الرسمي
                 showToast('جاري إطلاق الاستوري على حساب إنستجرام كاندي كلوب...', 'info');
                 const publishPayload = new URLSearchParams({
                     creation_id: creationId,
@@ -22301,14 +22322,17 @@ window.publishOfferToInstagramStory = async function(id, isAuto = false) {
                 console.warn('Facebook story publish error:', e);
             }
             
-            if (igSuccess || fbSuccess) {
+            if (igSuccess && fbSuccess) {
                 window.recordOfferStoryPublish(offer.id);
-                const platforms = [];
-                if (igSuccess) platforms.push('إنستجرام');
-                if (fbSuccess) platforms.push('فيسبوك');
-                showToast(`🎉 تم نشر ستوري (${offer.product_name}) بنجاح على ${platforms.join(' و ')}!`, 'success', 6000);
+                showToast(`🎉 تم نشر ستوري (${offer.product_name}) بنجاح على إنستجرام وفيسبوك معاً!`, 'success', 6000);
+            } else if (igSuccess && !fbSuccess) {
+                window.recordOfferStoryPublish(offer.id);
+                showToast(`✅ تم نشر ستوري (${offer.product_name}) على إنستجرام بنجاح (وتعذر فيسبوك)`, 'warning', 6000);
+            } else if (!igSuccess && fbSuccess) {
+                window.recordOfferStoryPublish(offer.id);
+                showToast(`✅ تم نشر ستوري (${offer.product_name}) على فيسبوك بنجاح (وتعذر إنستجرام)`, 'warning', 6000);
             } else {
-                const errMsg = createData?.error?.message || 'تعذر استكمال النشر عبر Meta API';
+                const errMsg = createData?.error?.message || 'تعذر استكمال النشر عبر Meta API، تأكد من الاتصال';
                 showToast(`خطأ في النشر: ${errMsg}`, 'error', 6000);
             }
         } catch(err) {
