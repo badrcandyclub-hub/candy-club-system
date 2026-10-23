@@ -20496,13 +20496,15 @@ window.getOffersStoryIntervalMinutes = function() {
 };
 
 const FACEBOOK_DEFAULT_PAGE_ID = '356148687583666';
-const FACEBOOK_DEFAULT_PAGE_ACCESS_TOKEN = 'EAAQXelKvXdEBS9zQKBYthQmfZBcP6NOefjPMhZBZAZBrfQZCREK9J7iftKdPAaNyZBWVZAUf9wier6GiJcWUutxciTgLkzhkZCOo4poSANVSCO4BIonluzvWYeaBZChd4rK3cCvzcUhi5ZB7ZAxiZCg7RtZBNu5CjoctgHrqb5IYP7HfpMqPv9C4HNAprtEOe9iyT5pRRpAcK7bpjnvvqa8TCLJMTshWwb5JjZBjmtlwUZCZBQuRfiZB5lavcEH7cgy40BDoZD';
+const FACEBOOK_DEFAULT_PAGE_ACCESS_TOKEN = 'EAAQXelKvXdEBSzmSpCpO2ggnyQZCS17F8XdcCJZCyxai0FeyYuohoSlivODXTk0OBd2ITJU6kf5K0Y9Mt0VI7rXgGGQ9HhvCLRZCrmEaoEZC3LX5CfWUMkhawymkHBc0gZAcCTZCwps0ZBZC357p2WTPcZCZC9rZAjCC7dXUXZAN2sGFWFGVyYgmBwpDU93YUsRfVPYmYKOJegqzOVPZBUSPrZATImtkpI';
 
 try {
     if (!localStorage.getItem('candy_club_fb_page_id')) {
         localStorage.setItem('candy_club_fb_page_id', FACEBOOK_DEFAULT_PAGE_ID);
     }
-    if (!localStorage.getItem('candy_club_fb_page_token')) {
+    const currentToken = localStorage.getItem('candy_club_fb_page_token');
+    // إذا كان التوكن القديم المنتهي مخزناً يتم استبداله فوراً بالتوكن الدائم الجديد
+    if (!currentToken || currentToken.startsWith('EAAQXelKvXdEBS9z') || currentToken.length < 50) {
         localStorage.setItem('candy_club_fb_page_token', FACEBOOK_DEFAULT_PAGE_ACCESS_TOKEN);
     }
 } catch(e) {}
@@ -20754,15 +20756,17 @@ window.testFacebookConnection = async function() {
             if (statusBadge) {
                 statusBadge.style.background = '#dcfce7';
                 statusBadge.style.color = '#15803d';
-                statusBadge.innerHTML = `<i class="fa-solid fa-circle-check"></i> متصل بنجاح بصفحة: <strong>${data.name}</strong> (ID: ${data.id})`;
+                statusBadge.innerHTML = `<i class="fa-solid fa-circle-check"></i> متصل بنجاح: <strong>${data.name}</strong> • <span style="color:#047857; font-weight:800;">(وضع Story فقط - البوستات مقفلة تماماً 🔒)</span>`;
             }
-            if (typeof showToast === 'function') showToast(`تم التحقق بنجاح! متصل بصفحة: ${data.name}`, 'success');
+            if (typeof showToast === 'function') showToast(`تم التحقق بنجاح! صفحة (${data.name}) جاهزة لنشر الستوري فقط`, 'success');
         } else {
             const errMsg = data.error?.message || 'تعذر التحقق من الصفحة، تأكد من صحة التوكن والمعرف';
+            const isExpired = errMsg.toLowerCase().includes('expired') || errMsg.toLowerCase().includes('session');
             if (statusBadge) {
                 statusBadge.style.background = '#fee2e2';
                 statusBadge.style.color = '#b91c1c';
-                statusBadge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> فشل الاتصال: ${errMsg}`;
+                statusBadge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> فشل الاتصال: ${errMsg}` + 
+                    (isExpired ? '<br><small style="color: #991b1b; font-weight: 700; margin-top: 4px; display: block;">انتهت صلاحية التوكن (Session has expired). يرجى توليد توكن دائم من مستكشف Graph API ولصقه هنا.</small>' : '');
             }
             if (typeof showToast === 'function') showToast(`فشل الاتصال: ${errMsg}`, 'error');
         }
@@ -22269,32 +22273,13 @@ window.publishOfferToInstagramStory = async function(id, isAuto = false) {
                 console.error('Instagram Container Creation Error:', createData);
             }
 
-            // 3. النشر الموازي كـ Story على صفحة فيسبوك كاندي كلوب
+            // 3. النشر الموازي كـ Story فقط وحصرياً على صفحة فيسبوك كاندي كلوب (ممنوع منعاً باتاً نشر أي بوست)
             try {
                 const fbStoryRes = await window.publishOfferToFacebookStory(publicImageUrl);
                 if (fbStoryRes && fbStoryRes.success) {
                     fbSuccess = true;
                 } else {
-                    console.warn('Facebook Page Story result:', fbStoryRes);
-                    // محاولة النشر كبوست صورة على الصفحة كخيار بديل إذا تعذر الستوري
-                    const pageId = window.getFacebookPageId();
-                    const pageToken = window.getFacebookPageAccessToken();
-                    if (pageId && pageToken) {
-                        const fbRes = await fetch(`https://graph.facebook.com/v19.0/${pageId}/photos`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                            body: new URLSearchParams({
-                                url: publicImageUrl,
-                                published: 'true',
-                                caption: `عرض حصري من كاندي كلوب: ${offer.product_name} 🔥 متوفر الآن بالفرع!`,
-                                access_token: pageToken
-                            }).toString()
-                        });
-                        const fbData = await fbRes.json();
-                        if (fbData && fbData.id) {
-                            fbSuccess = true;
-                        }
-                    }
+                    console.warn('Facebook Page Story publish failed (strictly no post fallback):', fbStoryRes);
                 }
             } catch(e) {
                 console.warn('Facebook story publish error:', e);

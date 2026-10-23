@@ -3461,17 +3461,17 @@
                     <div style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 14px; padding: 16px; margin-bottom: 16px;">
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
                             <span style="font-weight: 800; color: #166534; display: flex; align-items: center; gap: 7px; font-size: 0.95rem;">
-                                <i class="fa-brands fa-facebook" style="font-size: 1.25rem; color: #1877f2;"></i> صفحة Facebook الرسمية
+                                <i class="fa-brands fa-facebook" style="font-size: 1.25rem; color: #1877f2;"></i> صفحة Facebook الرسمية (Story فقط)
                             </span>
                             <span id="fbConnectionStatusBadge" class="badge" style="background: #dcfce7; color: #15803d; border: 1px solid #86efac; font-size: 0.78rem; font-weight: 700; padding: 4px 10px; border-radius: 6px;">
-                                <i class="fa-solid fa-circle-check"></i> متصل ومفعّل (Candy Club - EG)
+                                <i class="fa-solid fa-shield-halved"></i> وضع Story فقط (البوستات معطلة)
                             </span>
                         </div>
                         
                         <div style="background: #ffffff; border: 1px solid #bbf7d0; border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
                             <div>
                                 <div style="font-weight: 800; color: #1e293b; font-size: 0.9rem;"><i class="fa-solid fa-store" style="color: #16a34a; margin-left: 5px;"></i> Candy Club - EG</div>
-                                <div style="font-size: 0.78rem; color: #64748b;">صفحة فيسبوك الرسمية • أكثر من 59,800 متابع • النشر التلقائي جاهز</div>
+                                <div style="font-size: 0.78rem; color: #64748b;">صفحة فيسبوك الرسمية • النشر محصور 100% كـ Story فقط (ممنوع نشر بوستات تماماً)</div>
                             </div>
                             <button type="button" class="btn-sm interactive-btn" onclick="window.testFacebookConnection()" style="background: #16a34a; color: white; border: none; font-size: 0.78rem; font-weight: 700; padding: 6px 12px; border-radius: 6px; cursor: pointer;">
                                 <i class="fa-solid fa-bolt"></i> اختبار الاتصال الآن
@@ -3483,9 +3483,9 @@
                             <input type="text" id="socialSettingFbPageId" class="form-input" value="356148687583666" style="font-family: monospace; font-size: 0.9rem; font-weight: 700; background: #ffffff;">
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label style="font-size: 0.82rem; font-weight: 700; color: #374151;">Facebook Page Access Token</label>
+                            <label style="font-size: 0.82rem; font-weight: 700; color: #374151;">Facebook Page Access Token (رمز وصول الصفحة الدائم)</label>
                             <div style="position: relative;">
-                                <input type="password" id="socialSettingFbToken" class="form-input" value="EAAQXelKvXdEBS9zQKBYthQmfZBcP6NOefjPMhZBZAZBrfQZCREK9J7iftKdPAaNyZBWVZAUf9wier6GiJcWUutxciTgLkzhkZCOo4poSANVSCO4BIonluzvWYeaBZChd4rK3cCvzcUhi5ZB7ZAxiZCg7RtZBNu5CjoctgHrqb5IYP7HfpMqPv9C4HNAprtEOe9iyT5pRRpAcK7bpjnvvqa8TCLJMTshWwb5JjZBjmtlwUZCZBQuRfiZB5lavcEH7cgy40BDoZD" style="font-family: monospace; font-size: 0.85rem; padding-left: 38px;">
+                                <input type="password" id="socialSettingFbToken" class="form-input" value="EAAQXelKvXdEBSzmSpCpO2ggnyQZCS17F8XdcCJZCyxai0FeyYuohoSlivODXTk0OBd2ITJU6kf5K0Y9Mt0VI7rXgGGQ9HhvCLRZCrmEaoEZC3LX5CfWUMkhawymkHBc0gZAcCTZCwps0ZBZC357p2WTPcZCZC9rZAjCC7dXUXZAN2sGFWFGVyYgmBwpDU93YUsRfVPYmYKOJegqzOVPZBUSPrZATImtkpI" placeholder="Facebook Page Access Token" style="font-family: monospace; font-size: 0.85rem; padding-left: 38px;">
                                 <button type="button" onclick="const f=document.getElementById('socialSettingFbToken'); f.type = (f.type === 'password' ? 'text' : 'password');" style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); border: none; background: none; color: #64748b; cursor: pointer; padding: 4px; font-size: 0.9rem;" title="إظهار / إخفاء التوكن">
                                     <i class="fa-solid fa-eye"></i>
                                 </button>
