@@ -1,0 +1,32 @@
+name: Candy Club 24/7 Story Automation
+
+on:
+  schedule:
+    # يعمل تلقائياً كل 15 دقيقة على مدار الـ 24 ساعة بدون توقف
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+    # يتيح التشغيل اليدوي الفوري للتجربة من لوحة تحكم GitHub Actions في أي وقت
+
+jobs:
+  publish-stories:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Run Story Publisher Backend Job
+        run: node backend-jobs/publish_story_job.js
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          INSTAGRAM_ACCOUNT_ID: ${{ secrets.INSTAGRAM_ACCOUNT_ID }}
+          INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
+          FACEBOOK_PAGE_ID: ${{ secrets.FACEBOOK_PAGE_ID }}
+          FACEBOOK_PAGE_ACCESS_TOKEN: ${{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}

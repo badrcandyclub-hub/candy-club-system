@@ -22353,14 +22353,15 @@ window.checkAndAutoPublishNextOfferStory = async function() {
     }
 };
 
-// تشغيل الفاحص كل دقيقة
-if (!window._offersStorySchedulerInterval) {
-    window._offersStorySchedulerInterval = setInterval(() => {
-        if (typeof window.checkAndAutoPublishNextOfferStory === 'function') {
-            window.checkAndAutoPublishNextOfferStory();
-        }
-    }, 60000);
-}
+// تم نقل النشر التلقائي المجدول بالكامل إلى السيرفر السحابي (GitHub Actions Backend Job)
+// ليعمل 24/7 بدون الحاجة لفتح المتصفح أو اللابتوب ولمنع تكرار النشر في حال فتح أكثر من جهاز
+// if (!window._offersStorySchedulerInterval) {
+//     window._offersStorySchedulerInterval = setInterval(() => {
+//         if (typeof window.checkAndAutoPublishNextOfferStory === 'function') {
+//             window.checkAndAutoPublishNextOfferStory();
+//         }
+//     }, 60000);
+// }
 
 // 18. تصدير كتالوج العروض PDF الموجه للعملاء (بدون باركود وبدون كميات)
 window.generateCustomerOffersPdf = async function() {
