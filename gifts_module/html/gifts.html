@@ -77,8 +77,9 @@
                 </div>
 
                 <div class="gifts-form-group fg-pink">
-                    <label>اسم البوكيه أو الوصف <span style="color: var(--gifts-primary); font-weight: 800;">*</span></label>
-                    <input type="text" id="gifts-input-name" class="gifts-input" placeholder="مثال: بوكيه ميكس كيت كات وشوكولاتة" oninput="GiftsApp.onDraftChanged()">
+                    <label>اسم البوكيه أو الوصف <span style="color: var(--gifts-primary); font-weight: 800;">*</span> <span style="font-size: 0.76rem; color: #b91c1c; font-weight: 700; margin-right: 6px;">(ممنوع الإيموجي أو تكرار الاسم)</span></label>
+                    <input type="text" id="gifts-input-name" class="gifts-input" placeholder="مثال: بوكيه ميكس كيت كات وشوكولاتة (اسم فريد بالكلمات فقط)" oninput="GiftsApp.onDraftChanged()">
+                    <div id="gifts-name-validation-msg" style="display: none; font-size: 0.8rem; font-weight: 700; margin-top: 6px; padding: 5px 10px; border-radius: 8px; transition: all 0.2s;"></div>
                 </div>
 
                 <div class="gifts-form-group fg-lavender" style="display: flex; gap: 10px; flex-wrap: wrap; padding-bottom: 14px;">
@@ -429,6 +430,25 @@
 <!-- ================================================================
      MODALS
      ================================================================ -->
+
+<!-- 0. Gifts Customer Catalog Loading & Preloader Modal -->
+<div id="gifts-catalog-loading-modal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.78); backdrop-filter: blur(6px); z-index: 99999; align-items: center; justify-content: center; direction: rtl; font-family: 'Cairo', sans-serif;">
+    <div style="background: #ffffff; border-radius: 20px; padding: 28px 24px; width: 92%; max-width: 440px; text-align: center; box-shadow: 0 20px 45px rgba(0,0,0,0.35); border: 2px solid #FBCFE8;">
+        <div style="width: 62px; height: 62px; border-radius: 50%; background: #FDF2F8; color: #BE185D; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px auto; font-size: 1.8rem; box-shadow: 0 4px 15px rgba(190, 24, 93, 0.15);">
+            <i class="fa-solid fa-cloud-arrow-down fa-bounce"></i>
+        </div>
+        <h3 style="margin: 0 0 6px 0; font-size: 1.25rem; font-weight: 900; color: #831843;">جاري تجهيز كتالوج الهدايا PDF</h3>
+        <p id="gifts-catalog-loading-status" style="margin: 0 0 16px 0; font-size: 0.88rem; color: #64748B; font-weight: 700;">جاري فحص وتأكيد تحميل صور البوكيهات بدقة عالية لمنع أي صور فارغة...</p>
+        
+        <div style="background: #F1F5F9; border-radius: 12px; height: 10px; width: 100%; overflow: hidden; margin-bottom: 12px; position: relative;">
+            <div id="gifts-catalog-loading-progress" style="background: linear-gradient(90deg, #E91E8C, #BE185D); height: 100%; width: 0%; transition: width 0.25s ease;"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 800; color: #475569;">
+            <span id="gifts-catalog-loading-count">0 من 0</span>
+            <span id="gifts-catalog-loading-percent">0%</span>
+        </div>
+    </div>
+</div>
 
 <!-- 3. Sell Bouquet Modal with Optional Customer Recording -->
 <div class="gifts-modal-overlay" id="gifts-modal-sell-bouquet">

@@ -138,6 +138,34 @@
                 .replace(/'/g, '&#039;');
         },
 
+        // فحص احتواء النص على إيموجي أو رموز تعبيرية
+        hasEmoji(text) {
+            if (!text) return false;
+            const EMOJI_REGEX = /\p{Extended_Pictographic}|[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{200D}]/u;
+            return EMOJI_REGEX.test(text);
+        },
+
+        // إزالة أي إيموجي من النص تلقائياً
+        stripEmojis(text) {
+            if (!text) return '';
+            const EMOJI_REGEX_GLOBAL = /\p{Extended_Pictographic}|[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{200D}]/gu;
+            return text.replace(EMOJI_REGEX_GLOBAL, '').replace(/\s+/g, ' ');
+        },
+
+        // فحص هل اسم البوكيه مكرر ومسجل مسبقاً لبوكيه آخر غير مفكك
+        isBouquetNameDuplicate(name, excludeBouquetId = null) {
+            if (!name) return false;
+            const norm = this.normalizeArabic(name).replace(/\s+/g, ' ');
+            if (!norm) return false;
+
+            return (this.state.bouquets || []).some(b => {
+                if (excludeBouquetId && b.id === excludeBouquetId) return false;
+                if (b.status === 'disassembled') return false; // البوكيهات المفككة تم إلغاؤها من المحل
+                const bNorm = this.normalizeArabic(b.name || '').replace(/\s+/g, ' ');
+                return bNorm === norm;
+            });
+        },
+
         // 1. التهيئة الأولية (Init)
         async init(initialSubtab = 'builder') {
             console.log("Candy Club Gifts Module: Initializing...");
@@ -1401,13 +1429,42 @@
             this.updateSaveButtonState();
         },
 
-        // الحفظ التلقائي للمسودة في LocalStorage
+        // الحفظ التلقائي للمسودة في LocalStorage مع فحص الإيموجي والأسماء المكررة
         onDraftChanged() {
             const nameInput = document.getElementById('gifts-input-name');
             const creatorInput = document.getElementById('gifts-input-creator');
             const qtyInput = document.getElementById('gifts-input-qty');
+            const nameMsg = document.getElementById('gifts-name-validation-msg');
 
-            if (nameInput) this.state.draft.name = nameInput.value;
+            let rawName = nameInput ? nameInput.value : '';
+
+            // منع الإيموجي تلقائياً وتنبيه الموظف فوراً
+            if (this.hasEmoji(rawName)) {
+                rawName = this.stripEmojis(rawName);
+                if (nameInput) nameInput.value = rawName;
+                if (nameMsg) {
+                    nameMsg.style.display = 'block';
+                    nameMsg.style.background = '#FEF2F2';
+                    nameMsg.style.color = '#DC2626';
+                    nameMsg.style.border = '1px solid #FECACA';
+                    nameMsg.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> عذراً، ممنوع وضع الإيموجي في اسم البوكيه! تم مسحه تلقائياً، يرجى كتابة اسم بالكلمات فقط.';
+                }
+            } else if (rawName.trim() && this.isBouquetNameDuplicate(rawName.trim())) {
+                if (nameMsg) {
+                    nameMsg.style.display = 'block';
+                    nameMsg.style.background = '#FFFBEB';
+                    nameMsg.style.color = '#D97706';
+                    nameMsg.style.border = '1px solid #FDE68A';
+                    nameMsg.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> هذا الاسم مستخدم بالفعل لبوكيه آخر بالمحل! يجب تسمية كل بوكيه باسم مميز ومختلف.';
+                }
+            } else {
+                if (nameMsg) {
+                    nameMsg.style.display = 'none';
+                    nameMsg.innerHTML = '';
+                }
+            }
+
+            if (nameInput) this.state.draft.name = rawName;
             if (creatorInput) this.state.draft.creator = creatorInput.value;
             if (qtyInput) this.state.draft.qty = parseInt(qtyInput.value) || 1;
 
@@ -1498,7 +1555,7 @@
             this.showToastNotification("تم إفراغ المسودة وتجهيز نموذج جديد");
         },
 
-        // فحص اكتمال بيانات المسودة (الاسم + المصمم + صنف واحد على الأقل + صورة البوكيه إلزامية)
+        // فحص اكتمال بيانات المسودة (الاسم فريد بدون إيموجي + المصمم + صنف واحد على الأقل + صورة البوكيه إلزامية)
         checkDraftCompleteness() {
             const draft = this.state.draft;
             const name = (draft.name || '').trim();
@@ -1506,13 +1563,23 @@
             const hasItems = Array.isArray(draft.items) && draft.items.length > 0;
             const hasPhoto = !!(draft.photoBase64 && String(draft.photoBase64).startsWith('data:image'));
 
+            const hasEmojiInName = this.hasEmoji(name);
+            const isNameDuplicate = this.isBouquetNameDuplicate(name);
+
             const missing = [];
             let firstMissingField = null;
 
             if (!name) {
                 missing.push('اسم البوكيه');
                 if (!firstMissingField) firstMissingField = 'name';
+            } else if (hasEmojiInName) {
+                missing.push('إزالة الإيموجي من اسم البوكيه');
+                if (!firstMissingField) firstMissingField = 'name_emoji';
+            } else if (isNameDuplicate) {
+                missing.push('اسم البوكيه مكرر ومسجل مسبقاً');
+                if (!firstMissingField) firstMissingField = 'name_duplicate';
             }
+
             if (!creator) {
                 missing.push('المسؤول عن التصميم');
                 if (!firstMissingField) firstMissingField = 'creator';
@@ -1528,7 +1595,10 @@
 
             return {
                 isComplete: missing.length === 0,
-                hasName: !!name,
+                hasName: !!name && !hasEmojiInName && !isNameDuplicate,
+                rawHasName: !!name,
+                hasEmojiInName,
+                isNameDuplicate,
                 hasCreator: !!creator,
                 hasItems,
                 hasPhoto,
@@ -1591,7 +1661,7 @@
                         </div>
                         <div class="gifts-checklist-pills">
                             <span class="gifts-pill-tag ${check.hasName ? 'done' : 'needed'}">
-                                <i class="fa-solid ${check.hasName ? 'fa-check' : 'fa-xmark'}"></i> الاسم
+                                <i class="fa-solid ${check.hasName ? 'fa-check' : 'fa-xmark'}"></i> ${check.hasEmojiInName ? 'إزالة الإيموجي' : (check.isNameDuplicate ? 'اسم غير مكرر' : 'الاسم')}
                             </span>
                             <span class="gifts-pill-tag ${check.hasCreator ? 'done' : 'needed'}">
                                 <i class="fa-solid ${check.hasCreator ? 'fa-check' : 'fa-xmark'}"></i> المصمم
@@ -2149,7 +2219,25 @@
 
             const check = this.checkDraftCompleteness();
             if (!check.isComplete) {
-                if (!check.hasName) {
+                if (check.hasEmojiInName) {
+                    this.showToastNotification("⚠️ ممنوع استخدام الإيموجي أو الرموز في اسم البوكيه! يرجى كتابة اسم بالكلمات فقط.");
+                    const nameInput = document.getElementById('gifts-input-name');
+                    if (nameInput) {
+                        nameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        nameInput.focus();
+                    }
+                    return;
+                }
+                if (check.isNameDuplicate) {
+                    this.showToastNotification(`⚠️ اسم البوكيه ("${draft.name}") مسجل ومستخدم مسبقاً! يجب تسمية كل بوكيه باسم مختلف.`);
+                    const nameInput = document.getElementById('gifts-input-name');
+                    if (nameInput) {
+                        nameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        nameInput.focus();
+                    }
+                    return;
+                }
+                if (!check.rawHasName) {
                     this.showToastNotification("يرجى إدخال اسم البوكيه قبل الحفظ");
                     const nameInput = document.getElementById('gifts-input-name');
                     if (nameInput) {
@@ -2187,6 +2275,20 @@
                 }
             }
 
+            // فحص إضافي أخير ضد تكرار الاسم أو الإيموجي قبل رفع الصورة
+            if (this.hasEmoji(draft.name)) {
+                this.showToastNotification("⚠️ ممنوع استخدام الإيموجي أو الرموز في اسم البوكيه! يرجى كتابة اسم بالكلمات فقط.");
+                const nameInput = document.getElementById('gifts-input-name');
+                if (nameInput) { nameInput.scrollIntoView({ behavior: 'smooth', block: 'center' }); nameInput.focus(); }
+                return;
+            }
+            if (this.isBouquetNameDuplicate(draft.name)) {
+                this.showToastNotification(`⚠️ اسم البوكيه ("${draft.name}") مسجل ومستخدم مسبقاً! يجب تسمية كل بوكيه باسم مختلف.`);
+                const nameInput = document.getElementById('gifts-input-name');
+                if (nameInput) { nameInput.scrollIntoView({ behavior: 'smooth', block: 'center' }); nameInput.focus(); }
+                return;
+            }
+
             const saveBtn = document.getElementById('gifts-btn-save-bouquet');
             const saveLabel = document.getElementById('gifts-btn-save-label');
             const saveIcon = document.getElementById('gifts-btn-save-icon');
@@ -2212,59 +2314,6 @@
                     } else {
                         this.showToastNotification("تنبيه: لم يتم حفظ رابط الصورة لتعذر الوصول إلى Google Drive");
                     }
-                }
-
-                // فحص هل يوجد بوكيه جاهز في المحل مطابق 100% (نفس الاسم + نفس الأصناف والكميات + نفس الموظف)
-                const existingBouquet = this.findMatchingReadyBouquet(draft.name, creator, draft.items);
-
-                if (existingBouquet) {
-                    const oldQty = Number(existingBouquet.quantity) || 1;
-                    const newQty = oldQty + qty;
-                    existingBouquet.quantity = newQty;
-
-                    if (finalImageUrl && !existingBouquet.image_url) {
-                        existingBouquet.image_url = finalImageUrl;
-                    }
-
-                    if (!existingBouquet.timeline) existingBouquet.timeline = [];
-                    existingBouquet.timeline.push({
-                        event: `تمت إضافة (${qty}) قطع مطابقة بواسطة ${creator}، إجمالي المتوفر بالمحل (${newQty})`,
-                        by: creator,
-                        time: now
-                    });
-
-                    let syncedToSupabase = false;
-                    const sb = this.getSupabase();
-                    if (sb) {
-                        try {
-                            const { error } = await sb
-                                .from(GIFTS_TABLE)
-                                .update({
-                                    quantity: newQty,
-                                    image_url: existingBouquet.image_url,
-                                    timeline: existingBouquet.timeline
-                                })
-                                .eq('id', existingBouquet.id);
-
-                            if (!error) syncedToSupabase = true;
-                        } catch (e) {
-                            console.warn("Supabase update quantity error:", e);
-                        }
-                    }
-
-                    this.saveBouquetsToLocal();
-                    this.clearDraft();
-                    this.updateHeaderStats();
-
-                    const syncMsg = syncedToSupabase ? " (متزامن مع السحابة)" : " (محفوظ محليا)";
-                    this.showToastNotification(`تم دمج البوكيه مع نفس الموظف وزيادة الكمية إلى (${newQty}) قطع${syncMsg}`);
-
-                    const isMobileDevice = window.innerWidth < 768 || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-                    if (!isMobileDevice) {
-                        this.printBouquetThermalReceipt(existingBouquet.id);
-                    }
-                    this.switchSubTab('showcase');
-                    return;
                 }
 
                 // في حال كان بوكيه جديد (أو موظف مختلف)، ينشأ سجل مستقل
@@ -4276,28 +4325,104 @@
             }).join('');
         },
 
-        exportCustomerCatalogPDF() {
+        async exportCustomerCatalogPDF() {
             const catalogBouquets = this.state.bouquets.filter(b => b.status !== 'disassembled');
             if (catalogBouquets.length === 0) {
                 this.showToastNotification("لا توجد بوكيهات مسجلة حالياً لعرضها في كتالوج العملاء");
                 return;
             }
 
-            const printWindow = window.open('', '_blank', 'width=1100,height=900');
-            if (!printWindow) {
-                this.showToastNotification("يرجى السماح بالنوافذ المنبثقة لفتح كتالوج العملاء");
-                return;
-            }
-
-            const todayFormatted = new Date().toLocaleDateString('ar-EG', {
+            // تجهيز التواريخ واسم الملف المطلوب
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+            const dateFormattedNumeric = `${day}-${month}-${year}`;
+            const dateFormattedArabic = now.toLocaleDateString('ar-EG', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric'
             });
+            const catalogPdfTitle = `كتالوج هدايا كاندي كلوب بتاريخ ${dateFormattedNumeric}`;
 
-            const cardsHtml = catalogBouquets.map(b => {
+            // إظهار نافذة التحميل المسبق لمنع خروج أي صور فارغة
+            const loadingModal = document.getElementById('gifts-catalog-loading-modal');
+            const loadingStatus = document.getElementById('gifts-catalog-loading-status');
+            const loadingProgress = document.getElementById('gifts-catalog-loading-progress');
+            const loadingCount = document.getElementById('gifts-catalog-loading-count');
+            const loadingPercent = document.getElementById('gifts-catalog-loading-percent');
+
+            if (loadingModal) {
+                if (loadingProgress) loadingProgress.style.width = '0%';
+                if (loadingCount) loadingCount.textContent = `0 من ${catalogBouquets.length}`;
+                if (loadingPercent) loadingPercent.textContent = '0%';
+                if (loadingStatus) loadingStatus.textContent = 'جاري فحص وتأكيد تحميل صور البوكيهات بدقة عالية لمنع أي صور فارغة...';
+                loadingModal.style.display = 'flex';
+            }
+
+            // 1. تحويل الروابط وفحص وتحميل الصور بالكامل مسبقاً في ذاكرة المتصفح
+            let loadedImagesCount = 0;
+            const totalBouquets = catalogBouquets.length;
+
+            const resolvedBouquets = await Promise.all(catalogBouquets.map(async (b) => {
+                let photoSrc = b.image_url || '';
+
+                // تحويل أي رابط Google Drive تلقائياً إلى رابط مباشر عالي السرعة من CDN جوجل
+                if (photoSrc) {
+                    const driveMatch = photoSrc.match(/id=([a-zA-Z0-9_-]+)/) || photoSrc.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                    if (driveMatch && driveMatch[1]) {
+                        photoSrc = `https://lh3.googleusercontent.com/d/${driveMatch[1]}=w800`;
+                    }
+                }
+
+                if (photoSrc) {
+                    await new Promise((resolve) => {
+                        const img = new Image();
+                        img.crossOrigin = 'anonymous';
+                        let isResolved = false;
+                        const done = () => {
+                            if (isResolved) return;
+                            isResolved = true;
+                            loadedImagesCount++;
+                            const pct = Math.min(100, Math.round((loadedImagesCount / totalBouquets) * 100));
+                            if (loadingProgress) loadingProgress.style.width = `${pct}%`;
+                            if (loadingCount) loadingCount.textContent = `${loadedImagesCount} من ${totalBouquets}`;
+                            if (loadingPercent) loadingPercent.textContent = `${pct}%`;
+                            resolve();
+                        };
+                        img.onload = done;
+                        img.onerror = done;
+                        img.src = photoSrc;
+                        if (img.complete && img.naturalHeight !== 0) {
+                            done();
+                        }
+                        setTimeout(done, 3500); // مهلة حماية لمنع التعليق
+                    });
+                } else {
+                    loadedImagesCount++;
+                    const pct = Math.min(100, Math.round((loadedImagesCount / totalBouquets) * 100));
+                    if (loadingProgress) loadingProgress.style.width = `${pct}%`;
+                    if (loadingCount) loadingCount.textContent = `${loadedImagesCount} من ${totalBouquets}`;
+                    if (loadingPercent) loadingPercent.textContent = `${pct}%`;
+                }
+
+                return {
+                    ...b,
+                    resolvedPhotoSrc: photoSrc
+                };
+            }));
+
+            if (loadingStatus) loadingStatus.textContent = 'تم تجهيز جميع الصور بنجاح! جاري فتح الكتالوج للطباعة والتصدير...';
+            await new Promise(r => setTimeout(r, 350));
+            if (loadingModal) loadingModal.style.display = 'none';
+
+            // مسار لوجو كاندي كلوب المعتمد للطباعة
+            const logoSrc = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '') + '/images/Logo-print.png';
+
+            // 2. تجهيز كروت البوكيهات بتنسيق A4 مريح ومضغوط (3 كروت في الصف)
+            const cardsHtml = resolvedBouquets.map(b => {
                 const isReady = (b.status === 'ready');
-                const badgeText = isReady ? 'متوفر بالفرع الآن' : 'يُنفذ خلال 3 - 6 ساعات';
+                const badgeText = isReady ? 'متوفر فوري بالفرع' : 'يُنفذ حسب الطلب';
                 const badgeIcon = isReady ? 'fa-bolt' : 'fa-clock';
                 const badgeClass = isReady ? 'badge-ready' : 'badge-custom';
                 const cardClass = isReady ? 'card-ready' : 'card-custom';
@@ -4306,9 +4431,9 @@
                 const statusDotClass = isReady ? 'dot-ready' : 'dot-custom';
                 const statusBadgeClass = isReady ? 'status-ready' : 'status-custom';
 
-                const imgTag = b.image_url ?
+                const imgTag = b.resolvedPhotoSrc ?
                     `<div class="catalog-card-media">
-                        <img src="${b.image_url}" alt="${this.escapeHtml(b.name)}" loading="lazy">
+                        <img src="${b.resolvedPhotoSrc}" alt="${this.escapeHtml(b.name)}" loading="eager" decoding="sync" onerror="this.src='https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=600&q=80'">
                         <div class="catalog-card-badge ${badgeClass}"><i class="fa-solid ${badgeIcon}"></i> ${badgeText}</div>
                      </div>` :
                     `<div class="catalog-card-media catalog-card-noimg">
@@ -4318,12 +4443,21 @@
                      </div>`;
 
                 const items = b.items || [];
-                const itemsPills = items.length > 0 ? items.map(item => `
-                    <span class="catalog-pill">
-                        <strong class="catalog-pill-qty">${item.qty}×</strong>
-                        <span class="catalog-pill-name">${this.escapeHtml(item.name)}</span>
-                    </span>
-                `).join('') : '<span class="catalog-pill-empty">تشكيلة شوكولاتة وحلويات مختارة بعناية</span>';
+                const maxItemsToShow = 3;
+                let itemsPills = '';
+                if (items.length > 0) {
+                    const mainPills = items.slice(0, maxItemsToShow).map(item => `
+                        <span class="catalog-pill">
+                            <strong class="catalog-pill-qty">${item.qty}×</strong>
+                            <span class="catalog-pill-name">${this.escapeHtml(item.name)}</span>
+                        </span>
+                    `).join('');
+                    const remaining = items.length - maxItemsToShow;
+                    const morePill = remaining > 0 ? `<span class="catalog-pill-more">+${remaining} أصناف إضافية</span>` : '';
+                    itemsPills = mainPills + morePill;
+                } else {
+                    itemsPills = '<span class="catalog-pill-empty">تشكيلة شوكولاتة وحلويات مختارة بعناية</span>';
+                }
 
                 return `
                     <div class="catalog-card ${cardClass}">
@@ -4333,7 +4467,7 @@
                             
                             <div class="catalog-items-section">
                                 <div class="catalog-items-title">
-                                    <i class="fa-solid fa-boxes-stacked"></i> محتويات ومكونات البوكيه:
+                                    <i class="fa-solid fa-boxes-stacked"></i> المحتويات:
                                 </div>
                                 <div class="catalog-pills-wrap">
                                     ${itemsPills}
@@ -4342,7 +4476,7 @@
 
                             <div class="catalog-card-footer">
                                 <div class="catalog-price-box">
-                                    <span class="catalog-price-label">السعر الرسمي:</span>
+                                    <span class="catalog-price-label">السعر:</span>
                                     <div class="catalog-price-val">
                                         ${Number(b.total_price).toFixed(2)} <span class="currency">ج.م</span>
                                     </div>
@@ -4356,13 +4490,21 @@
                 `;
             }).join('');
 
+            // 3. فتح نافذة الطباعة المنبثقة
+            const printWindow = window.open('', '_blank', 'width=1100,height=900');
+            if (!printWindow) {
+                this.showToastNotification("يرجى السماح بالنوافذ المنبثقة لفتح كتالوج العملاء للطباعة والحفظ");
+                return;
+            }
+
+            // 4. كتابة كود الصفحة المتكامل
             printWindow.document.write(`
                 <!DOCTYPE html>
                 <html dir="rtl" lang="ar">
                 <head>
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>كتالوج بوكيهات كاندي كلوب الفاخرة | Candy Club Gifts</title>
+                    <title>${catalogPdfTitle}</title>
                     <link rel="preconnect" href="https://fonts.googleapis.com">
                     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
                     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Outfit:wght@500;700;800;900&display=swap" rel="stylesheet">
@@ -4378,15 +4520,18 @@
                             --bg-page: #FFFDFE;
                             --card-bg: #FFFFFF;
                         }
-                        * { box-sizing: border-box; }
+                        * {
+                            box-sizing: border-box;
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
+                        }
                         body {
-                            font-family: 'Cairo', sans-serif;
+                            font-family: 'Cairo', system-ui, -apple-system, sans-serif;
                             margin: 0;
                             padding: 0;
                             background: var(--bg-page);
                             color: var(--text-main);
-                            -webkit-print-color-adjust: exact;
-                            print-color-adjust: exact;
+                            direction: rtl;
                         }
 
                         /* Floating Top Bar (Hidden on Print) */
@@ -4404,17 +4549,20 @@
                         }
                         .toolbar-info {
                             display: flex;
-                            align-items: center;
-                            gap: 12px;
-                            font-size: 0.92rem;
-                            font-weight: 700;
+                            flex-direction: column;
+                            gap: 2px;
                         }
-                        .toolbar-badge {
-                            background: linear-gradient(135deg, #E91E8C, #BE185D);
-                            color: #FFF;
-                            padding: 4px 12px;
-                            border-radius: 20px;
+                        .toolbar-title {
+                            font-size: 0.98rem;
+                            font-weight: 800;
+                            color: #F43F5E;
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                        }
+                        .toolbar-tip {
                             font-size: 0.8rem;
+                            color: #94A3B8;
                         }
                         .toolbar-btns {
                             display: flex;
@@ -4436,106 +4584,115 @@
                         .btn-print {
                             background: linear-gradient(135deg, #E91E8C, #BE185D);
                             color: #FFFFFF;
+                            box-shadow: 0 4px 12px rgba(233, 30, 140, 0.35);
                         }
                         .btn-print:hover { filter: brightness(1.1); transform: scale(1.02); }
                         .btn-close {
                             background: rgba(255,255,255,0.12);
                             color: #FFFFFF;
+                            border: 1px solid rgba(255, 255, 255, 0.2);
                         }
                         .btn-close:hover { background: rgba(255,255,255,0.22); }
 
                         .catalog-container {
-                            max-width: 1200px;
+                            max-width: 1100px;
                             margin: 0 auto;
-                            padding: 24px 20px;
+                            padding: 20px 18px;
                         }
 
                         /* Header */
                         .catalog-header {
-                            text-align: center;
-                            padding: 20px 24px;
-                            background: linear-gradient(135deg, #FFF1F2 0%, #FDF2F8 50%, #FFFFFF 100%);
-                            border-radius: 18px;
-                            border: 2px solid var(--primary-border);
-                            margin-bottom: 24px;
-                            position: relative;
-                            box-shadow: 0 4px 20px rgba(233, 30, 140, 0.05);
-                        }
-                        .catalog-logo-wrap {
-                            display: inline-flex;
+                            display: flex;
+                            justify-content: space-between;
                             align-items: center;
-                            gap: 8px;
-                            background: #BE185D;
-                            color: #FFF;
-                            padding: 5px 16px;
-                            border-radius: 30px;
-                            font-weight: 800;
-                            font-size: 0.85rem;
-                            margin-bottom: 10px;
-                            letter-spacing: 0.5px;
+                            padding: 16px 20px;
+                            background: linear-gradient(135deg, #FFF1F2 0%, #FDF2F8 60%, #FFFFFF 100%);
+                            border-radius: 16px;
+                            border: 2px solid var(--primary-border);
+                            margin-bottom: 20px;
+                            position: relative;
+                            box-shadow: 0 4px 18px rgba(233, 30, 140, 0.06);
+                        }
+                        .catalog-brand-wrap {
+                            display: flex;
+                            align-items: center;
+                            gap: 14px;
+                        }
+                        .catalog-brand-logo {
+                            width: 62px;
+                            height: 62px;
+                            object-fit: contain;
+                            border-radius: 12px;
                         }
                         .catalog-title {
-                            font-size: 26px;
+                            font-size: 22px;
                             font-weight: 900;
                             color: #831843;
-                            margin: 0 0 6px 0;
+                            margin: 0 0 4px 0;
                             letter-spacing: -0.5px;
                         }
                         .catalog-sub {
-                            font-size: 13.5px;
+                            font-size: 13px;
                             font-weight: 700;
                             color: #BE185D;
-                            margin: 0 0 10px 0;
+                            margin: 0;
                         }
-                        .catalog-meta-row {
+                        .catalog-date-badge {
+                            background: #FFFFFF;
+                            border: 1.5px solid #FBCFE8;
+                            border-radius: 12px;
+                            padding: 8px 16px;
+                            text-align: right;
                             display: flex;
-                            justify-content: center;
-                            align-items: center;
-                            gap: 16px;
-                            font-size: 12px;
-                            color: var(--text-muted);
-                            font-weight: 600;
+                            flex-direction: column;
+                            gap: 3px;
+                            box-shadow: 0 2px 8px rgba(233, 30, 140, 0.05);
+                        }
+                        .catalog-date-badge .date-label {
+                            font-size: 0.88rem;
+                            font-weight: 900;
+                            color: #831843;
+                        }
+                        .catalog-date-badge .date-sub {
+                            font-size: 0.76rem;
+                            color: #BE185D;
+                            font-weight: 700;
                         }
 
-                        /* Grid - auto-fill so columns are never stretched into wide landscape */
+                        /* 3-Column Dense Grid (Fits 6 items comfortably per A4 page) */
                         .catalog-grid {
                             display: grid;
-                            grid-template-columns: repeat(auto-fill, minmax(280px, 320px));
-                            justify-content: center;
-                            gap: 24px;
+                            grid-template-columns: repeat(3, 1fr);
+                            gap: 14px;
+                            width: 100%;
                         }
 
-                        /* Card (3:4 Vertical Instagram Format) */
+                        /* Card */
                         .catalog-card {
                             background: var(--card-bg);
-                            border-radius: 18px;
+                            border-radius: 14px;
                             overflow: hidden;
                             display: flex;
                             flex-direction: column;
-                            page-break-inside: avoid;
-                            break-inside: avoid;
+                            border: 1.5px solid #FBCFE8;
+                            box-shadow: 0 3px 12px rgba(233, 30, 140, 0.06);
+                            break-inside: avoid !important;
+                            page-break-inside: avoid !important;
                             transition: transform 0.2s;
                         }
                         .catalog-card.card-ready {
-                            border: 2px solid #E91E8C;
-                            box-shadow: 0 6px 20px rgba(233, 30, 140, 0.1);
+                            border-color: #F472B6;
                         }
                         .catalog-card.card-custom {
-                            border: 1.5px solid #CBD5E1;
+                            border-color: #CBD5E1;
                             background: #FAF9FC;
-                            box-shadow: 0 4px 16px rgba(100, 116, 139, 0.08);
-                            opacity: 0.94;
-                        }
-                        .catalog-card:hover {
-                            transform: translateY(-3px);
-                            box-shadow: 0 10px 28px rgba(233, 30, 140, 0.14);
                         }
 
-                        /* 3:4 Media Container */
+                        /* Media Container */
                         .catalog-card-media {
                             position: relative;
                             width: 100%;
-                            aspect-ratio: 3 / 4;
+                            height: 180px;
                             background: #FDF2F8;
                             overflow: hidden;
                             display: flex;
@@ -4550,181 +4707,184 @@
                             object-position: center;
                             display: block;
                         }
-                        .catalog-card-badge {
-                            position: absolute;
-                            top: 10px;
-                            right: 10px;
-                            backdrop-filter: blur(6px);
-                            color: #FFFFFF;
-                            font-size: 10.5px;
-                            font-weight: 800;
-                            padding: 4px 10px;
-                            border-radius: 20px;
-                            box-shadow: 0 2px 8px rgba(0,0,0,0.18);
-                            display: flex;
-                            align-items: center;
-                            gap: 5px;
-                        }
-                        .catalog-card-badge.badge-ready {
-                            background: linear-gradient(135deg, #059669, #10B981);
-                        }
-                        .catalog-card-badge.badge-custom {
-                            background: linear-gradient(135deg, #7C3AED, #9333EA);
-                        }
                         .catalog-card-noimg {
                             display: flex;
                             flex-direction: column;
                             align-items: center;
                             justify-content: center;
-                            gap: 10px;
-                            color: var(--primary-light);
-                            font-size: 13px;
+                            gap: 8px;
+                            color: #BE185D;
+                            font-size: 0.82rem;
                             font-weight: 700;
                         }
-                        .catalog-card-noimg i { font-size: 48px; opacity: 0.7; }
+                        .catalog-card-noimg i {
+                            font-size: 2.2rem;
+                            opacity: 0.7;
+                        }
+                        .catalog-card-badge {
+                            position: absolute;
+                            top: 8px;
+                            right: 8px;
+                            font-size: 0.72rem;
+                            font-weight: 800;
+                            padding: 3px 8px;
+                            border-radius: 6px;
+                            color: #FFFFFF;
+                            display: flex;
+                            align-items: center;
+                            gap: 4px;
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+                        }
+                        .catalog-card-badge.badge-ready {
+                            background: #059669;
+                        }
+                        .catalog-card-badge.badge-custom {
+                            background: #7C3AED;
+                        }
 
                         /* Content */
                         .catalog-card-content {
-                            padding: 16px;
+                            padding: 10px 12px;
                             display: flex;
                             flex-direction: column;
                             flex: 1;
                             justify-content: space-between;
                         }
                         .catalog-card-title {
-                            margin: 0 0 10px 0;
-                            font-size: 17px;
-                            font-weight: 900;
-                            color: #831843;
+                            font-size: 0.95rem;
+                            font-weight: 800;
+                            color: #0F172A;
+                            margin: 0 0 6px 0;
                             line-height: 1.3;
+                            min-height: 38px;
                         }
-
                         .catalog-items-section {
-                            margin-bottom: 14px;
-                            background: #FFFDFE;
-                            border: 1px solid #FFE4E6;
-                            border-radius: 10px;
-                            padding: 10px;
+                            background: #FFF5F9;
+                            border: 1px solid #FCE7F3;
+                            border-radius: 8px;
+                            padding: 6px 8px;
+                            margin-bottom: 8px;
                         }
                         .catalog-items-title {
-                            font-size: 11px;
+                            font-size: 0.72rem;
                             font-weight: 800;
-                            color: var(--primary);
-                            margin-bottom: 6px;
+                            color: #BE185D;
+                            margin-bottom: 4px;
                             display: flex;
                             align-items: center;
-                            gap: 5px;
+                            gap: 4px;
                         }
                         .catalog-pills-wrap {
                             display: flex;
                             flex-wrap: wrap;
-                            gap: 5px;
-                            align-content: flex-start;
+                            gap: 4px;
                         }
                         .catalog-pill {
+                            background: #FFFFFF;
+                            border: 1px solid #FBCFE8;
+                            border-radius: 5px;
+                            padding: 1px 5px;
+                            font-size: 0.7rem;
+                            color: #475569;
                             display: inline-flex;
                             align-items: center;
-                            gap: 4px;
-                            background: #FFF1F2;
-                            border: 1px solid #FBCFE8;
-                            color: #9F1239;
-                            border-radius: 6px;
-                            padding: 3px 7px;
-                            font-size: 10.5px;
-                            font-weight: 700;
+                            gap: 3px;
+                            white-space: nowrap;
                         }
                         .catalog-pill-qty {
-                            background: #BE185D;
-                            color: #FFF;
-                            border-radius: 4px;
-                            padding: 1px 4px;
-                            font-size: 9.5px;
-                            font-weight: 900;
+                            color: #BE185D;
+                            font-weight: 800;
                         }
-                        .catalog-pill-name { white-space: nowrap; }
-                        .catalog-pill-empty { font-size: 11px; color: var(--text-muted); font-style: italic; }
+                        .catalog-pill-more {
+                            font-size: 0.68rem;
+                            color: #831843;
+                            font-weight: 800;
+                            padding: 1px 4px;
+                        }
+                        .catalog-pill-empty {
+                            font-size: 0.72rem;
+                            color: #64748B;
+                            font-style: italic;
+                        }
 
-                        /* Footer with price */
+                        /* Card Footer */
                         .catalog-card-footer {
-                            border-top: 1.5px dashed var(--primary-border);
-                            padding-top: 12px;
-                            margin-top: auto;
                             display: flex;
+                            align-items: flex-end;
                             justify-content: space-between;
-                            align-items: center;
+                            padding-top: 6px;
+                            border-top: 1px dashed #FCE7F3;
+                        }
+                        .catalog-price-box {
+                            display: flex;
+                            flex-direction: column;
                         }
                         .catalog-price-label {
-                            font-size: 11px;
+                            font-size: 0.68rem;
+                            color: #64748B;
                             font-weight: 700;
-                            color: var(--text-muted);
-                            display: block;
                         }
                         .catalog-price-val {
-                            font-family: 'Cairo', 'Outfit', sans-serif;
-                            font-size: 21px;
+                            font-size: 1.25rem;
                             font-weight: 900;
                             color: #BE185D;
-                            line-height: 1;
+                            line-height: 1.1;
                         }
                         .catalog-price-val .currency {
-                            font-size: 12px;
-                            font-weight: 700;
-                            color: var(--primary-light);
+                            font-size: 0.72rem;
+                            font-weight: 800;
                         }
                         .catalog-status-badge {
-                            padding: 4px 10px;
-                            border-radius: 20px;
-                            font-size: 10.5px;
+                            font-size: 0.72rem;
                             font-weight: 800;
+                            padding: 2px 6px;
+                            border-radius: 5px;
                             display: flex;
                             align-items: center;
-                            gap: 6px;
+                            gap: 4px;
                         }
                         .catalog-status-badge.status-ready {
                             background: #ECFDF5;
+                            color: #059669;
                             border: 1px solid #A7F3D0;
-                            color: #065F46;
                         }
                         .catalog-status-badge.status-custom {
                             background: #F5F3FF;
+                            color: #7C3AED;
                             border: 1px solid #DDD6FE;
-                            color: #6D28D9;
                         }
                         .catalog-status-dot {
-                            width: 7px;
-                            height: 7px;
+                            width: 6px;
+                            height: 6px;
                             border-radius: 50%;
-                            display: inline-block;
                         }
-                        .catalog-status-dot.dot-ready {
-                            background: #10B981;
-                        }
-                        .catalog-status-dot.dot-custom {
-                            background: #8B5CF6;
-                        }
+                        .catalog-status-dot.dot-ready { background: #059669; }
+                        .catalog-status-dot.dot-custom { background: #7C3AED; }
 
-                        /* Page Footer */
+                        /* Footer */
                         .catalog-footer {
-                            text-align: center;
-                            margin-top: 36px;
-                            padding: 18px;
+                            margin-top: 24px;
+                            padding-top: 14px;
                             border-top: 2px solid var(--primary-border);
-                            color: var(--text-muted);
-                            font-size: 12px;
-                            font-weight: 600;
+                            text-align: center;
                         }
-                        .catalog-footer-seal {
-                            font-size: 13px;
+                        .catalog-footer-warning {
+                            color: #B91C1C;
+                            font-size: 0.82rem;
                             font-weight: 800;
-                            color: #831843;
                             margin-bottom: 4px;
                         }
+                        .catalog-footer-sub {
+                            font-size: 0.76rem;
+                            color: #64748B;
+                            font-weight: 600;
+                        }
 
-                        /* Print Optimization - Compact Header & 3:4 Cards starting on Page 1 */
+                        /* Print Optimization (A4 Dense 3 Columns x 2 Rows = 6 items per page) */
                         @media print {
-                            .no-print { display: none !important; }
+                            .screen-toolbar { display: none !important; }
                             body {
-                                background: #FFF !important;
+                                background: #FFFFFF !important;
                                 padding: 0 !important;
                             }
                             .catalog-container {
@@ -4734,125 +4894,133 @@
                             }
                             .catalog-header {
                                 padding: 6px 14px !important;
-                                margin-bottom: 8mm !important;
+                                margin-bottom: 5mm !important;
                                 border-radius: 8px !important;
                                 border: 1.5px solid #FBCFE8 !important;
-                                display: flex !important;
-                                justify-content: space-between !important;
-                                align-items: center !important;
-                                text-align: right !important;
                                 background: #FFF1F2 !important;
                                 box-shadow: none !important;
                             }
-                            .catalog-header-text {
-                                display: flex !important;
-                                flex-direction: column !important;
-                                align-items: flex-start !important;
-                            }
                             .catalog-title {
-                                font-size: 14pt !important;
+                                font-size: 13pt !important;
                                 margin: 0 !important;
                                 color: #831843 !important;
                                 line-height: 1.2 !important;
                             }
                             .catalog-sub {
-                                display: none !important;
-                            }
-                            .catalog-meta-row {
                                 font-size: 8.5pt !important;
-                                color: #64748B !important;
-                                margin-top: 2px !important;
-                                gap: 12px !important;
-                                justify-content: flex-start !important;
+                                margin: 0 !important;
                             }
-                            .catalog-logo-wrap {
-                                padding: 4px 12px !important;
-                                font-size: 9.5pt !important;
-                                margin-bottom: 0 !important;
-                                flex-shrink: 0 !important;
+                            .catalog-brand-logo {
+                                width: 44px !important;
+                                height: 44px !important;
+                            }
+                            .catalog-date-badge {
+                                padding: 4px 10px !important;
+                                border-radius: 8px !important;
+                            }
+                            .catalog-date-badge .date-label {
+                                font-size: 8pt !important;
+                            }
+                            .catalog-date-badge .date-sub {
+                                font-size: 7pt !important;
                             }
                             .catalog-grid {
                                 display: grid !important;
-                                grid-template-columns: repeat(2, 1fr) !important;
-                                gap: 8mm !important;
+                                grid-template-columns: repeat(3, 1fr) !important;
+                                gap: 3.5mm !important;
                                 width: 100% !important;
                             }
                             .catalog-card {
                                 box-shadow: none !important;
                                 break-inside: avoid !important;
                                 page-break-inside: avoid !important;
-                                border-radius: 10px !important;
-                                border: 1.5px solid #E2E8F0 !important;
+                                border-radius: 8px !important;
+                                border: 1.2px solid #E2E8F0 !important;
                             }
                             .catalog-card.card-ready {
-                                border: 1.5px solid #F472B6 !important;
+                                border: 1.2px solid #F472B6 !important;
                             }
                             .catalog-card.card-custom {
-                                border: 1.5px solid #CBD5E1 !important;
-                                opacity: 1 !important;
+                                border: 1.2px solid #CBD5E1 !important;
                             }
                             .catalog-card-media {
-                                height: 105mm !important;
-                                max-height: 105mm !important;
-                                aspect-ratio: 3 / 4 !important;
+                                height: 50mm !important;
+                                max-height: 50mm !important;
                             }
                             .catalog-card-content {
-                                padding: 8px 10px !important;
+                                padding: 5px 8px !important;
                             }
                             .catalog-card-title {
-                                font-size: 12pt !important;
-                                margin-bottom: 4px !important;
-                            }
-                            .catalog-items-section {
-                                padding: 4px 6px !important;
-                                margin-bottom: 6px !important;
-                            }
-                            .catalog-items-title {
-                                font-size: 8.5pt !important;
+                                font-size: 9.5pt !important;
+                                min-height: 24px !important;
                                 margin-bottom: 3px !important;
                             }
+                            .catalog-items-section {
+                                padding: 3px 5px !important;
+                                margin-bottom: 4px !important;
+                                border-radius: 5px !important;
+                            }
+                            .catalog-items-title {
+                                font-size: 7pt !important;
+                                margin-bottom: 2px !important;
+                            }
                             .catalog-pill {
-                                font-size: 8pt !important;
-                                padding: 1px 4px !important;
+                                font-size: 6.8pt !important;
+                                padding: 0.5px 3px !important;
                             }
                             .catalog-card-footer {
-                                padding-top: 6px !important;
+                                padding-top: 4px !important;
                             }
                             .catalog-price-val {
-                                font-size: 15pt !important;
+                                font-size: 11pt !important;
+                            }
+                            .catalog-price-label {
+                                font-size: 6.5pt !important;
                             }
                             .catalog-status-badge {
-                                font-size: 8pt !important;
-                                padding: 3px 8px !important;
+                                font-size: 6.8pt !important;
+                                padding: 1.5px 5px !important;
                             }
                             .catalog-card-badge {
-                                font-size: 8pt !important;
-                                padding: 2px 7px !important;
+                                font-size: 6.8pt !important;
+                                padding: 1.5px 5px !important;
+                                top: 5px !important;
+                                right: 5px !important;
                             }
                             .catalog-footer {
-                                display: none !important;
+                                margin-top: 6mm !important;
+                                padding-top: 3mm !important;
+                                break-inside: avoid !important;
+                                page-break-inside: avoid !important;
+                            }
+                            .catalog-footer-warning {
+                                font-size: 7.5pt !important;
+                            }
+                            .catalog-footer-sub {
+                                font-size: 7pt !important;
                             }
                             @page {
                                 size: A4 portrait;
-                                margin: 10mm 10mm 10mm 10mm;
+                                margin: 8mm 8mm 10mm 8mm;
                             }
                         }
 
-                        @media screen and (max-width: 720px) {
+                        @media screen and (max-width: 768px) {
                             .catalog-grid { grid-template-columns: 1fr; }
                             .screen-toolbar { flex-direction: column; gap: 10px; text-align: center; }
+                            .catalog-header { flex-direction: column; gap: 12px; text-align: center; }
                         }
                     </style>
                 </head>
                 <body>
-                    <div class="screen-toolbar no-print">
+                    <div class="screen-toolbar">
                         <div class="toolbar-info">
-                            <span class="toolbar-badge"><i class="fa-brands fa-instagram"></i> مقاس موحد 3:4</span>
-                            <span>معاينة كتالوج كاندي كلوب الفاخر للعملاء</span>
+                            <span class="toolbar-title"><i class="fa-solid fa-file-pdf"></i> كتالوج بوكيهات كاندي كلوب الفاخرة</span>
+                            <span class="toolbar-tip">💡 لتصدير الملف كـ PDF: من نافذة الطباعة اختر الوجهة (Destination) -> "حفظ بتنسيق PDF" (Save as PDF).</span>
                         </div>
                         <div class="toolbar-btns">
                             <button type="button" class="btn-toolbar btn-print" onclick="window.print()">
-                                <i class="fa-solid fa-print"></i> طباعة / حفظ كـ PDF
+                                <i class="fa-solid fa-print"></i> طباعة / تصدير PDF الآن
                             </button>
                             <button type="button" class="btn-toolbar btn-close" onclick="window.close()">
                                 <i class="fa-solid fa-xmark"></i> إغلاق
@@ -4862,17 +5030,16 @@
 
                     <div class="catalog-container">
                         <div class="catalog-header">
-                            <div class="catalog-header-text">
-                                <h1 class="catalog-title">تشكيلة بوكيهات وهدايا كاندي كلوب الفاخرة</h1>
-                                <p class="catalog-sub">أحدث البوكيهات المصنوعة يدوياً والمتاحة للتسليم الفوري والتنفيذ المباشر</p>
-                                <div class="catalog-meta-row">
-                                    <span><i class="fa-regular fa-calendar-check"></i> تاريخ التحديث: ${todayFormatted}</span>
-                                    <span>•</span>
-                                    <span><i class="fa-solid fa-store"></i> متوفرة وجاهزة بالفرع</span>
+                            <div class="catalog-brand-wrap">
+                                <img src="${logoSrc}" alt="Candy Club" class="catalog-brand-logo" onerror="this.style.display='none'">
+                                <div>
+                                    <h1 class="catalog-title">كاندي كلوب - Candy Club</h1>
+                                    <p class="catalog-sub">كتالوج بوكيهات وتصاميم الهدايا الفاخرة</p>
                                 </div>
                             </div>
-                            <div class="catalog-logo-wrap">
-                                <i class="fa-solid fa-gift"></i> CANDY CLUB GIFTS
+                            <div class="catalog-date-badge">
+                                <span class="date-label"><i class="fa-regular fa-calendar-check"></i> تاريخ الإصدار: ${dateFormattedArabic}</span>
+                                <span class="date-sub">(${dateFormattedNumeric}) - فروع كاندي كلوب الرسمية</span>
                             </div>
                         </div>
 
@@ -4881,17 +5048,35 @@
                         </div>
 
                         <div class="catalog-footer">
-                            <div class="catalog-footer-seal">كاندي كلوب - تصاميم حصرية وشوكولاتة وهدايا أصلية 100%</div>
-                            <div>للطلب والحجز والاستفسار يرجى التواصل مع خدمة عملاء كاندي كلوب أو زيارة أقرب فرع</div>
+                            <div class="catalog-footer-warning">
+                                ⚠️ ملاحظة وتنبيه رسمي: موديلات وبوكيهات كاندي كلوب وأسعارها موثقة ومعتمدة بتاريخ هذا الكتالوج (${dateFormattedNumeric}) وتخضع لتوفر المكونات والأصناف بالفرع وقت الطلب. لا يسري هذا الكتالوج في تواريخ لاحقة بعد انتهاء العرض أو نفاذ الأصناف.
+                            </div>
+                            <div class="catalog-footer-sub">
+                                كاندي كلوب - تصاميم حصرية وشوكولاتة وهدايا أصلية 100% | للطلب والحجز والاستفسار يرجى التواصل مع خدمة العملاء
+                            </div>
                         </div>
                     </div>
 
                     <script>
-                        // الطباعة التلقائية بعد تحميل الصور بالكامل
-                        window.onload = function() {
-                            setTimeout(function() {
+                        // التأكد من اكتمال تحميل وفك ترميز الصور بنسبة 100% قبل فتح شاشة الطباعة والتصدير
+                        window.onload = async function() {
+                            const imgs = Array.from(document.querySelectorAll('img'));
+                            await Promise.all(imgs.map(img => {
+                                if (!img) return Promise.resolve();
+                                if (img.complete && img.naturalHeight !== 0) {
+                                    return (typeof img.decode === 'function') ? img.decode().catch(() => {}) : Promise.resolve();
+                                }
+                                return new Promise(resolve => {
+                                    img.onload = () => ((typeof img.decode === 'function') ? img.decode().catch(() => {}) : Promise.resolve()).then(resolve);
+                                    img.onerror = resolve;
+                                    setTimeout(resolve, 3000);
+                                });
+                            }));
+
+                            setTimeout(() => {
+                                window.focus();
                                 window.print();
-                            }, 600);
+                            }, 400);
                         };
                     </script>
                 </body>
