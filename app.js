@@ -21011,16 +21011,72 @@ window.ensureOffersAdminPermCard = function() {
     }
 };
 
-// 2. تحميل العروض من السيرفر / التخزين المحلي
+// 2. فحص وتجهيز كائن العرض/الستوري ليتطابق بدقة 100% مع أعمدة Supabase
+window.sanitizeOfferForSupabase = function(item) {
+    if (!item || typeof item !== 'object') return null;
+    return {
+        id: String(item.id || ('offer_' + Date.now())),
+        product_name: String(item.product_name || 'ستوري كاندي كلوب'),
+        barcode: item.barcode || null,
+        original_price: Number(item.original_price) || 0,
+        offer_price: Number(item.offer_price) || 0,
+        pricing_mode: item.pricing_mode || 'single',
+        bundle_qty: item.bundle_qty ? Number(item.bundle_qty) : null,
+        bundle_price: item.bundle_price ? Number(item.bundle_price) : null,
+        bundle_text: item.bundle_text || null,
+        expiry_type: item.expiry_type || 'unlimited',
+        quantity_mode: item.quantity_mode || null,
+        initial_quantity: (item.initial_quantity !== null && item.initial_quantity !== undefined) ? Number(item.initial_quantity) : null,
+        remaining_quantity: (item.remaining_quantity !== null && item.remaining_quantity !== undefined) ? Number(item.remaining_quantity) : null,
+        expiry_date: item.expiry_date || null,
+        image_url: (item.image_url && !item.image_url.startsWith('data:image')) ? item.image_url : (item.image_url || null),
+        drive_file_id: item.drive_file_id || null,
+        is_active: item.is_active !== false,
+        status_reason: item.status_reason || null,
+        updated_at: item.updated_at || new Date().toISOString(),
+        created_at: item.created_at || new Date().toISOString(),
+        created_by: item.created_by || 'المدير',
+        last_story_published_at: item.last_story_published_at ? Number(item.last_story_published_at) : null,
+        story_publish_count: Number(item.story_publish_count) || 0,
+        scheduled_story_ts: item.scheduled_story_ts ? Number(item.scheduled_story_ts) : null
+    };
+};
+
+// تحميل العروض والقصص من السيرفر / التخزين المحلي مع مزامنة ذكية تلقائية
 window.loadOffersData = async function() {
     try {
         if (window.supabase) {
             const { data, error } = await window.supabase.from('store_offers').select('*').order('created_at', { ascending: false });
             if (!error && Array.isArray(data)) {
-                window.offersData = data;
-                localStorage.setItem('candy_club_store_offers', JSON.stringify(data));
-                window.checkOffersExpiryConditions();
-                return;
+                if (data.length > 0) {
+                    window.offersData = data.map(window.sanitizeOfferForSupabase).filter(Boolean);
+                    try {
+                        const localClean = window.offersData.map(o => {
+                            const c = { ...o };
+                            if (c.image_url && c.image_url.startsWith('data:image')) c.image_url = '';
+                            return c;
+                        });
+                        localStorage.setItem('candy_club_store_offers', JSON.stringify(localClean));
+                    } catch(e) {}
+                    window.checkOffersExpiryConditions();
+                    return;
+                } else {
+                    // إذا كان السيرفر فارغاً والكاش به عروض، نقوم برفعها ومزامنتها فوراً إلى السيرفر
+                    let localOffers = [];
+                    try {
+                        const local = localStorage.getItem('candy_club_store_offers');
+                        localOffers = local ? JSON.parse(local) : [];
+                    } catch(e) {}
+
+                    if (Array.isArray(localOffers) && localOffers.length > 0) {
+                        console.log(`[Auto-Sync] Restoring and uploading ${localOffers.length} local offers up to Supabase...`);
+                        window.offersData = localOffers.map(window.sanitizeOfferForSupabase).filter(Boolean);
+                        await window.saveOffersDataLocallyAndRemote();
+                        return;
+                    }
+                    window.offersData = [];
+                    return;
+                }
             }
         }
     } catch(err) {
@@ -21038,10 +21094,37 @@ window.loadOffersData = async function() {
 };
 
 window.saveOffersDataLocallyAndRemote = async function() {
-    localStorage.setItem('candy_club_store_offers', JSON.stringify(window.offersData));
+    if (!Array.isArray(window.offersData)) window.offersData = [];
+
+    // تنظيف وتجهيز العناصر لتطابق مواصفات أعمدة الجدول تماماً
+    const sanitized = window.offersData.map(window.sanitizeOfferForSupabase).filter(Boolean);
+    window.offersData = sanitized;
+
+    // حفظ محلي آمن بدون Base64 لتفادي QuotaExceededError
+    try {
+        const localClean = sanitized.map(o => {
+            const copy = { ...o };
+            if (copy.image_url && copy.image_url.startsWith('data:image')) {
+                copy.image_url = '';
+            }
+            return copy;
+        });
+        localStorage.setItem('candy_club_store_offers', JSON.stringify(localClean));
+    } catch(e) {
+        console.warn('LocalStorage save warning:', e);
+    }
+
+    // حفظ ومزامنة فورية في سيرفر Supabase
     if (window.supabase) {
         try {
-            await window.supabase.from('store_offers').upsert(window.offersData, { onConflict: 'id' });
+            if (sanitized.length > 0) {
+                const { error } = await window.supabase.from('store_offers').upsert(sanitized, { onConflict: 'id' });
+                if (error) {
+                    console.error('[Supabase Upsert store_offers failed]:', error);
+                } else {
+                    console.log(`[Supabase Synced] Successfully synced ${sanitized.length} offers to server.`);
+                }
+            }
         } catch(e) {
             console.warn('Supabase upsert store_offers error:', e);
         }
@@ -21552,6 +21635,8 @@ window.openNewRecurringStoryModal = function() {
     document.getElementById('recurringStoryPhotoUrl').value = '';
     document.getElementById('recurringStoryDriveFileId').value = '';
     document.getElementById('recurringStoryTitle').value = '';
+    const urlInpNew = document.getElementById('recurringStoryUrlInput');
+    if (urlInpNew) urlInpNew.value = '';
     document.getElementById('recurringStoryModalTitle').innerHTML = '<i class="fa-solid fa-repeat" style="color: #e11d48;"></i> إضافة ستوري متكرر جديد';
     document.getElementById('btnSubmitRecurringStoryText').textContent = 'حفظ ونشر الستوري الآن';
 
@@ -21585,6 +21670,8 @@ window.openEditRecurringStoryModal = function(id) {
     document.getElementById('recurringStoryPhotoUrl').value = item.image_url || '';
     document.getElementById('recurringStoryDriveFileId').value = item.drive_file_id || '';
     document.getElementById('recurringStoryTitle').value = item.product_name || '';
+    const urlInpEdit = document.getElementById('recurringStoryUrlInput');
+    if (urlInpEdit) urlInpEdit.value = item.image_url || '';
     document.getElementById('recurringStoryModalTitle').innerHTML = '<i class="fa-solid fa-pen" style="color: #e11d48;"></i> تعديل الستوري المتكرر';
     document.getElementById('btnSubmitRecurringStoryText').textContent = 'حفظ التعديلات';
 
@@ -21684,6 +21771,7 @@ window.removeRecurringStoryPhoto = function() {
     const input = document.getElementById('recurringStoryPhotoInput');
     const base64Input = document.getElementById('recurringStoryBase64');
     const urlInput = document.getElementById('recurringStoryPhotoUrl');
+    const directUrlInput = document.getElementById('recurringStoryUrlInput');
     const preview = document.getElementById('recurringPhotoPreview');
     const previewWrapper = document.getElementById('recurringPhotoPreviewWrapper');
     const placeholder = document.getElementById('recurringPhotoPlaceholder');
@@ -21691,9 +21779,33 @@ window.removeRecurringStoryPhoto = function() {
     if (input) input.value = '';
     if (base64Input) base64Input.value = '';
     if (urlInput) urlInput.value = '';
+    if (directUrlInput) directUrlInput.value = '';
     if (preview) preview.src = '';
     if (previewWrapper) previewWrapper.style.display = 'none';
     if (placeholder) placeholder.style.display = 'flex';
+};
+
+window.handleRecurringUrlInput = function(url) {
+    if (!url || typeof url !== 'string') return;
+    const clean = url.trim();
+    if (!clean) return;
+
+    const fileId = window.extractGoogleDriveFileId(clean);
+    const finalUrl = fileId ? `https://lh3.googleusercontent.com/d/${fileId}` : clean;
+
+    const urlInput = document.getElementById('recurringStoryPhotoUrl');
+    const base64Input = document.getElementById('recurringStoryBase64');
+    const driveIdInput = document.getElementById('recurringStoryDriveFileId');
+    if (urlInput) urlInput.value = finalUrl;
+    if (base64Input) base64Input.value = '';
+    if (driveIdInput) driveIdInput.value = fileId || '';
+
+    const preview = document.getElementById('recurringPhotoPreview');
+    const previewWrapper = document.getElementById('recurringPhotoPreviewWrapper');
+    const placeholder = document.getElementById('recurringPhotoPlaceholder');
+    if (preview) preview.src = finalUrl;
+    if (previewWrapper) previewWrapper.style.display = 'block';
+    if (placeholder) placeholder.style.display = 'none';
 };
 
 window.openRecurringStoryCamera = function() {
@@ -21739,7 +21851,19 @@ window.handleRecurringStorySubmit = async function(e) {
                 photoUrl = uploadResult.url;
                 driveFileId = uploadResult.fileId;
             } else {
-                photoUrl = base64Image;
+                showToast('تعذر رفع الصورة إلى Google Drive، يرجى التأكد من اتصال الإنترنت والمحاولة مرة أخرى', 'error');
+                if (btnSubmit) {
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = origBtnHtml;
+                }
+                return;
+            }
+        } else if (photoUrl) {
+            // تطبيع رابط Google Drive إن وُجد
+            const extractedId = window.extractGoogleDriveFileId(photoUrl);
+            if (extractedId) {
+                driveFileId = extractedId;
+                photoUrl = `https://lh3.googleusercontent.com/d/${extractedId}`;
             }
         }
 
@@ -21755,7 +21879,7 @@ window.handleRecurringStorySubmit = async function(e) {
             expiry_type: expiryType,
             quantity_mode: (expiryType === 'count') ? 'publish_count' : null,
             initial_quantity: (expiryType === 'count') ? countVal : null,
-            remaining_quantity: (expiryType === 'count') ? (existing && existing.remaining_quantity !== undefined ? existing.remaining_quantity : countVal) : null,
+            remaining_quantity: (expiryType === 'count') ? (existing && existing.remaining_quantity !== undefined ? Number(existing.remaining_quantity) : countVal) : null,
             expiry_date: (expiryType === 'date') ? dateVal : null,
             image_url: photoUrl,
             drive_file_id: driveFileId,
@@ -21763,8 +21887,9 @@ window.handleRecurringStorySubmit = async function(e) {
             updated_at: new Date().toISOString(),
             created_at: editId ? (existing?.created_at || new Date().toISOString()) : new Date().toISOString(),
             created_by: window.currentUser ? window.currentUser.displayName : 'المدير',
-            last_story_published_at: existing?.last_story_published_at || null,
-            story_publish_count: existing?.story_publish_count || 0
+            last_story_published_at: existing?.last_story_published_at ? Number(existing.last_story_published_at) : null,
+            story_publish_count: Number(existing?.story_publish_count) || 0,
+            scheduled_story_ts: existing?.scheduled_story_ts ? Number(existing.scheduled_story_ts) : null
         };
 
         if (editId) {
@@ -21778,7 +21903,7 @@ window.handleRecurringStorySubmit = async function(e) {
         window.closeRecurringStoryModal();
         window.updateOffersStats();
         window.renderRecurringStoriesGrid();
-        showToast('تم حفظ الستوري بنجاح', 'success');
+        showToast('تم حفظ الستوري بنجاح في السيرفر السحابي', 'success');
 
         // إطلاق فوري لأول مرة عند إضافة ستوري جديد
         if (!editId) {
@@ -21799,7 +21924,7 @@ window.handleRecurringStorySubmit = async function(e) {
 
     } catch(err) {
         console.error('Error saving recurring story:', err);
-        showToast('حدث خطأ أثناء حفظ الستوري', 'error');
+        showToast('حدث خطأ أثناء حفظ الستوري: ' + (err.message || 'يرجى المحاولة مجدداً'), 'error');
     } finally {
         if (btnSubmit) {
             btnSubmit.disabled = false;
@@ -22697,6 +22822,9 @@ window.toggleOfferActive = async function(id) {
     await window.saveOffersDataLocallyAndRemote();
     window.updateOffersStats();
     window.renderOffersGrid();
+    if (typeof window.renderRecurringStoriesGrid === 'function') {
+        window.renderRecurringStoriesGrid();
+    }
     showToast(offer.is_active ? 'تم تفعيل العرض' : 'تم إيقاف العرض مؤقتاً', 'info');
 };
 
@@ -22725,6 +22853,9 @@ window.deleteOffer = function(id) {
         await window.saveOffersDataLocallyAndRemote();
         window.updateOffersStats();
         window.renderOffersGrid();
+        if (typeof window.renderRecurringStoriesGrid === 'function') {
+            window.renderRecurringStoriesGrid();
+        }
         showToast('تم حذف العرض ومسح صورته تماماً من Google Drive بنجاح', 'success');
     });
 };
@@ -23032,9 +23163,9 @@ window.publishSingleOfferStoryCore = async function(offer) {
         if (window.supabase) {
             try {
                 await window.supabase.from('store_offers').update({
-                    last_story_published_at: offer.last_story_published_at,
-                    story_publish_count: offer.story_publish_count,
-                    remaining_quantity: offer.remaining_quantity,
+                    last_story_published_at: Number(offer.last_story_published_at) || Date.now(),
+                    story_publish_count: Number(offer.story_publish_count) || 1,
+                    remaining_quantity: (offer.remaining_quantity !== null && offer.remaining_quantity !== undefined) ? Number(offer.remaining_quantity) : null,
                     is_active: offer.is_active,
                     status_reason: offer.status_reason || null
                 }).eq('id', offer.id);
@@ -23042,6 +23173,7 @@ window.publishSingleOfferStoryCore = async function(offer) {
                 console.warn('Supabase offer update error:', e);
             }
         }
+        await window.saveOffersDataLocallyAndRemote();
     }
     
     return {
