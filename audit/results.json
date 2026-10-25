@@ -125,8 +125,7 @@
     },
     {
       "name": "A20: users with expiry-only or inventory-only permission cannot load their base data",
-      "status": "HARNESS_FAILURE",
-      "error": "Unexpected token ')'"
+      "status": "REPRODUCED"
     },
     {
       "name": "A21: logout retains cleartext password in sessionStorage",
@@ -139,10 +138,20 @@
     {
       "name": "A23: sequential publication retries after database patch failure can duplicate an existing story",
       "status": "REPRODUCED"
+    },
+    {
+      "name": "A24: legacy expiry update filters quantity although active data mapping uses qty",
+      "status": "REPRODUCED"
     }
   ],
+  "controls": [
+    "addOrder returns success:false when insertion fails",
+    "checkIn returns success:false when insertion fails",
+    "overnight attendance duration is correctly calculated as 8 hours",
+    "shared pagination helper retrieves 1002 records across two pages"
+  ],
   "counts": {
-    "reproduced": 22,
-    "harnessFailures": 1
+    "reproduced": 24,
+    "harnessFailures": 0
   }
 }

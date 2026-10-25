@@ -12,6 +12,7 @@ const gifts = read('gifts_module/js/gifts.js');
 const job = read('backend-jobs/publish_story_job.js');
 const quiet = { log() {}, warn() {}, error() {} };
 const results = [];
+const controls = [];
 function section(source, start, end) {
   const a = source.indexOf(start);
   const b = source.indexOf(end, a + start.length);
@@ -134,14 +135,10 @@ async function main() {
   const giftMethod = (start, end) => vm.runInNewContext('({' + section(gifts, start, end).trim().replace(/,$/, '') + '})',
     { console: quiet, GIFTS_TABLE: 'gifts', confirm: () => true, localStorage: { getItem: () => null } });
   await test('A10: failed cloud bouquet deletion still removes it locally', async () => {
-    const obj = giftMethod('async deleteBouquet(id)', 'setShowcaseFilter(');
-    obj.state = { bouquets: [{ id: 'MOCK', name: 'MOCK' }] }; obj.getSupabase = () => database(denied);
-    for (const m of ['saveBouquetsToLocal', 'updateHeaderStats', 'renderShowcase', 'showToastNotification']) obj[m] = () => {};
-    // Method references window only for the optional activity notification.
     const c = context({ confirm: () => true, GIFTS_TABLE: 'gifts' });
     vm.runInContext('this.obj = ({' + section(gifts, 'async deleteBouquet(id)', 'setShowcaseFilter(').trim().replace(/,$/, '') + '})', c);
-    Object.assign(c.obj, obj); // Rebind the method in the context containing window.
-    c.obj.deleteBouquet = vm.runInContext('({' + section(gifts, 'async deleteBouquet(id)', 'setShowcaseFilter(').trim().replace(/,$/, '') + '}).deleteBouquet', c);
+    c.obj.state = { bouquets: [{ id: 'MOCK', name: 'MOCK' }] }; c.obj.getSupabase = () => database(denied);
+    for (const m of ['saveBouquetsToLocal', 'updateHeaderStats', 'renderShowcase', 'showToastNotification']) c.obj[m] = () => {};
     await c.obj.deleteBouquet('MOCK'); assert.equal(c.obj.state.bouquets.length, 0);
   });
   await test('A11: successful cloud reload discards unsynchronized local bouquet', async () => {
@@ -220,7 +217,7 @@ async function main() {
   });
   await test('A20: users with expiry-only or inventory-only permission cannot load their base data', async () => {
     const c = context();
-    vm.runInContext(section(app, 'window.shouldLoadCoreOrdersData =', 'async function loadDataFromServer('), c);
+    vm.runInContext(section(app, 'window.shouldLoadCoreOrdersData = function', 'async function loadDataFromServer('), c);
     for (const permissions of ['expiry', 'inventory', 'waitlist', 'pricetags']) {
       c.window.currentUser = { permissions }; assert.equal(c.window.shouldLoadCoreOrdersData(), false);
     }
@@ -250,8 +247,30 @@ async function main() {
     c.publishToFacebookStory = async () => ({ success: false });
     await c.main(); await c.main(); assert.equal(publications, 2);
   });
+  await test('A24: legacy expiry update filters quantity although active data mapping uses qty', async () => {
+    const db = database(accepted);
+    await request(interceptor(db), { action: 'updateExpiryItemData', id: 'MOCK_PRODUCT|10|2027-01-01', qty: '9' });
+    assert(db.calls[0].filters.some(f => f[1] === 'quantity'));
+    assert.equal(db.calls[0].payload.qty, '9');
+  });
+  // Positive and negative controls ensure the harness also recognizes working paths.
+  const c = interceptor(database(q => q.op === 'insert' ? denied() : accepted()));
+  assert.equal((await request(c, { action: 'addOrder' })).success, false);
+  controls.push('addOrder returns success:false when insertion fails');
+  assert.equal((await request(c, { action: 'checkIn', employeeName: 'MOCK' })).success, false);
+  controls.push('checkIn returns success:false when insertion fails');
+  const helperContext = context();
+  vm.runInContext(section(app, 'function parseAttendanceTimeToMinutes(', 'function formatHoursDisplay('), helperContext);
+  assert.equal(helperContext.calculateAttendanceHoursString('10:00 PM', '06:00 AM', '2026-10-24', '2026-10-25'), '8 ساعة');
+  controls.push('overnight attendance duration is correctly calculated as 8 hours');
+  const pagingContext = context();
+  vm.runInContext(section(app, 'async function fetchAllSupabaseRows(', '// 🛡️ Secure Delete Wrapper'), pagingContext);
+  const ranges = [];
+  const paged = await pagingContext.fetchAllSupabaseRows({ range(a, b) { ranges.push([a, b]); return Promise.resolve({ data: Array.from({ length: a === 0 ? 1000 : 2 }, (_, i) => a + i), error: null }); } });
+  assert.equal(paged.data.length, 1002); assert.equal(ranges.length, 2);
+  controls.push('shared pagination helper retrieves 1002 records across two pages');
   const report = { scope: 'Offline source and isolated mocked behavior audit; no live database, messaging or publishing',
-    syntaxChecked: syntax, html, scenarios: results,
+    syntaxChecked: syntax, html, scenarios: results, controls,
     counts: { reproduced: results.filter(x => x.status === 'REPRODUCED').length, harnessFailures: results.filter(x => x.status === 'HARNESS_FAILURE').length } };
   fs.writeFileSync(path.join(__dirname, 'results.json'), JSON.stringify(report, null, 2) + '\n');
   console.log(JSON.stringify(report, null, 2));
