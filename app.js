@@ -21620,6 +21620,7 @@ window.switchOffersSubtab = function(subtab) {
     const viewRecurring = document.getElementById('recurringStoriesViewContainer');
     const btnMainAction = document.getElementById('btnNewOffer');
     const btnMainActionText = document.getElementById('btnNewOfferText');
+    const btnHeaderBatch = document.getElementById('btnHeaderBatchRecurring');
 
     if (subtab === 'offers') {
         if (btnOffers) btnOffers.classList.add('active');
@@ -21631,6 +21632,7 @@ window.switchOffersSubtab = function(subtab) {
             btnMainAction.style.background = '';
             btnMainAction.title = 'إضافة عرض جديد بالباركود والأسعار';
         }
+        if (btnHeaderBatch) btnHeaderBatch.style.display = 'none';
         window.renderOffersGrid();
     } else {
         if (btnOffers) btnOffers.classList.remove('active');
@@ -21642,6 +21644,7 @@ window.switchOffersSubtab = function(subtab) {
             btnMainAction.style.background = 'linear-gradient(135deg, #e11d48, #be185d)';
             btnMainAction.title = 'إضافة ستوري متكرر بصورة فقط بدون باركود';
         }
+        if (btnHeaderBatch) btnHeaderBatch.style.display = 'inline-flex';
         window.renderRecurringStoriesGrid();
     }
     window.updateOffersStats();
@@ -22146,6 +22149,388 @@ window.updateRecurringSelectedCount = function() {
         selectAllCb.checked = (checkboxes.length > 0 && count === checkboxes.length);
         selectAllCb.indeterminate = (count > 0 && count < checkboxes.length);
     }
+};
+
+// ==========================================================================
+// 📸 إدارة رفع الاستوريهات المتعددة دفعة واحدة (Batch Recurring Stories)
+// ==========================================================================
+window.batchRecurringQueue = [];
+window.isBatchUploading = false;
+
+window.triggerBatchRecurringFileInput = function() {
+    const fileInput = document.getElementById('batchRecurringStoriesFileInput');
+    if (fileInput) {
+        fileInput.value = '';
+        fileInput.click();
+    }
+};
+
+window.extractCleanTitleFromFilename = function(filename) {
+    if (!filename || typeof filename !== 'string') return 'ستوري كاندي كلوب';
+    let name = filename.replace(/\.[^/.]+$/, '');
+    name = name.replace(/^(IMG|VID|Screenshot|photo|image|WhatsApp Image|PXL|Scan)[_\- ]*/i, '');
+    name = name.replace(/[_\-]+/g, ' ').trim();
+    if (!name || /^[\d\s]+$/.test(name)) {
+        return 'ستوري كاندي كلوب';
+    }
+    return name;
+};
+
+window.compressImageFile = function(file) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            const img = new Image();
+            img.onload = function() {
+                try {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 1080;
+                    const MAX_HEIGHT = 1920;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height = Math.round(height * (MAX_WIDTH / width));
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width = Math.round(width * (MAX_HEIGHT / height));
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+                    resolve(compressedBase64);
+                } catch(e) {
+                    console.warn('Canvas compression fallback to raw base64:', e);
+                    resolve(evt.target.result);
+                }
+            };
+            img.onerror = function() {
+                resolve(evt.target.result);
+            };
+            img.src = evt.target.result;
+        };
+        reader.onerror = function() {
+            resolve(null);
+        };
+        reader.readAsDataURL(file);
+    });
+};
+
+window.handleBatchRecurringFilesSelected = async function(e) {
+    const files = Array.from(e?.target?.files || []);
+    if (!files.length) return;
+
+    showToast(`📸 جاري تجهيز ومعاينة ${files.length} صور للدفعة...`, 'info', 3000);
+
+    const defaultExpiryType = document.getElementById('batchGlobalExpiryType')?.value || 'unlimited';
+    const defaultCount = parseInt(document.getElementById('batchGlobalCountInput')?.value) || 5;
+    const defaultDate = document.getElementById('batchGlobalDateInput')?.value || '';
+
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file.type.startsWith('image/')) continue;
+
+        const base64 = await window.compressImageFile(file);
+        if (!base64) continue;
+
+        const cleanTitle = window.extractCleanTitleFromFilename(file.name);
+        const sizeKb = Math.round(file.size / 1024);
+
+        window.batchRecurringQueue.push({
+            id: `batch_${Date.now()}_${Math.random().toString(36).substr(2, 6)}_${i}`,
+            file: file,
+            base64: base64,
+            title: cleanTitle,
+            sizeKb: sizeKb,
+            expiryType: defaultExpiryType,
+            publishCount: defaultCount,
+            endDate: defaultDate
+        });
+    }
+
+    const modal = document.getElementById('batchRecurringStoriesModal');
+    if (modal) modal.style.display = 'flex';
+
+    window.renderBatchRecurringItems();
+};
+
+window.renderBatchRecurringItems = function() {
+    const grid = document.getElementById('batchRecurringGrid');
+    const countBadge = document.getElementById('batchSelectedCountBadge');
+    const submitBtnCount = document.getElementById('btnSubmitBatchCount');
+    const submitBtn = document.getElementById('btnSubmitBatchRecurring');
+
+    const total = window.batchRecurringQueue.length;
+    if (countBadge) countBadge.textContent = total;
+    if (submitBtnCount) submitBtnCount.textContent = total;
+
+    if (!grid) return;
+
+    if (total === 0) {
+        grid.innerHTML = `
+            <div style="grid-column: 1/-1; text-align: center; color: #94a3b8; padding: 40px 10px;">
+                <i class="fa-solid fa-images" style="font-size: 2.5rem; color: #cbd5e1; margin-bottom: 12px; display: block;"></i>
+                <h4 style="margin: 0 0 6px; color: #475569; font-weight: 800;">لم يتم اختيار أي صور حتى الآن</h4>
+                <p style="margin: 0; font-size: 0.85rem; color: #94a3b8;">اضغط على "إضافة صور أخرى للدفعة" لاختيار صور من جهازك</p>
+            </div>
+        `;
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.5';
+            submitBtn.style.cursor = 'not-allowed';
+        }
+        return;
+    }
+
+    if (submitBtn && !window.isBatchUploading) {
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+        submitBtn.style.cursor = 'pointer';
+    }
+
+    grid.innerHTML = window.batchRecurringQueue.map((item, idx) => {
+        let cycleText = 'مستمر يومياً';
+        let cycleColor = '#059669';
+        let cycleBg = '#ecfdf5';
+
+        if (item.expiryType === 'count') {
+            cycleText = `نشر ${item.publishCount || 5} مرات`;
+            cycleColor = '#d97706';
+            cycleBg = '#fffbeb';
+        } else if (item.expiryType === 'date') {
+            cycleText = `حتى ${item.endDate || 'تاريخ'}`;
+            cycleColor = '#2563eb';
+            cycleBg = '#eff6ff';
+        }
+
+        const safeTitle = (item.title || '').replace(/"/g, '&quot;');
+
+        return `
+            <div class="batch-item-card" id="batchCard_${idx}">
+                <div class="batch-item-thumb-wrap" onclick="window.openOfferImageLightbox('${item.base64}', '${safeTitle}')" title="اضغط للمعاينة بالحجم الكامل">
+                    <img src="${item.base64}" alt="معاينة ستوري">
+                    <span class="batch-item-index-badge">#${idx + 1}</span>
+                    <button type="button" class="batch-item-remove-btn" onclick="event.stopPropagation(); window.removeBatchItem(${idx})" title="إزالة هذه الصورة من الدفعة">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+                    <div>
+                        <label style="font-size: 0.74rem; font-weight: 800; color: #475569; display: block; margin-bottom: 2px;">
+                            عنوان الستوري:
+                        </label>
+                        <input type="text" class="form-input" value="${safeTitle}" oninput="window.updateBatchItemTitle(${idx}, this.value)" placeholder="عنوان الستوري..." style="height: 34px; font-size: 0.84rem; font-weight: 700; border-radius: 8px; padding: 4px 8px; margin-bottom: 0;">
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.74rem; background: ${cycleBg}; color: ${cycleColor}; padding: 4px 8px; border-radius: 6px; font-weight: 700;">
+                        <span><i class="fa-solid fa-repeat"></i> ${cycleText}</span>
+                        <span style="color: #94a3b8; font-weight: 600;">${item.sizeKb ? item.sizeKb + ' KB' : ''}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+};
+
+window.removeBatchItem = function(index) {
+    if (window.isBatchUploading) return;
+    if (index >= 0 && index < window.batchRecurringQueue.length) {
+        window.batchRecurringQueue.splice(index, 1);
+        window.renderBatchRecurringItems();
+    }
+};
+
+window.updateBatchItemTitle = function(index, title) {
+    if (window.batchRecurringQueue[index]) {
+        window.batchRecurringQueue[index].title = title.trim();
+    }
+};
+
+window.clearBatchRecurringQueue = function() {
+    if (window.isBatchUploading) return;
+    window.batchRecurringQueue = [];
+    const fi = document.getElementById('batchRecurringStoriesFileInput');
+    if (fi) fi.value = '';
+    window.renderBatchRecurringItems();
+};
+
+window.handleBatchGlobalExpiryChange = function(type) {
+    const countWrap = document.getElementById('batchGlobalCountWrapper');
+    const dateWrap = document.getElementById('batchGlobalDateWrapper');
+    if (countWrap) countWrap.style.display = (type === 'count') ? 'block' : 'none';
+    if (dateWrap) dateWrap.style.display = (type === 'date') ? 'block' : 'none';
+};
+
+window.applyGlobalBatchSettings = function() {
+    if (window.isBatchUploading) return;
+    const type = document.getElementById('batchGlobalExpiryType')?.value || 'unlimited';
+    const count = parseInt(document.getElementById('batchGlobalCountInput')?.value) || 5;
+    const date = document.getElementById('batchGlobalDateInput')?.value || '';
+    const prefix = (document.getElementById('batchGlobalTitlePrefix')?.value || '').trim();
+
+    window.batchRecurringQueue.forEach((item, idx) => {
+        item.expiryType = type;
+        item.publishCount = count;
+        item.endDate = date;
+        if (prefix) {
+            item.title = `${prefix} (${idx + 1})`;
+        }
+    });
+
+    window.renderBatchRecurringItems();
+    showToast('تم تطبيق الإعدادات الموحدة على جميع صور الدفعة بنجاح', 'success', 2500);
+};
+
+window.closeBatchRecurringStoriesModal = function() {
+    if (window.isBatchUploading) {
+        const confirmCancel = confirm('جاري رفع الصور حالياً! هل أنت متأكد من رغبتك في الإغلاق؟');
+        if (!confirmCancel) return;
+        window.isBatchUploading = false;
+    }
+    const modal = document.getElementById('batchRecurringStoriesModal');
+    if (modal) modal.style.display = 'none';
+
+    const progressWrapper = document.getElementById('batchProgressWrapper');
+    if (progressWrapper) progressWrapper.style.display = 'none';
+
+    window.batchRecurringQueue = [];
+    const fi = document.getElementById('batchRecurringStoriesFileInput');
+    if (fi) fi.value = '';
+};
+
+window.submitBatchRecurringStories = async function() {
+    if (window.isBatchUploading) return;
+    const total = window.batchRecurringQueue.length;
+    if (total === 0) {
+        showToast('يرجى اختيار صورة واحدة على الأقل قبل الرفع', 'warning');
+        return;
+    }
+
+    window.isBatchUploading = true;
+
+    const btnSubmit = document.getElementById('btnSubmitBatchRecurring');
+    const btnCancel = document.getElementById('btnCancelBatchRecurring');
+    const progressWrapper = document.getElementById('batchProgressWrapper');
+    const progressBar = document.getElementById('batchProgressBar');
+    const progressText = document.getElementById('batchProgressText');
+    const progressDetail = document.getElementById('batchProgressDetail');
+    const progressSubtext = document.getElementById('batchProgressSubtext');
+
+    if (btnSubmit) {
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري رفع الدفعة...';
+    }
+    if (btnCancel) btnCancel.disabled = true;
+    if (progressWrapper) progressWrapper.style.display = 'block';
+
+    let successCount = 0;
+    let failCount = 0;
+
+    for (let i = 0; i < total; i++) {
+        if (!window.isBatchUploading) break; // cancelled
+
+        const item = window.batchRecurringQueue[i];
+        const percent = Math.round((i / total) * 100);
+
+        if (progressBar) progressBar.style.width = `${percent}%`;
+        if (progressText) progressText.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري رفع وحفظ صورة (${i + 1} من ${total}): "${item.title || 'ستوري'}"...`;
+        if (progressDetail) progressDetail.textContent = `${i} / ${total} مكتمل`;
+        if (progressSubtext) progressSubtext.textContent = 'جاري الرفع المباشر إلى Google Drive وضبط التكرار التلقائي...';
+
+        try {
+            // 1. رفع الصورة إلى Google Drive
+            let photoUrl = '';
+            let driveFileId = '';
+
+            const uploadRes = await window.uploadOfferPhotoToGoogleDrive(
+                item.base64,
+                `recurring_batch_${Date.now()}_${i}.jpg`
+            );
+
+            if (uploadRes && uploadRes.url) {
+                photoUrl = uploadRes.url;
+                driveFileId = uploadRes.fileId || '';
+            } else {
+                console.warn('Batch upload fallback: Drive upload failed, skipping item:', item.title);
+                failCount++;
+                continue;
+            }
+
+            // 2. إنشاء كائن الستوري المتكرر
+            const expiryType = item.expiryType || 'unlimited';
+            const countVal = (expiryType === 'count') ? (parseInt(item.publishCount) || 5) : null;
+            const dateVal = (expiryType === 'date') ? (item.endDate || null) : null;
+
+            const storyObj = {
+                id: `rec_story_${Date.now()}_${Math.random().toString(36).substr(2, 6)}_${i}`,
+                product_name: item.title || 'ستوري كاندي كلوب',
+                barcode: null,
+                original_price: 0,
+                offer_price: 0,
+                pricing_mode: 'recurring_story',
+                expiry_type: expiryType,
+                quantity_mode: (expiryType === 'count') ? 'publish_count' : null,
+                initial_quantity: countVal,
+                remaining_quantity: countVal,
+                expiry_date: dateVal,
+                image_url: photoUrl,
+                drive_file_id: driveFileId,
+                is_active: true,
+                updated_at: new Date().toISOString(),
+                created_at: new Date().toISOString(),
+                created_by: window.currentUser ? window.currentUser.displayName : 'المدير',
+                last_story_published_at: null,
+                story_publish_count: 0,
+                scheduled_story_ts: null
+            };
+
+            window.offersData.unshift(storyObj);
+            successCount++;
+
+        } catch(err) {
+            console.error('Error processing batch item index ' + i, err);
+            failCount++;
+        }
+    }
+
+    if (progressBar) progressBar.style.width = '100%';
+    if (progressText) progressText.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> جاري حفظ ومزامنة البيانات مع السيرفر السحابي...';
+    if (progressDetail) progressDetail.textContent = `${successCount} / ${total} مكتمل`;
+
+    try {
+        await window.saveOffersDataLocallyAndRemote();
+    } catch(saveErr) {
+        console.error('Error saving batch offers locally/remote:', saveErr);
+    }
+
+    window.isBatchUploading = false;
+    window.batchRecurringQueue = [];
+
+    const fi = document.getElementById('batchRecurringStoriesFileInput');
+    if (fi) fi.value = '';
+
+    window.closeBatchRecurringStoriesModal();
+    window.updateOffersStats();
+    window.renderRecurringStoriesGrid();
+
+    if (successCount > 0) {
+        showToast(`🎉 تم بنجاح رفع وحفظ ${successCount} ستوري متكرر دفعة واحدة ومزامنتها على السيرفر!`, 'success', 6000);
+    } else {
+        showToast('تعذر رفع الصور، يرجى التأكد من اتصال الإنترنت والمحاولة مجدداً', 'error', 5000);
+    }
+
+    if (btnSubmit) {
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> <span>حفظ ورفع جميع الاستوريهات</span>';
+    }
+    if (btnCancel) btnCancel.disabled = false;
 };
 
 // 7. اختيار المنتجات بالبحث أو الباركود في نافذة العرض

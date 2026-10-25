@@ -129,7 +129,7 @@
     <link rel="icon" type="image/png" href="favicon.png?v=13">
     <link rel="apple-touch-icon" href="favicon.png?v=13">
     <link rel="manifest" href="app-manifest.json?v=1003">
-    <link rel="stylesheet" href="style.css?v=117.0">
+    <link rel="stylesheet" href="style.css?v=118.0">
     <link rel="stylesheet" href="gifts_module/css/gifts.css?v=25">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap"
         rel="stylesheet">
@@ -3060,6 +3060,9 @@
                         <button type="button" id="btnOffersSocialSettings" class="interactive-btn btn-social-settings" onclick="window.openOffersSocialSettingsModal()" title="إعدادات ربط فيسبوك وإنستجرام">
                             <i class="fa-solid fa-gear"></i> إعدادات المنصات
                         </button>
+                        <button type="button" id="btnHeaderBatchRecurring" class="interactive-btn" onclick="window.triggerBatchRecurringFileInput()" style="display: none; background: linear-gradient(135deg, #0284c7, #2563eb); color: white; border: none; font-weight: 800; padding: 10px 18px; border-radius: 12px; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); cursor: pointer;" title="رفع مجموعة استوريهات متعددة دفعة واحدة">
+                            <i class="fa-solid fa-layer-group"></i> <span>رفع استوريهات متعددة</span>
+                        </button>
                         <button type="button" id="btnNewOffer" class="interactive-btn btn-new-offer" onclick="window.handleOffersMainAction()">
                             <i class="fa-solid fa-plus"></i> <span id="btnNewOfferText">إضافة عرض جديد</span>
                         </button>
@@ -3214,12 +3217,17 @@
                             </label>
                             <span id="selectedRecurringCountBadge" class="selected-count-badge">المحدد: 0 ستوري</span>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                             <button type="button" id="btnPublishSelectedRecurring" class="btn-primary interactive-btn btn-publish-batch" onclick="window.publishSelectedOffersStories()" style="background: linear-gradient(135deg, #e1306c, #1877f2); border: none; font-weight: 800; padding: 8px 18px; border-radius: 10px; display: flex; align-items: center; gap: 8px; color: white; cursor: pointer; transition: all 0.2s ease; opacity: 0.6;" disabled>
                                 <i class="fa-brands fa-instagram"></i>
                                 <i class="fa-brands fa-facebook"></i>
                                 <span>نشر القصص المحددة كـ Story</span>
                             </button>
+                            <button type="button" id="btnBatchUploadRecurringBar" class="interactive-btn" onclick="window.triggerBatchRecurringFileInput()" style="background: linear-gradient(135deg, #0284c7, #2563eb); border: none; font-weight: 800; padding: 8px 18px; border-radius: 10px; display: flex; align-items: center; gap: 8px; color: white; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);" title="رفع استوريهات متعددة دفعة واحدة">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                                <span>رفع استوريهات متعددة دفعة واحدة</span>
+                            </button>
+                            <input type="file" id="batchRecurringStoriesFileInput" accept="image/*" multiple style="display: none;" onchange="window.handleBatchRecurringFilesSelected(event)">
                         </div>
                     </div>
 
@@ -3236,9 +3244,14 @@
                         <div class="offers-empty-icon" style="color: #e11d48;"><i class="fa-solid fa-repeat"></i></div>
                         <h3>لا توجد قصص متكررة مسجلة حالياً</h3>
                         <p>أضف قصص وإعلانات المحل اليومية (بدون باركود أو أسعار) ليتم نشرها تلقائياً على إنستجرام وفيسبوك كل 24 ساعة.</p>
-                        <button type="button" class="interactive-btn btn-new-offer" onclick="window.openNewRecurringStoryModal()" style="background: linear-gradient(135deg, #e11d48, #be185d);">
-                            <i class="fa-solid fa-plus"></i> إضافة أول ستوري متكرر الآن
-                        </button>
+                        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                            <button type="button" class="interactive-btn btn-new-offer" onclick="window.openNewRecurringStoryModal()" style="background: linear-gradient(135deg, #e11d48, #be185d);">
+                                <i class="fa-solid fa-plus"></i> إضافة ستوري واحد
+                            </button>
+                            <button type="button" class="interactive-btn" onclick="window.triggerBatchRecurringFileInput()" style="background: linear-gradient(135deg, #0284c7, #2563eb); color: white; border: none; padding: 12px 22px; border-radius: 12px; font-weight: 800; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3); cursor: pointer;">
+                                <i class="fa-solid fa-layer-group"></i> رفع استوريهات متعددة دفعة واحدة
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -3841,6 +3854,125 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+
+        <!-- نافذة رفع استوريهات متعددة دفعة واحدة (Batch Recurring Stories Modal) -->
+        <div id="batchRecurringStoriesModal" class="modal-overlay" style="display: none; z-index: 10045;">
+            <div class="modal-content offer-modal-content batch-modal-content" style="max-width: 980px; width: 95%;">
+                <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #f1f5f9; padding-bottom: 14px; margin-bottom: 16px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, #0284c7, #2563eb); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);">
+                            <i class="fa-solid fa-layer-group"></i>
+                        </div>
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: #0f172a;">
+                                رفع استوريهات متعددة دفعة واحدة
+                            </h3>
+                            <p style="margin: 2px 0 0; font-size: 0.8rem; color: #64748b;">
+                                تم اختيار <strong id="batchSelectedCountBadge" style="color: #2563eb;">0</strong> صور جاهزة للرفع والمزامنة اليومية
+                            </p>
+                        </div>
+                    </div>
+                    <button type="button" class="offer-modal-close-btn" onclick="window.closeBatchRecurringStoriesModal()" title="إغلاق">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- شريط الإعدادات الموحدة السريعة للدفعة بالكامل -->
+                <div class="batch-global-controls-box" style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 14px 16px; margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+                        <span style="font-weight: 800; font-size: 0.92rem; color: #1e293b; display: flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-wand-magic-sparkles" style="color: #2563eb;"></i> إعدادات سريعة موحدة للدفعة:
+                        </span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <button type="button" class="interactive-btn" onclick="window.triggerBatchRecurringFileInput()" style="background: white; border: 1.5px solid #cbd5e1; padding: 6px 14px; border-radius: 8px; font-weight: 700; font-size: 0.82rem; color: #334155; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                                <i class="fa-solid fa-plus" style="color: #2563eb;"></i> إضافة صور أخرى للدفعة
+                            </button>
+                            <button type="button" class="interactive-btn" onclick="window.clearBatchRecurringQueue()" style="background: #fff1f2; border: 1.5px solid #fecdd3; padding: 6px 14px; border-radius: 8px; font-weight: 700; font-size: 0.82rem; color: #e11d48; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                                <i class="fa-solid fa-trash-can"></i> إفراغ القائمة
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; align-items: end;">
+                        <div>
+                            <label style="font-size: 0.82rem; font-weight: 800; color: #475569; display: block; margin-bottom: 6px;">
+                                نوع دورة التكرار لجميع الصور:
+                            </label>
+                            <select id="batchGlobalExpiryType" class="form-input" style="height: 40px; font-size: 0.88rem; font-weight: 700; border-radius: 8px;" onchange="window.handleBatchGlobalExpiryChange(this.value)">
+                                <option value="unlimited" selected>🟢 مستمر يومياً (كل 24 ساعة دائماً)</option>
+                                <option value="count">🟡 بعدد مرات نشر محددة</option>
+                                <option value="date">🔵 ينتهي بتاريخ محدد</option>
+                            </select>
+                        </div>
+
+                        <div id="batchGlobalCountWrapper" style="display: none;">
+                            <label style="font-size: 0.82rem; font-weight: 800; color: #475569; display: block; margin-bottom: 6px;">
+                                عدد مرات النشر لكل ستوري:
+                            </label>
+                            <input type="number" id="batchGlobalCountInput" min="1" max="365" value="5" class="form-input" style="height: 40px; font-size: 0.95rem; font-weight: 800; text-align: center; border-radius: 8px;">
+                        </div>
+
+                        <div id="batchGlobalDateWrapper" style="display: none;">
+                            <label style="font-size: 0.82rem; font-weight: 800; color: #475569; display: block; margin-bottom: 6px;">
+                                تاريخ الانتهاء الموحد:
+                            </label>
+                            <input type="date" id="batchGlobalDateInput" class="form-input" style="height: 40px; font-size: 0.88rem; font-weight: 700; border-radius: 8px;">
+                        </div>
+
+                        <div>
+                            <label style="font-size: 0.82rem; font-weight: 800; color: #475569; display: block; margin-bottom: 6px;">
+                                بادئة أو عنوان مشترك (اختياري):
+                            </label>
+                            <input type="text" id="batchGlobalTitlePrefix" class="form-input" placeholder="مثال: عروض نهاية الأسبوع..." style="height: 40px; font-size: 0.88rem; border-radius: 8px;">
+                        </div>
+
+                        <div>
+                            <button type="button" class="btn-primary interactive-btn" onclick="window.applyGlobalBatchSettings()" style="width: 100%; height: 40px; background: #0284c7; border: none; font-weight: 800; font-size: 0.86rem; border-radius: 8px; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                <i class="fa-solid fa-check-double"></i> تطبيق على كافة الصور
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- شبكة استعراض وتعديل صور الدفعة قبل الرفع -->
+                <div style="margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <label style="font-weight: 800; font-size: 0.9rem; color: #1e293b; display: flex; align-items: center; gap: 6px;">
+                        <i class="fa-solid fa-images" style="color: #0284c7;"></i> مراجعة كروت الاستوري المختارة (يمكنك تعديل اسم كل ستوري أو حذفه):
+                    </label>
+                </div>
+
+                <div id="batchRecurringGrid" class="batch-recurring-grid">
+                    <!-- سيتم توليد كروت الصور المختارة هنا ديناميكياً -->
+                </div>
+
+                <!-- شريط التقدم أثناء الرفع السحابي والمزامنة -->
+                <div id="batchProgressWrapper" style="display: none; margin-top: 16px; background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 12px; padding: 14px 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span id="batchProgressText" style="font-weight: 800; font-size: 0.9rem; color: #1e40af; display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-spinner fa-spin"></i> جاري معالجة ورفع الاستوريهات إلى السيرفر...
+                        </span>
+                        <span id="batchProgressDetail" style="font-weight: 900; font-size: 0.9rem; color: #2563eb;">0 / 0 مكتمل</span>
+                    </div>
+                    <div style="width: 100%; height: 12px; background: #dbeafe; border-radius: 8px; overflow: hidden; position: relative;">
+                        <div id="batchProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #0284c7, #2563eb); border-radius: 8px; transition: width 0.3s ease;"></div>
+                    </div>
+                    <small id="batchProgressSubtext" style="display: block; margin-top: 6px; font-size: 0.76rem; color: #64748b;">
+                        يتم ضغط كل صورة بدقة عالية ورفعها لسيرفر التخزين السحابي وحفظها كـ Recurring Story.
+                    </small>
+                </div>
+
+                <!-- أزرار الحفظ والإلغاء في الأسفل -->
+                <div class="modal-footer" style="margin-top: 20px; display: flex; gap: 12px; justify-content: flex-end; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+                    <button type="button" id="btnCancelBatchRecurring" class="btn-outline interactive-btn" onclick="window.closeBatchRecurringStoriesModal()" style="padding: 10px 20px; font-weight: 700;">
+                        إلغاء
+                    </button>
+                    <button type="button" id="btnSubmitBatchRecurring" class="btn-primary interactive-btn" onclick="window.submitBatchRecurringStories()" style="background: linear-gradient(135deg, #0284c7, #2563eb); border: none; padding: 12px 28px; font-weight: 800; font-size: 1rem; border-radius: 10px; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35); color: white; display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span>حفظ ورفع جميع الاستوريهات (<span id="btnSubmitBatchCount">0</span> صور)</span>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -4887,7 +5019,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script src="email_service.js?v=10.0" defer></script>
-    <script src="app.js?v=121.0" charset="UTF-8" defer></script>
+    <script src="app.js?v=122.0" charset="UTF-8" defer></script>
 
     <!-- Modal: إعداد موقع ونطاق الفرع (GPS Geofencing) -->
     <div id="branchLocationModal" class="modal-overlay" style="display:none; align-items:center; justify-content:center; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.65); backdrop-filter:blur(8px); z-index:99999;">
