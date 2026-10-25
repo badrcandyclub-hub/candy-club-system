@@ -8779,12 +8779,14 @@ body.dark-mode .cmp-footer {
 
 /* Customer PDF Catalog Styles */
 .copdf-wrapper {
-    width: 794px; /* A4 width */
+    max-width: 900px;
+    margin: 20px auto;
     background: #ffffff;
-    padding: 30px;
-    font-family: 'Cairo', sans-serif;
+    padding: 24px 28px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    font-family: 'Cairo', system-ui, -apple-system, sans-serif;
     color: #0f172a;
-    box-sizing: border-box;
     direction: rtl;
 }
 
@@ -8792,123 +8794,218 @@ body.dark-mode .cmp-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-bottom: 18px;
-    border-bottom: 3px solid #f43f5e;
-    margin-bottom: 24px;
+    padding-bottom: 14px;
+    border-bottom: 3px solid #e11d48;
+    margin-bottom: 18px;
 }
 
 .copdf-brand {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 14px;
 }
 
 .copdf-logo {
-    width: 60px;
-    height: 60px;
+    width: 68px;
+    height: 68px;
     object-fit: contain;
     border-radius: 12px;
 }
 
 .copdf-title {
-    font-size: 1.6rem;
+    font-size: 1.55rem;
     font-weight: 900;
     color: #0f172a;
     margin: 0;
+    line-height: 1.2;
 }
 
 .copdf-tagline {
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     color: #e11d48;
-    font-weight: 700;
-    margin: 4px 0 0 0;
+    font-weight: 800;
+    margin: 3px 0 0 0;
 }
 
-.copdf-contact {
-    text-align: left;
+.copdf-date-badge {
+    background: #fff1f2;
+    border: 1.5px solid #fecdd3;
+    border-radius: 12px;
+    padding: 8px 16px;
+    text-align: right;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 3px;
+}
+
+.copdf-date-badge .date-label {
     font-size: 0.88rem;
-    color: #64748b;
-    font-weight: 600;
+    font-weight: 900;
+    color: #9f1239;
+}
+
+.copdf-date-badge .date-sub {
+    font-size: 0.76rem;
+    color: #e11d48;
+    font-weight: 700;
 }
 
 .copdf-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
+    gap: 12px;
 }
 
 .copdf-item {
-    border: 1px solid #e2e8f0;
-    border-radius: 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
     overflow: hidden;
     background: #ffffff;
     display: flex;
     flex-direction: column;
     break-inside: avoid;
+    page-break-inside: avoid;
+}
+
+.copdf-item-img-wrap {
+    width: 100%;
+    height: 155px;
+    background: #f8fafc;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid #f1f5f9;
 }
 
 .copdf-item-img {
     width: 100%;
-    aspect-ratio: 4 / 3;
+    height: 100%;
     object-fit: cover;
-    background: #f8fafc;
 }
 
 .copdf-item-body {
-    padding: 12px;
+    padding: 10px 12px;
     display: flex;
     flex-direction: column;
     flex: 1;
+    justify-content: space-between;
 }
 
 .copdf-item-title {
-    font-size: 0.95rem;
+    font-size: 0.88rem;
     font-weight: 800;
     color: #0f172a;
     margin: 0 0 8px 0;
-    line-height: 1.3;
+    line-height: 1.35;
+    min-height: 34px;
 }
 
-.copdf-item-prices {
+.copdf-pricing-card {
+    background: #fafaf9;
+    border: 1px solid #e7e5e4;
+    border-radius: 8px;
+    padding: 6px 8px;
+}
+
+.copdf-bundle-badge {
+    background: #e11d48;
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 5px;
+    display: inline-block;
+    margin-bottom: 4px;
+}
+
+.copdf-single-badge {
+    background: #0284c7;
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 5px;
+    display: inline-block;
+    margin-bottom: 4px;
+}
+
+.copdf-price-row {
     display: flex;
     align-items: baseline;
-    gap: 8px;
-    margin-top: auto;
+    gap: 6px;
+    flex-wrap: wrap;
 }
 
-.copdf-item-price {
-    font-size: 1.25rem;
+.copdf-price-main {
+    font-size: 1.15rem;
     font-weight: 900;
     color: #e11d48;
 }
 
-.copdf-item-old {
-    font-size: 0.85rem;
+.copdf-price-old {
+    font-size: 0.8rem;
     color: #94a3b8;
     text-decoration: line-through;
 }
 
-.copdf-item-bundle {
-    margin-top: 6px;
-    background: #fdf2f8;
-    color: #be185d;
-    padding: 3px 6px;
-    border-radius: 6px;
-    font-size: 0.78rem;
-    font-weight: 700;
+.copdf-discount-pill {
+    background: #ecfdf5;
+    color: #059669;
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 1px 5px;
+    border-radius: 4px;
+    border: 1px solid #a7f3d0;
+}
+
+.copdf-unit-info {
+    margin-top: 4px;
+    font-size: 0.74rem;
+    color: #64748b;
+    font-weight: 600;
 }
 
 .copdf-footer {
-    margin-top: 30px;
-    padding-top: 15px;
-    border-top: 1px solid #e2e8f0;
+    margin-top: 22px;
+    padding-top: 14px;
+    border-top: 2px solid #e2e8f0;
     text-align: center;
-    font-size: 0.85rem;
+}
+
+.copdf-footer-warning {
+    color: #b91c1c;
+    font-size: 0.82rem;
+    font-weight: 800;
+    margin-bottom: 4px;
+}
+
+.copdf-footer-sub {
+    font-size: 0.76rem;
     color: #64748b;
-    font-weight: 700;
+    font-weight: 600;
+}
+
+@media print {
+    body.is-printing-offers-catalog {
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    body.is-printing-offers-catalog * {
+        visibility: hidden;
+    }
+    body.is-printing-offers-catalog #customerOffersPdfContainer,
+    body.is-printing-offers-catalog #customerOffersPdfContainer * {
+        visibility: visible;
+    }
+    body.is-printing-offers-catalog #customerOffersPdfContainer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        display: block !important;
+    }
 }
 
 /* Dark mode */

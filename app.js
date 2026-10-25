@@ -23558,74 +23558,514 @@ window.checkAndAutoPublishNextOfferStory = async function() {
 //     }, 60000);
 // }
 
-// 18. تصدير كتالوج العروض PDF الموجه للعملاء (بدون باركود وبدون كميات)
+// 18. تصدير كتالوج العروض PDF الموجه للعملاء (تصميم احترافي، بدون باركود وبدون كميات)
 window.generateCustomerOffersPdf = async function() {
     const activeOffers = (window.offersData || []).filter(o => o.is_active && o.pricing_mode !== 'recurring_story');
     if (activeOffers.length === 0) {
-        showToast('لا توجد عروض نشطة حالياً لتضمينها في الكتالوج', 'warning');
+        if (typeof showToast === 'function') showToast('لا توجد عروض نشطة حالياً لتضمينها في الكتالوج', 'warning');
         return;
     }
-    
-    showToast('جاري تجهيز كتالوج العروض المصور للعملاء...', 'info');
-    
-    const container = document.getElementById('customerOffersPdfContainer');
-    const grid = document.getElementById('copdfGrid');
-    const logoImg = document.getElementById('copdfLogo');
-    const dateSpan = document.getElementById('copdfDate');
-    const branchSpan = document.getElementById('copdfBranch');
-    
-    if (logoImg) {
-        const headerLogo = document.getElementById('headerLogo');
-        logoImg.src = headerLogo ? headerLogo.src : 'logo.png';
+
+    // إظهار نافذة مؤشر تقدم تجهيز وتحميل الصور بدقة عالية
+    const loadingModal = document.getElementById('catalogLoadingModal');
+    const loadingStatusText = document.getElementById('catalogLoadingStatusText');
+    const loadingProgressBar = document.getElementById('catalogLoadingProgressBar');
+    const loadingCountLabel = document.getElementById('catalogLoadingCountLabel');
+    const loadingPercentLabel = document.getElementById('catalogLoadingPercentLabel');
+
+    if (loadingModal) {
+        if (loadingProgressBar) loadingProgressBar.style.width = '5%';
+        if (loadingCountLabel) loadingCountLabel.textContent = `0 من ${activeOffers.length}`;
+        if (loadingPercentLabel) loadingPercentLabel.textContent = '5%';
+        if (loadingStatusText) loadingStatusText.textContent = 'جاري فحص وتأكيد تحميل صور العروض بدقة عالية...';
+        loadingModal.style.display = 'flex';
     }
-    if (dateSpan) dateSpan.textContent = new Date().toLocaleDateString('ar-EG');
-    if (branchSpan) branchSpan.textContent = 'كاندي كلوب';
-    
-    if (grid) {
-        grid.innerHTML = activeOffers.map(item => {
-            const origPrice = Number(item.original_price) || 0;
-            const offerPrice = Number(item.offer_price) || 0;
-            const photoSrc = item.image_url || 'https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?auto=format&fit=crop&w=600&q=80';
-            
-            return `
-                <div class="copdf-item">
-                    <img src="${photoSrc}" alt="${item.product_name}" class="copdf-item-img" crossorigin="anonymous">
-                    <div class="copdf-item-body">
-                        <div class="copdf-item-title">${item.product_name}</div>
-                        <div class="copdf-item-prices">
-                            <span class="copdf-item-price">${offerPrice} ج.م</span>
-                            ${origPrice > 0 ? `<span class="copdf-item-old">${origPrice} ج</span>` : ''}
-                        </div>
-                        ${item.bundle_text && item.bundle_price ? `<div class="copdf-item-bundle">${item.bundle_text}: ${item.bundle_price} ج</div>` : ''}
-                    </div>
+
+    // تجهيز التواريخ واسم الملف المطلوب
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+    const dateFormattedNumeric = `${day}-${month}-${year}`;
+    const dateFormattedArabic = now.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
+    const catalogPdfTitle = `عروض كاندي كلوب بتاريخ ${dateFormattedNumeric}`;
+
+    // 1. معالجة وتأكيد تحميل جميع الصور مسبقاً (Preloading & Resolution Check) لمنع الصور المفقودة
+    let loadedImagesCount = 0;
+    const resolvedOffers = await Promise.all(activeOffers.map(async (item) => {
+        let photoSrc = item.image_url || 'https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?auto=format&fit=crop&w=600&q=80';
+        
+        // تحويل روابط Google Drive إلى روابط CDN مباشرة وفائقة السرعة
+        if (typeof window.extractGoogleDriveFileId === 'function') {
+            const driveId = item.drive_file_id || window.extractGoogleDriveFileId(photoSrc);
+            if (driveId) {
+                photoSrc = `https://lh3.googleusercontent.com/d/${driveId}=w800`;
+            }
+        }
+
+        // التأكد من تحميل الصورة في ذاكرة المتصفح
+        await new Promise((resolve) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            let isResolved = false;
+            const done = () => {
+                if (isResolved) return;
+                isResolved = true;
+                loadedImagesCount++;
+                const pct = Math.min(100, Math.round((loadedImagesCount / activeOffers.length) * 100));
+                if (loadingProgressBar) loadingProgressBar.style.width = `${pct}%`;
+                if (loadingCountLabel) loadingCountLabel.textContent = `${loadedImagesCount} من ${activeOffers.length}`;
+                if (loadingPercentLabel) loadingPercentLabel.textContent = `${pct}%`;
+                resolve();
+            };
+            img.onload = done;
+            img.onerror = done;
+            img.src = photoSrc;
+            if (img.complete && img.naturalHeight !== 0) {
+                done();
+            }
+            setTimeout(done, 3000); // حماية من التعليق
+        });
+
+        return {
+            ...item,
+            resolvedPhotoSrc: photoSrc
+        };
+    }));
+
+    if (loadingStatusText) loadingStatusText.textContent = 'تم تجهيز جميع الصور بنجاح! جاري فتح الكتالوج للطباعة والحفظ...';
+    await new Promise(r => setTimeout(r, 350));
+
+    // 2. توليد كروت الأصناف بتصميم احترافي يوضح العرض (قطعتين بكذا / القطعة بكذا) وبدون أي عدادات أو مدة
+    const itemsHtml = resolvedOffers.map(item => {
+        const origPrice = Number(item.original_price) || 0;
+        const offerPrice = Number(item.offer_price) || 0;
+        const isBundle = Boolean(item.bundle_price && item.bundle_qty);
+        const bundleQty = Number(item.bundle_qty) || 2;
+        const bundlePrice = Number(item.bundle_price) || 0;
+
+        let pricingBoxHtml = '';
+        if (isBundle) {
+            const origTotal = origPrice * bundleQty;
+            const unitInsideBundle = Math.round(bundlePrice / bundleQty);
+            const discountPercent = (origTotal > bundlePrice && origTotal > 0) ? Math.round(((origTotal - bundlePrice) / origTotal) * 100) : 0;
+            const bundleLabel = (bundleQty === 2) ? 'عرض القطعتين معاً' : `عرض ${bundleQty} قطع معاً`;
+
+            pricingBoxHtml = `
+                <div class="copdf-bundle-badge">
+                    <span>🔥 ${bundleLabel}</span>
+                </div>
+                <div class="copdf-price-row">
+                    <span class="copdf-price-main">${bundlePrice} <small>ج.م</small></span>
+                    ${origTotal > 0 ? `<span class="copdf-price-old">${origTotal} ج</span>` : ''}
+                    ${discountPercent > 0 ? `<span class="copdf-discount-pill">وفر ${discountPercent}%</span>` : ''}
+                </div>
+                <div class="copdf-unit-info">
+                    سعر القطعة داخل العرض: <strong>${unitInsideBundle} ج</strong> ${origPrice > 0 ? `(المفردة بـ ${origPrice} ج)` : ''}
                 </div>
             `;
-        }).join('');
-    }
-    
-    container.style.display = 'block';
-    
-    if (typeof html2pdf !== 'undefined') {
-        const opt = {
-            margin: 10,
-            filename: `كتالوج_عروض_كاندي_كلوب_${new Date().toISOString().slice(0, 10)}.pdf`,
-            image: { type: 'jpeg', quality: 0.95 },
-            html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-        
-        try {
-            await html2pdf().set(opt).from(container.querySelector('.copdf-wrapper')).save();
-            showToast('تم تحميل كتالوج العروض PDF بنجاح', 'success');
-        } catch(e) {
-            console.error('html2pdf error:', e);
-            window.print();
-        } finally {
-            container.style.display = 'none';
+        } else {
+            const discountPercent = (origPrice > offerPrice && origPrice > 0) ? Math.round(((origPrice - offerPrice) / origPrice) * 100) : 0;
+
+            pricingBoxHtml = `
+                <div class="copdf-single-badge">
+                    <span>🏷️ عرض سعر القطعة</span>
+                </div>
+                <div class="copdf-price-row">
+                    <span class="copdf-price-main">${offerPrice} <small>ج.م</small></span>
+                    ${origPrice > 0 ? `<span class="copdf-price-old">${origPrice} ج</span>` : ''}
+                    ${discountPercent > 0 ? `<span class="copdf-discount-pill">خصم ${discountPercent}%</span>` : ''}
+                </div>
+                <div class="copdf-unit-info" style="color: #059669; font-weight: 700;">
+                    سعر خاص ومميز للقطعة الواحدة
+                </div>
+            `;
         }
+
+        return `
+            <div class="copdf-item">
+                <div class="copdf-item-img-wrap">
+                    <img src="${item.resolvedPhotoSrc}" alt="${item.product_name}" class="copdf-item-img" onerror="this.src='https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?auto=format&fit=crop&w=600&q=80'">
+                </div>
+                <div class="copdf-item-body">
+                    <div class="copdf-item-title">${item.product_name}</div>
+                    <div class="copdf-pricing-card">
+                        ${pricingBoxHtml}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    // مسار لوجو الطباعة
+    const logoSrc = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '') + '/images/Logo-print.png';
+
+    // 3. بناء صفحة HTML المتكاملة والمخصصة للطباعة والتصدير بجودة A4 فائقة
+    const standaloneHtml = `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${catalogPdfTitle}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 8mm 8mm 10mm 8mm;
+        }
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f8fafc;
+            font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+            color: #0f172a;
+            direction: rtl;
+        }
+        .screen-actions-bar {
+            background: #0f172a;
+            color: #ffffff;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 9999;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .screen-actions-bar .info-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .screen-actions-bar .info-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: #f43f5e;
+        }
+        .screen-actions-bar .info-tip {
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+        .screen-actions-bar .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+        .btn-action-print {
+            background: linear-gradient(135deg, #e11d48, #be185d);
+            color: #ffffff;
+            border: none;
+            padding: 9px 20px;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: 0.92rem;
+            cursor: pointer;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(225, 29, 72, 0.35);
+        }
+        .btn-action-close {
+            background: rgba(255, 255, 255, 0.12);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 9px 16px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.88rem;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        @media print {
+            .screen-actions-bar {
+                display: none !important;
+            }
+            body {
+                background: #ffffff !important;
+            }
+            .copdf-wrapper {
+                padding: 0 !important;
+                box-shadow: none !important;
+                max-width: 100% !important;
+            }
+        }
+        .copdf-wrapper {
+            max-width: 900px;
+            margin: 20px auto;
+            background: #ffffff;
+            padding: 24px 28px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        }
+        .copdf-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 14px;
+            border-bottom: 3px solid #e11d48;
+            margin-bottom: 18px;
+        }
+        .copdf-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .copdf-logo {
+            width: 68px;
+            height: 68px;
+            object-fit: contain;
+            border-radius: 12px;
+        }
+        .copdf-title {
+            font-size: 1.55rem;
+            font-weight: 900;
+            color: #0f172a;
+            margin: 0;
+            line-height: 1.2;
+        }
+        .copdf-tagline {
+            font-size: 0.92rem;
+            color: #e11d48;
+            font-weight: 800;
+            margin: 3px 0 0 0;
+        }
+        .copdf-date-badge {
+            background: #fff1f2;
+            border: 1.5px solid #fecdd3;
+            border-radius: 12px;
+            padding: 8px 16px;
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .copdf-date-badge .date-label {
+            font-size: 0.88rem;
+            font-weight: 900;
+            color: #9f1239;
+        }
+        .copdf-date-badge .date-sub {
+            font-size: 0.76rem;
+            color: #e11d48;
+            font-weight: 700;
+        }
+        .copdf-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        .copdf-item {
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+        .copdf-item-img-wrap {
+            width: 100%;
+            height: 155px;
+            background: #f8fafc;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .copdf-item-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .copdf-item-body {
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            justify-content: space-between;
+        }
+        .copdf-item-title {
+            font-size: 0.88rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 0 0 8px 0;
+            line-height: 1.35;
+            min-height: 34px;
+        }
+        .copdf-pricing-card {
+            background: #fafaf9;
+            border: 1px solid #e7e5e4;
+            border-radius: 8px;
+            padding: 6px 8px;
+        }
+        .copdf-bundle-badge {
+            background: #e11d48;
+            color: #ffffff;
+            font-size: 0.72rem;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 5px;
+            display: inline-block;
+            margin-bottom: 4px;
+        }
+        .copdf-single-badge {
+            background: #0284c7;
+            color: #ffffff;
+            font-size: 0.72rem;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 5px;
+            display: inline-block;
+            margin-bottom: 4px;
+        }
+        .copdf-price-row {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .copdf-price-main {
+            font-size: 1.15rem;
+            font-weight: 900;
+            color: #e11d48;
+        }
+        .copdf-price-old {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            text-decoration: line-through;
+        }
+        .copdf-discount-pill {
+            background: #ecfdf5;
+            color: #059669;
+            font-size: 0.68rem;
+            font-weight: 800;
+            padding: 1px 5px;
+            border-radius: 4px;
+            border: 1px solid #a7f3d0;
+        }
+        .copdf-unit-info {
+            margin-top: 4px;
+            font-size: 0.74rem;
+            color: #64748b;
+            font-weight: 600;
+        }
+        .copdf-footer {
+            margin-top: 22px;
+            padding-top: 14px;
+            border-top: 2px solid #e2e8f0;
+            text-align: center;
+        }
+        .copdf-footer-warning {
+            color: #b91c1c;
+            font-size: 0.82rem;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+        .copdf-footer-sub {
+            font-size: 0.76rem;
+            color: #64748b;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="screen-actions-bar">
+        <div class="info-wrap">
+            <span class="info-title">📄 كتالوج عروض كاندي كلوب - Candy Club</span>
+            <span class="info-tip">💡 لحفظ الملف بصيغة PDF: من نافذة الطباعة اختر الوجهة (Destination) -&gt; "حفظ بتنسيق PDF" (Save as PDF).</span>
+        </div>
+        <div class="btn-group">
+            <button type="button" class="btn-action-print" onclick="window.print()">
+                🖨️ طباعة / تصدير PDF الآن
+            </button>
+            <button type="button" class="btn-action-close" onclick="window.close()">
+                ✖️ إغلاق النافذة
+            </button>
+        </div>
+    </div>
+
+    <div class="copdf-wrapper">
+        <div class="copdf-header">
+            <div class="copdf-brand">
+                <img src="${logoSrc}" alt="Candy Club" class="copdf-logo" onerror="this.style.display='none'">
+                <div>
+                    <h1 class="copdf-title">كاندي كلوب - Candy Club</h1>
+                    <p class="copdf-tagline">كتالوج العروض الحصرية والأسعار المميزة</p>
+                </div>
+            </div>
+            <div class="copdf-date-badge">
+                <span class="date-label">📅 تاريخ الإصدار: ${dateFormattedArabic}</span>
+                <span class="date-sub">(${dateFormattedNumeric}) - فرع كاندي كلوب</span>
+            </div>
+        </div>
+
+        <div class="copdf-grid">
+            ${itemsHtml}
+        </div>
+
+        <div class="copdf-footer">
+            <div class="copdf-footer-warning">
+                ⚠️ ملاحظة هامة: جميع الأسعار والعروض سارية وموثقة بتاريخ إصدار هذا الكتالوج (${dateFormattedNumeric}) وتخضع لتوفر الكميات وقت الطلب في فروع كاندي كلوب.
+            </div>
+            <div class="copdf-footer-sub">
+                كاندي كلوب - عالم الحلويات والمستوردات الفاخرة | الأسعار شاملة وخاصة بالعملاء
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.onload = async function() {
+            const imgs = Array.from(document.querySelectorAll('img'));
+            await Promise.all(imgs.map(img => img.decode ? img.decode().catch(() => {}) : Promise.resolve()));
+            setTimeout(() => {
+                window.focus();
+                window.print();
+            }, 400);
+        };
+    </script>
+</body>
+</html>`;
+
+    // 4. فتح الكتالوج وإظهار نافذة الطباعة / الحفظ
+    if (loadingModal) loadingModal.style.display = 'none';
+
+    const printWin = window.open('', '_blank', 'width=1100,height=900');
+    if (printWin) {
+        printWin.document.open();
+        printWin.document.write(standaloneHtml);
+        printWin.document.close();
+        if (typeof showToast === 'function') showToast(`تم فتح كتالوج العروض (${catalogPdfTitle}) جاهزاً للطباعة والتصدير كـ PDF`, 'success');
     } else {
-        window.print();
-        container.style.display = 'none';
+        // بديل في حالة حظر النوافذ المنبثقة على بعض متصفحات الهواتف
+        const inPageContainer = document.getElementById('customerOffersPdfContainer');
+        if (inPageContainer) {
+            inPageContainer.innerHTML = standaloneHtml;
+            inPageContainer.style.display = 'block';
+            document.body.classList.add('is-printing-offers-catalog');
+            const originalTitle = document.title;
+            document.title = catalogPdfTitle;
+
+            const imgs = Array.from(inPageContainer.querySelectorAll('img'));
+            await Promise.all(imgs.map(img => img.decode ? img.decode().catch(() => {}) : Promise.resolve()));
+
+            window.print();
+
+            setTimeout(() => {
+                document.title = originalTitle;
+                document.body.classList.remove('is-printing-offers-catalog');
+                inPageContainer.style.display = 'none';
+            }, 1000);
+        }
     }
 };
 

@@ -3678,6 +3678,26 @@
             </div>
         </div>
 
+        <!-- نافذة شريط تقدم تجهيز وتحميل صور كتالوج العروض للطباعة / PDF -->
+        <div id="catalogLoadingModal" class="modal-overlay" style="display: none; z-index: 10070; background: rgba(15, 23, 42, 0.78); backdrop-filter: blur(6px);">
+            <div class="modal-content" style="max-width: 440px; border-radius: 20px; padding: 26px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);">
+                <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #e11d48, #be185d); color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 16px;">
+                    <i class="fa-solid fa-file-pdf fa-beat-fade"></i>
+                </div>
+                <h3 style="margin: 0 0 8px 0; font-size: 1.25rem; font-weight: 800; color: #0f172a;">جاري تجهيز كتالوج العروض</h3>
+                <p id="catalogLoadingStatusText" style="color: #64748b; font-size: 0.92rem; margin: 0 0 18px 0;">جاري تحميل وتأكيد صور المنتجات بدقة فائقة...</p>
+                
+                <!-- شريط التقدم -->
+                <div style="background: #f1f5f9; border-radius: 12px; height: 14px; overflow: hidden; margin-bottom: 10px; position: relative;">
+                    <div id="catalogLoadingProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #f43f5e, #fb7185); transition: width 0.3s ease; border-radius: 12px;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 700; color: #64748b;">
+                    <span id="catalogLoadingCountLabel">0 من 0</span>
+                    <span id="catalogLoadingPercentLabel">0%</span>
+                </div>
+            </div>
+        </div>
+
         <!-- نافذة إضافة / تعديل ستوري متكرر (Recurring Story Modal - بتصميم عرضي متناسق مع العروض) -->
         <div id="recurringStoryModal" class="modal-overlay" style="display: none; z-index: 10040;">
             <div class="modal-content offer-modal-content">
@@ -4867,7 +4887,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script src="email_service.js?v=10.0" defer></script>
-    <script src="app.js?v=119.0" charset="UTF-8" defer></script>
+    <script src="app.js?v=120.0" charset="UTF-8" defer></script>
 
     <!-- Modal: إعداد موقع ونطاق الفرع (GPS Geofencing) -->
     <div id="branchLocationModal" class="modal-overlay" style="display:none; align-items:center; justify-content:center; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.65); backdrop-filter:blur(8px); z-index:99999;">
