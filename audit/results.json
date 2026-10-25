@@ -1,0 +1,148 @@
+{
+  "scope": "Offline source and isolated mocked behavior audit; no live database, messaging or publishing",
+  "syntaxChecked": [
+    "app.js",
+    "email_service.js",
+    "gifts_module/js/gifts.js",
+    "gifts_module/apps_script/google_drive_script.js",
+    "backend-jobs/publish_story_job.js",
+    "backend-jobs/send_weekly_report.js"
+  ],
+  "html": [
+    {
+      "file": "index.html",
+      "inlineBlocksChecked": 2,
+      "duplicateIds": [
+        [
+          "toast-container",
+          [
+            396,
+            4859
+          ]
+        ]
+      ]
+    },
+    {
+      "file": "admin.html",
+      "inlineBlocksChecked": 1,
+      "duplicateIds": [
+        [
+          "toast-container",
+          [
+            189,
+            2182
+          ]
+        ]
+      ]
+    },
+    {
+      "file": "gifts_module/html/gifts.html",
+      "inlineBlocksChecked": 0,
+      "duplicateIds": []
+    },
+    {
+      "file": "gifts_module/html/gifts_reports.html",
+      "inlineBlocksChecked": 0,
+      "duplicateIds": []
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "A01: addShipping reports success after database denial",
+      "status": "REPRODUCED"
+    },
+    {
+      "name": "A02: deleteShipping reports success after secureDelete denies deletion",
+      "status": "REPRODUCED"
+    },
+    {
+      "name": "A03: unknown action reports success",
+      "status": "REPRODUCED"
+    },
+    {
+      "name": "A04: deleteUser ignores username supplied by its caller",
+      "status": "REPRODUCED"
+    },
+    {
+      "name": "A05: simultaneous orders calculate identical order IDs",
+      "status": "REPRODUCED"
+    },
+    {
+      "name": "A06: settlement changes total without updating outstanding balance",
+      "status": "REPRODUCED"
+    },
+    {
+      "name": "A07: checkout overwrites an already closed attendance record",
+      "status": "REPRODUCED"
+    },
+    {
+      "name": "A08: cached session survives server response showing suspended user",
+      "status": "REPRODUCED"
+    },
+    {
+      "name": "A09: stale offer save upserts unrelated offers and old publication state",
+      "status": "REPRODUCED"
+    },
+    {
+      "name": "A10: failed cloud bouquet deletion still removes it locally",
+      "status": "REPRODUCED"
+    },
+    {
+      "name": "A11: successful cloud reload discards unsynchronized local bouquet",
+      "status": "REPRODUCED"
+    },
+    {
+      "name": "A12: backend publishes expired date-based offer",
+      "status": "REPRODUCED"
+    },
+    {
+      "name": "A13: backend publishes exhausted count-based recurring story",
+      "status": "REPRODUCED"
+    },
+    {
+      "name": "A14: one-platform failure still advances shared publication timestamp",
+      "status": "REPRODUCED"
+    },
+    {
+      "name": "A15: backend passes full Supabase URL as hostname without normalization",
+      "status": "REPRODUCED"
+    },
+    {
+      "name": "A16: Drive handler permits unauthenticated deletion of arbitrary accessible file",
+      "status": "REPRODUCED"
+    },
+    {
+      "name": "A17: failed replacement upload trashes original image first",
+      "status": "REPRODUCED"
+    },
+    {
+      "name": "A18: fractional product quantity is truncated when deducting offer stock",
+      "status": "REPRODUCED"
+    },
+    {
+      "name": "A19: history renderer inserts customer-provided HTML without escaping",
+      "status": "REPRODUCED"
+    },
+    {
+      "name": "A20: users with expiry-only or inventory-only permission cannot load their base data",
+      "status": "HARNESS_FAILURE",
+      "error": "Unexpected token ')'"
+    },
+    {
+      "name": "A21: logout retains cleartext password in sessionStorage",
+      "status": "REPRODUCED"
+    },
+    {
+      "name": "A22: weekly reader treats HTTP 403 as an empty successful dataset",
+      "status": "REPRODUCED"
+    },
+    {
+      "name": "A23: sequential publication retries after database patch failure can duplicate an existing story",
+      "status": "REPRODUCED"
+    }
+  ],
+  "counts": {
+    "reproduced": 22,
+    "harnessFailures": 1
+  }
+}
