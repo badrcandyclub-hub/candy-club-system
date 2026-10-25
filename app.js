@@ -2366,9 +2366,11 @@ document.querySelectorAll('.nav-item').forEach(btn => {
                 // overlay.style.display = 'flex'; // DISABLED FOR SPEED
             }
             
-            // جلب البيانات الخاصة بالقسم الجديد فقط
-            if (typeof loadDataFromServer === 'function') {
-                loadDataFromServer();
+            // جلب البيانات الخاصة بالقسم الجديد فقط إذا كان القسم يحتاجها والمستخدم يملك الصلاحية
+            if (typeof loadDataFromServer === 'function' && typeof window.shouldLoadCoreOrdersData === 'function' && window.shouldLoadCoreOrdersData()) {
+                if (['orders', 'admin'].includes(newModuleGroup)) {
+                    loadDataFromServer();
+                }
             }
         }
 
@@ -3040,8 +3042,35 @@ async function fetchCachedSupabaseTable(tableName, queryBuilder) {
     return result;
 }
 
+// 🛡️ فاحص الصلاحيات الذكي لتجنب تحميل جداول الأوردرات والشحن والحسابات الضخمة للموظفين غير المصرح لهم (كقسم الهدايا أو شئون الموظفين)
+window.shouldLoadCoreOrdersData = function() {
+    let u = window.currentUser || (typeof currentUser !== 'undefined' ? currentUser : null);
+    if (!u) {
+        try {
+            const stored = localStorage.getItem('cc_user');
+            if (stored) u = JSON.parse(stored);
+        } catch(e) {}
+    }
+    if (!u) return false;
+    if (u.permissions === 'ALL') return true;
+    const perms = String(u.permissions || '').split(',').map(p => p.trim());
+    const coreOrderPerms = [
+        'create', 'history', 'shipping', 'moderators', 'reports', 
+        'shortages', 'financials', 'catalog', 'customers', 'suspended'
+    ];
+    return perms.some(p => coreOrderPerms.includes(p));
+};
+
 async function loadDataFromServer(customDate = null) {
     const syncStatus = document.getElementById('sync-status');
+
+    // ⚡ حماية الأجهزة الضعيفة: إذا كان الموظف لا يملك صلاحيات قسم الأوردرات/التقارير (مثل موظفي الهدايا فقط)، يتم تخطي جلب الـ 15 جدول
+    if (!window.shouldLoadCoreOrdersData()) {
+        console.log('[Performance Guard] Skipping 15 heavy Supabase tables: user permissions do not require core orders/shipping/financials.');
+        if (syncStatus) { syncStatus.innerText = "متصل"; syncStatus.style.color = "#10b981"; }
+        return;
+    }
+
     if (syncStatus) { syncStatus.innerText = "جاري التحميل..."; syncStatus.style.color = "#FF8C00"; }
 
     let hrAdminTab = document.getElementById('hr-admin-tab');
@@ -17526,20 +17555,7 @@ function printInventoryReceipt(logId, from, to, items, notes, senderName, regNam
     printWindow.document.close();
 }
 
-// Override loadDataFromServer to conditionally fetch catalog
-const originalLoadData = loadDataFromServer;
-loadDataFromServer = function(customDate = null) {
-    if (currentUser) {
-        let perms = (currentUser && currentUser.permissions ? String(currentUser.permissions).split(",") : []);
-        let isFull = currentUser.permissions === "ALL";
-        if (isFull || perms.includes("catalog") || perms.includes("create") || perms.includes("pricetags") || perms.includes("inventory") || perms.includes("shortages")) {
-            
-        }
-    }
-    // Call the original but ensure we don't duplicate logic.
-    // Wait, calling originalLoadData will do the normal fetch which is fine because the backend filters.
-    return originalLoadData.apply(this, arguments);
-};
+
 
 
 
@@ -21226,9 +21242,98 @@ window.updateOffersStats = function() {
     if (subRecurringCount) subRecurringCount.textContent = recurringStories.length;
 };
 
+// ==========================================
+// 📄 نظام ترقيم الصفحات للعروض والستوري المتكرر (Pagination)
+// ==========================================
+window.offersCurrentPage = 1;
+window.offersPageSize = 24; // 24 عرض في الصفحة كحد أقصى لعرض مريح للعين
+window.recurringCurrentPage = 1;
+window.recurringPageSize = 10; // 10 ستوريهات في الصفحة كحد أقصى
+
+window.changeOffersPage = function(targetPage) {
+    if (typeof targetPage === 'number') {
+        window.offersCurrentPage = targetPage;
+    }
+    window.renderOffersGrid();
+    const anchor = document.getElementById('offersGrid');
+    if (anchor) anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+window.changeRecurringPage = function(targetPage) {
+    if (typeof targetPage === 'number') {
+        window.recurringCurrentPage = targetPage;
+    }
+    window.renderRecurringStoriesGrid();
+    const anchor = document.getElementById('recurringStoriesGrid');
+    if (anchor) anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+// رسم شريط أزرار التنقل بين الصفحات
+window.renderPaginationControls = function(type, currentPage, totalPages, totalItems) {
+    const containerId = (type === 'offers') ? 'offersPaginationContainer' : 'recurringPaginationContainer';
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const pageSize = (type === 'offers') ? window.offersPageSize : window.recurringPageSize;
+    if (totalItems <= pageSize) {
+        container.innerHTML = '';
+        container.style.display = 'none';
+        return;
+    }
+
+    container.style.display = 'flex';
+
+    const fnChange = (type === 'offers') ? 'window.changeOffersPage' : 'window.changeRecurringPage';
+    const isFirst = (currentPage <= 1);
+    const isLast = (currentPage >= totalPages);
+
+    let pageBtns = '';
+    const maxVisibleButtons = 5;
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, startPage + maxVisibleButtons - 1);
+    if (endPage - startPage < maxVisibleButtons - 1) {
+        startPage = Math.max(1, endPage - maxVisibleButtons + 1);
+    }
+
+    if (startPage > 1) {
+        pageBtns += `<button type="button" class="page-num-btn" onclick="${fnChange}(1)">1</button>`;
+        if (startPage > 2) pageBtns += `<span class="page-dots">...</span>`;
+    }
+
+    for (let p = startPage; p <= endPage; p++) {
+        const activeClass = (p === currentPage) ? 'active' : '';
+        pageBtns += `<button type="button" class="page-num-btn ${activeClass}" onclick="${fnChange}(${p})">${p}</button>`;
+    }
+
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) pageBtns += `<span class="page-dots">...</span>`;
+        pageBtns += `<button type="button" class="page-num-btn" onclick="${fnChange}(${totalPages})">${totalPages}</button>`;
+    }
+
+    const itemLabel = (type === 'offers') ? 'عرض' : 'ستوري';
+
+    container.innerHTML = `
+        <div class="offers-pagination-bar">
+            <button type="button" class="page-nav-btn page-nav-prev" onclick="${fnChange}(${currentPage - 1})" ${isFirst ? 'disabled' : ''}>
+                <i class="fa-solid fa-chevron-right"></i> السابق
+            </button>
+            <div class="page-numbers-wrapper">
+                ${pageBtns}
+            </div>
+            <button type="button" class="page-nav-btn page-nav-next" onclick="${fnChange}(${currentPage + 1})" ${isLast ? 'disabled' : ''}>
+                التالي <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <div class="page-summary-badge">
+                صفحة <strong>${currentPage}</strong> من <strong>${totalPages}</strong> (إجمالي ${totalItems} ${itemLabel})
+            </div>
+        </div>
+    `;
+};
+
 // 5. تصفية وبحث العروض (3 فلاتر فقط: الكل - حسب الكمية - محددة بالمدة)
 window.setOffersFilter = function(filter) {
     window.activeOffersFilter = filter;
+    window.offersCurrentPage = 1;
     document.querySelectorAll('.offers-filter-pill').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.filter === filter);
     });
@@ -21236,6 +21341,7 @@ window.setOffersFilter = function(filter) {
 };
 
 window.filterOffersList = function() {
+    window.offersCurrentPage = 1;
     window.renderOffersGrid();
 };
 
@@ -21272,13 +21378,23 @@ window.renderOffersGrid = function() {
 
     if (list.length === 0) {
         grid.innerHTML = (emptyState && emptyState.style.display === 'block') ? '' : '<div style="grid-column: 1/-1; text-align: center; color: #94a3b8; padding: 40px;">لا توجد عروض تطابق معايير البحث</div>';
+        const pagContainer = document.getElementById('offersPaginationContainer');
+        if (pagContainer) { pagContainer.innerHTML = ''; pagContainer.style.display = 'none'; }
         window.updateOffersSelectedCount();
         return;
     }
     
     if (emptyState) emptyState.style.display = 'none';
+
+    // تطبيق الترقيم (24 عرض في الصفحة كحد أقصى)
+    const totalPages = Math.max(1, Math.ceil(list.length / window.offersPageSize));
+    if (window.offersCurrentPage > totalPages) window.offersCurrentPage = totalPages;
+    if (window.offersCurrentPage < 1) window.offersCurrentPage = 1;
+
+    const startIndex = (window.offersCurrentPage - 1) * window.offersPageSize;
+    const pageItems = list.slice(startIndex, startIndex + window.offersPageSize);
     
-    grid.innerHTML = list.map(item => {
+    grid.innerHTML = pageItems.map(item => {
         const isBundle = Boolean(item.bundle_price && item.bundle_qty);
         const origUnit = Number(item.original_price) || 0;
         
@@ -21435,6 +21551,12 @@ window.renderOffersGrid = function() {
         `;
     }).join('');
     
+    // رسم شريط الترقيم
+    if (typeof window.renderPaginationControls === 'function') {
+        const totalPages = Math.max(1, Math.ceil(list.length / window.offersPageSize));
+        window.renderPaginationControls('offers', window.offersCurrentPage, totalPages, list.length);
+    }
+
     // مزامنة شريط الليميت والعدادات وحالة التحديد
     window.updateOffersStorySchedulerUI();
     window.updateOffersSelectedCount();
@@ -21491,6 +21613,7 @@ window.handleOffersMainAction = function() {
 
 window.setRecurringStoriesFilter = function(filter) {
     window.activeRecurringFilter = filter;
+    window.recurringCurrentPage = 1;
     document.querySelectorAll('#recurringStoriesViewContainer .offers-filter-pill').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.filter === filter);
     });
@@ -21498,6 +21621,7 @@ window.setRecurringStoriesFilter = function(filter) {
 };
 
 window.filterRecurringStoriesList = function() {
+    window.recurringCurrentPage = 1;
     window.renderRecurringStoriesGrid();
 };
 
@@ -21533,11 +21657,21 @@ window.renderRecurringStoriesGrid = function() {
 
     if (list.length === 0) {
         grid.innerHTML = (emptyState && emptyState.style.display === 'block') ? '' : '<div style="grid-column: 1/-1; text-align: center; color: #94a3b8; padding: 40px;">لا توجد قصص متكررة تطابق معايير البحث</div>';
+        const pagContainer = document.getElementById('recurringPaginationContainer');
+        if (pagContainer) { pagContainer.innerHTML = ''; pagContainer.style.display = 'none'; }
         window.updateRecurringSelectedCount();
         return;
     }
 
-    grid.innerHTML = list.map(item => {
+    // تطبيق الترقيم (10 قصص في الصفحة كحد أقصى)
+    const totalPages = Math.max(1, Math.ceil(list.length / window.recurringPageSize));
+    if (window.recurringCurrentPage > totalPages) window.recurringCurrentPage = totalPages;
+    if (window.recurringCurrentPage < 1) window.recurringCurrentPage = 1;
+
+    const startIndex = (window.recurringCurrentPage - 1) * window.recurringPageSize;
+    const pageItems = list.slice(startIndex, startIndex + window.recurringPageSize);
+
+    grid.innerHTML = pageItems.map(item => {
         const photoSrc = item.image_url || 'https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?auto=format&fit=crop&w=600&q=80';
         let storyBadgeHtml = '';
 
@@ -21620,6 +21754,12 @@ window.renderRecurringStoriesGrid = function() {
             </div>
         `;
     }).join('');
+
+    // رسم شريط الترقيم
+    if (typeof window.renderPaginationControls === 'function') {
+        const totalPages = Math.max(1, Math.ceil(list.length / window.recurringPageSize));
+        window.renderPaginationControls('recurring', window.recurringCurrentPage, totalPages, list.length);
+    }
 
     window.updateOffersStorySchedulerUI();
     window.updateRecurringSelectedCount();

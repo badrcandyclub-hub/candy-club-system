@@ -8118,6 +8118,110 @@ body.dark-mode .cmp-footer {
     margin-inline: auto;
 }
 
+/* ============================================================
+   Pagination Controls for Offers and Recurring Stories
+   ============================================================ */
+.offers-pagination-container {
+    width: 100%;
+    margin-top: 24px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: center;
+}
+
+.offers-pagination-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #ffffff;
+    padding: 8px 16px;
+    border-radius: 14px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.page-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #1e293b;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.page-nav-btn:hover:not(:disabled) {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+    color: #0f172a;
+}
+
+.page-nav-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    border-color: #e2e8f0;
+    background: #f8fafc;
+}
+
+.page-numbers-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.page-num-btn {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 6px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #334155;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.page-num-btn:hover:not(.active) {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #cbd5e1;
+}
+
+.page-num-btn.active {
+    background: linear-gradient(135deg, #e11d48, #be185d);
+    color: #ffffff;
+    border-color: transparent;
+    box-shadow: 0 4px 10px rgba(225, 29, 72, 0.3);
+}
+
+.page-dots {
+    color: #94a3b8;
+    font-weight: 800;
+    padding: 0 4px;
+}
+
+.page-summary-badge {
+    margin-right: 8px;
+    padding: 6px 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+}
+
 /* Modal Layout */
 .offer-modal-content {
     max-width: 860px;
@@ -10523,31 +10627,154 @@ body.dark-mode .recurring-card-footer {
         border-radius: 10px;
     }
 
-    /* 7. شبكات كروت العروض والستوري */
-    .offers-grid {
-        grid-template-columns: 1fr;
-        gap: 14px;
-    }
-
+    /* 7. شبكات كروت العروض والستوري على الموبايل - كارتين مريحين للعين جنب بعض (2 Columns Grid) */
+    .offers-grid,
     .recurring-stories-grid {
-        grid-template-columns: 1fr;
-        gap: 14px;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 8px !important;
     }
 
+    .offer-card,
+    .recurring-story-card {
+        border-radius: 12px !important;
+        border-width: 1px !important;
+    }
+
+    .offer-card-media,
     .recurring-card-media {
-        height: 280px;
+        height: 165px !important;
+        aspect-ratio: auto !important;
+    }
+
+    /* إظهار زر العين دائماً على شاشات اللمس والموبايل لتكبير الصورة بنقرة واحدة */
+    .offer-img-preview-btn {
+        opacity: 0.95 !important;
+        transform: scale(1) !important;
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 0.85rem !important;
+        bottom: 6px !important;
+        right: 6px !important;
+    }
+
+    .offer-card-select-label {
+        top: 6px !important;
+        left: auto !important;
+        right: 6px !important;
+        width: 26px !important;
+        height: 26px !important;
+    }
+
+    .offer-discount-badge {
+        font-size: 0.68rem !important;
+        padding: 2px 6px !important;
+        top: 6px !important;
+        right: 36px !important;
+    }
+
+    .offer-status-badge {
+        font-size: 0.68rem !important;
+        padding: 2px 6px !important;
+        top: 6px !important;
+        left: 6px !important;
+    }
+
+    .offer-card-body,
+    .recurring-card-body {
+        padding: 8px !important;
+        gap: 4px !important;
+    }
+
+    .offer-card-title,
+    .recurring-card-title {
+        font-size: 0.82rem !important;
+        margin-bottom: 2px !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+
+    .offer-pricing-row {
+        margin-bottom: 4px !important;
+        gap: 4px !important;
+    }
+
+    .offer-price-current {
+        font-size: 1rem !important;
+    }
+
+    .offer-price-original {
+        font-size: 0.75rem !important;
+    }
+
+    .offer-bundle-pill {
+        font-size: 0.68rem !important;
+        padding: 2px 5px !important;
+    }
+
+    .offer-progress-box {
+        margin: 4px 0 !important;
+    }
+
+    .offer-progress-labels {
+        font-size: 0.68rem !important;
+    }
+
+    .offer-story-badge {
+        font-size: 0.68rem !important;
+        padding: 3px 6px !important;
     }
 
     .offer-card-footer,
     .recurring-card-footer {
-        flex-wrap: wrap;
-        gap: 6px;
+        flex-wrap: nowrap !important;
+        gap: 3px !important;
+        margin-top: 6px !important;
     }
 
-    .offer-action-btn {
-        padding: 7px 10px;
-        font-size: 0.8rem;
-        min-height: 36px;
+    .offer-action-btn,
+    .recurring-action-btn {
+        padding: 3px 5px !important;
+        font-size: 0.72rem !important;
+        min-height: 28px !important;
+        border-radius: 6px !important;
+        flex: 1 !important;
+    }
+
+    .offer-action-delete {
+        flex: 0 0 28px !important;
+        padding: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    /* شريط الترقيم على الموبايل */
+    .offers-pagination-bar {
+        padding: 6px 8px !important;
+        gap: 4px !important;
+        width: 100% !important;
+    }
+
+    .page-nav-btn {
+        padding: 5px 8px !important;
+        font-size: 0.75rem !important;
+    }
+
+    .page-num-btn {
+        min-width: 28px !important;
+        height: 28px !important;
+        font-size: 0.78rem !important;
+        padding: 0 4px !important;
+    }
+
+    .page-summary-badge {
+        width: 100% !important;
+        text-align: center !important;
+        margin-right: 0 !important;
+        margin-top: 4px !important;
+        font-size: 0.72rem !important;
+        padding: 4px 8px !important;
     }
 
     /* 8. النوافذ المنبثقة على الموبايل (Offer Modal & Recurring Story Modal) */
