@@ -1444,6 +1444,99 @@
     gap: 22px;
 }
 
+#gifts-view-showcase {
+    scroll-margin-top: 120px;
+}
+
+.gifts-showcase-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 24px;
+    padding: 16px;
+    background: #fff;
+    border: 1px solid var(--gifts-border-pink);
+    border-radius: var(--gifts-radius-md);
+}
+
+.gifts-showcase-pagination[hidden] {
+    display: none;
+}
+
+.gifts-showcase-range-info,
+.gifts-showcase-page-info {
+    color: var(--gifts-text-muted);
+    font-size: 0.88rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.gifts-showcase-page-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.gifts-showcase-page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 10px 18px;
+    border: 1px solid var(--gifts-border-pink);
+    border-radius: 12px;
+    background: var(--gifts-primary-soft);
+    color: var(--gifts-primary-dark);
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+.gifts-showcase-page-btn:hover:not(:disabled) {
+    border-color: var(--gifts-primary);
+    background: var(--gifts-primary);
+    color: #fff;
+}
+
+.gifts-showcase-page-btn:focus-visible {
+    outline: 2px solid var(--gifts-primary);
+    outline-offset: 3px;
+}
+
+.gifts-showcase-page-btn:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+@media (max-width: 600px) {
+    .gifts-showcase-pagination {
+        justify-content: center;
+        padding: 12px 10px;
+    }
+
+    .gifts-showcase-page-controls {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        width: 100%;
+        gap: 8px;
+    }
+
+    .gifts-showcase-page-btn {
+        padding: 10px 8px;
+        font-size: 0.82rem;
+        gap: 5px;
+    }
+
+    .gifts-showcase-page-info {
+        font-size: 0.78rem;
+    }
+}
+
 /* Boutique Product Card */
 .gifts-card {
     background: #FFFFFF;

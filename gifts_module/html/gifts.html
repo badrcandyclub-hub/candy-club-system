@@ -56,6 +56,11 @@
             <span class="tab-label-full">كتالوج العملاء التسويقي</span>
             <span class="tab-label-short">الكتالوج</span>
         </button>
+        <button class="gifts-subtab-btn" onclick="GiftsApp.openReportsScreen('analytics')" style="color: #0d9488;">
+            <i class="fa-solid fa-chart-pie"></i>
+            <span class="tab-label-full">تقارير الهدايا والعملاء</span>
+            <span class="tab-label-short">التقارير</span>
+        </button>
     </div>
 
     <!-- ================================================================
@@ -360,6 +365,18 @@
         <div class="gifts-showcase-grid" id="gifts-showcase-container">
             <!-- Rendered dynamically -->
         </div>
+        <nav id="gifts-showcase-pagination" class="gifts-showcase-pagination" aria-label="صفحات معرض الهدايا" hidden>
+            <span id="gifts-showcase-range-info" class="gifts-showcase-range-info"></span>
+            <div class="gifts-showcase-page-controls">
+                <button type="button" id="gifts-showcase-prev" class="gifts-showcase-page-btn" onclick="GiftsApp.changeShowcasePage(-1)" aria-controls="gifts-showcase-container" disabled>
+                    <i class="fa-solid fa-chevron-right" aria-hidden="true"></i> السابق
+                </button>
+                <span id="gifts-showcase-page-info" class="gifts-showcase-page-info" role="status" aria-live="polite" aria-atomic="true"></span>
+                <button type="button" id="gifts-showcase-next" class="gifts-showcase-page-btn" onclick="GiftsApp.changeShowcasePage(1)" aria-controls="gifts-showcase-container">
+                    التالي <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            </div>
+        </nav>
     </div>
 
     <!-- ================================================================

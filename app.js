@@ -16970,7 +16970,20 @@ function applyPermissions() {
     let isFullAccess = (currentUser.permissions === "ALL");
     let perms = isFullAccess ? [] : (currentUser && currentUser.permissions ? String(currentUser.permissions).split(",") : []);
     
-    function hasPerm(p) { return isFullAccess || perms.includes(p); }
+    function hasPerm(p) {
+        if (isFullAccess) return true;
+        if (!p) return false;
+        if (perms.includes(p)) return true;
+        // تطبيع الشرطة السفلية والعادية (مثل gifts_reports و gifts-reports)
+        const altUnderscore = p.replace(/-/g, '_');
+        const altHyphen = p.replace(/_/g, '-');
+        if (perms.includes(altUnderscore) || perms.includes(altHyphen)) return true;
+        // صلاحية تقارير الهدايا: إذا كان لديه gifts_reports أو gifts أو reports
+        if (p === 'gifts_reports' || p === 'gifts-reports') {
+            if (perms.includes('gifts') || perms.includes('reports')) return true;
+        }
+        return false;
+    }
     
     document.querySelectorAll('.nav-item').forEach(btn => {
         let target = btn.dataset.target;
@@ -16980,6 +16993,7 @@ function applyPermissions() {
         if (permKey === "inventory-transfers") permKey = "inventory";
         if (permKey === "price-tags") permKey = "pricetags";
         if (permKey === "whatsapp-campaign") permKey = "whatsapp";
+        if (permKey === "gifts-reports" || permKey === "gifts_reports") permKey = "gifts_reports";
         if (permKey === "users" || permKey === "branch-settings") { 
             btn.style.display = window.location.pathname.toLowerCase().includes("admin.html") ? "flex" : "none"; 
             if (btn.style.display==="flex") { btn.classList.remove('locked-nav-item'); btn.onclick=null; } 

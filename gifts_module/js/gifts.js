@@ -41,6 +41,9 @@
             currentSearchResults: [],
             cloneTarget: null,
             activeShowcaseFilter: 'all',
+            showcasePage: 1,
+            showcaseLastQuery: '',
+            showcaseLastFilter: 'all',
             activeTimelineBouquetId: null,
             currentSubTab: 'builder',
             currentReportsTab: 'analytics',
@@ -2866,6 +2869,32 @@
                 return true;
             });
 
+            // Only build cards (and image elements) for the current page.
+            const pageSize = 12;
+            if (query !== this.state.showcaseLastQuery || filter !== this.state.showcaseLastFilter) {
+                this.state.showcasePage = 1;
+            }
+            this.state.showcaseLastQuery = query;
+            this.state.showcaseLastFilter = filter;
+            const totalPages = Math.max(1, Math.ceil(list.length / pageSize));
+            const page = Math.min(totalPages, Math.max(1, this.state.showcasePage || 1));
+            this.state.showcasePage = page;
+            const startIndex = (page - 1) * pageSize;
+            const pageItems = list.slice(startIndex, startIndex + pageSize);
+
+            const pagination = document.getElementById('gifts-showcase-pagination');
+            const pageInfo = document.getElementById('gifts-showcase-page-info');
+            const rangeInfo = document.getElementById('gifts-showcase-range-info');
+            const prevButton = document.getElementById('gifts-showcase-prev');
+            const nextButton = document.getElementById('gifts-showcase-next');
+            if (pagination) pagination.hidden = list.length <= pageSize;
+            if (pageInfo) pageInfo.textContent = `الصفحة ${page} من ${totalPages}`;
+            if (rangeInfo) rangeInfo.textContent = list.length
+                ? `عرض ${startIndex + 1}–${Math.min(startIndex + pageSize, list.length)} من ${list.length} بوكيه`
+                : 'لا توجد نتائج';
+            if (prevButton) prevButton.disabled = page === 1;
+            if (nextButton) nextButton.disabled = page === totalPages;
+
             if (list.length === 0) {
                 container.innerHTML = `
                     <div class="gifts-empty-state" style="grid-column: 1 / -1; padding: 40px 20px;">
@@ -2880,7 +2909,7 @@
             }
 
             const now = Date.now();
-            container.innerHTML = list.map(b => {
+            container.innerHTML = pageItems.map(b => {
                 let badgeHtml = '';
                 const createdTime = new Date(b.created_at).getTime();
                 const isNew = (now - createdTime) < (24 * 60 * 60 * 1000);
@@ -2896,7 +2925,7 @@
                 }
 
                 const imgHtml = b.image_url ?
-                    `<img src="${b.image_url}" class="gifts-card-img" alt="${b.name}">` :
+                    `<img src="${b.image_url}" class="gifts-card-img" alt="${b.name}" loading="lazy" decoding="async">` :
                     `<div class="gifts-card-img-placeholder"><i class="fa-solid fa-gift"></i></div>`;
 
                 const itemsCount = b.items ? b.items.length : 0;
@@ -2970,6 +2999,17 @@
                     </div>
                 `;
             }).join('');
+        },
+
+        changeShowcasePage(direction) {
+            const previousPage = this.state.showcasePage || 1;
+            this.state.showcasePage = Math.max(1, previousPage + direction);
+            this.renderShowcase();
+            if (this.state.showcasePage !== previousPage) {
+                const view = document.getElementById('gifts-view-showcase');
+                const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                if (view) view.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+            }
         },
 
         async deleteBouquet(id) {
