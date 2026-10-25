@@ -2322,7 +2322,27 @@ window.MODULE_GROUPS = {
     'admin': { name: 'الإدارة والتقارير', icon: 'fa-solid fa-chart-pie fa-spin', tabs: ['reports-tab', 'moderators-tab', 'users-tab', 'branch-settings-tab'], req: 'orders,users,customers,shipping,financials,shortages' }
 };
 
-window.currentActiveModuleGroup = null;
+// ⭐ التحكم الدقيق في إظهار زر الطلبات المعلقة حصرياً داخل شاشة إنشاء الطلبات (create-tab) فقط وإخفاؤه في باقي الصفحات
+window.updateSuspendedButtonVisibility = function(targetId) {
+    const suspendedBtn = document.getElementById('openSuspendedBtn');
+    if (!suspendedBtn) return;
+
+    let isCreateTab = false;
+    if (typeof targetId === 'string' && targetId) {
+        isCreateTab = (targetId === 'create-tab');
+    } else {
+        const createTab = document.getElementById('create-tab');
+        isCreateTab = createTab ? (createTab.classList.contains('active') || createTab.style.display === 'block') : false;
+    }
+
+    if (isCreateTab) {
+        suspendedBtn.classList.remove('is-hidden-tab');
+        suspendedBtn.style.setProperty('display', 'inline-flex', 'important');
+    } else {
+        suspendedBtn.classList.add('is-hidden-tab');
+        suspendedBtn.style.setProperty('display', 'none', 'important');
+    }
+};
 
 document.querySelectorAll('.nav-item').forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -2417,10 +2437,9 @@ document.querySelectorAll('.nav-item').forEach(btn => {
             }
         }
 
-        // Hide suspended button unless in create-tab
-        const suspendedBtn = document.getElementById('openSuspendedBtn');
-        if (suspendedBtn) {
-            suspendedBtn.style.display = (targetId === 'create-tab') ? 'inline-block' : 'none';
+        // إظهار زر المعلقات فقط عند فتح صفحة إنشاء الطلبات وإخفاؤه تماماً في باقي الصفحات
+        if (typeof window.updateSuspendedButtonVisibility === 'function') {
+            window.updateSuspendedButtonVisibility(targetId);
         }
 
         // 🚨 فحص حالة أوردرات المودريتور فور فتح خانة إنشاء الطلبات
@@ -2481,6 +2500,28 @@ document.querySelectorAll('.nav-item').forEach(btn => {
         }
     });
 });
+
+// ⭐ مراقبة فورية لتبديل الشاشات لضمان بقاء زر الطلبات المعلقة محصوراً بشاشة إنشاء الطلبات فقط
+try {
+    const tabPanes = document.querySelectorAll('.tab-pane');
+    if (tabPanes.length > 0 && typeof MutationObserver !== 'undefined') {
+        const tabObserver = new MutationObserver(() => {
+            if (typeof window.updateSuspendedButtonVisibility === 'function') {
+                window.updateSuspendedButtonVisibility();
+            }
+        });
+        tabPanes.forEach(tp => {
+            tabObserver.observe(tp, { attributes: true, attributeFilter: ['class', 'style'] });
+        });
+    }
+} catch (e) {
+    console.warn("Tab observer init error:", e);
+}
+
+// فحص وتحديث الحالة المبدئية عند بدء التشغيل
+if (typeof window.updateSuspendedButtonVisibility === 'function') {
+    window.updateSuspendedButtonVisibility();
+}
 
 // ==========================================
 // Lazy Loading for Candy Club Gifts Module
@@ -5502,6 +5543,9 @@ function updateSuspendedCount() {
             btn.classList.remove('has-items');
             btn.classList.add('is-empty');
             if (icon) icon.className = 'fa-solid fa-folder-closed btn-suspended-icon';
+        }
+        if (typeof window.updateSuspendedButtonVisibility === 'function') {
+            window.updateSuspendedButtonVisibility();
         }
     }
 }

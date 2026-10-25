@@ -164,7 +164,7 @@ h1, h2, h3, h4, h5 {
 }
 
 .btn-suspended {
-    display: inline-flex !important;
+    display: inline-flex;
     align-items: center !important;
     justify-content: center !important;
     gap: 6px !important;
@@ -182,6 +182,10 @@ h1, h2, h3, h4, h5 {
     white-space: nowrap !important;
     box-sizing: border-box !important;
     flex-shrink: 0 !important;
+}
+
+#openSuspendedBtn.is-hidden-tab {
+    display: none !important;
 }
 
 .status-indicator {
