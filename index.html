@@ -2375,7 +2375,8 @@
                 <!-- Archive Table & Search -->
                 <div style="background: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 20px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-                        <h3 style="margin: 0; color: var(--primary);"><i class="fa-solid fa-clock-rotate-left"></i> سجل الأذونات السابقة</h3>
+                        <h3 style="margin: 0; color: var(--primary);"><i class="fa-solid fa-clock-rotate-left"></i> آخر 5 تحويلات</h3>
+                        <p style="margin:0; color:var(--text-muted); font-size:0.9rem;">يظهر أحدث 5 أذونات مطابقة. ابحث برقم الإذن أو الشهر للوصول إلى التحويلات الأقدم.</p>
 
                     </div>
                     <div style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
@@ -2383,7 +2384,7 @@
                         <input type="month" id="invSearchDate" class="input-field" style="margin-bottom: 0; flex: 1; min-width: 150px;">
                         <button onclick="filterAndRenderArchive()" class="interactive-btn" style="padding: 10px 20px; border: none; border-radius: 8px; background: var(--primary); color: white; cursor: pointer; font-weight: bold;"><i class="fa-solid fa-search"></i> بحث</button>
                     </div>
-                    <div class="table-container" style="max-height: 500px; overflow-y: auto;">
+                    <div class="table-container" style="max-height: 500px; overflow-y: auto; overflow-x: auto;">
                         <table>
                             <thead>
                                 <tr>
@@ -4969,7 +4970,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script src="email_service.js?v=10.0" defer></script>
-    <script src="app.js?v=125.0" charset="UTF-8" defer></script>
+    <script src="app.js?v=126.0" charset="UTF-8" defer></script>
 
     <!-- Modal: إعداد موقع ونطاق الفرع (GPS Geofencing) -->
     <div id="branchLocationModal" class="modal-overlay" style="display:none; align-items:center; justify-content:center; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.65); backdrop-filter:blur(8px); z-index:99999;">

@@ -17,6 +17,7 @@
     const GiftsApp = {
         state: {
             currentSubTab: 'builder',
+            activeSuspendedId: null,
             draft: {
                 name: '',
                 creator: '',
@@ -1543,6 +1544,9 @@
             this.state.draft.qty = 1;
             this.state.draft.photoBase64 = null;
             this.state.draft.photoSizeKB = 0;
+            this.state.activeSuspendedId = null;
+            const suspendedBanner = document.getElementById('gifts-suspended-resumed-banner');
+            if (suspendedBanner) suspendedBanner.style.display = 'none';
 
             const nameInput = document.getElementById('gifts-input-name');
             const qtyInput = document.getElementById('gifts-input-qty');
@@ -1567,7 +1571,7 @@
             const hasPhoto = !!(draft.photoBase64 && String(draft.photoBase64).startsWith('data:image'));
 
             const hasEmojiInName = this.hasEmoji(name);
-            const isNameDuplicate = this.isBouquetNameDuplicate(name);
+            const isNameDuplicate = this.isBouquetNameDuplicate(name, this.state.activeSuspendedId);
 
             const missing = [];
             let firstMissingField = null;
@@ -2285,7 +2289,7 @@
                 if (nameInput) { nameInput.scrollIntoView({ behavior: 'smooth', block: 'center' }); nameInput.focus(); }
                 return;
             }
-            if (this.isBouquetNameDuplicate(draft.name)) {
+            if (this.isBouquetNameDuplicate(draft.name, this.state.activeSuspendedId)) {
                 this.showToastNotification(`⚠️ اسم البوكيه ("${draft.name}") مسجل ومستخدم مسبقاً! يجب تسمية كل بوكيه باسم مختلف.`);
                 const nameInput = document.getElementById('gifts-input-name');
                 if (nameInput) { nameInput.scrollIntoView({ behavior: 'smooth', block: 'center' }); nameInput.focus(); }
@@ -2319,9 +2323,30 @@
                     }
                 }
 
-                // في حال كان بوكيه جديد (أو موظف مختلف)، ينشأ سجل مستقل
+                const isUpdatingSuspended = !!this.state.activeSuspendedId;
+                const targetBouquetId = isUpdatingSuspended
+                    ? this.state.activeSuspendedId
+                    : ((window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `bq_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`);
+
+                let existingTimeline = [];
+                let existingCreatedAt = now;
+                if (isUpdatingSuspended) {
+                    const existing = this.state.bouquets.find(b => b.id === targetBouquetId);
+                    if (existing) {
+                        if (Array.isArray(existing.timeline)) existingTimeline = existing.timeline;
+                        if (existing.created_at) existingCreatedAt = existing.created_at;
+                    }
+                }
+
+                const updatedTimeline = isUpdatingSuspended
+                    ? [...existingTimeline, { event: 'تم إرفاق صورة البوكيه واعتماده وعرضه في المحل', by: creator, time: now }]
+                    : [
+                        { event: 'تم إنشاء وتجميع البوكيه', by: creator, time: now },
+                        { event: `تم تسجيل كمية (${qty}) بوكيه مطابق`, by: creator, time: now }
+                    ];
+
                 const bouquetRecord = {
-                    id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `bq_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+                    id: targetBouquetId,
                     name: draft.name.trim(),
                     creator_name: creator,
                     color_tag: '#E91E8C',
@@ -2330,36 +2355,60 @@
                     status: 'ready',
                     items: draft.items,
                     image_url: finalImageUrl,
-                    timeline: [
-                        { event: 'تم إنشاء وتجميع البوكيه', by: creator, time: now },
-                        { event: `تم تسجيل كمية (${qty}) بوكيه مطابق`, by: creator, time: now }
-                    ],
-                    created_at: now
+                    timeline: updatedTimeline,
+                    created_at: existingCreatedAt
                 };
 
                 let syncedToSupabase = false;
                 const sb = this.getSupabase();
                 if (sb) {
                     try {
-                        const { error } = await sb.from(GIFTS_TABLE).insert([bouquetRecord]);
-                        if (!error) {
-                            syncedToSupabase = true;
+                        if (isUpdatingSuspended) {
+                            const { error } = await sb.from(GIFTS_TABLE).update({
+                                name: bouquetRecord.name,
+                                creator_name: bouquetRecord.creator_name,
+                                quantity: bouquetRecord.quantity,
+                                total_price: bouquetRecord.total_price,
+                                status: 'ready',
+                                items: bouquetRecord.items,
+                                image_url: finalImageUrl,
+                                timeline: updatedTimeline
+                            }).eq('id', targetBouquetId);
+                            if (!error) syncedToSupabase = true;
+                            else console.warn("Supabase update bouquet error:", error);
                         } else {
-                            console.warn("Supabase insert bouquet error:", error);
+                            const { error } = await sb.from(GIFTS_TABLE).insert([bouquetRecord]);
+                            if (!error) syncedToSupabase = true;
+                            else console.warn("Supabase insert bouquet error:", error);
                         }
                     } catch (e) {
-                        console.warn("Supabase insert error (falling back to local):", e);
+                        console.warn("Supabase insert/update error (falling back to local):", e);
                     }
                 }
 
-                this.state.bouquets.unshift(bouquetRecord);
+                if (isUpdatingSuspended) {
+                    const idx = this.state.bouquets.findIndex(b => b.id === targetBouquetId);
+                    if (idx !== -1) {
+                        this.state.bouquets[idx] = bouquetRecord;
+                    } else {
+                        this.state.bouquets.unshift(bouquetRecord);
+                    }
+                } else {
+                    this.state.bouquets.unshift(bouquetRecord);
+                }
+
                 this.saveBouquetsToLocal();
+                this.state.activeSuspendedId = null;
+                const suspendedBanner = document.getElementById('gifts-suspended-resumed-banner');
+                if (suspendedBanner) suspendedBanner.style.display = 'none';
+
                 if (typeof window.bumpSystemActivity === 'function') window.bumpSystemActivity();
 
                 const syncMsg = syncedToSupabase ? " (متزامن مع السحابة)" : " (محفوظ محليا)";
                 this.showToastNotification(`تم حفظ البوكيه "${bouquetRecord.name}" بنجاح${syncMsg}`);
                 this.clearDraft();
                 this.updateHeaderStats();
+                this.updateSuspendedBadge();
 
                 // إذا كان الجهاز هاتف محمول، لا نفتح نافذة الطباعة تلقائياً لعدم وجود طابعة USB بالهاتف
                 const isMobileDevice = window.innerWidth < 768 || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -2859,7 +2908,7 @@
             if (!container) return;
 
             let list = this.state.bouquets.filter(b => {
-                if (b.status === 'disassembled') return false;
+                if (b.status === 'disassembled' || b.status === 'suspended') return false;
                 if (query) {
                     const matchName = (b.name || '').toLowerCase().includes(query);
                     const matchCreator = (b.creator_name || '').toLowerCase().includes(query);
@@ -4284,7 +4333,7 @@
             const countEl   = document.getElementById('gifts-catalog-item-count');
             if (!container) return;
 
-            const catalogList = this.state.bouquets.filter(b => b.status !== 'disassembled');
+            const catalogList = this.state.bouquets.filter(b => b.status !== 'disassembled' && b.status !== 'suspended');
 
             // Update count chip
             if (countEl) {
@@ -4418,7 +4467,7 @@
         // 🌟 النظام المتطور لتصدير ومشاركة وتحميل كتالوج الهدايا الفاخر
         // mode: 'preview' (معاينة وطباعة) | 'download' (تحميل مباشر PDF) | 'share' (مشاركة واتساب)
         async exportCustomerCatalogPDF(mode = 'preview') {
-            const catalogBouquets = this.state.bouquets.filter(b => b.status !== 'disassembled');
+            const catalogBouquets = this.state.bouquets.filter(b => b.status !== 'disassembled' && b.status !== 'suspended');
             if (catalogBouquets.length === 0) {
                 this.showToastNotification("لا توجد بوكيهات مسجلة حالياً لعرضها في كتالوج العملاء");
                 return;
@@ -5500,7 +5549,330 @@
             if (todayEl) todayEl.innerText = todayCreated;
 
             this.updateReportsHeaderStats();
+            this.updateSuspendedBadge();
         },
+
+        // 🌟 تحديث شارة وعداد البوكيهات المعلقة في الترويسة الرئيسية
+        updateSuspendedBadge() {
+            const bouquets = this.state.bouquets || [];
+            const suspendedList = bouquets.filter(b => b.status === 'suspended');
+            const count = suspendedList.length;
+
+            const countEl = document.getElementById('giftsSuspendedCount');
+            if (countEl) countEl.innerText = count;
+
+            const btn = document.getElementById('openGiftsSuspendedBtn');
+            if (btn) {
+                if (count > 0) {
+                    btn.classList.add('has-items');
+                    btn.classList.remove('is-empty');
+                } else {
+                    btn.classList.remove('has-items');
+                    btn.classList.add('is-empty');
+                }
+            }
+        },
+
+        // 🌟 تعليق البوكيه (حفظ كمسودة في سوبا بيز بدون صورة لاستكماله لاحقاً)
+        async suspendBouquet() {
+            const draft = this.state.draft;
+            const name = (draft.name || '').trim();
+            const creator = (draft.creator || '').trim() || 'موظف الهدايا';
+            const qty = parseFloat(draft.qty) || 1;
+            const items = draft.items || [];
+
+            if (!name) {
+                this.showToastNotification("⚠️ يرجى إدخال اسم البوكيه قبل تعليقه!");
+                const nameInput = document.getElementById('gifts-input-name');
+                if (nameInput) { nameInput.scrollIntoView({ behavior: 'smooth', block: 'center' }); nameInput.focus(); }
+                return;
+            }
+
+            if (this.hasEmoji(name)) {
+                this.showToastNotification("⚠️ ممنوع استخدام الإيموجي أو الرموز في اسم البوكيه! يرجى كتابة اسم بالكلمات فقط.");
+                const nameInput = document.getElementById('gifts-input-name');
+                if (nameInput) { nameInput.scrollIntoView({ behavior: 'smooth', block: 'center' }); nameInput.focus(); }
+                return;
+            }
+
+            if (this.isBouquetNameDuplicate(name, this.state.activeSuspendedId)) {
+                this.showToastNotification(`⚠️ اسم البوكيه ("${name}") مسجل ومستخدم مسبقاً! يجب تسمية كل بوكيه باسم مختلف.`);
+                const nameInput = document.getElementById('gifts-input-name');
+                if (nameInput) { nameInput.scrollIntoView({ behavior: 'smooth', block: 'center' }); nameInput.focus(); }
+                return;
+            }
+
+            if (items.length === 0) {
+                this.showToastNotification("⚠️ يرجى مسح أو إضافة صنف واحد على الأقل للبوكيه لتعليقه!");
+                return;
+            }
+
+            const suspendBtn = document.getElementById('gifts-btn-suspend-bouquet');
+            if (suspendBtn) suspendBtn.disabled = true;
+
+            try {
+                const totalPrice = items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+                const now = new Date().toISOString();
+                const isUpdating = !!this.state.activeSuspendedId;
+                const targetId = isUpdating
+                    ? this.state.activeSuspendedId
+                    : ((window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `bq_sus_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`);
+
+                let existingTimeline = [];
+                if (isUpdating) {
+                    const existing = this.state.bouquets.find(b => b.id === targetId);
+                    if (existing && Array.isArray(existing.timeline)) {
+                        existingTimeline = existing.timeline;
+                    }
+                }
+
+                const newTimelineEvent = isUpdating
+                    ? { event: 'تم تحديث بيانات البوكيه المعلق', by: creator, time: now }
+                    : { event: 'تم تعليق البوكيه بدون صورة لاستكماله لاحقاً', by: creator, time: now };
+
+                const bouquetRecord = {
+                    id: targetId,
+                    name: name,
+                    creator_name: creator,
+                    color_tag: '#E91E8C',
+                    quantity: qty,
+                    total_price: totalPrice,
+                    status: 'suspended',
+                    items: items,
+                    image_url: null,
+                    timeline: [...existingTimeline, newTimelineEvent],
+                    created_at: now
+                };
+
+                let synced = false;
+                const sb = this.getSupabase();
+                if (sb) {
+                    try {
+                        if (isUpdating) {
+                            const { error } = await sb.from(GIFTS_TABLE).update({
+                                name: bouquetRecord.name,
+                                creator_name: bouquetRecord.creator_name,
+                                quantity: bouquetRecord.quantity,
+                                total_price: bouquetRecord.total_price,
+                                status: 'suspended',
+                                items: bouquetRecord.items,
+                                image_url: null,
+                                timeline: bouquetRecord.timeline
+                            }).eq('id', targetId);
+                            if (!error) synced = true;
+                            else console.warn("Supabase update suspended error:", error);
+                        } else {
+                            const { error } = await sb.from(GIFTS_TABLE).insert([bouquetRecord]);
+                            if (!error) synced = true;
+                            else console.warn("Supabase insert suspended error:", error);
+                        }
+                    } catch (e) {
+                        console.warn("Supabase suspend sync error:", e);
+                    }
+                }
+
+                if (isUpdating) {
+                    const idx = this.state.bouquets.findIndex(b => b.id === targetId);
+                    if (idx !== -1) {
+                        this.state.bouquets[idx] = bouquetRecord;
+                    } else {
+                        this.state.bouquets.unshift(bouquetRecord);
+                    }
+                } else {
+                    this.state.bouquets.unshift(bouquetRecord);
+                }
+
+                this.saveBouquetsToLocal();
+                this.state.activeSuspendedId = null;
+
+                const banner = document.getElementById('gifts-suspended-resumed-banner');
+                if (banner) banner.style.display = 'none';
+
+                this.clearDraft();
+                this.updateSuspendedBadge();
+                this.updateHeaderStats();
+
+                const syncNote = synced ? " (متزامن سحابياً)" : " (محفوظ محلياً)";
+                this.showToastNotification(`تم تعليق البوكيه "${name}" بنجاح${syncNote}، بانتظار رفع الصورة`);
+            } catch (err) {
+                console.error("Error suspending bouquet:", err);
+                this.showToastNotification("حدث خطأ أثناء تعليق البوكيه");
+            } finally {
+                if (suspendBtn) suspendBtn.disabled = false;
+            }
+        },
+
+        // 🌟 فتح نافذة البوكيهات المعلقة
+        openSuspendedModal() {
+            this.renderSuspendedList();
+            const modal = document.getElementById('gifts-modal-suspended');
+            if (modal) modal.classList.add('active');
+        },
+
+        // 🌟 إغلاق نافذة البوكيهات المعلقة
+        closeSuspendedModal() {
+            const modal = document.getElementById('gifts-modal-suspended');
+            if (modal) modal.classList.remove('active');
+        },
+
+        // 🌟 عرض وبناء قائمة البوكيهات المعلقة داخل المودال
+        renderSuspendedList() {
+            const container = document.getElementById('gifts-suspended-list-container');
+            if (!container) return;
+
+            const suspended = (this.state.bouquets || []).filter(b => b.status === 'suspended');
+
+            if (suspended.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px 20px; color: #92400E;">
+                        <i class="fa-solid fa-clock-rotate-left" style="font-size: 3rem; opacity: 0.3; margin-bottom: 12px; display: block;"></i>
+                        <h5 style="font-weight: 800; font-size: 1.1rem; margin-bottom: 6px;">لا توجد بوكيهات معلقة حالياً</h5>
+                        <p style="font-size: 0.88rem; color: #78350F; margin: 0;">يمكنك تعليق أي بوكيه كمسودة بدون صورة من شاشة التجميع لاستكماله ورفع صورته لاحقاً</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = suspended.map(b => {
+                const countItems = (b.items || []).length;
+                const totalUnits = (b.items || []).reduce((s, it) => s + (Number(it.qty) || 1), 0);
+                const price = Number(b.total_price || 0).toFixed(2);
+                const creator = this.escapeHtml(b.creator_name || 'موظف الهدايا');
+                const name = this.escapeHtml(b.name || 'بوكيه معلق');
+                const itemsText = (b.items || []).map(it => `${this.escapeHtml(it.name || it.product_name || 'صنف')} (×${it.qty})`).join('، ');
+
+                let dateDisplay = '';
+                if (b.created_at) {
+                    try {
+                        const d = new Date(b.created_at);
+                        dateDisplay = d.toLocaleDateString('ar-EG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    } catch (_) {
+                        dateDisplay = b.created_at;
+                    }
+                }
+
+                return `
+                    <div class="gifts-suspended-card" onclick="GiftsApp.resumeSuspendedBouquet('${b.id}')">
+                        <div class="gifts-suspended-card-info">
+                            <div class="gifts-suspended-card-header">
+                                <span class="gifts-suspended-card-name">${name}</span>
+                                <span class="gifts-suspended-card-badge"><i class="fa-solid fa-clock"></i> معلق</span>
+                            </div>
+                            <div class="gifts-suspended-card-meta">
+                                <span><i class="fa-solid fa-user-pen" style="color: var(--gifts-primary);"></i> ${creator}</span>
+                                ${dateDisplay ? `<span><i class="fa-solid fa-calendar-day" style="color: #D97706;"></i> ${dateDisplay}</span>` : ''}
+                                <span><i class="fa-solid fa-cubes" style="color: var(--gifts-teal);"></i> ${countItems} أصناف (${totalUnits} قطعة)</span>
+                                <strong style="color: #B45309; font-size: 0.95rem;">${price} ج.م</strong>
+                            </div>
+                            <div class="gifts-suspended-card-items-preview" title="${itemsText}">
+                                <i class="fa-solid fa-basket-shopping" style="color: #94A3B8; margin-left: 4px;"></i> ${itemsText || 'لا توجد أصناف'}
+                            </div>
+                        </div>
+                        <div class="gifts-suspended-card-actions">
+                            <button type="button" class="gifts-suspended-resume-btn" onclick="event.stopPropagation(); GiftsApp.resumeSuspendedBouquet('${b.id}')" title="استكمال البوكيه ورفع الصورة">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                                <span>استكمال</span>
+                            </button>
+                            <button type="button" class="gifts-suspended-delete-btn" onclick="event.stopPropagation(); GiftsApp.deleteSuspendedBouquet('${b.id}')" title="حذف هذا البوكيه المعلق">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        },
+
+        // 🌟 استكمال بوكيه معلق ونقله لنموذج التجميع مع تفعيل وضع التعديل
+        resumeSuspendedBouquet(id) {
+            const b = (this.state.bouquets || []).find(item => item.id === id);
+            if (!b) {
+                this.showToastNotification("⚠️ لم يتم العثور على هذا البوكيه المعلق");
+                return;
+            }
+
+            this.state.draft.name = b.name || '';
+            this.state.draft.creator = b.creator_name || '';
+            this.state.draft.qty = b.quantity || 1;
+            this.state.draft.colorTag = b.color_tag || '#E91E8C';
+            this.state.draft.items = JSON.parse(JSON.stringify(b.items || []));
+            this.state.draft.photoBase64 = null;
+            this.state.draft.photoSizeKB = 0;
+            this.state.activeSuspendedId = b.id;
+
+            const nameInput = document.getElementById('gifts-input-name');
+            const creatorInput = document.getElementById('gifts-input-creator');
+            const qtyInput = document.getElementById('gifts-input-qty');
+
+            if (nameInput) nameInput.value = b.name || '';
+            if (creatorInput) creatorInput.value = b.creator_name || '';
+            if (qtyInput) qtyInput.value = b.quantity || 1;
+
+            this.removePhoto();
+            this.renderDraftBasket();
+            this.renderRecentAddedList();
+            this.updateSaveButtonState();
+
+            const banner = document.getElementById('gifts-suspended-resumed-banner');
+            const bannerName = document.getElementById('gifts-suspended-resumed-name');
+            if (banner) banner.style.display = 'flex';
+            if (bannerName) bannerName.textContent = b.name || 'بوكيه معلق';
+
+            this.closeSuspendedModal();
+            this.switchSubTab('builder');
+
+            setTimeout(() => {
+                const photoCard = document.getElementById('gifts-camera-box');
+                if (photoCard) photoCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 150);
+
+            this.showToastNotification(`تم فتح البوكيه المعلق "${b.name}"، يرجى رفع الصورة وحفظه`);
+        },
+
+        // 🌟 إلغاء استكمال البوكيه المعلق وإعادة النموذج للوضع الطبيعي
+        cancelResumingSuspended() {
+            this.state.activeSuspendedId = null;
+            const banner = document.getElementById('gifts-suspended-resumed-banner');
+            if (banner) banner.style.display = 'none';
+            this.clearDraft();
+            this.showToastNotification("تم إلغاء استكمال البوكيه المعلق");
+        },
+
+        // 🌟 حذف بوكيه معلق نهائياً من سوبا بيز والمحلي
+        async deleteSuspendedBouquet(id) {
+            const b = (this.state.bouquets || []).find(item => item.id === id);
+            const name = b ? b.name : 'هذا البوكيه';
+
+            const doDelete = async () => {
+                if (this.state.activeSuspendedId === id) {
+                    this.cancelResumingSuspended();
+                }
+
+                const sb = this.getSupabase();
+                if (sb) {
+                    try {
+                        await sb.from(GIFTS_TABLE).delete().eq('id', id);
+                    } catch (e) {
+                        console.warn("Supabase delete suspended error:", e);
+                    }
+                }
+
+                this.state.bouquets = (this.state.bouquets || []).filter(item => item.id !== id);
+                this.saveBouquetsToLocal();
+                this.updateSuspendedBadge();
+                this.updateHeaderStats();
+                this.renderSuspendedList();
+                this.showToastNotification(`تم حذف البوكيه المعلق "${name}" نهائياً`);
+            };
+
+            if (typeof window.customConfirm === 'function') {
+                window.customConfirm(`هل أنت متأكد من حذف البوكيه المعلق ("${name}") نهائياً؟`, () => {
+                    doDelete();
+                });
+            } else if (confirm(`هل أنت متأكد من حذف البوكيه المعلق ("${name}") نهائياً؟`)) {
+                await doDelete();
+            }
+        },
+
 
         showToastNotification(message) {
             if (typeof window.showToast === 'function') {

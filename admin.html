@@ -1137,7 +1137,8 @@
                 <!-- Archive Table & Search -->
                 <div style="background: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 20px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-                        <h3 style="margin: 0; color: var(--primary);"><i class="fa-solid fa-clock-rotate-left"></i> سجل الأذونات السابقة</h3>
+                        <h3 style="margin: 0; color: var(--primary);"><i class="fa-solid fa-clock-rotate-left"></i> آخر 5 تحويلات</h3>
+                        <p style="margin:0; color:var(--text-muted); font-size:0.9rem;">يظهر أحدث 5 أذونات مطابقة. ابحث برقم الإذن أو الشهر للوصول إلى التحويلات الأقدم.</p>
                         <button id="refreshInvArchiveBtn" class="interactive-btn" style="background: var(--secondary); color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">
                             <i class="fa-solid fa-rotate-right"></i> تحديث السجل
                         </button>
@@ -1146,7 +1147,7 @@
                         <input type="text" id="invSearchInput" class="input-field" placeholder="أدخل رقم الإذن للبحث..." style="margin-bottom: 0; flex: 2; min-width: 200px;">
                         <input type="date" id="invSearchDate" class="input-field" style="margin-bottom: 0; flex: 1; min-width: 150px;">
                     </div>
-                    <div class="table-container" style="max-height: 500px; overflow-y: auto;">
+                    <div class="table-container" style="max-height: 500px; overflow-y: auto; overflow-x: auto;">
                         <table>
                             <thead>
                                 <tr>
@@ -2366,7 +2367,7 @@
     </div>
 </div>
 
-    <script src="app.js?v=125.0" charset="UTF-8" defer></script>
+    <script src="app.js?v=126.0" charset="UTF-8" defer></script>
 </body>
 </html>
 

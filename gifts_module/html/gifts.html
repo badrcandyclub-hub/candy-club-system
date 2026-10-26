@@ -65,6 +65,21 @@
          SUB-VIEW 1: BOUQUET BUILDER
          ================================================================ -->
     <div id="gifts-view-builder" class="gifts-subview active">
+        <!-- Banner if resuming a suspended bouquet -->
+        <div id="gifts-suspended-resumed-banner" class="gifts-suspended-banner" style="display: none;">
+            <div class="gifts-suspended-banner-content">
+                <i class="fa-solid fa-clock-rotate-left gifts-suspended-banner-icon"></i>
+                <div class="gifts-suspended-banner-text">
+                    <span class="gifts-suspended-banner-title">أنت الآن تستكمل بوكيه معلق:</span>
+                    <strong id="gifts-suspended-resumed-name">-</strong>
+                    <span class="gifts-suspended-banner-sub">ارفع صورة البوكيه واضغط "حفظ البوكيه" لاعتماده وعرضه في المحل</span>
+                </div>
+            </div>
+            <button type="button" class="gifts-btn-outline gifts-suspended-cancel-btn" onclick="GiftsApp.cancelResumingSuspended()">
+                <i class="fa-solid fa-xmark"></i> إلغاء الاستكمال
+            </button>
+        </div>
+
         <div class="gifts-builder-grid">
 
             <!-- 1. Basic Info Card (اسم البوكيه والمسؤول عن التصميم والكمية) -->
@@ -251,45 +266,21 @@
                 </div>
                 <div class="gifts-camera-container" id="gifts-camera-box">
                     <div class="gifts-camera-viewport-3x4" id="gifts-camera-viewport-3x4">
-                        <video id="gifts-camera-stream" class="gifts-camera-video" playsinline autoplay></video>
                         <img id="gifts-image-preview" class="gifts-camera-preview" alt="معاينة الصورة">
-                        
-                        <!-- 3:4 Viewfinder Guide Overlay -->
-                        <div class="gifts-camera-guide-overlay" id="gifts-camera-guide-overlay" style="display: none;">
-                            <div class="gifts-camera-reticle reticle-tl"></div>
-                            <div class="gifts-camera-reticle reticle-tr"></div>
-                            <div class="gifts-camera-reticle reticle-bl"></div>
-                            <div class="gifts-camera-reticle reticle-br"></div>
-                            <div class="gifts-camera-grid-line grid-h1"></div>
-                            <div class="gifts-camera-grid-line grid-h2"></div>
-                            <div class="gifts-camera-grid-line grid-v1"></div>
-                            <div class="gifts-camera-grid-line grid-v2"></div>
-                            <div class="gifts-camera-badge-ratio">
-                                <i class="fa-brands fa-instagram"></i> كادر رأسي موحد 3:4
-                            </div>
-                        </div>
 
                         <div id="gifts-camera-placeholder">
-                            <i class="fa-solid fa-camera" style="font-size: 2.2rem; color: #F472B6; margin-bottom: 8px;"></i>
-                            <div style="font-size: 0.85rem; color: var(--gifts-text-muted); font-weight: 700;">التقط صورة للبوكيه أو ارفعها من المعرض</div>
-                            <div style="font-size: 0.72rem; color: #E91E8C; font-weight: 700; margin-top: 5px;">
+                            <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2.3rem; color: #F472B6; margin-bottom: 8px;"></i>
+                            <div style="font-size: 0.88rem; color: var(--gifts-text-muted); font-weight: 700;">ارفع صورة البوكيه من المعرض أو الجهاز</div>
+                            <div style="font-size: 0.75rem; color: #E91E8C; font-weight: 700; margin-top: 5px;">
                                 <i class="fa-brands fa-instagram"></i> مقاس رأسي 3:4 موحد لكل المعروضات
                             </div>
                         </div>
                     </div>
 
                     <div class="gifts-camera-btns" style="margin-top: 12px;">
-                        <button type="button" class="gifts-btn-outline" id="gifts-btn-open-camera" onclick="GiftsApp.startCamera()">
-                            <i class="fa-solid fa-camera"></i> فتح الكاميرا
-                        </button>
-                        <button type="button" class="gifts-btn-outline" id="gifts-btn-snap" style="display: none; background: #E91E8C; color: #FFF; border-color: #BE185D;" onclick="GiftsApp.capturePhoto()">
-                            <i class="fa-solid fa-camera-retro"></i> التقاط الكادر 3:4
-                        </button>
-                        <button type="button" class="gifts-btn-outline" id="gifts-btn-cancel-cam" style="display: none;" onclick="GiftsApp.stopCamera()">
-                            <i class="fa-solid fa-xmark"></i> إغلاق الكاميرا
-                        </button>
-                        <label class="gifts-btn-outline" style="cursor: pointer; margin: 0;">
-                            <i class="fa-solid fa-upload"></i> من الصور
+                        <label class="gifts-btn-upload-gallery" style="cursor: pointer; margin: 0;">
+                            <i class="fa-solid fa-image"></i>
+                            <span>رفع صورة من المعرض</span>
                             <input type="file" id="gifts-file-input" accept="image/*" style="display: none;" onchange="GiftsApp.handleFileUpload(event)">
                         </label>
                         <button type="button" class="gifts-btn-outline" id="gifts-btn-adjust-crop" style="display: none; color: #BE185D;" onclick="GiftsApp.openCropModalForDraft()">
@@ -325,6 +316,10 @@
                     </button>
                     <!-- Missing items checklist / ready indicator -->
                     <div id="gifts-save-checklist" class="gifts-save-checklist incomplete"></div>
+                    <button type="button" id="gifts-btn-suspend-bouquet" class="gifts-btn-outline gifts-btn-suspend" onclick="GiftsApp.suspendBouquet()">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <span>تعليق البوكيه (حفظ كمسودة بدون صورة)</span>
+                    </button>
                     <button type="button" class="gifts-btn-outline" style="color: var(--gifts-red); width: 100%; margin-top: 6px;" onclick="GiftsApp.clearDraft()">
                         <i class="fa-solid fa-trash-can"></i> مسح السلة وتفريغ الأصناف
                     </button>
@@ -670,42 +665,11 @@
                 </div>
             </div>
 
-            <!-- Camera Stream (When Active) -->
-            <div id="gifts-change-photo-camera-container" style="display: none; margin-bottom: 16px; text-align: center;">
-                <div class="gifts-camera-viewport-3x4" style="margin: 0 auto 10px auto; max-width: 240px;">
-                    <video id="gifts-change-photo-camera-stream" autoplay playsinline class="gifts-camera-video"></video>
-                    <!-- 3:4 Viewfinder Guide Overlay -->
-                    <div class="gifts-camera-guide-overlay" style="display: block;">
-                        <div class="gifts-camera-reticle reticle-tl"></div>
-                        <div class="gifts-camera-reticle reticle-tr"></div>
-                        <div class="gifts-camera-reticle reticle-bl"></div>
-                        <div class="gifts-camera-reticle reticle-br"></div>
-                        <div class="gifts-camera-grid-line grid-h1"></div>
-                        <div class="gifts-camera-grid-line grid-h2"></div>
-                        <div class="gifts-camera-grid-line grid-v1"></div>
-                        <div class="gifts-camera-grid-line grid-v2"></div>
-                        <div class="gifts-camera-badge-ratio">
-                            <i class="fa-brands fa-instagram"></i> كادر رأسي موحد 3:4
-                        </div>
-                    </div>
-                </div>
-                <div style="display: flex; gap: 8px;">
-                    <button type="button" id="gifts-change-photo-snap-btn" class="interactive-btn" onclick="GiftsApp.captureChangePhoto()" style="flex: 2; padding: 10px; background: #E91E8C; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
-                        <i class="fa-solid fa-camera"></i> التقاط الكادر 3:4 الآن
-                    </button>
-                    <button type="button" class="interactive-btn" onclick="GiftsApp.stopChangePhotoCamera()" style="flex: 1; padding: 10px; background: #F1F5F9; color: #475569; border: 1px solid #CBD5E1; border-radius: 8px; font-weight: bold; cursor: pointer;">
-                        إلغاء الكاميرا
-                    </button>
-                </div>
-            </div>
-
             <!-- Action Buttons for photo source -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                <button type="button" id="gifts-btn-open-change-camera" class="interactive-btn" onclick="GiftsApp.startChangePhotoCamera()" style="padding: 11px; background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 10px; font-weight: 700; font-size: 0.88rem; cursor: pointer; color: #1E293B; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;">
-                    <i class="fa-solid fa-camera" style="color: #E91E8C; font-size: 1.05rem;"></i> فتح الكاميرا
-                </button>
-                <button type="button" class="interactive-btn" onclick="document.getElementById('gifts-change-photo-file-input').click()" style="padding: 11px; background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 10px; font-weight: 700; font-size: 0.88rem; cursor: pointer; color: #1E293B; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;">
-                    <i class="fa-solid fa-image" style="color: #0284c7; font-size: 1.05rem;"></i> رفع من الجهاز
+            <div style="text-align: center;">
+                <button type="button" class="interactive-btn" onclick="document.getElementById('gifts-change-photo-file-input').click()" style="width: 100%; padding: 12px; background: #F8FAFC; border: 1.5px solid #E2E8F0; border-radius: 12px; font-weight: 700; font-size: 0.92rem; cursor: pointer; color: #1E293B; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;">
+                    <i class="fa-solid fa-image" style="color: #0284c7; font-size: 1.15rem;"></i>
+                    <span>اختيار صورة جديدة من المعرض أو الجهاز</span>
                 </button>
                 <input type="file" id="gifts-change-photo-file-input" accept="image/*" style="display: none;" onchange="GiftsApp.handleChangePhotoFileUpload(event)">
             </div>
@@ -820,6 +784,34 @@
             <button type="button" class="interactive-btn" onclick="GiftsApp.confirmCropAdjustment()" style="padding: 9px 20px; background: linear-gradient(135deg, #E91E8C, #BE185D); color: #FFF; border: none; border-radius: 10px; font-weight: 800; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 7px; box-shadow: 0 4px 14px rgba(233, 30, 140, 0.4);">
                 <i class="fa-solid fa-check"></i> تأكيد واعتماد الكادر (3:4)
             </button>
+        </div>
+    </div>
+</div>
+
+<!-- ================================================================
+     MODAL: معلقات البوكيه (مسودات بانتظار رفع الصورة)
+     ================================================================ -->
+<div class="gifts-modal-overlay" id="gifts-modal-suspended">
+    <div class="gifts-modal" style="max-width: 620px; border-radius: 20px;">
+        <div class="gifts-modal-header" style="background: linear-gradient(135deg, #FFFBEB, #FEF3C7); border-bottom: 1.5px solid #FDE68A; padding: 18px 24px;">
+            <h4 style="color: #92400E; margin: 0; display: flex; align-items: center; gap: 10px; font-size: 1.2rem; font-weight: 900;">
+                <i class="fa-solid fa-clock-rotate-left" style="color: #D97706;"></i>
+                <span>معلقات البوكيه (مسودات بانتظار رفع الصورة)</span>
+            </h4>
+            <button type="button" class="gifts-modal-close" onclick="GiftsApp.closeSuspendedModal()" style="color: #92400E; font-size: 1.25rem;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="gifts-modal-body" style="padding: 20px; max-height: 65vh; overflow-y: auto;">
+            <div id="gifts-suspended-list-container">
+                <!-- يتم بناؤها برمجياً عبر GiftsApp.renderSuspendedList() -->
+            </div>
+        </div>
+        <div class="gifts-modal-footer" style="padding: 14px 20px; background: #FFFBEB; border-top: 1px solid #FDE68A; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <span style="font-size: 0.82rem; color: #92400E; font-weight: 700;">
+                <i class="fa-solid fa-circle-info"></i> اضغط على أي بوكيه لاستكماله ورفع صورته
+            </span>
+            <button type="button" class="gifts-btn-outline" onclick="GiftsApp.closeSuspendedModal()">إغلاق</button>
         </div>
     </div>
 </div>

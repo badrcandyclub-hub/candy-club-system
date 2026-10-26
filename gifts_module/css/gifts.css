@@ -4203,3 +4203,308 @@ button:active,
     gap: 10px;
 }
 
+/* ================================================================
+   13. Golden / Amber Suspended Bouquets System
+   نظام تعليق البوكيهات الذهبي الملكي
+   ================================================================ */
+.btn-gifts-suspended {
+    background: #FFFBEB !important;
+    border: 1.5px solid #FDE68A !important;
+    color: #92400E !important;
+    box-shadow: 0 1px 3px rgba(146, 64, 14, 0.08) !important;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.btn-gifts-suspended:hover {
+    background: #FEF3C7 !important;
+    border-color: #FCD34D !important;
+    color: #78350F !important;
+    transform: translateY(-1px) !important;
+}
+
+.btn-gifts-suspended .suspended-badge {
+    background: #FDE68A !important;
+    color: #92400E !important;
+    font-weight: 800 !important;
+}
+
+/* حالة وجود بوكيهات معلقة - إشعاع وتوهج ذهبي جذاب */
+.btn-gifts-suspended.has-items {
+    background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%) !important;
+    border: 1.5px solid #F59E0B !important;
+    color: #78350F !important;
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35) !important;
+    animation: giftsSuspendedGlow 2.5s infinite ease-in-out !important;
+}
+
+.btn-gifts-suspended.has-items:hover {
+    background: linear-gradient(135deg, #FDE68A 0%, #FCD34D 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 18px rgba(245, 158, 11, 0.45) !important;
+}
+
+.btn-gifts-suspended.has-items .suspended-badge {
+    background: linear-gradient(135deg, #D97706, #B45309) !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 2px 6px rgba(180, 83, 9, 0.4) !important;
+    font-weight: 900 !important;
+}
+
+@keyframes giftsSuspendedGlow {
+    0%, 100% {
+        box-shadow: 0 3px 10px rgba(245, 158, 11, 0.25);
+    }
+    50% {
+        box-shadow: 0 5px 20px rgba(245, 158, 11, 0.6);
+        border-color: #D97706;
+    }
+}
+
+/* زر تعليق البوكيه داخل نموذج التجميع */
+.gifts-btn-suspend {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 8px;
+    padding: 10px 16px;
+    background: #FFFBEB;
+    border: 1.5px solid #FDE68A;
+    color: #92400E;
+    font-weight: 800;
+    font-size: 0.92rem;
+    border-radius: var(--gifts-radius-md);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.gifts-btn-suspend:hover {
+    background: #FEF3C7;
+    border-color: #F59E0B;
+    color: #78350F;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+}
+
+.gifts-btn-suspend i {
+    color: #D97706;
+    font-size: 1.05rem;
+}
+
+/* زر رفع صورة البوكيه من المعرض */
+.gifts-btn-upload-gallery {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 18px;
+    background: linear-gradient(135deg, #FFFFFF 0%, #FDF2F8 100%);
+    border: 1.5px solid var(--gifts-primary);
+    color: var(--gifts-primary-dark);
+    font-weight: 800;
+    font-size: 0.9rem;
+    border-radius: var(--gifts-radius-md);
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(233, 30, 140, 0.12);
+    transition: all 0.2s ease;
+}
+
+.gifts-btn-upload-gallery:hover {
+    background: linear-gradient(135deg, #FCE7F3 0%, #FBCFE8 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(233, 30, 140, 0.22);
+}
+
+/* شريط التنبيه عند استكمال بوكيه معلق */
+.gifts-suspended-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+    border: 1.5px solid #FDE68A;
+    border-radius: var(--gifts-radius-md);
+    padding: 12px 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.12);
+}
+
+.gifts-suspended-banner-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.gifts-suspended-banner-icon {
+    font-size: 1.5rem;
+    color: #D97706;
+}
+
+.gifts-suspended-banner-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.gifts-suspended-banner-title {
+    font-size: 0.8rem;
+    color: #92400E;
+    font-weight: 700;
+}
+
+.gifts-suspended-banner-text strong {
+    font-size: 1.05rem;
+    color: #78350F;
+    font-weight: 900;
+}
+
+.gifts-suspended-banner-sub {
+    font-size: 0.78rem;
+    color: #B45309;
+    font-weight: 600;
+}
+
+.gifts-suspended-cancel-btn {
+    padding: 6px 14px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #92400E;
+    background: #FFF;
+    border: 1px solid #FCD34D;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.gifts-suspended-cancel-btn:hover {
+    background: #FEF3C7;
+    color: #78350F;
+}
+
+/* بطاقة البوكيه المعلق داخل المودال */
+.gifts-suspended-card {
+    background: #FFFFFF;
+    border: 1.5px solid #FDE68A;
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+}
+
+.gifts-suspended-card:hover {
+    border-color: #F59E0B;
+    background: #FFFDF7;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(245, 158, 11, 0.18);
+}
+
+.gifts-suspended-card-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.gifts-suspended-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.gifts-suspended-card-name {
+    font-size: 1.02rem;
+    font-weight: 800;
+    color: #0F172A;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gifts-suspended-card-badge {
+    background: #FEF3C7;
+    color: #92400E;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+
+.gifts-suspended-card-meta {
+    font-size: 0.8rem;
+    color: #64748B;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+}
+
+.gifts-suspended-card-items-preview {
+    font-size: 0.78rem;
+    color: #475569;
+    background: #F8FAFC;
+    padding: 4px 8px;
+    border-radius: 6px;
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gifts-suspended-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.gifts-suspended-resume-btn {
+    padding: 8px 14px;
+    background: linear-gradient(135deg, #F59E0B, #D97706);
+    color: #FFFFFF;
+    border: none;
+    border-radius: 10px;
+    font-weight: 800;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 6px rgba(217, 119, 6, 0.3);
+    transition: all 0.2s ease;
+}
+
+.gifts-suspended-resume-btn:hover {
+    background: linear-gradient(135deg, #D97706, #B45309);
+    transform: scale(1.03);
+}
+
+.gifts-suspended-delete-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: 1px solid #E2E8F0;
+    background: #FFF;
+    color: #94A3B8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.gifts-suspended-delete-btn:hover {
+    background: #FEF2F2;
+    border-color: #FCA5A5;
+    color: #DC2626;
+    transform: scale(1.08);
+}
+
+

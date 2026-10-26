@@ -16385,31 +16385,9 @@ window.switchInvTab = function(tab) {
         if(archiveBtn) { archiveBtn.style.cssText = activeStyle; }
         if(createBtn) { createBtn.style.cssText = inactiveStyle; }
         
-        // Auto-fetch data if not already loaded
-        if (!window.invLogsData) {
-            if (typeof fetchInventoryLogs === 'function') fetchInventoryLogs();
-        }
+        if (typeof fetchInventoryLogs === 'function') fetchInventoryLogs();
     }
 };
-
-function fetchInventoryLogs(callback = null) {
-    let tbody = document.getElementById('invArchiveTableBody');
-    if (tbody && tbody.children.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:15px; color:#64748b;"><i class="fa-solid fa-spinner fa-spin"></i> جاري تحميل البيانات من السيرفر...</td></tr>';
-    }
-    
-    (async () => { const { data: invData } = await supabase.from('inventory_logs').select('*').order('created_at', { ascending: false }); return (invData || []).map(l => ({ logId: l.log_id, from: l.from_location, to: l.to_location, regName: l.reg_name, timestamp: l.timestamp, items: l.items, notes: l.notes })); })().then(data => {
-            window.invLogsData = data;
-            try { renderInventoryDashboard(data); } catch(e) { console.error('Dash Error:', e); }
-            if (typeof callback === 'function') callback(data);
-        })
-        .catch(err => {
-            console.error(err);
-            if (tbody) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#ef4444; padding:15px;">خطأ في تحميل البيانات من السيرفر</td></tr>';
-            }
-        });
-}
 
 function renderInventoryDashboard(logs) {
     if (!logs) return;
@@ -16418,15 +16396,8 @@ function renderInventoryDashboard(logs) {
     let now = new Date();
     let currentMonth = now.getMonth();
     let currentYear = now.getFullYear();
-    let monthLogs = logs.filter(log => {
-        let parts = (log.timestamp ? String(log.timestamp).split(" ")[0] : '').split("-");
-        if(parts.length === 3) {
-            let logMonth = parseInt(parts[1]) - 1;
-            let logYear = parseInt(parts[0]);
-            return logMonth === currentMonth && logYear === currentYear;
-        }
-        return false;
-    });
+    const monthKey = currentYear + '-' + String(currentMonth + 1).padStart(2, '0');
+    let monthLogs = logs.filter(log => getInventoryLogMonth(log) === monthKey);
     
     let monthTotalEl = document.getElementById('invDashMonthTotal');
     if (monthTotalEl) monthTotalEl.innerText = `أذونات هذا الشهر: ${monthLogs.length}`;
@@ -16442,8 +16413,7 @@ function renderInventoryDashboard(logs) {
         if (from) senders[from] = (senders[from] || 0) + 1;
         if (to) receivers[to] = (receivers[to] || 0) + 1;
         
-        let datePart = log.timestamp ? String(log.timestamp).split(" ")[0] : ''; // YYYY-MM-DD
-        let yearMonth = datePart.substring(0, 7); // YYYY-MM
+        let yearMonth = getInventoryLogMonth(log);
         if (yearMonth) monthsGroup[yearMonth] = (monthsGroup[yearMonth] || 0) + 1;
         
         try {
@@ -16453,7 +16423,7 @@ function renderInventoryDashboard(logs) {
             if (Array.isArray(items)) {
                 items.forEach(i => {
                     let pName = String(i.name || i.productName || '').trim();
-                    let pQty = parseInt(i.qty || i.quantity) || 0;
+                    let pQty = parseFloat(i.qty ?? i.quantity) || 0;
                     if (pName && pName !== 'undefined') products[pName] = (products[pName] || 0) + pQty;
                 });
                 if (items.length === 0) throw new Error("Empty JSON array, try fallback");
@@ -16467,7 +16437,7 @@ function renderInventoryDashboard(logs) {
                     let match = p.trim().match(/(.*?)\s+\((\d+)\)(?:\s*\[باركود:\s*(.*?)\])?/);
                     if (match) {
                         let pName = match[1].trim();
-                        let pQty = parseInt(match[2]) || 0;
+                        let pQty = parseFloat(match[2]) || 0;
                         if (pName && pName !== 'undefined') products[pName] = (products[pName] || 0) + pQty;
                     }
                 });
@@ -16485,6 +16455,174 @@ function renderInventoryDashboard(logs) {
     document.getElementById('invDashTopProduct').innerText = window.invStatsProducts[0] ? window.invStatsProducts[0][0] : '-';
 }
 
+function escapeInventoryHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+}
+
+function getInventoryLogMonth(log) {
+    const raw = String(log.timestamp || '');
+    const iso = raw.match(/^(\d{4}-\d{2})/);
+    if (iso) return iso[1];
+    const parsed = new Date(raw);
+    if (!isNaN(parsed.getTime())) return parsed.getFullYear() + '-' + String(parsed.getMonth() + 1).padStart(2, '0');
+    return String(log.createdAt || '').slice(0, 7);
+}
+
+function parseInventoryLogItems(raw) {
+    let items = raw;
+    if (typeof raw === 'string') {
+        try { items = JSON.parse(raw); }
+        catch (e) {
+            items = raw.split('|').filter(part => part.trim()).map(part => {
+                const match = part.trim().match(/^(.+?)\s+\((\d+(?:\.\d+)?)\)(?:\s*\[باركود:\s*([^\]]*)\])?(?:\s*\[صلاحية:\s*([^\]]*)\])?\s*$/);
+                if (!match) throw new Error('تعذر قراءة أحد أصناف الإذن القديم. لن يتم تغيير بياناته.');
+                return { name: match[1].trim(), qty: Number(match[2]), barcode: (match[3] || '').trim(), expiry: (match[4] || '').trim() };
+            });
+        }
+    }
+    if (!Array.isArray(items)) throw new Error('بيانات أصناف الإذن غير صالحة للتعديل.');
+    return items.map(item => {
+        if (!item || typeof item !== 'object') throw new Error('بيانات أحد الأصناف غير صالحة.');
+        const result = { name: String(item.name || item.productName || '').trim(), qty: Number(item.qty ?? item.quantity), barcode: String(item.barcode || ''), expiry: String(item.expiry || '') };
+        if (!result.name || !Number.isFinite(result.qty) || result.qty <= 0) throw new Error('تأكد من أسماء الأصناف وكمياتها.');
+        return result;
+    });
+}
+
+let inventoryEditRecord = null;
+let inventoryEditSaving = false;
+let inventoryEditRequest = 0;
+
+window.closeInventoryLogEditor = function() {
+    if (inventoryEditSaving) return;
+    inventoryEditRequest++;
+    document.getElementById('inventoryLogEditor')?.remove();
+    inventoryEditRecord = null;
+};
+
+window.addInventoryEditRow = function(item = {}) {
+    const row = document.createElement('div');
+    row.className = 'inventory-edit-row';
+    row.style.cssText = 'display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; padding:14px; border:1px solid var(--border); border-radius:10px; margin-bottom:10px;';
+    row.innerHTML = `
+        <label>اسم الصنف<input class="input-field inv-edit-name" value="${escapeInventoryHtml(item.name)}" style="width:100%; box-sizing:border-box;"></label>
+        <label>الكمية<input class="input-field inv-edit-qty" type="number" min="0.001" step="any" inputmode="decimal" value="${escapeInventoryHtml(item.qty ?? 1)}" style="width:100%; box-sizing:border-box;"></label>
+        <label>الباركود<input class="input-field inv-edit-barcode" value="${escapeInventoryHtml(item.barcode)}" style="width:100%; box-sizing:border-box;"></label>
+        <label>الصلاحية<input class="input-field inv-edit-expiry" placeholder="YYYY-MM-DD" value="${escapeInventoryHtml(item.expiry)}" style="width:100%; box-sizing:border-box;"></label>
+        <button type="button" class="btn-delete inv-edit-remove" style="align-self:end; min-height:42px;">حذف الصنف</button>`;
+    row.querySelector('.inv-edit-remove').addEventListener('click', () => {
+        if (!inventoryEditSaving) row.remove();
+    });
+    document.getElementById('inventoryEditItems').appendChild(row);
+};
+
+window.openInventoryLogEditor = async function(logId) {
+    if (inventoryEditSaving) return;
+    const request = ++inventoryEditRequest;
+    try {
+        const { data, error } = await supabase.from('inventory_logs').select('*').eq('log_id', logId).single();
+        if (request !== inventoryEditRequest) return;
+        if (error) throw error;
+        if (!data) throw new Error('لم يتم العثور على الإذن.');
+        const items = parseInventoryLogItems(data.items);
+        document.getElementById('inventoryLogEditor')?.remove();
+        inventoryEditRecord = data;
+        const modal = document.createElement('div');
+        modal.id = 'inventoryLogEditor';
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.setAttribute('aria-labelledby', 'inventoryEditTitle');
+        modal.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:10000; display:flex; align-items:center; justify-content:center; padding:12px; box-sizing:border-box; direction:rtl;';
+        modal.innerHTML = `<form id="inventoryEditForm" style="width:900px; max-width:100%; max-height:90vh; overflow:auto; box-sizing:border-box; background:var(--card,#fff); color:var(--text-main); border-radius:14px; padding:20px;">
+            <h3 id="inventoryEditTitle" style="color:var(--primary); margin-top:0;">تعديل الإذن ${escapeInventoryHtml(data.log_id)}</h3>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px;">
+                <label>المسجّل الأصلي (ثابت)<input id="inventoryEditName" class="input-field" readonly aria-readonly="true" style="width:100%; box-sizing:border-box; background:#f1f5f9; color:#334155;"></label>
+                <label>من (جهة الإرسال)<input id="inventoryEditFrom" class="input-field" required style="width:100%; box-sizing:border-box;"></label>
+                <label>إلى (جهة الاستلام)<input id="inventoryEditTo" class="input-field" required style="width:100%; box-sizing:border-box;"></label>
+                <label>تاريخ ووقت الإذن<input id="inventoryEditTimestamp" class="input-field" required style="width:100%; box-sizing:border-box;"></label>
+            </div>
+            <p style="color:var(--text-muted);">اسم المسجّل الأصلي ورقم الإذن ثابتان عند التعديل.</p>
+            <h4>أصناف التحويل</h4><div id="inventoryEditItems"></div>
+            <button type="button" id="inventoryEditAdd" class="btn-confirm" style="min-height:44px; margin-bottom:12px;">+ إضافة صنف</button>
+            <label style="display:block;">ملاحظات الإذن<textarea id="inventoryEditNotes" class="input-field" rows="3" style="width:100%; box-sizing:border-box;"></textarea></label>
+            <p id="inventoryEditError" role="alert" hidden style="color:#b91c1c; font-weight:bold;"></p>
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+                <button type="submit" id="inventoryEditSave" class="btn-confirm" style="min-height:44px; flex:1;">حفظ التعديلات</button>
+                <button type="button" id="inventoryEditCancel" class="interactive-btn" style="min-height:44px; flex:1;">إلغاء</button>
+            </div>
+        </form>`;
+        document.body.appendChild(modal);
+        document.getElementById('inventoryEditName').value = data.reg_name || '';
+        document.getElementById('inventoryEditFrom').value = data.from_location || '';
+        document.getElementById('inventoryEditTo').value = data.to_location || '';
+        document.getElementById('inventoryEditTimestamp').value = data.timestamp || '';
+        document.getElementById('inventoryEditNotes').value = data.notes || '';
+        items.forEach(item => window.addInventoryEditRow(item));
+        document.getElementById('inventoryEditAdd').addEventListener('click', () => { if (!inventoryEditSaving) window.addInventoryEditRow(); });
+        document.getElementById('inventoryEditCancel').addEventListener('click', window.closeInventoryLogEditor);
+        document.getElementById('inventoryEditForm').addEventListener('submit', window.saveInventoryLogEdits);
+        modal.addEventListener('keydown', event => {
+            if (event.key === 'Escape') window.closeInventoryLogEditor();
+            if (event.key === 'Tab') {
+                const focusable = Array.from(modal.querySelectorAll('input, textarea, button')).filter(el => !el.disabled);
+                const first = focusable[0], last = focusable[focusable.length - 1];
+                if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+                else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+            }
+        });
+        document.getElementById('inventoryEditFrom').focus();
+    } catch (error) {
+        if (request === inventoryEditRequest) showToast(error.message || 'تعذر تحميل الإذن للتعديل.', 'error');
+    }
+};
+
+window.saveInventoryLogEdits = async function(event) {
+    event.preventDefault();
+    if (inventoryEditSaving || !inventoryEditRecord) return;
+    const original = inventoryEditRecord;
+    const errorEl = document.getElementById('inventoryEditError');
+    errorEl.hidden = true;
+    const button = document.getElementById('inventoryEditSave');
+    const controls = Array.from(document.querySelectorAll('#inventoryEditForm input, #inventoryEditForm textarea, #inventoryEditForm button'));
+    try {
+        const from = document.getElementById('inventoryEditFrom').value.trim();
+        const to = document.getElementById('inventoryEditTo').value.trim();
+        const timestamp = document.getElementById('inventoryEditTimestamp').value.trim();
+        const notes = document.getElementById('inventoryEditNotes').value.trim();
+        const items = Array.from(document.querySelectorAll('#inventoryEditItems .inventory-edit-row')).map(row => ({
+            name: row.querySelector('.inv-edit-name').value.trim(),
+            qty: Number(row.querySelector('.inv-edit-qty').value),
+            barcode: row.querySelector('.inv-edit-barcode').value.trim(),
+            expiry: row.querySelector('.inv-edit-expiry').value.trim()
+        }));
+        if (!from || !to || !timestamp) throw new Error('أدخل جهتي التحويل وتاريخ الإذن.');
+        if (!items.length) throw new Error('أضف صنفًا واحدًا على الأقل.');
+        parseInventoryLogItems(items);
+        if (!navigator.onLine) throw new Error('لا يوجد اتصال بالإنترنت. التعديلات لم تُحفظ بعد.');
+        inventoryEditSaving = true;
+        setBtnLoading(button, true, 'جاري الحفظ...');
+        controls.forEach(control => { control.disabled = true; });
+        // Explicit whitelist: never read the name field or send reg_name/log_id/created_at in the payload.
+        let update = supabase.from('inventory_logs').update({ from_location: from, to_location: to, items: JSON.stringify(items), notes, timestamp }).eq('log_id', original.log_id);
+        update = original.reg_name == null ? update.is('reg_name', null) : update.eq('reg_name', original.reg_name);
+        const { data, error } = await update.select('log_id').single();
+        if (error) throw error;
+        if (!data) throw new Error('تعذر تأكيد التعديل. حدّث الأرشيف وحاول مرة أخرى.');
+        if (typeof window.bumpSystemActivity === 'function') window.bumpSystemActivity();
+        inventoryEditSaving = false;
+        window.closeInventoryLogEditor();
+        showToast('تم تعديل الإذن مع الحفاظ على اسم المسجّل الأصلي.', 'success');
+        await fetchInventoryLogs();
+    } catch (error) {
+        errorEl.textContent = error.message || 'تعذر حفظ التعديلات.';
+        errorEl.hidden = false;
+    } finally {
+        inventoryEditSaving = false;
+        controls.forEach(control => { control.disabled = false; });
+        setBtnLoading(button, false, 'حفظ التعديلات');
+    }
+};
+
 function renderInventoryArchive(logs) {
     let tbody = document.getElementById('invArchiveTableBody');
     if (!tbody) return;
@@ -16495,20 +16633,28 @@ function renderInventoryArchive(logs) {
         return;
     }
     
-    let reversed = [...logs].reverse();
+    const recent = [...logs].sort((a, b) => {
+        const byCreated = String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+        return byCreated || String(b.logId || '').localeCompare(String(a.logId || ''), undefined, { numeric: true });
+    }).slice(0, 5);
     
-    reversed.forEach(log => {
+    recent.forEach(log => {
         let tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><b>${log.logId}</b></td>
-            <td>${log.from}</td>
-            <td>${log.to}</td>
-            <td>${log.regName}</td>
-            <td dir="ltr" style="text-align:right;">${log.timestamp}</td>
+            <td><b>${escapeInventoryHtml(log.logId)}</b></td>
+            <td>${escapeInventoryHtml(log.from)}</td>
+            <td>${escapeInventoryHtml(log.to)}</td>
+            <td>${escapeInventoryHtml(log.regName)}</td>
+            <td dir="ltr" style="text-align:right;">${escapeInventoryHtml(log.timestamp)}</td>
             <td style="text-align:center;">
-                <button class="interactive-btn" onclick="reprintInvLog('${log.logId}')" style="background:#3498db; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;" title="إعادة طباعة"><i class="fa-solid fa-print"></i></button>
+                <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap;">
+                    <button type="button" class="interactive-btn inv-reprint-action" style="background:#3498db; color:white; border:none; padding:8px 12px; min-height:40px; border-radius:6px; cursor:pointer;" title="إعادة طباعة"><i class="fa-solid fa-print"></i></button>
+                    <button type="button" class="interactive-btn inv-edit-action" style="background:#8e44ad; color:white; border:none; padding:8px 12px; min-height:40px; border-radius:6px; cursor:pointer;"><i class="fa-solid fa-pen-to-square"></i> تعديل</button>
+                </div>
             </td>
         `;
+        tr.querySelector('.inv-reprint-action').addEventListener('click', () => window.reprintInvLog(log.logId));
+        tr.querySelector('.inv-edit-action').addEventListener('click', () => window.openInventoryLogEditor(log.logId));
         tbody.appendChild(tr);
     });
 }
@@ -16791,34 +16937,18 @@ window.reprintInvLog = function(logId) {
         return;
     }
     
-    let itemsArr = [];
-    try {
-        try { itemsArr = typeof log.items === 'string' ? JSON.parse(log.items) : (Array.isArray(log.items) ? log.items : []); } catch(e) { itemsArr = []; }
-    } catch(e) {
-        if (log.items) {
-            let parts = log.items.split("|");
-            itemsArr = parts.map(p => {
-                let match = p.trim().match(/(.*?)\s+\((\d+)\)(?:\s*\[باركود:\s*(.*?)\])?(?:\s*\[صلاحية:\s*(.*?)\])?/);
-                if (match) {
-                    let name = match[1].trim();
-                    let qty = match[2];
-                    let barcode = match[3] ? match[3].replace(']', '').trim() : '';
-                    let expiry = match[4] ? match[4].replace(']', '').trim() : '';
-                    return { name, qty, barcode, expiry };
-                }
-                return { name: p.trim(), qty: 1, barcode: '', expiry: '' };
-            });
-        }
-    }
-    
+    let itemsArr;
+    try { itemsArr = parseInventoryLogItems(log.items); }
+    catch (error) { showToast(error.message, 'error'); return; }
+
     let itemsHtml = itemsArr.map(item => `
         <tr style="border-bottom: 1px dashed #000;">
             <td style="text-align: right; padding: 6px 4px; vertical-align: top;">
-                <div style="font-weight: bold; font-size: 13px; line-height: 1.3; word-break: break-word; white-space: normal; color: #000;">${item.name}</div>
-                ${item.barcode ? `<div style="font-family: monospace; font-size: 11px; font-weight: bold; color: #000; letter-spacing: 0.5px; margin-top: 2px;">${item.barcode}</div>` : ''}
-                    ${item.expiry ? `<div style="font-size: 11px; font-weight: bold; color: #000; margin-top: 2px;">الصلاحية: ${item.expiry}</div>` : ''}
+                <div style="font-weight: bold; font-size: 13px; line-height: 1.3; word-break: break-word; white-space: normal; color: #000;">${escapeInventoryHtml(item.name)}</div>
+                ${item.barcode ? `<div style="font-family: monospace; font-size: 11px; font-weight: bold; color: #000; letter-spacing: 0.5px; margin-top: 2px;">${escapeInventoryHtml(item.barcode)}</div>` : ''}
+                    ${item.expiry ? `<div style="font-size: 11px; font-weight: bold; color: #000; margin-top: 2px;">الصلاحية: ${escapeInventoryHtml(item.expiry)}</div>` : ''}
                 </td>
-            <td style="text-align: center; padding: 6px 4px; vertical-align: top; font-weight: bold; font-size: 14px; color: #000; width: 45px;">${item.qty}</td>
+            <td style="text-align: center; padding: 6px 4px; vertical-align: top; font-weight: bold; font-size: 14px; color: #000; width: 45px;">${escapeInventoryHtml(item.qty)}</td>
         </tr>
     `).join('');
     
@@ -16831,7 +16961,7 @@ window.reprintInvLog = function(logId) {
     let html = `
         <html dir="rtl" lang="ar">
         <head>
-            <title>إذن مخزن #${log.logId}</title>
+            <title>إذن مخزن #${escapeInventoryHtml(log.logId)}</title>
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
             <style>
                 @page { margin: 5mm; }
@@ -16849,13 +16979,13 @@ window.reprintInvLog = function(logId) {
         <body>
             <div class="receipt-header">
                 <h2 class="receipt-title">إذن حركة مخازن</h2>
-                <div style="font-size: 14px; font-weight: bold; margin-bottom: 3px;">#${log.logId}</div>
-                <div style="font-size: 11px;">تاريخ: <span dir="ltr">${log.timestamp}</span></div>
+                <div style="font-size: 14px; font-weight: bold; margin-bottom: 3px;">#${escapeInventoryHtml(log.logId)}</div>
+                <div style="font-size: 11px;">تاريخ: <span dir="ltr">${escapeInventoryHtml(log.timestamp)}</span></div>
             </div>
             
             <div class="info-row">
-                <span><i class="fa-solid fa-boxes-packing" style="color:#000; margin-left:4px;"></i><b>من:</b> ${log.from}</span>
-                <span><i class="fa-solid fa-location-dot" style="color:#000; margin-left:4px;"></i><b>إلى:</b> ${log.to}</span>
+                <span><i class="fa-solid fa-boxes-packing" style="color:#000; margin-left:4px;"></i><b>من:</b> ${escapeInventoryHtml(log.from)}</span>
+                <span><i class="fa-solid fa-location-dot" style="color:#000; margin-left:4px;"></i><b>إلى:</b> ${escapeInventoryHtml(log.to)}</span>
             </div>
             
             <table>
@@ -16870,7 +17000,7 @@ window.reprintInvLog = function(logId) {
                 </tbody>
             </table>
             
-            ${log.notes ? `<div class="notes"><i class="fa-solid fa-note-sticky" style="color:#000; margin-left:4px;"></i><b>ملاحظات:</b> ${log.notes}</div>` : ''}
+            ${log.notes ? `<div class="notes"><i class="fa-solid fa-note-sticky" style="color:#000; margin-left:4px;"></i><b>ملاحظات:</b> ${escapeInventoryHtml(log.notes)}</div>` : ''}
 
             <div class="footer">
                 Candy Club System<br>
@@ -17385,29 +17515,35 @@ window.togglePermCard = function(label) {
 // Overrides
 // ==========================================
 
-function fetchInventoryLogs(callback = null, query = "") {
-    let tbody = document.getElementById('invArchiveTableBody');
-    
-    let url = GOOGLE_SHEETS_URL + "?action=getInventoryLogs"; 
-    if (query !== "") {
-        url += `&q=${encodeURIComponent(query)}`;
+async function fetchInventoryLogs(callback = null, query = "") {
+    const tbody = document.getElementById('invArchiveTableBody');
+    try {
+        let request = supabase.from('inventory_logs').select('*').order('created_at', { ascending: false }).order('id', { ascending: false });
+        if (query) {
+            let logId = String(query).trim().toUpperCase();
+            if (/^\d+$/.test(logId)) logId = 'TRX-' + logId.padStart(6, '0');
+            else if (!logId.startsWith('TRX-')) logId = 'TRX-' + logId;
+            request = request.eq('log_id', logId);
+        }
+        const { data } = await fetchAllSupabaseRows(request);
+        const logs = (data || []).map(log => ({ logId: log.log_id, from: log.from_location, to: log.to_location, regName: log.reg_name, timestamp: log.timestamp, items: log.items, notes: log.notes, createdAt: log.created_at }));
+        if (query) {
+            // Keep the full archive and statistics intact when looking up an older permit.
+            const merged = new Map((window.invLogsData || []).map(log => [log.logId, log]));
+            logs.forEach(log => merged.set(log.logId, log));
+            window.invLogsData = Array.from(merged.values());
+        } else {
+            window.invLogsData = logs;
+            try { renderInventoryDashboard(logs); } catch (e) { console.error('Dash Error:', e); }
+        }
+        if (typeof callback === 'function') callback(logs);
+        else filterAndRenderArchive();
+        return logs;
+    } catch (error) {
+        console.error(error);
+        if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#ef4444; padding:15px;">تعذر تحميل الأذونات. حاول مرة أخرى.</td></tr>';
+        return null;
     }
-
-    fetch(url)
-        .then(res => res.json())
-        .then(data => {
-            // The interceptor might wrap the response in { success: true, data: [...] }
-            let actualData = data.data ? data.data : data; 
-            window.invLogsData = actualData;
-            try { if (query === "") renderInventoryDashboard(actualData); } catch(e) { console.error('Dash Error:', e); }
-            if (typeof callback === 'function') callback(data);
-        })
-        .catch(err => {
-            console.error(err);
-            if (tbody) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#ef4444; padding:15px;">خطأ في تحميل البيانات</td></tr>';
-            }
-        });
 }
 
 function filterAndRenderArchive() {
@@ -17417,8 +17553,8 @@ function filterAndRenderArchive() {
 
     if (q !== '') {
         // Server side search for ID
-        fetchInventoryLogs(() => {
-            renderInventoryArchive(window.invLogsData);
+        fetchInventoryLogs(logs => {
+            renderInventoryArchive(dateQ ? logs.filter(log => getInventoryLogMonth(log) === dateQ) : logs);
         }, q);
         return;
     }
@@ -17428,13 +17564,11 @@ function filterAndRenderArchive() {
         return;
     }
 
-    setTimeout(() => {
-        let filtered = window.invLogsData || [];
-        if (dateQ !== '') {
-            filtered = filtered.filter(log => String(log.timestamp).startsWith(dateQ));
-        }
-        renderInventoryArchive(filtered);
-    }, 150);
+    let filtered = window.invLogsData || [];
+    if (dateQ !== '') {
+        filtered = filtered.filter(log => getInventoryLogMonth(log) === dateQ);
+    }
+    renderInventoryArchive(filtered);
 }
 
 window.reprintInvLog = function(logId) {
@@ -17444,38 +17578,25 @@ window.reprintInvLog = function(logId) {
     }
     let log = window.invLogsData.find(l => l.logId === logId);
     if (!log) {
-        fetchInventoryLogs(() => window.reprintInvLog(logId), logId);
+        fetchInventoryLogs(logs => {
+            if (logs.length) window.reprintInvLog(logId);
+            else showToast('لم يتم العثور على الإذن.', 'warning');
+        }, logId);
         return;
     }
     
-    let itemsArr = [];
-    try {
-        itemsArr = JSON.parse(log.items);
-    } catch(e) {
-        if (log.items) {
-            let parts = log.items.split("|");
-            itemsArr = parts.map(p => {
-                let match = p.trim().match(/(.*?)\s+\((\d+)\)(?:\s*\[باركود:\s*(.*?)\])?(?:\s*\[صلاحية:\s*(.*?)\])?/);
-                if (match) {
-                    let name = match[1].trim();
-                    let qty = match[2];
-                    let barcode = match[3] ? match[3].replace(']', '').trim() : '';
-                    let expiry = match[4] ? match[4].replace(']', '').trim() : '';
-                    return { name, qty, barcode, expiry };
-                }
-                return { name: p.trim(), qty: 1, barcode: '', expiry: '' };
-            });
-        }
-    }
-    
+    let itemsArr;
+    try { itemsArr = parseInventoryLogItems(log.items); }
+    catch (error) { showToast(error.message, 'error'); return; }
+
     let itemsHtml = itemsArr.map(item => `
         <tr style="border-bottom: 1px dashed #000;">
             <td style="text-align: right; padding: 6px 4px; vertical-align: top;">
-                <div style="font-weight: bold; font-size: 13px; line-height: 1.3; word-break: break-word; white-space: normal; color: #000;">${item.name}</div>
-                ${item.barcode ? `<div style="font-family: monospace; font-size: 11px; font-weight: bold; color: #000; letter-spacing: 0.5px; margin-top: 2px;">${item.barcode}</div>` : ''}
-                    ${item.expiry ? `<div style="font-size: 11px; font-weight: bold; color: #000; margin-top: 2px;">الصلاحية: ${item.expiry}</div>` : ''}
+                <div style="font-weight: bold; font-size: 13px; line-height: 1.3; word-break: break-word; white-space: normal; color: #000;">${escapeInventoryHtml(item.name)}</div>
+                ${item.barcode ? `<div style="font-family: monospace; font-size: 11px; font-weight: bold; color: #000; letter-spacing: 0.5px; margin-top: 2px;">${escapeInventoryHtml(item.barcode)}</div>` : ''}
+                    ${item.expiry ? `<div style="font-size: 11px; font-weight: bold; color: #000; margin-top: 2px;">الصلاحية: ${escapeInventoryHtml(item.expiry)}</div>` : ''}
                 </td>
-            <td style="text-align: center; padding: 6px 4px; vertical-align: top; font-weight: bold; font-size: 14px; color: #000; width: 45px;">${item.qty}</td>
+            <td style="text-align: center; padding: 6px 4px; vertical-align: top; font-weight: bold; font-size: 14px; color: #000; width: 45px;">${escapeInventoryHtml(item.qty)}</td>
         </tr>
     `).join('');
     
@@ -17488,7 +17609,7 @@ window.reprintInvLog = function(logId) {
     let html = `
         <html dir="rtl" lang="ar">
         <head>
-            <title>إذن مخزن #${log.logId}</title>
+            <title>إذن مخزن #${escapeInventoryHtml(log.logId)}</title>
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
             <style>
                 @page { margin: 5mm; }
@@ -17506,13 +17627,13 @@ window.reprintInvLog = function(logId) {
         <body>
             <div class="receipt-header">
                 <h2 class="receipt-title">إذن حركة مخازن</h2>
-                <div style="font-size: 14px; font-weight: bold; margin-bottom: 3px;">#${log.logId}</div>
-                <div style="font-size: 11px;">تاريخ: <span dir="ltr">${log.timestamp}</span></div>
+                <div style="font-size: 14px; font-weight: bold; margin-bottom: 3px;">#${escapeInventoryHtml(log.logId)}</div>
+                <div style="font-size: 11px;">تاريخ: <span dir="ltr">${escapeInventoryHtml(log.timestamp)}</span></div>
             </div>
             
             <div class="info-row">
-                <span><i class="fa-solid fa-boxes-packing" style="color:#000; margin-left:4px;"></i><b>من:</b> ${log.from}</span>
-                <span><i class="fa-solid fa-location-dot" style="color:#000; margin-left:4px;"></i><b>إلى:</b> ${log.to}</span>
+                <span><i class="fa-solid fa-boxes-packing" style="color:#000; margin-left:4px;"></i><b>من:</b> ${escapeInventoryHtml(log.from)}</span>
+                <span><i class="fa-solid fa-location-dot" style="color:#000; margin-left:4px;"></i><b>إلى:</b> ${escapeInventoryHtml(log.to)}</span>
             </div>
             
             <div class="info-row" style="margin-top:3px;">
@@ -17531,7 +17652,7 @@ window.reprintInvLog = function(logId) {
                 </tbody>
             </table>
             
-            ${log.notes ? `<div class="notes"><i class="fa-solid fa-note-sticky" style="color:#000; margin-left:4px;"></i><b>ملاحظات:</b> ${log.notes}</div>` : ''}
+            ${log.notes ? `<div class="notes"><i class="fa-solid fa-note-sticky" style="color:#000; margin-left:4px;"></i><b>ملاحظات:</b> ${escapeInventoryHtml(log.notes)}</div>` : ''}
 
             <div class="footer">
                 Candy Club System<br>
