@@ -4365,14 +4365,66 @@
             }).join('');
         },
 
-        async exportCustomerCatalogPDF() {
+        // 📄 المساعد الذكي لتوليد اسم ملف PDF فريد يمنع أي تعارض عند التنزيل المتكرر في نفس اليوم
+        getCatalogPdfFileInfo(dateFormattedNumeric) {
+            const key = `cc_gifts_catalog_pdf_export_count_${dateFormattedNumeric}`;
+            let counter = 0;
+            try {
+                counter = parseInt(localStorage.getItem(key) || '0', 10);
+                counter += 1;
+                localStorage.setItem(key, String(counter));
+            } catch(e) {
+                counter = 1;
+            }
+
+            const now = new Date();
+            let hours = now.getHours();
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'م' : 'ص';
+            hours = hours % 12 || 12;
+            const timeFormatted = `${hours}-${minutes}${ampm}`;
+
+            let baseName = `كتالوج-هدايا-كاندي-كلوب-${dateFormattedNumeric}`;
+            let counterLabel = '';
+            if (counter > 1) {
+                baseName += `-(إصدار-${counter})-[${timeFormatted}]`;
+                counterLabel = ` - إصدار ${counter} (${timeFormatted})`;
+            }
+
+            return {
+                fileName: `${baseName}.pdf`,
+                baseName: baseName,
+                counter: counter,
+                counterLabel: counterLabel,
+                timeFormatted: timeFormatted,
+                fullDateTitle: `كتالوج هدايا كاندي كلوب بتاريخ ${dateFormattedNumeric}${counterLabel}`
+            };
+        },
+
+        // التأكد من توفر مكتبة html2pdf للتحميل والمشاركة المباشرة
+        async ensureHtml2Pdf() {
+            if (typeof window.html2pdf === 'function') return true;
+            return new Promise((resolve) => {
+                const existing = document.querySelector('script[src*="html2pdf"]');
+                if (existing && typeof window.html2pdf === 'function') return resolve(true);
+                const s = document.createElement('script');
+                s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+                s.onload = () => resolve(true);
+                s.onerror = () => resolve(false);
+                document.head.appendChild(s);
+            });
+        },
+
+        // 🌟 النظام المتطور لتصدير ومشاركة وتحميل كتالوج الهدايا الفاخر
+        // mode: 'preview' (معاينة وطباعة) | 'download' (تحميل مباشر PDF) | 'share' (مشاركة واتساب)
+        async exportCustomerCatalogPDF(mode = 'preview') {
             const catalogBouquets = this.state.bouquets.filter(b => b.status !== 'disassembled');
             if (catalogBouquets.length === 0) {
                 this.showToastNotification("لا توجد بوكيهات مسجلة حالياً لعرضها في كتالوج العملاء");
                 return;
             }
 
-            // تجهيز التواريخ واسم الملف المطلوب
+            // 1. تجهيز التواريخ واسم الملف المطلوب والعداد الذكي لمنع التعارض
             const now = new Date();
             const day = String(now.getDate()).padStart(2, '0');
             const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -4383,9 +4435,11 @@
                 month: 'long',
                 day: 'numeric'
             });
-            const catalogPdfTitle = `كتالوج هدايا كاندي كلوب بتاريخ ${dateFormattedNumeric}`;
 
-            // إظهار نافذة التحميل المسبق لمنع خروج أي صور فارغة
+            const fileInfo = this.getCatalogPdfFileInfo(dateFormattedNumeric);
+            const catalogPdfTitle = fileInfo.fullDateTitle;
+
+            // 2. إظهار نافذة التحميل المسبق لمنع خروج أي صور فارغة
             const loadingModal = document.getElementById('gifts-catalog-loading-modal');
             const loadingStatus = document.getElementById('gifts-catalog-loading-status');
             const loadingProgress = document.getElementById('gifts-catalog-loading-progress');
@@ -4400,14 +4454,13 @@
                 loadingModal.style.display = 'flex';
             }
 
-            // 1. تحويل الروابط وفحص وتحميل الصور بالكامل مسبقاً في ذاكرة المتصفح
+            // 3. تحويل الروابط وفحص وتحميل الصور بالكامل مسبقاً في ذاكرة المتصفح
             let loadedImagesCount = 0;
             const totalBouquets = catalogBouquets.length;
 
             const resolvedBouquets = await Promise.all(catalogBouquets.map(async (b) => {
                 let photoSrc = b.image_url || '';
 
-                // تحويل أي رابط Google Drive تلقائياً إلى رابط مباشر عالي السرعة من CDN جوجل
                 if (photoSrc) {
                     const driveMatch = photoSrc.match(/id=([a-zA-Z0-9_-]+)/) || photoSrc.match(/\/d\/([a-zA-Z0-9_-]+)/);
                     if (driveMatch && driveMatch[1]) {
@@ -4452,92 +4505,857 @@
                 };
             }));
 
-            if (loadingStatus) loadingStatus.textContent = 'تم تجهيز جميع الصور بنجاح! جاري فتح الكتالوج للطباعة والتصدير...';
-            await new Promise(r => setTimeout(r, 350));
-            if (loadingModal) loadingModal.style.display = 'none';
+            if (loadingStatus) {
+                loadingStatus.textContent = (mode === 'share') ? 'جاري تجهيز الكتالوج للمشاركة مع العميل...' :
+                    (mode === 'download') ? 'جاري إنشاء ملف PDF وتنزيله مباشرة...' :
+                    'تم تجهيز الصور بنجاح! جاري فتح الكتالوج...';
+            }
+            await new Promise(r => setTimeout(r, 250));
 
-            // مسار لوجو كاندي كلوب المعتمد للطباعة
+            // مسار لوجو كاندي كلوب المعتمد
             const logoSrc = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '') + '/images/Logo-print.png';
 
-            // 2. تجهيز كروت البوكيهات بتنسيق A4 مريح ومضغوط (3 كروت في الصف)
-            const cardsHtml = resolvedBouquets.map(b => {
-                const isReady = (b.status === 'ready');
-                const badgeText = isReady ? 'متوفر فوري بالفرع' : 'يُنفذ حسب الطلب';
-                const badgeIcon = isReady ? 'fa-bolt' : 'fa-clock';
-                const badgeClass = isReady ? 'badge-ready' : 'badge-custom';
-                const cardClass = isReady ? 'card-ready' : 'card-custom';
+            // 4. تقسيم الكروت بذكاء صارم: بالضبط 6 بوكيهات في كل صفحة (3 كروت في صفين)
+            // مقاسات مدروسة بالملليمتر لمنع انقسام أي كارت أو ظهور مساحات بيضاء فارغة
+            const itemsPerPage = 6;
+            const totalPages = Math.ceil(resolvedBouquets.length / itemsPerPage);
+            let pagesHtml = '';
 
-                const statusText = isReady ? 'جاهز للتسليم الفوري' : 'متاح للتنفيذ خلال 3 - 6 ساعات';
-                const statusDotClass = isReady ? 'dot-ready' : 'dot-custom';
-                const statusBadgeClass = isReady ? 'status-ready' : 'status-custom';
+            for (let pageIdx = 0; pageIdx < totalPages; pageIdx++) {
+                const pageBouquets = resolvedBouquets.slice(pageIdx * itemsPerPage, (pageIdx + 1) * itemsPerPage);
+                const isFirstPage = (pageIdx === 0);
+                const isLastPage = (pageIdx === totalPages - 1);
 
-                const imgTag = b.resolvedPhotoSrc ?
-                    `<div class="catalog-card-media">
-                        <img src="${b.resolvedPhotoSrc}" alt="${this.escapeHtml(b.name)}" loading="eager" decoding="sync" onerror="this.src='https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=600&q=80'">
-                        <div class="catalog-card-badge ${badgeClass}"><i class="fa-solid ${badgeIcon}"></i> ${badgeText}</div>
-                     </div>` :
-                    `<div class="catalog-card-media catalog-card-noimg">
-                        <i class="fa-solid fa-gift"></i>
-                        <span>كاندي كلوب • باقة فاخرة</span>
-                        <div class="catalog-card-badge ${badgeClass}"><i class="fa-solid ${badgeIcon}"></i> ${badgeText}</div>
-                     </div>`;
-
-                const items = b.items || [];
-                const maxItemsToShow = 3;
-                let itemsPills = '';
-                if (items.length > 0) {
-                    const mainPills = items.slice(0, maxItemsToShow).map(item => `
-                        <span class="catalog-pill">
-                            <strong class="catalog-pill-qty">${item.qty}×</strong>
-                            <span class="catalog-pill-name">${this.escapeHtml(item.name)}</span>
-                        </span>
-                    `).join('');
-                    const remaining = items.length - maxItemsToShow;
-                    const morePill = remaining > 0 ? `<span class="catalog-pill-more">+${remaining} أصناف إضافية</span>` : '';
-                    itemsPills = mainPills + morePill;
-                } else {
-                    itemsPills = '<span class="catalog-pill-empty">تشكيلة شوكولاتة وحلويات مختارة بعناية</span>';
-                }
-
-                return `
-                    <div class="catalog-card ${cardClass}">
-                        ${imgTag}
-                        <div class="catalog-card-content">
-                            <h3 class="catalog-card-title">${this.escapeHtml(b.name)}</h3>
-                            
-                            <div class="catalog-items-section">
-                                <div class="catalog-items-title">
-                                    <i class="fa-solid fa-boxes-stacked"></i> المحتويات:
-                                </div>
-                                <div class="catalog-pills-wrap">
-                                    ${itemsPills}
-                                </div>
+                // هيدر الصفحة الأولى (هيدر كامل ورسمي مع اللوجو)
+                // هيدر الصفحات اللاحقة (هيدر مدمج وأنيق يوضح البراند ورقم الصفحة)
+                const headerHtml = isFirstPage ? `
+                    <div class="catalog-header">
+                        <div class="catalog-brand-wrap">
+                            <img src="${logoSrc}" alt="Candy Club" class="catalog-brand-logo" onerror="this.style.display='none'">
+                            <div>
+                                <h1 class="catalog-title">كاندي كلوب - Candy Club</h1>
+                                <p class="catalog-sub">كتالوج بوكيهات وتصاميم الهدايا الفاخرة</p>
                             </div>
+                        </div>
+                        <div class="catalog-date-badge">
+                            <span class="date-label"><i class="fa-regular fa-calendar-check"></i> تاريخ الإصدار: ${dateFormattedArabic}</span>
+                            <span class="date-sub">(${dateFormattedNumeric}${fileInfo.counterLabel}) - فروع كاندي كلوب الرسمية</span>
+                        </div>
+                    </div>
+                ` : `
+                    <div class="catalog-mini-header">
+                        <div class="mini-brand"><i class="fa-solid fa-gift"></i> كاندي كلوب - Candy Club | كتالوج الهدايا الفاخرة</div>
+                        <div class="mini-page-num">${dateFormattedNumeric}${fileInfo.counterLabel} • صفحة ${pageIdx + 1} من ${totalPages}</div>
+                    </div>
+                `;
 
-                            <div class="catalog-card-footer">
-                                <div class="catalog-price-box">
-                                    <span class="catalog-price-label">السعر:</span>
-                                    <div class="catalog-price-val">
-                                        ${Number(b.total_price).toFixed(2)} <span class="currency">ج.م</span>
+                // توليد كروت هذه الصفحة
+                const cardsHtml = pageBouquets.map(b => {
+                    const isReady = (b.status === 'ready');
+                    const badgeText = isReady ? 'متوفر فوري بالفرع' : 'يُنفذ حسب الطلب';
+                    const badgeIcon = isReady ? 'fa-bolt' : 'fa-clock';
+                    const badgeClass = isReady ? 'badge-ready' : 'badge-custom';
+                    const cardClass = isReady ? 'card-ready' : 'card-custom';
+
+                    const statusText = isReady ? 'جاهز للتسليم الفوري' : 'متاح للتنفيذ خلال 3 - 6 ساعات';
+                    const statusDotClass = isReady ? 'dot-ready' : 'dot-custom';
+                    const statusBadgeClass = isReady ? 'status-ready' : 'status-custom';
+
+                    // ميزة object-fit: contain تضمن ظهور البوكيه بالكامل بدون أي قص لقمة أو قاعدة الصورة
+                    const imgTag = b.resolvedPhotoSrc ?
+                        `<div class="catalog-card-media">
+                            <img src="${b.resolvedPhotoSrc}" alt="${this.escapeHtml(b.name)}" loading="eager" decoding="sync" onerror="this.src='https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=600&q=80'">
+                            <div class="catalog-card-badge ${badgeClass}"><i class="fa-solid ${badgeIcon}"></i> ${badgeText}</div>
+                         </div>` :
+                        `<div class="catalog-card-media catalog-card-noimg">
+                            <i class="fa-solid fa-gift"></i>
+                            <span>كاندي كلوب • باقة فاخرة</span>
+                            <div class="catalog-card-badge ${badgeClass}"><i class="fa-solid ${badgeIcon}"></i> ${badgeText}</div>
+                         </div>`;
+
+                    const items = b.items || [];
+                    const maxItemsToShow = 3;
+                    let itemsPills = '';
+                    if (items.length > 0) {
+                        const mainPills = items.slice(0, maxItemsToShow).map(item => `
+                            <span class="catalog-pill">
+                                <strong class="catalog-pill-qty">${item.qty}×</strong>
+                                <span class="catalog-pill-name">${this.escapeHtml(item.name)}</span>
+                            </span>
+                        `).join('');
+                        const remaining = items.length - maxItemsToShow;
+                        const morePill = remaining > 0 ? `<span class="catalog-pill-more">+${remaining} أصناف إضافية</span>` : '';
+                        itemsPills = mainPills + morePill;
+                    } else {
+                        itemsPills = '<span class="catalog-pill-empty">تشكيلة شوكولاتة وحلويات مختارة بعناية</span>';
+                    }
+
+                    return `
+                        <div class="catalog-card ${cardClass}">
+                            ${imgTag}
+                            <div class="catalog-card-content">
+                                <h3 class="catalog-card-title">${this.escapeHtml(b.name)}</h3>
+                                
+                                <div class="catalog-items-section">
+                                    <div class="catalog-items-title">
+                                        <i class="fa-solid fa-boxes-stacked"></i> المحتويات:
+                                    </div>
+                                    <div class="catalog-pills-wrap">
+                                        ${itemsPills}
                                     </div>
                                 </div>
-                                <div class="catalog-status-badge ${statusBadgeClass}">
-                                    <span class="catalog-status-dot ${statusDotClass}"></span> ${statusText}
+
+                                <div class="catalog-card-footer">
+                                    <div class="catalog-price-box">
+                                        <span class="catalog-price-label">السعر:</span>
+                                        <div class="catalog-price-val">
+                                            ${Number(b.total_price).toFixed(2)} <span class="currency">ج.م</span>
+                                        </div>
+                                    </div>
+                                    <div class="catalog-status-badge ${statusBadgeClass}">
+                                        <span class="catalog-status-dot ${statusDotClass}"></span> ${statusText}
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                    `;
+                }).join('');
+
+                // فوتر الصفحة الأخيرة (التنبيه والملاحظات الرسمية)
+                const footerHtml = isLastPage ? `
+                    <div class="catalog-footer">
+                        <div class="catalog-footer-warning">
+                            ⚠️ ملاحظة وتنبيه رسمي: موديلات وبوكيهات كاندي كلوب وأسعارها موثقة ومعتمدة بتاريخ هذا الكتالوج (${dateFormattedNumeric}) وتخضع لتوفر المكونات والأصناف بالفرع وقت الطلب.
+                        </div>
+                        <div class="catalog-footer-sub">
+                            كاندي كلوب - تصاميم حصرية وشوكولاتة وهدايا أصلية 100% | للطلب والحجز والاستفسار يرجى التواصل مع خدمة العملاء
+                        </div>
+                    </div>
+                ` : '';
+
+                pagesHtml += `
+                    <div class="catalog-page page-${pageIdx + 1}">
+                        ${headerHtml}
+                        <div class="catalog-grid">
+                            ${cardsHtml}
+                        </div>
+                        ${footerHtml}
                     </div>
                 `;
-            }).join('');
+            }
 
-            // 3. فتح نافذة الطباعة المنبثقة
-            const printWindow = window.open('', '_blank', 'width=1100,height=900');
+            // 5. كود CSS المتكامل مع حل مشكلة القص والهوامش والتصدير
+            const standaloneCss = `
+                :root {
+                    --primary: #BE185D;
+                    --primary-light: #E91E8C;
+                    --primary-soft: #FFF1F2;
+                    --primary-border: #FBCFE8;
+                    --text-main: #0F172A;
+                    --text-muted: #64748B;
+                    --bg-page: #F8FAFC;
+                    --card-bg: #FFFFFF;
+                }
+                * {
+                    box-sizing: border-box;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }
+                body {
+                    font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+                    margin: 0;
+                    padding: 0;
+                    background: var(--bg-page);
+                    color: var(--text-main);
+                    direction: rtl;
+                }
+
+                /* Floating Top Bar (Hidden on Print) */
+                .screen-toolbar {
+                    position: sticky;
+                    top: 0;
+                    z-index: 1000;
+                    background: #0F172A;
+                    color: #FFFFFF;
+                    padding: 12px 20px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+                    gap: 12px;
+                    flex-wrap: wrap;
+                }
+                .toolbar-info {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
+                }
+                .toolbar-title {
+                    font-size: 0.98rem;
+                    font-weight: 800;
+                    color: #F43F5E;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+                .toolbar-tip {
+                    font-size: 0.78rem;
+                    color: #94A3B8;
+                }
+                .toolbar-btns {
+                    display: flex;
+                    gap: 8px;
+                    align-items: center;
+                    flex-wrap: wrap;
+                }
+                .btn-toolbar {
+                    padding: 8px 16px;
+                    border-radius: 8px;
+                    font-family: inherit;
+                    font-size: 0.86rem;
+                    font-weight: 700;
+                    cursor: pointer;
+                    border: none;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    transition: all 0.2s;
+                }
+                .btn-share {
+                    background: #25D366;
+                    color: #FFFFFF;
+                    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.35);
+                }
+                .btn-share:hover { filter: brightness(1.1); transform: scale(1.02); }
+                .btn-download {
+                    background: #0284c7;
+                    color: #FFFFFF;
+                    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
+                }
+                .btn-download:hover { filter: brightness(1.1); transform: scale(1.02); }
+                .btn-print {
+                    background: linear-gradient(135deg, #E91E8C, #BE185D);
+                    color: #FFFFFF;
+                    box-shadow: 0 4px 12px rgba(233, 30, 140, 0.35);
+                }
+                .btn-print:hover { filter: brightness(1.1); transform: scale(1.02); }
+                .btn-close {
+                    background: rgba(255,255,255,0.12);
+                    color: #FFFFFF;
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                }
+                .btn-close:hover { background: rgba(255,255,255,0.22); }
+
+                .catalog-container {
+                    max-width: 1050px;
+                    margin: 0 auto;
+                    padding: 20px 18px;
+                }
+
+                /* Page Wrapper (Screen View) */
+                .catalog-page {
+                    background: #FFFFFF;
+                    border-radius: 16px;
+                    padding: 16px;
+                    margin-bottom: 25px;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+                    border: 1px solid #F1F5F9;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: flex-start;
+                }
+
+                /* Header */
+                .catalog-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 12px 18px;
+                    background: linear-gradient(135deg, #FFF1F2 0%, #FDF2F8 60%, #FFFFFF 100%);
+                    border-radius: 12px;
+                    border: 1.5px solid var(--primary-border);
+                    margin-bottom: 14px;
+                    box-shadow: 0 4px 14px rgba(233, 30, 140, 0.05);
+                }
+                .catalog-brand-wrap {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                }
+                .catalog-brand-logo {
+                    width: 50px;
+                    height: 50px;
+                    object-fit: contain;
+                    border-radius: 10px;
+                }
+                .catalog-title {
+                    font-size: 19px;
+                    font-weight: 900;
+                    color: #831843;
+                    margin: 0 0 2px 0;
+                    letter-spacing: -0.5px;
+                }
+                .catalog-sub {
+                    font-size: 11.5px;
+                    font-weight: 700;
+                    color: #BE185D;
+                    margin: 0;
+                }
+                .catalog-date-badge {
+                    background: #FFFFFF;
+                    border: 1.5px solid #FBCFE8;
+                    border-radius: 10px;
+                    padding: 6px 14px;
+                    text-align: right;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
+                }
+                .catalog-date-badge .date-label {
+                    font-size: 0.82rem;
+                    font-weight: 900;
+                    color: #831843;
+                }
+                .catalog-date-badge .date-sub {
+                    font-size: 0.72rem;
+                    color: #BE185D;
+                    font-weight: 700;
+                }
+
+                /* Running Mini Header on Subsequent Pages */
+                .catalog-mini-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 8px 12px;
+                    margin-bottom: 12px;
+                    border-bottom: 1.5px solid #FBCFE8;
+                    color: #831843;
+                    font-weight: 800;
+                    font-size: 0.82rem;
+                }
+                .catalog-mini-header .mini-brand {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                }
+
+                /* 3-Column Dense Grid */
+                .catalog-grid {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 12px;
+                    width: 100%;
+                }
+
+                /* Card */
+                .catalog-card {
+                    background: var(--card-bg);
+                    border-radius: 12px;
+                    overflow: hidden;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                    border: 1.5px solid #FBCFE8;
+                    box-shadow: 0 2px 10px rgba(233, 30, 140, 0.05);
+                    break-inside: avoid !important;
+                    page-break-inside: avoid !important;
+                    transition: transform 0.2s;
+                }
+                .catalog-card.card-ready { border-color: #F472B6; }
+                .catalog-card.card-custom { border-color: #CBD5E1; background: #FAF9FC; }
+
+                /* Media Container: حل مشكلة قص الصور (object-fit: contain يظهر البوكيه كاملاً) */
+                .catalog-card-media {
+                    position: relative;
+                    width: 100%;
+                    height: 200px;
+                    background: #FFF5F9;
+                    overflow: hidden;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-bottom: 1px solid var(--primary-border);
+                    padding: 4px;
+                    box-sizing: border-box;
+                }
+                .catalog-card-media img {
+                    max-width: 100%;
+                    max-height: 100%;
+                    width: auto;
+                    height: auto;
+                    object-fit: contain !important;
+                    object-position: center;
+                    display: block;
+                    margin: auto;
+                    border-radius: 8px;
+                }
+                .catalog-card-noimg {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 6px;
+                    color: #BE185D;
+                    font-size: 0.78rem;
+                    font-weight: 700;
+                }
+                .catalog-card-noimg i {
+                    font-size: 2rem;
+                    opacity: 0.7;
+                }
+                .catalog-card-badge {
+                    position: absolute;
+                    top: 6px;
+                    right: 6px;
+                    font-size: 0.7rem;
+                    font-weight: 800;
+                    padding: 3px 7px;
+                    border-radius: 5px;
+                    color: #FFFFFF;
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.22);
+                    z-index: 2;
+                }
+                .catalog-card-badge.badge-ready { background: #059669; }
+                .catalog-card-badge.badge-custom { background: #7C3AED; }
+
+                /* Content */
+                .catalog-card-content {
+                    padding: 8px 10px;
+                    display: flex;
+                    flex-direction: column;
+                    flex: 1;
+                    justify-content: space-between;
+                }
+                .catalog-card-title {
+                    font-size: 0.9rem;
+                    font-weight: 800;
+                    color: #0F172A;
+                    margin: 0 0 5px 0;
+                    line-height: 1.3;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                .catalog-items-section {
+                    background: #FFF5F9;
+                    border: 1px solid #FCE7F3;
+                    border-radius: 6px;
+                    padding: 4px 6px;
+                    margin-bottom: 6px;
+                }
+                .catalog-items-title {
+                    font-size: 0.68rem;
+                    font-weight: 800;
+                    color: #BE185D;
+                    margin-bottom: 2px;
+                    display: flex;
+                    align-items: center;
+                    gap: 3px;
+                }
+                .catalog-pills-wrap {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 3px;
+                    max-height: 48px;
+                    overflow: hidden;
+                }
+                .catalog-pill {
+                    background: #FFFFFF;
+                    border: 1px solid #FBCFE8;
+                    border-radius: 4px;
+                    padding: 1px 4px;
+                    font-size: 0.66rem;
+                    color: #475569;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 2px;
+                    white-space: nowrap;
+                }
+                .catalog-pill-qty { color: #BE185D; font-weight: 800; }
+                .catalog-pill-more { font-size: 0.64rem; color: #831843; font-weight: 800; padding: 1px 3px; }
+                .catalog-pill-empty { font-size: 0.68rem; color: #64748B; font-style: italic; }
+
+                /* Card Footer */
+                .catalog-card-footer {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding-top: 5px;
+                    border-top: 1px dashed #FCE7F3;
+                }
+                .catalog-price-box { display: flex; flex-direction: column; }
+                .catalog-price-label { font-size: 0.64rem; color: #64748B; font-weight: 700; }
+                .catalog-price-val { font-size: 1.15rem; font-weight: 900; color: #BE185D; line-height: 1; }
+                .catalog-price-val .currency { font-size: 0.68rem; font-weight: 800; }
+                .catalog-status-badge {
+                    font-size: 0.68rem;
+                    font-weight: 800;
+                    padding: 2px 5px;
+                    border-radius: 4px;
+                    display: flex;
+                    align-items: center;
+                    gap: 3px;
+                }
+                .catalog-status-badge.status-ready { background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0; }
+                .catalog-status-badge.status-custom { background: #F5F3FF; color: #7C3AED; border: 1px solid #DDD6FE; }
+                .catalog-status-dot { width: 5px; height: 5px; border-radius: 50%; }
+                .catalog-status-dot.dot-ready { background: #059669; }
+                .catalog-status-dot.dot-custom { background: #7C3AED; }
+
+                /* Footer */
+                .catalog-footer {
+                    margin-top: 14px;
+                    padding-top: 10px;
+                    border-top: 1.5px solid var(--primary-border);
+                    text-align: center;
+                }
+                .catalog-footer-warning {
+                    color: #B91C1C;
+                    font-size: 0.76rem;
+                    font-weight: 800;
+                    margin-bottom: 3px;
+                }
+                .catalog-footer-sub {
+                    font-size: 0.72rem;
+                    color: #64748B;
+                    font-weight: 600;
+                }
+
+                /* إعدادات الطباعة الدقيقة: إزالة روابط about:blank وتثبيت كل صفحة بدقة A4 */
+                @page {
+                    size: A4 portrait;
+                    margin: 6mm 8mm 6mm 8mm;
+                }
+                @page :left {
+                    @top-left { content: none !important; }
+                    @top-right { content: none !important; }
+                    @bottom-left { content: none !important; }
+                    @bottom-right { content: none !important; }
+                }
+                @page :right {
+                    @top-left { content: none !important; }
+                    @top-right { content: none !important; }
+                    @bottom-left { content: none !important; }
+                    @bottom-right { content: none !important; }
+                }
+
+                @media print {
+                    .screen-toolbar { display: none !important; }
+                    html, body {
+                        width: 210mm !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        background: #ffffff !important;
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
+                    .catalog-container {
+                        width: 100% !important;
+                        max-width: 100% !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                    }
+                    /* كل صفحة مطبوعة بحسابات دقيقة A4 تملأ الصفحة بالكامل وتمنع أي انقسام للكروت */
+                    .catalog-page {
+                        width: 100% !important;
+                        height: 280mm !important;
+                        max-height: 280mm !important;
+                        page-break-after: always !important;
+                        break-after: page !important;
+                        page-break-inside: avoid !important;
+                        break-inside: avoid !important;
+                        box-shadow: none !important;
+                        border: none !important;
+                        border-radius: 0 !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                        display: flex !important;
+                        flex-direction: column !important;
+                        justify-content: flex-start !important;
+                        overflow: hidden !important;
+                        box-sizing: border-box !important;
+                    }
+                    .catalog-page:last-child {
+                        page-break-after: auto !important;
+                        break-after: auto !important;
+                    }
+                    .catalog-header {
+                        padding: 4px 10px !important;
+                        margin-bottom: 2.5mm !important;
+                        border-radius: 8px !important;
+                        border: 1.2px solid #FBCFE8 !important;
+                        background: #FFF1F2 !important;
+                        box-shadow: none !important;
+                        height: 25mm !important;
+                        box-sizing: border-box !important;
+                    }
+                    .catalog-brand-logo {
+                        width: 40px !important;
+                        height: 40px !important;
+                    }
+                    .catalog-title {
+                        font-size: 13pt !important;
+                        margin: 0 !important;
+                        color: #831843 !important;
+                        line-height: 1.2 !important;
+                    }
+                    .catalog-sub {
+                        font-size: 8pt !important;
+                        margin: 0 !important;
+                    }
+                    .catalog-date-badge {
+                        padding: 3px 8px !important;
+                        border-radius: 6px !important;
+                    }
+                    .catalog-date-badge .date-label { font-size: 7.5pt !important; }
+                    .catalog-date-badge .date-sub { font-size: 6.5pt !important; }
+                    .catalog-mini-header {
+                        display: flex !important;
+                        justify-content: space-between !important;
+                        align-items: center !important;
+                        padding: 1.5mm 3mm !important;
+                        margin-bottom: 2.5mm !important;
+                        border-bottom: 1.2px solid #FBCFE8 !important;
+                        font-size: 7.5pt !important;
+                        font-weight: 800 !important;
+                        color: #BE185D !important;
+                        height: 8mm !important;
+                        box-sizing: border-box !important;
+                    }
+                    .catalog-grid {
+                        display: grid !important;
+                        grid-template-columns: repeat(3, 1fr) !important;
+                        gap: 3.5mm !important;
+                        width: 100% !important;
+                    }
+                    .catalog-card {
+                        height: 118mm !important;
+                        max-height: 118mm !important;
+                        display: flex !important;
+                        flex-direction: column !important;
+                        justify-content: space-between !important;
+                        break-inside: avoid !important;
+                        page-break-inside: avoid !important;
+                        border-radius: 8px !important;
+                        border: 1.2px solid #FBCFE8 !important;
+                        background: #ffffff !important;
+                        overflow: hidden !important;
+                        box-sizing: border-box !important;
+                        box-shadow: none !important;
+                    }
+                    .catalog-card-media {
+                        height: 62mm !important;
+                        max-height: 62mm !important;
+                        background: #FFF5F9 !important;
+                        border-bottom: 1.2px solid #FCE7F3 !important;
+                        display: flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        padding: 2mm !important;
+                        box-sizing: border-box !important;
+                    }
+                    .catalog-card-media img {
+                        max-width: 100% !important;
+                        max-height: 100% !important;
+                        width: auto !important;
+                        height: auto !important;
+                        object-fit: contain !important;
+                        margin: auto !important;
+                    }
+                    .catalog-card-content {
+                        padding: 2.5mm 3mm !important;
+                        display: flex !important;
+                        flex-direction: column !important;
+                        justify-content: space-between !important;
+                        flex: 1 !important;
+                        box-sizing: border-box !important;
+                    }
+                    .catalog-card-title {
+                        font-size: 9pt !important;
+                        font-weight: 800 !important;
+                        color: #0F172A !important;
+                        margin: 0 0 1.5mm 0 !important;
+                        line-height: 1.2 !important;
+                        white-space: nowrap !important;
+                        overflow: hidden !important;
+                        text-overflow: ellipsis !important;
+                    }
+                    .catalog-items-section {
+                        background: #FFF5F9 !important;
+                        border: 1px solid #FCE7F3 !important;
+                        border-radius: 4px !important;
+                        padding: 1.5mm 2mm !important;
+                        margin-bottom: 1.5mm !important;
+                    }
+                    .catalog-items-title {
+                        font-size: 6.5pt !important;
+                        font-weight: 800 !important;
+                        color: #BE185D !important;
+                        margin-bottom: 0.8mm !important;
+                    }
+                    .catalog-pills-wrap {
+                        display: flex !important;
+                        flex-wrap: wrap !important;
+                        gap: 1.2mm !important;
+                        max-height: 13mm !important;
+                        overflow: hidden !important;
+                    }
+                    .catalog-pill {
+                        font-size: 6.2pt !important;
+                        padding: 0.5mm 1.6mm !important;
+                        border-radius: 3px !important;
+                        border: 1px solid #FBCFE8 !important;
+                        background: #FFFFFF !important;
+                    }
+                    .catalog-card-footer {
+                        display: flex !important;
+                        align-items: center !important;
+                        justify-content: space-between !important;
+                        padding-top: 1.5mm !important;
+                        border-top: 1px dashed #FCE7F3 !important;
+                    }
+                    .catalog-price-val {
+                        font-size: 11pt !important;
+                        font-weight: 900 !important;
+                        color: #BE185D !important;
+                        line-height: 1 !important;
+                    }
+                    .catalog-price-val .currency { font-size: 6.8pt !important; }
+                    .catalog-status-badge {
+                        font-size: 6.5pt !important;
+                        padding: 1mm 2.2mm !important;
+                        border-radius: 4px !important;
+                    }
+                    .catalog-card-badge {
+                        font-size: 6.5pt !important;
+                        padding: 1mm 2.2mm !important;
+                        top: 2mm !important;
+                        right: 2mm !important;
+                    }
+                    .catalog-footer {
+                        margin-top: 2mm !important;
+                        padding-top: 2mm !important;
+                        border-top: 1.2px solid #FBCFE8 !important;
+                        height: 13mm !important;
+                        box-sizing: border-box !important;
+                    }
+                    .catalog-footer-warning {
+                        font-size: 6.8pt !important;
+                        margin-bottom: 1mm !important;
+                    }
+                    .catalog-footer-sub {
+                        font-size: 6.5pt !important;
+                    }
+                }
+
+                @media screen and (max-width: 768px) {
+                    .catalog-grid { grid-template-columns: 1fr; }
+                    .screen-toolbar { flex-direction: column; gap: 10px; text-align: center; }
+                    .catalog-header { flex-direction: column; gap: 10px; text-align: center; }
+                }
+            `;
+
+            // 6. التعامل مع الخيارات: تحميل مباشر أو مشاركة أو معاينة
+            if (mode === 'download' || mode === 'share') {
+                try {
+                    await this.ensureHtml2Pdf();
+                    if (typeof window.html2pdf !== 'function') {
+                        throw new Error("html2pdf library not available");
+                    }
+
+                    // حاوية مؤقتة للرندر السريع بدقة A4
+                    const renderWrapper = document.createElement('div');
+                    renderWrapper.id = 'gifts-catalog-pdf-render-temp';
+                    renderWrapper.style.position = 'fixed';
+                    renderWrapper.style.left = '-9999px';
+                    renderWrapper.style.top = '0';
+                    renderWrapper.style.width = '210mm';
+                    renderWrapper.style.background = '#ffffff';
+                    renderWrapper.style.zIndex = '-9999';
+                    renderWrapper.innerHTML = `
+                        <style>
+                            ${standaloneCss}
+                            .screen-toolbar { display: none !important; }
+                            .catalog-container { padding: 0 !important; max-width: 100% !important; margin: 0 !important; }
+                            .catalog-page { box-shadow: none !important; border: none !important; border-radius: 0 !important; padding: 0 !important; margin: 0 !important; width: 100% !important; height: 280mm !important; max-height: 280mm !important; }
+                        </style>
+                        <div class="catalog-container">
+                            ${pagesHtml}
+                        </div>
+                    `;
+                    document.body.appendChild(renderWrapper);
+
+                    // التأكد من جاهزية الصور
+                    const imgs = Array.from(renderWrapper.querySelectorAll('img'));
+                    await Promise.all(imgs.map(img => (img.decode ? img.decode().catch(() => {}) : Promise.resolve())));
+
+                    const opt = {
+                        margin: [6, 8, 6, 8],
+                        filename: fileInfo.fileName,
+                        image: { type: 'jpeg', quality: 0.96 },
+                        html2canvas: { scale: 2, useCORS: true, logging: false },
+                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                        pagebreak: { mode: ['css', 'legacy'] }
+                    };
+
+                    if (mode === 'download') {
+                        await window.html2pdf().from(renderWrapper).set(opt).save();
+                        renderWrapper.remove();
+                        if (loadingModal) loadingModal.style.display = 'none';
+                        this.showToastNotification(`✅ تم تنزيل ملف الكتالوج (${fileInfo.fileName}) بنجاح!`);
+                        return;
+                    }
+
+                    if (mode === 'share') {
+                        const pdfBlob = await window.html2pdf().from(renderWrapper).set(opt).outputPdf('blob');
+                        renderWrapper.remove();
+                        if (loadingModal) loadingModal.style.display = 'none';
+
+                        const pdfFile = new File([pdfBlob], fileInfo.fileName, { type: 'application/pdf' });
+                        if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+                            await navigator.share({
+                                files: [pdfFile],
+                                title: fileInfo.baseName,
+                                text: `كتالوج بوكيهات وتصاميم الهدايا الفاخرة من كاندي كلوب (${dateFormattedNumeric})`
+                            });
+                            this.showToastNotification("✅ تمت مشاركة الكتالوج مع العميل بنجاح");
+                            return;
+                        } else {
+                            // تنزيل الملف مع فتح واتساب كخيار بديل تلقائي للمتصفحات غير الداعمة
+                            const fileUrl = URL.createObjectURL(pdfBlob);
+                            const a = document.createElement('a');
+                            a.href = fileUrl;
+                            a.download = fileInfo.fileName;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            URL.revokeObjectURL(fileUrl);
+
+                            this.showToastNotification("تم تنزيل الكتالوج PDF. جاري فتح واتساب لإرساله للعميل...");
+                            const waText = encodeURIComponent(`كتالوج بوكيهات كاندي كلوب الفاخرة (${dateFormattedNumeric}) - تم تجهيز ملف PDF ويمكنك إرفاقه بالمحادثة الآن.`);
+                            window.open('https://api.whatsapp.com/send?text=' + waText, '_blank');
+                            return;
+                        }
+                    }
+                } catch(pdfGenErr) {
+                    console.warn("Direct PDF export fallback to preview window:", pdfGenErr);
+                    // في حال حدث أي تعذر يتم فتح نافذة المعاينة والطباعة تلقائياً
+                }
+            }
+
+            if (loadingModal) loadingModal.style.display = 'none';
+
+            // 7. فتح نافذة المعاينة والطباعة المحسنة
+            const printWindow = window.open('', '_blank', 'width=1150,height=920');
             if (!printWindow) {
                 this.showToastNotification("يرجى السماح بالنوافذ المنبثقة لفتح كتالوج العملاء للطباعة والحفظ");
                 return;
             }
 
-            // 4. كتابة كود الصفحة المتكامل
             printWindow.document.write(`
                 <!DOCTYPE html>
                 <html dir="rtl" lang="ar">
@@ -4549,518 +5367,26 @@
                     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
                     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Outfit:wght@500;700;800;900&display=swap" rel="stylesheet">
                     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
                     <style>
-                        :root {
-                            --primary: #BE185D;
-                            --primary-light: #E91E8C;
-                            --primary-soft: #FFF1F2;
-                            --primary-border: #FBCFE8;
-                            --text-main: #0F172A;
-                            --text-muted: #64748B;
-                            --bg-page: #FFFDFE;
-                            --card-bg: #FFFFFF;
-                        }
-                        * {
-                            box-sizing: border-box;
-                            -webkit-print-color-adjust: exact !important;
-                            print-color-adjust: exact !important;
-                        }
-                        body {
-                            font-family: 'Cairo', system-ui, -apple-system, sans-serif;
-                            margin: 0;
-                            padding: 0;
-                            background: var(--bg-page);
-                            color: var(--text-main);
-                            direction: rtl;
-                        }
-
-                        /* Floating Top Bar (Hidden on Print) */
-                        .screen-toolbar {
-                            position: sticky;
-                            top: 0;
-                            z-index: 1000;
-                            background: #0F172A;
-                            color: #FFFFFF;
-                            padding: 12px 24px;
-                            display: flex;
-                            align-items: center;
-                            justify-content: space-between;
-                            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
-                        }
-                        .toolbar-info {
-                            display: flex;
-                            flex-direction: column;
-                            gap: 2px;
-                        }
-                        .toolbar-title {
-                            font-size: 0.98rem;
-                            font-weight: 800;
-                            color: #F43F5E;
-                            display: flex;
-                            align-items: center;
-                            gap: 8px;
-                        }
-                        .toolbar-tip {
-                            font-size: 0.8rem;
-                            color: #94A3B8;
-                        }
-                        .toolbar-btns {
-                            display: flex;
-                            gap: 10px;
-                        }
-                        .btn-toolbar {
-                            padding: 8px 18px;
-                            border-radius: 8px;
-                            font-family: inherit;
-                            font-size: 0.88rem;
-                            font-weight: 700;
-                            cursor: pointer;
-                            border: none;
-                            display: inline-flex;
-                            align-items: center;
-                            gap: 6px;
-                            transition: all 0.2s;
-                        }
-                        .btn-print {
-                            background: linear-gradient(135deg, #E91E8C, #BE185D);
-                            color: #FFFFFF;
-                            box-shadow: 0 4px 12px rgba(233, 30, 140, 0.35);
-                        }
-                        .btn-print:hover { filter: brightness(1.1); transform: scale(1.02); }
-                        .btn-close {
-                            background: rgba(255,255,255,0.12);
-                            color: #FFFFFF;
-                            border: 1px solid rgba(255, 255, 255, 0.2);
-                        }
-                        .btn-close:hover { background: rgba(255,255,255,0.22); }
-
-                        .catalog-container {
-                            max-width: 1100px;
-                            margin: 0 auto;
-                            padding: 20px 18px;
-                        }
-
-                        /* Header */
-                        .catalog-header {
-                            display: flex;
-                            justify-content: space-between;
-                            align-items: center;
-                            padding: 16px 20px;
-                            background: linear-gradient(135deg, #FFF1F2 0%, #FDF2F8 60%, #FFFFFF 100%);
-                            border-radius: 16px;
-                            border: 2px solid var(--primary-border);
-                            margin-bottom: 20px;
-                            position: relative;
-                            box-shadow: 0 4px 18px rgba(233, 30, 140, 0.06);
-                        }
-                        .catalog-brand-wrap {
-                            display: flex;
-                            align-items: center;
-                            gap: 14px;
-                        }
-                        .catalog-brand-logo {
-                            width: 62px;
-                            height: 62px;
-                            object-fit: contain;
-                            border-radius: 12px;
-                        }
-                        .catalog-title {
-                            font-size: 22px;
-                            font-weight: 900;
-                            color: #831843;
-                            margin: 0 0 4px 0;
-                            letter-spacing: -0.5px;
-                        }
-                        .catalog-sub {
-                            font-size: 13px;
-                            font-weight: 700;
-                            color: #BE185D;
-                            margin: 0;
-                        }
-                        .catalog-date-badge {
-                            background: #FFFFFF;
-                            border: 1.5px solid #FBCFE8;
-                            border-radius: 12px;
-                            padding: 8px 16px;
-                            text-align: right;
-                            display: flex;
-                            flex-direction: column;
-                            gap: 3px;
-                            box-shadow: 0 2px 8px rgba(233, 30, 140, 0.05);
-                        }
-                        .catalog-date-badge .date-label {
-                            font-size: 0.88rem;
-                            font-weight: 900;
-                            color: #831843;
-                        }
-                        .catalog-date-badge .date-sub {
-                            font-size: 0.76rem;
-                            color: #BE185D;
-                            font-weight: 700;
-                        }
-
-                        /* 3-Column Dense Grid (Fits 6 items comfortably per A4 page) */
-                        .catalog-grid {
-                            display: grid;
-                            grid-template-columns: repeat(3, 1fr);
-                            gap: 14px;
-                            width: 100%;
-                        }
-
-                        /* Card */
-                        .catalog-card {
-                            background: var(--card-bg);
-                            border-radius: 14px;
-                            overflow: hidden;
-                            display: flex;
-                            flex-direction: column;
-                            border: 1.5px solid #FBCFE8;
-                            box-shadow: 0 3px 12px rgba(233, 30, 140, 0.06);
-                            break-inside: avoid !important;
-                            page-break-inside: avoid !important;
-                            transition: transform 0.2s;
-                        }
-                        .catalog-card.card-ready {
-                            border-color: #F472B6;
-                        }
-                        .catalog-card.card-custom {
-                            border-color: #CBD5E1;
-                            background: #FAF9FC;
-                        }
-
-                        /* Media Container */
-                        .catalog-card-media {
-                            position: relative;
-                            width: 100%;
-                            height: 180px;
-                            background: #FDF2F8;
-                            overflow: hidden;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            border-bottom: 1px solid var(--primary-border);
-                        }
-                        .catalog-card-media img {
-                            width: 100%;
-                            height: 100%;
-                            object-fit: cover;
-                            object-position: center;
-                            display: block;
-                        }
-                        .catalog-card-noimg {
-                            display: flex;
-                            flex-direction: column;
-                            align-items: center;
-                            justify-content: center;
-                            gap: 8px;
-                            color: #BE185D;
-                            font-size: 0.82rem;
-                            font-weight: 700;
-                        }
-                        .catalog-card-noimg i {
-                            font-size: 2.2rem;
-                            opacity: 0.7;
-                        }
-                        .catalog-card-badge {
-                            position: absolute;
-                            top: 8px;
-                            right: 8px;
-                            font-size: 0.72rem;
-                            font-weight: 800;
-                            padding: 3px 8px;
-                            border-radius: 6px;
-                            color: #FFFFFF;
-                            display: flex;
-                            align-items: center;
-                            gap: 4px;
-                            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-                        }
-                        .catalog-card-badge.badge-ready {
-                            background: #059669;
-                        }
-                        .catalog-card-badge.badge-custom {
-                            background: #7C3AED;
-                        }
-
-                        /* Content */
-                        .catalog-card-content {
-                            padding: 10px 12px;
-                            display: flex;
-                            flex-direction: column;
-                            flex: 1;
-                            justify-content: space-between;
-                        }
-                        .catalog-card-title {
-                            font-size: 0.95rem;
-                            font-weight: 800;
-                            color: #0F172A;
-                            margin: 0 0 6px 0;
-                            line-height: 1.3;
-                            min-height: 38px;
-                        }
-                        .catalog-items-section {
-                            background: #FFF5F9;
-                            border: 1px solid #FCE7F3;
-                            border-radius: 8px;
-                            padding: 6px 8px;
-                            margin-bottom: 8px;
-                        }
-                        .catalog-items-title {
-                            font-size: 0.72rem;
-                            font-weight: 800;
-                            color: #BE185D;
-                            margin-bottom: 4px;
-                            display: flex;
-                            align-items: center;
-                            gap: 4px;
-                        }
-                        .catalog-pills-wrap {
-                            display: flex;
-                            flex-wrap: wrap;
-                            gap: 4px;
-                        }
-                        .catalog-pill {
-                            background: #FFFFFF;
-                            border: 1px solid #FBCFE8;
-                            border-radius: 5px;
-                            padding: 1px 5px;
-                            font-size: 0.7rem;
-                            color: #475569;
-                            display: inline-flex;
-                            align-items: center;
-                            gap: 3px;
-                            white-space: nowrap;
-                        }
-                        .catalog-pill-qty {
-                            color: #BE185D;
-                            font-weight: 800;
-                        }
-                        .catalog-pill-more {
-                            font-size: 0.68rem;
-                            color: #831843;
-                            font-weight: 800;
-                            padding: 1px 4px;
-                        }
-                        .catalog-pill-empty {
-                            font-size: 0.72rem;
-                            color: #64748B;
-                            font-style: italic;
-                        }
-
-                        /* Card Footer */
-                        .catalog-card-footer {
-                            display: flex;
-                            align-items: flex-end;
-                            justify-content: space-between;
-                            padding-top: 6px;
-                            border-top: 1px dashed #FCE7F3;
-                        }
-                        .catalog-price-box {
-                            display: flex;
-                            flex-direction: column;
-                        }
-                        .catalog-price-label {
-                            font-size: 0.68rem;
-                            color: #64748B;
-                            font-weight: 700;
-                        }
-                        .catalog-price-val {
-                            font-size: 1.25rem;
-                            font-weight: 900;
-                            color: #BE185D;
-                            line-height: 1.1;
-                        }
-                        .catalog-price-val .currency {
-                            font-size: 0.72rem;
-                            font-weight: 800;
-                        }
-                        .catalog-status-badge {
-                            font-size: 0.72rem;
-                            font-weight: 800;
-                            padding: 2px 6px;
-                            border-radius: 5px;
-                            display: flex;
-                            align-items: center;
-                            gap: 4px;
-                        }
-                        .catalog-status-badge.status-ready {
-                            background: #ECFDF5;
-                            color: #059669;
-                            border: 1px solid #A7F3D0;
-                        }
-                        .catalog-status-badge.status-custom {
-                            background: #F5F3FF;
-                            color: #7C3AED;
-                            border: 1px solid #DDD6FE;
-                        }
-                        .catalog-status-dot {
-                            width: 6px;
-                            height: 6px;
-                            border-radius: 50%;
-                        }
-                        .catalog-status-dot.dot-ready { background: #059669; }
-                        .catalog-status-dot.dot-custom { background: #7C3AED; }
-
-                        /* Footer */
-                        .catalog-footer {
-                            margin-top: 24px;
-                            padding-top: 14px;
-                            border-top: 2px solid var(--primary-border);
-                            text-align: center;
-                        }
-                        .catalog-footer-warning {
-                            color: #B91C1C;
-                            font-size: 0.82rem;
-                            font-weight: 800;
-                            margin-bottom: 4px;
-                        }
-                        .catalog-footer-sub {
-                            font-size: 0.76rem;
-                            color: #64748B;
-                            font-weight: 600;
-                        }
-
-                        /* Print Optimization (A4 Dense 3 Columns x 2 Rows = 6 items per page) */
-                        @media print {
-                            .screen-toolbar { display: none !important; }
-                            body {
-                                background: #FFFFFF !important;
-                                padding: 0 !important;
-                            }
-                            .catalog-container {
-                                max-width: 100% !important;
-                                padding: 0 !important;
-                                margin: 0 !important;
-                            }
-                            .catalog-header {
-                                padding: 6px 14px !important;
-                                margin-bottom: 5mm !important;
-                                border-radius: 8px !important;
-                                border: 1.5px solid #FBCFE8 !important;
-                                background: #FFF1F2 !important;
-                                box-shadow: none !important;
-                            }
-                            .catalog-title {
-                                font-size: 13pt !important;
-                                margin: 0 !important;
-                                color: #831843 !important;
-                                line-height: 1.2 !important;
-                            }
-                            .catalog-sub {
-                                font-size: 8.5pt !important;
-                                margin: 0 !important;
-                            }
-                            .catalog-brand-logo {
-                                width: 44px !important;
-                                height: 44px !important;
-                            }
-                            .catalog-date-badge {
-                                padding: 4px 10px !important;
-                                border-radius: 8px !important;
-                            }
-                            .catalog-date-badge .date-label {
-                                font-size: 8pt !important;
-                            }
-                            .catalog-date-badge .date-sub {
-                                font-size: 7pt !important;
-                            }
-                            .catalog-grid {
-                                display: grid !important;
-                                grid-template-columns: repeat(3, 1fr) !important;
-                                gap: 3.5mm !important;
-                                width: 100% !important;
-                            }
-                            .catalog-card {
-                                box-shadow: none !important;
-                                break-inside: avoid !important;
-                                page-break-inside: avoid !important;
-                                border-radius: 8px !important;
-                                border: 1.2px solid #E2E8F0 !important;
-                            }
-                            .catalog-card.card-ready {
-                                border: 1.2px solid #F472B6 !important;
-                            }
-                            .catalog-card.card-custom {
-                                border: 1.2px solid #CBD5E1 !important;
-                            }
-                            .catalog-card-media {
-                                height: 50mm !important;
-                                max-height: 50mm !important;
-                            }
-                            .catalog-card-content {
-                                padding: 5px 8px !important;
-                            }
-                            .catalog-card-title {
-                                font-size: 9.5pt !important;
-                                min-height: 24px !important;
-                                margin-bottom: 3px !important;
-                            }
-                            .catalog-items-section {
-                                padding: 3px 5px !important;
-                                margin-bottom: 4px !important;
-                                border-radius: 5px !important;
-                            }
-                            .catalog-items-title {
-                                font-size: 7pt !important;
-                                margin-bottom: 2px !important;
-                            }
-                            .catalog-pill {
-                                font-size: 6.8pt !important;
-                                padding: 0.5px 3px !important;
-                            }
-                            .catalog-card-footer {
-                                padding-top: 4px !important;
-                            }
-                            .catalog-price-val {
-                                font-size: 11pt !important;
-                            }
-                            .catalog-price-label {
-                                font-size: 6.5pt !important;
-                            }
-                            .catalog-status-badge {
-                                font-size: 6.8pt !important;
-                                padding: 1.5px 5px !important;
-                            }
-                            .catalog-card-badge {
-                                font-size: 6.8pt !important;
-                                padding: 1.5px 5px !important;
-                                top: 5px !important;
-                                right: 5px !important;
-                            }
-                            .catalog-footer {
-                                margin-top: 6mm !important;
-                                padding-top: 3mm !important;
-                                break-inside: avoid !important;
-                                page-break-inside: avoid !important;
-                            }
-                            .catalog-footer-warning {
-                                font-size: 7.5pt !important;
-                            }
-                            .catalog-footer-sub {
-                                font-size: 7pt !important;
-                            }
-                            @page {
-                                size: A4 portrait;
-                                margin: 8mm 8mm 10mm 8mm;
-                            }
-                        }
-
-                        @media screen and (max-width: 768px) {
-                            .catalog-grid { grid-template-columns: 1fr; }
-                            .screen-toolbar { flex-direction: column; gap: 10px; text-align: center; }
-                            .catalog-header { flex-direction: column; gap: 12px; text-align: center; }
-                        }
+                        ${standaloneCss}
                     </style>
                 </head>
                 <body>
                     <div class="screen-toolbar">
                         <div class="toolbar-info">
-                            <span class="toolbar-title"><i class="fa-solid fa-file-pdf"></i> كتالوج بوكيهات كاندي كلوب الفاخرة</span>
-                            <span class="toolbar-tip">💡 لتصدير الملف كـ PDF: من نافذة الطباعة اختر الوجهة (Destination) -> "حفظ بتنسيق PDF" (Save as PDF).</span>
+                            <span class="toolbar-title"><i class="fa-solid fa-file-pdf"></i> كتالوج بوكيهات كاندي كلوب الفاخرة (${dateFormattedNumeric}${fileInfo.counterLabel})</span>
+                            <span class="toolbar-tip">💡 نصيحة: يمكنك استخدام زر "تحميل مباشر PDF" لتنزيل الملف فوراً بدون ظهور أي روابط أو نوافذ طباعة.</span>
                         </div>
                         <div class="toolbar-btns">
+                            <button type="button" class="btn-toolbar btn-share" id="btn-share-pdf" onclick="shareCatalogDirectly()">
+                                <i class="fa-brands fa-whatsapp"></i> مشاركة مع العميل (واتساب)
+                            </button>
+                            <button type="button" class="btn-toolbar btn-download" id="btn-download-pdf" onclick="downloadCatalogDirectly()">
+                                <i class="fa-solid fa-file-arrow-down"></i> تحميل مباشر PDF
+                            </button>
                             <button type="button" class="btn-toolbar btn-print" onclick="window.print()">
-                                <i class="fa-solid fa-print"></i> طباعة / تصدير PDF الآن
+                                <i class="fa-solid fa-print"></i> طباعة ورقية
                             </button>
                             <button type="button" class="btn-toolbar btn-close" onclick="window.close()">
                                 <i class="fa-solid fa-xmark"></i> إغلاق
@@ -5069,54 +5395,86 @@
                     </div>
 
                     <div class="catalog-container">
-                        <div class="catalog-header">
-                            <div class="catalog-brand-wrap">
-                                <img src="${logoSrc}" alt="Candy Club" class="catalog-brand-logo" onerror="this.style.display='none'">
-                                <div>
-                                    <h1 class="catalog-title">كاندي كلوب - Candy Club</h1>
-                                    <p class="catalog-sub">كتالوج بوكيهات وتصاميم الهدايا الفاخرة</p>
-                                </div>
-                            </div>
-                            <div class="catalog-date-badge">
-                                <span class="date-label"><i class="fa-regular fa-calendar-check"></i> تاريخ الإصدار: ${dateFormattedArabic}</span>
-                                <span class="date-sub">(${dateFormattedNumeric}) - فروع كاندي كلوب الرسمية</span>
-                            </div>
-                        </div>
-
-                        <div class="catalog-grid">
-                            ${cardsHtml}
-                        </div>
-
-                        <div class="catalog-footer">
-                            <div class="catalog-footer-warning">
-                                ⚠️ ملاحظة وتنبيه رسمي: موديلات وبوكيهات كاندي كلوب وأسعارها موثقة ومعتمدة بتاريخ هذا الكتالوج (${dateFormattedNumeric}) وتخضع لتوفر المكونات والأصناف بالفرع وقت الطلب. لا يسري هذا الكتالوج في تواريخ لاحقة بعد انتهاء العرض أو نفاذ الأصناف.
-                            </div>
-                            <div class="catalog-footer-sub">
-                                كاندي كلوب - تصاميم حصرية وشوكولاتة وهدايا أصلية 100% | للطلب والحجز والاستفسار يرجى التواصل مع خدمة العملاء
-                            </div>
-                        </div>
+                        ${pagesHtml}
                     </div>
 
                     <script>
-                        // التأكد من اكتمال تحميل وفك ترميز الصور بنسبة 100% قبل فتح شاشة الطباعة والتصدير
+                        // دوال التحميل والمشاركة المباشرة من داخل نافذة المعاينة
+                        async function downloadCatalogDirectly() {
+                            const btn = document.getElementById('btn-download-pdf');
+                            const origHtml = btn.innerHTML;
+                            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التحميل...';
+                            btn.disabled = true;
+                            try {
+                                const element = document.querySelector('.catalog-container');
+                                const opt = {
+                                    margin: [6, 8, 6, 8],
+                                    filename: '${fileInfo.fileName}',
+                                    image: { type: 'jpeg', quality: 0.96 },
+                                    html2canvas: { scale: 2, useCORS: true, logging: false },
+                                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                                    pagebreak: { mode: ['css', 'legacy'] }
+                                };
+                                await html2pdf().from(element).set(opt).save();
+                            } catch(err) {
+                                console.error("html2pdf failed:", err);
+                                window.print();
+                            } finally {
+                                btn.innerHTML = origHtml;
+                                btn.disabled = false;
+                            }
+                        }
+
+                        async function shareCatalogDirectly() {
+                            const btn = document.getElementById('btn-share-pdf');
+                            const origHtml = btn.innerHTML;
+                            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التجهيز...';
+                            btn.disabled = true;
+                            try {
+                                const element = document.querySelector('.catalog-container');
+                                const opt = {
+                                    margin: [6, 8, 6, 8],
+                                    filename: '${fileInfo.fileName}',
+                                    image: { type: 'jpeg', quality: 0.96 },
+                                    html2canvas: { scale: 2, useCORS: true, logging: false },
+                                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                                    pagebreak: { mode: ['css', 'legacy'] }
+                                };
+                                const blob = await html2pdf().from(element).set(opt).outputPdf('blob');
+                                const file = new File([blob], '${fileInfo.fileName}', { type: 'application/pdf' });
+                                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                                    await navigator.share({
+                                        files: [file],
+                                        title: '${fileInfo.baseName}',
+                                        text: 'كتالوج بوكيهات وتصاميم الهدايا الفاخرة من كاندي كلوب'
+                                    });
+                                } else {
+                                    const url = URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = '${fileInfo.fileName}';
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    document.body.removeChild(a);
+                                    URL.revokeObjectURL(url);
+                                    const waMsg = encodeURIComponent('كتالوج بوكيهات وتصاميم الهدايا الفاخرة من كاندي كلوب (تم تجهيز ملف الـ PDF ويمكنك إرفاقه بالمحادثة الآن)');
+                                    window.open('https://api.whatsapp.com/send?text=' + waMsg, '_blank');
+                                }
+                            } catch(err) {
+                                if (err.name !== 'AbortError') {
+                                    console.error("Share failed:", err);
+                                    await downloadCatalogDirectly();
+                                }
+                            } finally {
+                                btn.innerHTML = origHtml;
+                                btn.disabled = false;
+                            }
+                        }
+
+                        // فك ترميز الصور مسبقاً لعرض فوري
                         window.onload = async function() {
                             const imgs = Array.from(document.querySelectorAll('img'));
-                            await Promise.all(imgs.map(img => {
-                                if (!img) return Promise.resolve();
-                                if (img.complete && img.naturalHeight !== 0) {
-                                    return (typeof img.decode === 'function') ? img.decode().catch(() => {}) : Promise.resolve();
-                                }
-                                return new Promise(resolve => {
-                                    img.onload = () => ((typeof img.decode === 'function') ? img.decode().catch(() => {}) : Promise.resolve()).then(resolve);
-                                    img.onerror = resolve;
-                                    setTimeout(resolve, 3000);
-                                });
-                            }));
-
-                            setTimeout(() => {
-                                window.focus();
-                                window.print();
-                            }, 400);
+                            await Promise.all(imgs.map(img => (img.decode ? img.decode().catch(() => {}) : Promise.resolve())));
                         };
                     </script>
                 </body>

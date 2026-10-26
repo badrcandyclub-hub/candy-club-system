@@ -405,16 +405,28 @@
                 </div>
             </div>
 
-            <button class="gifts-catalog-export-btn" onclick="GiftsApp.exportCustomerCatalogPDF()">
-                <div class="gifts-catalog-export-btn-inner">
-                    <i class="fa-solid fa-file-pdf" style="font-size: 1.4rem;"></i>
-                    <div>
-                        <div style="font-size: 1rem; font-weight: 900;">توليد وتحميل الكتالوج PDF</div>
-                        <div style="font-size: 0.78rem; opacity: 0.85; font-weight: 700;">شارك مع عملائك فوراً</div>
+            <div class="gifts-catalog-action-group">
+                <button type="button" class="gifts-catalog-export-btn gifts-catalog-share-btn" onclick="GiftsApp.exportCustomerCatalogPDF('share')" title="مشاركة الكتالوج كملف PDF مباشرة مع العميل على واتساب">
+                    <div class="gifts-catalog-export-btn-inner">
+                        <i class="fa-brands fa-whatsapp" style="font-size: 1.55rem; color: #25D366;"></i>
+                        <div>
+                            <div style="font-size: 1.05rem; font-weight: 900;">مشاركة الكتالوج مع العميل (واتساب)</div>
+                            <div style="font-size: 0.8rem; opacity: 0.92; font-weight: 700;">إرسال فوري مباشر كملف PDF</div>
+                        </div>
                     </div>
+                    <i class="fa-solid fa-share-nodes" style="font-size: 1.15rem; opacity: 0.9;"></i>
+                </button>
+                <div class="gifts-catalog-sub-actions">
+                    <button type="button" class="gifts-catalog-secondary-btn" onclick="GiftsApp.exportCustomerCatalogPDF('download')" title="تحميل ملف PDF مباشرة على جهازك بدون طباعة">
+                        <i class="fa-solid fa-file-arrow-down" style="color: #0284c7;"></i>
+                        <span>تحميل مباشر PDF</span>
+                    </button>
+                    <button type="button" class="gifts-catalog-secondary-btn" onclick="GiftsApp.exportCustomerCatalogPDF('preview')" title="معاينة صفحات الكتالوج والطباعة">
+                        <i class="fa-solid fa-print" style="color: #be185d;"></i>
+                        <span>معاينة وطباعة</span>
+                    </button>
                 </div>
-                <i class="fa-solid fa-arrow-left" style="font-size: 1rem; opacity: 0.8;"></i>
-            </button>
+            </div>
         </div>
 
         <!-- Bouquets Section -->
