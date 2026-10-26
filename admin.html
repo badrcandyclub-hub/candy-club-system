@@ -11,34 +11,6 @@
     
     <!-- Cache Buster -->
     <script>
-    function forceSystemHardRefresh() {
-        try {
-            if ('caches' in window) {
-                caches.keys().then(function(names) {
-                    names.forEach(function(name) { caches.delete(name); });
-                });
-            }
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                    registrations.forEach(function(reg) { reg.unregister(); });
-                });
-            }
-            var keepKeys = ['cc_user', 'candyDarkMode', 'cc_branch_whatsapp_group'];
-            var keysToRemove = [];
-            for (var i = 0; i < localStorage.length; i++) {
-                var k = localStorage.key(i);
-                if (k && keepKeys.indexOf(k) === -1 && !k.startsWith('cc_user')) {
-                    keysToRemove.push(k);
-                }
-            }
-            keysToRemove.forEach(function(k) { localStorage.removeItem(k); });
-            sessionStorage.clear();
-        } catch(e) {}
-        var url = new URL(window.location.href);
-        url.searchParams.set('reload', Date.now());
-        window.location.replace(url.toString());
-    }
-
     (function() {
         var APP_VERSION = '2.1.1';
         var STORED_VER = '';
@@ -82,42 +54,6 @@
             });
         }
 
-        function showEmergencyBar(detail) {
-            try {
-                var bar = document.getElementById('cc-emergency-cache-fix');
-                var mountTarget = document.body || document.documentElement;
-                if (!bar && mountTarget) {
-                    bar = document.createElement('div');
-                    bar.id = 'cc-emergency-cache-fix';
-                    bar.style.cssText = 'position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:9999999; background:#ffffff; color:#0f172a; border:2px solid #ef4444; box-shadow:0 12px 35px rgba(0,0,0,0.3); padding:14px 22px; border-radius:14px; font-family:Cairo,sans-serif; text-align:center; display:flex; align-items:center; gap:14px; font-weight:700;';
-                    bar.innerHTML = '<span>⚠️ يبدو أن لوحة الإدارة معلقة بسبب ملفات كاش قديمة ' + (detail ? '(' + detail + ')' : '') + '</span>' +
-                        '<button onclick="forceSystemHardRefresh()" style="background:#ef4444; color:#fff; border:none; padding:8px 18px; border-radius:8px; font-weight:800; cursor:pointer; font-family:inherit;">تحديث ومسح الكاش الآن 🔄</button>';
-                    mountTarget.appendChild(bar);
-                }
-            } catch(e) {}
-        }
-        window.showEmergencyRecoveryBar = showEmergencyBar;
-
-        window.addEventListener('error', function(e) {
-            if (!window.__APP_INITIALIZED__) {
-                var msg = e.message || '';
-                if (msg && !msg.includes('ResizeObserver') && !msg.includes('Script error')) {
-                    showEmergencyBar('خطأ تحميل ملفات');
-                }
-            }
-        });
-
-        // 🚨 Watchdog: If app hangs / gets stuck on load for > 4.5s
-        setTimeout(function() {
-            try {
-                var login = document.getElementById('login-screen');
-                var isLoginOpen = login && (login.style.display === 'flex' || login.style.display === 'block');
-                var activeTab = document.querySelector('.tab-pane.active');
-                if (!isLoginOpen && !activeTab && !window.__APP_INITIALIZED__) {
-                    showEmergencyBar();
-                }
-            } catch(e) {}
-        }, 4500);
     })();
     </script>
 
@@ -177,9 +113,6 @@
                 <a href="index.html" style="color:var(--text-muted); text-decoration: none; font-size: 0.95rem; font-weight: bold; transition: color 0.3s;" onmouseover="this.style.color='var(--secondary)'" onmouseout="this.style.color='var(--text-muted)'">
                     <i class="fa-solid fa-arrow-left" style="margin-right: 5px;"></i> الدخول كموظف
                 </a>
-                <button type="button" onclick="forceSystemHardRefresh()" style="background: none; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 7px 14px; color: #64748b; font-size: 0.82rem; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; font-family: inherit;" onmouseover="this.style.borderColor='var(--secondary)'; this.style.color='var(--secondary)';" onmouseout="this.style.borderColor='#cbd5e1'; this.style.color='#64748b';" title="مسح ملفات الكاش القديمة وتحديث النظام">
-                    <i class="fa-solid fa-arrows-rotate"></i> حل مشكلة التعليق (تحديث الكاش والذاكرة)
-                </button>
             </div>
         </div>
     </div>
@@ -2433,7 +2366,7 @@
     </div>
 </div>
 
-    <script src="app.js?v=124.0" charset="UTF-8" defer></script>
+    <script src="app.js?v=125.0" charset="UTF-8" defer></script>
 </body>
 </html>
 

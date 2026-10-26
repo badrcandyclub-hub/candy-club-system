@@ -2906,7 +2906,6 @@ window.onload = () => {
 
     // ⭐ V16: تحقق من الجلسة بدلاً من التحميل المباشر
     checkSession();
-    window.__APP_INITIALIZED__ = true;
 };
 
 // ==========================================
@@ -16869,7 +16868,6 @@ window.reprintInvLog = function(logId) {
 
 
 function showLogin() {
-    window.__APP_INITIALIZED__ = true;
     let screen = document.getElementById('login-screen');
     if (screen) screen.style.display = 'flex';
 }
