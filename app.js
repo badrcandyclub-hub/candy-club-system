@@ -15119,6 +15119,38 @@ let currentPriceTagsPage = 1;
 const priceTagsPerPage = 50;
 let filteredPriceTags = [];
 let selectedPriceTagsMap = new Map();
+// Print-only overrides: never write these offers into catalogData or the server.
+const priceTagOfferSettings = new Map();
+try {
+    const saved = JSON.parse(localStorage.getItem('cc_price_tag_offers_v1') || '[]');
+    if (Array.isArray(saved)) {
+        saved.forEach(entry => {
+            if (Array.isArray(entry) && typeof entry[0] === 'string' && entry[1]) {
+                priceTagOfferSettings.set(entry[0], entry[1]);
+            }
+        });
+    }
+} catch (e) { console.warn('Could not load print-only price tag settings:', e); }
+
+window.getPriceTagOffer = function(p) {
+    const custom = priceTagOfferSettings.get(p.name);
+    if (custom) {
+        if (custom.type === 'normal') return { type: 'normal' };
+        const price = Number(custom.price);
+        if (Number.isFinite(price) && price > 0) {
+            if (custom.type === 'discount' && price < Number(p.price)) return { type: 'discount', price };
+            if (custom.type === 'quantity' && Number.isSafeInteger(custom.quantity) && custom.quantity >= 2 && custom.quantity <= 9999) {
+                return { type: 'quantity', price, quantity: custom.quantity };
+            }
+        }
+        return { type: 'normal' };
+    }
+    // Preserve existing catalog offers on cards until explicitly customized.
+    const price = Number(p.offerPrice);
+    return p.isOffer && Number.isFinite(price) && price > 0 && price < Number(p.price)
+        ? { type: 'discount', price }
+        : { type: 'normal' };
+};
 
 window.initPriceTagsTab = function() {
     if (!catalogData || catalogData.length === 0) {
@@ -15161,6 +15193,12 @@ window.renderPriceTagsPage = function() {
     container.innerHTML = pageItems.map(p => {
         const isChecked = selectedPriceTagsMap.has(p.name) ? 'checked' : '';
         const safeName = p.name.replace(/"/g, '&quot;').replace(/'/g, '\\\'');
+        const tagOffer = getPriceTagOffer(p);
+        const tagPrice = tagOffer.type === 'quantity'
+            ? `الـ${tagOffer.quantity} بـ${tagOffer.price}ج`
+            : tagOffer.type === 'discount'
+                ? `<span style="text-decoration:line-through; color:rgba(255,255,255,0.7); margin-left:5px; font-size: 0.8rem;">${p.price}ج</span> <span>${tagOffer.price}ج</span>`
+                : `<span>${p.price}ج</span>`;
         
         return `
         <div class="price-tag-checkbox-item" style="display:flex; align-items:center; gap:15px; background:#fff; padding:12px 15px; border-radius:10px; border: 1px solid #e0e0e0; cursor:pointer; transition: all 0.2s ease-in-out; box-shadow: 0 2px 5px rgba(0,0,0,0.02);" 
@@ -15169,8 +15207,8 @@ window.renderPriceTagsPage = function() {
             <div style="flex:1; display: flex; flex-direction: column; gap: 5px;">
                 <div style="font-weight:bold; font-size:1.05rem; color: var(--text);">${p.name}</div>
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                    <div style="font-size:0.9rem; background: ${p.isOffer ? 'var(--danger)' : 'var(--secondary)'}; color: white; padding: 3px 10px; border-radius: 20px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                        ${p.isOffer ? `<span style="text-decoration:line-through; color:rgba(255,255,255,0.7); margin-left:5px; font-size: 0.8rem;">${p.price}ج</span> <span>${p.offerPrice}ج</span>` : `<span>${p.price}ج</span>`}
+                    <div style="font-size:0.9rem; background: ${tagOffer.type !== 'normal' ? 'var(--danger)' : 'var(--secondary)'}; color: white; padding: 3px 10px; border-radius: 20px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        ${tagPrice}
                     </div>
                     ${p.barcode ? `<span style="font-size: 0.8rem; background: #f0f4f8; border: 1px solid #cfd8dc; padding: 2px 8px; border-radius: 6px; color: #546e7a;"><i class="fa-solid fa-barcode"></i> ${p.barcode}</span>` : ''}
                 </div>
@@ -15214,13 +15252,17 @@ window.promptPriceTagOffer = function(name) {
     document.getElementById('customOfferProductName').textContent = p.name;
     document.getElementById('customOfferProductPrice').querySelector('span').textContent = p.price;
     
+    const offer = getPriceTagOffer(p);
     const input = document.getElementById('customOfferInput');
-    input.value = p.isOffer && p.offerPrice > 0 ? p.offerPrice : '';
+    input.value = offer.type === 'normal' ? '' : offer.price;
+    document.getElementById('customOfferType').value = offer.type;
+    document.getElementById('customOfferQuantity').value = offer.quantity || 3;
+    updatePriceTagOfferFields();
     
     const modal = document.getElementById('customOfferModal');
     if (modal) {
         modal.style.display = 'flex';
-        setTimeout(() => input.focus(), 100);
+        setTimeout(() => document.getElementById('customOfferType').focus(), 100);
     }
 };
 
@@ -15230,32 +15272,45 @@ window.closeCustomOfferModal = function() {
     currentOfferProductName = null;
 };
 
+window.updatePriceTagOfferFields = function() {
+    const type = document.getElementById('customOfferType').value;
+    document.getElementById('customOfferQuantityGroup').hidden = type !== 'quantity';
+    document.getElementById('customOfferPriceGroup').hidden = type === 'normal';
+    document.getElementById('customOfferPriceLabel').textContent = type === 'quantity'
+        ? 'إجمالي سعر العدد المحدد (ج.م):' : 'سعر القطعة بعد التخفيض (ج.م):';
+    document.getElementById('customOfferError').hidden = true;
+};
+
 window.saveCustomOffer = function() {
     if (!currentOfferProductName) return;
     
     const p = catalogData.find(item => item.name === currentOfferProductName);
     if (!p) return;
-    
-
-    
-    const input = document.getElementById('customOfferInput');
-    const newOffer = input.value.trim();
-    
-    const parsed = parseFloat(newOffer);
-    if (!isNaN(parsed) && parsed > 0 && parsed !== parseFloat(p.price)) {
-        p.isOffer = true;
-        p.offerPrice = parsed;
-        showToast("تم تخصيص وتطبيق العرض بنجاح", "success");
-    } else {
-        p.isOffer = false;
-        p.offerPrice = 0;
-        if (newOffer === '' || parsed === 0) showToast("تم إلغاء العرض", "success");
+    const type = document.getElementById('customOfferType').value;
+    const price = Number(document.getElementById('customOfferInput').value);
+    const quantity = Number(document.getElementById('customOfferQuantity').value);
+    const errorEl = document.getElementById('customOfferError');
+    let error = '';
+    if (!['normal', 'discount', 'quantity'].includes(type)) error = 'اختر نوع الكارت.';
+    else if (type !== 'normal' && (!Number.isFinite(price) || price <= 0)) error = 'أدخل سعرًا صحيحًا أكبر من صفر.';
+    else if (type === 'discount' && price >= Number(p.price)) error = 'سعر التخفيض لازم يكون أقل من سعر القطعة الأساسي.';
+    else if (type === 'quantity' && (!Number.isSafeInteger(quantity) || quantity < 2 || quantity > 9999)) error = 'أدخل عدد قطع صحيحًا من 2 إلى 9999.';
+    if (error) {
+        errorEl.textContent = error;
+        errorEl.hidden = false;
+        return;
     }
-    
-    window.pushCatalogUpdate(p.name, p.price, p.isOffer, p.offerPrice);
+    const offer = type === 'normal' ? { type } : { type, price, ...(type === 'quantity' ? { quantity } : {}) };
+    priceTagOfferSettings.set(p.name, offer);
+    let persisted = true;
+    try { localStorage.setItem('cc_price_tag_offers_v1', JSON.stringify(Array.from(priceTagOfferSettings))); }
+    catch (e) { persisted = false; console.warn('Could not persist print-only price tag settings:', e); }
+    selectedPriceTagsMap.set(p.name, p);
     
     filterPriceTagsList();
     updateLivePriceTagPreview();
+    updateDeselectButtonVisibility();
+    showToast(persisted ? 'تم حفظ إعدادات الكارت للطباعة فقط' : 'تم تجهيز الكارت لهذه الجلسة؛ تعذر حفظ إعداداته على الجهاز', persisted ? 'success' : 'warning');
     
     closeCustomOfferModal();
 };
@@ -15294,7 +15349,7 @@ window.filterPriceTagsList = function() {
         if (filterVal === 'instock') {
             matchesType = (Number(p.stock) > 0);
         } else if (filterVal === 'offers') {
-            matchesType = p.isOffer === true;
+            matchesType = getPriceTagOffer(p).type !== 'normal';
         }
         
         return matchesQuery && matchesType;
@@ -15338,18 +15393,23 @@ window.deselectAllTags = function() {
 window.generatePriceTagHTML = function(p, sizeClass) {
     let priceHtml = '';
     let cardClass = `price-tag-card size-large`; // Always render as large internally
+    const tagOffer = getPriceTagOffer(p);
+    const hasOffer = tagOffer.type !== 'normal';
     
-    if (p.isOffer && parseFloat(p.offerPrice) > 0 && parseFloat(p.offerPrice) !== parseFloat(p.price)) {
+    if (tagOffer.type === 'quantity') {
         cardClass += ' is-offer';
-        priceHtml = `<span class="old-price">${p.price}</span> ${p.offerPrice}`;
+        priceHtml = `الـ${tagOffer.quantity} بـ${tagOffer.price}`;
+    } else if (tagOffer.type === 'discount') {
+        cardClass += ' is-offer';
+        priceHtml = `<span class="old-price">${p.price}</span> ${tagOffer.price}`;
     } else {
         priceHtml = p.price;
     }
     
     const barcodeHtml = p.barcode ? `<img class="barcode-svg" data-barcode="${p.barcode}">` : '';
     
-    let priceTextLen = p.isOffer && parseFloat(p.offerPrice) > 0 && parseFloat(p.offerPrice) !== parseFloat(p.price) 
-        ? String(p.price).length + String(p.offerPrice).length + 4 
+    let priceTextLen = tagOffer.type === 'quantity' ? priceHtml.length
+        : tagOffer.type === 'discount' ? String(p.price).length + String(tagOffer.price).length + 4
         : String(p.price).length;
     
     let dynamicPriceStyle = priceTextLen > 12 ? 'font-size: 1.05em; line-height: 1.2;' : (priceTextLen > 7 ? 'font-size: 1.25em; line-height: 1.2;' : 'font-size: 1.45em; font-weight: 900;');
@@ -15362,7 +15422,7 @@ window.generatePriceTagHTML = function(p, sizeClass) {
                     <span class="candy-deco top-right">🍬</span>
                     <span class="candy-deco bottom-left">✨</span>
                     <span class="candy-deco bottom-right">🍭</span>
-                    ${p.isOffer && parseFloat(p.offerPrice) > 0 && parseFloat(p.offerPrice) !== parseFloat(p.price) ? '<div class="offer-badge">عرض خاص</div>' : ''}
+                    ${hasOffer ? `<div class="offer-badge">${tagOffer.type === 'quantity' ? 'عرض كمية' : 'عرض خاص'}</div>` : ''}
                 
                 <div class="price-tag-header">
                     <img src="images/Logo-print.png" class="price-tag-logo" onerror="this.src='images/logo-digital.png'" alt="Candy Club">
@@ -15382,7 +15442,7 @@ window.generatePriceTagHTML = function(p, sizeClass) {
                     <div class="tag-box bottom-box">
                         <div class="tag-row price-row" style="justify-content: center; text-align: center;">
                             <span class="tag-value" style="display: block; width: 100%; text-align: center; ${dynamicPriceStyle}">
-                                السعر: ${priceHtml}ج
+                                ${tagOffer.type === 'quantity' ? '' : 'السعر: '}${priceHtml}ج
                             </span>
                         </div>
                         ${barcodeHtml ? `<div class="tag-barcode-container">${barcodeHtml}</div>` : ''}

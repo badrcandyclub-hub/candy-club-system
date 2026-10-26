@@ -4097,24 +4097,36 @@
 
         <!-- نافذة تخصيص العرض (Custom Offer Modal) -->
         <div id="customOfferModal" class="modal" style="display: none; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000; direction: rtl;">
-            <div class="modal-content" style="background: #fff; width: 400px; max-width: 90%; border-radius: 15px; padding: 0; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; transform: scale(0.95); animation: popIn 0.3s forwards;">
+            <div class="modal-content" style="background: #fff; width: 400px; max-width: 90%; max-height: 90vh; overflow-y: auto; border-radius: 15px; padding: 0; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transform: scale(0.95); animation: popIn 0.3s forwards;">
                 <div style="background: var(--primary); color: #fff; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;">
-                    <h3 style="margin: 0; font-size: 1.2rem;"><i class="fa-solid fa-tag"></i> تخصيص عرض احترافي</h3>
+                    <h3 style="margin: 0; font-size: 1.2rem;"><i class="fa-solid fa-tag"></i> تخصيص عرض الكارت</h3>
                     <button onclick="closeCustomOfferModal()" style="background: none; border: none; color: #fff; font-size: 1.2rem; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <div style="padding: 20px;">
                     <div id="customOfferProductName" style="font-weight: bold; font-size: 1.1rem; margin-bottom: 10px; color: var(--text);">اسم المنتج</div>
                     <div id="customOfferProductPrice" style="color: #666; margin-bottom: 20px; font-size: 0.95rem;">السعر الأساسي: <span style="font-weight:bold;"></span> ج.م</div>
                     
-                    <label style="display: block; margin-bottom: 8px; font-weight: bold; color: var(--text);">سعر العرض الجديد (ج.م):</label>
-                    <input type="number" id="customOfferInput" class="input-field" placeholder="أدخل السعر الجديد..." style="width: 100%; box-sizing: border-box; font-size: 1.1rem; font-weight: bold; color: var(--primary);">
-                    
-                    <p style="font-size: 0.85rem; color: #888; margin-top: 10px; margin-bottom: 20px;">
-                        <i class="fa-solid fa-circle-info"></i> لإلغاء العرض تماماً وإرجاع السعر الأصلي، اترك الحقل فارغاً أو اكتب 0.
+                    <label for="customOfferType" style="display: block; margin-bottom: 8px; font-weight: bold; color: var(--text);">نوع الكارت:</label>
+                    <select id="customOfferType" class="input-field" onchange="updatePriceTagOfferFields()" style="width: 100%; box-sizing: border-box;">
+                        <option value="normal">سعر عادي — بدون عرض</option>
+                        <option value="discount">تخفيض على القطعة</option>
+                        <option value="quantity">عرض عدد من نفس الصنف</option>
+                    </select>
+                    <div id="customOfferQuantityGroup" hidden style="margin-bottom: 12px;">
+                        <label for="customOfferQuantity" style="display: block; margin-bottom: 8px; font-weight: bold;">عدد القطع في العرض:</label>
+                        <input type="number" id="customOfferQuantity" class="input-field" min="2" max="9999" step="1" inputmode="numeric" value="3" style="width: 100%; box-sizing: border-box;">
+                    </div>
+                    <div id="customOfferPriceGroup" hidden>
+                        <label id="customOfferPriceLabel" for="customOfferInput" style="display: block; margin-bottom: 8px; font-weight: bold;">سعر القطعة بعد التخفيض (ج.م):</label>
+                        <input type="number" id="customOfferInput" class="input-field" min="0.01" step="0.01" inputmode="decimal" placeholder="أدخل السعر..." style="width: 100%; box-sizing: border-box; font-size: 1.1rem; font-weight: bold; color: var(--primary);">
+                    </div>
+                    <p id="customOfferError" role="alert" hidden style="color: #b71c1c; font-weight: bold; margin: 10px 0;"></p>
+                    <p style="font-size: 0.85rem; color: #666; margin: 10px 0 20px;">
+                        <i class="fa-solid fa-circle-info"></i> إعدادات الكارت للطباعة فقط، ولا تغيّر سعر البيع. مثال عرض العدد: 3 قطع بـ100 ج.م.
                     </p>
-                    
+
                     <div style="display: flex; gap: 10px;">
-                        <button onclick="saveCustomOffer()" class="interactive-btn" style="flex: 2; background: var(--primary); color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 1rem;"><i class="fa-solid fa-check"></i> حفظ العرض</button>
+                        <button onclick="saveCustomOffer()" class="interactive-btn" style="flex: 2; background: var(--primary); color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 1rem;"><i class="fa-solid fa-check"></i> حفظ ومعاينة الكارت</button>
                         <button onclick="closeCustomOfferModal()" class="interactive-btn" style="flex: 1; background: #e0e0e0; color: #333; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 1rem;">إلغاء</button>
                     </div>
                 </div>
@@ -5019,7 +5031,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script src="email_service.js?v=10.0" defer></script>
-    <script src="app.js?v=123.0" charset="UTF-8" defer></script>
+    <script src="app.js?v=124.0" charset="UTF-8" defer></script>
 
     <!-- Modal: إعداد موقع ونطاق الفرع (GPS Geofencing) -->
     <div id="branchLocationModal" class="modal-overlay" style="display:none; align-items:center; justify-content:center; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.65); backdrop-filter:blur(8px); z-index:99999;">
