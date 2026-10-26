@@ -2322,25 +2322,47 @@ window.MODULE_GROUPS = {
     'admin': { name: 'الإدارة والتقارير', icon: 'fa-solid fa-chart-pie fa-spin', tabs: ['reports-tab', 'moderators-tab', 'users-tab', 'branch-settings-tab'], req: 'orders,users,customers,shipping,financials,shortages' }
 };
 
-// ⭐ التحكم الدقيق في إظهار زر الطلبات المعلقة حصرياً داخل شاشة إنشاء الطلبات (create-tab) فقط وإخفاؤه في باقي الصفحات
+// ⭐ التحكم الدقيق في إظهار زر الطلبات المعلقة وزر معلقات البوكيه حسب الشاشة النشطة
 window.updateSuspendedButtonVisibility = function(targetId) {
     const suspendedBtn = document.getElementById('openSuspendedBtn');
-    if (!suspendedBtn) return;
+    const giftsSuspendedBtn = document.getElementById('openGiftsSuspendedBtn');
 
     let isCreateTab = false;
+    let isGiftsTab = false;
+
     if (typeof targetId === 'string' && targetId) {
         isCreateTab = (targetId === 'create-tab');
+        isGiftsTab = (targetId === 'gifts-tab' || targetId === 'gifts-reports-tab');
     } else {
         const createTab = document.getElementById('create-tab');
         isCreateTab = createTab ? (createTab.classList.contains('active') || createTab.style.display === 'block') : false;
+        const giftsTab = document.getElementById('gifts-tab');
+        const giftsReportsTab = document.getElementById('gifts-reports-tab');
+        isGiftsTab = (giftsTab && (giftsTab.classList.contains('active') || giftsTab.style.display === 'block')) ||
+                     (giftsReportsTab && (giftsReportsTab.classList.contains('active') || giftsReportsTab.style.display === 'block'));
     }
 
-    if (isCreateTab) {
-        suspendedBtn.classList.remove('is-hidden-tab');
-        suspendedBtn.style.setProperty('display', 'inline-flex', 'important');
-    } else {
-        suspendedBtn.classList.add('is-hidden-tab');
-        suspendedBtn.style.setProperty('display', 'none', 'important');
+    if (suspendedBtn) {
+        if (isCreateTab) {
+            suspendedBtn.classList.remove('is-hidden-tab');
+            suspendedBtn.style.setProperty('display', 'inline-flex', 'important');
+        } else {
+            suspendedBtn.classList.add('is-hidden-tab');
+            suspendedBtn.style.setProperty('display', 'none', 'important');
+        }
+    }
+
+    if (giftsSuspendedBtn) {
+        if (isGiftsTab) {
+            giftsSuspendedBtn.classList.remove('is-hidden-tab');
+            giftsSuspendedBtn.style.setProperty('display', 'inline-flex', 'important');
+            if (window.GiftsApp && typeof GiftsApp.updateSuspendedBadge === 'function') {
+                GiftsApp.updateSuspendedBadge();
+            }
+        } else {
+            giftsSuspendedBtn.classList.add('is-hidden-tab');
+            giftsSuspendedBtn.style.setProperty('display', 'none', 'important');
+        }
     }
 };
 
@@ -15421,7 +15443,7 @@ window.generatePriceTagHTML = function(p, sizeClass) {
                     <span class="candy-deco top-right">🍬</span>
                     <span class="candy-deco bottom-left">✨</span>
                     <span class="candy-deco bottom-right">🍭</span>
-                    ${hasOffer ? `<div class="offer-badge">${tagOffer.type === 'quantity' ? 'عرض كمية' : 'عرض خاص'}</div>` : ''}
+                    ${hasOffer ? '<div class="offer-badge">عرض خاص</div>' : ''}
                 
                 <div class="price-tag-header">
                     <img src="images/Logo-print.png" class="price-tag-logo" onerror="this.src='images/logo-digital.png'" alt="Candy Club">
