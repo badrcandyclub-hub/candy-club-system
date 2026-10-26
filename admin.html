@@ -60,7 +60,7 @@
     <link rel="icon" type="image/png" href="favicon.png?v=13">
     <link rel="apple-touch-icon" href="favicon.png?v=13">
     <link rel="manifest" href="app-manifest.json?v=1003">
-    <link rel="stylesheet" href="style.css?v=118.0">
+    <link rel="stylesheet" href="style.css?v=119.0">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap"
         rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" type="text/javascript" crossorigin="anonymous"></script>
@@ -435,75 +435,684 @@
         </section>
 
         <section id="shipping-tab" class="tab-pane">
-            <div class="shipping-actions-row mb-15">
-                <button id="openZoneModalBtn" class="btn-outline interactive-btn">المناطق واسعار الشحن <i class="fa-solid fa-plus"></i></button>
+            <style>
+                #shipping-tab {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                    overflow-x: hidden;
+                }
+                .shipping-nav-wrapper {
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                    margin-bottom: 14px;
+                    overflow-x: auto;
+                    -webkit-overflow-scrolling: touch;
+                    scrollbar-width: none;
+                    padding-bottom: 6px;
+                }
+                .shipping-nav-wrapper::-webkit-scrollbar {
+                    display: none;
+                }
+                .shipping-nav-pills {
+                    display: flex;
+                    gap: 8px;
+                    flex-wrap: nowrap;
+                    width: max-content;
+                }
+                .shipping-subtab-pill {
+                    padding: 10px 16px;
+                    border-radius: 12px;
+                    border: 1px solid #cbd5e1;
+                    background: #ffffff;
+                    color: #475569;
+                    font-size: 0.9rem;
+                    font-weight: 800;
+                    cursor: pointer;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    white-space: nowrap;
+                    flex-shrink: 0;
+                    transition: all 0.2s ease;
+                    font-family: inherit;
+                    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+                }
+                .shipping-subtab-pill:hover {
+                    background: #f8fafc;
+                    border-color: #94a3b8;
+                    color: #0f172a;
+                }
+                .shipping-subtab-pill.active {
+                    background: #0284c7;
+                    color: #ffffff;
+                    border-color: #0284c7;
+                    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+                }
+                .shipping-subtab-pill[data-subtab="shipping-settlement"].active {
+                    background: #10b981;
+                    border-color: #10b981;
+                    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+                }
+                .shipping-subtab-pill[data-subtab="shipping-branch"].active {
+                    background: #e91e63;
+                    border-color: #e91e63;
+                    box-shadow: 0 4px 12px rgba(233, 30, 99, 0.25);
+                }
+                .shipping-subtab-pill[data-subtab="shipping-reservations"].active {
+                    background: #8b5cf6;
+                    border-color: #8b5cf6;
+                    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
+                }
+                .shipping-subtab-pill[data-subtab="shipping-zones"].active {
+                    background: #f59e0b;
+                    border-color: #f59e0b;
+                    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+                }
+                .shipping-subtab-pill .tab-badge {
+                    background: rgba(0, 0, 0, 0.08);
+                    color: inherit;
+                    padding: 2px 8px;
+                    border-radius: 20px;
+                    font-size: 0.8rem;
+                    font-weight: 800;
+                }
+                .shipping-subtab-pill.active .tab-badge {
+                    background: rgba(255, 255, 255, 0.25);
+                    color: #ffffff;
+                }
+                .shipping-search-box {
+                    position: relative;
+                    margin-bottom: 16px;
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                .shipping-search-box .search-icon {
+                    position: absolute;
+                    right: 14px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    color: #94a3b8;
+                    pointer-events: none;
+                    font-size: 1rem;
+                }
+                .shipping-search-box input {
+                    width: 100%;
+                    padding: 12px 42px 12px 14px;
+                    border: 1px solid #cbd5e1;
+                    border-radius: 12px;
+                    font-size: 0.95rem;
+                    background: #ffffff;
+                    margin-bottom: 0;
+                    box-sizing: border-box;
+                    transition: border-color 0.2s, box-shadow 0.2s;
+                }
+                .shipping-search-box input:focus {
+                    outline: none;
+                    border-color: #0284c7;
+                    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+                }
+                .quick-courier-chips {
+                    display: flex;
+                    gap: 6px;
+                    overflow-x: auto;
+                    -webkit-overflow-scrolling: touch;
+                    scrollbar-width: none;
+                    margin-bottom: 10px;
+                    padding-bottom: 4px;
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                .quick-courier-chips::-webkit-scrollbar {
+                    display: none;
+                }
+                .courier-chip {
+                    padding: 6px 12px;
+                    border-radius: 20px;
+                    background: #ecfdf5;
+                    border: 1px solid #a7f3d0;
+                    color: #047857;
+                    font-size: 0.82rem;
+                    font-weight: 800;
+                    cursor: pointer;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    white-space: nowrap;
+                    flex-shrink: 0;
+                    transition: all 0.2s;
+                }
+                .courier-chip:hover, .courier-chip.active {
+                    background: #10b981;
+                    color: #ffffff;
+                    border-color: #10b981;
+                    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+                }
+                .settlement-summary-grid {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 10px;
+                    margin-bottom: 14px;
+                    background: #f8fafc;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 12px;
+                    padding: 12px;
+                    box-sizing: border-box;
+                    width: 100%;
+                    max-width: 100%;
+                }
+                .settle-stat-card {
+                    text-align: center;
+                    padding: 8px 6px;
+                    border-radius: 8px;
+                    background: #ffffff;
+                    border: 1px solid #e2e8f0;
+                    box-sizing: border-box;
+                }
+                .settle-stat-card.highlight {
+                    background: #ecfdf5;
+                    border-color: #a7f3d0;
+                }
+                .settle-stat-card .stat-label {
+                    display: block;
+                    font-size: 0.78rem;
+                    font-weight: 700;
+                    color: #64748b;
+                    margin-bottom: 4px;
+                }
+                .settle-stat-card .stat-val {
+                    font-size: 1.15rem;
+                    font-weight: 900;
+                    color: #1e293b;
+                }
+                .settle-stat-card .stat-val.green {
+                    color: #10b981;
+                }
+                .settle-actions-bar {
+                    display: flex;
+                    gap: 8px;
+                    flex-wrap: wrap;
+                    width: 100%;
+                    box-sizing: border-box;
+                }
+                .settle-actions-bar button {
+                    flex: 1 1 100px;
+                    min-height: 44px;
+                    padding: 10px 14px;
+                    border-radius: 10px;
+                    font-size: 0.9rem;
+                    font-weight: 800;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 6px;
+                    cursor: pointer;
+                    border: none;
+                    transition: all 0.2s;
+                }
+                .btn-action-select-all {
+                    background: #f1f5f9;
+                    color: #334155;
+                    border: 1px solid #cbd5e1 !important;
+                }
+                .btn-action-delivered {
+                    background: #10b981;
+                    color: #ffffff;
+                    box-shadow: 0 3px 10px rgba(16, 185, 129, 0.25);
+                }
+                .btn-action-returned {
+                    background: #ef4444;
+                    color: #ffffff;
+                    box-shadow: 0 3px 10px rgba(239, 68, 68, 0.25);
+                }
+                .shipping-cards-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+                    gap: 12px;
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                .shipping-order-card {
+                    background: #ffffff;
+                    border: 1.5px solid #e2e8f0;
+                    border-radius: 14px;
+                    padding: 14px;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 12px;
+                    user-select: none;
+                    box-sizing: border-box;
+                    width: 100%;
+                    max-width: 100%;
+                    min-width: 0;
+                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+                }
+                .shipping-order-card:hover {
+                    border-color: #cbd5e1;
+                    box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+                }
+                .shipping-order-card.selected-card {
+                    border-color: #0284c7;
+                    background: #f0f9ff;
+                    box-shadow: 0 0 0 1px #0284c7, 0 4px 12px rgba(2, 132, 199, 0.12);
+                }
+                .shipping-order-card input[type="checkbox"] {
+                    width: 20px;
+                    height: 20px;
+                    margin-top: 3px;
+                    cursor: pointer;
+                    accent-color: #0284c7;
+                    flex-shrink: 0;
+                }
+                .shipping-order-card .soc-body {
+                    flex: 1;
+                    min-width: 0;
+                    max-width: 100%;
+                }
+                .reservation-date-pill {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    padding: 5px 10px;
+                    border-radius: 8px;
+                    background: #f5f3ff;
+                    color: #7c3aed;
+                    font-size: 0.82rem;
+                    font-weight: 800;
+                    border: 1px solid #ddd6fe;
+                }
+                .zones-filter-scroll {
+                    display: flex;
+                    gap: 8px;
+                    overflow-x: auto;
+                    -webkit-overflow-scrolling: touch;
+                    scrollbar-width: none;
+                    padding-bottom: 4px;
+                    flex-wrap: nowrap;
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+                .zones-filter-scroll::-webkit-scrollbar {
+                    display: none;
+                }
+                .zones-cards-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                    gap: 12px;
+                    width: 100%;
+                    max-width: 100%;
+                    box-sizing: border-box;
+                }
+
+                /* ========================================================= */
+                /* ⭐ RESPONSIVE MOBILE STYLES FOR SHIPPING HUB (<= 768px)    */
+                /* ========================================================= */
+                @media (max-width: 768px) {
+                    .shipping-subtab-pill {
+                        padding: 8px 12px;
+                        font-size: 0.82rem;
+                        gap: 6px;
+                        border-radius: 10px;
+                    }
+                    .shipping-subtab-pill .tab-badge {
+                        padding: 2px 6px;
+                        font-size: 0.74rem;
+                    }
+                    .shipping-cards-grid {
+                        grid-template-columns: 1fr;
+                        gap: 10px;
+                    }
+                    .zones-cards-grid {
+                        grid-template-columns: 1fr;
+                        gap: 10px;
+                    }
+                    .shipping-order-card {
+                        padding: 12px 10px;
+                        border-radius: 12px;
+                        gap: 10px;
+                    }
+                    .shipping-order-card .soc-name {
+                        font-size: 0.96rem;
+                    }
+                    .dispatch-actions-bar {
+                        display: grid !important;
+                        grid-template-columns: 1fr 1fr !important;
+                        gap: 8px !important;
+                    }
+                    .dispatch-actions-bar #selectAllPendingBtn {
+                        grid-column: 1 / 2 !important;
+                        width: 100% !important;
+                        min-height: 44px !important;
+                        flex: unset !important;
+                    }
+                    .dispatch-actions-bar #assignToDriverBtn {
+                        grid-column: 2 / 3 !important;
+                        width: 100% !important;
+                        min-height: 44px !important;
+                        flex: unset !important;
+                    }
+                    .dispatch-actions-bar #sendWaDriverBtn {
+                        grid-column: 1 / -1 !important;
+                        width: 100% !important;
+                        min-height: 44px !important;
+                        flex: unset !important;
+                    }
+                    #pendingOrdersSummaryStrip {
+                        flex-direction: column !important;
+                        align-items: stretch !important;
+                        gap: 6px !important;
+                        padding: 8px 12px !important;
+                        font-size: 0.8rem !important;
+                    }
+                    #selectedPendingSummaryText {
+                        display: block !important;
+                        text-align: center !important;
+                        background: #e0f2fe !important;
+                        color: #0369a1 !important;
+                        padding: 4px 8px !important;
+                        border-radius: 8px !important;
+                        font-weight: 800 !important;
+                    }
+                    .settlement-driver-row {
+                        flex-direction: column !important;
+                        gap: 8px !important;
+                    }
+                    .settlement-driver-row #closeDriverSelect {
+                        width: 100% !important;
+                        flex: unset !important;
+                    }
+                    .settlement-driver-row #loadDriverOrdersBtn {
+                        width: 100% !important;
+                        min-height: 44px !important;
+                        justify-content: center !important;
+                    }
+                    .settlement-summary-grid {
+                        grid-template-columns: repeat(3, 1fr) !important;
+                        gap: 6px !important;
+                        padding: 8px 6px !important;
+                        margin-bottom: 10px !important;
+                    }
+                    .settle-stat-card {
+                        padding: 6px 4px !important;
+                    }
+                    .settle-stat-card .stat-label {
+                        font-size: 0.68rem !important;
+                        margin-bottom: 2px !important;
+                    }
+                    .settle-stat-card .stat-val {
+                        font-size: 0.95rem !important;
+                    }
+                    .settle-actions-bar {
+                        display: grid !important;
+                        grid-template-columns: 1fr 1.2fr 1.2fr !important;
+                        gap: 6px !important;
+                    }
+                    .settle-actions-bar button {
+                        flex: unset !important;
+                        padding: 8px 4px !important;
+                        font-size: 0.78rem !important;
+                        min-height: 42px !important;
+                        gap: 4px !important;
+                    }
+                    .zones-add-grid {
+                        grid-template-columns: 1fr !important;
+                        gap: 8px !important;
+                    }
+                }
+            </style>
+
+            <!-- Shipping operations and courier accounts -->
+            <div class="shipping-nav-wrapper">
+                <div class="shipping-nav-pills" id="shippingSubTabs">
+                    <button type="button" class="shipping-subtab-pill active" data-subtab="shipping-dispatch">
+                        <i class="fa-solid fa-truck-ramp-box"></i> تسليم المناديب <span class="tab-badge" id="tabBadgeDispatch">0</span>
+                    </button>
+                    <button type="button" class="shipping-subtab-pill" data-subtab="shipping-accounts">
+                        <i class="fa-solid fa-wallet"></i> حسابات المناديب
+                    </button>
+                    <button type="button" class="shipping-subtab-pill" data-subtab="shipping-settlement">
+                        <i class="fa-solid fa-hand-holding-dollar"></i> تقفيل العهدة <span class="tab-badge" id="tabBadgeSettlement">0</span>
+                    </button>
+                    <button type="button" class="shipping-subtab-pill" data-subtab="shipping-branch">
+                        <i class="fa-solid fa-store"></i> استلام الفرع <span class="tab-badge" id="tabBadgeBranch">0</span>
+                    </button>
+                    <button type="button" class="shipping-subtab-pill" data-subtab="shipping-reservations">
+                        <i class="fa-regular fa-calendar-check"></i> حجز لتاريخ معين <span class="tab-badge" id="tabBadgeReservations">0</span>
+                    </button>
+                    <button type="button" class="shipping-subtab-pill" data-subtab="shipping-zones">
+                        <i class="fa-solid fa-map-location-dot"></i> مناطق وأسعار الشحن <span class="tab-badge" id="tabBadgeZones">0</span>
+                    </button>
+                </div>
             </div>
 
-            <div class="section-card" style="border-right: 4px solid var(--secondary);">
-                <h3 class="section-title"><i class="fa-solid fa-truck-ramp-box"></i> تحميل المناديب (توصيل)</h3>
-                <label>اختر المندوب للاستلام:</label>
-                <select id="assignDriverSelect">
-                    <option value="">-- اختر المندوب --</option>
-                </select>
-                <div id="pendingOrdersContainer" class="data-list-container mt-10" style="min-height: 100px;">
-                    <p class="empty-msg">جاري تحميل الأوردرات...</p>
+            <!-- Global Live Search Box -->
+            <div class="shipping-search-box">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="shippingSearchInput" placeholder="بحث فوري برقم الأوردر، اسم العميل، الهاتف، العنوان، أو المنطقة..." autocomplete="off">
+            </div>
+
+            <!-- ========================================== -->
+            <!-- SUB-TAB 1: تسليم المناديب (Dispatch) -->
+            <!-- ========================================== -->
+            <div id="subtab-shipping-dispatch" class="shipping-subtab-content" style="display: block;">
+                <div class="section-card" style="margin-bottom: 16px; border-radius: 14px; border-right: 4px solid #0284c7; padding: 16px;">
+                    <div style="margin-bottom: 12px;">
+                        <label style="display: block; font-size: 0.9rem; font-weight: 700; color: #334155; margin-bottom: 6px;">
+                            <i class="fa-solid fa-motorcycle" style="color: #0284c7;"></i> اختر المندوب لتسليم الشحنات:
+                        </label>
+                        <select hidden aria-hidden="true" tabindex="-1" class="shipping-courier-native" id="assignDriverSelect" style="width: 100%; padding: 11px 14px; border-radius: 10px; border: 1px solid #cbd5e1; font-weight: 700; font-size: 0.95rem; background: white; margin-bottom: 0;">
+                            <option value="">-- اختر المندوب --</option>
+                        </select>
+                    </div>
+
+                    <div class="dispatch-actions-bar" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
+                        <button type="button" id="selectAllPendingBtn" class="interactive-btn" style="flex: 1 1 100px; min-height: 42px; background: #f8fafc; color: #334155; border: 1px solid #cbd5e1; border-radius: 10px; font-weight: 700; font-size: 0.9rem; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+                            <i class="fa-solid fa-check-double"></i> تحديد الكل
+                        </button>
+                        <button type="button" id="assignToDriverBtn" class="interactive-btn" style="flex: 1 1 140px; min-height: 42px; background: linear-gradient(135deg, #0284c7, #0369a1); color: white; border: none; border-radius: 10px; font-weight: 800; font-size: 0.95rem; display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);">
+                            <i class="fa-solid fa-truck-fast"></i> تسليم للمندوب
+                        </button>
+                        <button type="button" id="sendWaDriverBtn" class="interactive-btn" style="flex: 1 1 140px; min-height: 42px; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; border-radius: 10px; font-weight: 800; font-size: 0.95rem; display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);">
+                            <i class="fa-brands fa-whatsapp"></i> إرسال واتساب
+                        </button>
+                    </div>
+
+                    <div id="pendingOrdersSummaryStrip" style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 10px 14px; font-size: 0.88rem; color: #0369a1; font-weight: 700; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                        <span><i class="fa-solid fa-circle-info"></i> حدد الشحنات ثم اضغط "تسليم للمندوب" أو "إرسال واتساب".</span>
+                        <span id="selectedPendingSummaryText">المحدد: 0 أوردر | الإجمالي: 0 ج.م</span>
+                    </div>
                 </div>
-                <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
-                    <button type="button" id="assignToDriverBtn" class="btn-save interactive-btn"
-                        style="flex: 1 1 180px; font-size: 1rem;">تسليم للمندوب <i class="fa-solid fa-truck-fast"></i></button>
-                    <button type="button" id="sendWaDriverBtn" class="btn-whatsapp interactive-btn"
-                        style="flex: 1 1 100px; font-size: 0.9rem;">إرسال واتس <i class="fa-brands fa-whatsapp"></i></button>
+
+                <div id="pendingOrdersContainer" class="shipping-cards-grid">
+                    <p class="empty-msg" style="grid-column: 1 / -1; text-align: center; padding: 40px; background: white; border-radius: 14px;">جاري تحميل الشحنات...</p>
                 </div>
             </div>
 
-            <!-- ⭐ قسم الحجوزات -->
-            <div class="section-card" style="border-right: 4px solid var(--primary);">
-                <h3 class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
-                    <span><i class="fa-solid fa-calendar-check"></i> طلبات الحجوزات القادمة</span>
-                    <span id="reservationsCountBadge" style="font-size: 0.85rem; background: var(--primary); color: white; padding: 4px 10px; border-radius: 12px; font-weight: bold;">العدد: 0</span>
-                </h3>
-                <div id="reservationsContainer" class="data-list-container mt-10"
-                    style="min-height: 100px; max-height: 250px; overflow-y: auto;">
-                    <p class="empty-msg">لا يوجد حجوزات قادمة...</p>
+            <!-- ========================================== -->
+            <!-- SUB-TAB 2: تقفيل العهدة (Settlement) -->
+            <!-- ========================================== -->
+            <div id="subtab-shipping-settlement" class="shipping-subtab-content" style="display: none;">
+                <div class="section-card" style="margin-bottom: 16px; border-radius: 14px; border-right: 4px solid #10b981; padding: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+                        <label style="font-size: 0.9rem; font-weight: 700; color: #334155; margin-bottom: 0;">
+                            <i class="fa-solid fa-motorcycle" style="color: #10b981;"></i> اختر المندوب لعرض وتصفية عهدته:
+                        </label>
+                        <span id="activeCouriersWithOrdersHint" style="font-size: 0.8rem; color: #047857; font-weight: 700;"></span>
+                    </div>
+
+                    <!-- Quick Courier Chips for couriers with orders in transit -->
+                    <div id="quickCourierChips" class="quick-courier-chips"></div>
+
+                    <div class="settlement-driver-row" style="display: flex; gap: 8px; margin-bottom: 12px;">
+                        <select hidden aria-hidden="true" tabindex="-1" class="shipping-courier-native" id="closeDriverSelect" style="flex: 1; padding: 11px 14px; border-radius: 10px; border: 1px solid #cbd5e1; font-weight: 700; font-size: 0.95rem; background: white; margin-bottom: 0;">
+                            <option value="">-- اختر المندوب --</option>
+                        </select>
+                        <button type="button" id="loadDriverOrdersBtn" class="interactive-btn" style="padding: 10px 16px; border-radius: 10px; background: #10b981; color: white; border: none; font-weight: 800; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
+                            <i class="fa-solid fa-rotate"></i> عرض العهدة
+                        </button>
+                    </div>
+
+                    <!-- 3-Box Financial Summary -->
+                    <div class="settlement-summary-grid">
+                        <div class="settle-stat-card">
+                            <span class="stat-label">شحنات مع المندوب</span>
+                            <div id="driverOutCountDisplay" class="stat-val">0 أوردر</div>
+                        </div>
+                        <div class="settle-stat-card highlight">
+                            <span class="stat-label">المحدد للتقفيل الآن</span>
+                            <div id="driverSelectedSettleDisplay" class="stat-val green">0 ج.م</div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="settle-actions-bar">
+                        <button type="button" id="selectAllShippedBtn" class="interactive-btn btn-action-select-all">
+                            <i class="fa-solid fa-check-double"></i> تحديد الكل
+                        </button>
+                        <button type="button" id="markDeliveredBtn" class="interactive-btn btn-action-delivered">
+                            <i class="fa-solid fa-circle-check"></i> تم التوصيل
+                        </button>
+                        <button type="button" id="markReturnedBtn" class="interactive-btn btn-action-returned">
+                            <i class="fa-solid fa-circle-xmark"></i> مرتجع
+                        </button>
+                    </div>
+                </div>
+
+                <div id="shippedOrdersContainer" class="shipping-cards-grid">
+                    <p class="empty-msg" style="grid-column: 1 / -1; text-align: center; padding: 40px; background: white; border-radius: 14px;">برجاء اختيار المندوب لعرض أوردرات عهدته.</p>
                 </div>
             </div>
 
-            <!-- ⭐ قسم استلام الفرع المنفصل -->
-            <div class="section-card" style="border-right: 4px solid var(--warning);">
-                <h3 class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
-                    <span><i class="fa-solid fa-store"></i> أوردرات استلام الفرع</span>
-                    <span id="branchCountBadge" style="font-size: 0.85rem; background: var(--warning); color: #000; padding: 4px 10px; border-radius: 12px; font-weight: bold;">العدد: 0</span>
-                </h3>
-                <div id="branchOrdersContainer" class="data-list-container mt-10" style="min-height: 100px;">
-                    <p class="empty-msg">جاري التحميل...</p>
+            <!-- ========================================== -->
+            <!-- SUB-TAB 3: استلام الفرع (Branch Pickups) -->
+            <!-- ========================================== -->
+            <div id="subtab-shipping-branch" class="shipping-subtab-content" style="display: none;">
+                <div class="section-card" style="margin-bottom: 16px; border-radius: 14px; border-right: 4px solid #e91e63; padding: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <div>
+                            <h3 style="margin: 0; color: #be185d; font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-store"></i> أوردرات استلام الفرع
+                            </h3>
+                            <p style="margin: 3px 0 0 0; color: #64748b; font-size: 0.85rem;">شحنات مجهزة للاستلام المباشر من المحل</p>
+                        </div>
+                        <span id="branchCountBadge" style="font-size: 0.85rem; background: #fdf2f8; color: #be185d; border: 1px solid #fbcfe8; padding: 5px 12px; border-radius: 20px; font-weight: 800;">جاهز: 0</span>
+                    </div>
+                </div>
+
+                <div id="branchOrdersContainer" class="shipping-cards-grid">
+                    <p class="empty-msg" style="grid-column: 1 / -1; text-align: center; padding: 40px; background: white; border-radius: 14px;">جاري تحميل أوردرات الفرع...</p>
                 </div>
             </div>
 
-            <div class="section-card" style="border-right: 4px solid var(--success);">
-                <h3 class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
-                    <span><i class="fa-solid fa-check-double"></i> تقفيل اليوم (حالة التوصيل)</span>
-                    <span id="outOrdersCountBadge" style="font-size: 0.85rem; background: var(--success); color: white; padding: 4px 10px; border-radius: 12px; font-weight: bold;">الاوردرات في الخارج حالياً: 0</span>
-                </h3>
-                <label>اختر المندوب لعرض عهدته:</label>
-                <!-- ⭐ زرار التأكيد الجديد لمنع العشوائية -->
-                <div style="display:flex; gap:10px; margin-bottom:10px;">
-                    <select id="closeDriverSelect" style="margin-bottom:0; flex:1;">
-                        <option value="">-- اختر المندوب --</option>
-                    </select>
-                    <button type="button" id="loadDriverOrdersBtn" class="btn-search interactive-btn"
-                        style="padding: 0 15px;">عرض العهدة <i class="fa-solid fa-check"></i></button>
+            <!-- ========================================== -->
+            <!-- SUB-TAB 4: حجز لتاريخ معين (Reservations) -->
+            <!-- ========================================== -->
+            <div id="subtab-shipping-reservations" class="shipping-subtab-content" style="display: none;">
+                <div class="section-card" style="margin-bottom: 16px; border-radius: 14px; border-right: 4px solid #8b5cf6; padding: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <div>
+                            <h3 style="margin: 0; color: #6d28d9; font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-regular fa-calendar-check"></i> طلبات الحجوزات القادمة (حجز لتاريخ معين)
+                            </h3>
+                            <p style="margin: 3px 0 0 0; color: #64748b; font-size: 0.85rem;">متابعة الأوردرات المحجوزة لتاريخ تسليم محدد مستقبلاً</p>
+                        </div>
+                        <span id="reservationsCountBadge" style="font-size: 0.85rem; background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; padding: 5px 12px; border-radius: 20px; font-weight: 800;">العدد: 0</span>
+                    </div>
                 </div>
 
-                <div id="shippedOrdersContainer" class="data-list-container mt-10" style="min-height: 100px;">
-                    <p class="empty-msg">برجاء اختيار المندوب والضغط على "عرض العهدة"</p>
+                <div id="reservationsContainer" class="shipping-cards-grid">
+                    <p class="empty-msg" style="grid-column: 1 / -1; text-align: center; padding: 40px; background: white; border-radius: 14px;">لا يوجد حجوزات قادمة...</p>
                 </div>
-                <div class="action-grid mt-10">
-                    <button type="button" id="markDeliveredBtn" class="btn-save interactive-btn" style="flex:1;">تم
-                        التوصيل <i class="fa-solid fa-check"></i></button>
-                    <button type="button" id="markReturnedBtn" class="interactive-btn"
-                        style="flex:1; background-color: var(--danger); color: white; border: none; border-radius: 12px; font-weight: bold; font-family: 'Cairo', sans-serif;">مرتجع
-                        <i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- SUB-TAB 5: إدارة المناطق وأسعار الشحن (Zones Hub) -->
+            <!-- ========================================== -->
+            <div id="subtab-shipping-zones" class="shipping-subtab-content" style="display: none;">
+                <!-- Quick Add / Edit Zone Box -->
+                <div class="section-card" style="margin-bottom:16px; padding:16px; border-radius:14px;">
+                    <button type="button" id="openZoneModalBtn" class="btn-outline interactive-btn">إضافة أو تعديل منطقة شحن <i class="fa-solid fa-location-dot"></i></button>
                 </div>
+
+                <!-- Zones Filter Pills -->
+                <div class="section-card" style="margin-bottom: 16px; border-radius: 14px; padding: 12px 16px;">
+                    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px;">
+                        <div class="zones-filter-scroll" id="zonesFilterPills">
+                            <button type="button" class="shipping-subtab-pill active" data-zonefilter="all" style="padding: 7px 12px; font-size: 0.85rem;">
+                                <i class="fa-solid fa-map"></i> الكل (<span id="zonePillAll">0</span>)
+                            </button>
+                            <button type="button" class="shipping-subtab-pill" data-zonefilter="same_day" style="padding: 7px 12px; font-size: 0.85rem;">
+                                <i class="fa-solid fa-bolt"></i> إسكندرية نفس اليوم (<span id="zonePillAlexSame">0</span>)
+                            </button>
+                            <button type="button" class="shipping-subtab-pill" data-zonefilter="next_day" style="padding: 7px 12px; font-size: 0.85rem;">
+                                <i class="fa-regular fa-calendar-day"></i> إسكندرية تاني يوم (<span id="zonePillAlexNext">0</span>)
+                            </button>
+                            <button type="button" class="shipping-subtab-pill" data-zonefilter="govs" style="padding: 7px 12px; font-size: 0.85rem;">
+                                <i class="fa-solid fa-truck-fast"></i> المحافظات (<span id="zonePillGov">0</span>)
+                            </button>
+                        </div>
+                        <div style="font-size: 0.85rem; color: #64748b; font-weight: 700;">
+                            إجمالي: <span id="zonesTotalCounterDisplay" style="color: #b45309; font-size: 1rem; font-weight: 900;">0</span> منطقة
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Zones Cards Grid -->
+                <div id="zonesGridContainer" class="zones-cards-grid">
+                    <p class="empty-msg" style="grid-column: 1 / -1; text-align: center; padding: 40px; background: white; border-radius: 14px;">جاري تحميل مناطق وأسعار الشحن...</p>
+                </div>
+            </div>
+
+            <div id="subtab-shipping-accounts" class="shipping-subtab-content" style="display:none;">
+                <section id="financials-tab" class="financials-tab">
+            <div class="section-card financials-page-card" style="width: 100%; box-sizing: border-box; display: flex; flex-direction: column;">
+                <div class="financials-header-row" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 10px; gap: 10px;">
+                    <div>
+                        <h2 style="color: var(--primary); margin: 0; display: inline-block; margin-left: 15px;"><i class="fa-solid fa-wallet"></i> حسابات المناديب</h2>
+                        <h3 style="color: var(--success); margin: 0; display: inline-block;" id="financialsTotalAmount">إجمالي الحساب: 0 ج.م</h3>
+                    </div>
+                    <div class="financials-controls" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <div class="financials-add-driver-form" style="display: flex; gap: 5px; background: #FAFBFF; border: 1px solid var(--border); border-radius: 8px; padding: 5px;">
+                            <input type="text" id="newDriverName" placeholder="اسم المندوب" style="margin-bottom: 0; padding: 5px; width: 120px;">
+                            <input type="tel" id="newDriverPhone" placeholder="رقم الموبايل" style="margin-bottom: 0; padding: 5px; width: 120px;">
+                            <button id="addDriverBtn" class="btn-confirm" style="padding: 5px 10px;"><i class="fa-solid fa-plus"></i> إضافة</button>
+                        </div>
+
+<!-- Filter & Search Container -->
+                        <div class="financials-filter-search" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                            <!-- Month Filter -->
+                            <div class="financials-month-filter" style="display: flex; gap: 5px; align-items: center; background: #FAFBFF; border: 1px solid var(--border); border-radius: 8px; padding: 5px;">
+                                <label for="driversMonthFilter" style="margin:0; font-size: 0.85rem; font-weight:bold; color:var(--text-main);">تصفية بالشهر:</label>
+                                <input type="month" id="driversMonthFilter" style="margin-bottom:0; padding:4px; border:1px solid #ccc; border-radius:4px;">
+                                <button type="button" class="btn-primary interactive-btn" onclick="refreshDriversStats()" style="padding: 4px 12px; border-radius: 6px; background: linear-gradient(135deg, var(--primary), var(--primary-light)); border: none; box-shadow: 0 2px 4px rgba(233,30,99,0.3); transition: all 0.3s; font-weight:bold;"><i class="fa-solid fa-bolt"></i> تحديث البيانات</button>
+                            </div>
+                            <!-- Order Search -->
+                            <div class="financials-order-search" style="display: flex; gap: 5px; align-items: center; background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px; padding: 5px;">
+                                <input type="text" id="driverOrderSearchInput" placeholder="بحث برقم الأوردر (لمعرفة مندوبه وحالته)..." style="margin-bottom:0; padding:5px; border:1px solid #ffd54f; border-radius:4px; width:240px; font-size:0.85rem;" onkeypress="if(event.key==='Enter') window.searchDriverOrder()">
+                                <button type="button" class="btn-search interactive-btn" onclick="window.searchDriverOrder()" style="padding: 4px 12px; border-radius: 6px;"><i class="fa-solid fa-magnifying-glass"></i> تتبع الأوردر</button>
+                            </div>
+                        </div>
+
+                        <label class="financials-select-all" style="display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: bold; background: var(--bg); padding: 5px 10px; border-radius: 8px;">
+                            <input type="checkbox" id="selectAllFinancialsCheckbox" style="width: 18px; height: 18px;">
+                            تحديد الكل
+                        </label>
+                        <button id="closeSelectedFinancialsBtn" class="btn-primary" style="background: var(--success); display: none;">تقفيل المحدد <i class="fa-solid fa-check"></i></button>
+                    </div>
+                </div>
+
+                <div id="financialsDisplayList" class="reports-grid financials-display-list" style="width: 100%; display: grid; gap: 15px; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); align-items: start; align-content: start;">
+                    <p class="empty-msg" style="grid-column: 1 / -1;">جاري تحميل الحسابات من السيرفر...</p>
+                </div>
+            </div>
+        </section>
             </div>
         </section>
 
@@ -1733,48 +2342,7 @@
             </div>
         </section>
 
-        <section id="financials-tab" class="tab-pane">
-            <div class="section-card" style="width: 100%; box-sizing: border-box; display: flex; flex-direction: column;">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 10px; gap: 10px;">
-                    <div>
-                        <h2 style="color: var(--primary); margin: 0; display: inline-block; margin-left: 15px;"><i class="fa-solid fa-wallet"></i> حسابات المناديب</h2>
-                        <h3 style="color: var(--success); margin: 0; display: inline-block;" id="financialsTotalAmount">إجمالي الحساب: 0 ج.م</h3>
-                    </div>
-                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <div style="display: flex; gap: 5px; background: #FAFBFF; border: 1px solid var(--border); border-radius: 8px; padding: 5px;">
-                            <input type="text" id="newDriverName" placeholder="اسم المندوب" style="margin-bottom: 0; padding: 5px; width: 120px;">
-                            <input type="tel" id="newDriverPhone" placeholder="رقم الموبايل" style="margin-bottom: 0; padding: 5px; width: 120px;">
-                            <button id="addDriverBtn" class="btn-confirm" style="padding: 5px 10px;"><i class="fa-solid fa-plus"></i> إضافة</button>
-                        </div>
-                        
-<!-- Filter & Search Container -->
-                        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
-                            <!-- Month Filter -->
-                            <div style="display: flex; gap: 5px; align-items: center; background: #FAFBFF; border: 1px solid var(--border); border-radius: 8px; padding: 5px;">
-                                <label for="driversMonthFilter" style="margin:0; font-size: 0.85rem; font-weight:bold; color:var(--text-main);">تصفية بالشهر:</label>
-                                <input type="month" id="driversMonthFilter" style="margin-bottom:0; padding:4px; border:1px solid #ccc; border-radius:4px;">
-                                <button type="button" class="btn-primary interactive-btn" onclick="refreshDriversStats()" style="padding: 4px 12px; border-radius: 6px; background: linear-gradient(135deg, var(--primary), var(--primary-light)); border: none; box-shadow: 0 2px 4px rgba(233,30,99,0.3); transition: all 0.3s; font-weight:bold;"><i class="fa-solid fa-bolt"></i> تحديث البيانات</button>
-                            </div>
-                            <!-- Order Search -->
-                            <div style="display: flex; gap: 5px; align-items: center; background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px; padding: 5px;">
-                                <input type="text" id="driverOrderSearchInput" placeholder="بحث برقم الأوردر (لمعرفة مندوبه وحالته)..." style="margin-bottom:0; padding:5px; border:1px solid #ffd54f; border-radius:4px; width:260px; font-size:0.85rem;" onkeypress="if(event.key==='Enter') window.searchDriverOrder()">
-                                <button type="button" class="btn-search interactive-btn" onclick="window.searchDriverOrder()" style="padding: 4px 12px; border-radius: 6px;"><i class="fa-solid fa-magnifying-glass"></i> تتبع الأوردر</button>
-                            </div>
-                        </div>
 
-                        <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: bold; background: var(--bg); padding: 5px 10px; border-radius: 8px;">
-                            <input type="checkbox" id="selectAllFinancialsCheckbox" style="width: 18px; height: 18px;">
-                            تحديد الكل
-                        </label>
-                        <button id="closeSelectedFinancialsBtn" class="btn-primary" style="background: var(--success); display: none;">تقفيل المحدد <i class="fa-solid fa-check"></i></button>
-                    </div>
-                </div>
-                
-                <div id="financialsDisplayList" class="reports-grid" style="width: 100%; display: grid; gap: 15px; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); align-items: start; align-content: start;">
-                    <p class="empty-msg" style="grid-column: 1 / -1;">جاري تحميل الحسابات من السيرفر...</p>
-                </div>
-            </div>
-        </section>
 
     </main>
 
@@ -2261,11 +2829,7 @@
                                 <span class="perm-text">الشحن والمناطق</span>
                             </label>
                             
-                            <label class="perm-card" onclick="togglePermCard(this)">
-                                <input type="checkbox" name="u-perms" value="financials">
-                                <span class="perm-icon" style="color: #f1c40f;"><i class="fa-solid fa-wallet"></i></span>
-                                <span class="perm-text">حساب المناديب</span>
-                            </label>
+
 
                             <label class="perm-card" onclick="togglePermCard(this)">
                                 <input type="checkbox" name="u-perms" value="customers">
@@ -2367,7 +2931,7 @@
     </div>
 </div>
 
-    <script src="app.js?v=126.0" charset="UTF-8" defer></script>
+    <script src="app.js?v=127.0" charset="UTF-8" defer></script>
 </body>
 </html>
 

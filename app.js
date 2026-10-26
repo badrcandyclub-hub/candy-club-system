@@ -2314,7 +2314,7 @@ function setBtnLoading(btn, isLoading, originalText = "") {
 // ==========================================
 // ⭐ V16.2: تعريف وحدات النظام (Modules)
 window.MODULE_GROUPS = {
-    'orders': { name: 'إدارة الأوردرات', icon: 'fa-solid fa-box fa-bounce', tabs: ['create-tab', 'catalog-tab', 'shipping-tab', 'history-tab', 'financials-tab', 'suspended-tab'], req: 'orders,customers,shipping,catalog,financials,shortages,drafts,users' },
+    'orders': { name: 'إدارة الأوردرات', icon: 'fa-solid fa-box fa-bounce', tabs: ['create-tab', 'catalog-tab', 'shipping-tab', 'history-tab', 'suspended-tab'], req: 'orders,customers,shipping,catalog,financials,shortages,drafts,users' },
     'marketing': { name: 'العملاء والتسويق', icon: 'fa-solid fa-users-viewfinder fa-fade', tabs: ['customers-tab', 'whatsapp-campaign-tab', 'waitlist-tab'], req: 'customers,users,orders,out_of_stock' },
     'products': { name: 'المنتجات', icon: 'fa-solid fa-tags fa-beat', tabs: ['offers-tab', 'price-tags-tab', 'shortages-tab', 'expiry-tab', 'inventory-transfers-tab'], req: 'catalog,drafts,users,expiries,offers' },
     'hr': { name: 'شئون الموظفين', icon: 'fa-solid fa-id-card-clip fa-flip', tabs: ['hr-tab', 'hr-admin-tab'], req: 'attendance,users' },
@@ -2446,16 +2446,6 @@ document.querySelectorAll('.nav-item').forEach(btn => {
             let subtab = btn.getAttribute('data-subtab') || 'analytics';
             if (typeof window.lazyLoadGiftsReportsModule === 'function') {
                 window.lazyLoadGiftsReportsModule(subtab);
-            }
-        }
-
-        // ⭐ V16.1: Auto load financials
-        if (targetId === 'financials-tab') {
-            let mInput = document.getElementById('driversMonthFilter');
-            if (mInput && !mInput.value) {
-                let d = new Date();
-                mInput.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-                if(window.refreshDriversStats) window.refreshDriversStats();
             }
         }
 
@@ -3413,6 +3403,8 @@ async function loadDataFromServer(customDate = null) {
         const driversDisplayList = document.getElementById('driversDisplayList');
         const assignDriverSelect = document.getElementById('assignDriverSelect');
         const closeDriverSelect = document.getElementById('closeDriverSelect');
+        const previousAssignDriver = assignDriverSelect?.value || '';
+        const previousCloseDriver = closeDriverSelect?.value || '';
         if (driversDisplayList) driversDisplayList.innerHTML = '';
         if (driverSelect) driverSelect.innerHTML = '<option value="">اختر المندوب</option>';
         if (assignDriverSelect) assignDriverSelect.innerHTML = '<option value="">اختر المندوب</option>';
@@ -3439,6 +3431,8 @@ async function loadDataFromServer(customDate = null) {
             if (closeDriverSelect) closeDriverSelect.innerHTML = driverSelectHtml;
             if (driversDisplayList) driversDisplayList.innerHTML = displayListHtml;
         }
+        if (assignDriverSelect) assignDriverSelect.value = previousAssignDriver;
+        if (closeDriverSelect) closeDriverSelect.value = previousCloseDriver;
 
         updateSmartSuggestionsFromFirebase();
 
@@ -6508,6 +6502,14 @@ window.switchShippingSubTab = function(subtabId) {
         targetEl.style.display = 'block';
     }
     window._activeShippingSubtab = subtabId;
+    if (subtabId === 'shipping-accounts') {
+        const monthInput = document.getElementById('driversMonthFilter');
+        if (monthInput && !monthInput.value) {
+            const date = new Date();
+            monthInput.value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            if (window.refreshDriversStats) window.refreshDriversStats();
+        }
+    }
     if (typeof applyShippingLiveSearch === 'function') {
         applyShippingLiveSearch();
     }
@@ -6571,6 +6573,7 @@ window.selectCourierForSettlement = function(driverName) {
     const sel = document.getElementById('closeDriverSelect');
     if (sel) {
         sel.value = driverName;
+        sel._courierPicker?.sync();
     }
     const chips = document.querySelectorAll('#quickCourierChips .courier-chip');
     chips.forEach(chip => {
@@ -6579,6 +6582,124 @@ window.selectCourierForSettlement = function(driverName) {
     });
     renderDriverShippedOrders(driverName);
 };
+
+function setupShippingCourierPicker(selectId) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+    if (select._courierPicker) {
+        select._courierPicker.sync();
+        return;
+    }
+    const wrapper = document.createElement('div');
+    wrapper.className = 'shipping-courier-picker';
+    wrapper.innerHTML = `
+        <button type="button" class="courier-picker-trigger" aria-haspopup="listbox" aria-expanded="false" aria-controls="${selectId}-options">
+            <span class="courier-picker-name">اختر المندوب</span>
+            <span class="courier-picker-count" hidden></span>
+            <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+        </button>
+        <div class="courier-picker-panel" hidden>
+            <input type="search" class="courier-picker-search" placeholder="ابحث عن المندوب..." aria-label="بحث عن مندوب" autocomplete="off">
+            <div id="${selectId}-options" class="courier-picker-options" role="listbox" aria-label="المناديب وعدد الأوردرات معهم"></div>
+            <button type="button" class="courier-picker-clear">إلغاء الاختيار</button>
+        </div>`;
+    select.classList.add('shipping-courier-native');
+    select.hidden = true;
+    select.tabIndex = -1;
+    select.setAttribute('aria-hidden', 'true');
+    select.insertAdjacentElement('afterend', wrapper);
+    const trigger = wrapper.querySelector('.courier-picker-trigger');
+    const nameLabel = wrapper.querySelector('.courier-picker-name');
+    const countLabel = wrapper.querySelector('.courier-picker-count');
+    const panel = wrapper.querySelector('.courier-picker-panel');
+    const search = wrapper.querySelector('.courier-picker-search');
+    const list = wrapper.querySelector('.courier-picker-options');
+    const getCounts = () => {
+        const counts = new Map();
+        const orders = window.shippedOrdersData || window.latestServerData?.shippedOrders || [];
+        orders.forEach(order => {
+            if (order.driver) counts.set(order.driver, (counts.get(order.driver) || 0) + 1);
+        });
+        return counts;
+    };
+    const close = (restoreFocus = false) => {
+        panel.hidden = true;
+        trigger.setAttribute('aria-expanded', 'false');
+        if (restoreFocus) trigger.focus();
+    };
+    const choose = value => {
+        select.value = value;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        sync();
+        close(true);
+    };
+    const render = () => {
+        const counts = getCounts();
+        const query = normalizeArabicText(search.value);
+        list.replaceChildren();
+        Array.from(select.options).filter(option => option.value && !option.disabled && normalizeArabicText(option.value).includes(query)).forEach(option => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'courier-picker-option';
+            button.setAttribute('role', 'option');
+            button.setAttribute('aria-selected', String(select.value === option.value));
+            const name = document.createElement('span');
+            name.textContent = option.value;
+            const count = document.createElement('span');
+            count.className = 'courier-picker-option-count';
+            count.textContent = `${counts.get(option.value) || 0} أوردر`;
+            button.append(name, count);
+            button.addEventListener('click', () => choose(option.value));
+            list.appendChild(button);
+        });
+        if (!list.children.length) {
+            const empty = document.createElement('p');
+            empty.className = 'courier-picker-empty';
+            empty.textContent = 'لا يوجد مندوب مطابق';
+            list.appendChild(empty);
+        }
+    };
+    const sync = () => {
+        nameLabel.textContent = select.value || 'اختر المندوب';
+        countLabel.hidden = !select.value;
+        countLabel.textContent = `${getCounts().get(select.value) || 0} أوردر معاه`;
+        render();
+    };
+    trigger.addEventListener('click', () => {
+        if (!panel.hidden) { close(); return; }
+        ['assignDriverSelect', 'closeDriverSelect'].forEach(id => {
+            const other = document.getElementById(id);
+            if (other !== select) other?._courierPicker?.close();
+        });
+        search.value = '';
+        render();
+        panel.hidden = false;
+        trigger.setAttribute('aria-expanded', 'true');
+        search.focus();
+    });
+    search.addEventListener('input', render);
+    wrapper.querySelector('.courier-picker-clear').addEventListener('click', () => choose(''));
+    select.addEventListener('change', sync);
+    wrapper.addEventListener('keydown', event => {
+        if (event.key === 'Escape') { close(true); return; }
+        if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+        event.preventDefault();
+        if (panel.hidden) trigger.click();
+        const options = Array.from(list.querySelectorAll('[role="option"]'));
+        const index = options.indexOf(document.activeElement);
+        const next = index < 0 ? (event.key === 'ArrowDown' ? 0 : options.length - 1)
+            : (index + (event.key === 'ArrowDown' ? 1 : -1) + options.length) % options.length;
+        options[next]?.focus();
+    });
+    wrapper.addEventListener('focusout', event => {
+        if (!wrapper.contains(event.relatedTarget)) close();
+    });
+    document.addEventListener('click', event => {
+        if (!wrapper.contains(event.target)) close();
+    });
+    select._courierPicker = { sync, close };
+    sync();
+}
 
 function populateShippingCouriersDropdowns() {
     const assignSelect = document.getElementById('assignDriverSelect');
@@ -6617,7 +6738,7 @@ function populateShippingCouriersDropdowns() {
             const opt = document.createElement('option');
             opt.value = d.name;
             if (st.count > 0) {
-                opt.text = `${d.name} (${st.count} أوردر - ${Math.round(st.total)} ج.م)`;
+                opt.text = `${d.name} (معاه ${st.count} أوردر)`;
                 opt.style.fontWeight = 'bold';
             } else {
                 opt.text = `${d.name} (0 أوردر)`;
@@ -6638,7 +6759,7 @@ function populateShippingCouriersDropdowns() {
                 btn.type = 'button';
                 btn.className = 'courier-chip' + (closeSelect && closeSelect.value === d.name ? ' active' : '');
                 btn.dataset.driver = d.name;
-                btn.innerHTML = `<i class="fa-solid fa-motorcycle"></i> ${d.name}: ${st.count} (${Math.round(st.total)}ج)`;
+                btn.textContent = `${d.name}: ${st.count} أوردر`;
                 btn.onclick = () => window.selectCourierForSettlement(d.name);
                 quickChips.appendChild(btn);
             });
@@ -6664,6 +6785,8 @@ function populateShippingCouriersDropdowns() {
         });
         if (currentVal) assignSelect.value = currentVal;
     }
+    setupShippingCourierPicker('assignDriverSelect');
+    setupShippingCourierPicker('closeDriverSelect');
 }
 
 function setupShippingHub() {
@@ -7427,10 +7550,10 @@ function updateAdvancedDashboard(history) {
     if (document.getElementById('completedCount')) document.getElementById('completedCount').innerText = completedToday;
 
     // بالس على زر المالية
-    let openFinancialsBtn = document.getElementById('openFinancialsBtn');
-    if (openFinancialsBtn) {
-        if (moneyWithDrivers > 0) openFinancialsBtn.classList.add('pulse-btn');
-        else openFinancialsBtn.classList.remove('pulse-btn');
+    const courierAccountsButton = document.querySelector('#shippingSubTabs [data-subtab="shipping-accounts"]');
+    if (courierAccountsButton) {
+        if (moneyWithDrivers > 0) courierAccountsButton.classList.add('pulse-btn');
+        else courierAccountsButton.classList.remove('pulse-btn');
     }
 }
 
