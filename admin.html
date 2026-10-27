@@ -60,7 +60,7 @@
     <link rel="icon" type="image/png" href="favicon.png?v=13">
     <link rel="apple-touch-icon" href="favicon.png?v=13">
     <link rel="manifest" href="app-manifest.json?v=1003">
-    <link rel="stylesheet" href="style.css?v=119.0">
+    <link rel="stylesheet" href="style.css?v=120.0">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap"
         rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" type="text/javascript" crossorigin="anonymous"></script>
@@ -874,11 +874,11 @@
                     <button type="button" class="shipping-subtab-pill active" data-subtab="shipping-dispatch">
                         <i class="fa-solid fa-truck-ramp-box"></i> تسليم المناديب <span class="tab-badge" id="tabBadgeDispatch">0</span>
                     </button>
-                    <button type="button" class="shipping-subtab-pill" data-subtab="shipping-accounts">
-                        <i class="fa-solid fa-wallet"></i> حسابات المناديب
-                    </button>
                     <button type="button" class="shipping-subtab-pill" data-subtab="shipping-settlement">
                         <i class="fa-solid fa-hand-holding-dollar"></i> تقفيل العهدة <span class="tab-badge" id="tabBadgeSettlement">0</span>
+                    </button>
+                    <button type="button" class="shipping-subtab-pill" data-subtab="shipping-accounts">
+                        <i class="fa-solid fa-wallet"></i> حسابات المناديب
                     </button>
                     <button type="button" class="shipping-subtab-pill" data-subtab="shipping-branch">
                         <i class="fa-solid fa-store"></i> استلام الفرع <span class="tab-badge" id="tabBadgeBranch">0</span>
@@ -1072,47 +1072,42 @@
 
             <div id="subtab-shipping-accounts" class="shipping-subtab-content" style="display:none;">
                 <section id="financials-tab" class="financials-tab">
-            <div class="section-card financials-page-card" style="width: 100%; box-sizing: border-box; display: flex; flex-direction: column;">
-                <div class="financials-header-row" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 10px; gap: 10px;">
-                    <div>
-                        <h2 style="color: var(--primary); margin: 0; display: inline-block; margin-left: 15px;"><i class="fa-solid fa-wallet"></i> حسابات المناديب</h2>
-                        <h3 style="color: var(--success); margin: 0; display: inline-block;" id="financialsTotalAmount">إجمالي الحساب: 0 ج.م</h3>
+                <div class="section-card financials-page-card">
+                    <div class="financials-header-row">
+                        <div class="courier-accounts-title">
+                            <h2><i class="fa-solid fa-wallet"></i> حسابات المناديب</h2>
+                            <h3 id="financialsTotalAmount">إجمالي الحساب: 0 ج.م</h3>
+                        </div>
+                        <details id="courierManageTools" class="courier-manage-tools">
+                            <summary><i class="fa-solid fa-user-plus"></i> إضافة مندوب</summary>
+                            <div class="financials-add-driver-form">
+                                <input type="text" id="newDriverName" placeholder="اسم المندوب" aria-label="اسم المندوب">
+                                <input type="tel" id="newDriverPhone" placeholder="رقم الموبايل" aria-label="رقم موبايل المندوب">
+                                <button type="button" id="addDriverBtn" class="btn-confirm"><i class="fa-solid fa-plus"></i> إضافة</button>
+                            </div>
+                        </details>
                     </div>
-                    <div class="financials-controls" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <div class="financials-add-driver-form" style="display: flex; gap: 5px; background: #FAFBFF; border: 1px solid var(--border); border-radius: 8px; padding: 5px;">
-                            <input type="text" id="newDriverName" placeholder="اسم المندوب" style="margin-bottom: 0; padding: 5px; width: 120px;">
-                            <input type="tel" id="newDriverPhone" placeholder="رقم الموبايل" style="margin-bottom: 0; padding: 5px; width: 120px;">
-                            <button id="addDriverBtn" class="btn-confirm" style="padding: 5px 10px;"><i class="fa-solid fa-plus"></i> إضافة</button>
+                    <div class="courier-accounts-toolbar">
+                        <div class="financials-month-filter">
+                            <label for="driversMonthFilter">الشهر:</label>
+                            <input type="month" id="driversMonthFilter">
+                            <button type="button" class="btn-primary interactive-btn" onclick="refreshDriversStats()"><i class="fa-solid fa-rotate"></i> تحديث</button>
                         </div>
-
-<!-- Filter & Search Container -->
-                        <div class="financials-filter-search" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
-                            <!-- Month Filter -->
-                            <div class="financials-month-filter" style="display: flex; gap: 5px; align-items: center; background: #FAFBFF; border: 1px solid var(--border); border-radius: 8px; padding: 5px;">
-                                <label for="driversMonthFilter" style="margin:0; font-size: 0.85rem; font-weight:bold; color:var(--text-main);">تصفية بالشهر:</label>
-                                <input type="month" id="driversMonthFilter" style="margin-bottom:0; padding:4px; border:1px solid #ccc; border-radius:4px;">
-                                <button type="button" class="btn-primary interactive-btn" onclick="refreshDriversStats()" style="padding: 4px 12px; border-radius: 6px; background: linear-gradient(135deg, var(--primary), var(--primary-light)); border: none; box-shadow: 0 2px 4px rgba(233,30,99,0.3); transition: all 0.3s; font-weight:bold;"><i class="fa-solid fa-bolt"></i> تحديث البيانات</button>
-                            </div>
-                            <!-- Order Search -->
-                            <div class="financials-order-search" style="display: flex; gap: 5px; align-items: center; background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px; padding: 5px;">
-                                <input type="text" id="driverOrderSearchInput" placeholder="بحث برقم الأوردر (لمعرفة مندوبه وحالته)..." style="margin-bottom:0; padding:5px; border:1px solid #ffd54f; border-radius:4px; width:240px; font-size:0.85rem;" onkeypress="if(event.key==='Enter') window.searchDriverOrder()">
-                                <button type="button" class="btn-search interactive-btn" onclick="window.searchDriverOrder()" style="padding: 4px 12px; border-radius: 6px;"><i class="fa-solid fa-magnifying-glass"></i> تتبع الأوردر</button>
-                            </div>
+                        <div class="financials-order-search">
+                            <input type="search" id="driverOrderSearchInput" placeholder="تتبّع برقم الأوردر..." aria-label="تتبع أوردر" onkeydown="if(event.key==='Enter') window.searchDriverOrder()">
+                            <button type="button" class="btn-search interactive-btn" onclick="window.searchDriverOrder()"><i class="fa-solid fa-search"></i> تتبّع</button>
                         </div>
-
-                        <label class="financials-select-all" style="display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: bold; background: var(--bg); padding: 5px 10px; border-radius: 8px;">
-                            <input type="checkbox" id="selectAllFinancialsCheckbox" style="width: 18px; height: 18px;">
-                            تحديد الكل
-                        </label>
-                        <button id="closeSelectedFinancialsBtn" class="btn-primary" style="background: var(--success); display: none;">تقفيل المحدد <i class="fa-solid fa-check"></i></button>
+                    </div>
+                    <div id="courierSelectionToolbar" class="courier-selection-toolbar">
+                        <label class="financials-select-all"><input type="checkbox" id="selectAllFinancialsCheckbox"><span id="courierSelectionLabel">تحديد كل أوردرات المندوب</span></label>
+                        <span id="courierSelectedCount" role="status" aria-live="polite"></span>
+                        <button type="button" id="closeSelectedFinancialsBtn" class="btn-primary" style="display:none;">تقفيل المحدد</button>
+                    </div>
+                    <div id="financialsDisplayList" class="reports-grid financials-display-list">
+                        <p class="empty-msg">جاري تحميل الحسابات...</p>
                     </div>
                 </div>
-
-                <div id="financialsDisplayList" class="reports-grid financials-display-list" style="width: 100%; display: grid; gap: 15px; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); align-items: start; align-content: start;">
-                    <p class="empty-msg" style="grid-column: 1 / -1;">جاري تحميل الحسابات من السيرفر...</p>
-                </div>
-            </div>
-        </section>
+            </section>
             </div>
         </section>
 
@@ -2931,7 +2926,7 @@
     </div>
 </div>
 
-    <script src="app.js?v=127.0" charset="UTF-8" defer></script>
+    <script src="app.js?v=128.0" charset="UTF-8" defer></script>
 </body>
 </html>
 

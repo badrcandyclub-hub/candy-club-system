@@ -968,6 +968,55 @@ async function handleSupabaseRequest(url, options) {
                 break;
             }
 
+            case 'editOrder':
+            case 'updateOrder': {
+                const orderId = params.orderId || params.order_id;
+                if (!orderId) {
+                    responseData = { success: false, error: 'Missing orderId' };
+                    break;
+                }
+
+                const updateData = {
+                    platform: params.platform || '',
+                    customer_name: params.customerName || '',
+                    governorate: params.gov || '',
+                    address: params.address || '',
+                    phone: params.phone1 || '',
+                    alt_phone: params.phone2 || '',
+                    delivery_type: params.orderType || '',
+                    payment_method: params.payMethod || '',
+                    delivery_date: params.expDate || '',
+                    products: params.products || '',
+                    products_total: params.pTotal ? parseFloat(params.pTotal) : 0,
+                    discount: params.discount ? parseFloat(params.discount) : 0,
+                    shipping_cost: params.shipping ? parseFloat(params.shipping) : 0,
+                    final_total: params.finalTotal ? parseFloat(params.finalTotal) : 0,
+                    notes: params.notes || '',
+                    moderator_name: params.moderator || '',
+                    deposit: params.deposit ? parseFloat(params.deposit) : 0,
+                    remaining: params.remaining ? parseFloat(params.remaining) : (params.finalTotal ? parseFloat(params.finalTotal) : 0)
+                };
+
+                const { data: updated, error: updErr } = await supabase.from('orders')
+                    .update(updateData)
+                    .eq('order_id', orderId)
+                    .select();
+
+                if (updErr) {
+                    responseData = { success: false, error: updErr.message };
+                } else {
+                    responseData = { success: true, orderId: orderId, message: 'تم تحديث الأوردر بنجاح', data: updated ? updated[0] : null };
+                    if (params.phone1) {
+                        await updateCustomerStatsInDatabase(params.phone1, { 
+                            customer_name: params.customerName, 
+                            governorate: params.gov, 
+                            address: params.address 
+                        });
+                    }
+                }
+                break;
+            }
+
             case 'updateOrderStatus': {
                 const updateData = { status: params.status };
                 if (params.driverName !== undefined) updateData.driver_name = params.driverName;
@@ -4258,6 +4307,183 @@ function checkBookingAlerts() {
     else banner.style.display = 'none';
 }
 
+const courierAccountsView = { selectedName: '', query: '', payment: 'cash' };
+
+function getActiveCourierOrderCheckboxes(checkedOnly = false) {
+    const card = document.querySelector('#financialsDisplayList .courier-account-detail:not([hidden])');
+    return card ? Array.from(card.querySelectorAll('.financial-order-checkbox' + (checkedOnly ? ':checked' : ''))) : [];
+}
+
+function syncCourierSelectionControls() {
+    const checkboxes = getActiveCourierOrderCheckboxes();
+    const checked = checkboxes.filter(cb => cb.checked).length;
+    const selectAll = document.getElementById('selectAllFinancialsCheckbox');
+    if (selectAll) {
+        selectAll.disabled = checkboxes.length === 0;
+        selectAll.checked = checkboxes.length > 0 && checked === checkboxes.length;
+        selectAll.indeterminate = checked > 0 && checked < checkboxes.length;
+    }
+    const label = document.getElementById('courierSelectionLabel');
+    if (label) label.textContent = courierAccountsView.selectedName
+        ? `تحديد كل أوردرات ${courierAccountsView.selectedName}` : 'تحديد كل أوردرات المندوب';
+    const counter = document.getElementById('courierSelectedCount');
+    if (counter) counter.textContent = checked ? `${checked} أوردر محدد` : '';
+    const button = document.getElementById('closeSelectedFinancialsBtn');
+    if (button && !button.disabled) {
+        button.style.display = checked > 0 ? 'inline-block' : 'none';
+        button.textContent = `تقفيل المحدد (${checked})`;
+    }
+}
+
+function prepareCourierAccountsWorkspace(container) {
+    const cards = Array.from(container.children).filter(card => card.classList.contains('financial-row'));
+    const toolbar = document.getElementById('courierSelectionToolbar');
+    if (toolbar) toolbar.hidden = cards.length === 0;
+    if (!cards.length) { syncCourierSelectionControls(); return; }
+    const workspace = document.createElement('div');
+    workspace.className = 'courier-accounts-workspace';
+    const sidebar = document.createElement('aside');
+    sidebar.className = 'courier-accounts-sidebar';
+    sidebar.innerHTML = `<details class="courier-list-panel">
+        <summary class="courier-list-summary"><span class="courier-current-name"></span><span class="courier-list-summary-hint">تغيير المندوب</span></summary>
+        <div class="courier-list-content"><input type="search" class="courier-account-search" aria-label="ابحث باسم المندوب" placeholder="ابحث باسم المندوب..." autocomplete="off">
+        <div class="courier-accounts-list" aria-label="حسابات المناديب"></div><p class="courier-accounts-empty" hidden>لا يوجد مندوب مطابق للبحث.</p></div>
+    </details>`;
+    const listPanel = sidebar.querySelector('details');
+    const isCompact = () => window.matchMedia && window.matchMedia('(max-width: 760px)').matches;
+    listPanel.open = !isCompact();
+    const search = sidebar.querySelector('input');
+    const list = sidebar.querySelector('.courier-accounts-list');
+    const empty = sidebar.querySelector('.courier-accounts-empty');
+    const detail = document.createElement('div');
+    detail.className = 'courier-accounts-detail';
+    const entries = cards.map((card, index) => ({ card, name: card.dataset.courierName || '', pending: Number(card.dataset.courierOrders) || 0, index }));
+    entries.sort((a, b) => b.pending - a.pending || a.name.localeCompare(b.name, 'ar'));
+    let activeEntry = entries.find(entry => entry.name === courierAccountsView.selectedName) || entries[0];
+    courierAccountsView.selectedName = activeEntry.name;
+
+    const selectCourier = entry => {
+        if (document.getElementById('closeSelectedFinancialsBtn')?.disabled) return;
+        container.querySelectorAll('.financial-order-checkbox').forEach(cb => { cb.checked = false; });
+        activeEntry = entry;
+        courierAccountsView.selectedName = entry.name;
+        entries.forEach(item => {
+            item.card.hidden = item !== entry;
+            item.button.setAttribute('aria-pressed', String(item === entry));
+        });
+        sidebar.querySelector('.courier-current-name').textContent = `${entry.name} · ${entry.pending} أوردر`;
+        if (isCompact()) {
+            listPanel.open = false;
+            sidebar.querySelector('summary').focus?.();
+        }
+        syncCourierSelectionControls();
+    };
+
+    entries.forEach(entry => {
+        const card = entry.card;
+        card.classList.add('courier-account-detail');
+        card.id = 'courier-account-detail-' + entry.index;
+        card.hidden = entry !== activeEntry;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'courier-account-choice';
+        button.setAttribute('aria-controls', card.id);
+        button.setAttribute('aria-pressed', String(entry === activeEntry));
+        const title = document.createElement('span');
+        title.className = 'courier-account-choice-title';
+        const name = document.createElement('span');
+        name.textContent = entry.name;
+        const count = document.createElement('span');
+        count.className = 'courier-account-choice-count';
+        count.textContent = `${entry.pending} أوردر`;
+        title.append(name, count);
+        const status = document.createElement('span');
+        status.className = 'courier-account-choice-status';
+        status.textContent = card.querySelector('.financial-status')?.textContent.trim().replace(/\s+/g, ' ') || '';
+        button.append(title, status);
+        button.addEventListener('click', () => selectCourier(entry));
+        entry.button = button;
+        list.appendChild(button);
+
+        const performance = card.lastElementChild;
+        const groups = Array.from(card.children).filter(child => child.querySelector('.financial-order-item'));
+        if (groups.length) {
+            const tabs = document.createElement('div');
+            tabs.className = 'courier-payment-tabs';
+            tabs.setAttribute('role', 'tablist');
+            tabs.setAttribute('aria-label', 'نوع دفع أوردرات المندوب');
+            const panels = groups.map((group, groupIndex) => {
+                const type = group.querySelector('.financial-payment-badge--instapay') ? 'instapay' : 'cash';
+                const tab = document.createElement('button');
+                tab.type = 'button';
+                tab.className = 'courier-payment-tab';
+                tab.id = `courier-payment-${entry.index}-${groupIndex}`;
+                tab.setAttribute('role', 'tab');
+                group.id = tab.id + '-panel';
+                group.classList.add('courier-payment-panel');
+                group.setAttribute('role', 'tabpanel');
+                group.setAttribute('aria-labelledby', tab.id);
+                tab.setAttribute('aria-controls', group.id);
+                const count = group.querySelectorAll('.financial-order-checkbox').length;
+                tab.textContent = `${type === 'cash' ? 'كاش' : 'إنستاباي / إلكتروني'} (${count})`;
+                tabs.appendChild(tab);
+                const scrollList = group.lastElementChild;
+                if (scrollList) {
+                    scrollList.tabIndex = 0;
+                    scrollList.setAttribute('aria-label', `أوردرات ${type === 'cash' ? 'الكاش' : 'الدفع الإلكتروني'} — يمكن تمرير القائمة`);
+                }
+                return { group, tab, type };
+            });
+            const activate = (panel, remember = true) => {
+                panels.forEach(item => {
+                    item.group.hidden = item !== panel;
+                    item.tab.setAttribute('aria-selected', String(item === panel));
+                    item.tab.tabIndex = item === panel ? 0 : -1;
+                });
+                if (remember) courierAccountsView.payment = panel.type;
+            };
+            panels.forEach((panel, index) => {
+                panel.tab.addEventListener('click', () => activate(panel));
+                panel.tab.addEventListener('keydown', event => {
+                    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+                    event.preventDefault();
+                    const next = panels[(index + (event.key === 'ArrowLeft' ? 1 : -1) + panels.length) % panels.length];
+                    activate(next);
+                    next.tab.focus();
+                });
+            });
+            card.insertBefore(tabs, groups[0]);
+            activate(panels.find(panel => panel.type === courierAccountsView.payment) || panels[0], false);
+        }
+        if (performance && !groups.includes(performance)) {
+            const disclosure = document.createElement('details');
+            disclosure.className = 'courier-performance';
+            const summary = document.createElement('summary');
+            summary.textContent = 'أداء المندوب وإحصائياته';
+            disclosure.append(summary, performance);
+            card.appendChild(disclosure);
+        }
+        detail.appendChild(card);
+    });
+    const filter = () => {
+        const query = normalizeArabicText(search.value);
+        courierAccountsView.query = search.value;
+        let visible = 0;
+        entries.forEach(entry => {
+            entry.button.hidden = !normalizeArabicText(entry.name).includes(query);
+            if (!entry.button.hidden) visible++;
+        });
+        empty.hidden = visible > 0;
+    };
+    search.value = courierAccountsView.query;
+    search.addEventListener('input', filter);
+    filter();
+    sidebar.querySelector('.courier-current-name').textContent = `${activeEntry.name} · ${activeEntry.pending} أوردر`;
+    workspace.append(sidebar, detail);
+    container.replaceChildren(workspace);
+    syncCourierSelectionControls();
+}
+
 function renderFinancials(finList) {
     let container = document.getElementById('financialsDisplayList');
     if (!container) return;
@@ -4631,6 +4857,11 @@ function renderHistoryList(orders, isLoadMore = false) {
                     </div>
                 </div>
                 <div class="history-item-actions-cluster">
+                    ${(order.status === 'قيد التجهيز') ? `
+                    <button type="button" class="order-action-icon-btn edit-action-btn" onclick="startOrderEdit('${order.id}')" title="تعديل الأوردر وإعادته لصفحة الإنشاء" aria-label="تعديل الأوردر">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                    ` : ''}
                     <button type="button" class="order-action-icon-btn whatsapp-action-btn" onclick="shareToWhatsAppGroup('${order.id}')" title="نسخ ومشاركة لجروب الواتساب" aria-label="مشاركة واتساب">
                         <i class="fa-brands fa-whatsapp"></i>
                     </button>
@@ -4646,6 +4877,10 @@ function renderHistoryList(orders, isLoadMore = false) {
                 <span style="font-weight:bold; color: var(--text-dark);"><i class=\'fa-solid fa-money-bill-wave\'></i> ${order.total} ج.م</span>
             </div>
         `;
+        div.onclick = (e) => {
+            if (e.target.closest('.order-action-icon-btn')) return;
+            showOrderDetailsModal(order.id);
+        };
         container.appendChild(div);
     });
 
@@ -6083,8 +6318,14 @@ if (saveAndPrintBtn) {
 
         let orderTypeLabel = deliveryTypeSelect ? deliveryTypeSelect.options[deliveryTypeSelect.selectedIndex].text : "توصيل";
 
+        const isEditing = !!window.editingOrderId;
+        const targetOrderId = window.editingOrderId;
+
         let formData = new URLSearchParams();
-        formData.append('action', 'addOrder');
+        formData.append('action', isEditing ? 'updateOrder' : 'addOrder');
+        if (isEditing) {
+            formData.append('orderId', targetOrderId);
+        }
         formData.append('platform', document.getElementById('platform') ? document.getElementById('platform').value : "");
         formData.append('customerName', name);
         formData.append('phone1', phone);
@@ -6108,8 +6349,56 @@ if (saveAndPrintBtn) {
             .then(res => res.json())
             .then((data) => {
                 if (typeof window.hideLoading === 'function') window.hideLoading();
+                if (data && data.success === false) {
+                    showToast("تعذر حفظ الأوردر: " + (data.error || 'يرجى المحاولة ثانية'), "error");
+                    setBtnLoading(saveAndPrintBtn, false, isEditing ? "💾 حفظ التعديلات وطباعة الفاتورة" : "💾 حفظ وطباعة الفاتورة");
+                    return;
+                }
+
                 if (typeof window.playRegisterBeep === 'function') window.playRegisterBeep();
-                showToast("<i class=\'fa-solid fa-check\'></i> تم حفظ الأوردر بنجاح!", "success");
+                const activeOrderId = (isEditing && targetOrderId) ? targetOrderId : ((data && data.orderId) ? data.orderId : "");
+
+                if (isEditing) {
+                    showToast(`<i class='fa-solid fa-check'></i> تم تحديث الأوردر (${activeOrderId}) بنجاح!`, "success");
+                    // تحديث بيانات الأوردر في الذاكرة المحلية
+                    const updateLocalObj = (o) => {
+                        if (!o || String(o.id) !== String(activeOrderId)) return;
+                        o.platform = document.getElementById('platform') ? document.getElementById('platform').value : o.platform;
+                        o.name = name;
+                        o.phone = phone;
+                        o.phone2 = document.getElementById('phone2') ? document.getElementById('phone2').value : "";
+                        o.gov = gov;
+                        o.address = addressVal;
+                        o.orderType = orderTypeLabel;
+                        o.deliveryDate = finalExpDate;
+                        o.reservationDate = finalExpDate;
+                        o.products = productsListText;
+                        o.subtotal = parseFloat(document.getElementById('productsTotal')?.value) || 0;
+                        o.discount = parseFloat(document.getElementById('discount')?.value) || 0;
+                        o.shipping = parseFloat(document.getElementById('shippingCost')?.value) || 0;
+                        o.total = parseFloat(finalTotalVal) || 0;
+                        o.paymentMethod = paymentMethod ? paymentMethod.value : o.paymentMethod;
+                        o.notes = finalNotes;
+                        o.moderator = selectedModerator;
+                        o.seller = selectedModerator;
+                        o.deposit = dep;
+                        o.remaining = rem;
+                    };
+                    if (Array.isArray(window.currentOrdersList)) window.currentOrdersList.forEach(updateLocalObj);
+                    if (Array.isArray(window.orderHistoryData)) window.orderHistoryData.forEach(updateLocalObj);
+                    if (Array.isArray(window.allOrdersData)) window.allOrdersData.forEach(updateLocalObj);
+                    if (Array.isArray(window.pendingOrdersData)) window.pendingOrdersData.forEach(updateLocalObj);
+
+                    if (typeof renderHistoryList === 'function' && Array.isArray(window.currentOrdersList)) {
+                        renderHistoryList(window.currentOrdersList);
+                    }
+                    window.editingOrderId = null;
+                    const eb = document.getElementById('orderEditBanner');
+                    if (eb) eb.style.display = 'none';
+                    setBtnLoading(saveAndPrintBtn, false, "💾 حفظ وطباعة الفاتورة");
+                } else {
+                    showToast("<i class=\'fa-solid fa-check\'></i> تم حفظ الأوردر بنجاح!", "success");
+                }
 
                 let isGovShipping = orderTypeLabel === 'gov_shipping' || orderTypeLabel.includes('محافظات') || delType === 'gov_shipping';
                 if (isGovShipping) {
@@ -6119,7 +6408,7 @@ if (saveAndPrintBtn) {
                 }
 
                 let govStr = gov ? gov + " - " : "";
-                let genIdText = (data && data.orderId) ? `<br><span style="font-size:14px; font-weight:normal; font-family: Tahoma, sans-serif;">رقم الأوردر: ${data.orderId}</span>` : "";
+                let genIdText = activeOrderId ? `<br><span style="font-size:14px; font-weight:normal; font-family: Tahoma, sans-serif;">رقم الأوردر: ${activeOrderId}</span>` : "";
                 if (document.getElementById('receipt-type')) document.getElementById('receipt-type').innerHTML = isGift ? `${govStr}${orderTypeLabel} - <i class=\'fa-solid fa-gift\'></i> هدية${genIdText}` : `${govStr}${orderTypeLabel}${genIdText}`;
 
                 let printLogo = document.getElementById('receiptLogo') || document.getElementById('print-logo');
@@ -6357,6 +6646,8 @@ window.editZoneUI = function (name, price, type, duration, zoneType) {
 };
 
 window.editDriverUI = function (name, phone) {
+    const tools = document.getElementById('courierManageTools');
+    if (tools) tools.open = true;
     if (document.getElementById('newDriverName')) document.getElementById('newDriverName').value = name;
     if (document.getElementById('newDriverPhone')) document.getElementById('newDriverPhone').value = phone;
     showToast("قم بتعديل البيانات واضغط حفظ", "success");
@@ -6502,6 +6793,8 @@ window.switchShippingSubTab = function(subtabId) {
         targetEl.style.display = 'block';
     }
     window._activeShippingSubtab = subtabId;
+    const shippingSearch = document.querySelector('#shipping-tab .shipping-search-box');
+    if (shippingSearch) shippingSearch.hidden = subtabId === 'shipping-accounts';
     if (subtabId === 'shipping-accounts') {
         const monthInput = document.getElementById('driversMonthFilter');
         if (monthInput && !monthInput.value) {
@@ -14884,6 +15177,7 @@ function renderFinancials(finList) {
     let driversArray = Object.values(driversMap);
     if (driversArray.length === 0) {
         container.innerHTML = '<p class="empty-msg" style="grid-column: 1 / -1;">لا توجد مناديب مسجلة.</p>';
+        prepareCourierAccountsWorkspace(container);
         return;
     }
 
@@ -15078,7 +15372,7 @@ function renderFinancials(finList) {
         `;
 
         container.innerHTML += `
-            <div class="${cardClass}" style="background: #fff; padding: 16px; border-radius: 14px; border: 1px solid ${cardBorderColor}; margin-bottom: 15px; box-shadow: ${cardShadow}; opacity: ${cardOpacity}; transition: all 0.3s ease; box-sizing: border-box; width: 100%;">
+            <div class="${cardClass}" data-courier-name="${escapeInventoryHtml(f.name)}" data-courier-orders="${driverOrders.length}" style="background: #fff; padding: 16px; border-radius: 14px; border: 1px solid ${cardBorderColor}; margin-bottom: 15px; box-shadow: ${cardShadow}; opacity: ${cardOpacity}; transition: all 0.3s ease; box-sizing: border-box; width: 100%;">
                 <!-- Header -->
                 <div class="financial-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #f1f5f9; padding-bottom:10px; margin-bottom:12px; gap: 8px;">
                     <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; min-width: 0;">
@@ -15120,6 +15414,7 @@ function renderFinancials(finList) {
     if (totalEl) {
         totalEl.innerText = `إجمالي الحساب: ${totalAllDue} ج.م`;
     }
+    prepareCourierAccountsWorkspace(container);
 }
 
 // --- Mobile Back Button (History API) & Sidebar Animation ---
@@ -15181,7 +15476,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if(selectAllCheckbox) {
         selectAllCheckbox.addEventListener('change', (e) => {
             const isChecked = e.target.checked;
-            const checkboxes = document.querySelectorAll('.financial-order-checkbox');
+            const checkboxes = getActiveCourierOrderCheckboxes();
             checkboxes.forEach(cb => cb.checked = isChecked);
             updateCloseBtnVisibility();
         });
@@ -15190,22 +15485,19 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('financialsDisplayList')?.addEventListener('change', (e) => {
         if(e.target.classList.contains('financial-order-checkbox')) {
             updateCloseBtnVisibility();
-            const allCheckboxes = document.querySelectorAll('.financial-order-checkbox');
+            const allCheckboxes = getActiveCourierOrderCheckboxes();
             const allChecked = Array.from(allCheckboxes).every(cb => cb.checked);
             if(selectAllCheckbox) selectAllCheckbox.checked = allChecked;
         }
     });
 
     function updateCloseBtnVisibility() {
-        const checkedCount = document.querySelectorAll('.financial-order-checkbox:checked').length;
-        if(closeSelectedBtn) {
-            closeSelectedBtn.style.display = checkedCount > 0 ? 'inline-block' : 'none';
-        }
+        syncCourierSelectionControls();
     }
 
     if(closeSelectedBtn) {
         closeSelectedBtn.addEventListener('click', () => {
-            const checkedBoxes = document.querySelectorAll('.financial-order-checkbox:checked');
+            const checkedBoxes = getActiveCourierOrderCheckboxes(true);
             if(checkedBoxes.length === 0) return;
             
             customConfirm(`هل أنت متأكد من تسوية عدد ${checkedBoxes.length} أوردر محدد؟`, () => {
@@ -24956,3 +25248,443 @@ window.decrementOffersFromOrderProducts = async function() {
         window.updateOffersStats();
     }
 };
+
+
+// ============================================================
+// ✏️ نظام تفاصيل وتعديل الأوردرات قيد التجهيز (Order Edit & Details)
+// ============================================================
+window.editingOrderId = null;
+
+// البحث عن الأوردر في الذاكرة المؤقتة بجميع القوائم
+window.findOrderById = function(orderId) {
+    if (!orderId) return null;
+    const strId = String(orderId).trim();
+    let order = null;
+    if (Array.isArray(window.currentOrdersList)) order = window.currentOrdersList.find(o => String(o.id).trim() === strId);
+    if (!order && Array.isArray(window.orderHistoryData)) order = window.orderHistoryData.find(o => String(o.id).trim() === strId);
+    if (!order && Array.isArray(window.allOrdersData)) order = window.allOrdersData.find(o => String(o.id).trim() === strId);
+    if (!order && Array.isArray(window.pendingOrdersData)) order = window.pendingOrdersData.find(o => String(o.id).trim() === strId);
+    return order;
+};
+
+// فتح نافذة تفاصيل الأوردر الشاملة
+window.showOrderDetailsModal = async function(orderId) {
+    let order = window.findOrderById(orderId);
+
+    // إذا لم يكن موجوداً محلياً، جلبه من Supabase مباشرة
+    if (!order && window.supabase) {
+        try {
+            if (typeof window.showLoading === 'function') window.showLoading();
+            const { data, error } = await supabase.from('orders').select('*').eq('order_id', orderId).limit(1);
+            if (!error && Array.isArray(data) && data.length > 0) {
+                order = typeof window.mapOrderRowToLocal === 'function' ? window.mapOrderRowToLocal(data[0]) : data[0];
+            }
+        } catch(e) {
+            console.warn("Could not fetch order from Supabase:", e);
+        } finally {
+            if (typeof window.hideLoading === 'function') window.hideLoading();
+        }
+    }
+
+    if (!order) {
+        showToast("⚠️ تعذر العثور على بيانات هذا الأوردر", "error");
+        return;
+    }
+
+    const modal = document.getElementById('orderDetailsModal');
+    const titleEl = document.getElementById('odModalTitle');
+    const subtitleEl = document.getElementById('odModalSubtitle');
+    const bodyEl = document.getElementById('odModalBody');
+    const footerEl = document.getElementById('odModalFooter');
+
+    if (!modal || !bodyEl) return;
+
+    if (titleEl) titleEl.innerText = `تفاصيل الأوردر (${order.id})`;
+    if (subtitleEl) subtitleEl.innerText = `تاريخ: ${order.date || '--'} • الوقت: ${order.time || '--'}`;
+
+    const platformIcons = {
+        'واتساب': { icon: 'fa-whatsapp', color: '#25D366' },
+        'فيسبوك': { icon: 'fa-facebook', color: '#1877F2' },
+        'إنستجرام': { icon: 'fa-instagram', color: '#E1306C' },
+        'تيك توك': { icon: 'fa-tiktok', color: '#000000' }
+    };
+    const platInfo = platformIcons[order.platform] || { icon: 'fa-layer-group', color: '#64748b' };
+
+    // تحليل أصناف الأوردر
+    let productsArray = [];
+    if (order.products) {
+        if (typeof order.products === 'string') productsArray = order.products.split('\n');
+        else if (Array.isArray(order.products)) productsArray = order.products;
+    }
+
+    let productsRowsHtml = '';
+    let totalItemsCount = 0;
+    productsArray.forEach(lineOrItem => {
+        if (!lineOrItem || (typeof lineOrItem === 'string' && lineOrItem.trim() === '')) return;
+        if (typeof lineOrItem === 'object') {
+            const pName = lineOrItem.name || 'صنف';
+            const pQty = lineOrItem.qty || 1;
+            const pPrice = lineOrItem.price || 0;
+            const pRowTotal = (parseFloat(pPrice) * parseFloat(pQty)).toFixed(2);
+            totalItemsCount += parseFloat(pQty);
+            productsRowsHtml += `
+                <tr>
+                    <td style="padding: 10px 12px; font-weight: 700; color: #1e293b; border-bottom: 1px solid #f1f5f9;">${pName}</td>
+                    <td style="padding: 10px 12px; text-align: center; color: #475569; border-bottom: 1px solid #f1f5f9;">${pPrice} ج.م</td>
+                    <td style="padding: 10px 12px; text-align: center; font-weight: 800; color: #0284c7; border-bottom: 1px solid #f1f5f9;">${pQty}</td>
+                    <td style="padding: 10px 12px; text-align: left; font-weight: 800; color: #be185d; border-bottom: 1px solid #f1f5f9;">${pRowTotal} ج.م</td>
+                </tr>
+            `;
+            return;
+        }
+
+        const match = lineOrItem.match(/(.*?) - الكمية:\s*([\d.]+)\s*\(([\d.]+)ج\)(?:\s*\[([\d.]+)\])?/);
+        if (match) {
+            const pName = match[1].trim();
+            const pQty = parseFloat(match[2]) || 1;
+            const pTotal = parseFloat(match[3]) || 0;
+            const pPrice = (pQty > 0 ? (pTotal / pQty) : pTotal).toFixed(2);
+            totalItemsCount += pQty;
+            productsRowsHtml += `
+                <tr>
+                    <td style="padding: 10px 12px; font-weight: 700; color: #1e293b; border-bottom: 1px solid #f1f5f9;">${pName}</td>
+                    <td style="padding: 10px 12px; text-align: center; color: #475569; border-bottom: 1px solid #f1f5f9;">${pPrice} ج.م</td>
+                    <td style="padding: 10px 12px; text-align: center; font-weight: 800; color: #0284c7; border-bottom: 1px solid #f1f5f9;">${pQty}</td>
+                    <td style="padding: 10px 12px; text-align: left; font-weight: 800; color: #be185d; border-bottom: 1px solid #f1f5f9;">${pTotal} ج.م</td>
+                </tr>
+            `;
+        } else {
+            productsRowsHtml += `
+                <tr>
+                    <td colspan="4" style="padding: 10px 12px; color: #1e293b; border-bottom: 1px solid #f1f5f9;">${lineOrItem}</td>
+                </tr>
+            `;
+        }
+    });
+
+    if (!productsRowsHtml) {
+        productsRowsHtml = '<tr><td colspan="4" style="text-align: center; padding: 18px; color: #94a3b8;">لا توجد أصناف مسجلة لهذا الطلب</td></tr>';
+    }
+
+    const isPending = (order.status === 'قيد التجهيز');
+    let statusBg = '#fef2f2', statusColor = '#ef4444', statusBorder = '#fecaca';
+    if (order.status === 'قيد التجهيز') { statusBg = '#fff1f2'; statusColor = '#e11d48'; statusBorder = '#fecdd3'; }
+    else if (order.status === 'في الشحن') { statusBg = '#eff6ff'; statusColor = '#2563eb'; statusBorder = '#bfdbfe'; }
+    else if (order.status === 'تم التوصيل' || order.status === 'تم التوصيل ومُحاسب') { statusBg = '#ecfdf5'; statusColor = '#059669'; statusBorder = '#a7f3d0'; }
+
+    bodyEl.innerHTML = `
+        <!-- بطاقة الحالة وهوية العميل -->
+        <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 14px 18px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <strong style="font-size: 1.15rem; color: #0f172a;">${order.name || 'بدون اسم'}</strong>
+                    <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 6px; font-size: 0.78rem; font-weight: 700; background: ${platInfo.color}15; color: ${platInfo.color};">
+                        <i class="${platInfo.icon.includes('layer') ? 'fa-solid ' + platInfo.icon : 'fa-brands ' + platInfo.icon}"></i> ${order.platform || 'منصة'}
+                    </span>
+                </div>
+                <div style="margin-top: 4px; font-size: 0.86rem; color: #475569; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                    <span><i class="fa-solid fa-phone" style="color: #0284c7;"></i> ${order.phone || '--'}</span>
+                    ${order.phone2 ? `<span><i class="fa-solid fa-mobile-screen" style="color: #64748b;"></i> ${order.phone2}</span>` : ''}
+                </div>
+            </div>
+            <div style="text-align: left;">
+                <span style="display: inline-block; padding: 5px 12px; border-radius: 20px; font-size: 0.84rem; font-weight: 800; background: ${statusBg}; color: ${statusColor}; border: 1.5px solid ${statusBorder};">
+                    ${order.status || 'قيد التجهيز'}
+                </span>
+                <div style="font-size: 0.78rem; color: #64748b; margin-top: 4px;">المودريتور: <strong>${order.moderator || order.seller || 'غير محدد'}</strong></div>
+            </div>
+        </div>
+
+        <!-- تفاصيل الشحن والتوصيل -->
+        <div style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 14px 18px; margin-bottom: 18px;">
+            <div style="font-size: 0.88rem; font-weight: 800; color: #1e293b; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-truck-fast" style="color: #0284c7;"></i> تفاصيل التوصيل والعنوان:
+            </div>
+            <div style="font-size: 0.85rem; color: #475569; line-height: 1.6;">
+                <div><strong>نوع التوصيل:</strong> ${order.orderType || 'توصيل منزلي'}</div>
+                ${order.gov ? `<div><strong>المنطقة / المحافظة:</strong> ${order.gov}</div>` : ''}
+                ${order.address ? `<div><strong>العنوان بالتفصيل:</strong> ${order.address}</div>` : ''}
+                ${order.deliveryDate || order.reservationDate ? `<div><strong>موعد التسليم:</strong> ${order.deliveryDate || order.reservationDate}</div>` : ''}
+                ${order.driver ? `<div><strong>المندوب المسؤول:</strong> ${order.driver}</div>` : ''}
+            </div>
+        </div>
+
+        <!-- جدول المنتجات -->
+        <div style="border: 1.5px solid #e2e8f0; border-radius: 14px; overflow: hidden; margin-bottom: 18px;">
+            <div style="background: #f8fafc; padding: 10px 14px; font-size: 0.88rem; font-weight: 800; color: #1e293b; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                <span><i class="fa-solid fa-basket-shopping" style="color: #ec4899;"></i> الأصناف والكميات المطلوبة</span>
+                <span style="font-size: 0.78rem; color: #64748b;">إجمالي القطع: ${totalItemsCount}</span>
+            </div>
+            <div style="max-height: 220px; overflow-y: auto;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.86rem;">
+                    <thead>
+                        <tr style="background: #f1f5f9; color: #475569; font-weight: 700;">
+                            <th style="padding: 8px 12px; text-align: right;">الصنف</th>
+                            <th style="padding: 8px 12px; text-align: center;">السعر</th>
+                            <th style="padding: 8px 12px; text-align: center;">الكمية</th>
+                            <th style="padding: 8px 12px; text-align: left;">الإجمالي</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${productsRowsHtml}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ملخص الحسابات والماليات -->
+        <div style="background: linear-gradient(135deg, #fdf4ff 0%, #fae8ff 100%); border: 1.5px solid #f0abfc; border-radius: 14px; padding: 14px 18px; margin-bottom: 16px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; font-size: 0.85rem;">
+                <div>
+                    <span style="color: #701a75; font-size: 0.76rem; font-weight: 700; display: block;">إجمالي المنتجات</span>
+                    <strong style="color: #4a044e; font-size: 1rem;">${order.subtotal || order.total || 0} ج.م</strong>
+                </div>
+                <div>
+                    <span style="color: #701a75; font-size: 0.76rem; font-weight: 700; display: block;">تكلفة الشحن</span>
+                    <strong style="color: #4a044e; font-size: 1rem;">${order.shipping || 0} ج.م</strong>
+                </div>
+                <div>
+                    <span style="color: #701a75; font-size: 0.76rem; font-weight: 700; display: block;">الخصم</span>
+                    <strong style="color: #be185d; font-size: 1rem;">${order.discount || 0} ج.م</strong>
+                </div>
+                <div>
+                    <span style="color: #701a75; font-size: 0.76rem; font-weight: 700; display: block;">الإجمالي المستحق</span>
+                    <strong style="color: #c026d3; font-size: 1.15rem;">${order.total || 0} ج.م</strong>
+                </div>
+                <div>
+                    <span style="color: #701a75; font-size: 0.76rem; font-weight: 700; display: block;">طريقة الدفع</span>
+                    <strong style="color: #4a044e; font-size: 0.95rem;">${order.paymentMethod || order.payment || 'كاش'}</strong>
+                </div>
+                ${parseFloat(order.deposit) > 0 ? `
+                <div>
+                    <span style="color: #701a75; font-size: 0.76rem; font-weight: 700; display: block;">العربون المدفوع</span>
+                    <strong style="color: #059669; font-size: 1rem;">${order.deposit} ج.م</strong>
+                </div>
+                <div>
+                    <span style="color: #701a75; font-size: 0.76rem; font-weight: 700; display: block;">المتبقي للتحصيل</span>
+                    <strong style="color: #dc2626; font-size: 1.05rem;">${order.remaining || order.total} ج.م</strong>
+                </div>
+                ` : ''}
+            </div>
+        </div>
+
+        ${order.notes ? `
+        <div style="background: #fffbeb; border: 1px solid #fef08a; border-radius: 10px; padding: 10px 14px; font-size: 0.84rem; color: #854d0e;">
+            <i class="fa-solid fa-comment-dots" style="margin-left: 4px;"></i> <strong>ملاحظات:</strong> ${order.notes}
+        </div>
+        ` : ''}
+    `;
+
+    footerEl.innerHTML = `
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <button type="button" class="interactive-btn" onclick="shareToWhatsAppGroup('${order.id}')" style="padding: 8px 14px; background: #ecfdf5; color: #16a34a; border: 1.5px solid #a7f3d0; border-radius: 10px; font-weight: 800; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                <i class="fa-brands fa-whatsapp"></i> مشاركة واتساب
+            </button>
+            <button type="button" class="interactive-btn" onclick="printHistoryOrder('${order.id}')" style="padding: 8px 14px; background: #f1f5f9; color: #334155; border: 1.5px solid #cbd5e1; border-radius: 10px; font-weight: 800; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-print"></i> طباعة الفاتورة
+            </button>
+        </div>
+
+        <div style="display: flex; gap: 8px; align-items: center;">
+            ${isPending ? `
+            <button type="button" class="interactive-btn" onclick="startOrderEdit('${order.id}')" style="padding: 9px 18px; background: linear-gradient(135deg, #e91e63, #c2185b); color: white; border: none; border-radius: 10px; font-weight: 800; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 7px; box-shadow: 0 4px 12px rgba(233, 30, 99, 0.3);">
+                <i class="fa-solid fa-pen-to-square"></i> تعديل الطلب في صفحة الإنشاء
+            </button>
+            ` : `
+            <span style="font-size: 0.8rem; color: #64748b; font-weight: 700; background: #f1f5f9; padding: 6px 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <i class="fa-solid fa-lock" style="color: #94a3b8;"></i> لا يمكن تعديل الأوردر بعد مغادرته مرحلة التجهيز
+            </span>
+            `}
+            <button type="button" onclick="closeOrderDetailsModal()" class="interactive-btn" style="padding: 9px 16px; background: #f8fafc; color: #475569; border: 1.5px solid #cbd5e1; border-radius: 10px; font-weight: 700; font-size: 0.85rem; cursor: pointer;">
+                إغلاق
+            </button>
+        </div>
+    `;
+
+    modal.style.display = 'flex';
+};
+
+// إغلاق نافذة تفاصيل الأوردر
+window.closeOrderDetailsModal = function() {
+    const modal = document.getElementById('orderDetailsModal');
+    if (modal) modal.style.display = 'none';
+};
+
+// بدء تعديل أوردر قيد التجهيز ونقله لصفحة الإنشاء
+window.startOrderEdit = async function(orderId) {
+    const order = window.findOrderById(orderId);
+    if (!order) {
+        showToast("⚠️ لم يتم العثور على الأوردر المطلوب تعديله", "error");
+        return;
+    }
+
+    if (order.status !== 'قيد التجهيز') {
+        showToast("⛔ عذراً، لا يمكن تعديل الأوردر إلا إذا كان في حالة (قيد التجهيز) فقط!", "error");
+        return;
+    }
+
+    // فحص ما إذا كان هناك طلب غير محفوظ مكتوب حالياً في صفحة الإنشاء
+    const custName = (document.getElementById('customerName')?.value || '').trim();
+    const custPhone = (document.getElementById('customerPhone')?.value || '').trim();
+    const prodsCount = document.querySelectorAll('.product-row').length;
+    const hasUnsavedWork = (custName !== '' || custPhone !== '' || prodsCount > 0);
+
+    if (hasUnsavedWork && !window.editingOrderId) {
+        const suspendBtn = document.getElementById('suspendBtn');
+        if (suspendBtn) {
+            try {
+                suspendBtn.click();
+                showToast("تم حفظ الطلب الذي كان مفتوحاً تلقائياً كمسودة في الطلبات المعلقة", "info");
+            } catch(e) {
+                console.warn("Could not auto-suspend open draft:", e);
+            }
+        }
+    }
+
+    // تعيين معرف الأوردر قيد التعديل
+    window.editingOrderId = order.id;
+
+    // ملء بيانات العميل
+    if (document.getElementById('customerName')) document.getElementById('customerName').value = order.name || '';
+    if (document.getElementById('customerPhone')) document.getElementById('customerPhone').value = order.phone || '';
+    if (document.getElementById('phone2')) document.getElementById('phone2').value = order.phone2 || '';
+
+    // المنصة
+    if (document.getElementById('platform')) {
+        document.getElementById('platform').value = order.platform || '';
+        if (window.syncPlatformUI) window.syncPlatformUI(order.platform || '');
+    }
+
+    // تفاصيل التوصيل
+    let delType = 'normal';
+    const oType = (order.orderType || '').toLowerCase();
+    if (oType.includes('استلام') || oType.includes('فرع') || oType === 'branch') delType = 'branch';
+    else if (oType.includes('محافظات') || oType === 'gov_shipping') delType = 'gov_shipping';
+    else if (oType.includes('حجز') || oType === 'special_date') delType = 'special_date';
+
+    if (deliveryTypeSelect) {
+        deliveryTypeSelect.value = delType;
+        deliveryTypeSelect.dispatchEvent(new Event('change'));
+    }
+
+    if (document.getElementById('specialDateInput')) {
+        document.getElementById('specialDateInput').value = order.deliveryDate || order.reservationDate || '';
+    }
+
+    if (document.getElementById('governorate')) {
+        document.getElementById('governorate').value = order.gov || '';
+        document.getElementById('governorate').dispatchEvent(new Event('change'));
+    }
+
+    if (document.getElementById('address')) {
+        document.getElementById('address').value = order.address || '';
+    }
+
+    // استعادة المنتجات بدقة
+    if (productsContainer) {
+        productsContainer.innerHTML = '';
+        let lines = [];
+        if (typeof order.products === 'string') lines = order.products.split('\n');
+        else if (Array.isArray(order.products)) lines = order.products;
+
+        lines.forEach(lineOrItem => {
+            if (!lineOrItem || (typeof lineOrItem === 'string' && lineOrItem.trim() === '')) return;
+            if (typeof lineOrItem === 'object') {
+                addProductRow(lineOrItem.name || '', lineOrItem.price || '', lineOrItem.qty || 1, true, lineOrItem.offer || '');
+                return;
+            }
+
+            const match = lineOrItem.match(/(.*?) - الكمية:\s*([\d.]+)\s*\(([\d.]+)ج\)(?:\s*\[([\d.]+)\])?/);
+            if (match) {
+                const pName = match[1].trim();
+                const pQty = parseFloat(match[2]) || 1;
+                const pTotal = parseFloat(match[3]) || 0;
+                const pSavedOrig = match[4] ? parseFloat(match[4]) : null;
+                const pFinalPrice = pQty > 0 ? (pTotal / pQty) : pTotal;
+                const pBasePrice = (pSavedOrig && pSavedOrig > pFinalPrice) ? pSavedOrig : pFinalPrice;
+                const pOfferVal = (pSavedOrig && pSavedOrig > pFinalPrice) ? pFinalPrice : '';
+                addProductRow(pName, pBasePrice, pQty, true, pOfferVal);
+            } else {
+                const simpleMatch = lineOrItem.match(/(.*?) - الكمية:\s*([\d.]+)/);
+                if (simpleMatch) {
+                    addProductRow(simpleMatch[1].trim(), '', parseFloat(simpleMatch[2]) || 1, true, '');
+                } else {
+                    addProductRow(lineOrItem.trim(), '', 1, true, '');
+                }
+            }
+        });
+        checkOrderProductsEmptyState();
+    }
+
+    // الخصم والشحن والماليات
+    if (document.getElementById('discount')) document.getElementById('discount').value = order.discount || '';
+    if (document.getElementById('shippingCost') && order.shipping !== undefined) document.getElementById('shippingCost').value = order.shipping;
+    if (document.getElementById('depositAmount')) document.getElementById('depositAmount').value = order.deposit || '';
+
+    // طريقة الدفع
+    if (paymentMethod && (order.paymentMethod || order.payment)) {
+        paymentMethod.value = order.paymentMethod || order.payment;
+    }
+    isPaymentConfirmed = true;
+    if (confirmPaymentBtn) {
+        confirmPaymentBtn.classList.add('confirmed');
+        confirmPaymentBtn.innerHTML = "تأكيد ✔️";
+    }
+    if (paymentMethod) paymentMethod.classList.add('locked-field');
+
+    // الملاحظات ونوع الهدية
+    let nText = order.notes || '';
+    const isGift = nText.includes('[أوردر هدية]');
+    if (isGift) nText = nText.replace(/\[أوردر هدية\]\s*-?\s*/g, '');
+    if (document.getElementById('notes')) document.getElementById('notes').value = nText;
+    if (document.getElementById('isGiftCheckbox')) document.getElementById('isGiftCheckbox').checked = isGift;
+
+    // المودريتور
+    let moderatorSelect = document.getElementById('moderatorSelect');
+    if (moderatorSelect && (order.moderator || order.seller)) {
+        moderatorSelect.value = order.moderator || order.seller;
+    }
+
+    // حساب الإجماليات
+    calculateTotal();
+
+    // إظهار شريط وضع التعديل
+    const banner = document.getElementById('orderEditBanner');
+    const bannerId = document.getElementById('orderEditBannerId');
+    if (banner) banner.style.display = 'flex';
+    if (bannerId) bannerId.innerText = order.id;
+
+    // تحديث نص زر الحفظ
+    const saveBtn = document.getElementById('saveAndPrintBtn');
+    if (saveBtn) saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> حفظ التعديلات وطباعة الفاتورة';
+
+    // إغلاق نافذة التفاصيل إذا كانت مفتوحة
+    window.closeOrderDetailsModal();
+
+    // الانتقال المباشر لتبويب إنشاء الأوردر
+    const createNavBtn = document.querySelector('.nav-item[data-target="create-tab"]');
+    if (createNavBtn) {
+        createNavBtn.click();
+    } else {
+        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-pane').forEach(c => c.classList.remove('active'));
+        const createPane = document.getElementById('create-tab');
+        if (createPane) createPane.classList.add('active');
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    showToast(`✏️ تم فتح الأوردر (${order.id}) في وضع التعديل`, "info");
+};
+
+// إلغاء وضع التعديل وإعادة النموذج للوضع الافتراضي
+window.cancelOrderEdit = function() {
+    window.editingOrderId = null;
+    const banner = document.getElementById('orderEditBanner');
+    if (banner) banner.style.display = 'none';
+
+    const saveBtn = document.getElementById('saveAndPrintBtn');
+    if (saveBtn) saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> حفظ وطباعة الفاتورة';
+
+    resetForm();
+    showToast("تم إلغاء وضع تعديل الأوردر وتفريغ النموذج", "info");
+};

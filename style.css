@@ -11118,3 +11118,206 @@ body.dark-mode .recurring-card-footer {
     #subtab-shipping-accounts .financials-controls { grid-template-columns: minmax(0, 1fr); }
     .courier-picker-count { font-size: .72rem; padding: 5px 7px; }
 }
+
+/* ========================================================= */
+/* ✏️ Order Edit Action Button & Mode Banner                 */
+/* ========================================================= */
+.order-action-icon-btn.edit-action-btn {
+    background: #fdf2f8 !important;
+    color: #be185d !important;
+    border-color: #fbcfe8 !important;
+}
+
+.order-action-icon-btn.edit-action-btn i {
+    font-size: 15px !important;
+    line-height: 1 !important;
+    color: #be185d !important;
+    pointer-events: none !important;
+}
+
+.order-action-icon-btn.edit-action-btn:hover,
+.order-action-icon-btn.edit-action-btn:active {
+    background: linear-gradient(135deg, #e91e63, #c2185b) !important;
+    border-color: #be185d !important;
+    color: #ffffff !important;
+    transform: scale(1.08);
+    box-shadow: 0 3px 8px rgba(190, 24, 93, 0.35) !important;
+}
+
+.order-action-icon-btn.edit-action-btn:hover i,
+.order-action-icon-btn.edit-action-btn:active i {
+    color: #ffffff !important;
+}
+
+body.dark-mode .order-action-icon-btn.edit-action-btn {
+    background: rgba(236, 72, 153, 0.18) !important;
+    border-color: rgba(244, 114, 182, 0.4) !important;
+    color: #f472b6 !important;
+}
+body.dark-mode .order-action-icon-btn.edit-action-btn i {
+    color: #f472b6 !important;
+}
+
+.order-edit-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border: 1.5px solid #fde68a;
+    border-radius: 14px;
+    padding: 12px 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
+    animation: slideDownFade 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.order-edit-banner-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.order-edit-banner-icon {
+    font-size: 1.5rem;
+    color: #d97706;
+    animation: pulseEdit 2s infinite ease-in-out;
+}
+
+.order-edit-banner-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.order-edit-banner-label {
+    font-size: 0.82rem;
+    color: #92400e;
+    font-weight: 700;
+}
+
+.order-edit-banner-id {
+    font-size: 1.1rem;
+    color: #78350f;
+    font-weight: 900;
+    font-family: monospace;
+}
+
+.order-edit-banner-sub {
+    font-size: 0.78rem;
+    color: #b45309;
+    font-weight: 600;
+}
+
+.order-edit-cancel-btn {
+    padding: 6px 14px !important;
+    font-size: 0.84rem !important;
+    font-weight: 800 !important;
+    color: #92400e !important;
+    background: #ffffff !important;
+    border: 1px solid #fcd34d !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.order-edit-cancel-btn:hover {
+    background: #fef3c7 !important;
+    color: #78350f !important;
+    transform: translateY(-1px) !important;
+}
+
+@keyframes pulseEdit {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); color: #b45309; }
+}
+
+@keyframes slideDownFade {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* History Card Interactive Hover */
+.history-item {
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.history-item:hover {
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1.5px);
+}
+
+
+
+/* Compact courier account workspace. Presentation only; amounts use the existing renderer. */
+#shippingSubTabs { width: 100%; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+#shippingSubTabs .shipping-subtab-pill { min-width: 0; min-height: 48px; padding: 10px 8px; white-space: normal; line-height: 1.5; }
+#shipping-tab .shipping-nav-wrapper { overflow: visible; }
+#shipping-tab .shipping-search-box[hidden] { display: none !important; }
+#subtab-shipping-accounts .financials-page-card { border-radius: 16px !important; padding: 18px; }
+#subtab-shipping-accounts .financials-header-row { display: flex !important; flex-direction: row; align-items: center !important; justify-content: space-between; gap: 12px !important; padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid #e2e8f0; }
+#subtab-shipping-accounts .courier-accounts-title h2 { margin: 0; color: #334155; font-size: 1.15rem; }
+#subtab-shipping-accounts #financialsTotalAmount { margin: 5px 0 0 !important; font-size: .88rem; color: #047857; }
+.courier-manage-tools { min-width: 0; }
+.courier-manage-tools > summary { padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; color: #475569; font-size: .85rem; font-weight: 800; cursor: pointer; }
+#subtab-shipping-accounts .financials-add-driver-form { display: flex; margin-top: 10px; border: 1px solid #e2e8f0; border-radius: 10px; max-width: 400px; }
+.courier-accounts-toolbar { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; margin-bottom: 10px; }
+#subtab-shipping-accounts .financials-month-filter,
+#subtab-shipping-accounts .financials-order-search { display: flex; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; }
+#subtab-shipping-accounts .financials-month-filter input { flex: 1; min-width: 100px; width: auto; }
+#subtab-shipping-accounts .financials-month-filter label { margin: 0; font-size: .82rem; font-weight: 700; }
+#subtab-shipping-accounts .courier-accounts-toolbar input { padding: 8px 10px; min-height: 40px; margin: 0; border-radius: 8px; box-sizing: border-box; box-shadow: none; }
+#subtab-shipping-accounts .courier-accounts-toolbar button { min-height: 40px; padding: 8px 12px; font-size: .82rem; border-radius: 8px; }
+.courier-selection-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; min-height: 40px; padding: 8px 10px; margin-bottom: 14px; border-radius: 10px; background: #f8fafc; font-size: .82rem; }
+.courier-selection-toolbar .financials-select-all { display: flex; align-items: center; gap: 8px; margin: 0; cursor: pointer; }
+#selectAllFinancialsCheckbox { width: 18px; height: 18px; margin: 0; accent-color: #0284c7; }
+#courierSelectedCount { color: #0369a1; font-weight: 700; }
+#subtab-shipping-accounts #closeSelectedFinancialsBtn { min-height: 36px; padding: 7px 12px; margin-inline-start: auto; border-radius: 8px; }
+#subtab-shipping-accounts #financialsDisplayList { display: block !important; width: 100%; min-width: 0; }
+.courier-accounts-workspace { display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 16px; align-items: start; }
+.courier-accounts-sidebar, .courier-accounts-detail { min-width: 0; }
+.courier-list-panel { border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #fff; }
+.courier-list-summary { padding: 12px; font-weight: 800; color: #334155; background: #f8fafc; cursor: pointer; }
+.courier-list-summary-hint { display: block; margin-top: 4px; font-size: .72rem; color: #64748b; font-weight: 600; }
+.courier-list-content { padding: 10px; }
+.courier-account-search { width: 100%; box-sizing: border-box; padding: 10px; min-height: 42px; margin: 0 0 8px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; font: inherit; font-size: .85rem; }
+.courier-accounts-list { display: flex; flex-direction: column; gap: 7px; max-height: 440px; overflow-y: auto; overscroll-behavior: contain; padding: 2px; }
+.courier-account-choice { display: block; width: 100%; padding: 11px; border: 1px solid #e2e8f0; border-radius: 10px; text-align: start; background: #fff; color: #334155; font: inherit; cursor: pointer; }
+.courier-account-choice[aria-pressed="true"] { background: #f0f9ff; border-color: #38bdf8; box-shadow: inset -3px 0 #0284c7; }
+.courier-account-choice-title { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: .9rem; font-weight: 800; }
+.courier-account-choice-title > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.courier-account-choice-count { flex-shrink: 0; font-size: .72rem; padding: 3px 6px; border-radius: 6px; background: #e2e8f0; color: #475569; }
+.courier-account-choice-status { display: block; margin-top: 6px; font-size: .72rem; line-height: 1.6; color: #64748b; }
+.courier-accounts-empty { padding: 12px; text-align: center; color: #64748b; font-size: .85rem; }
+#subtab-shipping-accounts .courier-account-detail { margin: 0 !important; padding: 14px !important; opacity: 1 !important; box-shadow: none !important; border-radius: 12px !important; }
+#subtab-shipping-accounts .courier-account-detail .financial-header { padding-bottom: 10px !important; margin-bottom: 12px !important; }
+#subtab-shipping-accounts .courier-account-detail .financial-metric-label { white-space: normal !important; }
+#subtab-shipping-accounts .courier-account-detail .financial-status { padding: 10px !important; font-size: .88rem !important; }
+.courier-payment-tabs { display: flex; gap: 8px; margin: 12px 0 0; }
+.courier-payment-tab { flex: 1; min-height: 42px; padding: 8px; border: 1px solid #e2e8f0; border-radius: 9px; background: #f8fafc; color: #475569; font: inherit; font-size: .82rem; font-weight: 800; cursor: pointer; }
+.courier-payment-tab[aria-selected="true"] { background: #ecfdf5; color: #047857; border-color: #6ee7b7; }
+#subtab-shipping-accounts .courier-payment-panel { margin-top: 10px !important; padding: 8px !important; border-radius: 10px !important; }
+.courier-payment-panel > div:first-child { display: none !important; }
+.courier-payment-panel > div:last-child { max-height: min(46vh, 420px); overflow-y: auto; overscroll-behavior: contain; padding: 2px; }
+#subtab-shipping-accounts .courier-payment-panel .financial-order-item { padding: 8px !important; gap: 6px !important; box-shadow: none !important; }
+.courier-performance { margin-top: 12px; border-top: 1px solid #e2e8f0; padding-top: 10px; }
+.courier-performance > summary { font-size: .82rem; font-weight: 700; color: #64748b; cursor: pointer; padding: 6px; }
+.courier-performance > div { margin: 0 !important; padding-top: 10px !important; border: 0 !important; }
+.courier-performance > div > strong { display: none !important; }
+.courier-account-choice:focus-visible, .courier-payment-tab:focus-visible, .courier-list-summary:focus-visible { outline: 2px solid #0284c7; outline-offset: 2px; }
+.courier-account-detail[hidden], .courier-account-choice[hidden], .courier-payment-panel[hidden], .courier-accounts-empty[hidden], .courier-selection-toolbar[hidden] { display: none !important; }
+@media (max-width: 1100px) { #shippingSubTabs { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 760px) {
+    #subtab-shipping-accounts .financials-page-card { padding: 12px 8px !important; }
+    #subtab-shipping-accounts .financials-header-row { flex-wrap: wrap; }
+    #subtab-shipping-accounts .courier-accounts-title h2 { font-size: 1rem; }
+    .courier-accounts-toolbar { grid-template-columns: minmax(0, 1fr); }
+    .courier-accounts-workspace { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+    .courier-accounts-list { max-height: 240px; }
+    .courier-list-summary-hint { display: inline; margin-inline-start: 8px; }
+    #subtab-shipping-accounts .courier-account-detail { padding: 10px !important; }
+    .courier-payment-panel > div:last-child { max-height: 46vh; }
+    .courier-payment-panel .financial-order-item > div:first-child { flex-wrap: wrap; }
+}
+@media (max-width: 480px) { #shippingSubTabs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
