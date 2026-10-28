@@ -9693,130 +9693,7 @@ if (darkModeToggle) {
     });
 }
 
-let currentCustomerFilter = 'all';
-
-function renderCustomers(customersList) {
-    let container = document.getElementById('customersListContainer');
-    if (!container) return;
-    container.innerHTML = '';
-
-    // Update Dashboard Stats
-    let dashTotalCustomers = document.getElementById('dashTotalCustomers');
-    let dashVipCustomers = document.getElementById('dashVipCustomers');
-    let dashTotalOrders = document.getElementById('dashTotalOrders');
-    
-    let allData = window.customersData || [];
-    let vipCount = allData.filter(c => (parseInt(c.count) || 0) >= 3).length;
-    let totalOrders = allData.reduce((sum, c) => sum + (parseInt(c.count) || 0), 0);
-
-    if(dashTotalCustomers) dashTotalCustomers.innerText = allData.length;
-    if(dashVipCustomers) dashVipCustomers.innerText = vipCount;
-    if(dashTotalOrders) dashTotalOrders.innerText = totalOrders;
-
-    if (customersList.length === 0) {
-        container.innerHTML = '<div class="empty-state-msg"><i class=\'fa-solid fa-box-open\' style=\'font-size: 3rem; margin-bottom: 10px;\'></i><p>لا يوجد عملاء مطابقين للبحث.</p></div>';
-        return;
-    }
-
-    customersList.forEach(c => {
-        let div = document.createElement('div');
-        let isVip = (parseInt(c.count) || 0) >= 3;
-        div.className = 'dash-card ' + (isVip ? 'customer-card-vip-border' : 'customer-card-regular-border');
-        
-        let vipBadge = isVip ? '<span class="customer-card-vip-badge"><i class=\'fa-solid fa-star\'></i> VIP</span>' : '';
-
-        div.innerHTML = `
-            ${vipBadge}
-            <div class="customer-card-header">
-                <div class="customer-card-avatar">
-                    <i class=\'fa-solid fa-user\'></i>
-                </div>
-                <div>
-                    <h4 class="customer-card-title">${c.name}</h4>
-                    <span class="customer-card-phone"><i class=\'fa-solid fa-phone\' style=\'font-size: 0.75rem;\'></i> ${c.phone}</span>
-                </div>
-            </div>
-            <div class="customer-card-details">
-                <span><i class=\'fa-solid fa-location-dot\' style=\'color: #e74c3c;\'></i> ${c.gov || 'غير محدد'} - ${c.address || ''}</span>
-                <div class="customer-card-stats-box">
-                    <span><i class=\'fa-solid fa-cart-shopping\' style=\'color: #3498db;\'></i> طلبات: <strong>${c.count || 0}</strong></span>
-                    <span><i class=\'fa-solid fa-money-bill-wave\' style=\'color: #27ae60;\'></i> مدفوعات: <strong>${c.total || 0}ج</strong></span>
-                </div>
-                <span style="font-size: 0.75rem; color: #999; text-align: left; margin-top: 5px;"><i class=\'fa-regular fa-calendar\'></i> آخر طلب: ${c.lastDate ? String(c.lastDate).split('T')[0] : '--'}</span>
-            </div>
-        `;
-        container.appendChild(div);
-    });
-}
-
-function applyCustomerFilters(keyword = '') {
-    let allData = window.customersData || [];
-    let filtered = allData;
-    
-    if (currentCustomerFilter === 'vip') {
-        filtered = filtered.filter(c => (parseInt(c.count) || 0) >= 3);
-    }
-    
-    if (keyword.trim() !== '') {
-        let lower = keyword.trim().toLowerCase();
-        filtered = filtered.filter(c => 
-            c.name.toLowerCase().includes(lower) || c.phone.toString().includes(lower)
-        );
-    }
-    
-    renderCustomers(filtered);
-}
-
-// Attach filter tabs listener once
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.filter-tabs .filter-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            document.querySelectorAll('.filter-tabs .filter-btn').forEach(b => {
-                b.classList.remove('active');
-                b.style.background = '#f0f0f0';
-                b.style.color = '#555';
-            });
-            e.currentTarget.classList.add('active');
-            e.currentTarget.style.background = 'var(--primary)';
-            e.currentTarget.style.color = 'white';
-            currentCustomerFilter = e.currentTarget.getAttribute('data-filter');
-            
-            if(window._customersLoaded) {
-                let kw = document.getElementById('customerSearchInput') ? document.getElementById('customerSearchInput').value : '';
-                applyCustomerFilters(kw);
-            }
-        });
-    });
-});
-
-let loadCustomersBtn = document.getElementById('loadCustomersBtn');
-let customersListContainer = document.getElementById('customersListContainer');
-window._customersLoaded = false;
-
-if (loadCustomersBtn) {
-    loadCustomersBtn.addEventListener('click', () => {
-        let btnIcon = loadCustomersBtn.querySelector('i');
-        if (btnIcon) btnIcon.classList.add('fa-spin');
-        
-        if(customersListContainer) {
-            customersListContainer.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--primary);"><i class=\'fa-solid fa-spinner fa-spin\' style=\'font-size: 3rem; margin-bottom: 10px;\'></i><p>جاري تحميل وتحليل البيانات...</p></div>';
-        }
-
-        fetch(`${GOOGLE_SHEETS_URL}?action=getCustomers`)
-            .then(r => r.json())
-            .then(data => {
-                let customers = data.customers || window.customersData || [];
-                window.customersData = customers;
-                window._customersLoaded = true;
-                applyCustomerFilters();
-                if (btnIcon) btnIcon.classList.remove('fa-spin');
-            })
-            .catch(() => {
-                applyCustomerFilters();
-                if (btnIcon) btnIcon.classList.remove('fa-spin');
-            });
-    });
-}
+// Customer dashboard lives in customer_crm/; order autocomplete data stays unchanged.
 
 let barcodeCatalogData = [];
 let html5QrcodeScanner = null;
@@ -9900,13 +9777,6 @@ window.addEventListener('load', () => {
         fetchCatalogFromFirebase();
     }
 });
-let customerSearchInput = document.getElementById('customerSearchInput');
-if (customerSearchInput) {
-    customerSearchInput.addEventListener('input', (e) => {
-        if(window._customersLoaded) applyCustomerFilters(e.target.value);
-    });
-}
-
 // ==========================================
 // 13. <i class=\'fa-solid fa-star\'></i> حماية زر الإكسيل بباسورد
 // ==========================================
