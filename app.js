@@ -22327,10 +22327,13 @@ window.renderOffersGrid = function() {
                     ${qtyHtml}
                     ${storyBadgeHtml}
                     <div class="offer-card-footer">
+                        <button type="button" class="offer-action-btn offer-action-instagram" onclick="window.publishOfferToInstagramStory('${item.id}')" title="نشر هذا العرض كـ Story الآن على إنستجرام وفيسبوك" style="flex: 1.3;">
+                            <i class="fa-brands fa-instagram"></i> نشر ستوري
+                        </button>
                         <button type="button" class="offer-action-btn" onclick="window.openEditOfferModal('${item.id}')" title="تعديل العرض" style="flex: 1;">
                             <i class="fa-solid fa-pen"></i> تعديل
                         </button>
-                        <button type="button" class="offer-action-btn" onclick="window.toggleOfferActive('${item.id}')" title="${item.is_active ? 'إيقاف العرض مؤقتاً' : 'تفعيل العرض'}" style="flex: 1;">
+                        <button type="button" class="offer-action-btn" onclick="window.toggleOfferActive('${item.id}')" title="${item.is_active ? 'إيقاف العرض مؤقتاً' : 'تفعيل العرض'}" style="flex: 0.8;">
                             <i class="fa-solid ${item.is_active ? 'fa-pause' : 'fa-play'}"></i> ${item.is_active ? 'إيقاف' : 'تفعيل'}
                         </button>
                         <button type="button" class="offer-action-btn offer-action-delete" onclick="window.deleteOffer('${item.id}')" title="حذف العرض نهائياً ومسح صورته من Google Drive">
@@ -22502,15 +22505,57 @@ window.renderRecurringStoriesGrid = function() {
             }
         }
 
-        // شارة نوع التكرار / الصلاحية
-        let cycleBadgeHtml = '';
-        if (item.expiry_type === 'count') {
-            const rem = (item.remaining_quantity !== undefined && item.remaining_quantity !== null) ? item.remaining_quantity : (item.initial_quantity || 0);
-            cycleBadgeHtml = `<span style="display:inline-flex; align-items:center; gap:5px; background:#fffbeb; color:#b45309; border:1px solid #fde68a; padding:4px 8px; border-radius:8px; font-size:0.78rem; font-weight:800;"><i class="fa-solid fa-arrow-down-1-9"></i> متبقي ${rem} مرات نشر</span>`;
+        // شريط العداد والنسبة المئوية في الاستوري المتكرر (مثل العروض تماماً)
+        let qtyHtml = '';
+        const hasPublishCount = item.expiry_type === 'count' || (item.remaining_quantity !== null && item.remaining_quantity !== undefined && item.remaining_quantity !== '');
+        if (hasPublishCount) {
+            const initial = Number(item.initial_quantity) || Number(item.remaining_quantity) || 5;
+            const remaining = Math.max(0, Number(item.remaining_quantity !== undefined ? item.remaining_quantity : initial));
+            const percent = initial > 0 ? Math.min(100, Math.round((remaining / initial) * 100)) : 100;
+            const fillClass = remaining === 0 ? 'out-of-stock' : (remaining <= 2 ? 'low-stock' : '');
+            
+            qtyHtml = `
+                <div class="offer-progress-box" style="margin: 8px 0;">
+                    <div class="offer-progress-labels">
+                        <span>المتبقي: <strong>${remaining}</strong> من ${initial} مرات نشر</span>
+                        <span>${percent}%</span>
+                    </div>
+                    <div class="offer-progress-bar">
+                        <div class="offer-progress-fill ${fillClass}" style="width: ${percent}%;"></div>
+                    </div>
+                </div>
+            `;
         } else if (item.expiry_type === 'date' && item.expiry_date) {
-            cycleBadgeHtml = `<span style="display:inline-flex; align-items:center; gap:5px; background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; padding:4px 8px; border-radius:8px; font-size:0.78rem; font-weight:800;"><i class="fa-solid fa-calendar"></i> ينتهي: ${item.expiry_date}</span>`;
+            const expDate = new Date(item.expiry_date);
+            const nowTime = new Date();
+            const diffHours = Math.round((expDate - nowTime) / (1000 * 60 * 60));
+            let timeText = '';
+            if (diffHours < 0) {
+                timeText = 'منتهي الصلاحية';
+            } else if (diffHours <= 24) {
+                timeText = `ينتهي خلال ${diffHours} ساعة`;
+            } else {
+                const days = Math.round(diffHours / 24);
+                timeText = `ينتهي خلال ${days} يوم`;
+            }
+            qtyHtml = `
+                <div class="offer-progress-box" style="margin: 8px 0;">
+                    <div class="offer-progress-labels" style="color: #2563eb;">
+                        <span><i class="fa-solid fa-clock"></i> ${timeText}</span>
+                        <span>${expDate.toLocaleDateString('ar-EG')}</span>
+                    </div>
+                </div>
+            `;
         } else {
-            cycleBadgeHtml = `<span style="display:inline-flex; align-items:center; gap:5px; background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; padding:4px 8px; border-radius:8px; font-size:0.78rem; font-weight:800;"><i class="fa-solid fa-infinity"></i> مستمر يومياً كل 24 ساعة</span>`;
+            const pubCount = item.story_publish_count || 0;
+            qtyHtml = `
+                <div class="offer-progress-box" style="margin: 8px 0;">
+                    <div class="offer-progress-labels" style="color: #059669;">
+                        <span><i class="fa-solid fa-infinity"></i> مستمر كل 24 ساعة</span>
+                        <span>نُشر: <strong>${pubCount}</strong> مرة</span>
+                    </div>
+                </div>
+            `;
         }
 
         const safeTitle = (item.product_name || 'ستوري كاندي كلوب').replace(/'/g, "\\'");
@@ -22531,13 +22576,16 @@ window.renderRecurringStoriesGrid = function() {
                 </div>
                 <div class="recurring-card-body">
                     <h3 class="recurring-card-title">${item.product_name || 'ستوري كاندي كلوب'}</h3>
-                    <div>${cycleBadgeHtml}</div>
+                    ${qtyHtml}
                     ${storyBadgeHtml}
                     <div class="recurring-card-footer">
+                        <button type="button" class="offer-action-btn offer-action-instagram" onclick="window.publishOfferToInstagramStory('${item.id}')" title="نشر هذا الستوري الآن على إنستجرام وفيسبوك" style="flex: 1.3;">
+                            <i class="fa-brands fa-instagram"></i> نشر الآن
+                        </button>
                         <button type="button" class="offer-action-btn" onclick="window.openEditRecurringStoryModal('${item.id}')" title="تعديل الستوري" style="flex: 1;">
                             <i class="fa-solid fa-pen"></i> تعديل
                         </button>
-                        <button type="button" class="offer-action-btn" onclick="window.toggleOfferActive('${item.id}')" title="${item.is_active ? 'إيقاف الستوري مؤقتاً' : 'تفعيل الستوري'}" style="flex: 1;">
+                        <button type="button" class="offer-action-btn" onclick="window.toggleOfferActive('${item.id}')" title="${item.is_active ? 'إيقاف الستوري مؤقتاً' : 'تفعيل الستوري'}" style="flex: 0.8;">
                             <i class="fa-solid ${item.is_active ? 'fa-pause' : 'fa-play'}"></i> ${item.is_active ? 'إيقاف' : 'تفعيل'}
                         </button>
                         <button type="button" class="offer-action-btn offer-action-delete" onclick="window.deleteOffer('${item.id}')" title="حذف الستوري نهائياً ومسح صورته من Google Drive">
@@ -24467,9 +24515,10 @@ window.publishSingleOfferStoryCore = async function(offer) {
         offer.last_story_published_at = Date.now();
         offer.story_publish_count = (offer.story_publish_count || 0) + 1;
 
-        // إذا كان العرض محدد بعدد مرات نشر (مثل الستوري المتكرر)
-        if (offer.quantity_mode === 'publish_count' && offer.remaining_quantity !== null && offer.remaining_quantity !== undefined) {
-            offer.remaining_quantity = Math.max(0, Number(offer.remaining_quantity) - 1);
+        // خصم 1 من العدد عند كل نشر للستوري
+        const hasPublishCount = (offer.quantity_mode === 'publish_count' || offer.expiry_type === 'count' || (offer.remaining_quantity !== null && offer.remaining_quantity !== undefined && offer.remaining_quantity !== ''));
+        if (hasPublishCount) {
+            offer.remaining_quantity = Math.max(0, Number(offer.remaining_quantity || 0) - 1);
             if (offer.remaining_quantity <= 0) {
                 offer.is_active = false;
                 offer.status_reason = 'انتهت مرات النشر المحددة';
@@ -24525,7 +24574,9 @@ window.publishOfferToInstagramStory = async function(id, isAuto = false) {
             } else {
                 showToast(`خطأ في النشر: ${res.igError || res.fbError || 'تعذر الاتصال بـ Meta API'}`, 'error', 6000);
             }
-            window.renderOffersGrid();
+            if (typeof window.renderOffersGrid === 'function') window.renderOffersGrid();
+            if (typeof window.renderRecurringStoriesGrid === 'function') window.renderRecurringStoriesGrid();
+            if (typeof window.updateOffersStorySchedulerUI === 'function') window.updateOffersStorySchedulerUI();
         } catch(err) {
             console.error('Publishing to Story failed:', err);
             showToast('حدث خطأ أثناء الاتصال بالمنصات: ' + err.message, 'error', 5000);

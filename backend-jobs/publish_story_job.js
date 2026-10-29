@@ -269,7 +269,8 @@ async function main() {
         };
 
         // إذا كان العرض محدد بعدد مرات نشر معينة
-        if (targetOffer.quantity_mode === 'publish_count' && targetOffer.remaining_quantity !== null && targetOffer.remaining_quantity !== undefined) {
+        const hasCount = (targetOffer.quantity_mode === 'publish_count' || targetOffer.expiry_type === 'count' || (targetOffer.remaining_quantity !== null && targetOffer.remaining_quantity !== undefined && targetOffer.remaining_quantity !== ''));
+        if (hasCount) {
             const newRem = Math.max(0, Number(targetOffer.remaining_quantity) - 1);
             updatePayload.remaining_quantity = newRem;
             if (newRem <= 0) {
