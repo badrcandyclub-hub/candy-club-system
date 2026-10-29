@@ -5297,61 +5297,262 @@ setupPhoneSanitizer('phone2');
 
 
 // <i class=\'fa-solid fa-star\'></i> إصلاح ذاكرة السمكة
-function performPhoneSearch() {
+async function performPhoneSearch() {
     if (!phoneInput || !phoneStatus) return;
     let phoneVal = phoneInput.value.trim().replace(/\D/g, '');
-    if (phoneVal.length >= 9) {
-        phoneStatus.innerHTML = "<i class=\'fa-solid fa-spinner fa-spin\'></i>";
+    if (phoneVal.length < 9) {
+        phoneStatus.innerHTML = "<i class='fa-solid fa-magnifying-glass'></i>";
+        phoneStatus.title = "ابحث عن العميل";
+        return;
+    }
 
-        let foundCustomer = null;
-        if (orderHistoryData && orderHistoryData.length > 0) foundCustomer = orderHistoryData.find(o => o.phone.toString().replace(/\D/g, '').includes(phoneVal));
-        if (!foundCustomer && window.pendingOrdersData && window.pendingOrdersData.length > 0) foundCustomer = window.pendingOrdersData.find(o => o.phone.toString().replace(/\D/g, '').includes(phoneVal));
+    phoneStatus.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i>";
+    phoneStatus.title = "جاري البحث عن العميل...";
 
-        if (foundCustomer) {
-            fillCustomerData(foundCustomer);
-        } else {
-            // البحث الشامل الصامت في قاعدة العملاء
-            (async () => { let keyword = phoneVal; // Supabase Global Search
-            const keyword_lower = keyword.toLowerCase();
-            const { data: searchResults, error: searchErr } = await fetchAllSupabaseRows(
-                supabase.from('orders').select('*')
-                .or(`order_id.ilike.%${keyword}%,customer_name.ilike.%${keyword}%,phone.ilike.%${keyword}%`)
-            );
-            if (searchErr) throw searchErr;
-            
-            let results = (searchResults || []).map(o => ({
-                id: o.order_id, date: o.order_date, time: o.order_time,
-                name: o.customer_name, phone: o.phone, phone2: o.alt_phone || "",
-                address: o.address, products: o.products, subtotal: o.products_total,
-                discount: o.discount, shipping: o.shipping_cost, total: parseFloat(o.final_total) || 0,
-                status: o.status, payment: o.payment_method, seller: o.moderator_name,
-                orderType: o.delivery_type, deposit: o.deposit || 0,
-                remaining: o.remaining || o.final_total,
-                gov: o.governorate, platform: o.platform, driver: o.driver_name,
-                reservationDate: o.delivery_date || ""
-            })).reverse();
-            return results; })()
-                .then(data => {
-                    if (data.length > 0) fillCustomerData(data[0]);
-                    else phoneStatus.innerText = "🆕";
-                }).catch(() => phoneStatus.innerHTML = "<i class=\'fa-solid fa-magnifying-glass\'></i>");
+    try {
+        // 1. البحث في الأوردرات المحلية المحملة أولاً لسرعة فائقة
+        let allLocal = (window.allOrdersData && window.allOrdersData.length > 0)
+            ? window.allOrdersData
+            : [...(orderHistoryData || []), ...(window.pendingOrdersData || []), ...(window.shippedOrdersData || [])];
+
+        let matchedLocal = (allLocal || []).filter(o => {
+            let p1 = String(o.phone || '').replace(/\D/g, '');
+            let p2 = String(o.phone2 || o.alt_phone || '').replace(/\D/g, '');
+            return (p1 && (p1 === phoneVal || p1.endsWith(phoneVal) || phoneVal.endsWith(p1))) ||
+                   (p2 && (p2 === phoneVal || p2.endsWith(phoneVal) || phoneVal.endsWith(p2)));
+        });
+
+        if (matchedLocal.length > 0) {
+            // ترتيب الأوردرات من الأحدث للأقدم لأخذ أحدث منطقة وأحدث عنوان
+            matchedLocal.sort((a, b) => {
+                let tA = new Date(a.createdAt || a.date || 0).getTime();
+                let tB = new Date(b.createdAt || b.date || 0).getTime();
+                return tB - tA;
+            });
+
+            let latest = matchedLocal[0];
+            let backupPhone = latest.phone2 || latest.alt_phone || '';
+            if (!backupPhone || String(backupPhone).replace(/\D/g, '') === phoneVal) {
+                for (let o of matchedLocal) {
+                    let bp = o.phone2 || o.alt_phone || o.secondPhone || o.backupPhone;
+                    if (bp && String(bp).trim() !== '' && String(bp).replace(/\D/g, '') !== phoneVal) {
+                        backupPhone = bp;
+                        break;
+                    }
+                    let p1 = String(o.phone || '').replace(/\D/g, '');
+                    if (p1 && p1 !== phoneVal) {
+                        backupPhone = o.phone;
+                        break;
+                    }
+                }
+            }
+
+            fillCustomerData({
+                name: latest.name,
+                phone: latest.phone,
+                phone2: backupPhone,
+                gov: latest.gov,
+                address: latest.address,
+                orderType: latest.orderType
+            });
+            return;
         }
-    } else {
-        phoneStatus.innerHTML = "<i class=\'fa-solid fa-magnifying-glass\'></i>";
+
+        // 2. إذا لم يكن بالذاكرة، البحث المباشر في Supabase مع الترتيب بالأحدث
+        const { data: searchResults, error: searchErr } = await supabase.from('orders')
+            .select('order_id,customer_name,phone,alt_phone,governorate,address,delivery_type,order_date,order_time,created_at')
+            .or(`phone.eq.${phoneVal},alt_phone.eq.${phoneVal},phone.ilike.%${phoneVal}%,alt_phone.ilike.%${phoneVal}%`)
+            .order('created_at', { ascending: false, nullsFirst: false })
+            .limit(10);
+
+        if (!searchErr && searchResults && searchResults.length > 0) {
+            let latest = searchResults[0];
+            let backupPhone = latest.alt_phone || '';
+            if (!backupPhone || String(backupPhone).replace(/\D/g, '') === phoneVal) {
+                for (let r of searchResults) {
+                    let bp = r.alt_phone;
+                    if (bp && String(bp).trim() !== '' && String(bp).replace(/\D/g, '') !== phoneVal) {
+                        backupPhone = bp;
+                        break;
+                    }
+                    let p1 = String(r.phone || '').replace(/\D/g, '');
+                    if (p1 && p1 !== phoneVal) {
+                        backupPhone = r.phone;
+                        break;
+                    }
+                }
+            }
+
+            fillCustomerData({
+                name: latest.customer_name,
+                phone: latest.phone,
+                phone2: backupPhone,
+                gov: latest.governorate,
+                address: latest.address,
+                orderType: latest.delivery_type
+            });
+            return;
+        }
+
+        // 3. البحث في جدول العملاء
+        let custInCache = (window.customersData || []).find(c => {
+            let p = String(c.phone || '').replace(/\D/g, '');
+            return p && (p === phoneVal || p.endsWith(phoneVal) || phoneVal.endsWith(p));
+        });
+
+        if (custInCache) {
+            fillCustomerData({
+                name: custInCache.name,
+                phone: custInCache.phone,
+                phone2: custInCache.phone2 || '',
+                gov: custInCache.gov,
+                address: custInCache.address
+            });
+            return;
+        }
+
+        const { data: custRows } = await supabase.from('customers')
+            .select('*')
+            .ilike('phone', `%${phoneVal}%`)
+            .limit(1);
+
+        if (custRows && custRows.length > 0) {
+            let c = custRows[0];
+            fillCustomerData({
+                name: c.customer_name,
+                phone: c.phone,
+                phone2: c.alt_phone || '',
+                gov: c.governorate,
+                address: c.address
+            });
+            return;
+        }
+
+        phoneStatus.innerText = "🆕";
+        phoneStatus.title = "عميل جديد";
+    } catch (err) {
+        console.error('Error searching customer by phone:', err);
+        phoneStatus.innerHTML = "<i class='fa-solid fa-magnifying-glass'></i>";
     }
 }
 
 function fillCustomerData(cust) {
-    if (document.getElementById('customerName')) document.getElementById('customerName').value = cust.name;
-    if (document.getElementById('address') && cust.address && cust.address !== 'استلام من الفرع') {
-        document.getElementById('address').value = cust.address;
+    if (!cust) return;
+
+    // 1. اسم العميل
+    const nameEl = document.getElementById('customerName');
+    if (nameEl && cust.name && cust.name !== 'بدون اسم') {
+        nameEl.value = cust.name;
     }
-    phoneStatus.innerHTML = "<i class=\'fa-solid fa-check\'></i>";
-    showToast(`تم العثور على العميل: ${cust.name}`, "success");
+
+    // 2. الرقم البديل (الاحتياطي)
+    const phone2El = document.getElementById('phone2');
+    const backupPhone = cust.phone2 || cust.alt_phone || cust.secondPhone || cust.backupPhone || cust.altPhone || cust.customerPhone2 || '';
+    if (phone2El) {
+        let cleanBackup = String(backupPhone || '').replace(/\D/g, '');
+        if (cleanBackup.startsWith('201') && cleanBackup.length === 12) {
+            cleanBackup = '0' + cleanBackup.slice(2);
+        }
+        if (cleanBackup && cleanBackup !== String(cust.phone || '').replace(/\D/g, '')) {
+            phone2El.value = cleanBackup;
+        }
+    }
+
+    // 3. العنوان بالتفصيل
+    const addressEl = document.getElementById('address');
+    if (addressEl && cust.address && cust.address !== 'استلام من الفرع') {
+        addressEl.value = cust.address;
+    }
+
+    // 4. نوع التوصيل والمنطقة / المحافظة من آخر أوردر
+    const govVal = (cust.gov || cust.governorate || '').trim();
+    const deliveryTypeEl = document.getElementById('deliveryType');
+    const govSelect = document.getElementById('governorate');
+
+    if (govVal && govSelect) {
+        let serverData = window.latestServerData || {};
+        let alexZones = serverData.alex || [];
+        let govZones = serverData.govs || [];
+
+        // تنظيف اسم المنطقة إذا كان يحتوي على أسعار مثل (65 ج)
+        let cleanGov = govVal.split('(')[0].trim();
+
+        // معرفة هل هي شحن محافظات أم توصيل إسكندرية
+        let isGovShipping = govZones.some(z => z.name === cleanGov || cleanGov.includes(z.name) || z.name.includes(cleanGov));
+        let isAlex = alexZones.some(z => z.name === cleanGov || cleanGov.includes(z.name) || z.name.includes(cleanGov));
+
+        if (deliveryTypeEl) {
+            let targetType = 'normal';
+            if (cust.orderType && (cust.orderType === 'gov_shipping' || cust.orderType === 'normal' || cust.orderType === 'special_date')) {
+                targetType = cust.orderType;
+            } else if (isGovShipping) {
+                targetType = 'gov_shipping';
+            } else if (isAlex) {
+                targetType = 'normal';
+            }
+
+            deliveryTypeEl.value = targetType;
+            let addressFields = document.getElementById('addressFields');
+            if (addressFields) addressFields.classList.remove('hidden-field');
+            let specialDateContainer = document.getElementById('specialDateContainer');
+            if (specialDateContainer && targetType !== 'special_date') specialDateContainer.classList.add('hidden-field');
+
+            if (typeof window.updateGovernoratesDropdown === 'function') {
+                window.updateGovernoratesDropdown();
+            }
+        }
+
+        // اختيار المنطقة من القائمة المنسدلة
+        let matchedOpt = Array.from(govSelect.options).find(opt => {
+            if (!opt.value) return false;
+            let v = opt.value.trim().toLowerCase();
+            let g = cleanGov.toLowerCase();
+            return v === g || v.includes(g) || g.includes(v);
+        });
+
+        if (matchedOpt) {
+            govSelect.value = matchedOpt.value;
+            govSelect.dispatchEvent(new Event('change'));
+        }
+    }
+
+    if (phoneStatus) {
+        phoneStatus.innerHTML = "<i class='fa-solid fa-check' style='color:#10b981;'></i>";
+        phoneStatus.title = "تم العثور على بيانات العميل";
+    }
+    showToast(`تم العثور على العميل: ${cust.name || ''}`, "success");
 }
 
 if (phoneStatus) phoneStatus.addEventListener('click', performPhoneSearch);
-if (phoneInput) phoneInput.addEventListener('change', performPhoneSearch);
+if (phoneInput) {
+    phoneInput.addEventListener('change', performPhoneSearch);
+
+    let phoneDebounceTimer = null;
+    phoneInput.addEventListener('input', function(e) {
+        let val = e.target.value.replace(/\D/g, '');
+        if (phoneDebounceTimer) clearTimeout(phoneDebounceTimer);
+
+        if (val.length === 11) {
+            performPhoneSearch();
+        } else if (val.length >= 9) {
+            phoneDebounceTimer = setTimeout(() => {
+                performPhoneSearch();
+            }, 500);
+        } else {
+            if (phoneStatus) {
+                phoneStatus.innerHTML = "<i class='fa-solid fa-magnifying-glass'></i>";
+                phoneStatus.title = "ابحث عن العميل";
+            }
+        }
+    });
+
+    phoneInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            performPhoneSearch();
+        }
+    });
+}
 
 const productsContainer = document.getElementById('productsContainer');
 
