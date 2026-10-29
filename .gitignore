@@ -1,6 +1,3 @@
-# Audit logs and temporary reports
-audit/results.json
-
 # OS & Editor files
 .DS_Store
 Thumbs.db
