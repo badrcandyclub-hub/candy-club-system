@@ -8,6 +8,7 @@
     const CSV_HEADERS = ['الاسم', 'الموبايل', 'المصدر', 'نوع العميل', 'الاهتمامات', 'المحافظة', 'العنوان', 'حالة المتابعة', 'التواصل التسويقي', 'موعد المتابعة', 'ملاحظات'];
     const LIFECYCLES = ['new', 'contacted', 'interested', 'follow_up', 'inactive'];
     const CONTACT_PERMISSIONS = ['unknown', 'allowed', 'declined'];
+    const VIP_MIN_ORDERS = 3;
     const digits = value => String(value == null ? '' : value).replace(/[٠-٩]/g, d => String(d.charCodeAt(0) - 1632)).replace(/[۰-۹]/g, d => String(d.charCodeAt(0) - 1776));
     const str = value => String(value == null ? '' : value).trim();
     const number = value => { const result = Number(value); return Number.isFinite(result) ? result : 0; };
@@ -45,7 +46,17 @@
         const key = normalizeText(source).replace(/\s/g, '');
         if (['talabat', 'طلبات'].includes(key)) return 'طلبات';
         if (['instashop', 'انستاشوب', 'شوب', 'shop'].includes(key)) return 'إنستاشوب';
+        if (['الهدايا', 'هدايا', 'عملاءالهدايا', 'gifts'].includes(key)) return 'الهدايا';
         return source;
+    }
+
+    function matchesSegment(customer, segment) {
+        if (segment === 'regular') return customer.relationship === 'customer' && !customer.vip;
+        if (segment === 'vip') return !!customer.vip;
+        if (segment === 'gifts') return !!customer.hasGifts;
+        if (segment === 'instashop') return (customer.sources || []).some(s => sourceName(s) === 'إنستاشوب');
+        if (segment === 'talabat') return (customer.sources || []).some(s => sourceName(s) === 'طلبات');
+        return segment === 'all';
     }
 
     function dateValue(value) {
@@ -192,6 +203,7 @@
             customer.notes = str(record.notes);
             customer.next_follow_up = str(record.next_follow_up);
             addSources(customer, record.sources);
+            if (customer.sources.includes('الهدايا')) customer.hasGifts = true;
         });
         return Array.from(merged.values()).map(customer => {
             customer.relationship = customer._confirmed ? 'customer' : customer.relationship;
@@ -199,7 +211,7 @@
             customer.total = round(customer.total);
             customer.giftTotal = round(customer.giftTotal);
             customer.giftCount = round(customer.giftCount);
-            customer.vip = customer.count >= 3;
+            customer.vip = customer.count >= VIP_MIN_ORDERS;
             customer.historicalUnavailable = customer.relationship === 'customer' && !customer.count && !customer.giftPurchases.length;
             customer.purchasedProducts = Array.from(customer._productMap.values()).map(p => ({ name: p.name, quantity: round(p.quantity), orders: p.orders.size })).sort((a, b) => b.orders - a.orders || b.quantity - a.quantity);
             customer.orders.sort((a, b) => (Date.parse(b.date) || 0) - (Date.parse(a.date) || 0));
@@ -330,5 +342,5 @@
         return result;
     }
 
-    return { CSV_HEADERS, LIFECYCLES, CONTACT_PERMISSIONS, normalizePhone, normalizeText, escapeHTML, extractProducts, readGiftContact, buildCustomers, parseCSV, serializeCSV, prepareImport };
+    return { CSV_HEADERS, LIFECYCLES, CONTACT_PERMISSIONS, VIP_MIN_ORDERS, matchesSegment, normalizePhone, normalizeText, escapeHTML, extractProducts, readGiftContact, buildCustomers, parseCSV, serializeCSV, prepareImport };
 });

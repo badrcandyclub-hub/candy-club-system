@@ -6,7 +6,16 @@
     const SIZE = 12;
     const life = {new:'جديد',contacted:'تم التواصل',interested:'مهتم',follow_up:'متابعة لاحقة',inactive:'متوقف'};
     const permission = {unknown:'غير محدد',allowed:'يسمح بالعروض',declined:'لا يرغب في العروض'};
-    const state = {customers:[],raw:null,loading:false,loaded:false,writable:false,page:1,segment:'all',selected:new Set(),details:new Map(),giftsAvailable:false,giftsUnlinked:0};
+    const views = {
+        all:{title:'كل العملاء',description:'قاعدة العملاء كاملة بكل المصادر.',icon:'users',theme:'regular'},
+        regular:{title:'العملاء العاديون',description:'عملاء لديهم أقل من ٣ طلبات مسجلة.',icon:'users',theme:'regular'},
+        vip:{title:'عملاء VIP',description:'٣ طلبات مسجلة أو أكثر؛ التصنيف يتحدث تلقائيًا.',icon:'crown',theme:'vip'},
+        gifts:{title:'عملاء الهدايا',description:'دليل عملاء البوكيهات وسجل مشتريات الهدايا.',icon:'gift',theme:'gifts',source:'الهدايا'},
+        instashop:{title:'عملاء إنستا شوب',description:'عملاؤك الذين اشتروا من خلال إنستا شوب.',icon:'basket',theme:'instashop',source:'إنستاشوب',brand:'instashop'},
+        talabat:{title:'عملاء طلبات',description:'عملاؤك الذين اشتروا من خلال طلبات.',icon:'bag',theme:'talabat',source:'طلبات',brand:'talabat'}
+    };
+    const sections = ['regular','vip','gifts','instashop','talabat'];
+    const state = {customers:[],raw:null,loading:false,loaded:false,writable:false,page:1,segment:'regular',selected:new Set(),details:new Map(),giftsAvailable:false,giftsUnlinked:0};
     let root;
     const $ = id => document.getElementById(id);
     const esc = value => M.escapeHTML(String(value == null ? '' : value));
@@ -17,6 +26,15 @@
     const tags = value => [...new Set(String(value||'').split(/[,،\n]/).map(v=>v.trim()).filter(Boolean))];
     const chip = (text,type='') => `<span class="crm-chip ${type?'crm-chip-'+type:''}">${esc(text)}</span>`;
     const options = (items,selected) => Object.entries(items).map(([v,t])=>`<option value="${esc(v)}" ${v===selected?'selected':''}>${esc(t)}</option>`).join('');
+    const icon = name => `<span class="crm-icon crm-icon-${name}" aria-hidden="true"></span>`;
+    function giftDirectory() {
+        try { const saved=JSON.parse(localStorage.getItem('candy_gifts_customers')||'[]'); return Array.isArray(saved)?saved:[]; } catch(_) { return []; }
+    }
+    function syncGiftDirectory() {
+        if(!state.raw)return;
+        state.raw.legacyGifts=giftDirectory();
+        rebuild();
+    }
     function credentials() {
         let user;
         try { user=JSON.parse(localStorage.getItem('cc_user')||'null'); } catch (_) {}
@@ -92,8 +110,7 @@
                 notices.push(code==='42501'?'عرض المشتريات متاح. لتعديل المتابعة، سجّل الدخول من جديد بحساب له صلاحية العملاء.':
                     ['PGRST202','42P01','42883'].includes(code)?'سجل المتابعة الجديد غير مفعّل بعد. عرض المشتريات متاح؛ الحفظ والاستيراد يحتاجان تفعيله.':'تعذر تحديث سجل المتابعة؛ الإضافة والتعديل متوقفان مؤقتًا. أعد المحاولة.');
             }
-            let legacyGifts=[];
-            try { const saved=JSON.parse(localStorage.getItem('candy_gifts_customers')||'[]'); if(Array.isArray(saved)) legacyGifts=saved; } catch(_) {}
+            const legacyGifts=giftDirectory();
             state.raw={customers:results[0].value,orders:results[1].value,gifts:results[2].status==='fulfilled'?results[2].value:(state.raw?.gifts||[]),
                 profiles:state.writable?results[3].value:(state.raw?.profiles||[]),legacyGifts};
             state.loaded=true; state.selected.clear(); state.details.clear(); rebuild();
@@ -106,6 +123,8 @@
     }
     function rebuild() {
         state.customers=M.buildCustomers(state.raw);
+        const keys=new Set(state.customers.map(c=>c.key));
+        for(const key of state.selected)if(!keys.has(key))state.selected.delete(key);
         for (const [id,field] of [['crmSource','sources'],['crmInterest','interests']]) {
             const el=$(id),previous=el.value;
             const values=[...new Set(state.customers.flatMap(c=>c[field]||[]))].sort((a,b)=>a.localeCompare(b,'ar'));
@@ -118,8 +137,7 @@
         const query=M.normalizeText($('crmSearch').value),source=$('crmSource').value,interest=$('crmInterest').value,follow=$('crmFollow').value,relation=$('crmRelation').value;
         const phone=M.normalizePhone($('crmSearch').value);
         const rows=state.customers.filter(c=>{
-            if (state.segment==='customers'&&c.relationship!=='customer' || state.segment==='products'&&!c.hasProducts || state.segment==='gifts'&&!c.hasGifts || state.segment==='vip'&&!c.vip || state.segment==='prospects'&&c.relationship!=='prospect') return false;
-            if (state.segment==='external'&&!(c.sources||[]).some(s=>['طلبات','إنستاشوب'].includes(s))) return false;
+            if (!M.matchesSegment(c,state.segment)) return false;
             if (relation&&c.relationship!==relation) return false;
             if (source&&!(c.sources||[]).includes(source) || interest&&!(c.interests||[]).includes(interest)) return false;
             if (follow==='due'&&!(c.next_follow_up&&c.next_follow_up<=today()) || follow==='allowed'&&c.contact_permission!=='allowed') return false;
@@ -133,11 +151,19 @@
         const all=state.customers,rows=filtered(),pages=Math.max(1,Math.ceil(rows.length/SIZE));
         state.page=Math.max(1,Math.min(state.page,pages));
         const shown=rows.slice((state.page-1)*SIZE,state.page*SIZE);
+        const view=views[state.segment]||views.all;
+        root.dataset.theme=view.theme;
+        $('crmPageTitle').textContent=view.title;
+        $('crmPageDescription').textContent=view.description;
+        $('crmPageIcon').innerHTML=icon(view.icon);
+        $('crmBrandName').textContent=view.brand||'';
+        $('crmBrandName').hidden=!view.brand;
         $('crmTotal').textContent=all.length; $('crmGiftTotal').textContent=state.giftsAvailable?all.filter(c=>c.hasGifts).length:'—';
         $('crmVipTotal').textContent=all.filter(c=>c.vip).length; $('crmFollowTotal').textContent=all.filter(c=>c.next_follow_up&&c.next_follow_up<=today()).length;
-        const countFor={all:all.length,products:all.filter(c=>c.hasProducts).length,gifts:state.giftsAvailable?all.filter(c=>c.hasGifts).length:'—',external:all.filter(c=>(c.sources||[]).some(s=>['طلبات','إنستاشوب'].includes(s))).length};
+        const countFor=Object.fromEntries(sections.map(key=>[key,all.filter(c=>M.matchesSegment(c,key)).length]));
+        if(!state.giftsAvailable) countFor.gifts=countFor.gifts?countFor.gifts+'+':'—';
         root.querySelectorAll('[data-segment-count]').forEach(el=>el.textContent=countFor[el.dataset.segmentCount]);
-        root.querySelectorAll('[data-segment]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.segment===state.segment || state.segment==='vip'&&el.dataset.segment==='all')));
+        root.querySelectorAll('[data-segment]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.segment===state.segment)));
         root.querySelectorAll('[data-quick]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.quick==='due'?$('crmFollow').value==='due':el.dataset.quick===state.segment&&$('crmFollow').value!=='due')));
         const activeFilters=['crmSource','crmInterest','crmFollow','crmRelation'].filter(id=>$(id).value).length;
         $('crmFilterCount').textContent=activeFilters?String(activeFilters):'';
@@ -151,7 +177,7 @@
             <td data-label="طلبات المنتجات"><strong>${c.count?`${c.count} طلب`:c.historicalUnavailable?'غير مسجلة':'لا يوجد'}</strong><span class="crm-cell-note">${c.count?money(c.total):'—'}</span></td>
             <td data-label="الهدايا"><strong>${!state.giftsAvailable&&!c.giftPurchases.length?'غير متاحة':c.giftCount?`${c.giftCount} قطعة`:c.localGiftContact?'سجل محلي':'لا يوجد'}</strong><span class="crm-cell-note">${c.giftPurchases.length?money(c.giftTotal):'—'}</span></td>
             <td data-label="المتابعة">${chip(life[c.lifecycle]||life.new,c.next_follow_up&&c.next_follow_up<=today()?'gold':'')}<span class="crm-cell-note">${c.next_follow_up?esc(day(c.next_follow_up)):`آخر شراء: ${esc(day(c.lastDate))}`}</span></td>
-            <td><button type="button" class="crm-btn crm-btn-soft" data-open="${esc(c.key)}" aria-label="فتح ملف ${esc(c.name)}">فتح الملف <span aria-hidden="true">←</span></button></td></tr>`).join(''):'<tr><td colspan="7"><div class="crm-empty"><strong>لا يوجد عملاء مطابقون</strong><p>غيّر البحث أو امسح الفلاتر لعرض باقي العملاء.</p></div></td></tr>';
+            <td><button type="button" class="crm-btn crm-btn-soft" data-open="${esc(c.key)}" aria-label="فتح ملف ${esc(c.name)}">فتح الملف ${icon('arrow')}</button></td></tr>`).join(''):'<tr><td colspan="7"><div class="crm-empty"><strong>لا يوجد عملاء مطابقون</strong><p>غيّر البحث أو اختر قسمًا آخر لعرض باقي العملاء.</p></div></td></tr>';
         $('crmPageLabel').textContent=`${rows.length?(state.page-1)*SIZE+1:0}–${Math.min(state.page*SIZE,rows.length)} من ${rows.length} عميل · صفحة ${state.page} من ${pages}`;
         $('crmPrev').disabled=state.page===1; $('crmNext').disabled=state.page===pages;
         const count=shown.filter(c=>state.selected.has(c.key)).length;
@@ -165,8 +191,8 @@
     }
     function dialog(title,content,actions='') {
         const previous=document.activeElement,el=document.createElement('dialog');
-        el.className='crm-dialog'; el.setAttribute('aria-label',title);
-        el.innerHTML=`<div class="crm-dialog-heading"><h2>${esc(title)}</h2><button type="button" class="crm-btn" data-close aria-label="إغلاق">✕</button></div><div class="crm-dialog-body">${content}</div>${actions?`<div class="crm-dialog-actions">${actions}</div>`:''}`;
+        el.className='crm-dialog'; el.dataset.theme=(views[state.segment]||views.all).theme; el.setAttribute('aria-label',title);
+        el.innerHTML=`<div class="crm-dialog-heading"><h2>${esc(title)}</h2><button type="button" class="crm-btn" data-close aria-label="إغلاق">${icon('close')}</button></div><div class="crm-dialog-body">${content}</div>${actions?`<div class="crm-dialog-actions">${actions}</div>`:''}`;
         document.body.appendChild(el);
         el.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>{if(!el.dataset.busy)el.close();}));
         el.addEventListener('cancel',e=>{if(el.dataset.busy)e.preventDefault();});
@@ -189,6 +215,7 @@
         if(!state.writable)return say('الحفظ غير متاح حاليًا. أعد التحديث أو سجّل الدخول من جديد.',true);
         if(c&&!c.editable)return say('هذا السجل بلا رقم صالح. أضف ملفًا برقم صحيح؛ العملاء لا يُدمجون بالاسم.',true);
         const d=profileData(c||{});
+        if(!c&&views[state.segment]?.source)d.sources=[views[state.segment].source];
         const el=dialog(c?'بيانات العميل ومتابعته':'إضافة عميل',`<form id="crmEditForm" class="crm-form-grid">
             <label>اسم العميل *<input name="customer_name" required maxlength="160" value="${esc(d.customer_name)}" autocomplete="name"></label>
             <label>رقم الموبايل *<input name="phone" type="tel" dir="ltr" required maxlength="30" value="${esc(d.phone)}" ${c?'readonly':''} autocomplete="tel"><span class="crm-form-help">${c?'الرقم ثابت للحفاظ على ربط المشتريات.':'يُقبل 01… أو +20…، وسنكتشف الرقم المكرر.'}</span></label>
@@ -214,7 +241,7 @@
             if(!payload.sources.length)payload.sources=['إدخال يدوي'];
             if([payload.sources,payload.interests].some(a=>a.length>20||a.some(t=>t.length>80))){msg.textContent='استخدم حتى ٢٠ وسمًا، كل وسم لا يزيد عن ٨٠ حرفًا.';return;}
             el.dataset.busy='true';el.querySelector('#crmSave').disabled=true;msg.textContent='جاري الحفظ…';
-            try{await saveRows([payload]);delete el.dataset.busy;el.close();say('تم حفظ بيانات العميل ومتابعته.');}
+            try{await saveRows([payload]);if(!c){const saved=state.customers.find(row=>row.phone===phone);if(saved&&!M.matchesSegment(saved,state.segment)){state.segment=saved.relationship==='customer'?'regular':'all';render();}}delete el.dataset.busy;el.close();say('تم حفظ بيانات العميل ومتابعته.');}
             catch(error){msg.textContent=errorMessage(error);}
             finally{delete el.dataset.busy;if(el.isConnected)el.querySelector('#crmSave').disabled=false;}
         });
@@ -294,7 +321,8 @@
     }
     function importFile(){
         if(!state.writable)return;
-        const el=dialog('استيراد عملاء',`<div class="crm-file-drop"><label>ملف CSV بترميز UTF-8<input id="crmImportFile" type="file" accept=".csv,text/csv"></label><p class="crm-muted">استخدم القالب الفارغ. الاسم والموبايل مطلوبان؛ النوع الافتراضي «عميل حالي». حتى ٢٠٠ صف في المرة.</p></div><p class="crm-muted">الأرقام الموجودة لن تُستبدل. راجع الأخطاء والمكرر قبل حفظ الصفوف الصحيحة.</p><p id="crmImportStatus" class="crm-status" role="status"></p><div id="crmImportPreview" class="crm-import-preview"></div><div id="crmImportErrors" class="crm-import-problems"></div>`,
+        const defaultSource=views[state.segment]?.source;
+        const el=dialog('استيراد عملاء',`<div class="crm-file-drop"><label>ملف CSV بترميز UTF-8<input id="crmImportFile" type="file" accept=".csv,text/csv"></label><p class="crm-muted">استخدم القالب الفارغ. الاسم والموبايل مطلوبان؛ النوع الافتراضي «عميل حالي». حتى ٢٠٠ صف في المرة.</p>${defaultSource?`<p class="crm-muted">المصدر الافتراضي للصفوف بدون مصدر: ${esc(defaultSource)}.</p>`:''}</div><p class="crm-muted">الأرقام الموجودة لن تُستبدل. راجع الأخطاء والمكرر قبل حفظ الصفوف الصحيحة.</p><p id="crmImportStatus" class="crm-status" role="status"></p><div id="crmImportPreview" class="crm-import-preview"></div><div id="crmImportErrors" class="crm-import-problems"></div>`,
             '<button class="crm-btn" data-close>إلغاء</button><button type="button" class="crm-btn crm-btn-primary" id="crmConfirmImport" disabled>حفظ الصفوف الصحيحة</button>');
         let prepared=null,version=0;
         const button=el.querySelector('#crmConfirmImport'),status=el.querySelector('#crmImportStatus');
@@ -305,6 +333,7 @@
             try{
                 const text=await file.text();if(current!==version||!el.isConnected)return;
                 prepared=M.prepareImport(text,state.customers);
+                if(defaultSource)prepared.rows.forEach(r=>{if(!r.sources.length||r.sources.length===1&&r.sources[0]==='استيراد يدوي')r.sources=[defaultSource];});
                 if(prepared.totalRows>200){prepared=null;status.textContent='قسّم الملف إلى دفعات لا تتجاوز ٢٠٠ صف.';return;}
                 status.textContent=`${prepared.validCount} صالح · ${prepared.duplicates.length} مكرر · ${prepared.errors.length} خطأ. الصفوف المستبعدة لن تُحفظ.`;
                 el.querySelector('#crmImportPreview').innerHTML=`<table class="crm-table"><thead><tr><th>الاسم</th><th>الموبايل</th><th>المصدر</th></tr></thead><tbody>${prepared.rows.map(r=>`<tr><td>${esc(r.customer_name)}</td><td dir="ltr">${esc(r.phone)}</td><td>${esc(r.sources.join('، '))}</td></tr>`).join('')}</tbody></table>`;
@@ -320,11 +349,11 @@
         });
     }
     function mount(){
-        root=$('crmRoot');if(!root)return;
-        root.innerHTML=`<header class="crm-heading"><div><h2>قاعدة العملاء</h2><p>المشتريات والاهتمامات والمتابعة، في ملف واحد لكل عميل.</p></div><div class="crm-actions"><button class="crm-btn crm-btn-primary" id="crmAdd" disabled>＋ إضافة عميل</button><details class="crm-tools" id="crmTools"><summary class="crm-btn">إدارة البيانات <span aria-hidden="true">⌄</span></summary><div class="crm-tools-menu"><button class="crm-btn" id="crmImport" disabled>استيراد عملاء</button><button class="crm-btn" id="crmTemplate">تنزيل قالب فارغ</button><button class="crm-btn" id="crmExport" disabled>تصدير العملاء</button></div></details><button class="crm-btn crm-icon-btn" id="crmRefresh" aria-label="تحديث بيانات العملاء" title="تحديث البيانات">↻</button></div></header>
+        root=$('crmRoot');if(!root)return;root.dataset.theme='regular';
+        root.innerHTML=`<header class="crm-heading"><div class="crm-page-identity"><span id="crmPageIcon" class="crm-page-symbol">${icon('users')}</span><div><span class="crm-page-kicker">قاعدة العملاء</span><div class="crm-page-title-line"><h2 id="crmPageTitle">العملاء العاديون</h2><span id="crmBrandName" class="crm-brand-name" hidden></span></div><p id="crmPageDescription">عملاء لديهم أقل من ٣ طلبات مسجلة.</p></div></div><div class="crm-actions"><button class="crm-btn crm-btn-primary" id="crmAdd" disabled>${icon('plus')} إضافة عميل</button><details class="crm-tools" id="crmTools"><summary class="crm-btn">إدارة البيانات ${icon('chevron')}</summary><div class="crm-tools-menu"><button class="crm-btn" id="crmImport" disabled>استيراد عملاء</button><button class="crm-btn" id="crmTemplate">تنزيل قالب فارغ</button><button class="crm-btn" id="crmExport" disabled>تصدير العملاء</button></div></details><button class="crm-btn crm-icon-btn" id="crmRefresh" aria-label="تحديث بيانات العملاء" title="تحديث البيانات">${icon('refresh')}</button></div></header>
             <div class="crm-stats"><button class="crm-stat" data-quick="all" aria-pressed="true"><span>كل العملاء</span><strong id="crmTotal">—</strong></button><button class="crm-stat" data-quick="gifts" aria-pressed="false"><span>عملاء الهدايا</span><strong id="crmGiftTotal">—</strong></button><button class="crm-stat" data-quick="vip" aria-pressed="false" title="٣ طلبات منتجات غير ملغاة أو مرتجعة فأكثر"><span>عملاء متكررون · ٣ طلبات فأكثر</span><strong id="crmVipTotal">—</strong></button><button class="crm-stat" data-quick="due" aria-pressed="false"><span>متابعة مستحقة</span><strong id="crmFollowTotal">—</strong></button></div>
-            <nav class="crm-segments" aria-label="تقسيم العملاء">${[["all","كل العملاء"],["products","المنتجات"],["gifts","الهدايا"],["external","شوب وطلبات"]].map(([v,t])=>`<button class="crm-segment" data-segment="${v}" aria-pressed="${v==='all'}">${t}<span data-segment-count="${v}">—</span></button>`).join('')}</nav>
-            <div class="crm-search-row"><label class="crm-search"><span class="crm-sr-only">البحث عن عميل</span><span class="crm-search-icon" aria-hidden="true">⌕</span><input id="crmSearch" type="search" placeholder="ابحث بالاسم أو رقم الموبايل أو المنطقة…"></label><label class="crm-sort"><span class="crm-sr-only">ترتيب العملاء</span><select id="crmSort"><option value="recent">الأحدث شراءً</option><option value="count">الأكثر طلبًا</option><option value="total">أعلى قيمة طلبات</option><option value="giftTotal">أعلى قيمة هدايا</option><option value="giftCount">الأكثر شراءً للهدايا</option><option value="name">الاسم</option></select></label><details class="crm-filter-tools" id="crmFilters"><summary class="crm-btn">تصفية <span id="crmFilterCount" class="crm-count"></span>⌄</summary><div class="crm-filter-panel"><label>مصدر العميل<select id="crmSource"><option value="">كل المصادر</option></select></label><label>الاهتمام<select id="crmInterest"><option value="">كل الاهتمامات</option></select></label><label>المتابعة<select id="crmFollow"><option value="">كل الحالات</option><option value="due">متابعة مستحقة</option><option value="allowed">يسمح بالعروض</option>${options(life,'')}</select></label><label>العلاقة بالعميل<select id="crmRelation"><option value="">حاليون ومحتملون</option><option value="customer">عملاء حاليون</option><option value="prospect">عملاء محتملون</option></select></label></div></details><button class="crm-btn crm-reset" id="crmReset" hidden>مسح الفلاتر</button></div>
+            <nav class="crm-segments" aria-label="أقسام العملاء">${sections.map(v=>`<button class="crm-segment" data-segment="${v}" data-theme="${views[v].theme}" aria-pressed="${v===state.segment}">${icon(views[v].icon)}<span class="crm-tab-label">${views[v].title}</span><span class="crm-tab-count" data-segment-count="${v}">—</span></button>`).join('')}</nav>
+            <div class="crm-search-row"><label class="crm-search"><span class="crm-sr-only">البحث عن عميل</span><span class="crm-search-icon">${icon('search')}</span><input id="crmSearch" type="search" placeholder="ابحث بالاسم أو رقم الموبايل أو المنطقة…"></label><label class="crm-sort"><span class="crm-sr-only">ترتيب العملاء</span><select id="crmSort"><option value="recent">الأحدث شراءً</option><option value="count">الأكثر طلبًا</option><option value="total">أعلى قيمة طلبات</option><option value="giftTotal">أعلى قيمة هدايا</option><option value="giftCount">الأكثر شراءً للهدايا</option><option value="name">الاسم</option></select></label><details class="crm-filter-tools" id="crmFilters"><summary class="crm-btn">تصفية <span id="crmFilterCount" class="crm-count"></span>${icon('chevron')}</summary><div class="crm-filter-panel"><label>مصدر العميل<select id="crmSource"><option value="">كل المصادر</option></select></label><label>الاهتمام<select id="crmInterest"><option value="">كل الاهتمامات</option></select></label><label>المتابعة<select id="crmFollow"><option value="">كل الحالات</option><option value="due">متابعة مستحقة</option><option value="allowed">يسمح بالعروض</option>${options(life,'')}</select></label><label>العلاقة بالعميل<select id="crmRelation"><option value="">حاليون ومحتملون</option><option value="customer">عملاء حاليون</option><option value="prospect">عملاء محتملون</option></select></label></div></details><button class="crm-btn crm-reset" id="crmReset" hidden>مسح الفلاتر</button></div>
             <div class="crm-results-bar"><div class="crm-list-title"><h3>قائمة العملاء</h3><span id="crmResultsCount">جاري التحميل…</span><span class="crm-data-quality" id="crmDataQuality" title="مبيعات مسجلة بلا اسم أو موبايل. لا يُنشأ لها عملاء افتراضيون." hidden></span></div><div class="crm-actions"><label class="crm-check-label"><input type="checkbox" id="crmSelectPage">تحديد الصفحة</label><button class="crm-btn crm-btn-soft" id="crmAudience" disabled>تجهيز جمهور عروض</button></div></div>
             <div class="crm-selection" id="crmSelection" hidden><strong id="crmSelectedLabel" aria-live="polite">٠ محدد</strong><div class="crm-actions"><button class="crm-btn" id="crmBulk" disabled>تصنيف المحدد</button><button class="crm-btn" id="crmClearSelection">إلغاء التحديد</button></div></div>
             <div id="crmNotice" class="crm-notice" role="status" hidden></div><div class="crm-table-wrap"><table class="crm-table"><thead><tr><th aria-label="تحديد"></th><th>العميل</th><th>المصدر والاهتمامات</th><th>طلبات المنتجات</th><th>مشتريات الهدايا</th><th>المتابعة</th><th>ملف العميل</th></tr></thead><tbody id="crmRows"><tr><td colspan="7"><div class="crm-empty">جاري تحميل العملاء…</div></td></tr></tbody></table></div>
@@ -337,13 +366,15 @@
         document.addEventListener('keydown',e=>{if(e.key==='Escape'){for(const id of ['crmTools','crmFilters'])if($(id).hasAttribute('open')){$(id).removeAttribute('open');$(id).querySelector('summary').focus();}}});
         const resetPage=()=>{state.page=1;state.selected.clear();render();};
         ['crmSearch','crmSource','crmInterest','crmFollow','crmRelation','crmSort'].forEach(id=>$(id).addEventListener(id==='crmSearch'?'input':'change',resetPage));
-        $('crmReset').addEventListener('click',()=>{['crmSearch','crmSource','crmInterest','crmFollow','crmRelation'].forEach(id=>$(id).value='');state.segment='all';root.querySelectorAll('[data-segment]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.segment==='all')));resetPage();});
+        $('crmReset').addEventListener('click',()=>{['crmSearch','crmSource','crmInterest','crmFollow','crmRelation'].forEach(id=>$(id).value='');root.querySelectorAll('[data-segment]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.segment===state.segment)));resetPage();});
         root.querySelectorAll('[data-segment]').forEach(b=>b.addEventListener('click',()=>{state.segment=b.dataset.segment;root.querySelectorAll('[data-segment]').forEach(t=>t.setAttribute('aria-pressed',String(t===b)));resetPage();}));
         root.querySelectorAll('[data-quick]').forEach(b=>b.addEventListener('click',()=>{['crmSearch','crmSource','crmInterest','crmFollow','crmRelation'].forEach(id=>$(id).value='');state.segment=b.dataset.quick==='due'?'all':b.dataset.quick;if(b.dataset.quick==='due')$('crmFollow').value='due';resetPage();}));
         $('crmPrev').addEventListener('click',()=>{state.page--;render();});$('crmNext').addEventListener('click',()=>{state.page++;render();});
         $('crmRows').addEventListener('click',e=>{const btn=e.target.closest('[data-open]');if(btn)openProfile(btn.dataset.open);});
         $('crmRows').addEventListener('change',e=>{if(e.target.matches('[data-select]')){const key=e.target.dataset.select;e.target.checked?state.selected.add(key):state.selected.delete(key);render();}});
         $('crmSelectPage').addEventListener('change',e=>{filtered().slice((state.page-1)*SIZE,state.page*SIZE).forEach(c=>e.target.checked?state.selected.add(c.key):state.selected.delete(c.key));render();});
+        window.addEventListener('candy:gifts-customers-updated',syncGiftDirectory);
+        window.addEventListener('storage',e=>{if(e.key==='candy_gifts_customers')syncGiftDirectory();});
         const tab=$('customers-tab'),autoLoad=()=>{if(tab.classList.contains('active')&&!state.loaded&&!state.loading)load();};
         new MutationObserver(autoLoad).observe(tab,{attributes:true,attributeFilter:['class']});autoLoad();
     }
