@@ -61,7 +61,7 @@
     <link rel="apple-touch-icon" href="favicon.png?v=13">
     <link rel="manifest" href="app-manifest.json?v=1003">
     <link rel="stylesheet" href="style.css?v=122.0">
-    <link rel="stylesheet" href="customer_crm/crm.css?v=2.0">
+    <link rel="stylesheet" href="customer_crm/crm.css?v=4.0">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap"
         rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" type="text/javascript" crossorigin="anonymous"></script>
@@ -1519,9 +1519,28 @@
             </div>
         </section>
 
-        <!-- Customer relationship workspace -->
+        <!-- Simple, independent customer directories -->
         <section id="customers-tab" class="tab-pane">
-            <div id="crmRoot" class="crm" dir="rtl"><p>جاري تجهيز قاعدة العملاء…</p></div>
+            <div class="customer-directory" data-customer-page="online" data-theme="online"></div>
+        </section>
+        <section id="store-customers-tab" class="tab-pane">
+            <div class="customer-directory" data-customer-page="store" data-theme="store"></div>
+        </section>
+        <section id="gift-customers-tab" class="tab-pane">
+            <div class="customer-directory" data-customer-page="gifts" data-theme="gifts"></div>
+        </section>
+        <section id="app-customers-tab" class="tab-pane">
+            <div class="customer-app-directory">
+                <div data-customer-app-view="choice" class="customer-app-choice">
+                    <h2>عملاء التطبيقات</h2>
+                    <div class="customer-app-links">
+                        <button type="button" class="customer-app-link" data-open-customer-app="talabat" data-theme="talabat"><span class="customer-wordmark">talabat</span><strong>عملاء طلبات</strong></button>
+                        <button type="button" class="customer-app-link" data-open-customer-app="instashop" data-theme="instashop"><span class="customer-wordmark">instashop</span><strong>عملاء إنستا شوب</strong></button>
+                    </div>
+                </div>
+                <div data-customer-app-view="talabat" hidden><button type="button" class="customer-back" data-customer-app-back>الرجوع لعملاء التطبيقات</button><div class="customer-directory" data-customer-page="talabat" data-theme="talabat"></div></div>
+                <div data-customer-app-view="instashop" hidden><button type="button" class="customer-back" data-customer-app-back>الرجوع لعملاء التطبيقات</button><div class="customer-directory" data-customer-page="instashop" data-theme="instashop"></div></div>
+            </div>
         </section>
 
         <!-- ⭐ شاشة إدارة الصلاحيات والعروض (Expiry Dashboard) -->
@@ -2298,6 +2317,12 @@
                     </button>
                 </div>
             </div>
+            <div class="menu-group"><h4 class="menu-group-title">العملاء</h4><div class="menu-group-items" style="display:block">
+                    <button class="nav-item" data-target="customers-tab" style="color:#245ac7"><span class="customer-nav-icon" aria-hidden="true"></span><span class="label">عملاء الأونلاين</span></button>
+                    <button class="nav-item" data-target="store-customers-tab" style="color:#7951ab"><span class="customer-nav-icon" aria-hidden="true"></span><span class="label">عملاء المحل</span></button>
+                    <button class="nav-item" data-target="gift-customers-tab" style="color:#087e74"><span class="customer-nav-icon" aria-hidden="true"></span><span class="label">عملاء الهدايا</span></button>
+                    <button class="nav-item" data-target="app-customers-tab" style="color:#d84b00"><span class="customer-nav-icon" aria-hidden="true"></span><span class="label">عملاء التطبيقات</span></button>
+            </div></div>
             <!-- زر تسجيل الخروج -->
             <div style="margin-top: 30px; padding: 0 15px; padding-bottom: 20px;">
                 <button onclick="handleLogout()" class="interactive-btn" style="width: 100%; padding: 12px; background: #ffebee; color: #d32f2f; border: 1px solid #ffcdd2; border-radius: 8px; font-family: inherit; font-size: 1rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
@@ -2863,8 +2888,8 @@
 </div>
 
 <script src="app.js?v=135.0" charset="UTF-8" defer></script>
-    <script src="customer_crm/model.js?v=2.0" defer></script>
-    <script src="customer_crm/crm.js?v=2.0" defer></script>
+    <script src="customer_crm/model.js?v=4.0" defer></script>
+    <script src="customer_crm/crm.js?v=4.0" defer></script>
 </body>
 </html>
 
