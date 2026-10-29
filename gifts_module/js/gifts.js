@@ -3470,6 +3470,7 @@
         saveCustomersToLocal() {
             try {
                 localStorage.setItem('candy_gifts_customers', JSON.stringify(this.state.customers));
+                window.dispatchEvent(new CustomEvent('candy:gifts-customers-updated'));
             } catch (e) {
                 console.warn("Could not save gifts customers:", e);
             }
