@@ -65,7 +65,7 @@
     <link rel="icon" type="image/png" href="favicon.png?v=13">
     <link rel="apple-touch-icon" href="favicon.png?v=13">
     <link rel="manifest" href="app-manifest.json?v=1003">
-    <link rel="stylesheet" href="style.css?v=121.0">
+    <link rel="stylesheet" href="style.css?v=122.0">
     <link rel="stylesheet" href="customer_crm/crm.css?v=2.0">
     <link rel="stylesheet" href="gifts_module/css/gifts.css?v=25">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap"
@@ -3147,6 +3147,10 @@
                             <span id="selectedRecurringCountBadge" class="selected-count-badge">المحدد: 0 ستوري</span>
                         </div>
                         <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                            <button type="button" id="btnPublishAllNewRecurring" class="btn-primary interactive-btn" onclick="window.publishAllPendingRecurringStories()" style="background: linear-gradient(135deg, #059669, #10b981); border: none; font-weight: 800; padding: 8px 18px; border-radius: 10px; display: flex; align-items: center; gap: 8px; color: white; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 3px 10px rgba(5, 150, 105, 0.25);" title="نشر جميع الاستوريهات الجديدة التي بانتظار أول نشر فوراً">
+                                <i class="fa-solid fa-bolt"></i>
+                                <span>نشر جميع الاستوريهات الجديدة فوراً</span>
+                            </button>
                             <button type="button" id="btnPublishSelectedRecurring" class="btn-primary interactive-btn btn-publish-batch" onclick="window.publishSelectedOffersStories()" style="background: linear-gradient(135deg, #e1306c, #1877f2); border: none; font-weight: 800; padding: 8px 18px; border-radius: 10px; display: flex; align-items: center; gap: 8px; color: white; cursor: pointer; transition: all 0.2s ease; opacity: 0.6;" disabled>
                                 <i class="fa-brands fa-instagram"></i>
                                 <i class="fa-brands fa-facebook"></i>
@@ -3893,7 +3897,12 @@
                 </div>
 
                 <!-- أزرار الحفظ والإلغاء في الأسفل -->
-                <div class="modal-footer" style="margin-top: 20px; display: flex; gap: 12px; justify-content: flex-end; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+                <div class="modal-footer" style="margin-top: 20px; display: flex; gap: 12px; justify-content: space-between; align-items: center; flex-wrap: wrap; border-top: 1px solid #f1f5f9; padding-top: 16px;">
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 0.88rem; font-weight: 700; color: #1e293b; cursor: pointer; user-select: none;">
+                        <input type="checkbox" id="batchPublishImmediatelyCheckbox" checked style="width: 18px; height: 18px; accent-color: #e11d48; cursor: pointer;">
+                        <span>🚀 نشر جميع الاستوريهات فوراً على إنستجرام وفيسبوك وبدء عداد الـ 24 ساعة</span>
+                    </label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
                     <button type="button" id="btnCancelBatchRecurring" class="btn-outline interactive-btn" onclick="window.closeBatchRecurringStoriesModal()" style="padding: 10px 20px; font-weight: 700;">
                         إلغاء
                     </button>
@@ -4917,7 +4926,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script src="email_service.js?v=10.0" defer></script>
-<script src="app.js?v=133.0" charset="UTF-8" defer></script>
+<script src="app.js?v=134.0" charset="UTF-8" defer></script>
     <script src="customer_crm/model.js?v=2.0" defer></script>
     <script src="customer_crm/crm.js?v=2.0" defer></script>
 
