@@ -6736,16 +6736,26 @@ if (saveAndPrintBtn) {
 
                 let waText = `🧾 *رقم الفاتورة:* ${orderIdSaved}\n`;
                 waText += `*نوع الطلب:* ${orderTypeLabel}\n`;
+                if (selectedModerator && String(selectedModerator).trim() !== '') {
+                    waText += `👨‍💼 *المسؤول:* ${String(selectedModerator).trim()}\n`;
+                }
                 if (bookingDatePrint && (orderTypeLabel.includes('حجز') || orderTypeLabel === 'special_date')) {
                     waText += `📅 *تاريخ التسليم:* ${bookingDatePrint}\n`;
                 }
                 waText += `*تاريخ إنشاء الأوردر:* ${orderDateNow} ⏰ ${orderTimeNow}\n`;
                 waText += `👤 *العميل:* ${name}\n`;
-                if (!orderTypeLabel.includes('استلام') && !orderTypeLabel.includes('فرع') && (gov || addressVal)) {
-                    waText += `📍 *العنوان:* ${gov ? gov + " - " : ""}${addressVal}\n`;
+                if (!orderTypeLabel.includes('استلام') && !orderTypeLabel.includes('فرع')) {
+                    if (gov && String(gov).trim() !== '') {
+                        waText += `🏙️ *المنطقة:* ${String(gov).trim()}\n`;
+                    }
+                    if (addressVal && String(addressVal).trim() !== '') {
+                        waText += `📍 *العنوان:* ${String(addressVal).trim()}\n`;
+                    }
                 }
                 if (phone) waText += `📱 *الموبايل:* ${phone}\n`;
-                if (p2ValNow) waText += `📱 *رقم احتياطي:* ${p2ValNow}\n`;
+                if (p2ValNow && String(p2ValNow).trim() !== '' && String(p2ValNow).trim() !== String(phone).trim()) {
+                    waText += `📱 *رقم احتياطي:* ${String(p2ValNow).trim()}\n`;
+                }
                 if (payMethodNow) waText += `💳 *طريقة الدفع:* ${payMethodNow}\n\n`;
                 waText += `📦 *المنتجات:*\n${productsListText}\n`;
                 let pTotalValNow = document.getElementById('productsTotal') ? document.getElementById('productsTotal').value : 0;
@@ -8376,8 +8386,13 @@ window.shareToWhatsAppGroup = async function (orderId) {
         }
     } catch(e) {}
 
+    let _moderator = order.moderator || order.seller || order.moderator_name || "";
+
     let text = `🧾 *رقم الفاتورة:* ${order.id || ''}\n`;
     text += `*نوع الطلب:* ${_type}\n`;
+    if (_moderator && String(_moderator).trim() !== '') {
+        text += `👨‍💼 *المسؤول:* ${String(_moderator).trim()}\n`;
+    }
     
     if (_type.includes('حجز') || _type === 'special_date') {
         let resDate = order.reservationDate || order.expectedDate || order.bookingDate || order.specialDate || order.spDate;
@@ -8395,11 +8410,18 @@ window.shareToWhatsAppGroup = async function (orderId) {
     text += `عدد اوردرات الشهر : ${monthlySequence}\n`;
 
     text += `👤 *العميل:* ${_name}\n`;
-    if (!_type.includes('استلام') && !_type.includes('فرع') && (_gov || _address)) {
-        text += `📍 *العنوان:* ${_gov ? _gov + " - " : ""}${_address}\n`;
+    if (!_type.includes('استلام') && !_type.includes('فرع')) {
+        if (_gov && String(_gov).trim() !== '') {
+            text += `🏙️ *المنطقة:* ${String(_gov).trim()}\n`;
+        }
+        if (_address && String(_address).trim() !== '') {
+            text += `📍 *العنوان:* ${String(_address).trim()}\n`;
+        }
     }
     if (_phone) text += `📱 *الموبايل:* ${_phone}\n`;
-    if (_phone2 && String(_phone2).trim() !== '') text += `📱 *رقم احتياطي:* ${String(_phone2).trim()}\n`;
+    if (_phone2 && String(_phone2).trim() !== '' && String(_phone2).trim() !== String(_phone).trim()) {
+        text += `📱 *رقم احتياطي:* ${String(_phone2).trim()}\n`;
+    }
     text += `💳 *طريقة الدفع:* ${_payment}\n\n`;
     text += `📦 *المنتجات:*\n${_products}\n`;
     let _subtotal = order.subtotal || order.productsTotal || (parseFloat(order.total) - parseFloat(_shipping)) || 0;
