@@ -7,6 +7,7 @@
     const titles = { online: 'عملاء الأونلاين', store: 'عملاء المحل', gifts: 'عملاء الهدايا', talabat: 'عملاء طلبات', instashop: 'عملاء إنستا شوب' };
     const sourceData = { customers: [], orders: [], profiles: [], gifts: [], legacyGifts: [] };
     const pages = new Map(), groups = { core: { loaded: false, pending: null, error: '', profilesUnavailable: false }, gifts: { loaded: false, pending: null, error: '' } };
+    let activeSection = 'online', activeApp = 'choice';
     let directories = M.buildDirectories(sourceData);
     const esc = M.escapeHTML;
     const icon = name => '<span class="customer-symbol customer-symbol-' + name + '" aria-hidden="true"></span>';
@@ -123,8 +124,25 @@
             render(p);
         return group.pending;
     }
-    function showApp(name) { document.querySelectorAll('[data-customer-app-view]').forEach(el => el.hidden = el.dataset.customerAppView !== name); const parent = document.getElementById('app-customers-tab'); parent.dataset.customerTheme = name === 'choice' ? 'apps' : name; if (name !== 'choice')
-        load(name); }
+    function activePage() {
+        return activeSection === 'apps' ? activeApp === 'choice' ? null : activeApp : activeSection;
+    }
+    function showSection(name) {
+        if (!['online', 'store', 'gifts', 'apps'].includes(name)) return;
+        activeSection = name;
+        document.querySelectorAll('[data-customer-panel]').forEach(el => el.hidden = el.dataset.customerPanel !== name);
+        document.querySelectorAll('[data-customer-section]').forEach(el => el.setAttribute('aria-pressed', String(el.dataset.customerSection === name)));
+        document.getElementById('customers-tab').dataset.customerTheme = name === 'apps' ? activeApp === 'choice' ? 'apps' : activeApp : name;
+        const page = activePage();
+        if (page) load(page);
+    }
+    function showApp(name) {
+        if (!['choice', 'talabat', 'instashop'].includes(name)) return;
+        activeApp = name;
+        document.querySelectorAll('[data-customer-app-view]').forEach(el => el.hidden = el.dataset.customerAppView !== name);
+        document.getElementById('customers-tab').dataset.customerTheme = name === 'choice' ? 'apps' : name;
+        if (name !== 'choice') load(name);
+    }
     function mount() {
         for (const root of document.querySelectorAll('[data-customer-page]')) {
             const page = root.dataset.customerPage;
@@ -136,30 +154,16 @@
         }
         document.querySelectorAll('[data-open-customer-app]').forEach(b => b.addEventListener('click', () => showApp(b.dataset.openCustomerApp)));
         document.querySelectorAll('[data-customer-app-back]').forEach(b => b.addEventListener('click', () => showApp('choice')));
-        const panes = [['customers-tab', 'online'], ['store-customers-tab', 'store'], ['gift-customers-tab', 'gifts']];
-        for (const [id, page] of panes) {
-            const pane = document.getElementById(id);
-            if (!pane)
-                continue;
-            const activate = () => { if (pane.classList.contains('active'))
-                load(page); };
-            new MutationObserver(activate).observe(pane, { attributes: true, attributeFilter: ['class'] });
-            activate();
-        }
-        const appPane = document.getElementById('app-customers-tab');
-        if (appPane) {
-            appPane.dataset.customerTheme = 'apps';
-            new MutationObserver(() => { if (appPane.classList.contains('active')) {
-                const current = [...appPane.querySelectorAll('[data-customer-app-view]')].find(el => !el.hidden);
-                if (current && current.dataset.customerAppView !== 'choice')
-                    load(current.dataset.customerAppView);
-            } }).observe(appPane, { attributes: true, attributeFilter: ['class'] });
-        }
+        document.querySelectorAll('[data-customer-section]').forEach(b => b.addEventListener('click', () => showSection(b.dataset.customerSection)));
+        const pane = document.getElementById('customers-tab');
+        const activate = () => { if (pane.classList.contains('active')) { const page = activePage(); if (page) load(page); } };
+        new MutationObserver(activate).observe(pane, { attributes: true, attributeFilter: ['class'] });
+        activate();
         window.addEventListener('candy:gifts-customers-updated', rebuild);
         window.addEventListener('storage', e => { if (e.key === 'candy_gifts_customers')
             rebuild(); });
     }
-    window.CandyCRM = { refresh: () => { const entry = [...pages.entries()].find(([, s]) => s.root.closest('.tab-pane.active') && !s.root.closest('[data-customer-app-view][hidden]')); return entry ? load(entry[0], true) : Promise.resolve(); } };
+    window.CandyCRM = { refresh: () => { const page = activePage(); return page && document.getElementById('customers-tab').classList.contains('active') ? load(page, true) : Promise.resolve(); } };
     if (document.readyState === 'loading')
         document.addEventListener('DOMContentLoaded', mount);
     else

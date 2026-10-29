@@ -61,7 +61,7 @@
     <link rel="apple-touch-icon" href="favicon.png?v=13">
     <link rel="manifest" href="app-manifest.json?v=1003">
     <link rel="stylesheet" href="style.css?v=122.0">
-    <link rel="stylesheet" href="customer_crm/crm.css?v=4.0">
+    <link rel="stylesheet" href="customer_crm/crm.css?v=5.0">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Tajawal:wght@400;700&display=swap"
         rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" type="text/javascript" crossorigin="anonymous"></script>
@@ -1519,17 +1519,20 @@
             </div>
         </section>
 
-        <!-- Simple, independent customer directories -->
-        <section id="customers-tab" class="tab-pane">
-            <div class="customer-directory" data-customer-page="online" data-theme="online"></div>
-        </section>
-        <section id="store-customers-tab" class="tab-pane">
-            <div class="customer-directory" data-customer-page="store" data-theme="store"></div>
-        </section>
-        <section id="gift-customers-tab" class="tab-pane">
-            <div class="customer-directory" data-customer-page="gifts" data-theme="gifts"></div>
-        </section>
-        <section id="app-customers-tab" class="tab-pane">
+        <!-- One customer database page with simple internal sections -->
+        <section id="customers-tab" class="tab-pane" data-customer-theme="online">
+            <div class="customer-base">
+                <h2 class="customer-base-title">قاعدة العملاء</h2>
+                <nav class="customer-section-nav" aria-label="أقسام قاعدة العملاء">
+                    <button type="button" data-customer-section="online" aria-pressed="true">عملاء الأونلاين</button>
+                    <button type="button" data-customer-section="store" aria-pressed="false">عملاء المحل</button>
+                    <button type="button" data-customer-section="gifts" aria-pressed="false">عملاء الهدايا</button>
+                    <button type="button" data-customer-section="apps" aria-pressed="false">عملاء التطبيقات</button>
+                </nav>
+                <div data-customer-panel="online"><div class="customer-directory" data-customer-page="online" data-theme="online"></div></div>
+                <div data-customer-panel="store" hidden><div class="customer-directory" data-customer-page="store" data-theme="store"></div></div>
+                <div data-customer-panel="gifts" hidden><div class="customer-directory" data-customer-page="gifts" data-theme="gifts"></div></div>
+                <div data-customer-panel="apps" id="customer-apps-area" hidden>
             <div class="customer-app-directory">
                 <div data-customer-app-view="choice" class="customer-app-choice">
                     <h2>عملاء التطبيقات</h2>
@@ -1540,6 +1543,8 @@
                 </div>
                 <div data-customer-app-view="talabat" hidden><button type="button" class="customer-back" data-customer-app-back>الرجوع لعملاء التطبيقات</button><div class="customer-directory" data-customer-page="talabat" data-theme="talabat"></div></div>
                 <div data-customer-app-view="instashop" hidden><button type="button" class="customer-back" data-customer-app-back>الرجوع لعملاء التطبيقات</button><div class="customer-directory" data-customer-page="instashop" data-theme="instashop"></div></div>
+            </div>
+                </div>
             </div>
         </section>
 
@@ -2318,10 +2323,7 @@
                 </div>
             </div>
             <div class="menu-group"><h4 class="menu-group-title">العملاء</h4><div class="menu-group-items" style="display:block">
-                    <button class="nav-item" data-target="customers-tab" style="color:#245ac7"><span class="customer-nav-icon" aria-hidden="true"></span><span class="label">عملاء الأونلاين</span></button>
-                    <button class="nav-item" data-target="store-customers-tab" style="color:#7951ab"><span class="customer-nav-icon" aria-hidden="true"></span><span class="label">عملاء المحل</span></button>
-                    <button class="nav-item" data-target="gift-customers-tab" style="color:#087e74"><span class="customer-nav-icon" aria-hidden="true"></span><span class="label">عملاء الهدايا</span></button>
-                    <button class="nav-item" data-target="app-customers-tab" style="color:#d84b00"><span class="customer-nav-icon" aria-hidden="true"></span><span class="label">عملاء التطبيقات</span></button>
+                    <button class="nav-item" data-target="customers-tab" style="color:#245ac7"><span class="customer-nav-icon" aria-hidden="true"></span><span class="label">قاعدة العملاء</span></button>
             </div></div>
             <!-- زر تسجيل الخروج -->
             <div style="margin-top: 30px; padding: 0 15px; padding-bottom: 20px;">
@@ -2887,9 +2889,9 @@
     </div>
 </div>
 
-<script src="app.js?v=135.0" charset="UTF-8" defer></script>
-    <script src="customer_crm/model.js?v=4.0" defer></script>
-    <script src="customer_crm/crm.js?v=4.0" defer></script>
+<script src="app.js?v=136.0" charset="UTF-8" defer></script>
+    <script src="customer_crm/model.js?v=5.0" defer></script>
+    <script src="customer_crm/crm.js?v=5.0" defer></script>
 </body>
 </html>
 

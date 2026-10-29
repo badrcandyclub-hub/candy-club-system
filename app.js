@@ -2364,7 +2364,7 @@ function setBtnLoading(btn, isLoading, originalText = "") {
 // ⭐ V16.2: تعريف وحدات النظام (Modules)
 window.MODULE_GROUPS = {
     'orders': { name: 'إدارة الأوردرات', icon: 'fa-solid fa-box fa-bounce', tabs: ['create-tab', 'catalog-tab', 'shipping-tab', 'history-tab', 'suspended-tab'], req: 'orders,customers,shipping,catalog,financials,shortages,drafts,users' },
-    'marketing': { name: 'العملاء والتسويق', icon: 'fa-solid fa-users-viewfinder fa-fade', tabs: ['customers-tab', 'store-customers-tab', 'gift-customers-tab', 'app-customers-tab', 'whatsapp-campaign-tab', 'waitlist-tab'], req: 'customers,users,orders,out_of_stock' },
+    'marketing': { name: 'العملاء والتسويق', icon: 'fa-solid fa-users-viewfinder fa-fade', tabs: ['customers-tab', 'whatsapp-campaign-tab', 'waitlist-tab'], req: 'customers,users,orders,out_of_stock' },
     'products': { name: 'المنتجات', icon: 'fa-solid fa-tags fa-beat', tabs: ['offers-tab', 'price-tags-tab', 'shortages-tab', 'expiry-tab', 'inventory-transfers-tab'], req: 'catalog,drafts,users,expiries,offers' },
     'hr': { name: 'شئون الموظفين', icon: 'fa-solid fa-id-card-clip fa-flip', tabs: ['hr-tab', 'hr-admin-tab'], req: 'attendance,users' },
     'gifts': { name: 'قسم الهدايا والبوكيهات', icon: 'fa-solid fa-wand-magic-sparkles', tabs: ['gifts-tab', 'gifts-reports-tab'], req: 'gifts,gifts_reports' },
@@ -17759,7 +17759,6 @@ function applyPermissions() {
         let target = btn.dataset.target;
         if (!target) return;
         let permKey = target.replace("-tab", "");
-        if (["store-customers", "gift-customers", "app-customers"].includes(permKey)) permKey = "customers";
         
         if (permKey === "inventory-transfers") permKey = "inventory";
         if (permKey === "price-tags") permKey = "pricetags";

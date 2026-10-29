@@ -57,12 +57,12 @@
 .customer-symbol-refresh::before { width:15px;height:15px;left:1px;top:1px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%; }
 .customer-symbol-refresh::after { border:4px solid transparent;border-top-color:currentColor;border-right-color:currentColor;right:0;top:0; }
 .customer-directory :focus-visible,.customer-app-directory :focus-visible { outline:3px solid var(--customer-accent,#245ac7);outline-offset:3px; }
-body:has(#customers-tab.active) { background:#f3f6fd; }
-body:has(#store-customers-tab.active) { background:#f6f1fc; }
-body:has(#gift-customers-tab.active) { background:#f0faf6; }
-body:has(#app-customers-tab.active[data-customer-theme=apps]) { background:#f8f7fc; }
-body:has(#app-customers-tab.active[data-customer-theme=talabat]) { background:#fff3e8; }
-body:has(#app-customers-tab.active[data-customer-theme=instashop]) { background:#fff0f6; }
+body:has(#customers-tab.active[data-customer-theme=online]) { background:#f3f6fd; }
+body:has(#customers-tab.active[data-customer-theme=store]) { background:#f6f1fc; }
+body:has(#customers-tab.active[data-customer-theme=gifts]) { background:#f0faf6; }
+body:has(#customers-tab.active[data-customer-theme=apps]) { background:#f8f7fc; }
+body:has(#customers-tab.active[data-customer-theme=talabat]) { background:#fff3e8; }
+body:has(#customers-tab.active[data-customer-theme=instashop]) { background:#fff0f6; }
 @media(max-width:700px) {
  .customer-directory,.customer-app-choice { padding:15px;border-radius:13px; }
  .customer-simple-header { align-items:flex-start;gap:10px; }.customer-simple-header h2 { font-size:20px; }.customer-simple-refresh { min-height:44px;padding:8px 12px; }
@@ -70,3 +70,15 @@ body:has(#app-customers-tab.active[data-customer-theme=instashop]) { background:
  .customer-app-links { grid-template-columns:1fr;gap:15px; }.customer-app-link { min-height:150px;padding:25px 15px; }.customer-app-choice h2 { font-size:21px; }
  .customer-online-types button { flex:1;min-height:44px; }
 }
+
+/* One sidebar entry; simple section choices live inside Customer Database. */
+.customer-base [hidden] { display:none!important; }
+.customer-base-title { margin:0 0 16px;font-family:Cairo,Tajawal,Arial,sans-serif;font-size:25px;color:#26334a; }
+.customer-section-nav { display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px; }
+.customer-section-nav button { font-family:Cairo,Tajawal,Arial,sans-serif;font-size:13px;font-weight:700;min-height:42px;padding:9px 16px;border:1px solid #dce5f2;border-radius:9px;background:#fff;color:#5a6b84;cursor:pointer; }
+.customer-section-nav button[aria-pressed=true] { color:#fff;background:#245ac7;border-color:#245ac7; }
+.customer-section-nav button[data-customer-section=store][aria-pressed=true] { background:#7951ab;border-color:#7951ab; }
+.customer-section-nav button[data-customer-section=gifts][aria-pressed=true] { background:#087e74;border-color:#087e74; }
+.customer-section-nav button[data-customer-section=apps][aria-pressed=true] { background:#e54e00;border-color:#e54e00; }
+.customer-section-nav button:focus-visible { outline:3px solid #245ac7;outline-offset:3px; }
+@media(max-width:700px) { .customer-section-nav { display:grid;grid-template-columns:1fr 1fr;gap:7px; }.customer-section-nav button { min-height:44px;padding:8px;font-size:12px; }.customer-base-title { font-size:22px; } }
