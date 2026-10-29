@@ -5,6 +5,7 @@
     if (!M)
         return;
     const titles = { online: 'عملاء الأونلاين', store: 'عملاء المحل', gifts: 'عملاء الهدايا', talabat: 'عملاء طلبات', instashop: 'عملاء إنستا شوب' };
+    const PAGE_SIZE = 50;
     const sourceData = { customers: [], orders: [], profiles: [], gifts: [], legacyGifts: [] };
     const pages = new Map(), groups = { core: { loaded: false, pending: null, error: '', profilesUnavailable: false }, gifts: { loaded: false, pending: null, error: '' } };
     let activeSection = 'online', activeApp = 'talabat';
@@ -75,13 +76,28 @@
             render(page);
     }
     function groupFor(page) { return page === 'gifts' ? 'gifts' : 'core'; }
-    function card(c, page) { const gifts = page === 'gifts'; return '<article class="customer-simple-card' + (c.vip ? ' is-vip' : '') + '"><div class="customer-card-top">' + icon('person') + '<div><h3>' + esc(c.name) + '</h3><p class="customer-card-phone" dir="ltr">' + esc(phone(c.phone) || 'رقم غير مسجل') + '</p></div>' + (c.vip ? '<span class="customer-vip">VIP</span>' : '') + '</div>' + (c.gov || c.address ? '<p class="customer-card-address">' + esc([c.gov, c.address].filter(Boolean).join(' · ')) + '</p>' : '') + (c.hasHistory ? '<div class="customer-card-numbers"><div><span>' + (gifts ? 'مرات شراء الهدايا' : 'الطلبات') + '</span><strong>' + esc(gifts ? c.purchaseCount == null ? '—' : c.purchaseCount : c.count) + '</strong></div><div><span>' + (gifts ? 'قيمة المشتريات' : 'قيمة الطلبات') + '</span><strong>' + money(c.total) + '</strong></div></div>' : '<p class="customer-no-history">تفاصيل الشراء غير مسجلة</p>') + '<p class="customer-card-date">' + (gifts ? 'آخر شراء: ' : 'آخر طلب: ') + esc(date(c.lastDate)) + '</p></article>'; }
+    function card(c, page) {
+        const gifts = page === 'gifts';
+        const location = c.vip
+            ? '<dl class="customer-card-location"><div><dt>المنطقة</dt><dd>' + esc(c.region || c.gov || 'غير مسجلة') + '</dd></div><div><dt>العنوان</dt><dd>' + esc(c.address || 'غير مسجل') + '</dd></div></dl>'
+            : c.region || c.gov || c.address ? '<p class="customer-card-address">' + esc([c.region || c.gov, c.address].filter(Boolean).join(' · ')) + '</p>' : '';
+        const frequency = c.topProduct ? c.topProduct.orders === 1 ? 'في طلب واحد' : c.topProduct.orders === 2 ? 'في طلبين' : 'في ' + c.topProduct.orders + (c.topProduct.orders <= 10 ? ' طلبات' : ' طلبًا') : '';
+        const interest = c.vip ? '<div class="customer-card-interest"><span>الأكثر طلبًا</span><strong>' + esc(c.topProduct ? c.topProduct.name : 'تفاصيل المنتجات غير مسجلة') + '</strong>' + (frequency ? '<small>' + esc(frequency) + '</small>' : '') + '</div>' : '';
+        return '<article class="customer-simple-card' + (c.vip ? ' is-vip' : '') + '"><div class="customer-card-top">' + icon('person') + '<div><h3>' + esc(c.name) + '</h3><p class="customer-card-phone" dir="ltr">' + esc(phone(c.phone) || 'رقم غير مسجل') + '</p>' + (c.vip && c.altPhone ? '<p class="customer-card-phone" dir="ltr">' + esc(phone(M.normalizePhone(c.altPhone) || c.altPhone)) + '</p>' : '') + '</div>' + (c.vip ? '<span class="customer-vip">VIP</span>' : '') + '</div>' + location + interest + (c.hasHistory ? '<div class="customer-card-numbers"><div><span>' + (gifts ? 'مرات شراء الهدايا' : 'الطلبات') + '</span><strong>' + esc(gifts ? c.purchaseCount == null ? '—' : c.purchaseCount : c.count) + '</strong></div><div><span>' + (gifts ? 'قيمة المشتريات' : 'قيمة الطلبات') + '</span><strong>' + money(c.total) + '</strong></div></div>' : '<p class="customer-no-history">تفاصيل الشراء غير مسجلة</p>') + '<p class="customer-card-date">' + (gifts ? 'آخر شراء: ' : 'آخر طلب: ') + esc(date(c.lastDate)) + '</p></article>';
+    }
+    function pagination() {
+        return '<nav class="customer-pagination" aria-label="صفحات العملاء" hidden><span data-customer-page-summary aria-live="polite"></span><div><button type="button" data-customer-page-step="-1">السابق</button><span data-customer-page-position></span><button type="button" data-customer-page-step="1">التالي</button></div></nav>';
+    }
     function render(page) {
         const state = pages.get(page);
         if (!state)
             return;
         const group = groups[groupFor(page)], all = directories[page] || [];
         const rows = page === 'online' ? all.filter(c => state.variant === 'vip' ? c.vip : !c.vip) : all;
+        const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+        state.pageNumber = Math.min(state.pageNumber, totalPages);
+        const offset = (state.pageNumber - 1) * PAGE_SIZE;
+        const visible = page === activePage();
         state.root.dataset.theme = page === 'online' && state.variant === 'vip' ? 'vip' : page;
         state.root.querySelector('[data-customer-count]').textContent = group.loaded ? rows.length + ' عميل' : '';
         state.root.setAttribute('aria-busy', String(!!group.pending));
@@ -92,7 +108,14 @@
         status.textContent = group.error || (group.profilesUnavailable && page !== 'online' ? 'تعذر تحميل بعض بيانات العملاء المضافة. أعد تسجيل الدخول ثم اضغط اسم القسم بالأعلى.' : '');
         status.hidden = !status.textContent;
         const list = state.root.querySelector('[data-customer-cards]');
-        list.innerHTML = rows.length ? rows.map(c => card(c, page)).join('') : '<div class="customer-simple-empty">' + (group.pending ? 'جاري تحميل البيانات…' : group.error ? 'تعذر تحميل البيانات. اضغط اسم القسم بالأعلى للمحاولة.' : group.loaded ? 'لا يوجد عملاء مسجلون هنا.' : 'البيانات تظهر تلقائيًا عند فتح القسم.') + '</div>';
+        list.innerHTML = !visible ? '' : rows.length ? rows.slice(offset, offset + PAGE_SIZE).map(c => card(c, page)).join('') : '<div class="customer-simple-empty">' + (group.pending ? 'جاري تحميل البيانات…' : group.error ? 'تعذر تحميل البيانات. اضغط اسم القسم بالأعلى للمحاولة.' : group.loaded ? 'لا يوجد عملاء مسجلون هنا.' : 'البيانات تظهر تلقائيًا عند فتح القسم.') + '</div>';
+        state.root.querySelectorAll('.customer-pagination').forEach(nav => {
+            nav.hidden = !visible || rows.length <= PAGE_SIZE;
+            nav.querySelector('[data-customer-page-summary]').textContent = 'عرض ' + (offset + 1) + '–' + Math.min(offset + PAGE_SIZE, rows.length) + ' من ' + rows.length + ' عميل';
+            nav.querySelector('[data-customer-page-position]').textContent = state.pageNumber + ' / ' + totalPages;
+            nav.querySelector('[data-customer-page-step="-1"]').disabled = state.pageNumber === 1;
+            nav.querySelector('[data-customer-page-step="1"]').disabled = state.pageNumber === totalPages;
+        });
     }
     async function load(page, force = false) {
         const state = pages.get(page), group = groups[groupFor(page)];
@@ -103,6 +126,7 @@
             state.root.querySelector('[data-customer-status]').hidden = false;
             return;
         }
+        render(page);
         if (group.pending)
             return group.pending;
         if (group.loaded && !force) {
@@ -121,7 +145,7 @@
                     sourceData.gifts = await giftSales();
                 }
                 else {
-                    const results = await Promise.allSettled([allRows(window.supabase.from('customers').select('id,customer_name,phone,governorate,address').order('id', { ascending: true })), allRows(window.supabase.from('orders').select('id,order_id,customer_name,phone,governorate,address,platform,order_date,status,final_total').order('id', { ascending: true })), profiles()]);
+                    const results = await Promise.allSettled([allRows(window.supabase.from('customers').select('id,customer_name,phone,governorate,address').order('id', { ascending: true })), allRows(window.supabase.from('orders').select('id,order_id,customer_name,phone,alt_phone,governorate,address,platform,order_date,status,final_total,products').order('id', { ascending: true })), profiles()]);
                     if (results[0].status === 'rejected')
                         throw results[0].reason;
                     if (results[1].status === 'rejected')
@@ -150,21 +174,25 @@
     function activePage() {
         return activeSection === 'apps' ? activeApp : activeSection;
     }
-    function animatePanel(panel) {
+    function animatePanel(panel, direction = 1) {
         if (!panel)
             return;
         panel.classList.remove('customer-panel-enter');
+        panel.style.setProperty('--customer-enter-x', direction < 0 ? '-18px' : '18px');
         void panel.offsetWidth;
         panel.classList.add('customer-panel-enter');
     }
     function showSection(name) {
         if (!['online', 'store', 'gifts', 'apps'].includes(name))
             return;
+        const direction = ['online', 'store', 'gifts', 'apps'].indexOf(name) - ['online', 'store', 'gifts', 'apps'].indexOf(activeSection);
         activeSection = name;
         document.querySelectorAll('[data-customer-panel]').forEach(el => el.hidden = el.dataset.customerPanel !== name);
         document.querySelectorAll('[data-customer-section]').forEach(el => el.setAttribute('aria-pressed', String(el.dataset.customerSection === name)));
         document.getElementById('customers-tab').dataset.customerTheme = name === 'apps' ? activeApp : name;
-        animatePanel(document.querySelector('[data-customer-panel="' + name + '"]'));
+        for (const page of pages.keys())
+            render(page);
+        animatePanel(document.querySelector('[data-customer-panel="' + name + '"]'), direction);
         if (name === 'apps')
             showApp(activeApp, false);
         else
@@ -173,27 +201,44 @@
     function showApp(name, transition = true) {
         if (!['talabat', 'instashop'].includes(name))
             return;
+        const direction = name === 'instashop' ? 1 : -1;
         activeApp = name;
         document.querySelectorAll('[data-customer-app-view]').forEach(el => el.hidden = el.dataset.customerAppView !== name);
         document.querySelectorAll('[data-open-customer-app]').forEach(el => el.setAttribute('aria-pressed', String(el.dataset.openCustomerApp === name)));
         document.getElementById('customers-tab').dataset.customerTheme = name;
+        for (const page of pages.keys())
+            render(page);
         if (transition)
-            animatePanel(document.querySelector('[data-customer-app-view="' + name + '"]'));
+            animatePanel(document.querySelector('[data-customer-app-view="' + name + '"]'), direction);
         load(name, true);
     }
     function mount() {
         for (const root of document.querySelectorAll('[data-customer-page]')) {
             const page = root.dataset.customerPage;
-            pages.set(page, { root, variant: 'regular' });
+            pages.set(page, { root, variant: 'regular', pageNumber: 1 });
             root.innerHTML = '<header class="customer-simple-header"><div><h2>' + esc(titles[page]) + '</h2><span class="customer-simple-count" data-customer-count></span></div><span class="customer-loading" data-customer-loading role="status" hidden>جاري تحميل البيانات</span></header>' + (page === 'online' ? '<div class="customer-online-types" aria-label="نوع عميل الأونلاين"><button type="button" data-online-type="regular" aria-pressed="true">العاديون</button><button type="button" data-online-type="vip" aria-pressed="false">VIP</button></div>' : '') + '<p class="customer-simple-status" data-customer-status role="status" hidden></p><div class="customer-simple-cards" data-customer-cards></div>';
-            root.querySelectorAll('[data-online-type]').forEach(b => b.addEventListener('click', () => { pages.get(page).variant = b.dataset.onlineType; render(page); animatePanel(root.querySelector('[data-customer-cards]')); }));
+            root.insertAdjacentHTML('beforeend', pagination());
+            root.querySelector('[data-customer-cards]').insertAdjacentHTML('beforebegin', pagination());
+            root.querySelectorAll('[data-customer-page-step]').forEach(b => b.addEventListener('click', () => {
+                const state = pages.get(page), step = Number(b.dataset.customerPageStep);
+                if (b.disabled)
+                    return;
+                state.pageNumber += step;
+                render(page);
+                animatePanel(root.querySelector('[data-customer-cards]'), step);
+                if (typeof root.scrollIntoView === 'function')
+                    root.scrollIntoView({ behavior: window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+            }));
+            root.querySelectorAll('[data-online-type]').forEach(b => b.addEventListener('click', () => { pages.get(page).variant = b.dataset.onlineType; pages.get(page).pageNumber = 1; render(page); animatePanel(root.querySelector('[data-customer-cards]'), b.dataset.onlineType === 'vip' ? 1 : -1); }));
             render(page);
         }
         document.querySelectorAll('[data-open-customer-app]').forEach(b => b.addEventListener('click', () => showApp(b.dataset.openCustomerApp)));
         document.querySelectorAll('[data-customer-section]').forEach(b => b.addEventListener('click', () => showSection(b.dataset.customerSection)));
         const pane = document.getElementById('customers-tab');
-        const activate = () => { if (pane.classList.contains('active'))
-            load(activePage(), true); };
+        const activate = () => {
+            if (pane.classList.contains('active'))
+                load(activePage(), true);
+        };
         new MutationObserver(activate).observe(pane, { attributes: true, attributeFilter: ['class'] });
         activate();
         window.addEventListener('candy:gifts-customers-updated', rebuild);

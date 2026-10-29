@@ -44,6 +44,37 @@
     }
     function sources(record) { const raw = record.sources || record.source || record.platform || []; return Array.isArray(raw) ? raw : text(raw).split(/[,،|]/).filter(Boolean); }
     function preferredPage(record) { return sources(record).map(sourcePage).find(p => p !== 'online') || 'online'; }
+    function orderProducts(value) {
+        let rows = value;
+        if (typeof rows === 'string') {
+            try {
+                rows = JSON.parse(rows);
+            }
+            catch (_) {
+                rows = rows.split(/\r?\n/);
+            }
+        }
+        if (!Array.isArray(rows))
+            rows = rows && typeof rows === 'object' ? [rows] : [];
+        return rows.flatMap(item => {
+            if (!item)
+                return [];
+            let name = '', quantity = 1;
+            if (typeof item === 'string') {
+                const line = digits(item);
+                const match = line.match(/^(.*?)\s*[-–]?\s*الكمية\s*:\s*([\d.]+)/) || line.match(/^(.*?)\s*\([x×]\s*([\d.]+)\)/i);
+                name = match ? match[1] : line;
+                quantity = match ? number(match[2]) : 1;
+                name = name.replace(/^\s*[-–]\s*/, '').replace(/\s*\(السعر:.*$/, '').trim();
+            }
+            else if (typeof item === 'object') {
+                name = text(item.name || item.item_name || item.product_name);
+                quantity = item.qty == null && item.quantity == null ? 1 : number(digits(item.qty == null ? item.quantity : item.qty));
+            }
+            name = plainText(name).replace(/\s+/g, ' ');
+            return name && quantity > 0 ? [{ name, quantity }] : [];
+        });
+    }
     function readGiftContact(record) {
         const r = { ...record };
         if (text(r.customer_name) && normalizePhone(r.customer_phone))
@@ -75,11 +106,11 @@
         function obtain(page, row, kind) {
             const rawPhone = text(row.phone == null ? row.customer_phone : row.phone), phone = normalizePhone(rawPhone), key = phone || kind + ':' + text(row.id || row.order_id || ++anonymous);
             if (!maps[page].has(key))
-                maps[page].set(key, { key, phone: phone || rawPhone, name: '', gov: '', address: '', count: 0, purchaseCount: null, total: 0, lastDate: '', vip: false, hasHistory: false, _orders: new Set(), _gifts: new Set(), _giftEvents: [] });
+                maps[page].set(key, { key, phone: phone || rawPhone, name: '', gov: '', region: '', address: '', altPhone: '', count: 0, purchaseCount: null, total: 0, lastDate: '', vip: false, hasHistory: false, _orders: new Set(), _gifts: new Set(), _giftEvents: [], _products: new Map() });
             return maps[page].get(key);
         }
         function details(c, row) {
-            for (const [key, value] of Object.entries({ name: row.customer_name || row.name, gov: row.governorate || row.gov, address: row.address }))
+            for (const [key, value] of Object.entries({ name: row.customer_name || row.name, gov: row.governorate || row.gov, region: row.region || row.area || row.governorate || row.gov, address: row.address, altPhone: row.alt_phone || row.phone2 }))
                 if (!c[key] && text(value))
                     c[key] = text(value);
         }
@@ -154,6 +185,23 @@
                 c.total += number(r.final_total == null ? r.total : r.final_total);
                 c.hasHistory = true;
                 date(c, r.order_date || r.date || r.created_at);
+                if (page === 'online') {
+                    const inOrder = new Map();
+                    for (const item of orderProducts(r.products || r.items)) {
+                        const key = item.name.normalize('NFKC').toLowerCase();
+                        const existing = inOrder.get(key);
+                        if (existing)
+                            existing.quantity += item.quantity;
+                        else
+                            inOrder.set(key, { ...item });
+                    }
+                    for (const [key, item] of inOrder) {
+                        const stats = c._products.get(key) || { name: item.name, orders: 0, quantity: 0 };
+                        stats.orders++;
+                        stats.quantity += item.quantity;
+                        c._products.set(key, stats);
+                    }
+                }
             }
         }
         const core = ['online', 'store', 'instashop', 'talabat'];
@@ -180,7 +228,18 @@
             else
                 details(obtain(preferredPage(r), r, 'profile'), r);
         }
-        return Object.fromEntries(Object.entries(maps).map(([page, map]) => [page, [...map.values()].map(c => { c.name = c.name || 'بدون اسم'; c.total = round(c.total); c.count = round(c.count); c.vip = page === 'online' && c.count >= VIP_MIN_ORDERS; delete c._orders; delete c._gifts; delete c._giftEvents; return c; }).sort((a, b) => String(b.lastDate).localeCompare(String(a.lastDate)) || a.name.localeCompare(b.name, 'ar'))]));
+        return Object.fromEntries(Object.entries(maps).map(([page, map]) => [page, [...map.values()].map(c => {
+                c.name = c.name || 'بدون اسم';
+                c.total = round(c.total);
+                c.count = round(c.count);
+                c.vip = page === 'online' && c.count >= VIP_MIN_ORDERS;
+                c.topProduct = c.vip ? [...c._products.values()].sort((a, b) => b.orders - a.orders || b.quantity - a.quantity || a.name.localeCompare(b.name, 'ar'))[0] || null : null;
+                delete c._orders;
+                delete c._gifts;
+                delete c._giftEvents;
+                delete c._products;
+                return c;
+            }).sort((a, b) => String(b.lastDate).localeCompare(String(a.lastDate)) || a.name.localeCompare(b.name, 'ar'))]));
     }
     return { VIP_MIN_ORDERS, plainText, escapeHTML, normalizePhone, sourcePage, readGiftContact, buildDirectories };
 });
