@@ -142,8 +142,11 @@
             if (included) customer.lastDate = latestDate(customer.lastDate, date);
             addSources(customer, record.platform || record.source || 'طلبات النظام');
         });
-        (data.gifts || []).forEach((record, index) => {
+        (data.gifts || []).forEach((rawRecord, index) => {
+            const record = readGiftContact(rawRecord);
             if (record.status !== 'sold') return;
+            // A sale without any buyer identity is a sale, not a separate unnamed customer.
+            if (!str(record.customer_name) && !normalizePhone(record.customer_phone)) return;
             const customer = obtain(record, 'gift');
             details(customer, { customer_name: record.customer_name });
             const id = str(record.id || 'row-' + index);
@@ -310,5 +313,22 @@
         return result;
     }
 
-    return { CSV_HEADERS, LIFECYCLES, CONTACT_PERMISSIONS, normalizePhone, normalizeText, escapeHTML, extractProducts, buildCustomers, parseCSV, serializeCSV, prepareImport };
+    // Older gifts schema stores buyer details in its own sale event instead of contact columns.
+    // Recover only the exact event format emitted by the gifts module; never join buyers by name.
+    function readGiftContact(record) {
+        const result = { ...record };
+        if (str(result.customer_name) && normalizePhone(result.customer_phone)) return result;
+        let timeline = result.timeline;
+        if (typeof timeline === 'string') { try { timeline = JSON.parse(timeline); } catch (_) { timeline = []; } }
+        const event = (Array.isArray(timeline) ? timeline : []).filter(item => /^تم بيع/.test(str(item && item.event))).at(-1);
+        const match = str(event && event.event).match(/للعميل\s+"([^"]+)"(?:\s*\(([^)]+)\))?/);
+        if (match) {
+            if (normalizePhone(result.customer_phone) && normalizePhone(match[2]) && normalizePhone(result.customer_phone) !== normalizePhone(match[2])) return result;
+            if (!str(result.customer_name)) result.customer_name = match[1].trim();
+            if (!str(result.customer_phone) && normalizePhone(match[2])) result.customer_phone = match[2].trim();
+        }
+        return result;
+    }
+
+    return { CSV_HEADERS, LIFECYCLES, CONTACT_PERMISSIONS, normalizePhone, normalizeText, escapeHTML, extractProducts, readGiftContact, buildCustomers, parseCSV, serializeCSV, prepareImport };
 });
