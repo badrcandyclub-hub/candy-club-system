@@ -12357,28 +12357,53 @@ window.customSinglePrompt = function (title, defaultValue, onConfirm) {
     };
 };
 
-window.customConfirm = function (message, onConfirm) {
+window.customConfirm = function (message, onConfirm, onCancel, options = {}) {
+    const existing = document.getElementById('candyClubCustomConfirmModal');
+    if (existing) existing.remove();
+
     const overlay = document.createElement('div');
-    overlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px);";
+    overlay.id = 'candyClubCustomConfirmModal';
+    overlay.style = "position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.65); z-index: 100000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(8px); animation: fadeIn 0.18s ease;";
+
+    const title = options.title || 'تأكيد الإجراء';
+    const confirmText = options.confirmText || 'تأكيد';
+    const cancelText = options.cancelText || 'إلغاء';
+    const icon = options.icon || '<i class="fa-solid fa-circle-question" style="color: #e11d48; font-size: 2.2rem;"></i>';
+    const confirmBtnBg = options.confirmBtnBg || 'linear-gradient(135deg, #e11d48, #be123c)';
+
     const modal = document.createElement('div');
-    modal.style = "background: white; padding: 25px; border-radius: 15px; text-align: center; max-width: 400px; width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.2);";
+    modal.style = "background: #ffffff; padding: 26px 24px; border-radius: 20px; text-align: center; max-width: 440px; width: 90%; box-shadow: 0 20px 45px rgba(0,0,0,0.3); border: 1.5px solid rgba(226, 232, 240, 0.9); font-family: 'Cairo', 'Tajawal', sans-serif;";
     modal.innerHTML = `
-        <h3 style="color: var(--primary); margin-top: 0;">تأكيد الإجراء</h3>
-        <p style="font-size: 1.1rem; color: #333; margin-bottom: 25px;">${message}</p>
-        <div style="display: flex; gap: 10px; justify-content: center;">
-            <button id="btnConfirmYes" class="interactive-btn" style="background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1;">نعم <i class=\'fa-solid fa-check\'></i></button>
-            <button id="btnConfirmNo" class="interactive-btn" style="background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; flex: 1;">إلغاء <i class=\'fa-solid fa-xmark\'></i></button>
+        <div style="margin-bottom: 12px;">${icon}</div>
+        <h3 style="color: #0f172a; margin: 0 0 10px; font-size: 1.25rem; font-weight: 800;">${title}</h3>
+        <p style="font-size: 0.95rem; color: #475569; margin: 0 0 22px; line-height: 1.6; font-weight: 600;">${message}</p>
+        <div style="display: flex; gap: 12px; justify-content: center;">
+            <button id="btnConfirmCancelModal" class="interactive-btn" style="flex: 1; padding: 11px 18px; border-radius: 12px; border: 1.5px solid #cbd5e1; background: #f8fafc; color: #475569; font-weight: 800; font-size: 0.92rem; cursor: pointer; transition: all 0.15s ease;">${cancelText}</button>
+            <button id="btnConfirmOkModal" class="interactive-btn" style="flex: 1.2; padding: 11px 18px; border-radius: 12px; border: none; background: ${confirmBtnBg}; color: #ffffff; font-weight: 800; font-size: 0.92rem; cursor: pointer; box-shadow: 0 4px 12px rgba(225, 29, 72, 0.25); transition: all 0.15s ease;">${confirmText}</button>
         </div>
     `;
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
 
-    document.getElementById('btnConfirmYes').onclick = () => {
-        document.body.removeChild(overlay);
-        onConfirm();
+    const cleanup = () => {
+        if (overlay && overlay.parentNode) {
+            overlay.parentNode.removeChild(overlay);
+        }
     };
-    document.getElementById('btnConfirmNo').onclick = () => {
-        document.body.removeChild(overlay);
+
+    document.getElementById('btnConfirmOkModal').onclick = () => {
+        cleanup();
+        if (typeof onConfirm === 'function') onConfirm();
+    };
+    document.getElementById('btnConfirmCancelModal').onclick = () => {
+        cleanup();
+        if (typeof onCancel === 'function') onCancel();
+    };
+    overlay.onclick = (e) => {
+        if (e.target === overlay) {
+            cleanup();
+            if (typeof onCancel === 'function') onCancel();
+        }
     };
 };
 
@@ -15124,9 +15149,12 @@ if(waStartCampaignBtn) {
             return;
         }
         
-        if(!confirm("سيتم إرسال الحملة إلى " + validCustomers.length + " عميل باستخدام المساعد الذكي. هل أنت مستعد للبدء؟")) {
-            return;
-        }
+        customConfirm("سيتم إرسال الحملة إلى " + validCustomers.length + " عميل باستخدام المساعد الذكي. هل أنت مستعد للبدء؟", () => {
+            window.waAssistantQueue = validCustomers;
+            window.waAssistantIndex = 0;
+            window.showWaAssistantModal();
+        });
+        return;
         
         window.waAssistantQueue = validCustomers;
         window.waAssistantIndex = 0;
@@ -18011,7 +18039,7 @@ window.loadUsersList = function() {
 };
 
 window.deleteUser = function(username) {
-    if(confirm(`هل أنت متأكد من حذف المستخدم ${username}؟`)) {
+    window.customConfirm(`هل أنت متأكد من حذف المستخدم ${username}؟`, () => {
         let formData = new FormData();
         formData.append("action", "deleteUser");
         formData.append("username", username);
@@ -18025,7 +18053,7 @@ window.deleteUser = function(username) {
                     showToast(data.error || "خطأ", "error");
                 }
             });
-    }
+    });
 };
 
 window.togglePermCard = function(label) {
@@ -22039,7 +22067,7 @@ window.updateOffersStats = function() {
 window.offersCurrentPage = 1;
 window.offersPageSize = 24; // 24 عرض في الصفحة كحد أقصى لعرض مريح للعين
 window.recurringCurrentPage = 1;
-window.recurringPageSize = 10; // 10 ستوريهات في الصفحة كحد أقصى
+window.recurringPageSize = 30; // 10 ستوريهات في الصفحة كحد أقصى
 
 window.changeOffersPage = function(targetPage) {
     if (typeof targetPage === 'number') {
@@ -22930,17 +22958,19 @@ window.publishAllPendingRecurringStories = async function() {
         return;
     }
 
-    const confirmRun = confirm(`هل تريد نشر جميع الاستوريهات الجديدة (${pending.length} استوري) فوراً على إنستجرام وفيسبوك وبدء عداد الـ 24 ساعة لكل منها؟`);
-    if (!confirmRun) return;
-
-    // تحديد هذه الاستوريهات وتشغيل النشر الجماعي
-    document.querySelectorAll('.offer-card-checkbox').forEach(cb => cb.checked = false);
-    pending.forEach(item => {
-        const cb = document.querySelector(`.recurring-card-checkbox[data-offer-id="${item.id}"]`);
-        if (cb) cb.checked = true;
-    });
-    window.updateRecurringSelectedCount();
-    await window.publishSelectedOffersStories();
+    window.customConfirm(
+        `سيتم نشر جميع الاستوريهات الجديدة (${pending.length} استوري) بالتتابع على إنستجرام وفيسبوك وتفعيل عداد الـ 24 ساعة لكل منها. هل تريد المتابعة؟`,
+        async () => {
+            await window.publishSelectedOffersStories(pending);
+        },
+        null,
+        {
+            title: 'نشر جميع الاستوريهات الجديدة',
+            icon: '<i class="fa-solid fa-paper-plane" style="color: #059669; font-size: 2.2rem;"></i>',
+            confirmBtnBg: 'linear-gradient(135deg, #059669, #10b981)',
+            confirmText: '🚀 نشر الآن'
+        }
+    );
 };
 
 window.toggleSelectAllRecurringStories = function(isChecked) {
@@ -22971,6 +23001,18 @@ window.updateRecurringSelectedCount = function() {
     if (selectAllCb) {
         selectAllCb.checked = (checkboxes.length > 0 && count === checkboxes.length);
         selectAllCb.indeterminate = (count > 0 && count < checkboxes.length);
+    }
+    const btnAllNew = document.getElementById('btnPublishAllNewRecurring');
+    if (btnAllNew) {
+        const pendingCount = (window.offersData || []).filter(item => {
+            return item.pricing_mode === 'recurring_story' && item.is_active && !item.last_story_published_at;
+        }).length;
+        if (pendingCount > 0) {
+            btnAllNew.style.display = 'inline-flex';
+            btnAllNew.innerHTML = `<i class="fa-solid fa-bolt"></i> <span>نشر جميع الاستوريهات الجديدة فوراً (${pendingCount})</span>`;
+        } else {
+            btnAllNew.style.display = 'none';
+        }
     }
 };
 
@@ -23213,10 +23255,26 @@ window.applyGlobalBatchSettings = function() {
 
 window.closeBatchRecurringStoriesModal = function() {
     if (window.isBatchUploading) {
-        const confirmCancel = confirm('جاري رفع الصور حالياً! هل أنت متأكد من رغبتك في الإغلاق؟');
-        if (!confirmCancel) return;
-        window.isBatchUploading = false;
+        window.customConfirm(
+            'جاري رفع الصور حالياً! هل أنت متأكد من رغبتك في الإلغاء والإغلاق؟',
+            () => {
+                window.isBatchUploading = false;
+                window._finishCloseBatchRecurringModal();
+            },
+            null,
+            {
+                title: 'إلغاء رفع الدفعة',
+                icon: '<i class="fa-solid fa-triangle-exclamation" style="color: #e11d48; font-size: 2.2rem;"></i>',
+                confirmBtnBg: 'linear-gradient(135deg, #e11d48, #be123c)',
+                confirmText: 'نعم، إغلاق'
+            }
+        );
+        return;
     }
+    window._finishCloseBatchRecurringModal();
+};
+
+window._finishCloseBatchRecurringModal = function() {
     const modal = document.getElementById('batchRecurringStoriesModal');
     if (modal) modal.style.display = 'none';
 
@@ -24642,22 +24700,45 @@ window.publishOfferToInstagramStory = async function(id, isAuto = false) {
 };
 
 // 3. النشر الجماعي للعروض المحددة مع شريط التقدم الحي (Batch Stories Publishing)
-window.publishSelectedOffersStories = async function() {
-    const checkboxes = document.querySelectorAll('.offer-card-checkbox:checked');
-    const ids = Array.from(checkboxes).map(cb => cb.dataset.offerId).filter(Boolean);
-    const selectedOffers = window.offersData.filter(o => ids.includes(String(o.id)));
+window.publishSelectedOffersStories = async function(customOffersList = null) {
+    let selectedOffers = [];
+    if (Array.isArray(customOffersList) && customOffersList.length > 0) {
+        selectedOffers = customOffersList;
+    } else {
+        const isRecurring = (window.activeOffersSubtab === 'recurring');
+        const selector = isRecurring ? '.recurring-card-checkbox:checked' : '.offer-card-checkbox:checked';
+        const checkboxes = document.querySelectorAll(selector);
+        const ids = Array.from(checkboxes).map(cb => cb.dataset.offerId).filter(Boolean);
+        selectedOffers = (window.offersData || []).filter(o => ids.includes(String(o.id)));
+    }
     
     if (selectedOffers.length === 0) {
-        showToast('يرجى تحديد عرض واحد على الأقل لنشره كـ Story', 'warning');
+        showToast('يرجى تحديد عرض أو ستوري واحد على الأقل للنشر', 'warning');
         return;
     }
     
     const usage = window.getOffersStoryDailyUsage();
     if (usage.remaining < selectedOffers.length) {
-        const proceed = confirm(`⚠️ تنبيه الحد اليومي: المتبقي من الليميت اليومي (${usage.remaining}) بينما قمت بتحديد (${selectedOffers.length}) عروض. هل تريد المتابعة على أية حال؟`);
-        if (!proceed) return;
+        window.customConfirm(
+            `⚠️ تنبيه الحد اليومي: المتبقي من الليميت اليومي (${usage.remaining}) بينما قمت باختيار (${selectedOffers.length}) استوري. هل تريد المتابعة على أية حال؟`,
+            () => {
+                window._runBatchStoryPublishProcess(selectedOffers);
+            },
+            null,
+            {
+                title: 'تنبيه الحد اليومي للنشر',
+                icon: '<i class="fa-solid fa-triangle-exclamation" style="color: #f59e0b; font-size: 2.2rem;"></i>',
+                confirmBtnBg: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                confirmText: 'متابعة النشر'
+            }
+        );
+        return;
     }
     
+    await window._runBatchStoryPublishProcess(selectedOffers);
+};
+
+window._runBatchStoryPublishProcess = async function(selectedOffers) {
     const modal = document.getElementById('offerBatchPublishModal');
     const progressBar = document.getElementById('batchPublishProgressBar');
     const countLabel = document.getElementById('batchPublishCountLabel');
