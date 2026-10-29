@@ -5297,6 +5297,18 @@ setupPhoneSanitizer('phone2');
 
 
 // <i class=\'fa-solid fa-star\'></i> إصلاح ذاكرة السمكة
+// دالة مساعدة لتوحيد الأحرف العربية للمقارنة الذكية
+function normalizeArabicText(str) {
+    if (!str) return '';
+    return String(str)
+        .trim()
+        .toLowerCase()
+        .replace(/[أإآ]/g, 'ا')
+        .replace(/ة/g, 'ه')
+        .replace(/ى/g, 'ي')
+        .replace(/[\s\-_]+/g, ' ');
+}
+
 async function performPhoneSearch() {
     if (!phoneInput || !phoneStatus) return;
     let phoneVal = phoneInput.value.trim().replace(/\D/g, '');
@@ -5453,7 +5465,9 @@ function fillCustomerData(cust) {
         if (cleanBackup.startsWith('201') && cleanBackup.length === 12) {
             cleanBackup = '0' + cleanBackup.slice(2);
         }
-        if (cleanBackup && cleanBackup !== String(cust.phone || '').replace(/\D/g, '')) {
+        let currentPhone = (document.getElementById('customerPhone')?.value || '').replace(/\D/g, '');
+        let custPhone = String(cust.phone || '').replace(/\D/g, '');
+        if (cleanBackup && cleanBackup !== currentPhone && cleanBackup !== custPhone) {
             phone2El.value = cleanBackup;
         }
     }
@@ -5476,18 +5490,26 @@ function fillCustomerData(cust) {
 
         // تنظيف اسم المنطقة إذا كان يحتوي على أسعار مثل (65 ج)
         let cleanGov = govVal.split('(')[0].trim();
+        let cleanGovNorm = normalizeArabicText(cleanGov);
 
         // معرفة هل هي شحن محافظات أم توصيل إسكندرية
-        let isGovShipping = govZones.some(z => z.name === cleanGov || cleanGov.includes(z.name) || z.name.includes(cleanGov));
-        let isAlex = alexZones.some(z => z.name === cleanGov || cleanGov.includes(z.name) || z.name.includes(cleanGov));
+        let isGovShipping = govZones.some(z => {
+            let zn = normalizeArabicText(z.name);
+            return zn === cleanGovNorm || zn.includes(cleanGovNorm) || cleanGovNorm.includes(zn);
+        });
+        let isAlex = alexZones.some(z => {
+            let zn = normalizeArabicText(z.name);
+            return zn === cleanGovNorm || zn.includes(cleanGovNorm) || cleanGovNorm.includes(zn);
+        });
 
         if (deliveryTypeEl) {
             let targetType = 'normal';
-            if (cust.orderType && (cust.orderType === 'gov_shipping' || cust.orderType === 'normal' || cust.orderType === 'special_date')) {
-                targetType = cust.orderType;
-            } else if (isGovShipping) {
+            let oType = (cust.orderType || '').toLowerCase();
+            if (oType.includes('محافظات') || oType === 'gov_shipping' || isGovShipping) {
                 targetType = 'gov_shipping';
-            } else if (isAlex) {
+            } else if (oType.includes('حجز') || oType === 'special_date') {
+                targetType = 'special_date';
+            } else {
                 targetType = 'normal';
             }
 
@@ -5502,12 +5524,14 @@ function fillCustomerData(cust) {
             }
         }
 
-        // اختيار المنطقة من القائمة المنسدلة
+        // اختيار المنطقة من القائمة المنسدلة بدقة ومراعاة الفروق اللغوية
         let matchedOpt = Array.from(govSelect.options).find(opt => {
             if (!opt.value) return false;
-            let v = opt.value.trim().toLowerCase();
-            let g = cleanGov.toLowerCase();
-            return v === g || v.includes(g) || g.includes(v);
+            let optNorm = normalizeArabicText(opt.value);
+            let optTextNorm = normalizeArabicText(opt.text.split('(')[0]);
+            return optNorm === cleanGovNorm || optTextNorm === cleanGovNorm ||
+                   optNorm.includes(cleanGovNorm) || cleanGovNorm.includes(optNorm) ||
+                   optTextNorm.includes(cleanGovNorm) || cleanGovNorm.includes(optTextNorm);
         });
 
         if (matchedOpt) {
@@ -5537,7 +5561,7 @@ if (phoneInput) {
         } else if (val.length >= 9) {
             phoneDebounceTimer = setTimeout(() => {
                 performPhoneSearch();
-            }, 500);
+            }, 400);
         } else {
             if (phoneStatus) {
                 phoneStatus.innerHTML = "<i class='fa-solid fa-magnifying-glass'></i>";
