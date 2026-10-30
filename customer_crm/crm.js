@@ -9,6 +9,7 @@
     const sourceData = { customers: [], orders: [], profiles: [], gifts: [], legacyGifts: [] };
     const pages = new Map(), groups = { core: { loaded: false, pending: null, error: '', profilesUnavailable: false }, gifts: { loaded: false, pending: null, error: '' } };
     let activeSection = 'online', activeApp = 'talabat';
+    let motionVersion = 0, runningMotion = null;
     let directories = M.buildDirectories(sourceData);
     const esc = M.escapeHTML;
     const icon = name => '<span class="customer-symbol customer-symbol-' + name + '" aria-hidden="true"></span>';
@@ -116,6 +117,7 @@
             nav.querySelector('[data-customer-page-step="-1"]').disabled = state.pageNumber === 1;
             nav.querySelector('[data-customer-page-step="1"]').disabled = state.pageNumber === totalPages;
         });
+        selectionMarker(state.root.querySelector('.customer-online-types'));
     }
     async function load(page, force = false) {
         const state = pages.get(page), group = groups[groupFor(page)];
@@ -182,35 +184,123 @@
         void panel.offsetWidth;
         panel.classList.add('customer-panel-enter');
     }
+    function reduceMotion() {
+        return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    }
+    function stopMotion() {
+        if (runningMotion)
+            runningMotion.cancel();
+        runningMotion = null;
+    }
+    function playMotion(panel, frames, options) {
+        try {
+            return panel.animate(frames, options);
+        }
+        catch (_) {
+            return null;
+        }
+    }
+    async function transitionContent(outgoing, update, incoming, direction = 1) {
+        const version = ++motionVersion;
+        stopMotion();
+        const enabled = !reduceMotion() && outgoing && !outgoing.hidden && typeof outgoing.animate === 'function';
+        const shift = direction < 0 ? -1 : 1;
+        if (enabled) {
+            outgoing.classList.remove('customer-panel-enter');
+            const exit = playMotion(outgoing, [{ opacity: 1, transform: 'translateX(0)' }, { opacity: 0, transform: 'translateX(' + (-shift * 10) + 'px)' }], { duration: 110, easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' });
+            runningMotion = exit;
+            if (exit)
+                await exit.finished.catch(() => { });
+            if (version !== motionVersion)
+                return;
+            stopMotion();
+        }
+        update();
+        const target = incoming();
+        if (!target || version !== motionVersion)
+            return;
+        target.classList.remove('customer-panel-enter');
+        if (enabled && typeof target.animate === 'function') {
+            const enter = playMotion(target, [{ opacity: 0, transform: 'translateX(' + (shift * 18) + 'px) translateY(3px)' }, { opacity: 1, transform: 'translateX(0) translateY(0)' }], { duration: 270, easing: 'cubic-bezier(.16,1,.3,1)' });
+            runningMotion = enter;
+            if (enter)
+                await enter.finished.catch(() => { });
+            if (version === motionVersion)
+                stopMotion();
+        }
+        else if (!reduceMotion())
+            animatePanel(target, direction);
+    }
+    function selectionMarker(nav) {
+        if (!nav)
+            return;
+        const selected = nav.querySelector('button[aria-pressed="true"]');
+        if (!selected)
+            return;
+        let marker = nav.querySelector('.customer-tab-indicator');
+        if (!marker) {
+            marker = document.createElement('span');
+            marker.className = 'customer-tab-indicator';
+            marker.setAttribute('aria-hidden', 'true');
+            nav.appendChild(marker);
+        }
+        const width = Number(selected.offsetWidth);
+        marker.hidden = !(width > 0);
+        if (marker.hidden)
+            return;
+        marker.style.width = Math.max(0, width - 24) + 'px';
+        marker.style.transform = 'translate(' + (selected.offsetLeft + 12) + 'px,' + (selected.offsetTop + selected.offsetHeight - 2) + 'px)';
+    }
+    function syncMarkers() {
+        document.querySelectorAll('.customer-section-nav,.customer-online-types,.customer-app-switch').forEach(selectionMarker);
+    }
     function showSection(name) {
         if (!['online', 'store', 'gifts', 'apps'].includes(name))
             return;
+        if (name === activeSection) {
+            ++motionVersion;
+            stopMotion();
+            load(activePage(), true);
+            return;
+        }
         const direction = ['online', 'store', 'gifts', 'apps'].indexOf(name) - ['online', 'store', 'gifts', 'apps'].indexOf(activeSection);
-        activeSection = name;
-        document.querySelectorAll('[data-customer-panel]').forEach(el => el.hidden = el.dataset.customerPanel !== name);
-        document.querySelectorAll('[data-customer-section]').forEach(el => el.setAttribute('aria-pressed', String(el.dataset.customerSection === name)));
-        document.getElementById('customers-tab').dataset.customerTheme = name === 'apps' ? activeApp : name;
-        for (const page of pages.keys())
-            render(page);
-        animatePanel(document.querySelector('[data-customer-panel="' + name + '"]'), direction);
-        if (name === 'apps')
-            showApp(activeApp, false);
-        else
-            load(name, true);
+        transitionContent(document.querySelector('[data-customer-panel="' + activeSection + '"]'), () => {
+            activeSection = name;
+            document.querySelectorAll('[data-customer-panel]').forEach(el => el.hidden = el.dataset.customerPanel !== name);
+            document.querySelectorAll('[data-customer-section]').forEach(el => el.setAttribute('aria-pressed', String(el.dataset.customerSection === name)));
+            document.getElementById('customers-tab').dataset.customerTheme = name === 'apps' ? activeApp : name;
+            for (const page of pages.keys())
+                render(page);
+            if (name === 'apps')
+                showApp(activeApp, false);
+            else
+                load(name, true);
+            syncMarkers();
+        }, () => document.querySelector('[data-customer-panel="' + name + '"]'), direction);
     }
     function showApp(name, transition = true) {
         if (!['talabat', 'instashop'].includes(name))
             return;
         const direction = name === 'instashop' ? 1 : -1;
-        activeApp = name;
-        document.querySelectorAll('[data-customer-app-view]').forEach(el => el.hidden = el.dataset.customerAppView !== name);
-        document.querySelectorAll('[data-open-customer-app]').forEach(el => el.setAttribute('aria-pressed', String(el.dataset.openCustomerApp === name)));
-        document.getElementById('customers-tab').dataset.customerTheme = name;
-        for (const page of pages.keys())
-            render(page);
-        if (transition)
-            animatePanel(document.querySelector('[data-customer-app-view="' + name + '"]'), direction);
-        load(name, true);
+        const update = () => {
+            activeApp = name;
+            document.querySelectorAll('[data-customer-app-view]').forEach(el => el.hidden = el.dataset.customerAppView !== name);
+            document.querySelectorAll('[data-open-customer-app]').forEach(el => el.setAttribute('aria-pressed', String(el.dataset.openCustomerApp === name)));
+            document.getElementById('customers-tab').dataset.customerTheme = name;
+            for (const page of pages.keys())
+                render(page);
+            load(name, true);
+            syncMarkers();
+        };
+        if (transition && name !== activeApp)
+            transitionContent(document.querySelector('[data-customer-app-view="' + activeApp + '"]'), update, () => document.querySelector('[data-customer-app-view="' + name + '"]'), direction);
+        else {
+            if (transition) {
+                ++motionVersion;
+                stopMotion();
+            }
+            update();
+        }
     }
     function mount() {
         for (const root of document.querySelectorAll('[data-customer-page]')) {
@@ -223,13 +313,24 @@
                 const state = pages.get(page), step = Number(b.dataset.customerPageStep);
                 if (b.disabled)
                     return;
-                state.pageNumber += step;
-                render(page);
-                animatePanel(root.querySelector('[data-customer-cards]'), step);
-                if (typeof root.scrollIntoView === 'function')
-                    root.scrollIntoView({ behavior: window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+                const list = root.querySelector('[data-customer-cards]');
+                transitionContent(list, () => {
+                    state.pageNumber += step;
+                    render(page);
+                    if (typeof root.scrollIntoView === 'function')
+                        root.scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'start' });
+                }, () => list, step);
             }));
-            root.querySelectorAll('[data-online-type]').forEach(b => b.addEventListener('click', () => { pages.get(page).variant = b.dataset.onlineType; pages.get(page).pageNumber = 1; render(page); animatePanel(root.querySelector('[data-customer-cards]'), b.dataset.onlineType === 'vip' ? 1 : -1); }));
+            root.querySelectorAll('[data-online-type]').forEach(b => b.addEventListener('click', () => {
+                const state = pages.get(page);
+                const update = () => { state.variant = b.dataset.onlineType; state.pageNumber = 1; render(page); };
+                if (state.variant === b.dataset.onlineType) {
+                    ++motionVersion;
+                    stopMotion();
+                    return;
+                }
+                transitionContent(root.querySelector('[data-customer-cards]'), update, () => root.querySelector('[data-customer-cards]'), b.dataset.onlineType === 'vip' ? 1 : -1);
+            }));
             render(page);
         }
         document.querySelectorAll('[data-open-customer-app]').forEach(b => b.addEventListener('click', () => showApp(b.dataset.openCustomerApp)));
@@ -238,9 +339,15 @@
         const activate = () => {
             if (pane.classList.contains('active'))
                 load(activePage(), true);
+            else {
+                ++motionVersion;
+                stopMotion();
+            }
+            syncMarkers();
         };
         new MutationObserver(activate).observe(pane, { attributes: true, attributeFilter: ['class'] });
         activate();
+        window.addEventListener('resize', syncMarkers);
         window.addEventListener('candy:gifts-customers-updated', rebuild);
         window.addEventListener('storage', e => {
             if (e.key === 'candy_gifts_customers')
