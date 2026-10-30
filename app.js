@@ -98,7 +98,134 @@ try {
     }
 } catch (rtErr) {
     console.warn('[Realtime] Failed to setup candy_system_channel:', rtErr);
+
+
+// ==========================================
+// 🔔 Waitlist Realtime & Audio Chime (صفحة الروابط وطلبات النواقص)
+// ==========================================
+function playWaitlistChime() {
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        if (ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime;
+        
+        // نغمة رنين ثلاثية متصاعدة ونقية للإشعار (C5 -> E5 -> G5)
+        const notes = [523.25, 659.25, 783.99];
+        notes.forEach((freq, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            
+            osc.type = 'sine';
+            const startTime = now + (idx * 0.12);
+            osc.frequency.setValueAtTime(freq, startTime);
+            
+            gain.gain.setValueAtTime(0, startTime);
+            gain.gain.linearRampToValueAtTime(0.25, startTime + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.5);
+            
+            osc.start(startTime);
+            osc.stop(startTime + 0.55);
+        });
+    } catch(e) {
+        console.warn('Waitlist chime audio error:', e);
+    }
 }
+
+window.initWaitlistRealtime = function() {
+    if (!window.supabase || typeof window.supabase.channel !== 'function') return;
+    if (window._waitlistRealtimeSubscribed) return;
+    window._waitlistRealtimeSubscribed = true;
+
+    try {
+        window.supabase.channel('public:out_of_stock')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'out_of_stock' }, (payload) => {
+                console.log('🔔 [Waitlist Realtime] New shortage request received:', payload);
+                const newRow = payload && payload.new;
+                if (!newRow) return;
+
+                // 1. تشغيل صوت تنبيه
+                playWaitlistChime();
+
+                // 2. معالجة وتجهيز العنصر
+                const rawReason = newRow.reason || newRow.purpose || '';
+                let attachedImg = newRow.image_url || null;
+                if (rawReason.includes('[IMG:')) {
+                    const m = rawReason.match(/\[IMG:([^\]]+)\]/);
+                    if (m) {
+                        if (!attachedImg) attachedImg = m[1];
+                    }
+                }
+
+                const newItem = {
+                    id: newRow.id,
+                    customer: newRow.customer_name || 'عميل من الرابط',
+                    phone: newRow.phone || '',
+                    product: newRow.product || '',
+                    reason: rawReason,
+                    date: newRow.created_at || new Date().toISOString(),
+                    image_url: attachedImg
+                };
+
+                // منع التكرار
+                if (!Array.isArray(window.oosData)) window.oosData = (typeof oosData !== 'undefined' && Array.isArray(oosData)) ? oosData : [];
+                const exists = window.oosData.some(it => String(it.id) === String(newItem.id));
+                if (!exists) {
+                    window.oosData.unshift(newItem);
+                    if (typeof oosData !== 'undefined') oosData = window.oosData;
+                }
+
+                // 3. إظهار إشعار Toast بارز
+                const isFromHub = rawReason.includes('صفحة الروابط') || rawReason.includes('Hub') || rawReason.includes('الموقع');
+                const srcLabel = isFromHub ? 'صفحة الروابط (أونلاين)' : 'طلب نواقص جديد';
+                showToast(`🔔 ${srcLabel}: ${newItem.customer} طلب (${newItem.product})`, 'info', 7000);
+
+                // 4. تحديث شارة التنبيه في القائمة الجانبية إذا لم تكن الشاشة مفتوحة
+                const waitlistTabEl = document.getElementById('waitlist-tab');
+                const isTabOpen = waitlistTabEl && waitlistTabEl.classList.contains('active');
+                if (!isTabOpen) {
+                    const navBtn = document.querySelector('button.nav-item[data-target="waitlist-tab"]');
+                    if (navBtn) {
+                        let badge = navBtn.querySelector('.waitlist-unread-badge');
+                        if (!badge) {
+                            badge = document.createElement('span');
+                            badge.className = 'waitlist-unread-badge';
+                            badge.style.cssText = 'background: #e11d48; color: #fff; font-size: 0.72rem; font-weight: 800; padding: 2px 7px; border-radius: 12px; margin-right: 6px; animation: pulse 1.5s infinite;';
+                            navBtn.appendChild(badge);
+                        }
+                        const cur = parseInt(badge.textContent) || 0;
+                        badge.textContent = cur + 1;
+                    }
+                }
+
+                // 5. إعادة رسم قائمة النواقص فوراً
+                if (typeof renderWaitlistTab === 'function') {
+                    renderWaitlistTab(window.oosData);
+                }
+            })
+            .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'out_of_stock' }, (payload) => {
+                const oldRow = payload && payload.old;
+                if (!oldRow || !oldRow.id) return;
+                if (Array.isArray(window.oosData)) {
+                    window.oosData = window.oosData.filter(it => String(it.id) !== String(oldRow.id));
+                    if (typeof oosData !== 'undefined') oosData = window.oosData;
+                    if (typeof renderWaitlistTab === 'function') {
+                        renderWaitlistTab(window.oosData);
+                    }
+                }
+            })
+            .subscribe((status) => {
+                console.log('[Waitlist Realtime] Subscription status:', status);
+            });
+    } catch(err) {
+        console.warn('[Waitlist Realtime] Setup error:', err);
+    }
+};
+
+try { window.initWaitlistRealtime(); } catch(e){}}
 
 // ==========================================
 // 🏷️ Barcode Aliases & Smart Match Normalizer
@@ -2480,6 +2607,8 @@ document.querySelectorAll('.nav-item').forEach(btn => {
             if (typeof window.loadModeratorSlaAdmin === 'function') window.loadModeratorSlaAdmin();
         }
         if (targetId === 'waitlist-tab') {
+            const waitlistBadge = btn.querySelector('.waitlist-unread-badge');
+            if (waitlistBadge) waitlistBadge.remove();
             if (typeof initWaitlistTab === 'function') initWaitlistTab();
             if (typeof renderWaitlistTab === 'function') renderWaitlistTab();
         }
@@ -9591,9 +9720,10 @@ function renderWaitlistTab(list = oosData) {
             }
         }
 
+        const isFromHub = rawReason.includes('صفحة الروابط') || rawReason.includes('Hub') || rawReason.includes('الموقع');
         let reasonBadgeHtml = '';
-        if (rawReason.includes('صفحة الروابط') || rawReason.includes('Hub') || rawReason.includes('الموقع')) {
-            reasonBadgeHtml = `<span style="background: #fdf2f8; color: #db2777; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; border: 1px solid #fbcfe8;"><i class="fa-solid fa-link"></i> من صفحة الروابط</span>`;
+        if (isFromHub) {
+            reasonBadgeHtml = `<span class="waitlist-source-badge is-hub"><i class="fa-solid fa-globe"></i> وارد من صفحة الروابط</span>`;
         } else if (rawReason === 'انتظار نزول عرض') {
             reasonBadgeHtml = `<span style="background: #ffedd5; color: #c2410c; padding: 3px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700;"><i class="fa-solid fa-tags"></i> انتظار عرض</span>`;
         } else if (rawReason === 'طلب كمية خاصة') {
@@ -9637,9 +9767,10 @@ function renderWaitlistTab(list = oosData) {
                 <!-- Top row: Customer Name & Stock Status -->
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 12px;">
                     <div>
-                        <div style="font-weight: 800; font-size: 1.05rem; color: #0f172a; display: flex; align-items: center; gap: 7px;">
+                        <div style="font-weight: 800; font-size: 1.05rem; color: #0f172a; display: flex; align-items: center; gap: 7px; flex-wrap: wrap;">
                             <i class="fa-solid fa-user-circle" style="color: #94a3b8; font-size: 1.15rem;"></i>
-                            ${item.customer || 'عميل من الرابط'}
+                            <span>${item.customer || 'عميل من الرابط'}</span>
+                            ${isFromHub ? '<span style="background: #fdf2f8; color: #db2777; border: 1px solid #fbcfe8; font-size: 0.7rem; font-weight: 800; padding: 1px 7px; border-radius: 8px;"><i class="fa-solid fa-link"></i> أونلاين</span>' : ''}
                         </div>
                         <a href="tel:${item.phone}" style="display: inline-flex; align-items: center; gap: 5px; color: #64748b; font-size: 0.88rem; text-decoration: none; margin-top: 3px; font-weight: 600;" dir="ltr">
                             <i class="fa-solid fa-phone" style="font-size: 0.75rem; color: #0284c7;"></i> ${item.phone}
@@ -9702,7 +9833,13 @@ function renderWaitlistTab(list = oosData) {
             if (phone.startsWith('0')) phone = '+2' + phone;
             
             let msg = '';
-            if (isAvail) {
+            if (isFromHub) {
+                if (isAvail) {
+                    msg = `أهلاً بك يا ${item.customer} 🍬\nمعاك كاندي كلوب:\nبخصوص طلبك عبر صفحة الروابط لتوفير صنف:\n*${item.product}*\nيسعدنا إبلاغك بأنه أصبح متوفراً الآن في الفرع! 🎉\nتقدر تطلبه الآن دليفري أو تشرفنا في الفرع للاستلام في أي وقت.\nنسعد بخدمتك دائماً.`;
+                } else {
+                    msg = `أهلاً بك يا ${item.customer} 🍬\nمعاك كاندي كلوب:\nبخصوص طلبك المسجل عبر صفحة الروابط لصنف:\n*${item.product}*\nطلبك وصلنا بنجاح ومسجل عندنا في قائمة الانتظار، وجاري التنسيق لتوفيره وسنتواصل معك أول ما يوصل الفرع فوراً! 📦✨`;
+                }
+            } else if (isAvail) {
                 msg = `أهلاً بك يا ${item.customer}\nمن كاندي كلوب:\nبخصوص استفسارك عن المنتج:\n*${item.product}*\nأصبح متوفراً الآن في الفرع، ويمكنك طلبه دليفري أو الاستلام من الفرع في أي وقت.\nنسعد بخدمتك دائماً.`;
             } else if (item.reason === 'انتظار نزول عرض') {
                 msg = `أهلاً بك يا ${item.customer}\nمن كاندي كلوب:\nبخصوص متابعة العروض على المنتج:\n*${item.product}*\nطلبك مسجل لدينا وسنقوم بإبلاغك فور توفر أي خصم أو عرض خاص.\nنسعد بخدمتك دائماً.`;
