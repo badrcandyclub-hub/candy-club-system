@@ -203,11 +203,13 @@
     async function transitionContent(outgoing, update, incoming, direction = 1) {
         const version = ++motionVersion;
         stopMotion();
-        const enabled = !reduceMotion() && outgoing && !outgoing.hidden && typeof outgoing.animate === 'function';
+        const reduced = reduceMotion();
+        const enabled = outgoing && !outgoing.hidden && typeof outgoing.animate === 'function';
         const shift = direction < 0 ? -1 : 1;
         if (enabled) {
             outgoing.classList.remove('customer-panel-enter');
-            const exit = playMotion(outgoing, [{ opacity: 1, transform: 'translateX(0)' }, { opacity: 0, transform: 'translateX(' + (-shift * 10) + 'px)' }], { duration: 110, easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' });
+            const exitFrames = reduced ? [{ opacity: 1 }, { opacity: 0 }] : [{ opacity: 1, transform: 'translateX(0)' }, { opacity: 0, transform: 'translateX(' + (-shift * 10) + 'px)' }];
+            const exit = playMotion(outgoing, exitFrames, { duration: reduced ? 120 : 110, easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' });
             runningMotion = exit;
             if (exit)
                 await exit.finished.catch(() => { });
@@ -221,14 +223,16 @@
             return;
         target.classList.remove('customer-panel-enter');
         if (enabled && typeof target.animate === 'function') {
-            const enter = playMotion(target, [{ opacity: 0, transform: 'translateX(' + (shift * 18) + 'px) translateY(3px)' }, { opacity: 1, transform: 'translateX(0) translateY(0)' }], { duration: 270, easing: 'cubic-bezier(.16,1,.3,1)' });
+            const enterFrames = reduced ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 0, transform: 'translateX(' + (shift * 18) + 'px) translateY(3px)' }, { opacity: 1, transform: 'translateX(0) translateY(0)' }];
+            const enter = playMotion(target, enterFrames, { duration: reduced ? 220 : 270, easing: 'cubic-bezier(.16,1,.3,1)' });
             runningMotion = enter;
             if (enter)
                 await enter.finished.catch(() => { });
+            else animatePanel(target, direction);
             if (version === motionVersion)
                 stopMotion();
         }
-        else if (!reduceMotion())
+        else
             animatePanel(target, direction);
     }
     function selectionMarker(nav) {

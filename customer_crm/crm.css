@@ -111,6 +111,7 @@ body:has(#customers-tab.active) { transition:background-color .32s ease; }
 #customers-tab:is([data-customer-theme=talabat],[data-customer-theme=instashop]) .customer-simple-header { border-color:var(--customer-line); }
 .customer-panel-enter { animation:customerPanelIn .38s cubic-bezier(.16,1,.3,1) both; }
 @keyframes customerPanelIn { from { opacity:0;transform:translateX(var(--customer-enter-x,18px)) translateY(5px); } to { opacity:1;transform:translateX(0) translateY(0); } }
+@keyframes customerPanelFade { from { opacity:0; } to { opacity:1; } }
 @keyframes customerSpin { to { transform:rotate(360deg); } }
 @media(max-width:700px) {
  .customer-base-heading { gap:9px;margin-bottom:14px; }.customer-base-title { font-size:22px; }
@@ -120,4 +121,9 @@ body:has(#customers-tab.active) { transition:background-color .32s ease; }
  .customer-app-switch { gap:4px;padding:4px;border-radius:13px; }.customer-app-switch button { min-height:55px;padding:8px;gap:4px;flex-direction:column;font-size:10px; }.customer-switch-wordmark { font-size:20px; }
  .customer-pagination { justify-content:center;font-size:11px; }.customer-pagination>span { width:100%;text-align:center; }.customer-pagination button { min-height:44px; }
 }
-@media(prefers-reduced-motion:reduce) { .customer-panel-enter,.customer-loading::before { animation:none!important; }.customer-tab-indicator,.customer-section-nav button,.customer-app-switch button,.customer-online-types button,.customer-pagination button,#customers-tab .customer-base-title,body:has(#customers-tab.active) { transition:none!important; } }
+@media(prefers-reduced-motion:reduce) {
+ .customer-panel-enter { animation:customerPanelFade .22s ease-out both!important; }
+ .customer-loading::before { animation:none!important; }
+ .customer-tab-indicator,.customer-section-nav button,.customer-app-switch button,.customer-online-types button,.customer-pagination button,#customers-tab .customer-base-title,body:has(#customers-tab.active) { transition:background-color .18s ease,color .18s ease,border-color .18s ease!important; }
+ .customer-section-nav button:hover,.customer-app-switch button:hover { transform:none; }
+}
