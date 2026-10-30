@@ -14829,9 +14829,12 @@ function generatePDFReceipt(filteredData, pdfTitleDate) {
                     margin-top: 4px;
                 }
 
-                .receipt-barcode-copy { appearance: none; display: inline; font: inherit; line-height: inherit; letter-spacing: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; direction: ltr; user-select: text; border-radius: 3px; }
-                .receipt-barcode-copy:hover, .receipt-barcode-copy:focus-visible { background: #fdf2f8; outline: 2px solid #E91E8C; outline-offset: 2px; }
-                .receipt-barcode-copy.is-copied { color: #047857; }
+                .receipt-barcode-copy { --copy-background: #fdf2f8; appearance: none; position: relative; display: inline-block; font: inherit; line-height: inherit; letter-spacing: inherit; color: #b51268; background: var(--copy-background); border: 1px solid #f3a3ce; padding: 4px 25px 4px 8px; margin: 0; cursor: pointer; direction: ltr; user-select: text; white-space: nowrap; border-radius: 6px; }
+                .receipt-barcode-copy::before, .receipt-barcode-copy::after { content: ''; position: absolute; width: 8px; height: 10px; border: 1px solid currentColor; border-radius: 2px; transform: translateY(-50%); }
+                .receipt-barcode-copy::before { right: 7px; top: 50%; background: var(--copy-background); z-index: 1; }
+                .receipt-barcode-copy::after { right: 10px; top: calc(50% - 3px); }
+                .receipt-barcode-copy:hover, .receipt-barcode-copy:focus-visible { --copy-background: #fce7f3; outline: 2px solid #E91E8C; outline-offset: 2px; }
+                .receipt-barcode-copy.is-copied { --copy-background: #ecfdf5; color: #047857; border-color: #6ee7b7; }
                 .receipt-barcode-print { display: none; }
                 .receipt-copy-feedback { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 30px); padding: 10px 18px; border-radius: 8px; background: #1e293b; color: #fff; font: 700 13px 'Cairo', sans-serif; text-align: center; z-index: 1000; pointer-events: none; }
                 .receipt-copy-feedback:empty { display: none; }
