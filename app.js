@@ -22846,8 +22846,6 @@ window.openNewRecurringStoryModal = function() {
     document.getElementById('recurringStoryPhotoUrl').value = '';
     document.getElementById('recurringStoryDriveFileId').value = '';
     document.getElementById('recurringStoryTitle').value = '';
-    const urlInpNew = document.getElementById('recurringStoryUrlInput');
-    if (urlInpNew) urlInpNew.value = '';
     document.getElementById('recurringStoryModalTitle').innerHTML = '<i class="fa-solid fa-repeat" style="color: #e11d48;"></i> إضافة ستوري متكرر جديد';
     document.getElementById('btnSubmitRecurringStoryText').textContent = 'حفظ ونشر الستوري الآن';
 
@@ -22881,8 +22879,6 @@ window.openEditRecurringStoryModal = function(id) {
     document.getElementById('recurringStoryPhotoUrl').value = item.image_url || '';
     document.getElementById('recurringStoryDriveFileId').value = item.drive_file_id || '';
     document.getElementById('recurringStoryTitle').value = item.product_name || '';
-    const urlInpEdit = document.getElementById('recurringStoryUrlInput');
-    if (urlInpEdit) urlInpEdit.value = item.image_url || '';
     document.getElementById('recurringStoryModalTitle').innerHTML = '<i class="fa-solid fa-pen" style="color: #e11d48;"></i> تعديل الستوري المتكرر';
     document.getElementById('btnSubmitRecurringStoryText').textContent = 'حفظ التعديلات';
 
@@ -22982,7 +22978,6 @@ window.removeRecurringStoryPhoto = function() {
     const input = document.getElementById('recurringStoryPhotoInput');
     const base64Input = document.getElementById('recurringStoryBase64');
     const urlInput = document.getElementById('recurringStoryPhotoUrl');
-    const directUrlInput = document.getElementById('recurringStoryUrlInput');
     const preview = document.getElementById('recurringPhotoPreview');
     const previewWrapper = document.getElementById('recurringPhotoPreviewWrapper');
     const placeholder = document.getElementById('recurringPhotoPlaceholder');
@@ -22990,33 +22985,9 @@ window.removeRecurringStoryPhoto = function() {
     if (input) input.value = '';
     if (base64Input) base64Input.value = '';
     if (urlInput) urlInput.value = '';
-    if (directUrlInput) directUrlInput.value = '';
     if (preview) preview.src = '';
     if (previewWrapper) previewWrapper.style.display = 'none';
     if (placeholder) placeholder.style.display = 'flex';
-};
-
-window.handleRecurringUrlInput = function(url) {
-    if (!url || typeof url !== 'string') return;
-    const clean = url.trim();
-    if (!clean) return;
-
-    const fileId = window.extractGoogleDriveFileId(clean);
-    const finalUrl = fileId ? `https://lh3.googleusercontent.com/d/${fileId}` : clean;
-
-    const urlInput = document.getElementById('recurringStoryPhotoUrl');
-    const base64Input = document.getElementById('recurringStoryBase64');
-    const driveIdInput = document.getElementById('recurringStoryDriveFileId');
-    if (urlInput) urlInput.value = finalUrl;
-    if (base64Input) base64Input.value = '';
-    if (driveIdInput) driveIdInput.value = fileId || '';
-
-    const preview = document.getElementById('recurringPhotoPreview');
-    const previewWrapper = document.getElementById('recurringPhotoPreviewWrapper');
-    const placeholder = document.getElementById('recurringPhotoPlaceholder');
-    if (preview) preview.src = finalUrl;
-    if (previewWrapper) previewWrapper.style.display = 'block';
-    if (placeholder) placeholder.style.display = 'none';
 };
 
 window.openRecurringStoryCamera = function() {
