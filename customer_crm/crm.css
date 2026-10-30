@@ -74,11 +74,11 @@
 .customer-pagination button { font:700 12px Cairo,Tajawal,Arial,sans-serif;min-height:42px;padding:8px 18px;border:1px solid var(--customer-line);border-radius:9px;background:var(--customer-soft);color:var(--customer-accent);cursor:pointer;transition:background-color .2s,transform .2s; }
 .customer-pagination button:hover:not(:disabled) { background:var(--customer-accent);color:#fff; }.customer-pagination button:disabled { opacity:.4;cursor:default; }
 .customer-app-switch { width:min(460px,100%);display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:5px;margin:0 auto 18px;border:1px solid #e3e8f2;border-radius:16px;background:#fff;box-shadow:0 4px 16px #233b6006; }
-.customer-app-switch button { min-width:0;min-height:60px;border:1px solid transparent;border-radius:12px;padding:9px 14px;cursor:pointer;background:#fff;color:#9aa6b6;display:flex;align-items:center;justify-content:center;gap:10px;font-family:Cairo,Tajawal,Arial,sans-serif;font-size:11px;font-weight:700;transition:background-color .22s,color .22s,box-shadow .22s,transform .22s; }
+.customer-app-switch button { --customer-accent:var(--customer-brand);min-width:0;min-height:60px;border:1px solid var(--customer-brand-line);border-radius:12px;padding:9px 14px;cursor:pointer;background:var(--customer-brand-soft);color:var(--customer-brand);display:flex;align-items:center;justify-content:center;gap:10px;font-family:Cairo,Tajawal,Arial,sans-serif;font-size:11px;font-weight:700;transition:background-color .22s,color .22s,box-shadow .22s,transform .22s; }
 .customer-switch-wordmark { font:800 22px/1.2 'Trebuchet MS',Arial,sans-serif;direction:ltr;letter-spacing:-.6px; }
-.customer-app-switch button[data-open-customer-app=talabat] { color:#ee580a; }.customer-app-switch button[data-open-customer-app=instashop] { color:#dc1b76; }
-.customer-app-switch button[data-open-customer-app=talabat][aria-pressed=true] { color:#fff;background:#ff5a00;box-shadow:0 3px 9px #ff5a0025; }
-.customer-app-switch button[data-open-customer-app=instashop][aria-pressed=true] { color:#fff;background:#df1874;box-shadow:0 3px 9px #df187425; }
+.customer-app-switch button[data-open-customer-app=talabat] { --customer-brand:#e54e00;--customer-brand-soft:#fff1e6;--customer-brand-line:#ffd4b5; }
+.customer-app-switch button[data-open-customer-app=instashop] { --customer-brand:#db176e;--customer-brand-soft:#fff0f6;--customer-brand-line:#f8cde0; }
+.customer-app-switch button[aria-pressed=true] { color:#fff;background:var(--customer-brand);border-color:var(--customer-brand);box-shadow:0 3px 9px #20355018; }
 .customer-app-switch button:hover { transform:translateY(-1px); }
 .customer-symbol,.customer-nav-icon { position:relative;display:inline-block;width:18px;height:18px;flex:0 0 18px; }
 .customer-symbol::before,.customer-symbol::after,.customer-nav-icon::before,.customer-nav-icon::after { content:"";position:absolute;box-sizing:border-box; }
@@ -103,9 +103,6 @@ body:has(#customers-tab.active) { transition:background-color .32s ease; }
 #customers-tab[data-customer-theme=instashop] { --customer-page-accent:#db176e;--customer-page-soft:#fff0f6;--customer-page-line:#f8cde0; }
 #customers-tab .customer-base-title { color:var(--customer-page-accent);transition:color .25s; }
 #customers-tab:is([data-customer-theme=talabat],[data-customer-theme=instashop]) .customer-section-nav button { --section-accent:var(--customer-page-accent);--section-soft:var(--customer-page-soft);border-color:var(--customer-page-line);color:var(--customer-page-accent); }
-#customers-tab:is([data-customer-theme=talabat],[data-customer-theme=instashop]) .customer-app-switch { background:var(--customer-page-soft);border-color:var(--customer-page-line); }
-#customers-tab:is([data-customer-theme=talabat],[data-customer-theme=instashop]) .customer-app-switch button { color:var(--customer-page-accent);background:transparent;box-shadow:none; }
-#customers-tab:is([data-customer-theme=talabat],[data-customer-theme=instashop]) .customer-app-switch button[aria-pressed=true] { background:var(--customer-page-accent);color:#fff;box-shadow:0 3px 9px #20355012; }
 #customers-tab:is([data-customer-theme=talabat],[data-customer-theme=instashop]) .customer-simple-status { background:var(--customer-soft);border-color:var(--customer-line);color:var(--customer-accent); }
 #customers-tab:is([data-customer-theme=talabat],[data-customer-theme=instashop]) :is(.customer-simple-count,.customer-no-history) { background:var(--customer-soft);color:var(--customer-accent); }
 #customers-tab:is([data-customer-theme=talabat],[data-customer-theme=instashop]) .customer-simple-header { border-color:var(--customer-line); }
