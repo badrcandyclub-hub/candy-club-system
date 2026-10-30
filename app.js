@@ -14717,6 +14717,7 @@ function generateExpiryMonthPDF(filteredData, monthVal) {
 }
 
 function generatePDFReceipt(filteredData, pdfTitleDate) {
+    const escapeReceiptBarcode = value => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     // Determine receiver name from the selected batch items
     let receivers = [...new Set(filteredData.map(item => item.receiver).filter(r => r && String(r).trim() !== ''))];
     let receiver = receivers.length > 0 ? receivers.join(' / ') : '.........................';
@@ -14828,6 +14829,16 @@ function generatePDFReceipt(filteredData, pdfTitleDate) {
                     margin-top: 4px;
                 }
 
+                .receipt-barcode-copy { appearance: none; display: inline; font: inherit; line-height: inherit; letter-spacing: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; direction: ltr; user-select: text; border-radius: 3px; }
+                .receipt-barcode-copy:hover, .receipt-barcode-copy:focus-visible { background: #fdf2f8; outline: 2px solid #E91E8C; outline-offset: 2px; }
+                .receipt-barcode-copy.is-copied { color: #047857; }
+                .receipt-barcode-print { display: none; }
+                .receipt-copy-feedback { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 30px); padding: 10px 18px; border-radius: 8px; background: #1e293b; color: #fff; font: 700 13px 'Cairo', sans-serif; text-align: center; z-index: 1000; pointer-events: none; }
+                .receipt-copy-feedback:empty { display: none; }
+                @media print {
+                    .receipt-barcode-copy, .receipt-copy-feedback { display: none !important; }
+                    .receipt-barcode-print { display: inline !important; }
+                }
                 .footer { 
                     text-align: center; 
                     margin-top: 40px; 
@@ -14929,16 +14940,17 @@ function generatePDFReceipt(filteredData, pdfTitleDate) {
                         
                         let barcodeHtml = '-';
                         if (item.barcode && item.barcode.trim() !== '') {
+                            const safeBarcode = escapeReceiptBarcode(item.barcode);
                             barcodeHtml = `
                                 <div class="barcode-container">
                                     <svg class="barcode"
-                                        jsbarcode-value="${item.barcode}"
+                                        jsbarcode-value="${safeBarcode}"
                                         jsbarcode-height="35"
                                         jsbarcode-width="1.5"
                                         jsbarcode-displayvalue="false"
                                         jsbarcode-margin="0">
                                     </svg>
-                                    <div class="barcode-text">${item.barcode}</div>
+                                    <div class="barcode-text"><button type="button" class="receipt-barcode-copy" onclick="copyReceiptBarcode(this)" title="اضغط لنسخ الباركود" aria-label="نسخ الباركود ${safeBarcode}">${safeBarcode}</button><span class="receipt-barcode-print">${safeBarcode}</span></div>
                                 </div>
                             `;
                         }
@@ -14969,6 +14981,51 @@ function generatePDFReceipt(filteredData, pdfTitleDate) {
             </div>
             
             <script>
+                var receiptCopyTimer;
+                function showReceiptCopyFeedback(message) {
+                    var status = document.getElementById('receipt-copy-feedback');
+                    if (!status) {
+                        status = document.createElement('div');
+                        status.id = 'receipt-copy-feedback';
+                        status.className = 'receipt-copy-feedback no-print';
+                        status.setAttribute('role', 'status');
+                        status.setAttribute('aria-live', 'polite');
+                        document.body.appendChild(status);
+                    }
+                    clearTimeout(receiptCopyTimer);
+                    status.textContent = message;
+                    receiptCopyTimer = setTimeout(function() { status.textContent = ''; }, 2200);
+                }
+                async function copyReceiptBarcode(button) {
+                    var barcode = button.textContent.trim();
+                    if (!barcode) return;
+                    var copied = false;
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        try {
+                            await navigator.clipboard.writeText(barcode);
+                            copied = true;
+                        } catch (_) {}
+                    }
+                    if (!copied) {
+                        var field = document.createElement('textarea');
+                        field.value = barcode;
+                        field.setAttribute('readonly', '');
+                        field.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0;';
+                        document.body.appendChild(field);
+                        try {
+                            field.focus();
+                            field.select();
+                            field.setSelectionRange(0, field.value.length);
+                            copied = document.execCommand('copy');
+                        } catch (_) {}
+                        finally {
+                            field.remove();
+                            button.focus({ preventScroll: true });
+                        }
+                    }
+                    button.classList.toggle('is-copied', copied);
+                    showReceiptCopyFeedback(copied ? 'تم نسخ الباركود' : 'تعذر النسخ تلقائيًا؛ حدّد الرقم وانسخه يدويًا.');
+                }
                 function toggleEditMode(btn) {
                     var isEditing = document.body.classList.toggle('edit-mode-active');
                     if (btn) {
