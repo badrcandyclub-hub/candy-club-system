@@ -96,7 +96,7 @@ body:has(#customers-tab.active[data-customer-theme=gifts]) { background:#f0faf6;
 body:has(#customers-tab.active[data-customer-theme=talabat]) { background:#fff3e8; }
 body:has(#customers-tab.active[data-customer-theme=instashop]) { background:#fff0f6; }
 body:has(#customers-tab.active) { transition:background-color .32s ease; }
-#customers-tab { --customer-page-accent:#245ac7;--customer-page-soft:#edf3ff;--customer-page-line:#dce6f6;overflow-x:clip; }
+#customers-tab { --customer-page-accent:#245ac7;--customer-page-soft:#edf3ff;--customer-page-line:#dce6f6;--customer-accent:var(--customer-page-accent);overflow-x:clip; }
 #customers-tab[data-customer-theme=store] { --customer-page-accent:#7951ab;--customer-page-soft:#f4effb;--customer-page-line:#e7d9f4; }
 #customers-tab[data-customer-theme=gifts] { --customer-page-accent:#087e74;--customer-page-soft:#e9f7f3;--customer-page-line:#c8e9df; }
 #customers-tab[data-customer-theme=talabat] { --customer-page-accent:#e54e00;--customer-page-soft:#fff1e6;--customer-page-line:#ffd4b5; }
